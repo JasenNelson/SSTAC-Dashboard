@@ -10,6 +10,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+// Final version - 11:00 AM PST
 // Define a type for our document data for better type safety
 type Document = {
   id: number;
