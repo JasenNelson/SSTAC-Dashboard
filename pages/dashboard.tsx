@@ -1,14 +1,3 @@
-Of course. Based on your revised prompt that specifies using the Next.js **Pages Router** and client-side data fetching, here is the correct and final code for your `pages/dashboard.tsx` file.
-
-This code aligns with your project's architecture, using the appropriate hooks (`useEffect`, `useState`, `useRouter`) and the standard `supabase-js` library to create a protected, dynamic dashboard page.
-
------
-
-### **Final Code for `pages/dashboard.tsx`**
-
-```tsx
-// pages/dashboard.tsx
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
