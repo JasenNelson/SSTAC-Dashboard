@@ -1,67 +1,56 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { User } from '@supabase/supabase-js';
-
-// It's crucial to import the Supabase client configured for client-side use.
-// Ensure this path is correct for your project structure.
-import { supabase } from '../utils/supabase/client';
+import type { Session } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabaseClient'; // Adjust the import path to your Supabase client file
 
 export default function Header() {
-  // State to hold the user object
-  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const router = useRouter();
 
-  // On component mount, check for a user session
   useEffect(() => {
-    const fetchUser = async () => {
-      // supabase.auth.getUser() fetches the user from the current session
-      const { data, error } = await supabase.auth.getUser();
-      if (error) {
-        console.error('Error fetching user:', error.message);
-        return;
-      }
-      setUser(data.user);
+    // Fetch the user session on component mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Set up a listener for authentication state changes (e.g., login, logout)
+    // This keeps the component's state in sync with the user's auth status
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    // Clean up the subscription when the component unmounts
+    return () => {
+      subscription?.unsubscribe();
     };
+  }, []); // The empty dependency array ensures this effect runs only once
 
-    fetchUser();
-  }, []);
-
-  // Function to handle user logout
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    // A page reload is a simple way to ensure all state is cleared
-    // and the user is redirected correctly after logout.
-    router.reload();
+    // Redirect to the home page after logout to ensure a clean state
+    router.push('/');
   };
 
   return (
-    <header className="bg-gray-800 text-white p-4">
-      <nav className="container mx-auto flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold hover:text-gray-300">
-          Home
-        </Link>
-        <div className="flex items-center space-x-4">
-          {user ? (
-            <>
-              <span className="text-sm">Signed in as {user.email}</span>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link href="/login">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Login
-              </button>
-            </Link>
-          )}
-        </div>
+    <header>
+      <nav>
+        {session ? (
+          <div>
+            <span>Signed in as: <strong>{session.user.email}</strong></span>
+            <button onClick={handleLogout} style={{ marginLeft: '1rem' }}>
+              Logout
+            </button>
+          </div>
+        ) : (
+          <Link href="/login">
+            <button>Login</button>
+          </Link>
+        )}
       </nav>
     </header>
   );
