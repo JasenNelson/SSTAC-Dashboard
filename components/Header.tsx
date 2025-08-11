@@ -1,57 +1,58 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import type { Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabaseClient'; // Adjust the import path to your Supabase client file
+// components/Header.tsx
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabaseClient'
+import { Session } from '@supabase/supabase-js'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
 
 export default function Header() {
-  const [session, setSession] = useState<Session | null>(null);
-  const router = useRouter();
+  const [session, setSession] = useState<Session | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
-    // Fetch the user session on component mount
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+      setSession(session)
+    })
 
-    // Set up a listener for authentication state changes (e.g., login, logout)
-    // This keeps the component's state in sync with the user's auth status
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+      setSession(session)
+    })
 
-    // Clean up the subscription when the component unmounts
-    return () => {
-      subscription?.unsubscribe();
-    };
-  }, []); // The empty dependency array ensures this effect runs only once
+    return () => subscription.unsubscribe()
+  }, [])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    // Redirect to the home page after logout to ensure a clean state
-    router.push('/');
-  };
+    await supabase.auth.signOut()
+    router.push('/') // Redirect to home page after logout
+  }
 
   return (
-    <header>
-      <nav>
+    <header className="flex items-center justify-between p-4 bg-gray-800 text-white">
+      <Link href="/" className="text-xl font-bold">
+        SSTAC Dashboard
+      </Link>
+      <div className="flex items-center gap-4">
         {session ? (
-          <div>
-            <span>Signed in as: <strong>{session.user.email}</strong></span>
-            <button onClick={handleLogout} style={{ marginLeft: '1rem' }}>
+          <>
+            <p className="text-sm">{session.user.email}</p>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+            >
               Logout
             </button>
-          </div>
+          </>
         ) : (
-          <Link href="/login">
-            <button>Login</button>
+          <Link
+            href="/login"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          >
+            Login
           </Link>
         )}
-      </nav>
+      </div>
     </header>
-  );
+  )
 }
