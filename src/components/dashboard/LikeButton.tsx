@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Heart, Users } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '../supabase-client';
 import { useToast } from '@/components/Toast';
 
 interface LikeButtonProps {
