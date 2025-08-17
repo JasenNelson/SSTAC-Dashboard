@@ -17,10 +17,10 @@ type DocumentsListProps = {
 };
 
 export default function DocumentsList({ initialDocuments }: DocumentsListProps) {
-  const [documents, setDocuments] = useState<Document[]>(initialDocuments);
+  const [documents] = useState<Document[]>(initialDocuments);
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>(initialDocuments);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
 
   // Filter documents based on selected tags
