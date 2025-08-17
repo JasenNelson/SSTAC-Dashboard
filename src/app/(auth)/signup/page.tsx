@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '../../../../lib/supabase/client';
+import { createClient } from '../supabase-client';
 import type { NextPage } from 'next';
 import Link from 'next/link';
 

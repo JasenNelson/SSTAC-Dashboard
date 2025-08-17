@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '../lib/supabase/client';
+import { createClient } from './supabase-client';
 
 export default function DatabaseDiagnostic() {
   const [results, setResults] = useState<any>(null);
