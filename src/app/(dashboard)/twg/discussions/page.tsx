@@ -81,7 +81,7 @@ export default function TwgDiscussionsPage() {
 
       // Process discussions and get reply stats
       const discussionsWithStats = await Promise.all(
-        result.data.map(async (discussion: any) => {
+        result.data.map(async (discussion: unknown) => {
           // Get reply count and last reply for this discussion
           const { count: replyCount } = await supabase
             .from('discussion_replies')

@@ -35,7 +35,7 @@ export default function Header() {
       const result = await Promise.race([
         roleCheckPromise,
         timeoutPromise
-      ]) as { data: any; error: any };
+      ]) as { data: unknown; error: unknown };
       
       const { data: userRoles, error: userRolesError } = result;
       
@@ -73,7 +73,7 @@ export default function Header() {
       }
       
       // Check if user has admin role
-      const hasAdminRole = userRoles.some((role: any) => role.role === 'admin');
+      const hasAdminRole = userRoles.some((role: unknown) => role.role === 'admin');
       
       if (hasAdminRole) {
         console.log('✅ User is admin via user_roles table');
@@ -81,7 +81,7 @@ export default function Header() {
         localStorage.setItem(`admin_status_${userId}`, 'true');
         return true;
       } else {
-        console.log('ℹ️ User is not admin - roles found:', userRoles.map((r: any) => r.role));
+        console.log('ℹ️ User is not admin - roles found:', userRoles.map((r: unknown) => r.role));
         setIsAdmin(false);
         localStorage.removeItem(`admin_status_${userId}`);
         return false;

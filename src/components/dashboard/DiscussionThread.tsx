@@ -27,7 +27,7 @@ type Reply = {
 interface DiscussionThreadProps {
   discussion: Discussion;
   onUpdate: () => void;
-  session: any;
+  session: unknown;
 }
 
 export default function DiscussionThread({ discussion, onUpdate, session }: DiscussionThreadProps) {
