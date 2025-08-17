@@ -76,7 +76,7 @@ const LoginPage: NextPage = () => {
       
       <div style={{ marginTop: '24px', textAlign: 'center' }}>
         <p style={{ marginBottom: '16px' }}>
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Link href="/signup" style={{ color: '#3b82f6', textDecoration: 'none' }}>
             Create one here
           </Link>
