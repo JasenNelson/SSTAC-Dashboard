@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 // Import the new client helper
-import { createClient } from '../../../lib/supabase/client';
+import { createClient } from '../../../../lib/supabase/client';
 import type { NextPage } from 'next';
 import Link from 'next/link';
 
