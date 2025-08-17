@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/Toast';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '../supabase-client';
 
 import { Plus, Edit, Trash2, Eye, EyeOff, Calendar, User } from 'lucide-react';
 
