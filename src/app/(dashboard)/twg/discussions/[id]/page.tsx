@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { createClient } from '../../../../../lib/supabase/client';
+import { createClient } from '../../../../lib/supabase/client';
 import { useToast } from '@/components/Toast';
 import LikeButton from '@/components/dashboard/LikeButton';
 import Link from 'next/link';
