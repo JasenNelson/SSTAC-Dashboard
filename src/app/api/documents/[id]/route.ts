@@ -5,20 +5,22 @@ import { NextRequest, NextResponse } from 'next/server';
 // Test GET method to verify route is working
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  return NextResponse.json({ 
-    message: 'API route working', 
-    id: const { id } = await params; id,
+  const { id } = await params;
+  return NextResponse.json({
+    message: 'API route working',
+    id: id,
     timestamp: new Date().toISOString()
   });
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,7 +46,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const documentId = parseInt(const { id } = await params; id);
+    const documentId = parseInt(id);
     if (isNaN(documentId)) {
       return NextResponse.json({ error: 'Invalid document ID' }, { status: 400 });
     }
@@ -128,9 +130,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -156,7 +159,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const documentId = parseInt(const { id } = await params; id);
+    const documentId = parseInt(id);
     if (isNaN(documentId)) {
       return NextResponse.json({ error: 'Invalid document ID' }, { status: 400 });
     }
