@@ -9,7 +9,7 @@ export async function GET(
 ) {
   return NextResponse.json({ 
     message: 'API route working', 
-    id: params.id,
+    id: const { id } = await params; id,
     timestamp: new Date().toISOString()
   });
 }
@@ -44,7 +44,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const documentId = parseInt(params.id);
+    const documentId = parseInt(const { id } = await params; id);
     if (isNaN(documentId)) {
       return NextResponse.json({ error: 'Invalid document ID' }, { status: 400 });
     }
@@ -156,7 +156,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const documentId = parseInt(params.id);
+    const documentId = parseInt(const { id } = await params; id);
     if (isNaN(documentId)) {
       return NextResponse.json({ error: 'Invalid document ID' }, { status: 400 });
     }
