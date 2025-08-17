@@ -12,6 +12,28 @@ export default function Home() {
           height={38}
           priority
         />
+        
+        {/* Navigation Links */}
+        <div className="flex gap-4 items-center flex-col sm:flex-row">
+          <a
+            href="/signup"
+            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-indigo-600 text-white gap-2 hover:bg-indigo-700 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
+          >
+            Create Account
+          </a>
+          <a
+            href="/login"
+            className="rounded-full border border-solid border-indigo-600 transition-colors flex items-center justify-center bg-white text-indigo-600 gap-2 hover:bg-indigo-50 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
+          >
+            Log In
+          </a>
+          <a
+            href="/dashboard"
+            className="rounded-full border border-solid border-gray-300 transition-colors flex items-center justify-center bg-gray-100 text-gray-700 gap-2 hover:bg-gray-200 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
+          >
+            Dashboard
+          </a>
+        </div>
         <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
           <li className="mb-2 tracking-[-.01em]">
             Get started by editing{" "}
