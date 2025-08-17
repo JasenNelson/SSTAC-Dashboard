@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { createClient } from '@/lib/supabase/client';
+import { createClient } from '../supabase-client';
 import { useToast } from '@/components/Toast';
 import LikeButton from './LikeButton';
 
