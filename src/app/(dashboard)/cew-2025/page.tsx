@@ -167,7 +167,7 @@ export default async function Cew2025Page() {
           <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
             <h3 className="text-xl font-semibold text-purple-800 mb-3">Session 3: Bioaccumulation Assessment</h3>
             <p className="text-purple-700 font-medium mb-2">Joline (Jo) Widmeyer</p>
-            <p className="text-purple-600 italic">Bioaccumulation and sediment assessment: evaluating Canada's regulatory readiness</p>
+            <p className="text-purple-600 italic">Bioaccumulation and sediment assessment: evaluating Canada&apos;s regulatory readiness</p>
           </div>
 
           {/* Session 4 */}
@@ -314,7 +314,7 @@ export default async function Cew2025Page() {
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-8 mt-8 text-center text-white">
         <h2 className="text-2xl font-bold mb-4">Ready to Join Us?</h2>
         <p className="text-indigo-100 text-lg mb-6">
-          Don't miss this opportunity to participate in the premier ecotoxicology conference in Canada
+          Don&apos;t miss this opportunity to participate in the premier ecotoxicology conference in Canada
         </p>
         <div className="space-x-4">
           <a 

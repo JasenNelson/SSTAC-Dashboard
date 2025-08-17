@@ -8,7 +8,7 @@ import type { NextPage } from 'next';
 import Link from 'next/link';
 
 const SignupPage: NextPage = () => {
-  const router = useRouter();
+  // const router = useRouter();
   const supabase = createClient();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');

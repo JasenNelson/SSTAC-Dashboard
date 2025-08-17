@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-export async function createMilestone(formData: FormData, prevState: any) {
+export async function createMilestone(formData: FormData, prevState: unknown) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -94,7 +94,7 @@ export async function createMilestone(formData: FormData, prevState: any) {
   }
 }
 
-export async function updateMilestone(formData: FormData, prevState: any) {
+export async function updateMilestone(formData: FormData, prevState: unknown) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -198,7 +198,7 @@ export async function updateMilestone(formData: FormData, prevState: any) {
   }
 }
 
-export async function deleteMilestone(formData: FormData, prevState: any) {
+export async function deleteMilestone(formData: FormData, prevState: unknown) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

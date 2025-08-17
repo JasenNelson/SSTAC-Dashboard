@@ -154,7 +154,7 @@ export default async function DashboardPage() {
               Register by <strong>August 22, 2025</strong> for reduced rates!
             </p>
             <p className="text-green-100 text-sm">
-              Don't miss the opportunity to register for the Canadian Ecotoxicity Workshop 2025 at reduced rates!
+              Don&apos;t miss the opportunity to register for the Canadian Ecotoxicity Workshop 2025 at reduced rates!
             </p>
           </div>
         </div>

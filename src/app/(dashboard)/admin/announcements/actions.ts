@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-export async function createAnnouncement(formData: FormData, prevState: any) {
+export async function createAnnouncement(formData: FormData, prevState: unknown) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -86,7 +86,7 @@ export async function createAnnouncement(formData: FormData, prevState: any) {
   }
 }
 
-export async function updateAnnouncement(formData: FormData, prevState: any) {
+export async function updateAnnouncement(formData: FormData, prevState: unknown) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -182,7 +182,7 @@ export async function updateAnnouncement(formData: FormData, prevState: any) {
   }
 }
 
-export async function deleteAnnouncement(formData: FormData, prevState: any) {
+export async function deleteAnnouncement(formData: FormData, prevState: unknown) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
