@@ -33,7 +33,7 @@ export default function DatabaseDiagnostic() {
       console.log('✅ Authentication successful:', { id: user.id, email: user.email });
 
       // For now, just show basic user info without database queries
-      const diagnostics: any = {
+      const diagnostics: unknown = {
         user: {
           id: user.id,
           email: user.email
