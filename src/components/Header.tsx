@@ -41,9 +41,9 @@ export default function Header() {
       
       if (userRolesError) {
         // Handle specific error cases
-        if (userRolesError.code === 'PGRST116') {
+        if ((userRolesError as any).code === 'PGRST116') {
           console.log('⚠️ user_roles table does not exist (PGRST116)');
-        } else if (userRolesError.code === '42P17') {
+        } else if ((userRolesError as any).code === '42P17') {
           console.error('❌ Infinite recursion detected in RLS policies');
           // Try localStorage backup for infinite recursion
           const backupAdminStatus = localStorage.getItem(`admin_status_${userId}`);
@@ -51,7 +51,7 @@ export default function Header() {
             setIsAdmin(true);
             return true;
           }
-        } else if (userRolesError.code === '406') {
+        } else if ((userRolesError as any).code === '406') {
           // 406 error means RLS policies are blocking access - user is likely not admin
           console.log('ℹ️ User access blocked by RLS - likely not admin');
           setIsAdmin(false);
@@ -73,7 +73,7 @@ export default function Header() {
       }
       
       // Check if user has admin role
-      const hasAdminRole = userRoles.some((role: unknown) => role.role === 'admin');
+      const hasAdminRole = (userRoles as any).some((role: unknown) => (role as any).role === 'admin');
       
       if (hasAdminRole) {
         console.log('✅ User is admin via user_roles table');
@@ -81,7 +81,7 @@ export default function Header() {
         localStorage.setItem(`admin_status_${userId}`, 'true');
         return true;
       } else {
-        console.log('ℹ️ User is not admin - roles found:', userRoles.map((r: unknown) => r.role));
+        console.log('ℹ️ User is not admin - roles found:', (userRoles as any).map((r: unknown) => (r as any).role));
         setIsAdmin(false);
         localStorage.removeItem(`admin_status_${userId}`);
         return false;

@@ -61,9 +61,9 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
 
   useEffect(() => {
     fetchReplies();
-    if (session?.user) {
-      setCurrentUser(session.user);
-      checkAdminStatus(session.user.id);
+    if ((session as any)?.user) {
+      setCurrentUser((session as any).user);
+      checkAdminStatus((session as any).user.id);
     } else {
       // Fallback: try to get user independently if session not passed
       const getCurrentUser = async () => {

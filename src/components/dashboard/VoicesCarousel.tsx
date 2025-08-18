@@ -56,7 +56,7 @@ const quotes: Quote[] = [
   }
 ];
 
-export default function VoicesCarousel() {
+export default function VoicesCarousel({ quotes, autoRotate = true, rotationInterval = 8000, showNavigation = true }: any) {
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
 
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function VoicesCarousel() {
 
       {/* Quote Navigation Dots */}
       <div className="flex justify-center mt-6 space-x-2">
-        {quotes.map((_, index) => (
+        {quotes.map((_: any, index: number) => (
           <button
             key={index}
             onClick={() => setCurrentQuoteIndex(index)}

@@ -75,9 +75,9 @@ export default function AdminUsersManager() {
       }
 
       if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
+        return (aValue as any) > (bValue as any) ? 1 : -1;
       } else {
-        return aValue < bValue ? 1 : -1;
+        return (aValue as any) < (bValue as any) ? 1 : -1;
       }
     });
 
