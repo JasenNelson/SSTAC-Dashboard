@@ -61,7 +61,7 @@ export default async function TwgDocumentsPage() {
     id: doc.id,
     title: doc.title,
     created_at: doc.created_at,
-    tags: doc.document_tags?.map((dt: unknown) => dt.tags).filter(Boolean) || []
+    tags: doc.document_tags?.map((dt: unknown) => (dt as any).tags).filter(Boolean) || []
   })) || [];
 
   if (error) {

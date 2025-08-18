@@ -55,7 +55,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
     setToasts(prev => [...prev, newToast]);
 
     // Auto-hide toast after duration
-    if (newToast.duration > 0) {
+    if ((newToast.duration ?? 0) > 0) {
       console.log('🧪 Setting timeout for toast:', id);
       setTimeout(() => {
         console.log('🧪 Auto-hiding toast:', id);

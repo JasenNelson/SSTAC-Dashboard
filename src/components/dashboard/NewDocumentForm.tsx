@@ -38,17 +38,10 @@ export default function NewDocumentForm() {
     }
   }, [state, showToast]);
 
-  const handleSubmit = (formData: FormData) => {
-    // Add selected tags to form data
-    selectedTags.forEach((tagId, index) => {
-      formData.append(`tags[${index}]`, tagId.toString());
-    });
-    return formAction(formData);
-  };
 
   return (
     // The `action` prop points to our Server Action
-    <form action={handleSubmit} className="space-y-6">
+    <form action={formAction} className="space-y-6">
       {state?.error && (
         <div className="rounded-md bg-red-50 p-4">
           <p className="text-sm text-red-700">{state.error}</p>

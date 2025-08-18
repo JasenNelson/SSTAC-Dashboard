@@ -86,22 +86,22 @@ export default function TwgDiscussionsPage() {
           const { count: replyCount } = await supabase
             .from('discussion_replies')
             .select('*', { count: 'exact', head: true })
-            .eq('discussion_id', discussion.id);
+            .eq('discussion_id', (discussion as any).id);
 
           const { data: lastReply } = await supabase
             .from('discussion_replies')
             .select('created_at')
-            .eq('discussion_id', discussion.id)
+            .eq('discussion_id', (discussion as any).id)
             .order('created_at', { ascending: false })
             .limit(1)
             .single();
 
           return {
-            id: discussion.id,
-            title: discussion.title,
-            author: discussion.user_email || 'Unknown User',
-            created_at: discussion.created_at,
-            updated_at: discussion.updated_at,
+            id: (discussion as any).id,
+            title: (discussion as any).title,
+            author: (discussion as any).user_email || 'Unknown User',
+            created_at: (discussion as any).created_at,
+            updated_at: (discussion as any).updated_at,
             reply_count: replyCount || 0,
             last_reply_at: lastReply?.created_at || null
           };
@@ -228,7 +228,7 @@ export default function TwgDiscussionsPage() {
   };
 
   const getActivityIndicator = (discussion: DiscussionSummary) => {
-    const lastActivity = discussion.last_reply_at || discussion.updated_at;
+    const lastActivity = discussion.last_reply_at || (discussion as any).updated_at;
     const lastActivityDate = new Date(lastActivity);
     const now = new Date();
     const diffInHours = (now.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60);
@@ -304,17 +304,17 @@ export default function TwgDiscussionsPage() {
           <div className="divide-y divide-gray-200">
             {discussions.map((discussion) => (
               <Link
-                key={discussion.id}
-                href={`/twg/discussions/${discussion.id}`}
+                key={(discussion as any).id}
+                href={`/twg/discussions/${(discussion as any).id}`}
                 className="block p-6 hover:bg-gray-50 transition-colors duration-150"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-3 mb-2">
                       <h3 className="text-lg font-semibold text-gray-900 hover:text-indigo-600 transition-colors truncate">
-                        {discussion.title}
+                        {(discussion as any).title}
                       </h3>
-                      {discussion.updated_at !== discussion.created_at && (
+                      {(discussion as any).updated_at !== (discussion as any).created_at && (
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           Edited
                         </span>
@@ -328,7 +328,7 @@ export default function TwgDiscussionsPage() {
                       </span>
                       <span className="flex items-center">
                         <span className="mr-1">📅</span>
-                        {formatDate(discussion.created_at)}
+                        {formatDate((discussion as any).created_at)}
                       </span>
                       <span className="flex items-center">
                         <span className="mr-1">💬</span>
