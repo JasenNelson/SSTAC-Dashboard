@@ -267,7 +267,7 @@ export default async function SurveyResultsPage() {
                       </div>
 
                       {/* Bottom: Wide Quote Box */}
-                      <VoicesCarousel />
+                      <VoicesCarousel quotes={[]} />
                     </div>
 
             {/* Key Insights Summary - Full Width Below */}
