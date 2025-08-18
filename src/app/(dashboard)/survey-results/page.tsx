@@ -422,7 +422,7 @@ export default async function SurveyResultsPage() {
                   </div>
                   <div className="flex items-start">
                     <span className="text-green-300 mr-2 mt-1">→</span>
-                    <span><strong>Modern Approaches:</strong> Cutting-edge assessment methodologies</span>
+                    <span><strong>Effectiveness:</strong> Cutting-edge assessment methodologies</span>
                   </div>
                   <div className="flex items-start">
                     <span className="text-green-300 mr-2 mt-1">→</span>
@@ -430,11 +430,11 @@ export default async function SurveyResultsPage() {
                   </div>
                   <div className="flex items-start">
                     <span className="text-green-300 mr-2 mt-1">→</span>
-                    <span><strong>Complex Mixtures:</strong> Synergistic effects assessment</span>
+                    <span><strong>Holistic Protection:</strong> Synergistic effects assessment</span>
                   </div>
                   <div className="flex items-start">
                     <span className="text-green-300 mr-2 mt-1">→</span>
-                    <span><strong>Cumulative Effects:</strong> Long-term impact evaluation</span>
+                    <span><strong>Tiered Framework:</strong> Long-term impact evaluation</span>
                   </div>
                 </div>
               </div>
@@ -484,12 +484,12 @@ export default async function SurveyResultsPage() {
               </div>
             </Link>
 
-            {/* Modern Approaches Card */}
-            <Link href="/survey-results/modern-approaches" className="group">
+            {/* Effectiveness Card */}
+            <Link href="/survey-results/effectiveness" className="group">
               <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-purple-300">
                 <div className="text-4xl mb-4">🚀</div>
                 <h3 className="text-xl font-semibold text-gray-800 group-hover:text-purple-600 transition-colors mb-3">
-                  Modern Approaches
+                  Effectiveness
                 </h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Prioritization of cutting-edge methodologies and scientific advancements in sediment assessment.
@@ -504,11 +504,11 @@ export default async function SurveyResultsPage() {
             </Link>
 
             {/* Contaminants Expansion Card */}
-            <Link href="/survey-results/contaminants-expansion" className="group">
+            <Link href="/survey-results/technical-standards" className="group">
               <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-orange-300">
                 <div className="text-4xl mb-4">🧪</div>
                 <h3 className="text-xl font-semibold text-gray-800 group-hover:text-orange-600 transition-colors mb-3">
-                  Expanding Contaminants List
+                  Technical Standards
                 </h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Comprehensive coverage of emerging contaminants and substances of concern.
@@ -522,12 +522,12 @@ export default async function SurveyResultsPage() {
               </div>
             </Link>
 
-            {/* Complex Mixtures Card */}
-            <Link href="/survey-results/complex-mixtures" className="group">
+            {/* Holistic Protection Card */}
+            <Link href="/survey-results/holistic-protection" className="group">
               <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-red-300">
                 <div className="text-4xl mb-4">🔬</div>
                 <h3 className="text-xl font-semibold text-gray-800 group-hover:text-red-600 transition-colors mb-3">
-                  Complex Mixtures
+                  Holistic Protection
                 </h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Assessment methodologies for complex contaminant mixtures and synergistic effects.
@@ -541,12 +541,12 @@ export default async function SurveyResultsPage() {
               </div>
             </Link>
 
-            {/* Cumulative Effects Card */}
-            <Link href="/survey-results/cumulative-effects" className="group">
+            {/* Tiered Framework Card */}
+            <Link href="/survey-results/tiered-framework" className="group">
               <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-teal-300">
                 <div className="text-4xl mb-4">📈</div>
                 <h3 className="text-xl font-semibold text-gray-800 group-hover:text-teal-600 transition-colors mb-3">
-                  Cumulative Effects
+                  Tiered Framework
                 </h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   Long-term impact assessment and cumulative risk evaluation frameworks.
