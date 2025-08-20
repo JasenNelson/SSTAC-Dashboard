@@ -291,6 +291,7 @@ export default function Header() {
     { href: '/cew-2025', label: 'CEW', icon: '📋' },
     { href: '/twg/documents', label: 'Documents', icon: '📄' },
     { href: '/twg/discussions', label: 'Forum', icon: '💬' },
+    { href: '/wiks', label: 'WIKS', icon: '🌿' },
   ];
 
   // Admin-only navigation links
