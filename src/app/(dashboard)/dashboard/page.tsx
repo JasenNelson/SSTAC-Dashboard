@@ -236,6 +236,21 @@ export default async function DashboardPage() {
               </div>
             </Link>
 
+            {/* WIKS - Weaving Indigenous Knowledge & Science */}
+            <Link href="/wiks" className="group">
+              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-amber-300">
+                <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-amber-200 transition-colors">
+                  <span className="text-3xl">🌿</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 group-hover:text-amber-600 transition-colors mb-3">
+                  WIKS
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Explore the strategic plan to integrate Indigenous-led WQCIU framework into BC's modernized sediment standards.
+                </p>
+              </div>
+            </Link>
+
             {/* Admin Panel */}
             <Link href="/admin" className="group">
               <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-red-300">
