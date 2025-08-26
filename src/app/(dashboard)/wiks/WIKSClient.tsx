@@ -2,329 +2,368 @@
 
 import React, { useState } from 'react';
 
+interface PollData {
+  question: string;
+  options: string[];
+  votes: number[];
+  totalVotes: number;
+}
+
 export default function WIKSClient() {
-  const [activeSection, setActiveSection] = useState('overview');
-
-  // Handle smooth scrolling to sections
-  const scrollToSection = (sectionId: string) => {
-    setActiveSection(sectionId);
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+  const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
+  const [polls, setPolls] = useState<PollData[]>([
+    {
+      question: "What is the most effective starting point for developing a holistic baseline study that combines co-located sampling with area-based Indigenous Knowledge and Science?",
+      options: [
+        "Community-led traditional use mapping and seasonal activity calendars",
+        "Co-located water and sediment sampling with Indigenous harvest areas",
+        "Indigenous knowledge interviews focused on ecosystem health indicators",
+        "Scientific baseline studies with Indigenous knowledge validation"
+      ],
+      votes: [0, 0, 0, 0],
+      totalVotes: 0
+    },
+    {
+      question: "How can the scientific framework incorporate protection goals related to Indigenous Stewardship principles such as the 'connectedness of all life' and '7-generations'?",
+      options: [
+        "Include cultural keystone species in risk assessments",
+        "Develop long-term monitoring programs spanning multiple generations",
+        "Integrate traditional ecological knowledge into exposure scenarios",
+        "Create co-management frameworks for ongoing stewardship",
+        "Establish Indigenous-led review processes for scientific standards"
+      ],
+      votes: [0, 0, 0, 0, 0],
+      totalVotes: 0
+    },
+    {
+      question: "Within a tiered framework, where can place-based Indigenous Knowledge provide the most direct scientific value for modifying a generic baseline value to be more site-specific?",
+      options: [
+        "Defining local exposure scenarios and use patterns",
+        "Identifying culturally significant species and habitats",
+        "Establishing seasonal variations in environmental conditions",
+        "Determining appropriate sampling locations and timing"
+      ],
+      votes: [0, 0, 0, 0],
+      totalVotes: 0
     }
-  };
+  ]);
 
-  // Toggle card details
-  const toggleDetails = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.classList.toggle('hidden');
-    }
-  };
+  const [votedPolls, setVotedPolls] = useState<Set<number>>(new Set());
 
-  // Toggle accordion content
   const toggleAccordion = (id: string) => {
-    const content = document.getElementById(id);
-    const button = document.querySelector(`[data-target="${id}"]`);
-    const arrow = button?.querySelector('.arrow');
+    setActiveAccordion(activeAccordion === id ? null : id);
+  };
+
+  const handleVote = (pollIndex: number, optionIndex: number) => {
+    if (votedPolls.has(pollIndex)) return; // Prevent multiple votes
+
+    const newPolls = [...polls];
+    newPolls[pollIndex].votes[optionIndex]++;
+    newPolls[pollIndex].totalVotes++;
+    setPolls(newPolls);
     
-    if (content && button && arrow) {
-      content.classList.toggle('hidden');
-      arrow.classList.toggle('rotate-180');
-    }
+    const newVotedPolls = new Set(votedPolls);
+    newVotedPolls.add(pollIndex);
+    setVotedPolls(newVotedPolls);
+  };
+
+  const getPercentage = (votes: number, total: number) => {
+    if (total === 0) return 0;
+    return Math.round((votes / total) * 100);
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] text-[#5D4037]">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-amber-50">
+      {/* Hero/Header Section */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')",
+            filter: "brightness(0.7)"
+          }}
+        />
+        
+        {/* Content Overlay */}
+        <div className="relative z-10 text-center text-white px-6 max-w-6xl mx-auto">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 font-['Merriweather']">
+            Weaving Indigenous Knowledges & Science
+          </h1>
+          <p className="text-xl md:text-2xl lg:text-3xl mb-8 font-['Lato'] font-light">
+            A Practical Discussion on Modernizing BC's Sediment Protection Framework
+          </p>
+          
+          {/* Land Acknowledgement */}
+          <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 max-w-4xl mx-auto">
+            <p className="text-lg md:text-xl italic leading-relaxed">
+              "We acknowledge and respect the lək̓ʷəŋən (Lekwungen) Peoples (Songhees and Esquimalt Nations), 
+              on whose traditional territories we gather, and whose historical relationships with this land 
+              continue to this day."
+            </p>
+          </div>
+        </div>
+      </section>
 
-      
-      {/* Header & Navigation */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
-        <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-xl md:text-2xl font-bold text-[#A0522D]">WQCIU Integration Strategy</h1>
-          <div className="hidden md:flex space-x-8">
-            {[
-              { id: 'overview', label: 'Framework Overview' },
-              { id: 'comparison', label: 'Comparative Analysis' },
-              { id: 'integration', label: 'BC Integration' },
-              { id: 'roadmap', label: 'Roadmap' }
-            ].map(({ id, label }) => (
+      {/* Bridging Vision to Action Section */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 font-['Merriweather']">
+            From Vision to Action: A New Approach to Stewardship
+          </h2>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Card 1: The 'Why' */}
+            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl shadow-2xl h-full">
+                <div className="text-4xl mb-4">🌊</div>
+                <h3 className="text-2xl font-bold mb-4">The 'Why' - Foundational Vision</h3>
+                <p className="text-blue-100 leading-relaxed">
+                  Embrace 'Two-Eyed Seeing' to recognize that our waters and lands are kin. 
+                  Respectfully integrating Indigenous wisdom with Western science can forge more 
+                  holistic, place-based environmental standards.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 2: The 'How' */}
+            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
+              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-8 rounded-2xl shadow-2xl h-full">
+                <div className="text-4xl mb-4">🏛️</div>
+                <h3 className="text-2xl font-bold mb-4">The 'How' - A Tangible Example</h3>
+                <p className="text-green-100 leading-relaxed">
+                  The Tsleil-Waututh Nation's work on the Burrard Inlet Water Quality Objectives 
+                  is a precedent-setting, Nation-led initiative. It demonstrates a successful 
+                  government-to-government process that weaves knowledges to create numerical 
+                  values that protect cultural practices.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3: The Bridge */}
+            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
+              <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-8 rounded-2xl shadow-2xl h-full">
+                <div className="text-4xl mb-4">🌉</div>
+                <h3 className="text-2xl font-bold mb-4">The Bridge - Our Goal</h3>
+                <p className="text-amber-100 leading-relaxed">
+                  Our goal is to build on this momentum. We will explore how we can apply 
+                  these principles to the scientific framework for modernizing BC's sediment standards.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Opportunities for Braiding Knowledges Section */}
+      <section className="py-20 px-6 bg-gradient-to-br from-green-50 to-blue-50">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 font-['Merriweather']">
+            Opportunities for Weaving Knowledges
+          </h2>
+          
+          <div className="space-y-6">
+            {/* Accordion 1 */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
               <button
-                key={id}
-                onClick={() => scrollToSection(id)}
-                className={`nav-link font-medium pb-1 transition-colors duration-300 border-b-2 ${
-                  activeSection === id 
-                    ? 'text-[#008080] border-[#008080]' 
-                    : 'text-[#5D4037] border-transparent hover:text-[#008080] hover:border-[#008080]'
-                }`}
+                onClick={() => toggleAccordion('accordion-1')}
+                className="w-full text-left p-8 hover:bg-gray-50 transition-colors duration-300"
               >
-                {label}
+                <div className="flex justify-between items-center">
+                  <h3 className="text-2xl font-bold text-gray-800">Holistic Protection Approach</h3>
+                  <span className={`text-3xl transition-transform duration-300 ${
+                    activeAccordion === 'accordion-1' ? 'rotate-180' : ''
+                  }`}>
+                    ▼
+                  </span>
+                </div>
               </button>
+              
+              {activeAccordion === 'accordion-1' && (
+                <div className="px-8 pb-8 border-t border-gray-200">
+                  <div className="pt-6 space-y-6">
+                    <div>
+                      <h4 className="text-xl font-semibold text-gray-800 mb-3">What it is:</h4>
+                      <p className="text-gray-600 text-lg">
+                        Protecting the entire ecosystem, including wildlife and people that rely on it.
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-semibold text-gray-800 mb-3">The IK&S Opportunity:</h4>
+                      <p className="text-gray-600 text-lg">
+                        Re-visioning the conceptual exposure scenarios. What does it mean to protect Indigenous Uses? 
+                        How can the scientific framework include 'health' protection goals that are inclusive of the 
+                        well-being of culturally significant species, such as medicinal plants, and the ability for 
+                        communities to maintain their relationship with the water?
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 2 */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+              <button
+                onClick={() => toggleAccordion('accordion-2')}
+                className="w-full text-left p-8 hover:bg-gray-50 transition-colors duration-300"
+              >
+                <div className="flex justify-between items-center">
+                  <h3 className="text-2xl font-bold text-gray-800">Tiered, Site-Specific Approach</h3>
+                  <span className={`text-3xl transition-transform duration-300 ${
+                    activeAccordion === 'accordion-2' ? 'rotate-180' : ''
+                  }`}>
+                    ▼
+                  </span>
+                </div>
+              </button>
+              
+              {activeAccordion === 'accordion-2' && (
+                <div className="px-8 pb-8 border-t border-gray-200">
+                  <div className="pt-6 space-y-6">
+                    <div>
+                      <h4 className="text-xl font-semibold text-gray-800 mb-3">What it is:</h4>
+                      <p className="text-gray-600 text-lg">
+                        Recognizing every place is unique and developing a framework for tailoring assessments to local conditions.
+                      </p>
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-semibold text-gray-800 mb-3">The IK&S Opportunity:</h4>
+                      <p className="text-gray-600 text-lg">
+                        Would a collaborative study, aimed at gathering area-based knowledge and scientific data, 
+                        be a good initial step? Would a cause-effect approach (probabilistic modeling) help us 
+                        understand real-world environmental conditions, including multiple stressors, cumulative 
+                        effects, complex mixtures, ecosystem characteristics, and Indigenous Uses?
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Polls Section */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-8 text-gray-800 font-['Merriweather']">
+            The Questions We Face
+          </h2>
+          <p className="text-xl text-center text-gray-600 mb-16 max-w-4xl mx-auto">
+            Your insights will help inform this collaborative process. Please share your thoughts on the following questions.
+          </p>
+          
+          <div className="space-y-16">
+            {polls.map((poll, pollIndex) => (
+              <div key={pollIndex} className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 shadow-lg">
+                <h3 className="text-2xl font-bold text-gray-800 mb-8 text-center">
+                  {poll.question}
+                </h3>
+                
+                <div className="space-y-4">
+                  {poll.options.map((option, optionIndex) => {
+                    const percentage = getPercentage(poll.votes[optionIndex], poll.totalVotes);
+                    const hasVoted = votedPolls.has(pollIndex);
+                    
+                    return (
+                      <div key={optionIndex} className="relative">
+                        <button
+                          onClick={() => handleVote(pollIndex, optionIndex)}
+                          disabled={hasVoted}
+                          className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 ${
+                            hasVoted 
+                              ? 'bg-gray-100 border-gray-300 cursor-not-allowed' 
+                              : 'bg-white border-blue-300 hover:border-blue-500 hover:shadow-md cursor-pointer'
+                          }`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className={`font-medium ${
+                              hasVoted ? 'text-gray-600' : 'text-gray-800'
+                            }`}>
+                              {option}
+                            </span>
+                            {hasVoted && (
+                              <span className="text-blue-600 font-semibold">
+                                {percentage}%
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Progress bar for voted polls */}
+                          {hasVoted && (
+                            <div className="mt-3 bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-500 h-2 rounded-full transition-all duration-1000"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {votedPolls.has(pollIndex) && (
+                  <div className="mt-6 text-center">
+                    <p className="text-gray-600">
+                      Total votes: <span className="font-semibold text-blue-600">{poll.totalVotes}</span>
+                    </p>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
-          <button className="md:hidden focus:outline-none">
-            <span className="block w-6 h-0.5 bg-[#5D4037] mb-1"></span>
-            <span className="block w-6 h-0.5 bg-[#5D4037] mb-1"></span>
-            <span className="block w-6 h-0.5 bg-[#5D4037]"></span>
-          </button>
-        </nav>
-      </header>
+        </div>
+      </section>
 
-      <main className="container mx-auto px-6 py-8 md:py-12">
-        {/* Hero Section */}
-        <section className="text-center mb-16">
-          <h2 className="text-3xl md:text-5xl font-bold text-[#A0522D] mb-4">
-            A New Paradigm for Water Protection
+      {/* Next Steps & Contact Section */}
+      <section className="py-20 px-6 bg-gradient-to-br from-gray-800 to-gray-900 text-white">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-8 font-['Merriweather']">
+            Thank You & Next Steps
           </h2>
-          <p className="max-w-3xl mx-auto text-lg text-[#5D4037]">
-            An interactive exploration of the strategic plan to integrate the Indigenous-led WQCIU framework into British Columbia's modernized sediment standards, enhancing scientific and cultural relevance.
-          </p>
-        </section>
-
-        {/* Section 1: Framework Overview */}
-        <section id="overview" className="mb-20 pt-16">
-          <h3 className="text-3xl font-bold text-center mb-2 text-[#CC7722]">
-            WQCIU Framework Overview
-          </h3>
-          <p className="text-center max-w-2xl mx-auto mb-12">
-            The WQCIU report introduces a groundbreaking dual-approach methodology, blending scientific data with Indigenous knowledge to define what needs protection and why. Click on the cards below to explore these core concepts.
-          </p>
           
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* Card 1: Dual-Approach Methodology */}
-            <div 
-              className="card bg-white p-6 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-lg"
-              onClick={() => toggleDetails('details-methodology')}
-            >
-              <h4 className="text-xl font-bold mb-3 text-[#008080]">
-                The Dual-Approach Methodology
-              </h4>
-              <p className="mb-4">
-                The framework's core innovation is its use of two complementary lenses to define environmental criteria.
+          <div className="space-y-8 text-lg">
+            <div>
+              <h3 className="text-2xl font-semibold mb-4 text-blue-300">Your Input Matters</h3>
+              <p className="text-gray-200 leading-relaxed">
+                Your contributions will directly inform the SSTAC's ongoing work and help us find 
+                meaningful pathways to weave these essential knowledge systems together.
               </p>
-              <div id="details-methodology" className="hidden space-y-4 mt-4 border-t pt-4">
-                <div>
-                  <h5 className="font-semibold text-lg">1. Current Condition Approach</h5>
-                  <p>
-                    An anti-degradation tool using long-term monitoring data to establish a baseline. It prevents further deterioration of water and sediment quality, even if conditions are already considered degraded from a historical perspective.
-                  </p>
-                </div>
-                <div>
-                  <h5 className="font-semibold text-lg">2. Risk-Based Approach</h5>
-                  <p>
-                    Defines health-protective criteria by identifying risks to specific cultural practices and ecosystem components. It uses community-specific data (e.g., traditional food consumption) to ensure standards are truly protective.
-                  </p>
-                </div>
-              </div>
-              <span className="text-sm font-medium text-[#008080] mt-4 inline-block">
-                Click to expand
-              </span>
-            </div>
-
-            {/* Card 2: Indigenous Use & Protection Goals */}
-            <div 
-              className="card bg-white p-6 rounded-lg shadow-md cursor-pointer transition-all duration-300 hover:transform hover:-translate-y-1 hover:shadow-lg"
-              onClick={() => toggleDetails('details-goals')}
-            >
-              <h4 className="text-xl font-bold mb-3 text-[#008080]">
-                Indigenous Use & Protection Goals
-              </h4>
-              <p className="mb-4">
-                The framework is built on four core Indigenous water use categories defined by the partner First Nations.
-              </p>
-              <div id="details-goals" className="hidden space-y-3 mt-4 border-t pt-4">
-                <p>
-                  <strong className="text-[#A0522D]">Traditional Foods & Drinking Water:</strong> Ensures safe consumption of fish, wildlife, and untreated water.
-                </p>
-                <p>
-                  <strong className="text-[#A0522D]">Traditional Medicines:</strong> Protects aquatic plants like wild mint and rat root from contamination.
-                </p>
-                <p>
-                  <strong className="text-[#A0522D]">Aquatic Ecosystem Health:</strong> A holistic view protecting the entire ecosystem for community well-being.
-                </p>
-                <p>
-                  <strong className="text-[#A0522D]">Wildlife Health:</strong> Protects not just animal survival, but their fitness for cultural use (e.g., "Good quality pelts").
-                </p>
-              </div>
-              <span className="text-sm font-medium text-[#008080] mt-4 inline-block">
-                Click to expand
-              </span>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 2: Comparative Analysis */}
-        <section id="comparison" className="mb-20 pt-16 bg-[#EFEBE9] -mx-6 px-6 py-12 rounded-lg">
-          <h3 className="text-3xl font-bold text-center mb-2 text-[#CC7722]">
-            Comparative Analysis
-          </h3>
-          <p className="text-center max-w-2xl mx-auto mb-12">
-            The WQCIU's methods lead to significantly different outcomes compared to standard approaches. The chart below highlights the dramatic difference in fish consumption rates used for risk assessment—a key driver for more protective standards.
-          </p>
-          
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h4 className="text-xl font-bold text-center mb-6">
-              Fish Consumption Rate Comparison (g/day)
-            </h4>
-            <div className="relative w-full max-w-2xl mx-auto h-80">
-              <div className="flex items-center justify-center h-full">
-                <div className="grid grid-cols-2 gap-8 w-full">
-                  <div className="text-center">
-                    <div className="bg-[#CC7722] text-white p-4 rounded-lg mb-2">
-                      <div className="text-3xl font-bold">22</div>
-                      <div className="text-sm">g/day</div>
-                    </div>
-                    <div className="font-semibold text-[#5D4037]">US EPA Default</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="bg-[#008080] text-white p-4 rounded-lg mb-2">
-                      <div className="text-3xl font-bold">388</div>
-                      <div className="text-sm">g/day</div>
-                    </div>
-                    <div className="font-semibold text-[#5D4037]">WQCIU (95th Percentile)</div>
-                  </div>
-                </div>
-              </div>
-              <div className="text-center mt-4 text-sm text-[#5D4037]">
-                <strong>17.6x higher</strong> consumption rate leads to significantly more protective standards
-              </div>
-            </div>
-          </div>
-        </section>
-        
-        {/* Section 3: BC Integration Strategy */}
-        <section id="integration" className="mb-20 pt-16">
-          <h3 className="text-3xl font-bold text-center mb-2 text-[#CC7722]">
-            BC Integration Strategy
-          </h3>
-          <p className="text-center max-w-2xl mx-auto mb-12">
-            The strategic plan proposes weaving WQCIU principles into the fabric of BC's modernized standards. This involves enhancing guiding principles, aligning methodologies, and adopting a true co-development model.
-          </p>
-          
-          <div className="bg-white p-8 rounded-lg shadow-lg">
-            <h4 className="text-2xl font-bold text-center mb-8">A Path to Integration</h4>
-            <div className="relative flex flex-col items-center md:flex-row justify-around space-y-8 md:space-y-0">
-              {/* WQCIU Principles */}
-              <div className="text-center w-64 p-4 border-2 border-[#008080] rounded-lg">
-                <h5 className="font-bold text-lg text-[#008080]">WQCIU Principles</h5>
-                <ul className="text-left mt-2 list-disc list-inside text-sm space-y-1">
-                  <li>Community-Defined Goals</li>
-                  <li>Community-Led Data</li>
-                  <li>Dual-Approach Method</li>
-                  <li>Co-Developed Framework</li>
-                </ul>
-              </div>
-              
-              {/* Arrow */}
-              <div className="text-4xl text-[#A0522D] font-bold transform md:-translate-y-1/2 md:absolute md:top-1/2 md:left-1/2 md:-translate-x-1/2 rotate-90 md:rotate-0">
-                →
-              </div>
-
-              {/* BC Framework Enhancements */}
-              <div className="text-center w-64 p-4 border-2 border-[#008080] rounded-lg">
-                <h5 className="font-bold text-lg text-[#008080]">Proposed BC Enhancements</h5>
-                <ul className="text-left mt-2 list-disc list-inside text-sm space-y-1">
-                  <li>Protect Traditional Use</li>
-                  <li>Uphold Co-Governance</li>
-                  <li>Adopt Anti-Degradation</li>
-                  <li>Launch BC Consumption Surveys</li>
-                </ul>
-              </div>
-            </div>
-            <div className="mt-8 text-center">
-              <p className="italic">This integration transforms BC's standards into a tool for protecting cultural practices, not just species.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 4: Implementation Roadmap */}
-        <section id="roadmap" className="pt-16 bg-[#EFEBE9] -mx-6 px-6 py-12 rounded-lg">
-          <h3 className="text-3xl font-bold text-center mb-2 text-[#CC7722]">
-            Implementation Roadmap
-          </h3>
-          <p className="text-center max-w-2xl mx-auto mb-12">
-            The path forward involves adopting best practices while proactively addressing challenges. Explore the key steps and proposed solutions below.
-          </p>
-          
-          <div className="max-w-4xl mx-auto">
-            {/* Accordion Item 1: Best Practices */}
-            <div className="mb-4 border border-gray-200 rounded-lg bg-white">
-              <button 
-                className="w-full text-left p-4 font-semibold text-lg text-[#008080] flex justify-between items-center"
-                onClick={() => toggleAccordion('accordion-1')}
-                data-target="accordion-1"
-              >
-                <span>Key Learnings & Best Practices</span>
-                <span className="arrow transform transition-transform duration-300">▼</span>
-              </button>
-              <div id="accordion-1" className="hidden p-4 border-t">
-                <ul className="list-disc list-inside space-y-2">
-                  <li>
-                    <strong>Knowledge Integration:</strong> Treat Indigenous knowledge as a primary source of quantitative data and guiding principles.
-                  </li>
-                  <li>
-                    <strong>Community-Led Data Collection:</strong> Empower communities to lead data gathering to ensure cultural appropriateness, accuracy, and trust.
-                  </li>
-                  <li>
-                    <strong>Conservatism in Protection:</strong> Use precautionary principles (e.g., 95th percentile consumption rates) to protect the most exposed individuals.
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Accordion Item 2: Challenges & Solutions */}
-            <div className="mb-4 border border-gray-200 rounded-lg bg-white">
-              <button 
-                className="w-full text-left p-4 font-semibold text-lg text-[#008080] flex justify-between items-center"
-                onClick={() => toggleAccordion('accordion-2')}
-                data-target="accordion-2"
-              >
-                <span>Anticipated Challenges & Solutions</span>
-                <span className="arrow transform transition-transform duration-300">▼</span>
-              </button>
-              <div id="accordion-2" className="hidden p-4 border-t">
-                <div className="space-y-4">
-                  <div>
-                    <h5 className="font-semibold">Challenge: Diversity of Nations and Diets in BC</h5>
-                    <p>A single, province-wide consumption rate is inappropriate for over 200 distinct First Nations.</p>
-                    <p className="mt-1">
-                      <strong className="text-[#A0522D]">Solution:</strong> Implement a regional approach, developing a suite of eco-cultural region-specific standards based on local surveys.
-                    </p>
-                  </div>
-                  <div>
-                    <h5 className="font-semibold">Challenge: Data Gaps for BC-Specific Species</h5>
-                    <p>Bioaccumulation factors (BAFs) may not exist for all culturally important species.</p>
-                    <p className="mt-1">
-                      <strong className="text-[#A0522D]">Solution:</strong> Commit to funding targeted, collaborative research with First Nations and academic partners to fill these critical data gaps.
-                    </p>
-                  </div>
-                </div>
-              </div>
             </div>
             
-            {/* Accordion Item 3: Concluding Recommendation */}
-            <div className="border border-gray-200 rounded-lg bg-white">
-              <button 
-                className="w-full text-left p-4 font-semibold text-lg text-[#008080] flex justify-between items-center"
-                onClick={() => toggleAccordion('accordion-3')}
-                data-target="accordion-3"
+            <div>
+              <h3 className="text-2xl font-semibold mb-4 text-blue-300">Continuing the Dialogue</h3>
+              <p className="text-gray-200 leading-relaxed">
+                This conversation extends beyond today's session. We welcome your ongoing perspectives 
+                as we develop this framework together.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="text-2xl font-semibold mb-4 text-blue-300">Contact Information</h3>
+              <p className="text-gray-200 mb-4">
+                Please reach out with additional insights or questions about the Sediment Standards Project.
+              </p>
+              <a 
+                href="mailto:info@sabcs.ca"
+                className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl transition-colors duration-300 text-lg"
               >
-                <span>Concluding Recommendation</span>
-                <span className="arrow transform transition-transform duration-300">▼</span>
-              </button>
-              <div id="accordion-3" className="hidden p-4 border-t">
-                <p>
-                  Fully embrace the WQCIU principles to create modernized sediment standards that are scientifically robust, holistically protective, and a leading Canadian example of environmental co-governance. This approach strengthens legal defensibility and represents a tangible step toward reconciliation.
-                </p>
-              </div>
+                Email: info@sabcs.ca
+              </a>
             </div>
           </div>
-        </section>
-      </main>
+        </div>
+      </section>
 
-      <footer className="bg-[#5D4037] text-white mt-16">
-        <div className="container mx-auto px-6 py-4 text-center">
-          <p>&copy; 2024 SSTAC & TWG Dashboard | Weaving Indigenous Knowledge & Science</p>
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-8">
+        <div className="container mx-auto px-6 text-center">
+          <p className="text-gray-400">
+            &copy; 2024 SSTAC & TWG Dashboard | Weaving Indigenous Knowledge & Science
+          </p>
         </div>
       </footer>
     </div>
