@@ -13,12 +13,12 @@ export default function WIKSClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
   const [polls, setPolls] = useState<PollData[]>([
     {
-      question: "What is the most effective starting point for developing a holistic baseline study that combines co-located sampling with area-based Indigenous Knowledge and Science?",
+      question: "What is the most effective starting point for developing a holistic baseline study that combines co-located sampling (e.g., sediment, porewater, tissue, surface water) with area-based Indigenous Knowledge and Science?",
       options: [
-        "Community-led traditional use mapping and seasonal activity calendars",
-        "Co-located water and sediment sampling with Indigenous harvest areas",
-        "Indigenous knowledge interviews focused on ecosystem health indicators",
-        "Scientific baseline studies with Indigenous knowledge validation"
+        "A co-developed conceptual site model that uses Indigenous Knowledge to first identify key species, exposure pathways, and areas of cultural significance to guide the scientific sampling plan.",
+        "A comprehensive literature and data review that compiles all existing scientific and Indigenous knowledge for the area to identify critical data gaps that the baseline study must fill.",
+        "A pilot-scale field study conducted collaboratively with community members to test and validate sampling methods and ensure they are effective and culturally appropriate.",
+        "A series of collaborative workshops where knowledge holders and scientists share information to establish a shared understanding of the ecosystem's history, health, and stressors."
       ],
       votes: [0, 0, 0, 0],
       totalVotes: 0
@@ -26,11 +26,11 @@ export default function WIKSClient() {
     {
       question: "How can the scientific framework incorporate protection goals related to Indigenous Stewardship principles such as the 'connectedness of all life' and '7-generations'?",
       options: [
-        "Include cultural keystone species in risk assessments",
-        "Develop long-term monitoring programs spanning multiple generations",
-        "Integrate traditional ecological knowledge into exposure scenarios",
-        "Create co-management frameworks for ongoing stewardship",
-        "Establish Indigenous-led review processes for scientific standards"
+        "By using food-web models that scientifically map contaminant pathways between species.",
+        "By developing Species Sensitivity Distributions (SSDs) that include culturally significant local species.",
+        "By setting protective tissue residue guidelines for key indicator species to ensure long-term safety.",
+        "By incorporating ecosystem function metrics (e.g., nutrient cycling) as formal scientific endpoints.",
+        "By developing standards to protect the fitness of resources for various traditional uses, such as medicinal plants."
       ],
       votes: [0, 0, 0, 0, 0],
       totalVotes: 0
@@ -38,10 +38,10 @@ export default function WIKSClient() {
     {
       question: "Within a tiered framework, where can place-based Indigenous Knowledge provide the most direct scientific value for modifying a generic baseline value to be more site-specific?",
       options: [
-        "Defining local exposure scenarios and use patterns",
-        "Identifying culturally significant species and habitats",
-        "Establishing seasonal variations in environmental conditions",
-        "Determining appropriate sampling locations and timing"
+        "Informing bioavailability models with specific knowledge of local sediment characteristics and processes.",
+        "Identifying sensitive local species or life stages not included in the generic models for a more accurate risk calculation.",
+        "Characterizing unique, site-specific contaminant exposure pathways that would alter baseline risk model assumptions.",
+        "Identifying potential confounding environmental factors (e.g., freshwater seeps) influencing scientific measurements."
       ],
       votes: [0, 0, 0, 0],
       totalVotes: 0
