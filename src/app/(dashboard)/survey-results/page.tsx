@@ -428,23 +428,23 @@ export default async function SurveyResultsPage() {
                     <span className="text-green-300 mr-2 mt-1">→</span>
                     <span><strong>Contaminants Expansion:</strong> Emerging substances coverage</span>
                   </div>
-                  <div className="flex items-start">
-                    <span className="text-green-300 mr-2 mt-1">→</span>
-                    <span><strong>Holistic Protection:</strong> Synergistic effects assessment</span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="text-green-300 mr-2 mt-1">→</span>
-                    <span><strong>Tiered Framework:</strong> Long-term impact evaluation</span>
-                  </div>
+                                     <div className="flex items-start">
+                     <span className="text-green-300 mr-2 mt-1">→</span>
+                     <span><strong>Weaving Indigenous Knowledges & Science:</strong> In the Sediment Standards Framework</span>
+                   </div>
+                   <div className="flex items-start">
+                     <span className="text-green-300 mr-2 mt-1">→</span>
+                     <span><strong>Prioritization Framework:</strong> Collaborative Development</span>
+                   </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* FIXED: CEW Theme Navigation - Now Points to Actual Themes */}
+        {/* FIXED: Survey Theme Navigation - Now Points to Actual Themes */}
         <section className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Explore CEW 2025 Themes</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Explore Survey Responses Related to Key Themes</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Holistic Protection Card */}
             <Link href="/survey-results/holistic-protection" className="group">
@@ -522,15 +522,15 @@ export default async function SurveyResultsPage() {
               </div>
             </Link>
 
-            {/* Holistic Protection Card */}
-            <Link href="/survey-results/holistic-protection" className="group">
+            {/* Detailed Findings Card */}
+            <Link href="/survey-results/detailed-findings" className="group">
               <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-red-300">
-                <div className="text-4xl mb-4">🔬</div>
+                <div className="text-4xl mb-4">📊</div>
                 <h3 className="text-xl font-semibold text-gray-800 group-hover:text-red-600 transition-colors mb-3">
-                  Holistic Protection
+                  Detailed Findings
                 </h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Assessment methodologies for complex contaminant mixtures and synergistic effects.
+                  Comprehensive analysis of survey responses and expert recommendations for modernization.
                 </p>
                 <div className="mt-4 flex items-center text-red-600 group-hover:text-red-700">
                   <span className="text-sm font-medium">Explore Theme</span>
