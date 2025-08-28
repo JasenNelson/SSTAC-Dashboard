@@ -541,15 +541,15 @@ export default async function SurveyResultsPage() {
               </div>
             </Link>
 
-            {/* Tiered Framework Card */}
-            <Link href="/survey-results/tiered-framework" className="group">
+            {/* Indigenous Knowledge Integration Card */}
+            <Link href="/wiks" className="group">
               <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-teal-300">
-                <div className="text-4xl mb-4">📈</div>
+                <div className="text-4xl mb-4">🌿</div>
                 <h3 className="text-xl font-semibold text-gray-800 group-hover:text-teal-600 transition-colors mb-3">
-                  Tiered Framework
+                  Indigenous Knowledge Integration
                 </h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
-                  Long-term impact assessment and cumulative risk evaluation frameworks.
+                  While no survey questions specifically involved Indigenous Knowledge & Science, some responses indicated that this should be integrated in this project, which we intend to do.
                 </p>
                 <div className="mt-4 flex items-center text-teal-600 group-hover:text-teal-700">
                   <span className="text-sm font-medium">Explore Theme</span>
