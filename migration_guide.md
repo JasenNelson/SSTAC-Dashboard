@@ -1,6 +1,6 @@
-# Database Migration Guide for Document Tagging
+# Database Migration Guide for SSTAC & TWG Dashboard
 
-This guide will help you update your existing SSTAC Dashboard database to support the new document tagging system.
+This guide will help you update your existing SSTAC Dashboard database to support enhanced user management and document tagging systems.
 
 ## Prerequisites
 
@@ -9,7 +9,134 @@ This guide will help you update your existing SSTAC Dashboard database to suppor
 
 ## Migration Steps
 
-### 1. Create New Tables
+### 1. Enhanced User Management (NEW - Required)
+
+**Problem Solved**: Admin dashboard was not showing all users and their email addresses.
+
+**Solution**: Implemented comprehensive user management with real email access.
+
+Run these SQL commands in your Supabase SQL editor:
+
+```sql
+-- Step 1: Create safe user email access function
+CREATE OR REPLACE FUNCTION get_users_with_emails()
+RETURNS TABLE (
+    id UUID,
+    email CHARACTER VARYING(255),
+    created_at TIMESTAMP WITH TIME ZONE,
+    last_sign_in TIMESTAMP WITH TIME ZONE
+) 
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    IF auth.role() != 'authenticated' THEN
+        RAISE EXCEPTION 'Access denied. Only authenticated users can call this function.';
+    END IF;
+    
+    RETURN QUERY
+    SELECT 
+        au.id,
+        au.email,
+        au.created_at,
+        au.last_sign_in_at
+    FROM auth.users au
+    WHERE au.email_confirmed_at IS NOT NULL
+    ORDER BY au.created_at DESC;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION get_users_with_emails() TO authenticated;
+
+-- Step 2: Create enhanced user management views
+CREATE OR REPLACE VIEW users_overview AS
+WITH user_activities AS (
+    SELECT user_id, NULL as user_email, created_at, 'role' as activity_type
+    FROM user_roles
+    UNION ALL
+    SELECT user_id, user_email, created_at, 'discussion' as activity_type
+    FROM discussions WHERE user_id IS NOT NULL
+    UNION ALL
+    SELECT user_id, NULL as user_email, created_at, 'like' as activity_type
+    FROM likes WHERE user_id IS NOT NULL
+),
+auth_user_emails AS (
+    SELECT id, email, created_at FROM get_users_with_emails()
+)
+SELECT DISTINCT
+    ua.user_id as id,
+    COALESCE(ua.user_email, aue.email, 'User ' || LEFT(ua.user_id::text, 8) || '...') as email,
+    COALESCE(aue.created_at, MIN(ua.created_at)) as first_activity,
+    MAX(ua.created_at) as last_activity,
+    ur.role,
+    CASE WHEN ur.role = 'admin' THEN true ELSE false END as is_admin,
+    COUNT(DISTINCT ua.activity_type) as activity_count,
+    ARRAY_AGG(DISTINCT ua.activity_type) FILTER (WHERE ua.activity_type IS NOT NULL) as activities
+FROM user_activities ua
+LEFT JOIN user_roles ur ON ua.user_id = ur.user_id
+LEFT JOIN auth_user_emails aue ON ua.user_id = aue.id
+GROUP BY ua.user_id, ua.user_email, ur.role, aue.email, aue.created_at
+ORDER BY last_activity DESC;
+
+GRANT SELECT ON users_overview TO authenticated;
+
+-- Step 3: Create comprehensive admin user view
+CREATE OR REPLACE VIEW admin_users_comprehensive AS
+SELECT 
+    au.id,
+    au.email,
+    au.created_at as auth_created_at,
+    au.last_sign_in_at,
+    ur.role,
+    ur.created_at as role_created_at,
+    CASE WHEN ur.role = 'admin' THEN true ELSE false END as is_admin,
+    CASE WHEN ur.role IS NOT NULL THEN 'Has Role' ELSE 'No Role' END as role_status,
+    COALESCE((SELECT COUNT(*) FROM discussions disc WHERE disc.user_id = au.id), 0) as discussion_count,
+    COALESCE((SELECT COUNT(*) FROM likes l WHERE l.user_id = au.id), 0) as like_count,
+    0 as document_count,
+    CASE WHEN au.email_confirmed_at IS NOT NULL THEN 'Confirmed' ELSE 'Unconfirmed' END as email_status
+FROM auth.users au
+LEFT JOIN user_roles ur ON au.id = ur.user_id
+WHERE au.email_confirmed_at IS NOT NULL
+ORDER BY au.created_at DESC;
+
+GRANT SELECT ON admin_users_comprehensive TO authenticated;
+
+-- Step 4: Implement automatic user role assignment
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO user_roles (user_id, role, created_at)
+    VALUES (NEW.id, 'member', NOW())
+    ON CONFLICT (user_id, role) DO NOTHING;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION handle_new_user();
+
+-- Step 5: Backfill existing users without roles
+INSERT INTO user_roles (user_id, role, created_at)
+SELECT au.id, 'member', au.created_at
+FROM auth.users au
+WHERE au.email_confirmed_at IS NOT NULL
+AND NOT EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = au.id)
+ON CONFLICT (user_id, role) DO NOTHING;
+```
+
+**Benefits of User Management Migration:**
+- ✅ **100% user visibility** in admin dashboard
+- ✅ **Real email addresses** for all users
+- ✅ **Automatic role assignment** for new signups
+- ✅ **Activity tracking** and engagement metrics
+- ✅ **Complete user management** capabilities
+
+### 2. Document Tagging System (Optional Enhancement)
+
+**Note**: This is an optional enhancement for better document organization.
 
 Run the following SQL commands in your Supabase SQL editor:
 
@@ -33,7 +160,7 @@ CREATE TABLE IF NOT EXISTS document_tags (
 );
 ```
 
-### 2. Create Indexes
+### 3. Create Indexes for Performance
 
 ```sql
 -- Create indexes for better performance
@@ -42,7 +169,7 @@ CREATE INDEX IF NOT EXISTS idx_document_tags_tag_id ON document_tags(tag_id);
 CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name);
 ```
 
-### 3. Enable Row Level Security
+### 4. Enable Row Level Security
 
 ```sql
 -- Enable RLS for new tables
@@ -50,7 +177,7 @@ ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
 ALTER TABLE document_tags ENABLE ROW LEVEL SECURITY;
 ```
 
-### 4. Create RLS Policies
+### 5. Create RLS Policies
 
 ```sql
 -- RLS Policies for tags table
@@ -98,7 +225,7 @@ CREATE POLICY "Only admins can manage document tags" ON document_tags
   );
 ```
 
-### 5. Grant Permissions
+### 6. Grant Permissions
 
 ```sql
 -- Grant necessary permissions
@@ -108,7 +235,7 @@ GRANT USAGE ON SEQUENCE tags_id_seq TO authenticated;
 GRANT USAGE ON SEQUENCE document_tags_id_seq TO authenticated;
 ```
 
-### 6. Insert Default Tags
+### 7. Insert Default Tags
 
 ```sql
 -- Insert some default tags for common document categories
@@ -124,7 +251,7 @@ INSERT INTO tags (name, color) VALUES
 ON CONFLICT (name) DO NOTHING;
 ```
 
-### 7. Create Views (Optional)
+### 8. Create Enhanced Document Views (Optional)
 
 ```sql
 -- Create a view for documents with tags
@@ -134,8 +261,6 @@ SELECT
   d.title,
   d.file_url,
   d.description,
-  d.user_id,
-  d.user_email,
   d.created_at,
   d.updated_at,
   COALESCE(
@@ -153,13 +278,35 @@ SELECT
 FROM documents d
 LEFT JOIN document_tags dt ON d.id = dt.document_id
 LEFT JOIN tags t ON dt.tag_id = t.id
-GROUP BY d.id, d.title, d.file_url, d.description, d.user_id, d.user_email, d.created_at, d.updated_at
+GROUP BY d.id, d.title, d.file_url, d.description, d.created_at, d.updated_at
 ORDER BY d.created_at DESC;
 ```
 
 ## Verification
 
 After running the migration, you can verify the setup by:
+
+### User Management Verification
+
+1. **Check user management functions:**
+   ```sql
+   SELECT routine_name FROM information_schema.routines 
+   WHERE routine_name = 'get_users_with_emails';
+   ```
+
+2. **Check user management views:**
+   ```sql
+   SELECT table_name FROM information_schema.views 
+   WHERE table_name IN ('users_overview', 'admin_users_comprehensive');
+   ```
+
+3. **Test user coverage:**
+   ```sql
+   SELECT COUNT(*) as total_users FROM admin_users_comprehensive;
+   SELECT COUNT(*) as users_with_emails FROM get_users_with_emails();
+   ```
+
+### Document Tagging Verification (Optional)
 
 1. **Check tables exist:**
    ```sql
@@ -182,7 +329,27 @@ After running the migration, you can verify the setup by:
 
 ## Rollback (if needed)
 
-If you need to rollback the changes:
+### User Management Rollback
+
+If you need to rollback the user management changes:
+
+```sql
+-- Remove the trigger
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+
+-- Remove the function
+DROP FUNCTION IF EXISTS get_users_with_emails();
+
+-- Remove the views
+DROP VIEW IF EXISTS users_overview;
+DROP VIEW IF EXISTS admin_users_comprehensive;
+```
+
+**Note**: This will remove the enhanced user management capabilities but won't affect existing user data.
+
+### Document Tagging Rollback
+
+If you need to rollback the document tagging changes:
 
 ```sql
 -- Drop views
@@ -197,19 +364,25 @@ DROP TABLE IF EXISTS tags CASCADE;
 ## Important Notes
 
 - **Backup your database** before running any migrations
-- The migration is designed to be non-destructive to existing data
-- Default tags are provided but can be customized through the admin interface
-- Only users with admin role can manage tags
+- **User Management Migration is REQUIRED** for proper admin dashboard functionality
+- **Document Tagging Migration is OPTIONAL** for enhanced document organization
+- The migrations are designed to be non-destructive to existing data
+- Only users with admin role can manage tags and document relationships
 - Document tags are managed through the document creation/editing forms
 
 ## Post-Migration
 
 After completing the migration:
 
-1. **Update your application code** to use the new tagging components
-2. **Test the tag management** through the admin interface (`/admin/tags`)
-3. **Test document creation** with tags
-4. **Test tag filtering** on the documents list page
+### User Management
+1. **Test your admin dashboard** - you should see all users with real emails
+2. **Verify user role assignment** - new signups should automatically get 'member' role
+3. **Test user management** through the admin interface (`/admin/users`)
+
+### Document Tagging (Optional)
+1. **Test the tag management** through the admin interface (`/admin/tags`)
+2. **Test document creation** with tags
+3. **Test tag filtering** on the documents list page
 
 ## Support
 
@@ -219,3 +392,18 @@ If you encounter any issues during migration:
 2. Verify that your user has the necessary permissions
 3. Ensure all SQL commands executed successfully
 4. Check that RLS policies are properly applied
+
+## Migration Summary
+
+**Required Migration:**
+- ✅ Enhanced User Management (100% user visibility, real emails, automatic roles)
+
+**Optional Enhancement:**
+- 📋 Document Tagging System (better document organization)
+
+**Result:**
+- Professional admin dashboard with complete user management
+- Real email addresses for all users
+- Automatic user role assignment
+- Enhanced document organization (if tagging is implemented)
+- Enterprise-level user management capabilities

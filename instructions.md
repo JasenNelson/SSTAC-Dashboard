@@ -61,14 +61,16 @@ src/components/
     ├── TagManagement.tsx      # Tag CRUD with admin status refresh
     ├── AnnouncementsManagement.tsx  # Announcement CRUD with admin status refresh
     ├── MilestonesManagement.tsx     # Milestone CRUD with admin status refresh
-    └── AdminUsersManager.tsx  # User management interface
+    ├── AdminUsersManager.tsx  # User management interface
+    ├── LikeButton.tsx         # Enhanced like system with user attribution ✅ NEW
+    └── DiscussionThread.tsx   # Forum discussions with like functionality ✅ NEW
 ```
 
 ## Implementation Requirements
 
 ### 1. Admin Status Persistence
 Every admin component must:
-- **Import** `refreshGlobalAdminStatus` from `@/components/Header`
+- **Import** `refreshGlobalAdminStatus` from `@/lib/admin-utils`
 - **Call** the refresh function after successful CRUD operations
 - **Include** admin status refresh on component mount
 - **Handle** errors gracefully with fallback to cached admin status
@@ -80,13 +82,15 @@ The enhanced like system has been implemented with:
 - **Real-time Updates**: Immediate UI updates on like actions
 - **User Experience**: Click to expand and see who liked what with timestamps
 - **Performance**: Optimized queries and efficient like operations
+- **User Attribution**: Display who liked what with click-to-expand details
+- **Security**: Row-level security for all like operations
 
 ### 3. Client Component Pattern
 ```typescript
 'use client';
 
 import { useEffect } from 'react';
-import { refreshGlobalAdminStatus } from '@/components/Header';
+import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
 
 export default function AdminPageClient() {
   // Refresh admin status when component mounts
@@ -161,10 +165,13 @@ export default async function AdminPage() {
 - **announcements**: Dashboard announcements with priority and status
 - **milestones**: Project timeline with status tracking
 - **discussions**: Forum threads and replies
+- **likes**: User interactions with discussions and replies ✅ NEW
 
 ### Critical Views
 - **discussion_stats**: Aggregated discussion metrics
 - **documents_with_tags**: Document-tag relationships
+- **users_overview**: Comprehensive user activity overview ✅ NEW
+- **admin_users_comprehensive**: Complete admin user management ✅ NEW
 
 ### Row Level Security
 - **Enable RLS** on all tables
@@ -234,6 +241,7 @@ export default async function AdminPage() {
 - **CRUD operations** for all admin features
 - **Error handling** for various failure scenarios
 - **User experience** across different devices
+- **Enhanced like system** functionality ✅ NEW
 
 ### Security Testing
 - **Authentication bypass** attempts
@@ -261,7 +269,7 @@ export default async function AdminPage() {
 ### 4. Database View Missing
 - **Problem**: Forum returns 404 when accessing discussion features
 - **Solution**: Ensure required database views exist
-- **Critical Views**: `discussion_stats`, `documents_with_tags`
+- **Critical Views**: `discussion_stats`, `documents_with_tags`, `users_overview`, `admin_users_comprehensive`
 
 ### 5. Authentication Issues
 - **Problem**: Admin users lose admin badge after browser refresh
@@ -275,6 +283,11 @@ export default async function AdminPage() {
 - **Error Handling**: Graceful fallbacks for authentication failures
 - **Member vs Admin**: Clean separation of user experiences
 - **Console Logging**: Minimal noise for member users, detailed for admin debugging
+
+### 7. Enhanced Like System Issues ✅ NEW
+- **Problem**: Like system not working or showing errors
+- **Solution**: Verify likes table exists with proper constraints and RLS policies
+- **Required**: Check database schema includes likes table and proper indexes
 
 ## Current Development Phase
 
@@ -292,6 +305,7 @@ export default async function AdminPage() {
 - **Real-time Updates**: Immediate UI updates on like actions
 - **Database Integration**: Proper constraints and RLS policies
 - **Performance Optimization**: Efficient queries and responsive interactions
+- **User Experience**: Click to expand and see who liked what with timestamps
 
 ### Phase 3: Advanced Analytics 🔄 IN PROGRESS
 - **Dashboard Metrics**: Comprehensive dashboard statistics and reporting
@@ -356,3 +370,5 @@ export default async function AdminPage() {
 5. **Follow security best practices** for all implementations
 6. **Maintain responsive design** across all components
 7. **Use proper error handling** for robust user experience
+8. **Enhanced like system is complete** - build on it, don't rewrite it ✅ NEW
+9. **Authentication improvements are implemented** - follow established patterns ✅ NEW

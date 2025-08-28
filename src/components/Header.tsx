@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '../app/supabase-client';
 import type { Session } from '@supabase/supabase-js';
+import { refreshGlobalAdminStatus, clearAdminStatusBackup } from '@/lib/admin-utils';
 
 
 
@@ -138,7 +139,8 @@ export default function Header() {
             console.log('✅ Admin status restored from localStorage');
           }
           
-          await checkAdminRole(session.user.id);
+          const isUserAdmin = await refreshGlobalAdminStatus();
+          setIsAdmin(isUserAdmin);
         } else {
           setIsAdmin(false);
         }
@@ -170,7 +172,8 @@ export default function Header() {
           console.log('✅ Admin status restored from localStorage during auth change');
         }
         
-        await checkAdminRole(session.user.id);
+        const isUserAdmin = await refreshGlobalAdminStatus();
+        setIsAdmin(isUserAdmin);
       } else {
         setIsAdmin(false);
       }
@@ -186,7 +189,8 @@ export default function Header() {
         console.log('✅ Admin status restored from localStorage during initial load');
       }
       
-      checkAdminRole(session.user.id);
+      const isUserAdmin = await refreshGlobalAdminStatus();
+      setIsAdmin(isUserAdmin);
     }
 
     return () => {
@@ -200,7 +204,13 @@ export default function Header() {
     if (session?.user && isAdmin) {
       // Refresh admin status when navigating to admin pages
       if (pathname.startsWith('/admin')) {
-        // Route change to admin page detected
+        console.log('🔄 Admin page navigation detected - refreshing admin status');
+        refreshGlobalAdminStatus().then((isStillAdmin) => {
+          if (!isStillAdmin) {
+            console.log('⚠️ Admin status lost during navigation');
+            setIsAdmin(false);
+          }
+        });
       }
     }
   }, [pathname, session?.user, isAdmin]);
@@ -209,7 +219,13 @@ export default function Header() {
   useEffect(() => {
     const handleRouteChange = () => {
       if (session?.user && isAdmin && pathname.startsWith('/admin')) {
-        // Navigation event detected
+        console.log('🔄 Navigation event detected - refreshing admin status');
+        refreshGlobalAdminStatus().then((isStillAdmin) => {
+          if (!isStillAdmin) {
+            console.log('⚠️ Admin status lost during navigation event');
+            setIsAdmin(false);
+          }
+        });
       }
     };
 
@@ -242,23 +258,24 @@ export default function Header() {
     if (session?.user && isAdmin) {
       const intervalId = setInterval(async () => {
         if (session?.user) {
-          await checkAdminRole(session.user.id);
+          const isStillAdmin = await refreshGlobalAdminStatus();
+          if (!isStillAdmin) {
+            console.log('⚠️ Admin status lost during periodic check');
+            setIsAdmin(false);
+          }
         }
       }, 30000); // Check every 30 seconds
 
       return () => clearInterval(intervalId);
     }
-  }, [session?.user, isAdmin, checkAdminRole]);
+  }, [session?.user, isAdmin]);
 
   const handleLogout = async () => {
     console.log('🔄 Logout initiated for user:', session?.user?.email);
     
     try {
-      // Clear admin status backup from localStorage
-      if (session?.user) {
-        localStorage.removeItem(`admin_status_${session.user.id}`);
-        console.log('🧹 Cleared admin status backup from localStorage');
-      }
+      // Clear admin status backup using utility function
+      await clearAdminStatusBackup();
       
       console.log('🔄 Calling Supabase signOut...');
       const { error } = await supabase.auth.signOut();
@@ -280,8 +297,8 @@ export default function Header() {
       console.error('❌ Logout exception:', error);
       // Even if there's an exception, clear local state and redirect
       setSession(null);
-      setIsAdmin(false);
-      router.push('/login');
+        setIsAdmin(false);
+        router.push('/login');
     }
   };
 

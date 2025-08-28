@@ -2,10 +2,18 @@
 
 import { useEffect } from 'react';
 import TagManagement from '@/components/dashboard/TagManagement';
-
+import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
 
 export default function TagsPageClient() {
   // Refresh admin status when component mounts
+  useEffect(() => {
+    const refreshAdmin = async () => {
+      console.log('🔄 Tags page mounted - refreshing admin status');
+      await refreshGlobalAdminStatus();
+    };
+    
+    refreshAdmin();
+  }, []);
 
 
   return (

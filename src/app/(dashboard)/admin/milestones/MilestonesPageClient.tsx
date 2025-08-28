@@ -2,10 +2,18 @@
 
 import { useEffect } from 'react';
 import MilestonesManagement from '@/components/dashboard/MilestonesManagement';
-
+import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
 
 export default function MilestonesPageClient() {
   // Refresh admin status when component mounts
+  useEffect(() => {
+    const refreshAdmin = async () => {
+      console.log('🔄 Milestones page mounted - refreshing admin status');
+      await refreshGlobalAdminStatus();
+    };
+    
+    refreshAdmin();
+  }, []);
 
 
   return (
