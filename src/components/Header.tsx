@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { createClient } from '../app/supabase-client';
+import { createClient } from './supabase-client';
 import type { Session } from '@supabase/supabase-js';
 import { refreshGlobalAdminStatus, clearAdminStatusBackup } from '@/lib/admin-utils';
 
@@ -172,8 +172,10 @@ export default function Header() {
           console.log('✅ Admin status restored from localStorage during auth change');
         }
         
-        const isUserAdmin = await refreshGlobalAdminStatus();
-        setIsAdmin(isUserAdmin);
+        // Use .then() instead of await in useEffect
+        refreshGlobalAdminStatus().then((isUserAdmin) => {
+          setIsAdmin(isUserAdmin);
+        });
       } else {
         setIsAdmin(false);
       }
@@ -189,8 +191,10 @@ export default function Header() {
         console.log('✅ Admin status restored from localStorage during initial load');
       }
       
-      const isUserAdmin = await refreshGlobalAdminStatus();
-      setIsAdmin(isUserAdmin);
+      // Use .then() instead of await in useEffect
+      refreshGlobalAdminStatus().then((isUserAdmin) => {
+        setIsAdmin(isUserAdmin);
+      });
     }
 
     return () => {
