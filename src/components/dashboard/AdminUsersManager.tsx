@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import SimpleToast from '@/components/SimpleToast';
 import { getUsers, toggleAdminRole, addUserRole, type UserWithRole } from '@/app/(dashboard)/admin/users/actions';
 import { Search, Filter, ChevronLeft, ChevronRight, Users, Shield, User } from 'lucide-react';
+import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
 
 export default function AdminUsersManager() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
@@ -105,6 +106,9 @@ export default function AdminUsersManager() {
       
       // Refresh the users list
       await fetchUsers();
+      
+      // Refresh admin status to ensure badge persists
+      await refreshGlobalAdminStatus();
     } catch (error) {
       console.error('Error updating admin role:', error);
       showToast(
@@ -221,8 +225,9 @@ export default function AdminUsersManager() {
        <div className="px-6 py-4 border-b border-gray-200 bg-blue-50">
          <h3 className="text-sm font-medium text-blue-900 mb-2">💡 User Management</h3>
          <div className="text-sm text-blue-800 space-y-2">
-           <p><strong>New Signups:</strong> Users who sign up at <a href="/signup" className="underline text-blue-600 hover:text-blue-800">/signup</a> are automatically added to the system</p>
+           <p><strong>User Discovery:</strong> The system automatically discovers users who interact with the platform (create documents, discussions, or likes)</p>
            <p><strong>Role Management:</strong> Admins can promote users to admin status or remove admin privileges</p>
+           <p><strong>Email Display:</strong> Full emails are shown when available, otherwise a truncated user ID is displayed</p>
          </div>
        </div>
       

@@ -3,10 +3,18 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import AdminUsersManager from '@/components/dashboard/AdminUsersManager';
-
+import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
 
 export default function UsersPageClient() {
   // Refresh admin status when component mounts
+  useEffect(() => {
+    const refreshAdmin = async () => {
+      console.log('🔄 Users page mounted - refreshing admin status');
+      await refreshGlobalAdminStatus();
+    };
+    
+    refreshAdmin();
+  }, []);
 
 
   return (

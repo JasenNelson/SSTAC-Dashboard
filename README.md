@@ -1,97 +1,112 @@
 # SSTAC & TWG Dashboard
 
-A comprehensive dashboard platform for the Sediment Standards Technical Advisory Committee (SSTAC) and Technical Working Group (TWG), providing centralized access to project documents, stakeholder engagement results, and administrative tools.
+A comprehensive dashboard platform for the **Sediment Standards Technical Advisory Committee (SSTAC)** and **Technical Working Group (TWG)**. This platform manages sediment standards development through stakeholder engagement, document management, and administrative tools.
 
-## 🚀 Key Features
+## 🚀 **Recent Major Updates**
 
-### Admin Management System ✅ COMPLETED
-- **Centralized Dashboard**: Overview of system metrics and quick actions
-- **User Management**: Add, edit, and manage user accounts and permissions
-- **Tag Management**: Create, edit, and organize document tags
-- **Announcement Management**: Create and manage dashboard announcements
-- **Milestone Management**: Update project timeline and track progress
-- **Admin Badge Persistence**: Robust system preventing badge disappearance
+### **Enhanced User Management System** ✅
+- **100% User Visibility**: Admin dashboard now shows all authenticated users
+- **Real Email Addresses**: No more "User 1234..." - displays actual user emails
+- **Automatic Role Assignment**: New signups automatically get 'member' role
+- **Complete Activity Tracking**: Monitor user engagement and participation
+- **Professional Admin Interface**: Enterprise-level user management capabilities
 
-### Dashboard Features ✅ COMPLETED
-- **Real-time Updates**: Live data from Supabase database
-- **Interactive Components**: Expandable sections and collapsible content
-- **Data Visualization**: Charts and metrics for stakeholder engagement
-- **Responsive Layout**: Optimized for all device sizes
+### **Database Improvements** ✅
+- **Secure User Email Access**: Safe database functions for user data
+- **Enhanced Views**: Comprehensive user management and activity tracking
+- **Automatic Triggers**: Self-maintaining user role system
+- **Performance Optimization**: Efficient queries and indexing
 
-### Survey & Engagement ✅ COMPLETED
-- **Results Display**: Interactive charts and analysis
-- **Stakeholder Quotes**: Rotating carousel of feedback
-- **Theme Navigation**: Detailed exploration of survey findings
+## 🏗️ **Architecture**
 
-### Phase 3: Enhanced User Engagement ✅ COMPLETED
-- **Like System**: Interactive like/unlike for discussions and replies
-- **User Attribution**: See who liked what with detailed information
-- **Real-time Updates**: Immediate feedback on user interactions
-- **Performance Optimization**: Efficient queries and responsive UI
+### **Technology Stack**
+- **Frontend**: Next.js 15+ with App Router, TypeScript, Tailwind CSS v4
+- **Backend**: Supabase (PostgreSQL, Authentication, Real-time features)
+- **State Management**: React hooks with localStorage backup
+- **Deployment**: Vercel
 
-## 🏗️ Project Structure
+### **Core Components**
+- **User Authentication**: Supabase Auth with role-based access control
+- **Database**: PostgreSQL with Row Level Security (RLS)
+- **Real-time Features**: Live updates for discussions and notifications
+- **Admin Panel**: Comprehensive user and content management
+
+## 📊 **Features**
+
+### **User Management** 🆕
+- **Complete User Visibility**: See all authenticated users in admin dashboard
+- **Real Email Addresses**: Professional user communication capabilities
+- **Automatic Role Assignment**: Self-maintaining user role system
+- **Activity Tracking**: Monitor user engagement and participation
+- **Role Management**: Promote/demote users between admin and member roles
+
+### **Document Management**
+- **File Upload**: Secure document storage and management
+- **Tagging System**: Categorize documents for easy organization
+- **Version Control**: Track document updates and changes
+- **Access Control**: Role-based document permissions
+
+### **Discussion Forum**
+- **Threaded Discussions**: Create and participate in forum conversations
+- **Real-time Updates**: Live notifications for new posts and replies
+- **User Engagement**: Like system for content interaction
+- **Moderation Tools**: Admin controls for forum management
+
+### **Survey Results**
+- **Interactive Charts**: Visual representation of stakeholder feedback
+- **Data Analysis**: Comprehensive survey result analysis
+- **Export Capabilities**: Download results in various formats
+- **Historical Tracking**: Monitor changes over time
+
+### **Admin Dashboard**
+- **User Management**: Complete user visibility and control
+- **Content Moderation**: Manage documents, discussions, and announcements
+- **System Monitoring**: Track platform usage and engagement
+- **Role Administration**: Manage user permissions and access
+
+## 🔐 **Security Features**
+
+### **Row Level Security (RLS)**
+- **User Isolation**: Users can only access their own data
+- **Admin Privileges**: Administrators can manage all content
+- **Secure Functions**: Database functions respect RLS policies
+- **Permission Control**: Granular access control for all operations
+
+### **Authentication & Authorization**
+- **Supabase Auth**: Secure user authentication system
+- **Role-Based Access**: Different capabilities for admins vs members
+- **Session Management**: Secure session handling and validation
+- **API Security**: Protected endpoints with proper authentication
+
+## 📁 **Project Structure**
 
 ```
 src/
-├── app/
-│   ├── (dashboard)/
-│   │   ├── admin/                    # Admin management system ✅ COMPLETED
-│   │   │   ├── page.tsx             # Main admin dashboard
-│   │   │   ├── AdminDashboardClient.tsx  # Client component with admin refresh
-│   │   │   ├── users/               # User management ✅ COMPLETED
-│   │   │   ├── tags/                # Tag management ✅ COMPLETED
-│   │   │   ├── announcements/       # Announcement management ✅ COMPLETED
-│   │   │   └── milestones/          # Milestone management ✅ COMPLETED
-│   │   ├── dashboard/               # Main dashboard landing page ✅ COMPLETED
-│   │   ├── survey-results/          # Survey results and analysis ✅ COMPLETED
-│   │   ├── cew-2025/               # CEW conference information ✅ COMPLETED
-│   │   └── twg/                    # TWG-specific features ✅ COMPLETED
-│   ├── api/                        # API routes for client components ✅ COMPLETED
-│   │   ├── tags/                   # Tag CRUD operations
-│   │   ├── announcements/          # Announcement CRUD operations
-│   │   ├── milestones/             # Milestone CRUD operations
-│   │   ├── discussions/            # Discussion CRUD operations
-│   │   └── documents/              # Document CRUD operations
-│   └── globals.css                 # Global styles and Tailwind imports
-├── components/
-│   ├── Header.tsx                  # Global navigation with admin badge persistence ✅ COMPLETED
-│   ├── Toast.tsx                   # Toast notification system ✅ COMPLETED
-│   └── dashboard/                  # Dashboard-specific components ✅ COMPLETED
-│       ├── TagManagement.tsx       # Tag CRUD with admin status refresh
-│       ├── AnnouncementsManagement.tsx  # Announcement CRUD with admin status refresh
-│       ├── MilestonesManagement.tsx     # Milestone CRUD with admin status refresh
-│       ├── AdminUsersManager.tsx   # User management interface
-│       ├── Announcements.tsx       # Dashboard announcements display
-│       ├── ProjectTimeline.tsx     # Dashboard milestones display
-│       ├── SurveyResultsChart.tsx  # Interactive survey charts
-│       ├── VoicesCarousel.tsx      # Stakeholder quotes carousel
-│       ├── ProjectPhases.tsx      # Expandable project phases
-│       └── LikeButton.tsx          # Enhanced like system ✅ COMPLETED
-├── lib/
-│   └── supabase/                   # Supabase client configuration ✅ COMPLETED
-└── types/                          # TypeScript type definitions ✅ COMPLETED
+├── app/                    # Next.js App Router
+│   ├── (auth)/           # Authentication pages
+│   ├── (dashboard)/      # Main dashboard and admin
+│   ├── api/              # API routes
+│   └── globals.css       # Global styles
+├── components/            # Reusable React components
+│   ├── dashboard/        # Dashboard-specific components
+│   └── shared/           # Common UI components
+├── lib/                   # Utility functions and configurations
+│   └── supabase/         # Supabase client and middleware
+└── middleware.ts          # Route protection middleware
 ```
 
-## 🛠️ Tech Stack
+## 🚀 **Getting Started**
 
-- **Frontend**: Next.js 15+ with App Router, TypeScript, Tailwind CSS v4
-- **Backend**: Supabase (PostgreSQL, Authentication, Real-time)
-- **State Management**: React hooks with localStorage backup
-- **Styling**: Utility-first CSS with responsive design
-- **Deployment**: Vercel (optimized for Next.js)
-
-## 🚀 Getting Started
-
-### Prerequisites
+### **Prerequisites**
 - Node.js 18+ 
-- npm or yarn
 - Supabase account and project
+- Vercel account (for deployment)
 
-### Installation
+### **Installation**
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone [repository-url]
    cd SSTAC-Dashboard
    ```
 
@@ -101,177 +116,222 @@ src/
    ```
 
 3. **Environment Setup**
-   Create a `.env.local` file with your Supabase credentials:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```bash
+   cp .env.example .env.local
+   # Fill in your Supabase credentials
    ```
 
 4. **Database Setup**
-   Run the SQL scripts in your Supabase SQL editor:
-   - `database_schema.sql` - Core database structure
-   - `create_missing_views.sql` - Required database views
-   - `setup_admin_user.sql` - Admin user setup
+   ```bash
+   # Run the enhanced database schema
+   # This includes the new user management system
+   ```
 
 5. **Start Development Server**
    ```bash
    npm run dev
    ```
 
-6. **Access the Application**
-   - Open [http://localhost:3000](http://localhost:3000)
-   - Login with your admin credentials
-   - Navigate to `/admin` for administrative functions
+## 🗄️ **Database Setup**
 
-## 🔐 Authentication & Admin Setup
+### **Enhanced User Management** 🆕
+The database now includes a comprehensive user management system:
 
-### Admin User Creation
-1. Create a user account through Supabase Auth
-2. Run the admin setup script in Supabase SQL editor:
-   ```sql
-   INSERT INTO user_roles (user_id, role) 
-   VALUES ('your-user-uuid', 'admin');
-   ```
+- **`get_users_with_emails()` Function**: Secure access to user emails
+- **`users_overview` View**: Comprehensive user activity tracking
+- **`admin_users_comprehensive` View**: Complete admin user management
+- **Automatic Role Assignment**: New users get 'member' role automatically
+- **Activity Tracking**: Monitor user engagement and participation
 
-### Admin Badge Persistence
-The system includes a comprehensive admin status persistence solution:
-- **Global Refresh Function**: Accessible from any component
-- **Local Storage Backup**: Fallback recovery for temporary database issues
-- **Retry Logic**: Automatic retry on connection issues
-- **Navigation Listeners**: Status refresh on route changes
-- **Periodic Verification**: Automatic status checks every 30 seconds
+### **Core Tables**
+- **`user_roles`**: User role management and access control
+- **`documents`**: File storage and management
+- **`discussions`**: Forum conversations and user engagement
+- **`likes`**: User interaction tracking
+- **`announcements`**: System notifications and updates
+- **`milestones`**: Project timeline and progress tracking
 
-## 📊 Admin Management Features
+## 🔧 **Configuration**
 
-### User Management
-- Create and manage user accounts
-- Assign and modify user roles
-- Monitor user activity and permissions
+### **Environment Variables**
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
 
-### Tag Management
-- Create, edit, and delete document tags
-- Color-coded tag system
-- Bulk tag operations
+### **Supabase Setup**
+1. Create a new Supabase project
+2. Enable Row Level Security (RLS)
+3. Run the enhanced database schema
+4. Configure authentication providers
+5. Set up storage buckets for documents
 
-### Announcement Management
-- Create and manage dashboard announcements
-- Priority levels (low, medium, high)
-- Active/inactive status control
+## 📱 **Usage**
 
-### Milestone Management
-- Project timeline management
-- Status tracking (pending, in-progress, completed, delayed)
-- Priority levels and target dates
+### **For Users**
+1. **Sign Up**: Create an account with email verification
+2. **Access Dashboard**: Navigate to main dashboard features
+3. **Participate**: Join discussions, upload documents, engage with content
+4. **Stay Updated**: Receive notifications for important updates
 
-## 🔧 API Architecture
+### **For Administrators**
+1. **User Management**: Monitor all users and their activities
+2. **Content Moderation**: Manage documents, discussions, and announcements
+3. **System Administration**: Configure platform settings and permissions
+4. **Analytics**: Track user engagement and platform usage
 
-### Next.js 15+ Solution
-The application uses a modern API route architecture:
-1. **Server Actions**: Handle database operations and business logic
-2. **API Routes**: Act as intermediaries between client components and server actions
-3. **Client Components**: Use fetch() to call API routes and handle responses
+## 🧪 **Testing**
 
-### API Endpoints
-- `POST /api/tags` - Create new tags
-- `PUT /api/tags` - Update existing tags
-- `DELETE /api/tags` - Delete tags
-- `POST /api/announcements` - Create announcements
-- `PUT /api/announcements` - Update announcements
-- `DELETE /api/announcements` - Delete announcements
-- `POST /api/milestones` - Create milestones
-- `PUT /api/milestones` - Update milestones
-- `DELETE /api/milestones` - Delete milestones
+### **User Management Testing**
+```bash
+# Test user visibility
+npm run test:users
 
-## 🐛 Common Issues & Solutions
+# Test admin capabilities
+npm run test:admin
 
-### Admin Badge Disappearing
-- **Problem**: Admin badge disappears after operations or page navigation
-- **Solution**: The system includes comprehensive admin status persistence
-- **Features**: Global refresh, localStorage backup, retry logic, navigation listeners
+# Test role assignment
+npm run test:roles
+```
 
-### Phase 3 Like System ✅ COMPLETED
-- **Status**: Enhanced like system is fully implemented and working
-- **Features**: Like/unlike discussions and replies, user attribution, real-time updates
-- **Note**: Don't attempt to modify or rewrite the like system - it's working correctly
+### **Database Testing**
+```bash
+# Test database functions
+npm run test:db
 
-### Database Views Missing
-- **Problem**: Forum returns 404 when accessing discussion features
-- **Solution**: Ensure required database views exist
-- **Critical Views**: `discussion_stats`, `documents_with_tags`
-- **SQL Script**: Use `create_missing_views.sql` to create missing views
+# Test RLS policies
+npm run test:security
 
-### Hydration Errors
-- **Problem**: Server/client content mismatch
-- **Solution**: Ensure consistent data between server and client components
-- **Files to Check**: Components using dynamic data or browser APIs
+# Test performance
+npm run test:performance
+```
 
-### Next.js 15+ Import Issues
-- **Problem**: Client components cannot import server actions using `next/headers`
-- **Solution**: Use API route architecture with client-side fetch calls
-- **Pattern**: Server actions → API routes → Client components
+## 📈 **Performance**
 
-## 📱 Responsive Design
+### **Optimizations**
+- **Database Views**: Efficient data aggregation and querying
+- **Indexing Strategy**: Optimized database performance
+- **Function Caching**: Secure and fast user data access
+- **RLS Optimization**: Minimal security overhead
 
-The dashboard is fully responsive and optimized for:
-- **Desktop**: Full-featured interface with advanced controls
-- **Tablet**: Touch-friendly interface with optimized layouts
-- **Mobile**: Streamlined interface for field use and remote access
+### **Monitoring**
+- **User Growth**: Track platform adoption and usage
+- **Activity Metrics**: Monitor user engagement levels
+- **Performance Metrics**: Database query performance
+- **Security Auditing**: RLS policy verification
 
-## 🚀 Deployment
+## 🔄 **Deployment**
 
-### Vercel Deployment
+### **Vercel Deployment**
 1. Connect your GitHub repository to Vercel
 2. Configure environment variables
 3. Deploy automatically on push to main branch
+4. Monitor deployment status and performance
 
-### Environment Variables
-Ensure all required environment variables are set in your production environment:
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+### **Database Migrations**
+- **User Management**: Required for proper admin functionality
+- **Document Tagging**: Optional enhancement for organization
+- **Backup Strategy**: Always backup before running migrations
+- **Rollback Plan**: Procedures for reverting changes if needed
 
-## 🤝 Contributing
+## 🤝 **Contributing**
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+### **Development Guidelines**
+1. **Code Style**: Follow TypeScript and React best practices
+2. **Testing**: Write tests for new features and bug fixes
+3. **Documentation**: Update relevant documentation for changes
+4. **Security**: Ensure all changes maintain security standards
 
-## 📄 License
+### **Database Changes**
+1. **Schema Updates**: Document all database modifications
+2. **Migration Scripts**: Create rollback procedures
+3. **Testing**: Verify changes in development environment
+4. **Documentation**: Update schema documentation
 
-This project is proprietary and confidential. All rights reserved.
+## 📚 **Documentation**
 
-## 🆘 Support
+### **User Management** 🆕
+- **`USER_MANAGEMENT_SYSTEM.md`**: Comprehensive system documentation
+- **`migration_guide.md`**: Step-by-step migration instructions
+- **`database_schema.sql`**: Complete database structure
+- **`create_missing_views.sql`**: Current view status
+- **`PHASE_3_COMPLETION.md`**: Complete Phase 3 implementation report ✅ NEW
 
-For technical support or questions:
-- Check the [Common Issues & Solutions](#-common-issues--solutions) section
-- Review the [Architecture Documentation](architecture.md)
-- Contact the development team
+### **API Documentation**
+- **Authentication**: User login and role management
+- **Documents**: File upload and management
+- **Discussions**: Forum conversation management
+- **Admin**: User and content administration
 
-## 🔮 Future Enhancements
+## 🐛 **Troubleshooting**
 
-### Phase 3: Enhanced User Engagement ✅ COMPLETED
-- **Like System**: Interactive like/unlike for discussions and replies
-- **User Attribution**: See who liked what with detailed information
-- **Real-time Updates**: Immediate feedback on user interactions
-- **Performance Optimization**: Efficient queries and responsive UI
+### **Common Issues**
 
-### Phase 3: Advanced Analytics 🔄 IN PROGRESS
-- **Dashboard Metrics**: Comprehensive dashboard statistics and reporting
-- **User Engagement Tracking**: Monitor user interaction patterns
-- **Content Analytics**: Analyze discussion and document popularity
-- **Performance Monitoring**: Track system performance and user experience
+#### **User Management Problems**
+- **Users Not Visible**: Check role assignment and email confirmation
+- **Email Display Issues**: Verify function permissions and RLS policies
+- **Role Assignment Problems**: Check trigger existence and constraints
 
-### Phase 3: Enhanced Collaboration Tools 🔄 PLANNED
-- **Real-time Notification System**: Live updates and alerts
-- **Advanced Forum Features**: Enhanced discussion capabilities
-- **Document Collaboration**: Improved document sharing and editing
-- **Mobile Application**: Native mobile app for field use
+#### **Database Issues**
+- **Connection Problems**: Verify Supabase credentials and network access
+- **Permission Errors**: Check RLS policies and user roles
+- **Performance Issues**: Monitor query performance and indexing
 
-### Technical Improvements 🔄 PLANNED
-- **WebSocket Integration**: Real-time updates for enhanced collaboration
-- **Redis Caching**: Improved performance and response times
-- **API Rate Limiting**: Protection against abuse and overload
-- **Advanced Security**: Enhanced authentication and monitoring features
-   
- 
+### **Debug Queries**
+```sql
+-- Check user coverage
+SELECT COUNT(*) FROM admin_users_comprehensive;
+
+-- Verify function access
+SELECT routine_name FROM information_schema.routines 
+WHERE routine_name = 'get_users_with_emails';
+
+-- Check RLS policies
+SELECT schemaname, tablename, policyname 
+FROM pg_policies;
+```
+
+## 🔮 **Roadmap**
+
+### **Short Term**
+- **Enhanced Analytics**: Advanced user engagement metrics
+- **Notification System**: Real-time user activity notifications
+- **Mobile Optimization**: Responsive design improvements
+- **Performance Monitoring**: Advanced performance tracking
+
+### **Long Term**
+- **User Groups**: Organization and team management
+- **Advanced Roles**: Complex permission hierarchies
+- **API Integration**: External system integration
+- **Scalability**: Support for larger user bases
+
+## 📄 **License**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 **Acknowledgments**
+
+- **SSTAC Committee**: For project requirements and feedback
+- **TWG Members**: For technical guidance and testing
+- **Supabase Team**: For excellent backend-as-a-service platform
+- **Next.js Team**: For powerful React framework
+- **Open Source Community**: For valuable tools and libraries
+
+## 📞 **Support**
+
+### **Technical Support**
+- **Documentation**: Comprehensive guides and examples
+- **Migration Support**: Step-by-step migration assistance
+- **Troubleshooting**: Common issues and solutions
+- **Performance**: Optimization and monitoring guidance
+
+### **User Support**
+- **Admin Training**: User management system training
+- **Feature Requests**: Submit enhancement suggestions
+- **Bug Reports**: Report issues and problems
+- **General Questions**: Platform usage and configuration
+
+---
+
+**SSTAC & TWG Dashboard** - Professional user management and stakeholder engagement platform for sediment standards development.
