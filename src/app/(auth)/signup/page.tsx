@@ -46,47 +46,22 @@ const SignupPage: NextPage = () => {
         }
       });
 
-             if (error) {
-         setError(error.message);
-       } else if (data.user) {
-         // Try to create a user role
-         try {
-           const { error: roleError } = await supabase
-             .from('user_roles')
-             .insert({
-               user_id: data.user.id,
-               role: 'member'
-             });
-           
-           if (roleError) {
-             console.warn('Role creation warning:', roleError);
-             console.error('Role creation details:', {
-               user_id: data.user.id,
-               role: 'member',
-               error: roleError
-             });
-           } else {
-             console.log('User role created successfully');
-           }
-         } catch (roleErr) {
-           console.warn('Role creation error:', roleErr);
-           console.error('Role creation exception:', roleErr);
-         }
-         
-         setSuccess('Account created successfully! Redirecting you to login...');
-         setAccountCreated(true);
-         
-         // Clear form
-         setEmail('');
-         setPassword('');
-         setConfirmPassword('');
-         
-         // Redirect to login page after 2 seconds
-         setTimeout(() => {
-           router.push('/login');
-         }, 2000);
-         
-       }
+      if (error) {
+        setError(error.message);
+      } else if (data.user) {
+        setSuccess('Account created successfully! Redirecting you to login...');
+        setAccountCreated(true);
+        
+        // Clear form
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
+        
+        // Redirect to login page after 2 seconds
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
     } finally {

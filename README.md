@@ -4,6 +4,13 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 
 ## 🚀 **Recent Major Updates**
 
+### **Dark/Light Mode Theme System** ✅ NEW
+- **Complete Theme Implementation**: Full dark/light mode support across all pages
+- **Theme Persistence**: User preferences saved in localStorage
+- **CSS Specificity Solution**: Resolved complex CSS override issues
+- **Comprehensive Coverage**: All components and pages support both themes
+- **Professional UI**: Consistent visual experience across all interfaces
+
 ### **Enhanced User Management System** ✅
 - **100% User Visibility**: Admin dashboard now shows all authenticated users
 - **Real Email Addresses**: No more "User 1234..." - displays actual user emails
@@ -32,6 +39,13 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **Admin Panel**: Comprehensive user and content management
 
 ## 📊 **Features**
+
+### **Theme System** 🆕
+- **Dark/Light Mode**: Complete theme switching with user preference persistence
+- **CSS Specificity Solution**: Resolved complex styling override issues
+- **Comprehensive Coverage**: All pages and components support both themes
+- **Professional UI**: Consistent visual experience across all interfaces
+- **Theme Toggle**: Easy switching between light and dark modes
 
 ### **User Management** 🆕
 - **Complete User Visibility**: See all authenticated users in admin dashboard
@@ -251,6 +265,12 @@ npm run test:performance
 
 ## 📚 **Documentation**
 
+### **Theme System** 🆕
+- **`DEBUGGING_LESSONS.md`**: Theme implementation and debugging lessons
+- **Theme Context**: `src/contexts/ThemeContext.tsx` - Theme state management
+- **Theme Toggle**: `src/components/ThemeToggle.tsx` - Theme switching component
+- **Global Styles**: `src/app/globals.css` - Theme-specific CSS rules
+
 ### **User Management** 🆕
 - **`USER_MANAGEMENT_SYSTEM.md`**: Comprehensive system documentation
 - **`migration_guide.md`**: Step-by-step migration instructions
@@ -266,30 +286,48 @@ npm run test:performance
 
 ## 🐛 **Troubleshooting**
 
-### **Common Issues**
+### Common Issues
 
-#### **User Management Problems**
-- **Users Not Visible**: Check role assignment and email confirmation
-- **Email Display Issues**: Verify function permissions and RLS policies
-- **Role Assignment Problems**: Check trigger existence and constraints
+#### Theme System Issues
+- **Background Not Changing**: CSS specificity issues with theme switching
+- **Solution**: Use high-specificity selectors like `html.light` instead of `.light body`
+- **Verification**: Check browser console for theme class application
+- **Documentation**: See `DEBUGGING_LESSONS.md` for comprehensive troubleshooting
 
-#### **Database Issues**
-- **Connection Problems**: Verify Supabase credentials and network access
-- **Permission Errors**: Check RLS policies and user roles
-- **Performance Issues**: Monitor query performance and indexing
+#### Users Not Visible in Admin Dashboard
+- **Cause**: Users may not have roles assigned or email confirmation issues
+- **Solution**: Check role assignment in `user_roles` table and email confirmation status
+- **Verification**: Use the admin dashboard to view all users and their roles
 
-### **Debug Queries**
+#### Permission Errors
+- **Cause**: RLS policies or role assignment issues
+- **Solution**: Verify user has appropriate role in `user_roles` table
+- **Verification**: Check user roles through admin dashboard
+
+#### Signup Issues
+- **Status**: ✅ RESOLVED
+- **Previous Issue**: Temporary 500 errors during signup were caused by Supabase service issues, not database configuration
+- **Current State**: Signup process works normally with automatic role assignment
+- **Verification**: New users can sign up and automatically receive 'member' role
+
+### Database Health Checks
+
+Run these queries in Supabase SQL Editor to verify system health:
+
 ```sql
--- Check user coverage
-SELECT COUNT(*) FROM admin_users_comprehensive;
+-- Check user role distribution
+SELECT role, COUNT(*) as count 
+FROM user_roles 
+GROUP BY role;
 
--- Verify function access
-SELECT routine_name FROM information_schema.routines 
-WHERE routine_name = 'get_users_with_emails';
+-- Verify views are working
+SELECT COUNT(*) as total_users FROM admin_users_comprehensive;
+SELECT COUNT(*) as users_with_emails FROM get_users_with_emails();
 
--- Check RLS policies
-SELECT schemaname, tablename, policyname 
-FROM pg_policies;
+-- Check trigger status
+SELECT trigger_name, event_manipulation, action_statement 
+FROM information_schema.triggers 
+WHERE event_object_table = 'users' AND trigger_schema = 'auth';
 ```
 
 ## 🔮 **Roadmap**

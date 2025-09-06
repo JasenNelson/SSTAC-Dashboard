@@ -33,7 +33,7 @@ export default async function SurveyResultsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen">
       {/* Hero Header */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -63,12 +63,12 @@ export default async function SurveyResultsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Purpose Statement */}
         <section className="mb-16">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl shadow-lg p-8 border border-blue-200">
-            <h2 className="text-2xl font-bold text-blue-900 mb-6 flex items-center">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-blue-100 mb-6 flex items-center">
               <span className="text-3xl mr-3">🎯</span>
               Project Purpose & Background
             </h2>
-            <div className="space-y-6 text-blue-800">
+            <div className="space-y-6 text-gray-700 dark:text-blue-200">
               <p className="text-lg leading-relaxed">
                 A partnership undertaken between the British Columbia (BC) Ministry of Environment and Parks (the Ministry) and the Science Advisory Board for Contaminated Sites (SABCS) has launched the first phase of a multi‑year effort to modernize Contaminated Sites Regulation (CSR) sediment standards. The initiative will develop a transparent, risk‑based scientific framework that incorporates bioavailability, contaminant mixtures, and cumulative‑effects endpoints to ensure holistic protection of aquatic ecosystems, including the wildlife and people who depend on them.
               </p>
@@ -97,20 +97,20 @@ export default async function SurveyResultsPage() {
 
         {/* Key Metrics (KPIs) - Interactive Cards */}
         <section className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">
             Key Findings at a Glance
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* KPI Card 1 */}
-            <div className="group relative bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-red-500">
+            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-red-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-red-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   73%
                 </div>
-                <div className="text-gray-800 font-semibold text-lg mb-2">
+                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
                   Rate Standards as Ineffective
                 </div>
-                <div className="text-gray-600 text-sm">
+                <div className="text-gray-600 dark:text-gray-400 text-sm">
                   For bioaccumulation protection
                 </div>
               </div>
@@ -122,15 +122,15 @@ export default async function SurveyResultsPage() {
             </div>
 
             {/* KPI Card 2 */}
-            <div className="group relative bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-green-500">
+            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-green-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-green-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   95%
                 </div>
-                <div className="text-gray-800 font-semibold text-lg mb-2">
+                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
                   Support Expanding Contaminant List
                 </div>
-                <div className="text-gray-600 text-sm">
+                <div className="text-gray-600 dark:text-gray-400 text-sm">
                   As Essential or Very Important
                 </div>
               </div>
@@ -142,15 +142,15 @@ export default async function SurveyResultsPage() {
             </div>
 
             {/* KPI Card 3 */}
-            <div className="group relative bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-blue-500">
+            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-blue-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   91%
                 </div>
-                <div className="text-gray-800 font-semibold text-lg mb-2">
+                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
                   See Bioavailability as Essential
                 </div>
-                <div className="text-gray-600 text-sm">
+                <div className="text-gray-600 dark:text-gray-400 text-sm">
                   For modernized standards
                 </div>
               </div>
@@ -162,15 +162,15 @@ export default async function SurveyResultsPage() {
             </div>
 
             {/* KPI Card 4 */}
-            <div className="group relative bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-purple-500">
+            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-purple-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-purple-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   84%
                 </div>
-                <div className="text-gray-800 font-semibold text-lg mb-2">
+                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
                   Believe New Standards Essential
                 </div>
-                <div className="text-gray-600 text-sm">
+                <div className="text-gray-600 dark:text-gray-400 text-sm">
                   For modernized framework
                 </div>
               </div>
@@ -185,10 +185,10 @@ export default async function SurveyResultsPage() {
 
         {/* TRANSFORMED: Stakeholder Feedback Overview - Now Highly Engaging */}
         <section className="mb-16">
-          <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8">
             <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-800 mb-4">Stakeholder Feedback Overview</h2>
-              <p className="text-gray-600 text-lg">
+              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">Stakeholder Feedback Overview</h2>
+              <p className="text-gray-600 dark:text-gray-300 text-lg">
                 Interactive visualization of feedback across major assessment categories and stakeholder groups.
               </p>
             </div>
@@ -259,105 +259,220 @@ export default async function SurveyResultsPage() {
                 </div>
               </div>
 
-                      {/* Middle: Full-Width Chart */}
-                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
-                        <div className="h-96">
-                          <SurveyResultsChart />
+              {/* Key Insights from the Responses - Above Chart */}
+              <div className="bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-6 border border-gray-200">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4">Key Insights from the Responses</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Widespread Dissatisfaction with Data */}
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                        <span className="text-red-600 font-bold">1</span>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-semibold text-gray-800 mb-2">Widespread Dissatisfaction</h4>
+                        <p className="text-gray-600 text-sm mb-3">Consensus that current standards are outdated and not sufficiently protective of the environment.</p>
+                        <div className="text-center bg-red-50 rounded-lg p-3">
+                          <div className="text-2xl font-bold text-red-600 mb-1">73%</div>
+                          <div className="text-red-700 text-xs">Find current standards ineffective for bioaccumulation protection</div>
                         </div>
                       </div>
-
-                      {/* Bottom: Wide Quote Box */}
-                      <VoicesCarousel quotes={[]} />
                     </div>
+                  </div>
 
-            {/* Key Insights Summary - Full Width Below */}
-            <div className="mt-8 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-6 border border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">Key Insights from the Data</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="text-center bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-3xl font-bold text-red-600 mb-2">73%</div>
-                  <div className="text-gray-700 text-sm">Find current standards ineffective for bioaccumulation protection</div>
-                </div>
-                <div className="text-center bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-3xl font-bold text-orange-600 mb-2">95%</div>
-                  <div className="text-gray-700 text-sm">Rate expanding contaminant list as essential or very important</div>
-                </div>
-                <div className="text-center bg-white rounded-lg p-4 shadow-sm">
-                  <div className="text-3xl font-bold text-green-600 mb-2">91%</div>
-                  <div className="text-gray-700 text-sm">See bioavailability adjustments as essential or very important</div>
+                  {/* Call for Broader Scope with Data */}
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <span className="text-green-600 font-bold">2</span>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-semibold text-gray-800 mb-2">Call for Broader Scope</h4>
+                        <p className="text-gray-600 text-sm mb-3">Overwhelming demand to expand the list of regulated contaminants and address bioaccumulation risks.</p>
+                        <div className="text-center bg-green-50 rounded-lg p-3">
+                          <div className="text-2xl font-bold text-green-600 mb-1">95%</div>
+                          <div className="text-green-700 text-xs">Rate expanding contaminant list as essential or very important</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Science-Based Approach with Data */}
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-bold">3</span>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-semibold text-gray-800 mb-2">Mandate for Science-Based Approach</h4>
+                        <p className="text-gray-600 text-sm mb-3">Strong desire for a nuanced, evidence-based system that incorporates bioavailability and tiered frameworks.</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="text-center bg-blue-50 rounded-lg p-2">
+                            <div className="text-lg font-bold text-blue-600">91%</div>
+                            <div className="text-blue-700 text-xs">Support bioavailability adjustments</div>
+                          </div>
+                          <div className="text-center bg-blue-50 rounded-lg p-2">
+                            <div className="text-lg font-bold text-blue-600">86%</div>
+                            <div className="text-blue-700 text-xs">See tiered framework as beneficial</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Need for Clear Guidance with Data */}
+                  <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="flex items-start space-x-3">
+                      <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span className="text-purple-600 font-bold">4</span>
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-semibold text-gray-800 mb-2">Need for Clear Guidance</h4>
+                        <p className="text-gray-600 text-sm mb-3">Emphasis on comprehensive guidance, standardized methods, and training for new standards implementation.</p>
+                        <div className="text-center bg-purple-50 rounded-lg p-3">
+                          <div className="text-2xl font-bold text-purple-600 mb-1">88%</div>
+                          <div className="text-purple-700 text-xs">Support modernization of sediment standards</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              {/* Middle: Full-Width Chart */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                <div className="h-96">
+                  <SurveyResultsChart />
+                </div>
+              </div>
+
+              {/* Bottom: Wide Quote Box */}
+              <VoicesCarousel quotes={[]} />
+
             </div>
           </div>
         </section>
 
-        {/* Key Themes Summary */}
-        <section className="mb-16">
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Key Themes Summary</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                    <span className="text-red-600 font-bold">1</span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Widespread Dissatisfaction</h3>
-                    <p className="text-gray-600">Consensus that current standards are outdated and not sufficiently protective of the environment.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="text-green-600 font-bold">2</span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Call for Broader Scope</h3>
-                    <p className="text-gray-600">Overwhelming demand to expand the list of regulated contaminants and address bioaccumulation risks.</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-bold">3</span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Mandate for Science-Based Approach</h3>
-                    <p className="text-gray-600">Strong desire for a nuanced, evidence-based system that incorporates bioavailability and tiered frameworks.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-purple-600 font-bold">4</span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Need for Clear Guidance</h3>
-                    <p className="text-gray-600">Emphasis on comprehensive guidance, standardized methods, and training for new standards implementation.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        {/* Call to Action */}
+
+
+        {/* FIXED: Survey Theme Navigation - Now Points to Actual Themes */}
         <section className="mb-16">
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-12 text-center text-white">
-            <h2 className="text-3xl font-bold mb-4">Ready to Explore the Detailed Findings?</h2>
-            <p className="text-xl text-indigo-100 mb-8 max-w-3xl mx-auto">
-              Dive deeper into the expert feedback, explore interactive visualizations, and understand the comprehensive recommendations for modernizing BC's sediment standards.
-            </p>
-            <Link 
-              href="/survey-results/detailed-findings"
-              className="inline-flex items-center px-8 py-4 bg-white text-indigo-600 font-semibold rounded-xl text-lg hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-            >
-              Explore the Detailed Findings
-              <svg className="w-6 h-6 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
+          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Explore Survey Responses Related to Key Themes</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Holistic Protection Card */}
+            <Link href="/survey-results/holistic-protection" className="group">
+              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-blue-300">
+                <div className="text-4xl mb-4">🛡️</div>
+                <h3 className="text-xl font-semibold text-gray-800 group-hover:text-blue-600 transition-colors mb-3">
+                  Holistic Protection
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Matrix sediment standards framework for comprehensive ecosystem protection.
+                </p>
+                <div className="mt-4 flex items-center text-blue-600 group-hover:text-blue-700">
+                  <span className="text-sm font-medium">Explore Theme</span>
+                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+
+            {/* Tiered Framework Card */}
+            <Link href="/survey-results/tiered-framework" className="group">
+              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-green-300">
+                <div className="text-4xl mb-4">🏗️</div>
+                <h3 className="text-xl font-semibold text-gray-800 group-hover:text-green-600 transition-colors mb-3">
+                  Tiered Framework
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Site-specific modification protocols and assessment frameworks for flexible implementation.
+                </p>
+                <div className="mt-4 flex items-center text-green-600 group-hover:text-green-700">
+                  <span className="text-sm font-medium">Explore Theme</span>
+                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+
+            {/* Effectiveness Card */}
+            <Link href="/survey-results/effectiveness" className="group">
+              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-purple-300">
+                <div className="text-4xl mb-4">🚀</div>
+                <h3 className="text-xl font-semibold text-gray-800 group-hover:text-purple-600 transition-colors mb-3">
+                  Effectiveness
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Prioritization of cutting-edge methodologies and scientific advancements in sediment assessment.
+                </p>
+                <div className="mt-4 flex items-center text-purple-600 group-hover:text-purple-700">
+                  <span className="text-sm font-medium">Explore Theme</span>
+                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+
+            {/* Prioritization Framework Card */}
+            <Link href="/survey-results/prioritization" className="group">
+              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-orange-300">
+                <div className="text-4xl mb-4">🎯</div>
+                <h3 className="text-xl font-semibold text-gray-800 group-hover:text-orange-600 transition-colors mb-3">
+                  Prioritization Framework
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Collaborative development of strategic research plans and feasibility assessments for all modernization approaches.
+                </p>
+                <div className="mt-4 flex items-center text-orange-600 group-hover:text-orange-700">
+                  <span className="text-sm font-medium">Explore Theme</span>
+                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+
+            {/* Detailed Findings Card */}
+            <Link href="/survey-results/detailed-findings" className="group">
+              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-red-300">
+                <div className="text-4xl mb-4">📊</div>
+                <h3 className="text-xl font-semibold text-gray-800 group-hover:text-red-600 transition-colors mb-3">
+                  Detailed Findings
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Comprehensive analysis of survey responses and expert recommendations for modernization.
+                </p>
+                <div className="mt-4 flex items-center text-red-600 group-hover:text-red-700">
+                  <span className="text-sm font-medium">Explore Theme</span>
+                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
+            </Link>
+
+
+            {/* Indigenous Knowledge Integration Card */}
+            <Link href="/wiks" className="group">
+              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-teal-300">
+                <div className="text-4xl mb-4">🌿</div>
+                <h3 className="text-xl font-semibold text-gray-800 group-hover:text-teal-600 transition-colors mb-3">
+                  Indigenous Knowledge Integration
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  While no survey questions specifically involved Indigenous Knowledge & Science, some responses indicated that this should be integrated in this project, which we intend to do.
+                </p>
+                <div className="mt-4 flex items-center text-teal-600 group-hover:text-teal-700">
+                  <span className="text-sm font-medium">Explore Theme</span>
+                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </div>
             </Link>
           </div>
         </section>
@@ -414,7 +529,7 @@ export default async function SurveyResultsPage() {
                 <div className="space-y-3 text-green-100">
                   <div className="flex items-start">
                     <span className="text-green-300 mr-2 mt-1">→</span>
-                    <span><strong>Holistic Protection:</strong> Dual standards and matrix approaches</span>
+                    <span><strong>Holistic Protection:</strong> Matrix sediment standards framework</span>
                   </div>
                   <div className="flex items-start">
                     <span className="text-green-300 mr-2 mt-1">→</span>
@@ -426,184 +541,22 @@ export default async function SurveyResultsPage() {
                   </div>
                   <div className="flex items-start">
                     <span className="text-green-300 mr-2 mt-1">→</span>
-                    <span><strong>Contaminants Expansion:</strong> Emerging substances coverage</span>
+                    <span><strong>Prioritization Framework:</strong> Strategic research planning and feasibility assessment</span>
                   </div>
-                                     <div className="flex items-start">
-                     <span className="text-green-300 mr-2 mt-1">→</span>
-                     <span><strong>Weaving Indigenous Knowledges & Science:</strong> In the Sediment Standards Framework</span>
-                   </div>
-                   <div className="flex items-start">
-                     <span className="text-green-300 mr-2 mt-1">→</span>
-                     <span><strong>Prioritization Framework:</strong> Collaborative Development</span>
-                   </div>
+                  <div className="flex items-start">
+                    <span className="text-green-300 mr-2 mt-1">→</span>
+                    <span><strong>Weaving Indigenous Knowledges & Science:</strong> In the Sediment Standards Framework</span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-green-300 mr-2 mt-1">→</span>
+                    <span><strong>Prioritization Framework:</strong> Collaborative Development</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* FIXED: Survey Theme Navigation - Now Points to Actual Themes */}
-        <section className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Explore Survey Responses Related to Key Themes</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Holistic Protection Card */}
-            <Link href="/survey-results/holistic-protection" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-blue-300">
-                <div className="text-4xl mb-4">🛡️</div>
-                <h3 className="text-xl font-semibold text-gray-800 group-hover:text-blue-600 transition-colors mb-3">
-                  Holistic Protection
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Dual standards approach and matrix standards for comprehensive environmental protection.
-                </p>
-                <div className="mt-4 flex items-center text-blue-600 group-hover:text-blue-700">
-                  <span className="text-sm font-medium">Explore Theme</span>
-                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            </Link>
-
-            {/* Tiered Framework Card */}
-            <Link href="/survey-results/tiered-framework" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-green-300">
-                <div className="text-4xl mb-4">🏗️</div>
-                <h3 className="text-xl font-semibold text-gray-800 group-hover:text-green-600 transition-colors mb-3">
-                  Tiered Framework
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Site-specific modification protocols and assessment frameworks for flexible implementation.
-                </p>
-                <div className="mt-4 flex items-center text-green-600 group-hover:text-green-700">
-                  <span className="text-sm font-medium">Explore Theme</span>
-                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            </Link>
-
-            {/* Effectiveness Card */}
-            <Link href="/survey-results/effectiveness" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-purple-300">
-                <div className="text-4xl mb-4">🚀</div>
-                <h3 className="text-xl font-semibold text-gray-800 group-hover:text-purple-600 transition-colors mb-3">
-                  Effectiveness
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Prioritization of cutting-edge methodologies and scientific advancements in sediment assessment.
-                </p>
-                <div className="mt-4 flex items-center text-purple-600 group-hover:text-purple-700">
-                  <span className="text-sm font-medium">Explore Theme</span>
-                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            </Link>
-
-            {/* Contaminants Expansion Card */}
-            <Link href="/survey-results/technical-standards" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-orange-300">
-                <div className="text-4xl mb-4">🧪</div>
-                <h3 className="text-xl font-semibold text-gray-800 group-hover:text-orange-600 transition-colors mb-3">
-                  Technical Standards
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Comprehensive coverage of emerging contaminants and substances of concern.
-                </p>
-                <div className="mt-4 flex items-center text-orange-600 group-hover:text-orange-700">
-                  <span className="text-sm font-medium">Explore Theme</span>
-                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            </Link>
-
-            {/* Detailed Findings Card */}
-            <Link href="/survey-results/detailed-findings" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-red-300">
-                <div className="text-4xl mb-4">📊</div>
-                <h3 className="text-xl font-semibold text-gray-800 group-hover:text-red-600 transition-colors mb-3">
-                  Detailed Findings
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  Comprehensive analysis of survey responses and expert recommendations for modernization.
-                </p>
-                <div className="mt-4 flex items-center text-red-600 group-hover:text-red-700">
-                  <span className="text-sm font-medium">Explore Theme</span>
-                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            </Link>
-
-            {/* Indigenous Knowledge Integration Card */}
-            <Link href="/wiks" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-200 hover:border-teal-300">
-                <div className="text-4xl mb-4">🌿</div>
-                <h3 className="text-xl font-semibold text-gray-800 group-hover:text-teal-600 transition-colors mb-3">
-                  Indigenous Knowledge Integration
-                </h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  While no survey questions specifically involved Indigenous Knowledge & Science, some responses indicated that this should be integrated in this project, which we intend to do.
-                </p>
-                <div className="mt-4 flex items-center text-teal-600 group-hover:text-teal-700">
-                  <span className="text-sm font-medium">Explore Theme</span>
-                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            </Link>
-          </div>
-        </section>
-
-        {/* Next Steps Summary */}
-        <section>
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-2xl shadow-lg p-8 border border-green-200">
-            <h2 className="text-2xl font-semibold text-green-900 mb-6">Next Steps</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-semibold text-green-800 mb-4">Immediate Actions</h3>
-                <ul className="space-y-3 text-green-700">
-                  <li className="flex items-start">
-                    <span className="text-green-600 mr-3 mt-1">📋</span>
-                    Develop dual standards for benthic and bioaccumulation protection
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-green-600 mr-3 mt-1">📋</span>
-                    Expand list of regulated contaminants including emerging substances
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-green-600 mr-3 mt-1">📋</span>
-                    Establish tiered assessment framework with clear guidance
-                  </li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-green-800 mb-4">Implementation Support</h3>
-                <ul className="space-y-3 text-green-700">
-                  <li className="flex items-start">
-                    <span className="text-green-600 mr-3 mt-1">📋</span>
-                    Create comprehensive guidance documents and decision trees
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-green-600 mr-3 mt-1">📋</span>
-                    Develop training programs for regulators and practitioners
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-green-600 mr-3 mt-1">📋</span>
-                    Establish regional background concentration databases
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </section>
       </div>
     </div>
   );

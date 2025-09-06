@@ -33,7 +33,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Hero Header with Aquatic Theme */}
       <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white shadow-2xl relative overflow-hidden">
         {/* Aquatic Texture Overlay */}
@@ -68,9 +68,9 @@ export default async function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
         {/* Project Context Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 mb-12 border border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-12 border border-gray-100 dark:border-gray-700">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">
               About the Sediment Standards Project
             </h2>
             
@@ -82,11 +82,11 @@ export default async function DashboardPage() {
                     <span className="text-2xl">🏛️</span>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-3">Project Overview</h3>
-                    <p className="text-gray-700 leading-relaxed mb-4">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Project Overview</h3>
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
                       The Science Advisory Board for Contaminated Sites (SABCS) has partnered with the BC Ministry of Environment & Parks to collaboratively develop a scientific framework for modernizing the CSR standards.
                     </p>
-                    <p className="text-gray-700 leading-relaxed">
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                       The Science & Standards Technical Advisory Committee (SSTAC) is leading the Sediment Standards Project, which integrates best-available science to protect aquatic ecosystems and the communities that depend on them.
                     </p>
                   </div>
@@ -111,33 +111,33 @@ export default async function DashboardPage() {
 
         {/* Quick Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <div className="bg-white rounded-2xl shadow-lg p-6 text-center border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 text-center border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl">📊</span>
             </div>
             <div className="text-3xl font-bold text-blue-600 mb-2">7</div>
-            <div className="text-gray-600 text-sm font-medium">Project Milestones</div>
+            <div className="text-gray-600 dark:text-gray-300 text-sm font-medium">Project Milestones</div>
           </div>
-          <div className="bg-white rounded-2xl shadow-lg p-6 text-center border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 text-center border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl">📝</span>
             </div>
             <div className="text-3xl font-bold text-green-600 mb-2">61</div>
-            <div className="text-gray-600 text-sm font-medium">Survey Responses</div>
+            <div className="text-gray-600 dark:text-gray-300 text-sm font-medium">Survey Responses</div>
           </div>
-          <div className="bg-white rounded-2xl shadow-lg p-6 text-center border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 text-center border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl">📢</span>
             </div>
             <div className="text-3xl font-bold text-purple-600 mb-2">3</div>
-            <div className="text-gray-600 text-sm font-medium">Active Announcements</div>
+            <div className="text-gray-600 dark:text-gray-300 text-sm font-medium">Active Announcements</div>
           </div>
-          <div className="bg-white rounded-2xl shadow-lg p-6 text-center border border-gray-100 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 text-center border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-2xl">🎯</span>
             </div>
             <div className="text-3xl font-bold text-orange-600 mb-2">Dec 2025</div>
-            <div className="text-gray-600 text-sm font-medium">Phase 1 Completion</div>
+            <div className="text-gray-600 dark:text-gray-300 text-sm font-medium">Phase 1 Completion</div>
           </div>
         </div>
         
@@ -174,18 +174,20 @@ export default async function DashboardPage() {
 
         {/* Quick Navigation */}
         <section className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Quick Navigation</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-8 mx-auto max-w-md">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white text-center">Quick Navigation</h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Survey Results */}
             <Link href="/survey-results" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-blue-300">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500">
                 <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-200 transition-colors">
                   <span className="text-3xl">📊</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-3">
                   Survey
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   Explore comprehensive stakeholder feedback and expert insights on modernizing BC sediment standards.
                 </p>
               </div>
@@ -197,10 +199,10 @@ export default async function DashboardPage() {
                 <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-200 transition-colors">
                   <span className="text-3xl">🌊</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 group-hover:text-green-600 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors mb-3">
                   CEW
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   Session details and conference information for the Canadian Ecotoxicity Workshop 2025 in Victoria.
                 </p>
               </div>
@@ -212,10 +214,10 @@ export default async function DashboardPage() {
                 <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-200 transition-colors">
                   <span className="text-3xl">📋</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 group-hover:text-purple-600 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors mb-3">
                   Documents
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   Access and manage Technical Working Group documents, reports, and technical materials.
                 </p>
               </div>
@@ -227,10 +229,10 @@ export default async function DashboardPage() {
                 <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-200 transition-colors">
                   <span className="text-3xl">💬</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 group-hover:text-orange-600 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors mb-3">
                   Forum
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   Engage in technical discussions and collaborate with stakeholders on sediment standards.
                 </p>
               </div>
@@ -242,10 +244,10 @@ export default async function DashboardPage() {
                 <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-amber-200 transition-colors">
                   <span className="text-3xl">🌿</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 group-hover:text-amber-600 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors mb-3">
                   WIKS
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   Explore the strategic plan to integrate Indigenous-led WQCIU framework into BC's modernized sediment standards.
                 </p>
               </div>
@@ -257,10 +259,10 @@ export default async function DashboardPage() {
                 <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-red-200 transition-colors">
                   <span className="text-3xl">⚙️</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 group-hover:text-red-600 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors mb-3">
                   Admin
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   Access the admin dashboard to manage users, announcements, milestones, and system settings (Admin access required).
                 </p>
               </div>
@@ -272,10 +274,10 @@ export default async function DashboardPage() {
                 <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-teal-200 transition-colors">
                   <span className="text-3xl">📚</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 group-hover:text-teal-600 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors mb-3">
                   Project Resources
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   Access project documentation, research materials, and technical resources.
                 </p>
               </div>
@@ -334,17 +336,17 @@ export default async function DashboardPage() {
 
         {/* Contact Information */}
         <section className="mb-12">
-          <div className="bg-white rounded-2xl shadow-xl p-10 border border-gray-100">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Get in Touch</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-10 border border-gray-100 dark:border-gray-700">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">Get in Touch</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
               <div>
                 <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">📧</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Email Support</h3>
-                <div className="text-gray-600 space-y-3">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Email Support</h3>
+                <div className="text-gray-600 dark:text-gray-300 space-y-3">
                   <div>
-                    <strong className="text-gray-800">SABCS:</strong>{' '}
+                    <strong className="text-gray-800 dark:text-gray-200">SABCS:</strong>{' '}
                     <a 
                       href="mailto:info@sabcs.ca" 
                       className="text-blue-600 hover:text-blue-800 underline font-medium"
@@ -367,8 +369,8 @@ export default async function DashboardPage() {
                 <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">📋</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Project Updates</h3>
-                <p className="text-gray-600 leading-relaxed">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Project Updates</h3>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   Stay informed about project progress and milestones
                 </p>
               </div>
@@ -376,8 +378,8 @@ export default async function DashboardPage() {
                 <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">🤝</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-4">Stakeholder Engagement</h3>
-                <p className="text-gray-600 leading-relaxed">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Stakeholder Engagement</h3>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   Participate in discussions and provide feedback
                 </p>
               </div>

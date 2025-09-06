@@ -1,0 +1,253 @@
+Of course. Here is the content from the provided presentations in markdown format.
+
+# Presentation 1: Holistic Protection of Aquatic Ecosystems: Developing a Scientific Framework to Modernize Sediment Standards
+
+[cite_start]**Presenters:** Jasen Nelson & Marc Cameron [cite: 5]  
+[cite_start]**Affiliation:** Science Advisory Board for Contaminated Sites in BC (SABCS), Science and Standards Technical Advisory Committee [cite: 6, 7]
+
+---
+
+## Sediment Standards Project - Phase 1 Overview
+
+[cite_start]This project is a collaborative effort to develop a scientific framework for modernizing sediment standards. [cite: 10, 11]
+
+### [cite_start]Phase 1 (2025) Deliverables [cite: 11]
+* [cite_start]High-Level Summary (White Paper) [cite: 12]
+* [cite_start]Scoping Plan (Roadmap) [cite: 13]
+
+### [cite_start]SABCS White Paper Components [cite: 14]
+* [cite_start]Preliminary Scientific Review [cite: 16]
+* [cite_start]Jurisdictional Scan [cite: 16]
+* [cite_start]Interim Scientific Framework [cite: 17]
+* [cite_start]Community Engagement (Survey, Interactive Session at CEW, Technical Working Groups) [cite: 17, 19, 20, 21]
+* [cite_start]Prioritization Framework [cite: 21]
+* [cite_start]Strategic Planning and Recommendations [cite: 25]
+
+### Today's Session
+[cite_start]The goal of this session is to gather insights to inform the framework's development. [cite: 22] [cite_start]Your expertise is invaluable. [cite: 24] We will cover:
+* [cite_start]An overview of the project [cite: 23]
+* [cite_start]Survey results [cite: 23]
+* [cite_start]Four key themes [cite: 23]
+
+---
+
+## The Context: Why Update Now? Why Together?
+
+
+* [cite_start]**Current Limitations:** Schedule 3.4 standards are lacking bioavailability metrics and do not offer explicit protection for the food chain. [cite: 28]
+* [cite_start]**Scientific Advancements:** New understandings of bioaccumulation, emerging contaminants, and mixtures necessitate updates. [cite: 30]
+* [cite_start]**Collaborative Solution:** These complex challenges require shared understanding and diverse expertise. [cite: 32]
+
+---
+
+## Proposed Core Framework
+
+[cite_start]The proposed framework is designed to be modern, holistic, and inclusive of diverse needs. [cite: 34, 35]
+
+
+### Matrix Sediment Standards Framework
+[cite_start]This approach uses separate standards to protect both ecological and human health across two pathways: **direct contact** and the **food web**. [cite: 38]
+
+### Tiered Approach
+[cite_start]This includes a scientific framework that allows for site-specific adjustments of the matrix sediment standards. [cite: 40]
+
+---
+
+## Survey Overview & Key Messages
+
+[cite_start]A survey was conducted to gather expert feedback from environmental professionals and the community to kickstart the scoping phase of the project. [cite: 42, 43, 46, 47]
+
+* [cite_start]**Methodology:** An online survey ran from May 30 to July 31, 2025, receiving 61 total responses. [cite: 49, 50]
+* [cite_start]**Respondents:** The audience was highly experienced, with over 70% being "Familiar" or "Very Familiar" with current standards. [cite: 54, 55]
+
+### Key Message #1: Strong Mandate for Change
+The survey revealed strong support for modernizing the standards.
+* [cite_start]**88%** support modernization. [cite: 58, 59]
+* [cite_start]**73%** feel the current standards offer inadequate protection. [cite: 72, 73]
+* [cite_start]**59.5%** of respondents found the current standards to be "Not Effective." [cite: 75, 76]
+
+### Key Message #2: Clear Roadmap for Modernization
+There was clear agreement on the path forward.
+* [cite_start]**95%** support expanding the contaminant list. [cite: 90, 92]
+* [cite_start]**91%** support incorporating bioavailability. [cite: 91, 93]
+* [cite_start]**86%** see a formal tiered framework as beneficial. [cite: 94, 96]
+* [cite_start]**83%** view a dual standard (ecological and human health) as necessary. [cite: 95, 97]
+
+---
+
+## Engagement Themes
+
+[cite_start]Today's session will focus on four key themes through presentations and interactive discussions. [cite: 99, 121]
+
+1.  [cite_start]**Matrix Sediment Standards:** A holistic protection approach for aquatic ecosystems. [cite: 100, 101, 102, 103, 104]
+2.  [cite_start]**Developing a Tiered Framework:** Integrating site-specific data. [cite: 105, 108, 110]
+3.  [cite_start]**Prioritizing Sediment Standards:** Discussing approaches and options. [cite: 106, 107, 109, 111, 112, 113, 114]
+4.  [cite_start]**Weaving Indigenous Knowledge & Science:** Integrating Indigenous wisdom into the standards. [cite: 115, 116, 117, 118, 119]
+
+---
+
+## The Path Forward
+
+* [cite_start]**SABCS White Paper:** Feedback from community engagement will be used to refine the Interim Scientific Framework and develop a Prioritization Framework, to be finalized in December 2025. [cite: 176, 177, 178]
+* [cite_start]**Scoping Plan & Roadmap:** A proposal for Phase 2 of the project will be developed based on the White Paper. [cite: 180, 181]
+* [cite_start]**Technical Working Groups:** Focused research groups will be established based on prioritized topics. [cite: 182, 183]
+* [cite_start]**Expanded Engagement:** Engagement with stakeholders and potential research partners will continue. [cite: 184, 185]
+
+***
+
+# Presentation 2: Defining Holistic Protection: A Matrix Sediment Standards Framework
+
+[cite_start]**Presenters & Facilitators:** Beth Power & Jasen Nelson [cite: 426]  
+[cite_start]**Affiliation:** Science Advisory Board for Contaminated Sites in BC, Sediment Science and Technical Advisory Committee [cite: 427, 428]
+
+---
+
+## Why "Holistic Protection" Matters
+
+* [cite_start]**Current Standards:** Current standards are based on direct toxicity to amphipods and are only assumed to be protective of other organisms. [cite: 431]
+* [cite_start]**Ecosystem Integrity:** True protection requires ensuring the health of all organisms, from bottom-dwellers to those in the water column. [cite: 433]
+* [cite_start]**Food Pathway Toxicity:** Contaminants can move through food webs, impacting fish, wildlife, and people who consume aquatic organisms. [cite: 435]
+
+
+### Key Messages from Survey on Bioaccumulation
+* [cite_start]**73%** of respondents found the current standards to be "Not Effective" or "Slightly Effective" at preventing bioaccumulation. [cite: 438, 439]
+* [cite_start]**76.7%** felt that addressing bioaccumulation is moderately to very necessary/essential in future standards. [cite: 445, 446]
+
+> [cite_start]"The BC CSR sediment standards are not appropriate or adequate to protect upper trophic level organisms, apex predators and humans at the top of foodwebs..." [cite: 452]
+
+> [cite_start]"True sediment COCs are not always identified as bioaccumulation is not considered at the investigation stage." [cite: 453]
+
+---
+
+## Matrix Sediment Standards (SedS) Framework
+
+[cite_start]This framework is designed to provide holistic protection by addressing different exposure pathways for both ecological and human health. [cite: 217]
+
+
+* **Direct Toxicity (SedS-direct)**
+    * [cite_start]**SedS-directECO:** Protects aquatic organisms from direct exposure to contaminants in sediment. [cite: 238, 239]
+    * [cite_start]**SedS-directHH:** Protects people from risks associated with direct contact (e.g., ingestion, dermal contact) during recreational or cultural activities. [cite: 240, 241]
+* **Food Pathway Toxicity (SedS-food)**
+    * [cite_start]**SedS-foodECO:** Protects piscivorous wildlife (like otters, eagles, and orcas) from the bioaccumulation and biomagnification of contaminants. [cite: 243, 244]
+    * [cite_start]**SedS-foodHH:** Protects humans who consume fish, shellfish, and other aquatic foods. [cite: 245, 246]
+
+### Integrating Advanced Science
+Deriving values for the matrix requires advanced scientific tools:
+* [cite_start]**Species Sensitivity Distributions (SSDs):** Statistical models used for SedS-directECO. [cite: 478, 479, 488]
+* [cite_start]**Biota-Sediment Accumulation Factors (BSAFs):** Ratios that quantify how contaminants move from sediment into organisms. [cite: 480, 482]
+* [cite_start]**Food-Web Models (FWMs):** Simulations of contaminant transfer through entire ecosystems. [cite: 483]
+* [cite_start]**Bioaccumulation Based Sediment Guideline Values (BBSGV):** Risk-based estimates protective of the food exposure pathway. [cite: 484, 485]
+
+[cite_start]These tools (BBSGVs, BSAFs, FWMs) are essential for deriving the SedS-food standards. [cite: 488]
+
+***
+
+# Presentation 3: Expanding the Tiered Framework: Site-Specific Numerical Sediment Standards
+
+[cite_start]**Presenters:** Wayne Landis, Jasen Nelson [cite: 523]  
+[cite_start]**Facilitators:** Jennifer Trowell, Geoff Wickstrom, Marc Cameron, Shannon Bard [cite: 524]  
+[cite_start]**Affiliation:** Science Advisory Board for Contaminated Sites in BC, Science and Standards Technical Advisory Committee [cite: 525, 526]
+
+---
+
+## Why a Tiered Framework?
+
+[cite_start]A tiered framework allows for more adaptable and effective sediment management. [cite: 531]
+
+* [cite_start]**Current Limitations:** Generic, fixed concentration standards don't account for environmental factors that affect toxicity, which can lead to assessments that are either too conservative or not protective enough. [cite: 529]
+* [cite_start]**Adaptable Approach:** Site-specific standards (a Tier 2 option) reduce uncertainty and streamline assessments by using site conditions instead of conservative assumptions. [cite: 531]
+* [cite_start]**Enhanced Protection:** This approach supports better decision-making, leading to improved environmental outcomes and more effective use of resources. [cite: 534]
+
+### Key Messages from Survey
+* [cite_start]**86.4%** of respondents found a tiered framework would be beneficial. [cite: 536, 537]
+* [cite_start]**88.1%** felt that incorporating bioavailability adjustments is important or essential. [cite: 541, 542]
+
+> [cite_start]"Exceeding a standard for a particular substance is almost irrelevant without the context of bioavailability..." [cite: 549]
+
+> [cite_start]"The bioavailability in sediment helps us understand not just how much contaminant is present, but whether it is causing harm...This distinction is required to make informed decisions..." [cite: 550]
+
+---
+
+## Proposed Three-Tier Framework
+
+
+* **Tier 1: Screening Level Numerical Assessment**
+    * [cite_start]Uses conservative, generic standards for initial site screening to quickly identify sites needing more assessment. [cite: 227]
+* **Tier 2a: Refined Numerical Assessment**
+    * [cite_start]Uses models and procedures (e.g., Cause-Effect) to derive site-specific standards, primarily for bioavailability adjustments. [cite: 229, 230]
+* **Tier 2b: Screening-Level Risk-Based Assessment**
+    * [cite_start]Similar to Tier 2a but adds prescribed lines of evidence, such as community analysis. [cite: 232]
+* **Tier 3: Detailed Risk-Based Assessment**
+    * [cite_start]A full risk assessment using multiple lines of evidence and site-specific factors. [cite: 234, 235]
+
+***
+
+# Presentation 4: Modernizing BC's Sediment Standards: Prioritizing Approaches & Options
+
+[cite_start]**Presenters:** Gary Lawrence, Beth Power, Jasen Nelson [cite: 197]  
+[cite_start]**Facilitators:** Jennifer Trowell, Geoff Wickstrom, Marc Cameron, Shannon Bard [cite: 198]  
+[cite_start]**Affiliation:** Science Advisory Board for Contaminated Sites in BC, Sediment Science and Technical Advisory Committee [cite: 199, 200]
+
+---
+
+## Key Areas for Modernization
+
+[cite_start]Modernizing the framework requires focusing on several key areas to ensure standards are protective, practical, and aligned with the best science. [cite: 209, 210]
+
+* [cite_start]**Tiered, Site-Specific Approach:** Moving beyond fixed standards to adaptable, risk-based assessments that account for local conditions. [cite: 212]
+* [cite_start]**Matrix Sediment Standards Framework:** Protecting both ecological organisms and people from direct and food-web toxicity. [cite: 217]
+* [cite_start]**Emerging Contaminants & Mixtures:** Addressing non-scheduled substances (like pharmaceuticals, personal care products, and industrial chemicals) and their combined effects. [cite: 219, 259, 261]
+* [cite_start]**Data Availability:** Launching collaborative studies to fill data gaps, such as determining regional background levels and incorporating Indigenous Knowledge. [cite: 221]
+* [cite_start]**Feasibility & Prioritization Framework:** Developing a systematic approach for strategic planning that considers feasibility and data reliability. [cite: 223]
+
+---
+
+## Modernization Priorities: Poll Questions
+
+A series of poll questions were presented to gather expert opinion on prioritizing the next steps. The topics included:
+
+* [cite_start]**Feasibility:** Ranking criteria such as data adequacy, need for new technology, complexity, and likelihood of success. [cite: 275]
+* [cite_start]**Timeframe:** Ranking considerations like focusing on short-term progress vs. long-term strategic goals. [cite: 282]
+* [cite_start]**Approaches:** Ranking the priority of developing a site-specific framework, an ecological protection matrix, a human health protection matrix, or standards for new contaminants. [cite: 289]
+* [cite_start]**Mixtures:** Ranking the scientific defensibility of different approaches, such as a simple additive model or site-specific toxicity testing. [cite: 295]
+* [cite_start]**Mid-term Research (3-5 years):** Ranking objectives like creating a bioavailability framework for metals, standardizing methods for emerging contaminants, or generating new toxicity data for legacy contaminants. [cite: 302]
+* [cite_start]**Long-term Research (5+ years):** Ranking foundational research areas like studying ecosystem-level impacts of chronic exposure or investigating the effect of climate change on contaminant toxicity. [cite: 309]
+* [cite_start]**Bioavailability:** Ranking the most promising scientific approaches, such as equilibrium partitioning models or direct measurement with passive sampling devices. [cite: 318]
+* [cite_start]**Contaminants:** Ranking the most pressing class of emerging compounds, such as PFAS, microplastics, pesticides, or pharmaceuticals. [cite: 325]
+
+***
+
+# Presentation 5: Weaving Indigenous Knowledges into Sediment Standards
+
+---
+
+## Bridging from Vision to Action
+
+[cite_start]Modern sediment standards must be holistic, place-based, and respectfully braid Indigenous wisdom with Western science. [cite: 359] [cite_start]This involves embracing concepts like **'Two-Eyed Seeing'** and recognizing that waters and lands are kin. [cite: 358]
+
+[cite_start]A precedent-setting example is the **Tsleil-Waututh Nation's** work on the Burrard Inlet Water Quality Objectives, which demonstrates a successful government-to-government process that weaves knowledge to create numerical values protective of cultural practices, like the ability to safely harvest shellfish. [cite: 360, 361]
+
+[cite_start]The goal is to apply these principles to the scientific framework for modernizing BC's sediment standards. [cite: 363]
+
+
+---
+
+## Opportunities for Braiding Knowledge & Science
+
+[cite_start]There are potential opportunities for weaving Indigenous Knowledges & Science (IK&S) into the project. [cite: 366]
+
+### Holistic Protection Approach
+* [cite_start]**The IK&S Opportunity:** This involves re-visioning the conceptual exposure model to answer the question: What does it mean to protect Indigenous Uses? [cite: 369] [cite_start]This could mean defining "health" to include the well-being of culturally significant species and the ability for communities to maintain their relationship with the water. [cite: 370]
+
+### Tiered, Site-Specific Approach
+* [cite_start]**The IK&S Opportunity:** A collaborative study to gather area-based knowledge could be a good first step. [cite: 373] [cite_start]This could support a cause-effect approach to better understand real-world conditions, including cumulative effects, complex mixtures, and Indigenous Uses. [cite: 374]
+
+---
+
+## Key Questions & Polls
+
+Discussion and polls focused on how to practically integrate IK&S into the scientific framework.
+
+* **Poll 1: A Braided Baseline Study:** Asked for the most effective starting point for a study combining co-located sampling with area-based IK&S. [cite_start]Options included co-developing a conceptual site model first, conducting a comprehensive data review, or starting with a collaborative pilot study. [cite: 387, 388, 389, 390]
+* **Poll 2: Enhancing Scientific Protection Goals:** Explored how to incorporate Indigenous Stewardship principles like 'connectedness of all life.' [cite_start]Scientific approaches included using food-web models, developing Species Sensitivity Distributions with culturally significant species, and setting protective tissue residue guidelines. [cite: 398, 399, 400, 401]
+* **Poll 3: A Braided Tiered Approach in Practice:** Asked where place-based Indigenous Knowledge could provide the most direct scientific value in modifying a generic value to be site-specific. [cite_start]Options included informing bioavailability models, identifying sensitive local species, and characterizing unique exposure pathways. [cite: 408, 409, 410, 411]

@@ -9,6 +9,7 @@ import { createClient } from '@/components/supabase-client';
  */
 export async function refreshGlobalAdminStatus(): Promise<boolean> {
   try {
+
     const supabase = createClient();
     
     // Get current user

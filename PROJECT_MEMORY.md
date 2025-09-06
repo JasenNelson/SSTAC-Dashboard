@@ -1,5 +1,63 @@
 # 🧠 SSTAC & TWG Dashboard Project Memory
 
+## 🚨 Critical Debugging Incident (2025-01-XX)
+
+### Theme System CSS Specificity Issues
+**LESSON LEARNED**: CSS specificity is critical for theme systems - use high-specificity selectors to override conflicting styles.
+
+#### What Happened
+- Implemented dark/light mode theme system with React Context API
+- Theme toggle was working (console logs confirmed theme switching)
+- Landing page background remained dark blue in light mode despite CSS rules
+- Multiple attempts with different CSS approaches failed
+- Issue persisted for hours of debugging
+
+#### Root Cause
+- **CSS Specificity Problem**: Original selectors like `.light body` were being overridden
+- **Solution Required**: High-specificity selectors like `html.light body`
+- **Key Discovery**: Used bright red background (`#ff0000`) for testing to confirm CSS was loading
+
+#### Key Takeaway
+- **CSS Specificity Matters**: Higher specificity selectors override lower ones
+- **Test with Obvious Colors**: Use bright, obvious colors for debugging
+- **Target Multiple Elements**: Don't assume one element controls the background
+- **Verify Theme Application**: Check that theme classes are actually applied
+
+#### Final Solution
+```css
+/* High-specificity selectors that work */
+html.light,
+html.light body,
+html.light #__next,
+html.light .min-h-screen {
+  background-color: #f8fafc !important;
+  background: #f8fafc !important;
+}
+```
+
+## 🚨 Critical Debugging Incident (2025-09-05)
+
+### Discussions Page Failure Due to Over-Optimization
+**LESSON LEARNED**: Never optimize working systems without explicit user request and clear justification.
+
+#### What Happened
+- Added throttling to `refreshGlobalAdminStatus()` to reduce "excessive" calls
+- This broke the discussions page by preventing legitimate database queries
+- User correctly identified that page was working before our changes
+- Required extensive debugging to identify root cause
+
+#### Key Takeaway
+- **"If it ain't broke, don't fix it"** - Working systems should not be modified without clear need
+- **Trust user feedback** - User knew exactly when the problem started
+- **Measure first** - Should have verified if performance issues actually existed
+- **Test in isolation** - Changes should be tested separately before applying broadly
+
+#### Prevention
+- Always ask "why?" before making optimizations
+- Test changes in separate branches first
+- Have rollback plans ready
+- Document dependencies between systems
+
 ## 🔐 Critical Authentication Knowledge
 
 ### Supabase Authentication System

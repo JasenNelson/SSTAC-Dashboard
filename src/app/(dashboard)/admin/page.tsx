@@ -62,7 +62,8 @@ export default async function AdminDashboardPage() {
     totalDiscussionThreads: 15,
     activeAnnouncements: 3,
     totalMilestones: 7,
-    completedMilestones: 4
+    completedMilestones: 4,
+    totalPollVotes: 0
   };
 
   return <AdminDashboardClient metrics={metrics} />;

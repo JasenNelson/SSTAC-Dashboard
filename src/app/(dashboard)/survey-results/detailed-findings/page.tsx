@@ -44,10 +44,10 @@ export default function DetailedFindingsPage() {
   ];
 
   const recommendedApproachesData = [
-    { label: 'Expand Contaminant List', value: 54, color: '#3B82F6', description: 'Include emerging contaminants and PFAS' },
-    { label: 'Incorporate Bioavailability', value: 52, color: '#10B981', description: 'Site-specific bioavailability adjustments' },
-    { label: 'Formal Tiered Framework', value: 49, color: '#8B5CF6', description: 'Structured assessment approach' },
-    { label: 'Dual Standard Approach', value: 47, color: '#6366F1', description: 'Separate benthic and bioaccumulation standards' },
+    { label: 'Expand Contaminant List', value: 95, color: '#3B82F6', description: 'Include emerging contaminants and PFAS' },
+    { label: 'Incorporate Bioavailability', value: 91, color: '#10B981', description: 'Site-specific bioavailability adjustments' },
+    { label: 'Formal Tiered Framework', value: 86, color: '#8B5CF6', description: 'Structured assessment approach' },
+    { label: 'Dual Standard Approach', value: 83, color: '#6366F1', description: 'Separate benthic and bioaccumulation standards' },
   ];
 
   const dualStandardData = [

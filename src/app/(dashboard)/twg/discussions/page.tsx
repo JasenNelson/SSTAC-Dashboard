@@ -1,7 +1,7 @@
 // src/app/(dashboard)/twg/discussions/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createClient } from '@/components/supabase-client';
 import type { Session } from '@supabase/supabase-js';
 import Link from 'next/link';
@@ -20,18 +20,24 @@ type DiscussionSummary = {
 export default function TwgDiscussionsPage() {
   console.log('🚀 TwgDiscussionsPage component rendering...');
   console.log('🔧 Component function called at:', new Date().toISOString());
+  console.log('🔧 Component mounting - about to set up state');
+  console.log('🔧 ===== COMPONENT MOUNTING =====');
   
   const [discussions, setDiscussions] = useState<DiscussionSummary[]>([]);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  console.log('🔧 State initialized - discussions:', discussions.length, 'session:', !!session, 'isLoading:', isLoading);
   const [showNewForm, setShowNewForm] = useState(false);
-  const supabase = createClient();
+  const supabase = useRef(createClient()).current;
+  const fetchDiscussionsRef = useRef<() => Promise<void>>(() => Promise.resolve());
   
   console.log('🔧 Component state - discussions:', discussions.length, 'session:', !!session, 'isLoading:', isLoading);
 
   const fetchDiscussions = useCallback(async () => {
     try {
-      console.log('🔍 Fetching discussions...');
+      console.log('🔍 fetchDiscussions function called - starting...');
+      console.log('🔍 Supabase client:', !!supabase);
       
       // First, let's test if the table exists with a simple count query
       console.log('🔍 Testing if discussions table exists...');
@@ -40,7 +46,6 @@ export default function TwgDiscussionsPage() {
         .select('*', { count: 'exact', head: true });
       
       console.log('🔍 Table test result - count:', count, 'error:', countError);
-      
       if (countError) {
         console.error('❌ Table test failed:', countError);
         setDiscussions([]);
@@ -112,45 +117,48 @@ export default function TwgDiscussionsPage() {
       setDiscussions(discussionsWithStats);
     } catch (error) {
       console.error('❌ Exception fetching discussions:', error);
+      console.error('❌ Error details:', error);
       setDiscussions([]);
     }
-  }, [supabase]);
+  }, []); // No dependencies since supabase is now stable
+
+  // Store the function in a ref to avoid dependency issues
+  fetchDiscussionsRef.current = fetchDiscussions;
 
   useEffect(() => {
-    console.log('🔧 useEffect triggered - starting initialization');
-    
-    const initializePage = async () => {
+    try {
+      console.log('🔧 ===== useEffect STARTING =====');
+      console.log('🔧 useEffect triggered - starting initialization');
+      console.log('🔧 fetchDiscussionsRef.current exists:', !!fetchDiscussionsRef.current);
+      
+      const initializePage = async () => {
       try {
         console.log('🔧 initializePage function called');
         // First, check if we already have a session
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
         console.log('🔍 Current session check:', currentSession);
+        console.log('🔍 Session error:', sessionError);
         
         if (currentSession) {
-          // Check if user has a role
-          const { data: roleData } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', currentSession.user.id)
-            .single();
-          
-          if (roleData) {
-            console.log('✅ User has role:', roleData.role);
-            setSession(currentSession);
-            console.log('🔧 About to call fetchDiscussions...');
-            await fetchDiscussions();
-            console.log('🔧 fetchDiscussions completed');
+          console.log('✅ User is authenticated, setting session');
+          setSession(currentSession);
+          console.log('🔧 About to call fetchDiscussions...');
+          console.log('🔧 fetchDiscussionsRef.current exists:', !!fetchDiscussionsRef.current);
+          if (fetchDiscussionsRef.current) {
+            console.log('🔧 Calling fetchDiscussions...');
+            await fetchDiscussionsRef.current();
+            console.log('🔧 fetchDiscussions call completed');
           } else {
-            console.log('❌ User does not have a role');
-            setSession(null);
+            console.log('❌ fetchDiscussionsRef.current is undefined');
           }
+          console.log('🔧 fetchDiscussions completed');
         } else {
           console.log('ℹ️ No current session found');
+          // Still set loading to false even if no session
+          setIsLoading(false);
         }
       } catch (error) {
         console.error('❌ Initial session check error:', error);
-      } finally {
-        console.log('🔧 Setting isLoading to false');
         setIsLoading(false);
       }
     };
@@ -167,36 +175,31 @@ export default function TwgDiscussionsPage() {
       console.log('🔄 Auth state change:', event, session);
       
       if (session) {
-        // Check if user has a role
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .single();
-        
-        if (roleData) {
-          console.log('✅ User has role:', roleData.role);
-          setSession(session);
-          console.log('🔄 Auth state change - fetching discussions...');
-          try {
-            await fetchDiscussions();
-          } catch (error) {
-            console.error('❌ Auth state change discussions fetch error:', error);
+        console.log('✅ User is authenticated, setting session');
+        setSession(session);
+        console.log('🔄 Auth state change - fetching discussions...');
+        try {
+          if (fetchDiscussionsRef.current) {
+            await fetchDiscussionsRef.current();
           }
-        } else {
-          console.log('❌ User does not have a role');
-          setSession(null);
+        } catch (error) {
+          console.error('❌ Auth state change discussions fetch error:', error);
         }
       } else {
         setSession(null);
       }
     });
 
-    return () => {
-      clearTimeout(timeoutId);
-      subscription.unsubscribe();
-    };
-  }, [fetchDiscussions]);
+      return () => {
+        clearTimeout(timeoutId);
+        subscription.unsubscribe();
+      };
+    } catch (error) {
+      console.error('❌ useEffect error:', error);
+    }
+  }, []); // Remove fetchDiscussions dependency to prevent infinite loops
+  
+  console.log('🔧 ===== useEffect COMPLETED =====');
 
   const handleDiscussionCreated = useCallback(() => {
     console.log('🔄 handleDiscussionCreated called');
@@ -262,6 +265,7 @@ export default function TwgDiscussionsPage() {
   }
 
   console.log('🎯 Render state - session:', !!session, 'discussions:', discussions.length, 'discussions data:', discussions);
+  console.log('🔧 ===== COMPONENT RENDERING =====');
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

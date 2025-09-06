@@ -5,23 +5,44 @@ This document provides specific instructions for AI assistants working on the SS
 
 ## Core Development Principles
 
-### 1. Architecture Adherence
+### 1. "If It Ain't Broke, Don't Fix It" (CRITICAL)
+- **NEVER optimize working systems** without explicit user request and clear justification
+- **ALWAYS verify the problem exists** before implementing solutions
+- **MEASURE before and after** to ensure changes actually improve things
+- **TRUST user feedback** about when things were working
+- **HISTORICAL CONTEXT**: AI previously added throttling to `refreshGlobalAdminStatus()` which broke the discussions page
+
+### 2. "First, Do No Harm"
+- **TEST changes in isolation** before applying them broadly
+- **UNDERSTAND dependencies** before modifying core functions
+- **HAVE rollback plans** ready for any changes
+- **ASK "what changed?"** when issues arise
+
+### 3. Architecture Adherence
 - **Follow Next.js 15+ App Router patterns** strictly
 - **Use Server Components** for authentication and initial data loading
 - **Use Client Components** for interactive UI and state management
 - **Implement API Route Architecture** for client-server communication
 
-### 2. Admin Badge Persistence
+### 4. Admin Badge Persistence
 - **Never allow admin badge to disappear** after operations
 - **Implement comprehensive admin status management** in all admin components
 - **Use the global refresh function** `refreshGlobalAdminStatus()` after CRUD operations
 - **Include localStorage backup** for temporary database issues
 
-### 3. Component Architecture
+### 5. Component Architecture
 - **Server Components**: Handle authentication, database queries, and initial rendering
 - **Client Components**: Handle user interactions, state management, and real-time updates
 - **API Routes**: Bridge between client components and server actions
 - **Server Actions**: Handle database operations with proper validation
+
+### 6. Performance Optimization Guidelines (CRITICAL)
+- **MEASURE FIRST**: Check if performance issues actually exist before optimizing
+- **ISOLATE TESTING**: Test optimizations in separate branches first
+- **USER CONSULTATION**: Ask if "excessive" calls are actually problematic
+- **GRADUAL ROLLOUT**: Implement optimizations as optional features first
+- **NEVER modify core functions** without understanding all dependencies
+- **ALWAYS have rollback plans** for any performance changes
 
 ## File Structure Requirements
 
@@ -205,6 +226,9 @@ export default async function AdminPage() {
 - **Proper error messages** for user feedback
 - **Rollback mechanisms** for failed operations
 - **Logging** for debugging and monitoring
+- **CRITICAL: Always conduct safety checks** before database modifications
+- **NEVER assume database state** - always verify current structure first
+- **ALWAYS provide rollback scripts** for any database changes
 
 ## Performance Requirements
 
@@ -289,6 +313,12 @@ export default async function AdminPage() {
 - **Solution**: Verify likes table exists with proper constraints and RLS policies
 - **Required**: Check database schema includes likes table and proper indexes
 
+### 8. Database Safety Protocol ✅ NEW
+- **Problem**: AI has previously provided SQL scripts that replaced and duplicated functional database policies, causing significant harm
+- **Solution**: Always conduct comprehensive safety checks before ANY database modifications
+- **Required**: Verify current state, test existing functionality, provide rollback scripts
+- **Critical**: Never assume database state matches documentation
+
 ## Current Development Phase
 
 ### Phase 2: Admin Management System ✅ COMPLETED
@@ -372,3 +402,6 @@ export default async function AdminPage() {
 7. **Use proper error handling** for robust user experience
 8. **Enhanced like system is complete** - build on it, don't rewrite it ✅ NEW
 9. **Authentication improvements are implemented** - follow established patterns ✅ NEW
+10. **CRITICAL: Always conduct database safety checks** before ANY database modifications ✅ NEW
+11. **NEVER assume database state** - always verify current structure first ✅ NEW
+12. **ALWAYS provide rollback scripts** for any database changes ✅ NEW

@@ -1,21 +1,584 @@
 @import "tailwindcss";
 
+/* Cache buster - updated theme fixes */
+
 :root {
-  --background: #ffffff;
+  --background: #f8fafc; /* Tailwind's gray-50 */
   --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --debug-bg: #f8fafc;
+  --text-primary: #111827;
+  --popover-foreground: #171717;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #3b82f6;
+  --radius: 0.5rem;
+  --light-bg: #f8fafc;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+/* Light mode (default) */
+.light {
+  --background: #f8fafc; /* Tailwind's gray-50 */
+  --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #3b82f6;
+}
+
+/* Dark mode */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --card: #1a1a1a;
+  --card-foreground: #ededed;
+  --popover: #1a1a1a;
+  --popover-foreground: #ededed;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  --secondary: #262626;
+  --secondary-foreground: #ededed;
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --accent: #262626;
+  --accent-foreground: #ededed;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #404040;
+  --input: #404040;
+  --ring: #3b82f6;
+}
+
+/* Theme-based background colors with high specificity */
+html.light,
+html.light body,
+html.light #__next,
+html.light .min-h-screen {
+  background-color: #f8fafc !important; /* Light gray-blue for light mode */
+  background: #f8fafc !important;
+}
+
+html.dark,
+html.dark body,
+html.dark #__next,
+html.dark .min-h-screen {
+  background-color: #0a0a0a !important; /* Dark background for dark mode */
+  background: #0a0a0a !important;
+}
+
+/* ========================================
+   SYSTEMATIC THEME SYSTEM
+   ======================================== */
+
+/* Base container backgrounds */
+.light .bg-white {
+  background-color: #ffffff !important;
+}
+
+.dark .bg-white {
+  background-color: #1f2937 !important;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Header backgrounds */
+.light header.bg-white {
+  background-color: #ffffff !important;
+}
+
+.dark header.bg-gray-800 {
+  background-color: #1f2937 !important;
+}
+
+/* Text colors - systematic approach */
+.light .text-gray-900 {
+  color: #111827 !important;
+}
+
+.dark .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+.light .text-gray-700 {
+  color: #374151 !important;
+}
+
+.dark .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+.light .text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.dark .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+.light .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.dark .text-gray-500 {
+  color: #6b7280 !important;
+}
+
+/* Border colors */
+.light .border-gray-200 {
+  border-color: #e5e7eb !important;
+}
+
+.dark .border-gray-200 {
+  border-color: #374151 !important;
+}
+
+/* High-specificity border rules for theme system */
+html.light .border-gray-100 {
+  border-color: #f3f4f6 !important;
+}
+
+html.dark .border-gray-100 {
+  border-color: #374151 !important;
+}
+
+/* Card and container backgrounds */
+.light .bg-white.rounded-2xl {
+  background-color: #ffffff !important;
+}
+
+.dark .bg-white.rounded-2xl {
+  background-color: #1f2937 !important;
+}
+
+/* Status indicators - fix bright green */
+.light .bg-green-100 {
+  background-color: #dcfce7 !important;
+}
+
+.dark .bg-green-100 {
+  background-color: #064e3b !important; /* Dark green instead of bright */
+}
+
+.light .text-green-800 {
+  color: #166534 !important;
+}
+
+.dark .text-green-800 {
+  color: #6ee7b7 !important; /* Light green text for dark mode */
+}
+
+/* ========================================
+   COMPONENT-SPECIFIC FIXES
+   ======================================== */
+
+/* Fix white backgrounds in dark mode - but not on landing page hero section */
+.dark .bg-white:not(.bg-gradient-to-r) {
+  background-color: #1f2937 !important;
+}
+
+.dark .bg-white:not(.bg-gradient-to-r) .text-gray-800,
+.dark .bg-white:not(.bg-gradient-to-r) .text-gray-900 {
+  color: #f9fafb !important;
+}
+
+.dark .bg-white:not(.bg-gradient-to-r) .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+.dark .bg-white:not(.bg-gradient-to-r) .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+/* Project Phases containers - fix dark text on dark blue background */
+.light .bg-gray-50:not(.min-h-screen) {
+  background-color: #f9fafb !important;
+}
+
+.light .bg-gray-50 .text-gray-700 {
+  color: #374151 !important;
+}
+
+.light .bg-gray-50 .text-gray-600 {
+  color: #4b5563 !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #374151 !important;
+}
+
+.dark .bg-gray-50 .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+.dark .bg-gray-50 .text-gray-600 {
+  color: #9ca3af !important;
+}
+
+/* Icon backgrounds - make them neutral for both modes */
+.light .bg-blue-100 {
+  background-color: #f3f4f6 !important; /* Neutral gray */
+}
+
+.dark .bg-blue-100 {
+  background-color: #374151 !important; /* Neutral dark gray */
+}
+
+.light .bg-green-100 {
+  background-color: #f3f4f6 !important; /* Neutral gray */
+}
+
+.dark .bg-green-100 {
+  background-color: #374151 !important; /* Neutral dark gray */
+}
+
+.light .bg-red-100 {
+  background-color: #f3f4f6 !important; /* Neutral gray */
+}
+
+.dark .bg-red-100 {
+  background-color: #374151 !important; /* Neutral dark gray */
+}
+
+/* Make all colored icon backgrounds neutral */
+.light .bg-blue-100,
+.light .bg-green-100,
+.light .bg-red-100,
+.light .bg-yellow-100,
+.light .bg-purple-100,
+.light .bg-indigo-100 {
+  background-color: #f3f4f6 !important; /* Neutral gray */
+}
+
+.dark .bg-blue-100,
+.dark .bg-green-100,
+.dark .bg-red-100,
+.dark .bg-yellow-100,
+.dark .bg-purple-100,
+.dark .bg-indigo-100 {
+  background-color: #374151 !important; /* Neutral dark gray */
+}
+
+/* Priority colors for announcements - neutral dark mode versions like project timeline */
+.dark .bg-red-100 {
+  background-color: #374151 !important; /* Same as project timeline containers */
+  border-color: #4b5563 !important;
+}
+
+.dark .bg-orange-100 {
+  background-color: #374151 !important; /* Same as project timeline containers */
+  border-color: #4b5563 !important;
+}
+
+.dark .bg-yellow-100 {
+  background-color: #374151 !important; /* Same as project timeline containers */
+  border-color: #4b5563 !important;
+}
+
+.dark .text-red-900 {
+  color: #d1d5db !important; /* Same as project timeline text */
+}
+
+.dark .text-orange-900 {
+  color: #d1d5db !important; /* Same as project timeline text */
+}
+
+.dark .text-yellow-900 {
+  color: #d1d5db !important; /* Same as project timeline text */
+}
+
+/* Make announcement priority badges more neutral in dark mode */
+.dark .bg-red-200 {
+  background-color: #4b5563 !important;
+}
+
+.dark .bg-orange-200 {
+  background-color: #4b5563 !important;
+}
+
+.dark .bg-yellow-200 {
+  background-color: #4b5563 !important;
+}
+
+/* Survey engagement section - fix dark mode */
+.dark .bg-gradient-to-br.from-purple-50.to-pink-50 {
+  background: linear-gradient(135deg, #581c87, #be185d) !important;
+}
+
+.dark .text-purple-800 {
+  color: #e9d5ff !important;
+}
+
+.dark .text-purple-700 {
+  color: #c4b5fd !important;
+}
+
+.dark .text-purple-600 {
+  color: #a78bfa !important;
+}
+
+/* ========================================
+   TIMELINE AND STATUS FEATURE FIXES
+   ======================================== */
+
+/* Fix timeline hover states in dark mode */
+.dark .border-blue-300.bg-blue-50 {
+  background-color: #1f2937 !important;
+  border-color: #4b5563 !important;
+}
+
+.dark .border-blue-300.bg-blue-50 .text-gray-800 {
+  color: #f9fafb !important;
+}
+
+.dark .border-blue-300.bg-blue-50 .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+.dark .border-blue-300.bg-blue-50 .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+/* Fix status feature text visibility in dark mode */
+.dark .text-green-100 {
+  color: #ffffff !important;
+}
+
+.dark .text-green-600 {
+  color: #ffffff !important;
+}
+
+.dark .text-orange-600 {
+  color: #ffffff !important;
+}
+
+.dark .text-purple-600 {
+  color: #ffffff !important;
+}
+
+/* Fix status feature backgrounds in dark mode */
+.dark .bg-purple-100 {
+  background-color: #1f2937 !important;
+}
+
+.dark .bg-orange-100 {
+  background-color: #1f2937 !important;
+}
+
+/* Fix CEW Early Bird Notice text in dark mode */
+.dark .bg-gradient-to-r.from-green-500.to-emerald-600 .text-green-100 {
+  color: #ffffff !important;
+}
+
+/* Fix refresh announcements button in dark mode */
+.dark .bg-blue-100.text-blue-800 {
+  background-color: #1e3a8a !important;
+  color: #ffffff !important;
+  border-color: #3b82f6 !important;
+}
+
+.dark .bg-blue-100.text-blue-800:hover {
+  background-color: #1e40af !important;
+}
+
+/* Fix yellow text on white background in dark mode */
+.dark .text-yellow-600 {
+  color: #ffffff !important;
+}
+
+.dark .text-yellow-500 {
+  color: #ffffff !important;
+}
+
+.dark .text-yellow-800 {
+  color: #ffffff !important;
+}
+
+.dark .text-yellow-900 {
+  color: #ffffff !important;
+}
+
+/* Fix light text on white backgrounds in dark mode */
+.dark .text-green-100 {
+  color: #ffffff !important;
+}
+
+.dark .text-blue-100 {
+  color: #ffffff !important;
+}
+
+.dark .text-blue-200 {
+  color: #ffffff !important;
+}
+
+/* Fix status feature backgrounds that might be white */
+.dark .bg-white\/20 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Fix timeline status labels - "Overdue" text visibility */
+.dark .bg-gray-100.text-gray-800 {
+  background-color: #374151 !important;
+  color: #ffffff !important;
+}
+
+.dark .bg-green-100.text-green-800 {
+  background-color: #064e3b !important;
+  color: #ffffff !important;
+}
+
+.dark .bg-blue-100.text-blue-800 {
+  background-color: #1e3a8a !important;
+  color: #ffffff !important;
+}
+
+/* Fix all status badge text in dark mode */
+.dark .px-2.py-1.rounded-full.text-xs.font-medium {
+  color: #ffffff !important;
+}
+
+/* Specific fix for timeline status badges */
+.dark .bg-gray-100 {
+  background-color: #374151 !important;
+}
+
+.dark .bg-green-100 {
+  background-color: #064e3b !important;
+}
+
+.dark .bg-blue-100 {
+  background-color: #1e3a8a !important;
+}
+
+/* Key insights section - fix dark mode */
+.dark .bg-gradient-to-r.from-gray-50.to-blue-50 {
+  background: linear-gradient(90deg, #374151, #1e3a8a) !important;
+}
+
+.dark .bg-white.rounded-lg.shadow-sm {
+  background-color: #1f2937 !important;
+}
+
+/* CEW Early Bird Notice - fix dark mode */
+.dark .bg-gradient-to-r.from-green-500.to-emerald-600 {
+  background: linear-gradient(90deg, #065f46, #047857) !important;
+}
+
+.dark .text-green-100 {
+  color: #d1fae5 !important;
+}
+
+/* ========================================
+   THEME TOGGLE BUTTON FIXES
+   ======================================== */
+
+/* Ensure theme toggle button has proper contrast */
+.light .text-gray-900 {
+  color: #111827 !important;
+}
+
+.dark .text-gray-100 {
+  color: #f3f4f6 !important;
+}
+
+/* Theme toggle button specific styling */
+.light button.text-gray-900 {
+  color: #111827 !important;
+}
+
+.dark button.text-gray-100 {
+  color: #f3f4f6 !important;
+}
+
+/* Ensure the button background and text work together */
+.light .bg-gray-100 {
+  background-color: #f3f4f6 !important;
+}
+
+.dark .bg-gray-800 {
+  background-color: #1f2937 !important;
+}
+
+/* System preference fallback */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light) {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --card: #1a1a1a;
+    --card-foreground: #ededed;
+    --popover: #1a1a1a;
+    --popover-foreground: #ededed;
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+    --secondary: #262626;
+    --secondary-foreground: #ededed;
+    --muted: #262626;
+    --muted-foreground: #a3a3a3;
+    --accent: #262626;
+    --accent-foreground: #ededed;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: #404040;
+    --input: #404040;
+    --ring: #3b82f6;
   }
 }
 
@@ -23,7 +586,9 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
+
 
 /* Toast animations */
 @keyframes slideInRight {

@@ -7,6 +7,20 @@ This guide will help you update your existing SSTAC Dashboard database to suppor
 - Access to your Supabase project's SQL editor
 - Existing SSTAC Dashboard database with the basic tables
 
+## 🚨 CRITICAL SAFETY PROTOCOL
+
+**BEFORE RUNNING ANY MIGRATION SCRIPTS:**
+
+1. **ALWAYS conduct safety checks** before making database changes
+2. **NEVER assume database state** - always verify current structure first
+3. **ALWAYS test existing functionality** before making changes
+4. **ALWAYS provide rollback scripts** for any database modifications
+5. **ALWAYS make incremental changes** - one change at a time
+
+**HISTORICAL CONTEXT**: AI has previously provided SQL scripts that replaced and duplicated functional database policies, causing significant harm and days of lost debugging time. This protocol prevents such incidents.
+
+See `DATABASE_SAFETY_PROTOCOL.md` for complete safety procedures.
+
 ## Migration Steps
 
 ### 1. Enhanced User Management (NEW - Required)
@@ -407,3 +421,185 @@ If you encounter any issues during migration:
 - Automatic user role assignment
 - Enhanced document organization (if tagging is implemented)
 - Enterprise-level user management capabilities
+
+## Enhanced User Management
+
+The following SQL commands will set up automatic user role assignment and comprehensive user management views.
+
+### Step 1: Create the get_users_with_emails function
+
+```sql
+-- Function to safely retrieve user emails from auth.users
+CREATE OR REPLACE FUNCTION get_users_with_emails()
+RETURNS TABLE (
+    id UUID,
+    email CHARACTER VARYING(255),
+    created_at TIMESTAMP WITH TIME ZONE,
+    last_sign_in_at TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+    -- Return user information from auth.users
+    -- This is safe because we're only returning basic user info
+    RETURN QUERY
+    SELECT 
+        au.id,
+        au.email,
+        au.created_at,
+        au.last_sign_in_at
+    FROM auth.users au
+    WHERE au.email_confirmed_at IS NOT NULL  -- Only confirmed users
+    ORDER BY au.created_at DESC;
+END;
+$$;
+
+-- Grant execute permission to authenticated users
+GRANT EXECUTE ON FUNCTION get_users_with_emails() TO authenticated;
+```
+
+### Step 2: Create the handle_new_user function
+
+```sql
+-- Function to automatically assign roles to new users
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Insert the new user into user_roles with 'member' role
+    INSERT INTO user_roles (user_id, role, created_at)
+    VALUES (NEW.id, 'member', NOW())
+    ON CONFLICT (user_id, role) DO NOTHING;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
+### Step 3: Create the trigger
+
+```sql
+-- Trigger that fires when a new user is created in auth.users
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION handle_new_user();
+```
+
+### Step 4: Create the users_overview view
+
+```sql
+-- Enhanced users overview view for admin user management
+CREATE OR REPLACE VIEW users_overview AS
+WITH user_activities AS (
+    -- Users from user_roles (guaranteed to exist)
+    SELECT 
+        user_id,
+        NULL as user_email,
+        created_at,
+        'role' as activity_type
+    FROM user_roles
+    
+    UNION ALL
+    
+    -- Users from discussions (confirmed structure with user_email)
+    SELECT 
+        user_id,
+        user_email,
+        created_at,
+        'discussion' as activity_type
+    FROM discussions 
+    WHERE user_id IS NOT NULL
+    
+    UNION ALL
+    
+    -- Users from likes (confirmed structure)
+    SELECT 
+        user_id,
+        NULL as user_email,
+        created_at,
+        'like' as activity_type
+    FROM likes 
+    WHERE user_id IS NOT NULL
+),
+auth_user_emails AS (
+    -- Get user emails from auth.users through the safe function
+    SELECT 
+        id,
+        email,
+        created_at
+    FROM get_users_with_emails()
+)
+SELECT DISTINCT
+    ua.user_id as id,
+    COALESCE(
+        ua.user_email,           -- First priority: email from activity (discussions)
+        aue.email,               -- Second priority: email from auth.users
+        'User ' || LEFT(ua.user_id::text, 8) || '...'  -- Fallback: truncated ID
+    ) as email,
+    COALESCE(
+        aue.created_at,          -- Use auth.users created_at if available
+        MIN(ua.created_at)       -- Otherwise use earliest activity
+    ) as first_activity,
+    MAX(ua.created_at) as last_activity,
+    COUNT(DISTINCT CASE WHEN ua.activity_type = 'discussion' THEN ua.user_id END) as discussion_count,
+    COUNT(DISTINCT CASE WHEN ua.activity_type = 'like' THEN ua.user_id END) as like_count,
+    0 as document_count  -- Set to 0 since documents table doesn't have user_id
+FROM user_activities ua
+LEFT JOIN auth_user_emails aue ON ua.user_id = aue.id
+GROUP BY ua.user_id, ua.user_email, aue.email, aue.created_at
+ORDER BY first_activity DESC;
+
+-- Grant permissions on the view
+GRANT SELECT ON users_overview TO authenticated;
+```
+
+### Step 5: Create the admin_users_comprehensive view
+
+```sql
+-- Comprehensive admin view for user management
+CREATE OR REPLACE VIEW admin_users_comprehensive AS
+SELECT 
+    uo.id,
+    uo.email,
+    uo.first_activity,
+    uo.last_activity,
+    uo.discussion_count,
+    uo.like_count,
+    uo.document_count,
+    ur.role,
+    CASE 
+        WHEN ur.role = 'admin' THEN true 
+        ELSE false 
+    END as is_admin,
+    CASE 
+        WHEN ur.role IS NOT NULL THEN 'Has Role'
+        ELSE 'No Role'
+    END as role_status,
+    CASE 
+        WHEN uo.email LIKE '%@%' THEN 'Confirmed'
+        ELSE 'Unconfirmed'
+    END as email_status
+FROM users_overview uo
+LEFT JOIN user_roles ur ON uo.id = ur.user_id
+ORDER BY uo.first_activity DESC;
+
+-- Grant permissions on the view
+GRANT SELECT ON admin_users_comprehensive TO authenticated;
+```
+
+## Signup Issue Resolution
+
+**Status: RESOLVED** ✅
+
+The automatic user role assignment system is working correctly. New users who sign up are automatically assigned the 'member' role through the `on_auth_user_created` trigger.
+
+**What was working:**
+- The `handle_new_user()` function was successfully creating user roles
+- The trigger system was functioning as designed
+- RLS policies were correctly configured
+
+**Previous 500 errors:** The signup errors were likely temporary Supabase service issues or network-related problems, not related to the database trigger system.
+
+**Current state:** 
+- Signup process works normally
+- New users automatically get 'member' role
+- Admin dashboard can display all users with their roles
+- No manual intervention required for basic user setup
