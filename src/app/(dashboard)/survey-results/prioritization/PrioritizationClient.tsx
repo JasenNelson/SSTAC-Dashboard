@@ -11,7 +11,7 @@ interface PollData {
 
 export default function PrioritizationClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
-  const [polls] = useState<PollData[]>([
+  const [polls, setPolls] = useState<PollData[]>([
     {
       question: "Please rank these potential feasibility criteria to help inform the development of a prioritization framework (1= highest):",
       options: [

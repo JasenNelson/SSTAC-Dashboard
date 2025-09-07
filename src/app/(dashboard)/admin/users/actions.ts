@@ -180,7 +180,7 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
 
     // Try to get user emails from auth.users through a database function
     // This requires creating a database function that can safely expose user emails
-    let authUsers: { id: string; email: string }[] = [];
+    let authUsers: { id: string; email: string; created_at: string }[] = [];
     try {
       // Try to call a database function that returns user emails
       const { data: authUsersData, error: authError } = await supabase
@@ -286,10 +286,12 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
 
     // Add the current user if they're not in the list
     if (!userMap.has(currentUser.id)) {
+      // Get current user's full data from auth
+      const { data: { user: fullUser } } = await supabase.auth.getUser();
       userMap.set(currentUser.id, {
         id: currentUser.id,
-        email: currentUser.email || 'Current User',
-        created_at: currentUser.created_at,
+        email: fullUser?.email || 'Current User',
+        created_at: fullUser?.created_at || new Date().toISOString(),
         role: 'admin',
         isAdmin: true
       });
