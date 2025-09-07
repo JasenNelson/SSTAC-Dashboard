@@ -200,6 +200,892 @@ html.dark .border-gray-100 {
   border-color: #374151 !important;
 }
 
+/* ========================================
+   COMPREHENSIVE THEME FIXES
+   ======================================== */
+
+/* Fix white background sections in dark mode */
+html.dark .bg-white {
+  background-color: #1f2937 !important; /* Dark gray instead of white */
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+html.dark .bg-gradient-to-br.from-gray-50.to-indigo-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+html.dark .bg-gradient-to-br.from-green-50.to-blue-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+/* Fix all remaining white background sections */
+html.dark .bg-white.rounded-2xl {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-white.rounded-xl {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-white.rounded-lg {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-white.shadow-lg {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-white.shadow-xl {
+  background-color: #1f2937 !important;
+}
+
+/* Fix text colors in dark mode */
+html.dark .text-gray-800 {
+  color: #f3f4f6 !important; /* Light text on dark backgrounds */
+}
+
+html.dark .text-gray-700 {
+  color: #e5e7eb !important;
+}
+
+html.dark .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+/* Fix hover states that hide text */
+html.light .hover\:bg-gray-100:hover {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important; /* Ensure text remains dark */
+}
+
+html.dark .hover\:bg-gray-100:hover {
+  background-color: #374151 !important;
+  color: #f3f4f6 !important; /* Ensure text remains light */
+}
+
+html.dark .hover\:bg-gray-700:hover {
+  background-color: #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+/* Fix poll question text colors */
+html.light .text-yellow-600 {
+  color: #d97706 !important; /* Darker yellow for better contrast */
+}
+
+html.dark .text-yellow-600 {
+  color: #fbbf24 !important; /* Lighter yellow for dark mode */
+}
+
+/* Fix poll component text visibility */
+html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-800 {
+  color: #111827 !important; /* Dark text on light background */
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-800 {
+  color: #f3f4f6 !important; /* Light text on dark background */
+}
+
+html.light .bg-gradient-to-br.from-indigo-50.to-blue-50 .text-gray-800 {
+  color: #111827 !important; /* Dark text on light background */
+}
+
+html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 .text-gray-800 {
+  color: #f3f4f6 !important; /* Light text on dark background */
+}
+
+/* Fix poll option text in light mode */
+html.light .bg-white .text-gray-800 {
+  color: #111827 !important;
+}
+
+html.light .bg-white .text-gray-600 {
+  color: #374151 !important;
+}
+
+/* Fix poll option text in dark mode */
+html.dark .bg-gray-700 .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-gray-700 .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+/* Fix tiered framework page sections */
+html.light .bg-gradient-to-br.from-green-50.to-blue-50 {
+  background: linear-gradient(to bottom right, #dcfce7, #dbeafe) !important; /* Light green to light blue gradient for light mode */
+}
+
+html.dark .bg-gradient-to-br.from-green-50.to-blue-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+html.light .bg-gradient-to-br.from-blue-50.to-green-50 {
+  background: linear-gradient(to bottom right, #dbeafe, #dcfce7) !important; /* Light blue to light green gradient for light mode */
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-green-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+html.light .bg-gradient-to-br.from-green-50.via-blue-50.to-emerald-50 {
+  background: linear-gradient(to bottom right, #dcfce7, #dbeafe, #d1fae5) !important; /* Light green to light blue to light emerald gradient for light mode */
+}
+
+html.light .bg-gradient-to-br.from-green-50.to-blue-50.rounded-2xl {
+  background: linear-gradient(to bottom right, #dcfce7, #dbeafe) !important; /* Light green to light blue gradient for poll containers in light mode */
+}
+
+html.dark .bg-gradient-to-br.from-green-50.to-blue-50.rounded-2xl {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+html.dark .bg-gradient-to-br.from-green-50.via-blue-50.to-emerald-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151, #1f2937) !important;
+}
+
+/* Force white text for colored container headings in tiered framework page */
+.bg-gradient-to-br.from-red-500.to-red-600 h3,
+.bg-gradient-to-br.from-orange-500.to-orange-600 h3,
+.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3 {
+  color: #ffffff !important;
+}
+
+/* Force white text for colored container paragraphs in tiered framework page */
+.bg-gradient-to-br.from-red-500.to-red-600 p,
+.bg-gradient-to-br.from-orange-500.to-orange-600 p,
+.bg-gradient-to-br.from-yellow-500.to-yellow-600 p {
+  color: #ffffff !important;
+}
+
+/* Ultra-specific rules for tiered framework colored containers - using high specificity approach */
+html.light div.bg-gradient-to-br.from-red-500.to-red-600 h3,
+html.light div.bg-gradient-to-br.from-orange-500.to-orange-600 h3,
+html.light div.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3,
+html.dark div.bg-gradient-to-br.from-red-500.to-red-600 h3,
+html.dark div.bg-gradient-to-br.from-orange-500.to-orange-600 h3,
+html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3 {
+  color: #ffffff !important;
+}
+
+html.light div.bg-gradient-to-br.from-red-500.to-red-600 p,
+html.light div.bg-gradient-to-br.from-orange-500.to-orange-600 p,
+html.light div.bg-gradient-to-br.from-yellow-500.to-yellow-600 p,
+html.dark div.bg-gradient-to-br.from-red-500.to-red-600 p,
+html.dark div.bg-gradient-to-br.from-orange-500.to-orange-600 p,
+html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 p {
+  color: #ffffff !important;
+}
+
+/* Ultra-specific rules for prioritization page colored containers - using high specificity approach */
+html.light div.bg-gradient-to-br.from-red-500.to-red-600 h3,
+html.light div.bg-gradient-to-br.from-orange-500.to-orange-600 h3,
+html.light div.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3,
+html.dark div.bg-gradient-to-br.from-red-500.to-red-600 h3,
+html.dark div.bg-gradient-to-br.from-orange-500.to-orange-600 h3,
+html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3 {
+  color: #ffffff !important;
+}
+
+html.light div.bg-gradient-to-br.from-red-500.to-red-600 p,
+html.light div.bg-gradient-to-br.from-orange-500.to-orange-600 p,
+html.light div.bg-gradient-to-br.from-yellow-500.to-yellow-600 p,
+html.dark div.bg-gradient-to-br.from-red-500.to-red-600 p,
+html.dark div.bg-gradient-to-br.from-orange-500.to-orange-600 p,
+html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 p {
+  color: #ffffff !important;
+}
+
+/* Fix poll component backgrounds in dark mode */
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 {
+  background: linear-gradient(to bottom right, #1e3a8a, #1e40af) !important;
+}
+
+/* Fix all white containers in dark mode with high specificity */
+html.dark div.bg-white {
+  background-color: #1f2937 !important;
+}
+
+html.dark section.bg-white {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-white.dark\:bg-gray-800 {
+  background-color: #1f2937 !important;
+}
+
+/* Fix text in white containers that should be dark in dark mode */
+html.dark .bg-white h2,
+html.dark .bg-white h3,
+html.dark .bg-white h4,
+html.dark .bg-white .text-gray-800,
+html.dark .bg-white .text-gray-700 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-white .text-gray-600,
+html.dark .bg-white .text-gray-500 {
+  color: #d1d5db !important;
+}
+
+/* Nuclear option - fix ALL white backgrounds in dark mode */
+html.dark *[class*="bg-white"] {
+  background-color: #1f2937 !important;
+}
+
+/* Fix specific sections that are still showing white backgrounds */
+html.dark .py-20.px-6.bg-white {
+  background-color: #1f2937 !important;
+}
+
+html.dark .max-w-6xl.mx-auto .bg-white {
+  background-color: #1f2937 !important;
+}
+
+html.dark .max-w-7xl.mx-auto .bg-white {
+  background-color: #1f2937 !important;
+}
+
+/* Fix poll question sections specifically */
+html.dark .space-y-16 .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, #1e3a8a, #1e40af) !important;
+}
+
+/* Fix accordion sections in tiered framework */
+html.dark .bg-white.rounded-2xl.shadow-lg {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-white.rounded-2xl.shadow-lg h2,
+html.dark .bg-white.rounded-2xl.shadow-lg h3,
+html.dark .bg-white.rounded-2xl.shadow-lg h4 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-white.rounded-2xl.shadow-lg .text-gray-800,
+html.dark .bg-white.rounded-2xl.shadow-lg .text-gray-700 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-white.rounded-2xl.shadow-lg .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+/* Fix prioritization page specific sections */
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+/* Fix prioritization page poll sections */
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, #1e3a8a, #1e40af) !important;
+}
+
+/* Fix prioritization page text in dark mode */
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 h2,
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 h3,
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .text-gray-600,
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+/* Fix prioritization page white containers in dark mode */
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-white {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-white h2,
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-white h3,
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-white .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-white .text-gray-600,
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-white .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+/* Fix survey-results page dark mode issues */
+html.dark .bg-white\/50 {
+  background-color: rgba(31, 41, 55, 0.5) !important; /* Dark background with transparency */
+}
+
+html.dark .bg-white\/50 .text-blue-700 {
+  color: #93c5fd !important; /* Light blue text for dark mode */
+}
+
+html.dark .bg-white\/50 .text-blue-600 {
+  color: #60a5fa !important; /* Lighter blue text for dark mode */
+}
+
+/* Fix survey-results gradient containers in dark mode */
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 {
+  background: linear-gradient(to bottom right, #064e3b, #065f46) !important;
+}
+
+html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 {
+  background: linear-gradient(to bottom right, #581c87, #be185d) !important;
+}
+
+html.dark .bg-gradient-to-r.from-gray-50.to-blue-50 {
+  background: linear-gradient(to right, #374151, #1e3a8a) !important;
+}
+
+html.dark .bg-gradient-to-r.from-blue-50.to-indigo-50 {
+  background: linear-gradient(to right, #1e3a8a, #312e81) !important;
+}
+
+/* Fix survey-results text colors in dark mode */
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-green-800,
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-green-700 {
+  color: #d1fae5 !important; /* Light green text for dark mode */
+}
+
+html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 .text-purple-800,
+html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 .text-purple-700 {
+  color: #e9d5ff !important; /* Light purple text for dark mode */
+}
+
+html.dark .bg-gradient-to-r.from-gray-50.to-blue-50 .text-gray-800 {
+  color: #f3f4f6 !important; /* Light text for dark mode */
+}
+
+html.dark .bg-gradient-to-r.from-blue-50.to-indigo-50 .text-gray-800 {
+  color: #f3f4f6 !important; /* Light text for dark mode */
+}
+
+/* Fix survey-results white containers in dark mode */
+html.dark .bg-white.rounded-lg {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-white.rounded-lg .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-white.rounded-lg .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+/* Fix survey-results colored backgrounds in dark mode */
+html.dark .bg-red-50 {
+  background-color: #7f1d1d !important;
+}
+
+html.dark .bg-green-50 {
+  background-color: #064e3b !important;
+}
+
+html.dark .bg-blue-50 {
+  background-color: #1e3a8a !important;
+}
+
+html.dark .bg-purple-50 {
+  background-color: #581c87 !important;
+}
+
+/* Fix survey-results colored text in dark mode */
+html.dark .bg-red-50 .text-red-600,
+html.dark .bg-red-50 .text-red-700 {
+  color: #fca5a5 !important;
+}
+
+html.dark .bg-green-50 .text-green-600,
+html.dark .bg-green-50 .text-green-700 {
+  color: #6ee7b7 !important;
+}
+
+html.dark .bg-blue-50 .text-blue-600,
+html.dark .bg-blue-50 .text-blue-700 {
+  color: #93c5fd !important;
+}
+
+html.dark .bg-purple-50 .text-purple-600,
+html.dark .bg-purple-50 .text-purple-700 {
+  color: #c4b5fd !important;
+}
+
+/* Fix poll component text visibility with high specificity */
+html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 .bg-white .text-gray-800 {
+  color: #111827 !important;
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .bg-gray-700 .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 .bg-white .text-gray-600 {
+  color: #374151 !important;
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .bg-gray-700 .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+/* Fix poll button text specifically */
+html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 button .text-gray-800 {
+  color: #111827 !important;
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 button .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 button .text-gray-600 {
+  color: #374151 !important;
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 button .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+/* Fix stakeholder perspectives section */
+html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 {
+  background: linear-gradient(to bottom right, #dbeafe, #e0e7ff) !important; /* Light blue gradient for light mode */
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 {
+  background: linear-gradient(to bottom right, #1e3a8a, #312e81) !important;
+}
+
+html.light .bg-gradient-to-br.from-green-50.to-emerald-50 {
+  background: linear-gradient(to bottom right, #dcfce7, #d1fae5) !important; /* Light green gradient for light mode */
+}
+
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 {
+  background: linear-gradient(to bottom right, #064e3b, #065f46) !important;
+}
+
+/* Fix text colors in stakeholder sections for both modes */
+html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 h3,
+html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-800 {
+  color: #111827 !important; /* Dark text on light background */
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 h3,
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-800 {
+  color: #f3f4f6 !important; /* Light text on dark background */
+}
+
+html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-700,
+html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-300 {
+  color: #374151 !important; /* Dark text on light background */
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-700,
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-300 {
+  color: #d1d5db !important; /* Light text on dark background */
+}
+
+html.light .bg-gradient-to-br.from-green-50.to-emerald-50 h3,
+html.light .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-800 {
+  color: #111827 !important; /* Dark text on light background */
+}
+
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 h3,
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-800 {
+  color: #f3f4f6 !important; /* Light text on dark background */
+}
+
+html.light .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-700,
+html.light .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-300 {
+  color: #374151 !important; /* Dark text on light background */
+}
+
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-700,
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-300 {
+  color: #d1d5db !important; /* Light text on dark background */
+}
+
+/* Fix poll section backgrounds */
+html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 {
+  background: linear-gradient(to bottom right, #1e3a8a, #1e40af) !important;
+}
+
+/* Fix Project Mission container in dashboard - high specificity */
+html.light .bg-gradient-to-r.from-blue-50.to-indigo-50 {
+  background: linear-gradient(to right, #dbeafe, #e0e7ff) !important; /* Light blue gradient for light mode */
+}
+
+html.dark .bg-gradient-to-r.from-blue-50.to-indigo-50 {
+  background: linear-gradient(to right, #1e3a8a, #312e81) !important; /* Dark blue gradient for dark mode */
+}
+
+/* Even more specific - target the exact Project Mission container */
+html.light .mt-10.p-6.bg-gradient-to-r.from-blue-50.to-indigo-50 {
+  background: linear-gradient(to right, #dbeafe, #e0e7ff) !important; /* Force light gradient in light mode */
+}
+
+html.dark .mt-10.p-6.bg-gradient-to-r.from-blue-50.to-indigo-50 {
+  background: linear-gradient(to right, #1e3a8a, #312e81) !important; /* Force dark gradient in dark mode */
+}
+
+/* Fix poll section text colors specifically */
+html.light .bg-gradient-to-br.from-indigo-50.to-blue-50 h2 {
+  color: #111827 !important; /* Dark text on light background */
+}
+
+html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 h2 {
+  color: #f3f4f6 !important; /* Light text on dark background */
+}
+
+html.light .bg-gradient-to-br.from-indigo-50.to-blue-50 p {
+  color: #374151 !important; /* Dark text on light background */
+}
+
+html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 p {
+  color: #d1d5db !important; /* Light text on dark background */
+}
+
+/* Fix poll component text in poll sections */
+html.light .bg-gradient-to-br.from-indigo-50.to-blue-50 .text-gray-800 {
+  color: #111827 !important;
+}
+
+html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.light .bg-gradient-to-br.from-indigo-50.to-blue-50 .text-gray-600 {
+  color: #374151 !important;
+}
+
+html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+/* Prioritization page - simple white background */
+html.light .min-h-screen.bg-white {
+  background-color: #ffffff !important;
+}
+
+html.light .min-h-screen.bg-white section {
+  background-color: #ffffff !important;
+}
+
+/* Fix prioritization page stakeholder concerns box */
+html.light .bg-gradient-to-br.from-yellow-50.to-orange-50 {
+  background: linear-gradient(to bottom right, #fef3c7, #fed7aa) !important; /* Lighter yellow-orange */
+}
+
+html.dark .bg-gradient-to-br.from-yellow-50.to-orange-50 {
+  background: linear-gradient(to bottom right, #451a03, #78350f) !important;
+}
+
+/* Fix text colors in prioritization stakeholder concerns */
+html.light .bg-gradient-to-br.from-yellow-50.to-orange-50 h3,
+html.light .bg-gradient-to-br.from-yellow-50.to-orange-50 .text-gray-800 {
+  color: #111827 !important; /* Dark text on light background */
+}
+
+html.dark .bg-gradient-to-br.from-yellow-50.to-orange-50 h3,
+html.dark .bg-gradient-to-br.from-yellow-50.to-orange-50 .text-gray-800 {
+  color: #f3f4f6 !important; /* Light text on dark background */
+}
+
+html.light .bg-gradient-to-br.from-yellow-50.to-orange-50 .text-gray-700,
+html.light .bg-gradient-to-br.from-yellow-50.to-orange-50 .text-gray-300 {
+  color: #374151 !important; /* Dark text on light background */
+}
+
+html.dark .bg-gradient-to-br.from-yellow-50.to-orange-50 .text-gray-700,
+html.dark .bg-gradient-to-br.from-yellow-50.to-orange-50 .text-gray-300 {
+  color: #d1d5db !important; /* Light text on dark background */
+}
+
+/* Fix documents page dark mode */
+html.dark .text-gray-900 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .text-gray-800 {
+  color: #e5e7eb !important;
+}
+
+/* Fix documents page text colors */
+html.dark .text-indigo-700 {
+  color: #93c5fd !important; /* Light blue for dark mode */
+}
+
+html.dark .text-indigo-600 {
+  color: #93c5fd !important; /* Light blue for dark mode */
+}
+
+html.dark .text-indigo-500 {
+  color: #60a5fa !important; /* Lighter blue for dark mode */
+}
+
+/* Fix documents page backgrounds */
+html.dark .bg-white.rounded-lg {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-white.p-4 {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-white.shadow-sm {
+  background-color: #1f2937 !important;
+}
+
+html.dark .bg-white.shadow-md {
+  background-color: #1f2937 !important;
+}
+
+/* Fix documents page hover states */
+html.dark .hover\:bg-gray-50:hover {
+  background-color: #374151 !important;
+}
+
+/* Fix documents page text in white containers */
+html.dark .bg-white .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+html.dark .bg-white .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+html.dark .bg-white .text-gray-700 {
+  color: #e5e7eb !important;
+}
+
+/* Fix pie chart text visibility in dark mode */
+html.dark svg text {
+  fill: #f3f4f6 !important; /* Light text in dark mode */
+}
+
+html.dark .text-gray-700 {
+  color: #f3f4f6 !important; /* Light text in dark mode */
+}
+
+html.dark .text-gray-600 {
+  color: #d1d5db !important; /* Light text in dark mode */
+}
+
+html.dark .text-gray-500 {
+  color: #9ca3af !important; /* Light text in dark mode */
+}
+
+/* Fix pie chart legend text in dark mode */
+html.dark .bg-gray-100 {
+  background-color: #374151 !important;
+}
+
+html.dark .bg-blue-50 {
+  background-color: #1e3a8a !important;
+}
+
+html.dark .border-blue-200 {
+  border-color: #3b82f6 !important;
+}
+
+/* Fix pie chart center text */
+html.dark .absolute.inset-0 .text-gray-700 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .absolute.inset-0 .text-gray-500 {
+  color: #d1d5db !important;
+}
+
+/* Fix detailed findings page sections in dark mode */
+html.dark .bg-gradient-to-br.from-red-50.to-pink-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 {
+  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+}
+
+html.dark .bg-gradient-to-r.from-red-50.to-orange-50 {
+  background: linear-gradient(to right, #1f2937, #374151) !important;
+}
+
+/* Fix text colors in detailed findings sections */
+html.dark .bg-gradient-to-br.from-red-50.to-pink-50 h3,
+html.dark .bg-gradient-to-br.from-red-50.to-pink-50 .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 h3,
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 h3,
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 h3,
+html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-gradient-to-r.from-red-50.to-orange-50 h3,
+html.dark .bg-gradient-to-r.from-red-50.to-orange-50 .text-red-800 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-gradient-to-r.from-red-50.to-orange-50 .text-red-700 {
+  color: #d1d5db !important;
+}
+
+/* Fix detailed findings page text in all gradient sections */
+html.dark .bg-gradient-to-br.from-red-50.to-pink-50 .text-gray-600,
+html.dark .bg-gradient-to-br.from-red-50.to-pink-50 .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-600,
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-600,
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 .text-gray-600,
+html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 .text-gray-700 {
+  color: #d1d5db !important;
+}
+
+/* Fix detailed findings page white containers */
+html.dark .bg-white.border.border-gray-200 {
+  background-color: #1f2937 !important;
+  border-color: #374151 !important;
+}
+
+html.dark .bg-white.border.border-gray-200 h2,
+html.dark .bg-white.border.border-gray-200 h3,
+html.dark .bg-white.border.border-gray-200 .text-gray-800 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .bg-white.border.border-gray-200 .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+/* Fix pie chart text visibility in dark mode */
+html.dark .text-gray-700 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+html.dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+/* Fix pie chart center text specifically */
+html.dark .absolute.inset-0 .text-gray-700 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .absolute.inset-0 .text-gray-500 {
+  color: #d1d5db !important;
+}
+
+/* Fix pie chart legend text */
+html.dark .space-y-2 .text-gray-700 {
+  color: #f3f4f6 !important;
+}
+
+html.dark .space-y-2 .text-gray-600 {
+  color: #d1d5db !important;
+}
+
+html.dark .space-y-2 .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+/* Fix pie chart legend hover states */
+html.dark .space-y-2 .hover\:bg-gray-100:hover {
+  background-color: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
+html.dark .space-y-2 .bg-blue-50 {
+  background-color: #1e3a8a !important;
+  border-color: #3b82f6 !important;
+}
+
+html.dark .space-y-2 .bg-blue-50 .text-gray-700,
+html.dark .space-y-2 .bg-blue-50 .text-gray-600 {
+  color: #f3f4f6 !important;
+}
+
+/* Fix pie chart center "Total Responses" text for better contrast */
+html.dark .absolute.inset-0 .text-gray-700 {
+  color: #ffffff !important;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8) !important;
+  font-weight: 700 !important;
+}
+
+html.dark .absolute.inset-0 .text-gray-500 {
+  color: #ffffff !important;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8) !important;
+  font-weight: 600 !important;
+}
+
+/* Also fix for light mode to ensure good contrast */
+.light .absolute.inset-0 .text-gray-700 {
+  color: #1f2937 !important;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.8) !important;
+  font-weight: 700 !important;
+}
+
+.light .absolute.inset-0 .text-gray-500 {
+  color: #374151 !important;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.8) !important;
+  font-weight: 600 !important;
+}
+
+/* Fix forum hover states */
+html.dark .hover\:bg-white:hover {
+  background-color: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
+/* Fix tiered framework hover states */
+html.dark .hover\:text-gray-900:hover {
+  color: #f3f4f6 !important;
+}
+
+html.dark .hover\:bg-gray-50:hover {
+  background-color: #374151 !important;
+  color: #f3f4f6 !important;
+}
+
 /* Card and container backgrounds */
 .light .bg-white.rounded-2xl {
   background-color: #ffffff !important;

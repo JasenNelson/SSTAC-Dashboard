@@ -6,14 +6,15 @@ import { cookies } from 'next/headers';
 // Updated data with correct conference information
 const sessionData = {
   title: 'Holistic Protection of Aquatic Ecosystems - Modern Sediment Quality Assessment',
-  coChairs: ['Jasen Nelson', 'Shannon Bard', 'Marc Cameron'],
+  sstacMembers: ['Geoff Wickstrom', 'Jennifer Trowell', 'Jasen Nelson', 'Marc Cameron', 'Peter Ross', 'Shannon Bard'],
+  twgMembers: ['Beth Power', 'Gary Lawrence', 'Joline (Jo) Widmeyer', 'Shannon Waters', 'Wayne Landis'],
+  guestSpeakers: ['Anuradha Rao', 'Melany Sanchez Solano', 'Sushil Dixit'],
   summary:
     'This session explores the holistic protection of aquatic ecosystems through modern sediment quality assessment. Our guest speakers will lead interactive discussions covering widespread contamination challenges, the latest in assessment science, and the critical importance of weaving Indigenous Knowledges into environmental monitoring and protection frameworks.',
   conferenceDate: 'October 5-9, 2025',
   sessionDate: 'Tuesday, October 7, 2025',
-  sessionTime: 'Morning Session',
+  sessionTime: '8:30 am to 12:00 pm',
   location: 'Victoria, British Columbia',
-  duration: 'Half Day',
   format: 'Engaging Presentations and Interactive Discussions',
   conferenceWebsite: 'https://www.ecotoxcan.ca/cew-conference-home'
 };
@@ -47,295 +48,339 @@ export default async function Cew2025Page() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Main Title Banner */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl shadow-lg p-12 mb-8 text-center">
-        <h1 className="text-5xl font-bold mb-4">Canadian Ecotoxicity Workshop (CEW) 2025 Victoria</h1>
-        <p className="text-2xl text-blue-100 max-w-4xl mx-auto leading-relaxed">
-          Join us for this premier ecotoxicology conference in Canada
-        </p>
-      </div>
-
-      {/* Conference Information Banner */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-xl shadow-lg p-6 mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold mb-2">CEW 2025 Conference</h2>
-            <p className="text-green-100 text-lg">
-              October 5-9, 2025 • Victoria, British Columbia
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 text-white rounded-2xl shadow-2xl mb-12">
+        <div className="relative px-8 py-16 text-center">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-4xl font-bold mb-6 leading-tight">
+              Holistic Protection of Aquatic Ecosystems - Modern Sediment Quality Assessment
+            </h1>
+            <p className="text-2xl text-blue-100 max-w-4xl mx-auto leading-relaxed mb-8">
+              SABCS interactive session at the Canadian Ecotoxicity Workshop (CEW)
             </p>
+            
+            {/* Conference Details Card */}
+            <div className="bg-white/15 backdrop-blur-sm rounded-xl p-6 mb-8 max-w-2xl mx-auto border border-white/30 shadow-lg">
+              <div className="flex items-center justify-center space-x-8 text-lg">
+                <div className="flex items-center space-x-2">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-white font-semibold">October 5-9, 2025</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span className="text-white font-semibold">Victoria, BC</span>
+                </div>
+              </div>
+            </div>
+            
+            <a 
+              href={sessionData.conferenceWebsite}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-10 py-4 bg-white text-blue-600 rounded-xl font-bold hover:bg-blue-50 hover:scale-105 transition-all duration-300 text-xl shadow-lg"
+            >
+              Visit Conference Website
+              <svg className="w-6 h-6 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
           </div>
-          <a 
-            href={sessionData.conferenceWebsite}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-white text-green-600 px-6 py-3 rounded-lg font-semibold hover:bg-green-50 transition-colors"
-          >
-            Visit Conference Website
-          </a>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="bg-white rounded-xl shadow-md p-8 mb-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 mb-4 leading-tight">
-            {sessionData.title}
-          </h2>
-          
-          <p className="text-lg text-gray-600 mb-6">
-            A featured session at the Canadian Ecotoxicity Workshop (CEW) 2025
-          </p>
-        </div>
+      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900 dark:to-purple-900 rounded-2xl shadow-xl border border-indigo-200 dark:border-indigo-700 overflow-hidden mb-12">
         
-        {/* Session Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-blue-800 mb-1">Conference Dates</h3>
-            <p className="text-lg font-semibold text-blue-900">{sessionData.conferenceDate}</p>
+        <div className="p-8">
+          {/* Session Details Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-800 dark:to-purple-800 p-6 rounded-xl border border-indigo-200 dark:border-indigo-600 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-semibold text-indigo-900 dark:text-indigo-200 uppercase tracking-wide">Session Date</h3>
+              </div>
+              <p className="text-xl font-bold text-indigo-950 dark:text-indigo-100">{sessionData.sessionDate}</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-800 dark:to-pink-800 p-6 rounded-xl border border-purple-200 dark:border-purple-600 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-200 uppercase tracking-wide">Session Time</h3>
+              </div>
+              <p className="text-xl font-bold text-purple-950 dark:text-purple-100">{sessionData.sessionTime}</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 dark:from-blue-800 dark:via-indigo-800 dark:to-purple-800 p-6 rounded-xl border border-blue-200 dark:border-blue-600 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-200 uppercase tracking-wide">Format</h3>
+              </div>
+              <p className="text-lg font-bold text-blue-950 dark:text-blue-100">{sessionData.format}</p>
+            </div>
           </div>
-          <div className="bg-green-50 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-green-800 mb-1">Session Date</h3>
-            <p className="text-lg font-semibold text-green-900">{sessionData.sessionDate}</p>
-          </div>
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-purple-800 mb-1">Session Time</h3>
-            <p className="text-lg font-semibold text-purple-900">{sessionData.sessionTime}</p>
-          </div>
-          <div className="bg-orange-50 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-orange-800 mb-1">Duration</h3>
-            <p className="text-lg font-semibold text-orange-900">{sessionData.duration}</p>
-          </div>
-        </div>
 
-        {/* Location and Format */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-indigo-50 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-indigo-800 mb-1">Location</h3>
-            <p className="text-lg font-semibold text-indigo-900">{sessionData.location}</p>
-            <p className="text-indigo-600 text-sm">Beautiful coastal city on Vancouver Island</p>
-          </div>
-          <div className="bg-teal-50 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-teal-800 mb-1">Format</h3>
-            <p className="text-lg font-semibold text-teal-900">{sessionData.format}</p>
-            <p className="text-teal-600 text-sm">Engaging discussions and presentations</p>
-          </div>
-        </div>
+          {/* Presenters, Facilitators, and Moderators */}
+          <div className="mb-8">
+            <div className="text-center mb-8">
+              <h3 className="text-3xl font-bold text-indigo-900 dark:text-gray-100 mb-2">Presenters, Facilitators, and Moderators</h3>
+              <div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-indigo-500 mx-auto rounded-full"></div>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* SSTAC Members */}
+              <div className="bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-800 dark:to-purple-800 rounded-xl p-6 border border-indigo-200 dark:border-indigo-600 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold text-indigo-950 dark:text-indigo-100">SSTAC Members</h4>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {sessionData.sstacMembers.map((member) => (
+                    <div key={member} className="bg-white/70 dark:bg-indigo-700/50 rounded-lg px-4 py-3 border border-indigo-200/50 dark:border-indigo-500/50 hover:bg-white dark:hover:bg-indigo-600/70 transition-colors">
+                      <p className="text-indigo-950 dark:text-indigo-100 font-medium text-center">{member}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-        {/* Co-Chairs */}
-        <div className="mb-8">
-          <h3 className="text-2xl font-semibold text-gray-700 mb-4">Session Co-Chairs</h3>
-          <div className="flex flex-wrap gap-4">
-            {sessionData.coChairs.map((chair) => (
-              <span key={chair} className="bg-indigo-100 text-indigo-800 text-lg font-medium px-6 py-3 rounded-full">
-                {chair}
-              </span>
-            ))}
-          </div>
-        </div>
+              {/* TWG Members */}
+              <div className="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-800 dark:to-pink-800 rounded-xl p-6 border border-purple-200 dark:border-purple-600 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold text-purple-950 dark:text-purple-100">TWG Members</h4>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {sessionData.twgMembers.map((member) => (
+                    <div key={member} className="bg-white/70 dark:bg-purple-700/50 rounded-lg px-4 py-3 border border-purple-200/50 dark:border-purple-500/50 hover:bg-white dark:hover:bg-purple-600/70 transition-colors">
+                      <p className="text-purple-950 dark:text-purple-100 font-medium text-center">{member}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-        {/* Session Summary */}
-        <div>
-          <h3 className="text-2xl font-semibold text-gray-700 mb-4">Session Summary</h3>
-          <p className="text-gray-700 leading-relaxed text-lg">
-            {sessionData.summary}
-          </p>
+              {/* Guest Speakers */}
+              <div className="bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 dark:from-blue-800 dark:via-indigo-800 dark:to-purple-800 rounded-xl p-6 border border-blue-200 dark:border-blue-600 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
+                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m-9 0h10m-9 0a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V6a2 2 0 00-2-2M9 4a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-bold text-blue-950 dark:text-blue-100">Guest Speakers</h4>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {sessionData.guestSpeakers.map((speaker) => (
+                    <div key={speaker} className="bg-white/70 dark:bg-blue-700/50 rounded-lg px-4 py-3 border border-blue-200/50 dark:border-blue-500/50 hover:bg-white dark:hover:bg-blue-600/70 transition-colors">
+                      <p className="text-blue-950 dark:text-blue-100 font-medium text-center">{speaker}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Session Summary */}
+          <div>
+            <h3 className="text-2xl font-semibold text-indigo-900 dark:text-gray-100 mb-4">Session Summary</h3>
+            <p className="text-indigo-800 dark:text-gray-200 leading-relaxed text-lg">
+              {sessionData.summary}
+            </p>
+          </div>
         </div>
       </div>
 
       {/* CEW Session Schedule */}
-      <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">CEW Session Schedule</h2>
-        <p className="text-lg text-gray-600 mb-8 text-center">
-          Tuesday, October 7, 2025 - Half Day (Morning)
-        </p>
+      <div className="bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800 dark:from-blue-800 dark:via-indigo-800 dark:to-purple-800 rounded-xl shadow-lg p-8 mb-8">
+        <h2 className="text-3xl font-bold text-white mb-6 text-center">CEW Session Schedule</h2>
         
         <div className="space-y-6">
           {/* Session 1 */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
-            <h3 className="text-xl font-semibold text-blue-800 mb-3">Session 1: Whales, Water and Sediments</h3>
-            <p className="text-blue-700 font-medium mb-2">Peter Ross</p>
-            <p className="text-blue-600 italic">Towards a renewed risk-based approach to environmental contamination</p>
+          <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-teal-800 dark:via-cyan-800 dark:to-blue-800 rounded-xl p-6 border border-teal-200 dark:border-teal-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-teal-800 dark:text-teal-100">Presentation 1: Whales, water and sediments: Towards a renewed risk-based approach to environmental contamination</h3>
+              <span className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-3 py-1 rounded-full text-sm font-medium">8:30 AM</span>
+            </div>
+            <p className="text-teal-700 dark:text-teal-200 font-medium">by Peter Ross</p>
           </div>
 
           {/* Session 2 */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
-            <h3 className="text-xl font-semibold text-green-800 mb-3">Session 2: Holistic Protection Framework</h3>
-            <p className="text-green-700 font-medium mb-2">Jasen Nelson, Marc Cameron</p>
-            <p className="text-green-600 italic">Holistic protection of aquatic ecosystems: Developing a scientific framework to modernize sediment quality standards</p>
+          <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-teal-800 dark:via-cyan-800 dark:to-blue-800 rounded-xl p-6 border border-teal-200 dark:border-teal-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-teal-800 dark:text-teal-100">Presentation 2: Holistic protection of aquatic ecosystems: Developing a scientific framework to modernize sediment quality standards</h3>
+              <span className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-3 py-1 rounded-full text-sm font-medium">8:45 AM</span>
+            </div>
+            <p className="text-teal-700 dark:text-teal-200 font-medium">by Jasen Nelson</p>
           </div>
 
           {/* Session 3 */}
-          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
-            <h3 className="text-xl font-semibold text-purple-800 mb-3">Session 3: Bioaccumulation Assessment</h3>
-            <p className="text-purple-700 font-medium mb-2">Joline (Jo) Widmeyer</p>
-            <p className="text-purple-600 italic">Bioaccumulation and sediment assessment: evaluating Canada&apos;s regulatory readiness</p>
+          <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-teal-800 dark:via-cyan-800 dark:to-blue-800 rounded-xl p-6 border border-teal-200 dark:border-teal-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-teal-800 dark:text-teal-100">Presentation 3: Bioaccumulation and sediment assessment: evaluating Canada&apos;s regulatory readiness</h3>
+              <span className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-3 py-1 rounded-full text-sm font-medium">9:00 AM</span>
+            </div>
+            <p className="text-teal-700 dark:text-teal-200 font-medium">by Joline (Jo) Widmeyer</p>
           </div>
 
           {/* Session 4 */}
-          <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl p-6 border border-orange-200">
-            <h3 className="text-xl font-semibold text-orange-800 mb-3">Session 4: Cause-Effect Pathways</h3>
-            <p className="text-orange-700 font-medium mb-2">Wayne Landis</p>
-            <p className="text-orange-600 italic">Applying cause-effect pathways to the holistic integration of sediment quality assessments for long-term management</p>
+          <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-teal-800 dark:via-cyan-800 dark:to-blue-800 rounded-xl p-6 border border-teal-200 dark:border-teal-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-teal-800 dark:text-teal-100">Presentation 4: Applying cause-effect pathways to the holistic integration of sediment quality assessments for long-term management</h3>
+              <span className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-3 py-1 rounded-full text-sm font-medium">9:15 AM</span>
+            </div>
+            <p className="text-teal-700 dark:text-teal-200 font-medium">by Wayne Landis</p>
           </div>
 
           {/* Session 5 */}
-          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl p-6 border border-teal-200">
-            <h3 className="text-xl font-semibold text-teal-800 mb-3">Session 5: Dual Sediment Standards</h3>
-            <p className="text-teal-700 font-medium mb-2">Beth Power, Jasen Nelson</p>
-            <p className="text-teal-600 italic">Holistic protection: integrating modern science into dual sediment standards</p>
+          <div className="bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 dark:from-sky-800 dark:via-blue-800 dark:to-indigo-800 rounded-xl p-6 border border-sky-200 dark:border-sky-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-sky-800 dark:text-sky-100">Presentation 5: Interactive Discussion - Holistic protection: integrating modern science into matrix sediment standards</h3>
+              <span className="bg-gradient-to-r from-sky-500 to-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">9:30 AM</span>
+            </div>
+            <p className="text-sky-700 dark:text-sky-200 font-medium">by Beth Power</p>
           </div>
 
           {/* Session 6 */}
-          <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-6 border border-red-200">
-            <h3 className="text-xl font-semibold text-red-800 mb-3">Session 6: Tiered Framework Development</h3>
-            <p className="text-red-700 font-medium mb-2">Wayne Landis, Jasen Nelson</p>
-            <p className="text-red-600 italic">Developing a tiered framework: integrating site-specific data for sediment standards</p>
+          <div className="bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 dark:from-sky-800 dark:via-blue-800 dark:to-indigo-800 rounded-xl p-6 border border-sky-200 dark:border-sky-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-sky-800 dark:text-sky-100">Presentation 6: Interactive Discussion - Expanding the tiered framework: developing a procedure for deriving site-specific sediment standards</h3>
+              <span className="bg-gradient-to-r from-sky-500 to-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">9:45 AM</span>
+            </div>
+            <p className="text-sky-700 dark:text-sky-200 font-medium">by Wayne Landis</p>
+          </div>
+
+          {/* Break */}
+          <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 dark:from-purple-800 dark:via-pink-800 dark:to-rose-800 rounded-xl p-6 border border-purple-200 dark:border-purple-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-semibold text-purple-800 dark:text-purple-200">Break</h3>
+              <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-medium">10:00 - 10:30 AM</span>
+            </div>
+            <p className="text-purple-700 dark:text-purple-300 italic mt-2 font-semibold">30-minute break</p>
           </div>
 
           {/* Session 7 */}
-          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 rounded-xl p-6 border border-indigo-200">
-            <h3 className="text-xl font-semibold text-indigo-800 mb-3">Session 7: New Sediment Quality Guidelines</h3>
-            <p className="text-indigo-700 font-medium mb-2">Sushil Dixit</p>
-            <p className="text-indigo-600 italic">Development of a new sediment quality guideline protocol and applying it to the derivation of tributyltin sediment quality guidelines</p>
+          <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-teal-800 dark:via-cyan-800 dark:to-blue-800 rounded-xl p-6 border border-teal-200 dark:border-teal-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-teal-800 dark:text-teal-100">Presentation 7: Development of a new sediment quality guideline protocol and applying it to the derivation of tributyltin sediment quality guidelines</h3>
+              <span className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-3 py-1 rounded-full text-sm font-medium">10:30 AM</span>
+            </div>
+            <p className="text-teal-700 dark:text-teal-200 font-medium">by Sushil Dixit</p>
           </div>
 
           {/* Session 8 */}
-          <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-xl p-6 border border-emerald-200">
-            <h3 className="text-xl font-semibold text-emerald-800 mb-3">Session 8: Modernizing BC Standards (Part 1)</h3>
-            <p className="text-emerald-700 font-medium mb-2">Beth Power, Gary Lawrence, Jasen Nelson</p>
-            <p className="text-emerald-600 italic">Modernizing BC's sediment standards: Prioritizing options and approaches (Part 1 - presentation)</p>
+          <div className="bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 dark:from-sky-800 dark:via-blue-800 dark:to-indigo-800 rounded-xl p-6 border border-sky-200 dark:border-sky-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-sky-800 dark:text-sky-100">Presentation 8: Interactive Discussion - Modernizing BC&apos;s sediment standards: Prioritizing options and approaches (Part 1)</h3>
+              <span className="bg-gradient-to-r from-sky-500 to-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">10:45 AM</span>
+            </div>
+            <p className="text-sky-700 dark:text-sky-200 font-medium">by Gary Lawrence & Beth Power</p>
           </div>
 
           {/* Session 9 */}
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200">
-            <h3 className="text-xl font-semibold text-amber-800 mb-3">Session 9: Modernizing BC Standards (Part 2)</h3>
-            <p className="text-amber-700 font-medium mb-2">Beth Power, Gary Lawrence, Jasen Nelson</p>
-            <p className="text-amber-600 italic">Modernizing BC's sediment standards: Prioritizing options and approaches (Part 2 - interactive discussion)</p>
+          <div className="bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 dark:from-sky-800 dark:via-blue-800 dark:to-indigo-800 rounded-xl p-6 border border-sky-200 dark:border-sky-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-sky-800 dark:text-sky-100">Presentation 9: Interactive Discussion - Modernizing BC&apos;s sediment standards: Prioritizing options and approaches (Part 2)</h3>
+              <span className="bg-gradient-to-r from-sky-500 to-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">11:00 AM</span>
+            </div>
+            <p className="text-sky-700 dark:text-sky-200 font-medium">by Gary Lawrence & Beth Power</p>
           </div>
 
           {/* Session 10 */}
-          <div className="bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl p-6 border border-rose-200">
-            <h3 className="text-xl font-semibold text-rose-800 mb-3">Session 10: Indigenous Wisdom Integration</h3>
-            <p className="text-rose-700 font-medium mb-2">Shannon Waters</p>
-            <p className="text-rose-600 italic">Weaving knowledges: Indigenous wisdom in modernizing sediment standards for planetary health</p>
+          <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-teal-800 dark:via-cyan-800 dark:to-blue-800 rounded-xl p-6 border border-teal-200 dark:border-teal-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-teal-800 dark:text-teal-100">Presentation 10: Weaving knowledges: Indigenous wisdom in modernizing sediment standards for planetary health</h3>
+              <span className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-3 py-1 rounded-full text-sm font-medium">11:15 AM</span>
+            </div>
+            <p className="text-teal-700 dark:text-teal-200 font-medium">by Shannon Waters</p>
           </div>
 
           {/* Session 11 */}
-          <div className="bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl p-6 border border-violet-200">
-            <h3 className="text-xl font-semibold text-violet-800 mb-3">Session 11: Merging Western and Indigenous Science</h3>
-            <p className="text-violet-700 font-medium mb-2">Anuradha Rao</p>
-            <p className="text-violet-600 italic">Setting a New Standard: Merging Western and Indigenous Science to Apply the Burrard Inlet Water Quality Objectives to Contaminated Sites</p>
+          <div className="bg-gradient-to-br from-teal-50 via-cyan-50 to-blue-50 dark:from-teal-800 dark:via-cyan-800 dark:to-blue-800 rounded-xl p-6 border border-teal-200 dark:border-teal-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-teal-800 dark:text-teal-100">Presentation 11: Setting a New Standard: Merging Western and Indigenous Science to Apply the Burrard Inlet Water Quality Objectives to Contaminated Sites</h3>
+              <span className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-3 py-1 rounded-full text-sm font-medium">11:30 AM</span>
+            </div>
+            <p className="text-teal-700 dark:text-teal-200 font-medium">by Anuradha Rao & Melany Sanchez Solano</p>
           </div>
 
           {/* Session 12 */}
-          <div className="bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl p-6 border border-sky-200">
-            <h3 className="text-xl font-semibold text-sky-800 mb-3">Session 12: Interactive Discussion</h3>
-            <p className="text-sky-700 font-medium mb-2">Anuradha Rao, Shannon Waters</p>
-            <p className="text-sky-600 italic">Interactive Discussion on Weaving Indigenous Knowledges into Standards</p>
+          <div className="bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 dark:from-sky-800 dark:via-blue-800 dark:to-indigo-800 rounded-xl p-6 border border-sky-200 dark:border-sky-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="text-xl font-semibold text-sky-800 dark:text-sky-100">Presentation 12: Interactive Discussion - Weaving Indigenous Knowledges & Science into the Sediment Standards Framework</h3>
+              <span className="bg-gradient-to-r from-sky-500 to-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">11:45 AM</span>
+            </div>
+            <p className="text-sky-700 dark:text-sky-200 font-medium">by Jasen Nelson, Shannon Waters, Anuradha Rao & Melany Sanchez Solano</p>
+          </div>
+
+          {/* Lunch Break */}
+          <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 dark:from-purple-800 dark:via-pink-800 dark:to-rose-800 rounded-xl p-6 border border-purple-200 dark:border-purple-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-semibold text-purple-800 dark:text-purple-200">Lunch Break</h3>
+              <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-medium">12:00 PM</span>
+            </div>
+            <p className="text-purple-700 dark:text-purple-300 italic mt-2 font-semibold">Lunch break - Session concludes</p>
           </div>
         </div>
       </div>
 
-      {/* Conference Highlights */}
-      <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl shadow-lg p-8 mb-8 border border-green-200">
-        <h2 className="text-2xl font-bold text-green-900 mb-6">Why Attend CEW 2025?</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="text-4xl mb-3">🌊</div>
-            <h3 className="text-lg font-semibold text-green-800 mb-2">Victoria Location</h3>
-            <p className="text-green-700 text-sm">
-              Beautiful coastal city with rich environmental heritage and stunning natural surroundings
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl mb-3">🔬</div>
-            <h3 className="text-lg font-semibold text-green-800 mb-2">Scientific Excellence</h3>
-            <p className="text-green-700 text-sm">
-              Premier ecotoxicology conference featuring cutting-edge research and expert presentations
-            </p>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl mb-3">🤝</div>
-            <h3 className="text-lg font-semibold text-green-800 mb-2">Networking</h3>
-            <p className="text-green-700 text-sm">
-              Connect with leading researchers, practitioners, and industry professionals
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Additional Information */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">What to Expect</h3>
-          <ul className="space-y-3 text-gray-600">
-            <li className="flex items-start">
-              <span className="text-green-500 mr-3 mt-1">✓</span>
-              Expert presentations on modern assessment methods
-            </li>
-            <li className="flex items-start">
-              <span className="text-green-500 mr-3 mt-1">✓</span>
-              Interactive discussions on contamination challenges
-            </li>
-            <li className="flex items-start">
-              <span className="text-green-500 mr-3 mt-1">✓</span>
-              Indigenous Knowledge integration approaches
-            </li>
-            <li className="flex items-start">
-              <span className="text-green-500 mr-3 mt-1">✓</span>
-              Networking opportunities with peers
-            </li>
-          </ul>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Key Topics</h3>
-          <ul className="space-y-3 text-gray-600">
-            <li className="flex items-start">
-              <span className="text-blue-500 mr-3 mt-1">🔬</span>
-              Advanced sediment quality assessment techniques
-            </li>
-            <li className="flex items-start">
-              <span className="text-blue-500 mr-3 mt-1">🌊</span>
-              Aquatic ecosystem protection strategies
-            </li>
-            <li className="flex items-start">
-              <span className="text-blue-500 mr-3 mt-1">🏛️</span>
-              Indigenous Knowledge integration
-            </li>
-            <li className="flex items-start">
-              <span className="text-blue-500 mr-3 mt-1">📊</span>
-              Modern monitoring and assessment frameworks
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      {/* Registration Call to Action */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg p-8 mt-8 text-center text-white">
-        <h2 className="text-2xl font-bold mb-4">Ready to Join Us?</h2>
+      {/* Explore CEW Core Themes */}
+      <div className="bg-indigo-600 dark:bg-indigo-700 rounded-xl shadow-lg p-8 mt-8 text-center text-white">
+        <h2 className="text-2xl font-bold mb-4">Explore CEW Core Themes</h2>
         <p className="text-indigo-100 text-lg mb-6">
-          Don&apos;t miss this opportunity to participate in the premier ecotoxicology conference in Canada
+          Discover the key themes and frameworks that will be discussed at CEW 2025
         </p>
-        <div className="space-x-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <a 
-            href={sessionData.conferenceWebsite}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
+            href="/core-themes/indigenous-knowledge-science"
+            className="inline-flex items-center justify-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
           >
-            Visit Conference Website
-            <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
+            Indigenous Knowledge & Science
           </a>
           <a 
-            href="/survey-results"
-            className="inline-flex items-center px-6 py-3 bg-transparent text-white font-semibold rounded-lg border-2 border-white hover:bg-white hover:text-indigo-600 transition-colors"
+            href="/core-themes/holistic-protection"
+            className="inline-flex items-center justify-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
           >
-            View Survey Results
-            <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19l-7-7 7-7" />
-            </svg>
+            Holistic Protection
+          </a>
+          <a 
+            href="/core-themes/tiered-framework"
+            className="inline-flex items-center justify-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
+          >
+            Tiered Framework
+          </a>
+          <a 
+            href="/core-themes/prioritization-framework"
+            className="inline-flex items-center justify-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
+          >
+            Prioritization Framework
           </a>
         </div>
       </div>

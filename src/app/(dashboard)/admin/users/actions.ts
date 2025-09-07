@@ -109,7 +109,7 @@ export async function getUsers(): Promise<UserWithRole[]> {
 }
 
 // Comprehensive user discovery that searches multiple sources
-async function getUsersComprehensive(currentUser: any): Promise<UserWithRole[]> {
+async function getUsersComprehensive(currentUser: { id: string }): Promise<UserWithRole[]> {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -180,7 +180,7 @@ async function getUsersComprehensive(currentUser: any): Promise<UserWithRole[]> 
 
     // Try to get user emails from auth.users through a database function
     // This requires creating a database function that can safely expose user emails
-    let authUsers: any[] = [];
+    let authUsers: { id: string; email: string }[] = [];
     try {
       // Try to call a database function that returns user emails
       const { data: authUsersData, error: authError } = await supabase
@@ -192,7 +192,7 @@ async function getUsersComprehensive(currentUser: any): Promise<UserWithRole[]> 
       } else {
         console.log('⚠️ Database function not available, using fallback method');
       }
-    } catch (funcError) {
+    } catch {
       console.log('⚠️ Database function call failed, using fallback method');
     }
 

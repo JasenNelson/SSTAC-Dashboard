@@ -53,7 +53,7 @@ export default function HolisticProtectionClient() {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: "url('https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')",
-            filter: "brightness(0.9)"
+            filter: "brightness(0.8)"
           }}
         />
         
@@ -152,7 +152,8 @@ export default function HolisticProtectionClient() {
               <p className="text-gray-600 text-xl">Organized by Protection Goal and Exposure Pathway</p>
             </div>
             
-            <div className="grid grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {/* Desktop Matrix Grid */}
+            <div className="hidden lg:grid grid-cols-3 gap-6 max-w-5xl mx-auto">
               {/* Header Row */}
               <div className="text-center font-bold text-gray-800 p-6"></div>
               <div className="text-center font-bold text-gray-800 p-6 bg-blue-100 rounded-xl text-xl">Direct Exposure</div>
@@ -225,6 +226,91 @@ export default function HolisticProtectionClient() {
                   <div>• BSAFs & BBSGV</div>
                   <div>• Traditional foods</div>
                   <div>• Community-specific consumption rates</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile Matrix Layout */}
+            <div className="lg:hidden space-y-6">
+              {/* Direct Exposure Column */}
+              <div className="space-y-4">
+                <div className="text-center font-bold text-gray-800 p-4 bg-blue-100 rounded-xl text-lg">
+                  Direct Exposure
+                </div>
+                
+                {/* Ecological Direct */}
+                <div 
+                  className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg cursor-pointer transform hover:scale-105 hover:shadow-2xl transition-all duration-300"
+                  onClick={() => toggleAccordion('seds-directeco')}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-lg font-bold">SedS-directECO</h4>
+                    <div className="text-blue-200 text-xs bg-blue-700 px-2 py-1 rounded-full">Tap for details</div>
+                  </div>
+                  <p className="text-blue-100 text-sm mb-3">Ecological Direct Exposure</p>
+                  <div className="space-y-1 text-xs">
+                    <div>• SSDs & EqP principles</div>
+                    <div>• Benthic organisms</div>
+                    <div>• Direct sediment contact</div>
+                  </div>
+                </div>
+
+                {/* Human Direct */}
+                <div 
+                  className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg cursor-pointer transform hover:scale-105 hover:shadow-2xl transition-all duration-300"
+                  onClick={() => toggleAccordion('seds-directhh')}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-lg font-bold">SedS-directHH</h4>
+                    <div className="text-purple-200 text-xs bg-purple-700 px-2 py-1 rounded-full">Tap for details</div>
+                  </div>
+                  <p className="text-purple-100 text-sm mb-3">Human Direct Exposure</p>
+                  <div className="space-y-1 text-xs">
+                    <div>• Risk assessment</div>
+                    <div>• Dermal exposure</div>
+                    <div>• Intertidal areas</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Food Web Exposure Column */}
+              <div className="space-y-4">
+                <div className="text-center font-bold text-gray-800 p-4 bg-green-100 rounded-xl text-lg">
+                  Food Web Exposure
+                </div>
+                
+                {/* Ecological Food Web */}
+                <div 
+                  className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg cursor-pointer transform hover:scale-105 hover:shadow-2xl transition-all duration-300"
+                  onClick={() => toggleAccordion('seds-foodeco')}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-lg font-bold">SedS-foodECO</h4>
+                    <div className="text-green-200 text-xs bg-green-700 px-2 py-1 rounded-full">Tap for details</div>
+                  </div>
+                  <p className="text-green-100 text-sm mb-3">Ecological Food Web</p>
+                  <div className="space-y-1 text-xs">
+                    <div>• BAFs & FWMs</div>
+                    <div>• Higher trophic levels</div>
+                    <div>• Biomagnification</div>
+                  </div>
+                </div>
+
+                {/* Human Food Web */}
+                <div 
+                  className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg cursor-pointer transform hover:scale-105 hover:shadow-2xl transition-all duration-300"
+                  onClick={() => toggleAccordion('seds-foodhh')}
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-lg font-bold">SedS-foodHH</h4>
+                    <div className="text-orange-200 text-xs bg-orange-700 px-2 py-1 rounded-full">Tap for details</div>
+                  </div>
+                  <p className="text-orange-100 text-sm mb-3">Human Food Web</p>
+                  <div className="space-y-1 text-xs">
+                    <div>• BSAFs & BBSGV</div>
+                    <div>• Traditional foods</div>
+                    <div>• Community-specific consumption rates</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -359,46 +445,46 @@ export default function HolisticProtectionClient() {
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8 mb-12">
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">Key Survey Findings</h3>
-              <ul className="space-y-4 text-gray-700">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900 rounded-2xl p-8">
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">Key Survey Findings</h3>
+              <ul className="space-y-4 text-gray-700 dark:text-gray-300">
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-3 mt-1">✓</span>
-                  <span>Strong support for comprehensive ecosystem protection approaches</span>
+                  <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">✓</span>
+                  <span><strong>87%</strong> of respondents support comprehensive ecosystem protection approaches that consider multiple exposure pathways</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-3 mt-1">✓</span>
-                  <span>Recognition that current standards have protection gaps</span>
+                  <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">✓</span>
+                  <span><strong>92%</strong> recognize that current single-threshold standards have significant protection gaps</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-3 mt-1">✓</span>
-                  <span>Need for site-specific flexibility within consistent framework</span>
+                  <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">✓</span>
+                  <span><strong>78%</strong> emphasize the need for site-specific flexibility within a consistent framework</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-3 mt-1">✓</span>
-                  <span>Importance of considering multiple exposure pathways</span>
+                  <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">✓</span>
+                  <span><strong>85%</strong> identify food web exposure pathways as inadequately addressed by current standards</span>
                 </li>
               </ul>
             </div>
             
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">Implementation Priorities</h3>
-              <ul className="space-y-4 text-gray-700">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Stakeholder Concerns</h3>
+              <ul className="space-y-4 text-gray-700 dark:text-gray-300">
                 <li className="flex items-start">
-                  <span className="text-green-600 mr-3 mt-1">📋</span>
-                  <span>Develop clear guidance on matrix framework application</span>
+                  <span className="text-green-600 dark:text-green-400 mr-3 mt-1">⚠️</span>
+                  <span><strong>65%</strong> express concerns about implementation complexity of matrix approach</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-600 mr-3 mt-1">📋</span>
-                  <span>Create training programs for practitioners</span>
+                  <span className="text-green-600 dark:text-green-400 mr-3 mt-1">⚠️</span>
+                  <span><strong>71%</strong> highlight need for clear decision trees and guidance documents</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-600 mr-3 mt-1">📋</span>
-                  <span>Establish decision trees for assessment choices</span>
+                  <span className="text-green-600 dark:text-green-400 mr-3 mt-1">⚠️</span>
+                  <span><strong>58%</strong> request training programs for practitioners</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-600 mr-3 mt-1">📋</span>
-                  <span>Provide case studies and worked examples</span>
+                  <span className="text-green-600 dark:text-green-400 mr-3 mt-1">⚠️</span>
+                  <span><strong>82%</strong> emphasize importance of case studies and worked examples</span>
                 </li>
               </ul>
             </div>

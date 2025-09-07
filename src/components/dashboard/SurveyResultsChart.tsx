@@ -4,6 +4,7 @@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { useEffect, useState } from 'react';
 
 type ChartData = {
   name: string;
@@ -41,33 +42,65 @@ const sampleData: ChartData[] = [
 ];
 
 export default function SurveyResultsChart() {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Check if dark mode is active
+    const checkDarkMode = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setIsDarkMode(isDark);
+    };
+
+    // Check on mount
+    checkDarkMode();
+
+    // Watch for theme changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Theme-aware colors
+  const textColor = isDarkMode ? '#f3f4f6' : '#6b7280';
+  const gridColor = isDarkMode ? '#4b5563' : '#e5e7eb';
+  const tooltipBg = isDarkMode ? 'rgba(31, 41, 55, 0.98)' : 'rgba(255, 255, 255, 0.98)';
+  const tooltipBorder = isDarkMode ? '#4b5563' : '#d1d5db';
+  const tooltipText = isDarkMode ? '#f3f4f6' : '#1f2937';
+  const legendText = isDarkMode ? '#d1d5db' : '#374151';
+
   return (
     <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={sampleData} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
           <XAxis 
             dataKey="name" 
-            stroke="#6b7280" 
+            stroke={textColor} 
             fontSize={11}
             angle={-45}
             textAnchor="end"
             height={60}
+            tick={{ fill: textColor }}
           />
           <YAxis 
-            stroke="#6b7280" 
+            stroke={textColor} 
             fontSize={11}
             domain={[0, 100]}
             tickFormatter={(value) => `${value}%`}
+            tick={{ fill: textColor }}
           />
           <Tooltip
             cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
             contentStyle={{
-              backgroundColor: 'rgba(255, 255, 255, 0.98)',
-              border: '1px solid #d1d5db',
+              backgroundColor: tooltipBg,
+              border: `1px solid ${tooltipBorder}`,
               borderRadius: '0.5rem',
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-              color: '#1f2937',
+              color: tooltipText,
               fontSize: '12px',
             }}
             formatter={(value: number, name: string) => [
@@ -76,11 +109,11 @@ export default function SurveyResultsChart() {
             ]}
             labelStyle={{ 
               fontWeight: 'bold',
-              color: '#1f2937',
+              color: tooltipText,
               fontSize: '13px',
             }}
             itemStyle={{
-              color: '#1f2937',
+              color: tooltipText,
               fontSize: '12px',
             }}
           />
@@ -91,7 +124,7 @@ export default function SurveyResultsChart() {
             }}
             formatter={(value) => (
               <span style={{ 
-                color: '#374151', 
+                color: legendText, 
                 fontSize: '12px',
                 fontWeight: '500',
               }}>

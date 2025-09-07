@@ -98,11 +98,11 @@ export default async function DashboardPage() {
             </div>
             
             {/* Elevator Pitch */}
-            <div className="mt-10 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+            <div className="mt-10 p-6 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-xl border border-blue-200 dark:border-blue-700">
               <div className="text-center">
-                <h4 className="text-xl font-semibold text-blue-900 mb-3">Project Mission</h4>
-                <p className="text-blue-800 italic text-lg leading-relaxed max-w-4xl mx-auto">
-                  "The Sediment Standards Project is developing a modern, robust scientific framework for updating BC's Contaminated Sites Regulation sediment standards, integrating best-available science to protect aquatic ecosystems and the communities that depend on them."
+                <h4 className="text-xl font-semibold text-blue-950 dark:text-blue-100 mb-3">Project Mission</h4>
+                <p className="text-blue-900 dark:text-blue-200 italic text-lg leading-relaxed max-w-4xl mx-auto">
+                  &quot;The Sediment Standards Project is developing a modern, robust scientific framework for updating BC&apos;s Contaminated Sites Regulation sediment standards, integrating best-available science to protect aquatic ecosystems and the communities that depend on them.&quot;
                 </p>
               </div>
             </div>

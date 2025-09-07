@@ -1,5 +1,75 @@
 # Debugging Lessons Learned
 
+## 🚨 Critical Incident: Overly Complicated Color Scheme System (2025-01-XX)
+
+### **What Happened**
+The color scheme system has become extremely complex and unmaintainable. Multiple survey result pages have inconsistent theming with complex gradients, 200+ CSS override rules, and dark backgrounds appearing in light mode. Simple color changes require extensive debugging and CSS specificity wars.
+
+### **Root Cause Analysis**
+1. **Over-Engineering**: Complex gradient systems that violate basic design principles
+2. **CSS Specificity Wars**: 200+ CSS rules with `!important` declarations fighting each other
+3. **Inconsistent Patterns**: Each page has different color schemes instead of unified design system
+4. **No Design System**: Lack of standardized color tokens and consistent theming approach
+
+### **Key Problems Identified**
+- **Dark backgrounds in light mode**: Basic design principle violated repeatedly
+- **CSS Override Hell**: `html.light` and `html.dark` rules scattered throughout codebase
+- **Maintenance Nightmare**: Simple color changes require extensive CSS debugging
+- **User Experience Issues**: Poor contrast and readability due to complex theming
+
+### **Timeline of Events**
+1. **Initial Implementation**: Complex gradient backgrounds added to survey pages
+2. **CSS Override Spiral**: Each fix required more specific CSS rules
+3. **Specificity Wars**: 200+ CSS rules with `!important` declarations
+4. **Maintenance Crisis**: Simple changes became debugging nightmares
+5. **User Impact**: Poor readability and inconsistent theming
+
+### **Key Lessons Learned**
+
+#### 1. Keep Color Schemes Simple
+- **Basic principle**: Light backgrounds in light mode, dark in dark mode
+- **No complex gradients**: Simple, readable color schemes are better
+- **Consistent patterns**: All pages should follow the same theming approach
+
+#### 2. Avoid CSS Override Hell
+- **Minimize `!important`**: Use sparingly and understand why it's needed
+- **Consolidate rules**: Don't scatter theming rules throughout CSS
+- **Design system approach**: Use consistent color tokens and theming
+
+#### 3. Design System First
+- **Establish patterns**: Create consistent color schemes before implementing
+- **Test thoroughly**: Verify theming works before adding complexity
+- **Document decisions**: Record why specific color choices were made
+
+### **What We Should Have Done Differently**
+1. **Started with simple theming**: Basic light/dark backgrounds first
+2. **Established design system**: Consistent color tokens and patterns
+3. **Avoided complex gradients**: Simple, readable color schemes
+4. **Consolidated CSS rules**: Single source of truth for theming
+
+### **Prevention Strategies**
+
+#### Before Adding Color Complexity:
+- [ ] **Ask "Why?"** - What specific problem are we solving?
+- [ ] **Keep it simple** - Can this be done with basic colors?
+- [ ] **Test thoroughly** - Verify theming works in both modes
+- [ ] **Document patterns** - Record color choices and reasoning
+
+#### During Implementation:
+- [ ] **Use design system** - Follow established color patterns
+- [ ] **Minimize overrides** - Avoid CSS specificity wars
+- [ ] **Test both modes** - Ensure light/dark mode work correctly
+- [ ] **Keep it maintainable** - Simple changes should be simple
+
+### **Action Items for Future**
+1. **Simplify Color System**: Replace complex gradients with simple, readable colors
+2. **Consolidate CSS Rules**: Reduce 200+ rules to essential theming only
+3. **Establish Design System**: Create consistent color tokens and theming approach
+4. **Remove CSS Override Hell**: Eliminate scattered `!important` declarations
+5. **Document Color Patterns**: Record why specific color choices were made
+
+---
+
 ## 🚨 Critical Incident: Theme System CSS Specificity Issues (2025-01-XX)
 
 ### **What Happened**

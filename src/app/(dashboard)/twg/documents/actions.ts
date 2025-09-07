@@ -54,7 +54,7 @@ export async function addDocument(prevState: AddDocumentState, formData: FormDat
     return { error: 'User not authenticated.' };
   }
 
-  let { data: document, error } = await supabase
+  const { data: document, error } = await supabase
     .from('documents')
     .insert([{ 
       title, 

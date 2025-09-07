@@ -58,12 +58,14 @@ export default function ProjectTimeline() {
 
   const getStatusColor = (milestone: Milestone) => {
     if (milestone.status === 'completed') return 'bg-green-500';
+    if (milestone.status === 'in_progress') return 'bg-blue-500';
     if (isFutureDate(milestone.target_date)) return 'bg-blue-500';
     return 'bg-gray-400';
   };
 
   const getStatusText = (milestone: Milestone) => {
     if (milestone.status === 'completed') return 'Completed';
+    if (milestone.status === 'in_progress') return 'Ongoing';
     if (isFutureDate(milestone.target_date)) return 'Upcoming';
     return 'Overdue';
   };

@@ -2,6 +2,34 @@
 
 ## 🚨 Critical Debugging Incident (2025-01-XX)
 
+### Overly Complicated Color Scheme System
+**LESSON LEARNED**: The current color scheme system is overly complicated and creates maintenance nightmares. Simple, consistent color schemes are essential for maintainable code.
+
+#### What Happened
+- Multiple survey result pages have complex gradient backgrounds with inconsistent theming
+- CSS specificity overrides are scattered throughout `globals.css` with 200+ rules
+- Dark backgrounds appear in light mode due to conflicting CSS rules
+- Each page requires individual CSS overrides to work properly
+- Simple changes like background colors require extensive debugging
+
+#### Root Cause
+- **Over-Engineering**: Complex gradient systems that don't follow basic design principles
+- **CSS Specificity Wars**: 200+ CSS rules with `!important` declarations fighting each other
+- **Inconsistent Patterns**: Each page has different color schemes instead of unified design system
+- **No Design System**: Lack of standardized color tokens and consistent theming approach
+
+#### Key Problems
+- **Dark backgrounds in light mode**: Basic design principle violated repeatedly
+- **CSS Override Hell**: `html.light` and `html.dark` rules scattered throughout codebase
+- **Maintenance Nightmare**: Simple color changes require extensive CSS debugging
+- **User Experience Issues**: Poor contrast and readability due to complex theming
+
+#### Solution Required
+- **Simplify Color System**: Use basic light/dark backgrounds with consistent patterns
+- **Remove Complex Gradients**: Replace with simple, readable color schemes
+- **Consolidate CSS Rules**: Reduce 200+ rules to essential theming only
+- **Establish Design System**: Create consistent color tokens and theming approach
+
 ### Theme System CSS Specificity Issues
 **LESSON LEARNED**: CSS specificity is critical for theme systems - use high-specificity selectors to override conflicting styles.
 

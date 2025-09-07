@@ -479,10 +479,10 @@ export default async function SurveyResultsPage() {
 
         {/* CEW 2025 Conference Connection */}
         <section className="mb-16">
-          <div className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-2xl shadow-lg p-12 text-white">
+          <div className="bg-gradient-to-r from-green-600 to-emerald-700 dark:from-green-800 dark:to-emerald-900 rounded-2xl shadow-lg p-12 text-white">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold mb-4">Connecting to CEW 2025 Victoria</h2>
-              <p className="text-xl text-green-100 max-w-4xl mx-auto">
+              <p className="text-xl text-green-100 dark:text-green-200 max-w-4xl mx-auto">
                 These survey findings directly inform our session at the Canadian Ecotoxicity Workshop 2025 in Victoria, BC
               </p>
             </div>
@@ -490,7 +490,7 @@ export default async function SurveyResultsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               <div>
                 <h3 className="text-2xl font-bold mb-4">Conference Details</h3>
-                <div className="space-y-3 text-green-100">
+                <div className="space-y-3 text-green-100 dark:text-green-200">
                   <div className="flex items-center">
                     <span className="text-2xl mr-3">📅</span>
                     <span><strong>Dates:</strong> October 5-9, 2025</span>
@@ -524,9 +524,9 @@ export default async function SurveyResultsPage() {
                 </div>
               </div>
               
-              <div className="bg-white/10 rounded-xl p-6 backdrop-blur-sm">
+              <div className="bg-white/10 dark:bg-white/5 rounded-xl p-6 backdrop-blur-sm">
                 <h3 className="text-xl font-bold mb-4">Survey Themes → Conference Topics</h3>
-                <div className="space-y-3 text-green-100">
+                <div className="space-y-3 text-green-100 dark:text-green-200">
                   <div className="flex items-start">
                     <span className="text-green-300 mr-2 mt-1">→</span>
                     <span><strong>Holistic Protection:</strong> Matrix sediment standards framework</span>

@@ -325,25 +325,26 @@ export default function Header() {
     }
   };
 
-  // Navigation links for authenticated users
-  const navigationLinks = [
-    { href: '/survey-results', label: 'Survey', icon: '📊' },
-    { href: '/cew-2025', label: 'CEW', icon: '📋' },
-    { href: '/twg/documents', label: 'Documents', icon: '📄' },
-    { href: '/twg/discussions', label: 'Forum', icon: '💬' },
-    { href: '/wiks', label: 'WIKS', icon: '🌿' },
-  ];
+  // Navigation links for authenticated users - removed direct links, now handled by menu
+  const navigationLinks: any[] = [];
 
   // Comprehensive menu links for desktop dropdown
   const allMenuLinks = [
+    // Main
     { href: '/dashboard', label: 'Dashboard', icon: '🏠', category: 'Main' },
-    { href: '/survey-results', label: 'Survey Results', icon: '📊', category: 'Survey' },
-    { href: '/survey-results/holistic-protection', label: 'Holistic Protection', icon: '🛡️', category: 'Survey' },
-    { href: '/survey-results/tiered-framework', label: 'Tiered Framework', icon: '📈', category: 'Survey' },
-    { href: '/survey-results/prioritization', label: 'Contaminant Prioritization', icon: '🧪', category: 'Survey' },
-    { href: '/survey-results/detailed-findings', label: 'Detailed Findings', icon: '📋', category: 'Survey' },
-    { href: '/wiks', label: 'Indigenous Knowledge & Science', icon: '🌿', category: 'Knowledge' },
-    { href: '/cew-2025', label: 'CEW 2025', icon: '📅', category: 'Events' },
+    
+    // Engagement
+    { href: '/survey-results', label: 'Survey Results', icon: '📊', category: 'Engagement' },
+    { href: '/survey-results/detailed-findings', label: 'Detailed Findings', icon: '📋', category: 'Engagement', parent: 'Survey Results' },
+    { href: '/cew-2025', label: 'CEW 2025', icon: '📅', category: 'Engagement' },
+    
+    // Core Themes
+    { href: '/wiks', label: 'Indigenous Knowledge & Science', icon: '🌿', category: 'Core Themes' },
+    { href: '/survey-results/holistic-protection', label: 'Holistic Protection', icon: '🛡️', category: 'Core Themes' },
+    { href: '/survey-results/tiered-framework', label: 'Tiered Framework', icon: '📈', category: 'Core Themes' },
+    { href: '/survey-results/prioritization', label: 'Prioritization Framework', icon: '🧪', category: 'Core Themes' },
+    
+    // Resources
     { href: '/twg/documents', label: 'Documents', icon: '📄', category: 'Resources' },
     { href: '/twg/discussions', label: 'Discussion Forum', icon: '💬', category: 'Resources' },
   ];
@@ -438,7 +439,7 @@ export default function Header() {
                 {isDesktopMenuOpen && (
                   <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-600 z-50">
                     <div className="py-1 max-h-96 overflow-y-auto">
-                      {['Main', 'Survey', 'Knowledge', 'Events', 'Resources'].map((category) => (
+                      {['Main', 'Engagement', 'Core Themes', 'Resources'].map((category) => (
                         <div key={category}>
                           <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700">
                             {category}
@@ -451,9 +452,13 @@ export default function Header() {
                                 href={link.href}
                                 onClick={() => setIsDesktopMenuOpen(false)}
                                 className={`block px-4 py-2 text-sm transition-colors ${
+                                  link.parent 
+                                    ? 'pl-8 text-gray-600 dark:text-gray-400' 
+                                    : ''
+                                } ${
                                   isActiveLink(link.href)
-                                    ? 'bg-indigo-100 text-indigo-700'
-                                    : 'text-gray-700 hover:bg-gray-100'
+                                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300'
+                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                                 }`}
                               >
                                 <span className="mr-3">{link.icon}</span>
@@ -533,27 +538,40 @@ export default function Header() {
         {session && isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4">
             <nav className="space-y-1">
-              {navigationLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    isActiveLink(link.href)
-                      ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  <span className="mr-3">{link.icon}</span>
-                  {link.label}
-                </Link>
+              {['Main', 'Engagement', 'Core Themes', 'Resources'].map((category) => (
+                <div key={category}>
+                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700">
+                    {category}
+                  </div>
+                  {allMenuLinks
+                    .filter(link => link.category === category)
+                    .map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                          link.parent 
+                            ? 'pl-8 text-gray-600 dark:text-gray-400' 
+                            : ''
+                        } ${
+                          isActiveLink(link.href)
+                            ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
+                            : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        <span className="mr-3">{link.icon}</span>
+                        {link.label}
+                      </Link>
+                    ))}
+                </div>
               ))}
               
               {/* Admin Links */}
               {isAdmin && (
                 <>
-                  <div className="pt-2 border-t border-gray-200">
-                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700">
                       Admin
                     </div>
                     {adminLinks.map((link) => (

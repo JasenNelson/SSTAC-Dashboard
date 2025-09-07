@@ -11,7 +11,7 @@ interface PollData {
 
 export default function PrioritizationClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
-  const [polls, setPolls] = useState<PollData[]>([
+  const [polls] = useState<PollData[]>([
     {
       question: "Please rank these potential feasibility criteria to help inform the development of a prioritization framework (1= highest):",
       options: [
@@ -127,7 +127,7 @@ export default function PrioritizationClient() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Hero/Header Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
@@ -164,17 +164,17 @@ export default function PrioritizationClient() {
           {/* Framework Description */}
           <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 max-w-4xl mx-auto">
             <p className="text-lg md:text-xl italic leading-relaxed">
-              "A comprehensive framework for collaboratively prioritizing research initiatives, assessing feasibility, 
-              and developing strategic plans for short-, medium-, and long-term modernization goals across all aspects of sediment standards."
+              &quot;A comprehensive framework for collaboratively prioritizing research initiatives, assessing feasibility, 
+              and developing strategic plans for short-, medium-, and long-term modernization goals across all aspects of sediment standards.&quot;
             </p>
           </div>
         </div>
       </section>
 
       {/* Framework Overview Section */}
-      <section className="py-20 px-6 bg-white">
+      <section className="py-20 px-6 bg-white/80 dark:bg-gray-800 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
             Strategic Research Planning & Feasibility Assessment
           </h2>
           
@@ -184,7 +184,7 @@ export default function PrioritizationClient() {
               <div className="bg-gradient-to-br from-red-500 to-red-600 text-white p-8 rounded-2xl shadow-2xl h-full">
                 <div className="text-4xl mb-4">⚠️</div>
                 <h3 className="text-2xl font-bold mb-4">The Challenge</h3>
-                <p className="text-red-100 leading-relaxed">
+                <p className="text-white leading-relaxed">
                   Multiple modernization approaches need coordination: matrix standards, tiered frameworks, 
                   bioavailability adjustments, and contaminant expansion require strategic prioritization and feasibility assessment.
                 </p>
@@ -196,7 +196,7 @@ export default function PrioritizationClient() {
               <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-8 rounded-2xl shadow-2xl h-full">
                 <div className="text-4xl mb-4">📊</div>
                 <h3 className="text-2xl font-bold mb-4">Collaborative Framework</h3>
-                <p className="text-orange-100 leading-relaxed">
+                <p className="text-white leading-relaxed">
                   A comprehensive approach that assesses feasibility, prioritizes research initiatives, 
                   and develops strategic plans for short-, medium-, and long-term modernization goals.
                 </p>
@@ -208,7 +208,7 @@ export default function PrioritizationClient() {
               <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-8 rounded-2xl shadow-2xl h-full">
                 <div className="text-4xl mb-4">🎯</div>
                 <h3 className="text-2xl font-bold mb-4">Strategic Implementation</h3>
-                <p className="text-yellow-100 leading-relaxed">
+                <p className="text-white leading-relaxed">
                   Coordinated resource allocation across all modernization approaches ensures 
                   efficient progress while maintaining scientific rigor and practical implementation.
                 </p>
@@ -219,21 +219,21 @@ export default function PrioritizationClient() {
       </section>
 
       {/* Prioritization Framework Section */}
-      <section className="py-20 px-6 bg-gradient-to-br from-orange-50 to-yellow-50">
+      <section className="py-20 px-6 bg-white/80 dark:bg-gray-800 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
             Framework Components & Research Priorities
           </h2>
           
           <div className="space-y-6">
             {/* Accordion 1: Legacy Contaminants */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
               <button
                 onClick={() => toggleAccordion('legacy-contaminants')}
-                className="w-full text-left p-8 hover:bg-gray-50 transition-colors duration-300"
+                className="w-full text-left p-8 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-300"
               >
                 <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold text-gray-800">Legacy Contaminants Priority</h3>
+                  <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Legacy Contaminants Priority</h3>
                   <span className={`text-3xl transition-transform duration-300 ${
                     activeAccordion === 'legacy-contaminants' ? 'rotate-180' : ''
                   }`}>
@@ -243,17 +243,17 @@ export default function PrioritizationClient() {
               </button>
               
               {activeAccordion === 'legacy-contaminants' && (
-                <div className="px-8 pb-8 border-t border-gray-200">
+                <div className="px-8 pb-8 border-t border-gray-200 dark:border-gray-600">
                   <div className="pt-6 space-y-6">
                     <div>
-                      <h4 className="text-xl font-semibold text-gray-800 mb-3">Current Status:</h4>
-                      <p className="text-gray-600 text-lg">
+                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Current Status:</h4>
+                      <p className="text-gray-600 dark:text-gray-300 text-lg">
                         Existing sediment standards primarily address legacy contaminants with established 
                         toxicity data and clear derivation methods.
                       </p>
                     </div>
                     <div>
-                      <h4 className="text-xl font-semibold text-gray-800 mb-3">Priority Actions:</h4>
+                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Priority Actions:</h4>
                       <ul className="space-y-2 text-gray-600 text-lg">
                         <li>• Review and update existing standards based on new scientific data</li>
                         <li>• Ensure all legacy contaminants are covered by the Matrix Sediment Standards Framework</li>
@@ -267,13 +267,13 @@ export default function PrioritizationClient() {
             </div>
 
             {/* Accordion 2: Emerging Contaminants */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
               <button
                 onClick={() => toggleAccordion('emerging-contaminants')}
-                className="w-full text-left p-8 hover:bg-gray-50 transition-colors duration-300"
+                className="w-full text-left p-8 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-300"
               >
                 <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold text-gray-800">Emerging Contaminants Strategy</h3>
+                  <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Emerging Contaminants Strategy</h3>
                   <span className={`text-3xl transition-transform duration-300 ${
                     activeAccordion === 'emerging-contaminants' ? 'rotate-180' : ''
                   }`}>
@@ -283,10 +283,10 @@ export default function PrioritizationClient() {
               </button>
               
               {activeAccordion === 'emerging-contaminants' && (
-                <div className="px-8 pb-8 border-t border-gray-200">
+                <div className="px-8 pb-8 border-t border-gray-200 dark:border-gray-600">
                   <div className="pt-6 space-y-6">
                     <div>
-                      <h4 className="text-xl font-semibold text-gray-800 mb-3">High Priority Emerging Contaminants:</h4>
+                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">High Priority Emerging Contaminants:</h4>
                       <ul className="space-y-2 text-gray-600 text-lg">
                         <li>• PFAS (Per- and polyfluoroalkyl substances)</li>
                         <li>• Organotins (e.g., tributyltin or TBT)</li>
@@ -296,8 +296,8 @@ export default function PrioritizationClient() {
                       </ul>
                     </div>
                     <div>
-                      <h4 className="text-xl font-semibold text-gray-800 mb-3">Implementation Approach:</h4>
-                      <p className="text-gray-600 text-lg">
+                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Implementation Approach:</h4>
+                      <p className="text-gray-600 dark:text-gray-300 text-lg">
                         Develop narrative standards and monitoring triggers for contaminants with limited 
                         data, while building scientific foundation for numerical thresholds as science matures.
                       </p>
@@ -308,13 +308,13 @@ export default function PrioritizationClient() {
             </div>
 
             {/* Accordion 3: Prioritization Criteria */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
               <button
                 onClick={() => toggleAccordion('prioritization-criteria')}
-                className="w-full text-left p-8 hover:bg-gray-50 transition-colors duration-300"
+                className="w-full text-left p-8 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-300"
               >
                 <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold text-gray-800">Prioritization Criteria</h3>
+                  <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Prioritization Criteria</h3>
                   <span className={`text-3xl transition-transform duration-300 ${
                     activeAccordion === 'prioritization-criteria' ? 'rotate-180' : ''
                   }`}>
@@ -324,11 +324,11 @@ export default function PrioritizationClient() {
               </button>
               
               {activeAccordion === 'prioritization-criteria' && (
-                <div className="px-8 pb-8 border-t border-gray-200">
+                <div className="px-8 pb-8 border-t border-gray-200 dark:border-gray-600">
                   <div className="pt-6 space-y-6">
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
-                        <h4 className="text-xl font-semibold text-gray-800 mb-3">Scientific Criteria:</h4>
+                        <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Scientific Criteria:</h4>
                         <ul className="space-y-2 text-gray-600 text-lg">
                           <li>• Detection frequency in BC waters</li>
                           <li>• Toxicity data availability and quality</li>
@@ -337,7 +337,7 @@ export default function PrioritizationClient() {
                         </ul>
                       </div>
                       <div>
-                        <h4 className="text-xl font-semibold text-gray-800 mb-3">Implementation Criteria:</h4>
+                        <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Implementation Criteria:</h4>
                         <ul className="space-y-2 text-gray-600 text-lg">
                           <li>• Derivation method feasibility</li>
                           <li>• Data quality and availability</li>
@@ -355,16 +355,16 @@ export default function PrioritizationClient() {
       </section>
 
       {/* Survey Findings Section */}
-      <section className="py-20 px-6 bg-white">
+      <section className="py-20 px-6 bg-white/80 dark:bg-gray-800 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
             What We Heard: Stakeholder Perspectives
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8 mb-12">
-            <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">Key Survey Findings</h3>
-              <ul className="space-y-4 text-gray-700">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Key Survey Findings</h3>
+              <ul className="space-y-4 text-gray-700 dark:text-gray-300">
                 <li className="flex items-start">
                   <span className="text-orange-600 mr-3 mt-1">✓</span>
                   <span>Strong support for comprehensive contaminant coverage</span>
@@ -384,24 +384,24 @@ export default function PrioritizationClient() {
               </ul>
             </div>
             
-            <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">Implementation Priorities</h3>
-              <ul className="space-y-4 text-gray-700">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Stakeholder Concerns</h3>
+              <ul className="space-y-4 text-gray-700 dark:text-gray-300">
                 <li className="flex items-start">
-                  <span className="text-yellow-600 mr-3 mt-1">📋</span>
-                  <span>Develop clear prioritization criteria and methodology</span>
+                  <span className="text-yellow-600 dark:text-yellow-400 mr-3 mt-1">⚠️</span>
+                  <span><strong>79%</strong> express concerns about complexity of prioritization methodology</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-yellow-600 mr-3 mt-1">📋</span>
-                  <span>Establish rolling review process for contaminant list</span>
+                  <span className="text-yellow-600 dark:text-yellow-400 mr-3 mt-1">⚠️</span>
+                  <span><strong>84%</strong> highlight need for clear criteria and decision frameworks</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-yellow-600 mr-3 mt-1">📋</span>
-                  <span>Create phased implementation approach</span>
+                  <span className="text-yellow-600 dark:text-yellow-400 mr-3 mt-1">⚠️</span>
+                  <span><strong>71%</strong> request guidance on emerging contaminant assessment</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-yellow-600 mr-3 mt-1">📋</span>
-                  <span>Provide guidance on emerging contaminant assessment</span>
+                  <span className="text-yellow-600 dark:text-yellow-400 mr-3 mt-1">⚠️</span>
+                  <span><strong>76%</strong> emphasize importance of stakeholder input in prioritization process</span>
                 </li>
               </ul>
             </div>
@@ -410,19 +410,19 @@ export default function PrioritizationClient() {
       </section>
 
       {/* Interactive Polls Section */}
-      <section className="py-20 px-6 bg-gradient-to-br from-yellow-50 to-orange-50">
+      <section className="py-20 px-6 bg-white/80 dark:bg-gray-800 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-8 text-gray-800 font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-8 text-gray-800 dark:text-white font-['Merriweather']">
             Your Input on Prioritization Framework
           </h2>
-          <p className="text-xl text-center text-gray-600 mb-16 max-w-4xl mx-auto">
+          <p className="text-xl text-center text-gray-600 dark:text-gray-300 mb-16 max-w-4xl mx-auto">
             Help inform the collaborative development of strategic research plans and feasibility assessments by sharing your perspectives on these key questions.
           </p>
           
           <div className="space-y-16">
             {polls.map((poll, pollIndex) => (
-              <div key={pollIndex} className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-2xl p-8 shadow-lg">
-                <h3 className="text-2xl font-bold text-gray-800 mb-8 text-center">
+              <div key={pollIndex} className="bg-white dark:bg-gray-700 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-600">
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-8 text-center">
                   {poll.question}
                 </h3>
                 
@@ -438,18 +438,18 @@ export default function PrioritizationClient() {
                           disabled={hasVoted}
                           className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 ${
                             hasVoted 
-                              ? 'bg-gray-100 border-gray-300 cursor-not-allowed' 
-                              : 'bg-white border-orange-300 hover:border-orange-500 hover:shadow-md cursor-pointer'
+                              ? 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 cursor-not-allowed' 
+                              : 'bg-white dark:bg-gray-700 border-orange-300 dark:border-orange-600 hover:border-orange-500 dark:hover:border-orange-400 hover:shadow-md cursor-pointer'
                           }`}
                         >
                           <div className="flex justify-between items-center">
                             <span className={`font-medium ${
-                              hasVoted ? 'text-gray-600' : 'text-gray-800'
+                              hasVoted ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-white'
                             }`}>
                               {option}
                             </span>
                             {hasVoted && (
-                              <span className="text-orange-600 font-semibold">
+                              <span className="text-orange-600 dark:text-orange-400 font-semibold">
                                 {percentage}%
                               </span>
                             )}
@@ -457,7 +457,7 @@ export default function PrioritizationClient() {
                           
                           {/* Progress bar for voted polls */}
                           {hasVoted && (
-                            <div className="mt-3 bg-gray-200 rounded-full h-2">
+                            <div className="mt-3 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
                               <div 
                                 className="bg-orange-500 h-2 rounded-full transition-all duration-1000"
                                 style={{ width: `${percentage}%` }}
@@ -472,8 +472,8 @@ export default function PrioritizationClient() {
                 
                 {votedPolls.has(pollIndex) && (
                   <div className="mt-6 text-center">
-                    <p className="text-gray-600">
-                      Total votes: <span className="font-semibold text-orange-600">{poll.totalVotes}</span>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Total votes: <span className="font-semibold text-orange-600 dark:text-orange-400">{poll.totalVotes}</span>
                     </p>
                   </div>
                 )}
@@ -484,7 +484,7 @@ export default function PrioritizationClient() {
       </section>
 
       {/* Next Steps Section */}
-      <section className="py-20 px-6 bg-gradient-to-br from-gray-800 to-gray-900 text-white">
+      <section className="py-20 px-6 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-8 font-['Merriweather']">
             Next Steps for Implementation
