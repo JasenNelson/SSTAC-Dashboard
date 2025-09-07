@@ -254,7 +254,7 @@ export default function PrioritizationClient() {
                     </div>
                     <div>
                       <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Priority Actions:</h4>
-                      <ul className="space-y-2 text-gray-600 text-lg">
+                      <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-lg">
                         <li>• Review and update existing standards based on new scientific data</li>
                         <li>• Ensure all legacy contaminants are covered by the Matrix Sediment Standards Framework</li>
                         <li>• Validate existing standards against current risk assessment methodologies</li>
@@ -287,7 +287,7 @@ export default function PrioritizationClient() {
                   <div className="pt-6 space-y-6">
                     <div>
                       <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">High Priority Emerging Contaminants:</h4>
-                      <ul className="space-y-2 text-gray-600 text-lg">
+                      <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-lg">
                         <li>• PFAS (Per- and polyfluoroalkyl substances)</li>
                         <li>• Organotins (e.g., tributyltin or TBT)</li>
                         <li>• Dioxins/furans (as toxic equivalents or TEQs)</li>
@@ -329,7 +329,7 @@ export default function PrioritizationClient() {
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
                         <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Scientific Criteria:</h4>
-                        <ul className="space-y-2 text-gray-600 text-lg">
+                        <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-lg">
                           <li>• Detection frequency in BC waters</li>
                           <li>• Toxicity data availability and quality</li>
                           <li>• Persistence in environmental media</li>
@@ -338,7 +338,7 @@ export default function PrioritizationClient() {
                       </div>
                       <div>
                         <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Implementation Criteria:</h4>
-                        <ul className="space-y-2 text-gray-600 text-lg">
+                        <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-lg">
                           <li>• Derivation method feasibility</li>
                           <li>• Data quality and availability</li>
                           <li>• Regulatory urgency</li>
@@ -492,24 +492,24 @@ export default function PrioritizationClient() {
           
           <div className="space-y-8 text-lg">
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-orange-300">Immediate Actions</h3>
-              <p className="text-gray-200 leading-relaxed">
+              <h3 className="text-2xl font-semibold mb-4 text-orange-600 dark:text-orange-400">Immediate Actions</h3>
+              <p className="text-gray-700 dark:text-gray-200 leading-relaxed">
                 Develop prioritization criteria, establish rolling review processes, and create 
                 phased implementation strategies for expanding contaminant coverage.
               </p>
             </div>
             
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-orange-300">Long-term Development</h3>
-              <p className="text-gray-200 leading-relaxed">
+              <h3 className="text-2xl font-semibold mb-4 text-orange-600 dark:text-orange-400">Long-term Development</h3>
+              <p className="text-gray-700 dark:text-gray-200 leading-relaxed">
                 Comprehensive contaminant coverage, emerging substance standards, and adaptive 
                 management frameworks to ensure continued relevance and effectiveness.
               </p>
             </div>
             
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-orange-300">Your Continued Input</h3>
-              <p className="text-gray-200 mb-4">
+              <h3 className="text-2xl font-semibold mb-4 text-orange-600 dark:text-orange-400">Your Continued Input</h3>
+              <p className="text-gray-700 dark:text-gray-200 mb-4">
                 We welcome your ongoing perspectives as we develop this prioritization framework together. 
                 Your input is essential for creating effective, practical contaminant prioritization strategies.
               </p>
