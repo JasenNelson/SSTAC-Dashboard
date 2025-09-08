@@ -1,17 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
+import PollWithResults from '@/components/PollWithResults';
+import RankingPoll from '@/components/dashboard/RankingPoll';
 
-interface PollData {
-  question: string;
-  options: string[];
-  votes: number[];
-  totalVotes: number;
-}
 
 export default function PrioritizationClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
-  const [polls, setPolls] = useState<PollData[]>([
+  
+  // Define polls with proper structure for the new poll system
+  const polls = [
     {
       question: "Please rank these potential feasibility criteria to help inform the development of a prioritization framework (1= highest):",
       options: [
@@ -19,9 +17,7 @@ export default function PrioritizationClient() {
         "Need for new or specialized technologies",
         "Level of complexity and corresponding expertise and resource requirements",
         "Level of likelihood/uncertainty in successful completion of project or meeting research goals"
-      ],
-      votes: [0, 0, 0, 0],
-      totalVotes: 0
+      ]
     },
     {
       question: "Please rank these timeframe considerations for developing a prioritization framework and strategic planning for research to support modernizing BC's sediment standards (1= highest):",
@@ -30,9 +26,7 @@ export default function PrioritizationClient() {
         "Focus on short-term progress (e.g., identify opportunities to quickly address regulatory gaps)",
         "Focus on progressing the highest potential impact, following a clear long-term strategic goal, avoiding convenient short-term efforts if they will distract from the goal and divert resources away from more meaningful progress.",
         "Consistent progress prioritized, with a balance of short- and long-term research efforts."
-      ],
-      votes: [0, 0, 0, 0],
-      totalVotes: 0
+      ]
     },
     {
       question: "Based on Today's discussion and your experience, please rank these four areas for modernization priority in BC's sediment standards (1= highest):",
@@ -41,9 +35,7 @@ export default function PrioritizationClient() {
         "Development of a Matrix Sediment Standards Framework - Focus on Ecological Protection",
         "Development of a Matrix Sediment Standards Framework - Focus on Human Health Protection",
         "Develop Sediment Standards for Non-scheduled Contaminants & Mixtures"
-      ],
-      votes: [0, 0, 0, 0],
-      totalVotes: 0
+      ]
     },
     {
       question: "Which scientific approach to bioavailability holds the most promise for practical and defensible application in BC's regulatory framework?",
@@ -52,9 +44,7 @@ export default function PrioritizationClient() {
         "Normalization using Acid-Volatile Sulfides and Simultaneously Extracted Metals (AVS/SEM)",
         "Application of the Biotic Ligand Model (BLM) for sediments",
         "Direct measurement using passive sampling devices (PSDs)"
-      ],
-      votes: [0, 0, 0, 0],
-      totalVotes: 0
+      ]
     },
     {
       question: "When considering contaminant mixtures, rank the following approaches from most to least scientifically defensible and practically achievable for BC's regulatory framework (1= highest):",
@@ -63,9 +53,7 @@ export default function PrioritizationClient() {
         "A weighted approach based on toxicological similarity",
         "Site-specific toxicity testing for all complex mixtures",
         "The development of new, mixture-specific standards"
-      ],
-      votes: [0, 0, 0, 0],
-      totalVotes: 0
+      ]
     },
     {
       question: "Within a medium-term (3-5 year) research plan, rank the following scientific objectives from most to least critical for modernizing BC's sediment standards?",
@@ -74,9 +62,7 @@ export default function PrioritizationClient() {
         "Establishing standardized analytical methods for a priority list of contaminants of emerging concern (CECs).",
         "Creating a predictive model for contaminant mixture toxicity based on concentration addition.",
         "Generating sufficient toxicity data to derive new guidelines for 3-5 high-priority legacy contaminants."
-      ],
-      votes: [0, 0, 0, 0],
-      totalVotes: 0
+      ]
     },
     {
       question: "To support long-term (5+ years) strategic goals, please rank the following foundational research areas in order of importance for creating a more adaptive and forward-looking regulatory framework (1= highest importance):",
@@ -85,9 +71,7 @@ export default function PrioritizationClient() {
         "Development of advanced in-vitro and high-throughput screening methods for rapid hazard assessment",
         "Investigating the toxicological impacts of climate change variables (e.g., temperature, hypoxia) on sediment contaminant toxicity",
         "Building a comprehensive, open-access database of sediment chemistry and toxicology data for all of BC"
-      ],
-      votes: [0, 0, 0, 0],
-      totalVotes: 0
+      ]
     },
     {
       question: "For the Hazard Index / Concentration Addition approach to mixture assessment, what is the single greatest scientific research gap that must be addressed before it can be reliably implemented?",
@@ -96,34 +80,12 @@ export default function PrioritizationClient() {
         "Poor understanding of the modes of action for many contaminants to justify grouping them",
         "Difficulty in validating model predictions with whole sediment toxicity testing results",
         "The inability of current models to account for significant synergistic or antagonistic interactions"
-      ],
-      votes: [0, 0, 0, 0],
-      totalVotes: 0
+      ]
     }
-  ]);
-
-  const [votedPolls, setVotedPolls] = useState<Set<number>>(new Set());
+  ];
 
   const toggleAccordion = (id: string) => {
     setActiveAccordion(activeAccordion === id ? null : id);
-  };
-
-  const handleVote = (pollIndex: number, optionIndex: number) => {
-    if (votedPolls.has(pollIndex)) return; // Prevent multiple votes
-
-    const newPolls = [...polls];
-    newPolls[pollIndex].votes[optionIndex]++;
-    newPolls[pollIndex].totalVotes++;
-    setPolls(newPolls);
-    
-    const newVotedPolls = new Set(votedPolls);
-    newVotedPolls.add(pollIndex);
-    setVotedPolls(newVotedPolls);
-  };
-
-  const getPercentage = (votes: number, total: number) => {
-    if (total === 0) return 0;
-    return Math.round((votes / total) * 100);
   };
 
   return (
@@ -420,65 +382,38 @@ export default function PrioritizationClient() {
           </p>
           
           <div className="space-y-16">
-            {polls.map((poll, pollIndex) => (
-              <div key={pollIndex} className="bg-white dark:bg-gray-700 rounded-2xl p-8 shadow-lg border border-gray-200 dark:border-gray-600">
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-8 text-center">
-                  {poll.question}
-                </h3>
-                
-                <div className="space-y-4">
-                  {poll.options.map((option, optionIndex) => {
-                    const percentage = getPercentage(poll.votes[optionIndex], poll.totalVotes);
-                    const hasVoted = votedPolls.has(pollIndex);
-                    
-                    return (
-                      <div key={optionIndex} className="relative">
-                        <button
-                          onClick={() => handleVote(pollIndex, optionIndex)}
-                          disabled={hasVoted}
-                          className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 ${
-                            hasVoted 
-                              ? 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 cursor-not-allowed' 
-                              : 'bg-white dark:bg-gray-700 border-orange-300 dark:border-orange-600 hover:border-orange-500 dark:hover:border-orange-400 hover:shadow-md cursor-pointer'
-                          }`}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className={`font-medium ${
-                              hasVoted ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-white'
-                            }`}>
-                              {option}
-                            </span>
-                            {hasVoted && (
-                              <span className="text-orange-600 dark:text-orange-400 font-semibold">
-                                {percentage}%
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Progress bar for voted polls */}
-                          {hasVoted && (
-                            <div className="mt-3 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                              <div 
-                                className="bg-orange-500 h-2 rounded-full transition-all duration-1000"
-                                style={{ width: `${percentage}%` }}
-                              />
-                            </div>
-                          )}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                {votedPolls.has(pollIndex) && (
-                  <div className="mt-6 text-center">
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Total votes: <span className="font-semibold text-orange-600 dark:text-orange-400">{poll.totalVotes}</span>
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
+            {polls.map((poll, pollIndex) => {
+              // Check if this is a ranking question
+              const isRankingQuestion = poll.question.toLowerCase().includes('rank');
+              
+              if (isRankingQuestion) {
+                return (
+                  <RankingPoll
+                    key={pollIndex}
+                    pollIndex={pollIndex}
+                    question={poll.question}
+                    options={poll.options}
+                    pagePath="/survey-results/prioritization"
+                    onVote={(pollIndex, rankings) => {
+                      console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
+                    }}
+                  />
+                );
+              } else {
+                return (
+                  <PollWithResults
+                    key={pollIndex}
+                    pollIndex={pollIndex}
+                    question={poll.question}
+                    options={poll.options}
+                    pagePath="/survey-results/prioritization"
+                    onVote={(pollIndex, optionIndex) => {
+                      console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
+                    }}
+                  />
+                );
+              }
+            })}
           </div>
         </div>
       </section>

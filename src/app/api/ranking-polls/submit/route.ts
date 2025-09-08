@@ -28,12 +28,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { pagePath, pollIndex, question, options, optionIndex } = await request.json();
-    console.log(`[Poll Submit] Received vote for poll ${pollIndex} on page ${pagePath}, option ${optionIndex}`);
+    const { pagePath, pollIndex, question, options, rankings } = await request.json();
 
-    // Get or create poll
+    // Get or create ranking poll
     const { data: pollData, error: pollError } = await supabase
-      .rpc('get_or_create_poll', {
+      .rpc('get_or_create_ranking_poll', {
         p_page_path: pagePath,
         p_poll_index: pollIndex,
         p_question: question,
@@ -41,28 +40,25 @@ export async function POST(request: NextRequest) {
       });
 
     if (pollError) {
-      console.error(`[Poll Submit] Error creating/getting poll for pollIndex ${pollIndex}:`, pollError);
-      return NextResponse.json({ error: 'Failed to create/get poll' }, { status: 500 });
+      console.error('Error creating/getting ranking poll:', pollError);
+      return NextResponse.json({ error: 'Failed to create/get ranking poll' }, { status: 500 });
     }
 
-    console.log(`[Poll Submit] Poll created/found for pollIndex ${pollIndex}:`, pollData);
-
-    // Submit vote
+    // Submit ranking votes
     const { data: voteData, error: voteError } = await supabase
-      .rpc('submit_poll_vote', {
-        p_poll_id: pollData,
-        p_option_index: optionIndex
+      .rpc('submit_ranking_votes', {
+        p_ranking_poll_id: pollData,
+        p_rankings: rankings
       });
 
     if (voteError) {
-      console.error(`[Poll Submit] Error submitting vote for pollIndex ${pollIndex}:`, voteError);
-      return NextResponse.json({ error: 'Failed to submit vote' }, { status: 500 });
+      console.error('Error submitting ranking votes:', voteError);
+      return NextResponse.json({ error: 'Failed to submit ranking votes' }, { status: 500 });
     }
 
-    console.log(`[Poll Submit] Vote submitted successfully for pollIndex ${pollIndex}:`, voteData);
     return NextResponse.json({ success: true, pollId: pollData });
   } catch (error) {
-    console.error('Error in poll submit API:', error);
+    console.error('Error in ranking poll submit API:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

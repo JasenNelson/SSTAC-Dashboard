@@ -1,17 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
+import PollWithResults from '@/components/PollWithResults';
+import RankingPoll from '@/components/dashboard/RankingPoll';
 
 interface PollData {
   question: string;
   options: string[];
-  votes: number[];
-  totalVotes: number;
 }
 
 export default function WIKSClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
-  const [polls, setPolls] = useState<PollData[]>([
+  
+  // Define polls with proper structure for the new poll system
+  const polls: PollData[] = [
     {
       question: "What is the most effective starting point for developing a holistic baseline study that combines co-located sampling (e.g., sediment, porewater, tissue, surface water) with area-based Indigenous Knowledge and Science?",
       options: [
@@ -19,9 +21,7 @@ export default function WIKSClient() {
         "A comprehensive literature and data review that compiles all existing scientific and Indigenous knowledge for the area to identify critical data gaps that the baseline study must fill.",
         "A pilot-scale field study conducted collaboratively with community members to test and validate sampling methods and ensure they are effective and culturally appropriate.",
         "A series of collaborative workshops where knowledge holders and scientists share information to establish a shared understanding of the ecosystem's history, health, and stressors."
-      ],
-      votes: [0, 0, 0, 0],
-      totalVotes: 0
+      ]
     },
     {
       question: "How can the scientific framework incorporate protection goals related to Indigenous Stewardship principles such as the 'connectedness of all life' and '7-generations'?",
@@ -31,9 +31,7 @@ export default function WIKSClient() {
         "By setting protective tissue residue guidelines for key indicator species to ensure long-term safety.",
         "By incorporating ecosystem function metrics (e.g., nutrient cycling) as formal scientific endpoints.",
         "By developing standards to protect the fitness of resources for various traditional uses, such as medicinal plants."
-      ],
-      votes: [0, 0, 0, 0, 0],
-      totalVotes: 0
+      ]
     },
     {
       question: "Within a tiered framework, where can place-based Indigenous Knowledge provide the most direct scientific value for modifying a generic baseline value to be more site-specific?",
@@ -42,34 +40,12 @@ export default function WIKSClient() {
         "Identifying sensitive local species or life stages not included in the generic models for a more accurate risk calculation.",
         "Characterizing unique, site-specific contaminant exposure pathways that would alter baseline risk model assumptions.",
         "Identifying potential confounding environmental factors (e.g., freshwater seeps) influencing scientific measurements."
-      ],
-      votes: [0, 0, 0, 0],
-      totalVotes: 0
+      ]
     }
-  ]);
-
-  const [votedPolls, setVotedPolls] = useState<Set<number>>(new Set());
+  ];
 
   const toggleAccordion = (id: string) => {
     setActiveAccordion(activeAccordion === id ? null : id);
-  };
-
-  const handleVote = (pollIndex: number, optionIndex: number) => {
-    if (votedPolls.has(pollIndex)) return; // Prevent multiple votes
-
-    const newPolls = [...polls];
-    newPolls[pollIndex].votes[optionIndex]++;
-    newPolls[pollIndex].totalVotes++;
-    setPolls(newPolls);
-    
-    const newVotedPolls = new Set(votedPolls);
-    newVotedPolls.add(pollIndex);
-    setVotedPolls(newVotedPolls);
-  };
-
-  const getPercentage = (votes: number, total: number) => {
-    if (total === 0) return 0;
-    return Math.round((votes / total) * 100);
   };
 
   return (
@@ -255,65 +231,37 @@ export default function WIKSClient() {
           </p>
           
           <div className="space-y-16">
-            {polls.map((poll, pollIndex) => (
-              <div key={pollIndex} className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-8 shadow-lg">
-                <h3 className="text-2xl font-bold text-gray-800 mb-8 text-center">
-                  {poll.question}
-                </h3>
-                
-                <div className="space-y-4">
-                  {poll.options.map((option, optionIndex) => {
-                    const percentage = getPercentage(poll.votes[optionIndex], poll.totalVotes);
-                    const hasVoted = votedPolls.has(pollIndex);
-                    
-                    return (
-                      <div key={optionIndex} className="relative">
-                        <button
-                          onClick={() => handleVote(pollIndex, optionIndex)}
-                          disabled={hasVoted}
-                          className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 ${
-                            hasVoted 
-                              ? 'bg-gray-100 border-gray-300 cursor-not-allowed' 
-                              : 'bg-white border-blue-300 hover:border-blue-500 hover:shadow-md cursor-pointer'
-                          }`}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className={`font-medium ${
-                              hasVoted ? 'text-gray-600' : 'text-gray-800'
-                            }`}>
-                              {option}
-                            </span>
-                            {hasVoted && (
-                              <span className="text-blue-600 font-semibold">
-                                {percentage}%
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Progress bar for voted polls */}
-                          {hasVoted && (
-                            <div className="mt-3 bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-blue-500 h-2 rounded-full transition-all duration-1000"
-                                style={{ width: `${percentage}%` }}
-                              />
-                            </div>
-                          )}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                {votedPolls.has(pollIndex) && (
-                  <div className="mt-6 text-center">
-                    <p className="text-gray-600">
-                      Total votes: <span className="font-semibold text-blue-600">{poll.totalVotes}</span>
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
+            {polls.map((poll, pollIndex) => {
+              // Use RankingPoll if question contains "rank"
+              if (poll.question.toLowerCase().includes('rank')) {
+                return (
+                  <RankingPoll
+                    key={pollIndex}
+                    pollIndex={pollIndex}
+                    question={poll.question}
+                    options={poll.options}
+                    pagePath="/wiks"
+                    onVote={(pollIndex, rankings) => {
+                      console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
+                    }}
+                  />
+                );
+              }
+              
+              // Use regular PollWithResults for single-choice questions
+              return (
+                <PollWithResults
+                  key={pollIndex}
+                  pollIndex={pollIndex}
+                  question={poll.question}
+                  options={poll.options}
+                  pagePath="/wiks"
+                  onVote={(pollIndex, optionIndex) => {
+                    console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
       </section>

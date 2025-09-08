@@ -33,12 +33,25 @@ export default function PollWithResults({
   const [results, setResults] = useState<PollResults | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [userVote, setUserVote] = useState<number | null>(null);
+  const [showChangeOption, setShowChangeOption] = useState(false);
 
-  const handleVote = async (optionIndex: number) => {
-    if (hasVoted || isLoading) return;
+  // Fetch results when component mounts
+  useEffect(() => {
+    fetchResults();
+  }, []);
 
-    setIsLoading(true);
+  const handleSelectOption = (optionIndex: number) => {
+    if ((hasVoted && !showChangeOption) || isLoading) return;
+    console.log(`[PollWithResults ${pollIndex}] Selected option ${optionIndex}`);
     setSelectedOption(optionIndex);
+  };
+
+  const handleSubmitVote = async () => {
+    if (selectedOption === null || isLoading) return;
+
+    console.log(`[PollWithResults ${pollIndex}] Submitting vote for option ${selectedOption}`);
+    setIsLoading(true);
 
     try {
       const response = await fetch('/api/polls/submit', {
@@ -51,27 +64,31 @@ export default function PollWithResults({
           pollIndex,
           question,
           options,
-          optionIndex
+          optionIndex: selectedOption
         }),
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log(`[PollWithResults ${pollIndex}] Vote submitted successfully:`, result);
         setHasVoted(true);
         setShowResults(true);
+        setUserVote(selectedOption);
+        setShowChangeOption(false);
         
         // Fetch updated results
         await fetchResults();
         
         // Call parent callback if provided
         if (onVote) {
-          onVote(pollIndex, optionIndex);
+          onVote(pollIndex, selectedOption);
         }
       } else {
-        console.error('Failed to submit vote');
+        console.error(`[PollWithResults ${pollIndex}] Failed to submit vote:`, response.status);
         setSelectedOption(null);
       }
     } catch (error) {
-      console.error('Error submitting vote:', error);
+      console.error(`[PollWithResults ${pollIndex}] Error submitting vote:`, error);
       setSelectedOption(null);
     } finally {
       setIsLoading(false);
@@ -80,14 +97,40 @@ export default function PollWithResults({
 
   const fetchResults = async () => {
     try {
+      console.log(`[PollWithResults ${pollIndex}] Fetching results for poll ${pollIndex} on page ${pagePath}`);
       const response = await fetch(`/api/polls/results?pagePath=${encodeURIComponent(pagePath)}&pollIndex=${pollIndex}`);
       if (response.ok) {
         const data = await response.json();
+        console.log(`[PollWithResults ${pollIndex}] API Response:`, data);
         setResults(data.results);
+        
+        // Check if user has already voted
+        if (data.userVote !== null && data.userVote !== undefined) {
+          console.log(`[PollWithResults ${pollIndex}] User has vote:`, data.userVote);
+          setUserVote(data.userVote);
+          setHasVoted(true);
+          setShowResults(true);
+        } else {
+          console.log(`[PollWithResults ${pollIndex}] No user vote found`);
+        }
+      } else {
+        console.log(`[PollWithResults ${pollIndex}] Failed to fetch results:`, response.status);
       }
     } catch (error) {
-      console.error('Error fetching results:', error);
+      console.error(`[PollWithResults ${pollIndex}] Error fetching results:`, error);
     }
+  };
+
+  const handleChangeVote = () => {
+    setShowChangeOption(true);
+    setHasVoted(false);
+    setSelectedOption(null);
+  };
+
+  const handleCancelChange = () => {
+    setShowChangeOption(false);
+    setHasVoted(true);
+    setSelectedOption(userVote);
   };
 
   const getPercentage = (votes: number, totalVotes: number) => {
@@ -107,6 +150,48 @@ export default function PollWithResults({
         {question}
       </h3>
       
+      {/* User's previous vote indicator - always show when user has voted */}
+      {hasVoted && userVote !== null && (
+        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-green-600 dark:text-green-400 font-semibold">✓</span>
+              <span className="text-green-800 dark:text-green-200">
+                You voted: <strong>{options[userVote]}</strong>
+              </span>
+            </div>
+            {!showChangeOption && (
+              <button
+                onClick={handleChangeVote}
+                className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+              >
+                Change Vote
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Change vote mode indicator */}
+      {showChangeOption && (
+        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-yellow-600 dark:text-yellow-400 font-semibold">🔄</span>
+              <span className="text-yellow-800 dark:text-yellow-200 font-medium">
+                Choose a new option to change your vote
+              </span>
+            </div>
+            <button
+              onClick={handleCancelChange}
+              className="px-3 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+      
       <div className="space-y-4">
         {options.map((option, optionIndex) => {
           const votes = getOptionVotes(optionIndex);
@@ -117,13 +202,15 @@ export default function PollWithResults({
           return (
             <div key={optionIndex} className="relative">
               <button
-                onClick={() => handleVote(optionIndex)}
-                disabled={isVoted || isLoading}
+                onClick={() => handleSelectOption(optionIndex)}
+                disabled={(isVoted && !showChangeOption) || isLoading}
                 className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 ${
-                  isVoted 
+                  (isVoted && !showChangeOption)
                     ? 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 cursor-not-allowed' 
                     : 'bg-white dark:bg-gray-700 border-blue-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md cursor-pointer'
-                } ${isSelected && !isVoted ? 'ring-2 ring-blue-500' : ''}`}
+                } ${isSelected && (!isVoted || showChangeOption) ? 'ring-2 ring-blue-500' : ''} ${
+                  userVote === optionIndex && hasVoted && !showChangeOption ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-600' : ''
+                }`}
               >
                 <div className="flex justify-between items-center">
                   <span className={`font-medium ${
@@ -134,6 +221,11 @@ export default function PollWithResults({
                   
                   {isVoted && (
                     <div className="flex items-center space-x-2">
+                      {userVote === optionIndex && !showChangeOption && (
+                        <span className="text-green-600 dark:text-green-400 font-semibold text-sm">
+                          Your Vote
+                        </span>
+                      )}
                       <span className="text-blue-600 dark:text-blue-400 font-semibold">
                         {percentage}%
                       </span>
@@ -165,6 +257,35 @@ export default function PollWithResults({
           );
         })}
       </div>
+
+      {/* Submit Button - always show when not voted, disabled until option selected */}
+      {!hasVoted && (
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={handleSubmitVote}
+            disabled={selectedOption === null || isLoading}
+            className={`px-8 py-3 font-semibold rounded-xl transition-colors duration-300 flex items-center space-x-2 ${
+              selectedOption === null || isLoading
+                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+            }`}
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>{showChangeOption ? 'Updating Vote...' : 'Submitting Vote...'}</span>
+              </>
+            ) : (
+              <>
+                <span>{showChangeOption ? 'Update Vote' : 'Submit Vote'}</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Results Summary */}
       {showResults && results && (

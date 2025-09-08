@@ -2,12 +2,11 @@
 
 import React, { useState } from 'react';
 import PollWithResults from '@/components/PollWithResults';
+import RankingPoll from '@/components/dashboard/RankingPoll';
 
 interface PollData {
   question: string;
   options: string[];
-  votes: number[];
-  totalVotes: number;
 }
 
 export default function HolisticProtectionClient() {
@@ -22,9 +21,7 @@ export default function HolisticProtectionClient() {
         "Per-and Polyfluoroalkyl Substances",
         "All of the above",
         "Other"
-      ],
-      votes: [0, 0, 0, 0, 0, 0],
-      totalVotes: 0
+      ]
     },
     {
       question: "Rank in order of highest to lowest importance the following considerations in developing and implementing the Matrix Sediment Standards Framework:",
@@ -34,9 +31,7 @@ export default function HolisticProtectionClient() {
         "Enhanced Protection: Comprehensive safeguards for BC's diverse aquatic ecosystems and peoples",
         "Scientific Advancement: Opportunity to pioneer innovative approaches to sediment management",
         "Societal Expectations: Given the challenges of modern society, holistic protection may not be feasible"
-      ],
-      votes: [0, 0, 0, 0, 0],
-      totalVotes: 0
+      ]
     }
   ]);
 
@@ -503,19 +498,37 @@ export default function HolisticProtectionClient() {
           </p>
           
           <div className="space-y-16">
-            {polls.map((poll, pollIndex) => (
-              <PollWithResults
-                key={pollIndex}
-                pollIndex={pollIndex}
-                question={poll.question}
-                options={poll.options}
-                pagePath="/survey-results/holistic-protection"
-                onVote={(pollIndex, optionIndex) => {
-                  // Handle vote callback if needed
-                  console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
-                }}
-              />
-            ))}
+            {polls.map((poll, pollIndex) => {
+              // Use RankingPoll if question contains "rank"
+              if (poll.question.toLowerCase().includes('rank')) {
+                return (
+                  <RankingPoll
+                    key={pollIndex}
+                    pollIndex={pollIndex}
+                    question={poll.question}
+                    options={poll.options}
+                    pagePath="/survey-results/holistic-protection"
+                    onVote={(pollIndex, rankings) => {
+                      console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
+                    }}
+                  />
+                );
+              }
+              
+              // Use regular PollWithResults for single-choice questions
+              return (
+                <PollWithResults
+                  key={pollIndex}
+                  pollIndex={pollIndex}
+                  question={poll.question}
+                  options={poll.options}
+                  pagePath="/survey-results/holistic-protection"
+                  onVote={(pollIndex, optionIndex) => {
+                    console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
       </section>

@@ -1,17 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
+import PollWithResults from '@/components/PollWithResults';
+import RankingPoll from '@/components/dashboard/RankingPoll';
 
-interface PollData {
-  question: string;
-  options: string[];
-  votes: number[];
-  totalVotes: number;
-}
 
 export default function TieredFrameworkClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
-  const [polls, setPolls] = useState<PollData[]>([
+  
+  // Define polls with proper structure for the new poll system
+  const polls = [
     {
       question: "In developing Protocol 2 requirements, procedures, and a supporting model for bioavailability adjustments, would a cause-effect model (e.g., Bayesian Networks or Regression) be the best approach for a scientific framework that uses site-specific data and known toxicity-modifying factors to develop refined sediment standards?",
       options: [
@@ -20,9 +18,7 @@ export default function TieredFrameworkClient() {
         "It depends",
         "Unsure",
         "Other"
-      ],
-      votes: [0, 0, 0, 0, 0],
-      totalVotes: 0
+      ]
     },
     {
       question: "Please rank the following lines of evidence in order of importance for developing a robust scientific framework for deriving Tier 2b site-specific sediment standards for screening-level risk assessment (1 = most important):",
@@ -31,34 +27,12 @@ export default function TieredFrameworkClient() {
         "Bioaccumulation Data in Tissues of Local Species",
         "Benthic Community Structure Analysis",
         "Other"
-      ],
-      votes: [0, 0, 0, 0],
-      totalVotes: 0
+      ]
     }
-  ]);
-
-  const [votedPolls, setVotedPolls] = useState<Set<number>>(new Set());
+  ];
 
   const toggleAccordion = (id: string) => {
     setActiveAccordion(activeAccordion === id ? null : id);
-  };
-
-  const handleVote = (pollIndex: number, optionIndex: number) => {
-    if (votedPolls.has(pollIndex)) return; // Prevent multiple votes
-
-    const newPolls = [...polls];
-    newPolls[pollIndex].votes[optionIndex]++;
-    newPolls[pollIndex].totalVotes++;
-    setPolls(newPolls);
-    
-    const newVotedPolls = new Set(votedPolls);
-    newVotedPolls.add(pollIndex);
-    setVotedPolls(newVotedPolls);
-  };
-
-  const getPercentage = (votes: number, total: number) => {
-    if (total === 0) return 0;
-    return Math.round((votes / total) * 100);
   };
 
   return (
@@ -419,65 +393,38 @@ export default function TieredFrameworkClient() {
           </p>
           
           <div className="space-y-16">
-            {polls.map((poll, pollIndex) => (
-              <div key={pollIndex} className="bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 shadow-lg">
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-8 text-center">
-                  {poll.question}
-                </h3>
-                
-                <div className="space-y-4">
-                  {poll.options.map((option, optionIndex) => {
-                    const percentage = getPercentage(poll.votes[optionIndex], poll.totalVotes);
-                    const hasVoted = votedPolls.has(pollIndex);
-                    
-                    return (
-                      <div key={optionIndex} className="relative">
-                        <button
-                          onClick={() => handleVote(pollIndex, optionIndex)}
-                          disabled={hasVoted}
-                          className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 ${
-                            hasVoted 
-                              ? 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 cursor-not-allowed' 
-                              : 'bg-white dark:bg-gray-700 border-green-300 dark:border-green-600 hover:border-green-500 dark:hover:border-green-400 hover:shadow-md cursor-pointer'
-                          }`}
-                        >
-                          <div className="flex justify-between items-center">
-                            <span className={`font-medium ${
-                              hasVoted ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-white'
-                            }`}>
-                              {option}
-                            </span>
-                            {hasVoted && (
-                              <span className="text-green-600 dark:text-green-400 font-semibold">
-                                {percentage}%
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Progress bar for voted polls */}
-                          {hasVoted && (
-                            <div className="mt-3 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                              <div 
-                                className="bg-green-500 h-2 rounded-full transition-all duration-1000"
-                                style={{ width: `${percentage}%` }}
-                              />
-                            </div>
-                          )}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                {votedPolls.has(pollIndex) && (
-                  <div className="mt-6 text-center">
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Total votes: <span className="font-semibold text-green-600 dark:text-green-400">{poll.totalVotes}</span>
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
+            {polls.map((poll, pollIndex) => {
+              // Check if this is a ranking question
+              const isRankingQuestion = poll.question.toLowerCase().includes('rank');
+              
+              if (isRankingQuestion) {
+                return (
+                  <RankingPoll
+                    key={pollIndex}
+                    pollIndex={pollIndex}
+                    question={poll.question}
+                    options={poll.options}
+                    pagePath="/survey-results/tiered-framework"
+                    onVote={(pollIndex, rankings) => {
+                      console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
+                    }}
+                  />
+                );
+              } else {
+                return (
+                  <PollWithResults
+                    key={pollIndex}
+                    pollIndex={pollIndex}
+                    question={poll.question}
+                    options={poll.options}
+                    pagePath="/survey-results/tiered-framework"
+                    onVote={(pollIndex, optionIndex) => {
+                      console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
+                    }}
+                  />
+                );
+              }
+            })}
           </div>
         </div>
       </section>

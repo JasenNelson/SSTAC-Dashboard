@@ -4,6 +4,15 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 
 ## 🚀 **Recent Major Updates**
 
+### **Comprehensive Poll System** ✅ NEW
+- **Interactive Polls**: Single-choice and ranking polls across 4 survey pages
+- **Vote Persistence**: Votes remembered across page refreshes and sessions
+- **Select-Then-Submit Pattern**: Clear user experience with explicit submit buttons
+- **Change Vote Functionality**: Users can modify their previous choices
+- **Real-time Results**: Live poll results with percentage displays
+- **Database Integration**: Secure poll storage with Row Level Security
+- **Admin Management**: Complete poll results viewing and management
+
 ### **Dark/Light Mode Theme System** ✅ NEW
 - **Complete Theme Implementation**: Full dark/light mode support across all pages
 - **Theme Persistence**: User preferences saved in localStorage
@@ -39,6 +48,16 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **Admin Panel**: Comprehensive user and content management
 
 ## 📊 **Features**
+
+### **Interactive Poll System** 🆕
+- **Survey Pages**: 4 pages with interactive polls (Holistic Protection, Prioritization, Tiered Framework, WIKS)
+- **Poll Types**: Single-choice polls and ranking polls with automatic detection
+- **Vote Persistence**: All votes saved and remembered across sessions
+- **User Experience**: Select-then-submit pattern with clear submit buttons
+- **Change Votes**: Users can modify their previous choices anytime
+- **Real-time Results**: Live poll results with percentage displays and progress bars
+- **Admin Dashboard**: Complete poll results viewing and management
+- **Database Security**: Row Level Security ensures data protection
 
 ### **Theme System** 🆕
 - **Dark/Light Mode**: Complete theme switching with user preference persistence
