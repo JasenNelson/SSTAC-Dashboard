@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import PollResultsChart from './PollResultsChart';
 
 interface RankingOption {
   id: string;
@@ -330,33 +331,17 @@ export default function RankingPoll({
         </div>
       )}
 
-      {/* Results Summary */}
-      {showResults && results && (
-        <div className="mt-6 p-4 bg-white dark:bg-gray-700 rounded-lg border border-blue-200 dark:border-gray-600">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-lg font-semibold text-gray-800 dark:text-white">Ranking Results</h4>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {results.total_votes} total ranking{results.total_votes !== 1 ? 's' : ''}
-            </span>
-          </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Lower average rank = higher importance (1st = most important, 5th = least important)
-          </p>
-          
-          <div className="space-y-2">
-            {results.results.map((result: any, index: number) => (
-              <div key={index} className="flex items-center justify-between text-sm">
-                <span className="text-gray-700 dark:text-gray-300 truncate flex-1 mr-2">
-                  {result.optionText}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium text-blue-600 dark:text-blue-400">
-                    Avg Rank: {result.averageRank?.toFixed(1) || 'N/A'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Results Visualization */}
+      {showResults && (
+        <div className="mt-6">
+          <PollResultsChart
+            pollType="ranking"
+            results={results}
+            title="Ranking Results"
+            showVoteCount={true}
+            showPercentages={false}
+            interactive={true}
+          />
         </div>
       )}
     </div>

@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import PollResultsChart from './dashboard/PollResultsChart';
 
 interface PollOption {
-  optionIndex: number;
-  optionText: string;
+  option_index: number;
+  option_text: string;
   votes: number;
 }
 
@@ -140,7 +141,7 @@ export default function PollWithResults({
 
   const getOptionVotes = (optionIndex: number) => {
     if (!results?.results) return 0;
-    const option = results.results.find(r => r.optionIndex === optionIndex);
+    const option = results.results.find(r => r.option_index === optionIndex);
     return option?.votes || 0;
   };
 
@@ -287,33 +288,17 @@ export default function PollWithResults({
         </div>
       )}
 
-      {/* Results Summary */}
-      {showResults && results && (
-        <div className="mt-6 p-4 bg-white dark:bg-gray-700 rounded-lg border border-blue-200 dark:border-gray-600">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="text-lg font-semibold text-gray-800 dark:text-white">Results</h4>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {results.total_votes} total vote{results.total_votes !== 1 ? 's' : ''}
-            </span>
-          </div>
-          
-          <div className="space-y-2">
-            {results.results.map((result, index) => (
-              <div key={index} className="flex items-center justify-between text-sm">
-                <span className="text-gray-700 dark:text-gray-300 truncate flex-1 mr-2">
-                  {result.optionText}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <span className="font-medium text-blue-600 dark:text-blue-400">
-                    {getPercentage(result.votes, results.total_votes)}%
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-400">
-                    ({result.votes})
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Results Visualization */}
+      {showResults && (
+        <div className="mt-6">
+          <PollResultsChart
+            pollType="single-choice"
+            results={results}
+            title="Poll Results"
+            showVoteCount={true}
+            showPercentages={true}
+            interactive={true}
+          />
         </div>
       )}
     </div>

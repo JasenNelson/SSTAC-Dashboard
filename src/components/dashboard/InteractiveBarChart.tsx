@@ -89,12 +89,12 @@ export default function InteractiveBarChart({
               >
                 <div className="flex items-center space-x-3">
                   {/* Label */}
-                  <div className="w-32 text-sm font-medium text-gray-700 text-right">
+                  <div className="w-64 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">
                     {bar.label}
                   </div>
                   
                   {/* Bar Container */}
-                  <div className="flex-1 bg-gray-200 rounded-full h-8 overflow-hidden relative">
+                  <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-8 overflow-hidden relative">
                     {/* Bar */}
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
@@ -120,7 +120,7 @@ export default function InteractiveBarChart({
                   
                   {/* Percentage */}
                   {showPercentages && (
-                    <div className="w-20 text-sm font-semibold text-gray-600 text-right">
+                    <div className="w-20 text-sm font-semibold text-gray-600 dark:text-gray-400 text-right">
                       {bar.percentage.toFixed(1)}%
                     </div>
                   )}
