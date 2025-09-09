@@ -4,6 +4,11 @@ import React, { useState } from 'react';
 import PollWithResults from '@/components/PollWithResults';
 import RankingPoll from '@/components/dashboard/RankingPoll';
 
+interface PollData {
+  question: string;
+  options: string[];
+  questionNumber?: number;
+}
 
 export default function PrioritizationClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
@@ -12,6 +17,7 @@ export default function PrioritizationClient() {
   const polls = [
     {
       question: "Please rank these potential feasibility criteria to help inform the development of a prioritization framework (1= highest):",
+      questionNumber: 1,
       options: [
         "Adequacy and reliability of available data for key research topics",
         "Need for new or specialized technologies",
@@ -21,6 +27,7 @@ export default function PrioritizationClient() {
     },
     {
       question: "Please rank these timeframe considerations for developing a prioritization framework and strategic planning for research to support modernizing BC's sediment standards (1= highest):",
+      questionNumber: 2,
       options: [
         "Outcome-driven priority, regardless of timeframe (i.e., disregard timeframe when prioritizing research)",
         "Focus on short-term progress (e.g., identify opportunities to quickly address regulatory gaps)",
@@ -30,6 +37,7 @@ export default function PrioritizationClient() {
     },
     {
       question: "Based on Today's discussion and your experience, please rank these four areas for modernization priority in BC's sediment standards (1= highest):",
+      questionNumber: 3,
       options: [
         "Development of a Scientific Framework for Deriving Site-Specific Sediment Standards (Bioavailability Adjustment)",
         "Development of a Matrix Sediment Standards Framework - Focus on Ecological Protection",
@@ -39,6 +47,7 @@ export default function PrioritizationClient() {
     },
     {
       question: "Which scientific approach to bioavailability holds the most promise for practical and defensible application in BC's regulatory framework?",
+      questionNumber: 4,
       options: [
         "Equilibrium partitioning models (e.g., based on organic carbon content).",
         "Normalization using Acid-Volatile Sulfides and Simultaneously Extracted Metals (AVS/SEM)",
@@ -48,6 +57,7 @@ export default function PrioritizationClient() {
     },
     {
       question: "When considering contaminant mixtures, rank the following approaches from most to least scientifically defensible and practically achievable for BC's regulatory framework (1= highest):",
+      questionNumber: 5,
       options: [
         "A simple additive model (e.g., hazard index)",
         "A weighted approach based on toxicological similarity",
@@ -57,6 +67,7 @@ export default function PrioritizationClient() {
     },
     {
       question: "Within a medium-term (3-5 year) research plan, rank the following scientific objectives from most to least critical for modernizing BC's sediment standards?",
+      questionNumber: 6,
       options: [
         "Developing a robust framework for assessing the bioavailability of metals and metalloids.",
         "Establishing standardized analytical methods for a priority list of contaminants of emerging concern (CECs).",
@@ -66,6 +77,7 @@ export default function PrioritizationClient() {
     },
     {
       question: "To support long-term (5+ years) strategic goals, please rank the following foundational research areas in order of importance for creating a more adaptive and forward-looking regulatory framework (1= highest importance):",
+      questionNumber: 7,
       options: [
         "Research into the ecosystem-level impacts of chronic, low-level contaminant exposure",
         "Development of advanced in-vitro and high-throughput screening methods for rapid hazard assessment",
@@ -75,6 +87,7 @@ export default function PrioritizationClient() {
     },
     {
       question: "For the Hazard Index / Concentration Addition approach to mixture assessment, what is the single greatest scientific research gap that must be addressed before it can be reliably implemented?",
+      questionNumber: 8,
       options: [
         "A lack of high-quality toxicity data for many individual components of common mixtures",
         "Poor understanding of the modes of action for many contaminants to justify grouping them",
@@ -394,6 +407,7 @@ export default function PrioritizationClient() {
                     question={poll.question}
                     options={poll.options}
                     pagePath="/survey-results/prioritization"
+                    questionNumber={poll.questionNumber}
                     onVote={(pollIndex, rankings) => {
                       console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
                     }}
@@ -407,6 +421,7 @@ export default function PrioritizationClient() {
                     question={poll.question}
                     options={poll.options}
                     pagePath="/survey-results/prioritization"
+                    questionNumber={poll.questionNumber}
                     onVote={(pollIndex, optionIndex) => {
                       console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
                     }}

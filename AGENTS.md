@@ -5,6 +5,47 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 
 **Current Status**: Phase 3 completed successfully - Enhanced user engagement and user management system fully operational. Theme system implemented with dark/light mode support.
 
+## 🎯 Core Development Principles
+
+### 1. "If It Ain't Broke, Don't Fix It" (CRITICAL)
+- **NEVER optimize working systems** without explicit user request and clear justification
+- **ALWAYS verify the problem exists** before implementing solutions
+- **MEASURE before and after** to ensure changes actually improve things
+- **TRUST user feedback** about when things were working
+- **HISTORICAL CONTEXT**: AI previously added throttling to `refreshGlobalAdminStatus()` which broke the discussions page
+
+### 2. "First, Do No Harm"
+- **TEST changes in isolation** before applying them broadly
+- **UNDERSTAND dependencies** before modifying core functions
+- **HAVE rollback plans** ready for any changes
+- **ASK "what changed?"** when issues arise
+
+### 3. Architecture Adherence
+- **Follow Next.js 15+ App Router patterns** strictly
+- **Use Server Components** for authentication and initial data loading
+- **Use Client Components** for interactive UI and state management
+- **Implement API Route Architecture** for client-server communication
+
+### 4. Admin Badge Persistence
+- **Never allow admin badge to disappear** after operations
+- **Implement comprehensive admin status management** in all admin components
+- **Use the global refresh function** `refreshGlobalAdminStatus()` after CRUD operations
+- **Include localStorage backup** for temporary database issues
+
+### 5. Component Architecture
+- **Server Components**: Handle authentication, database queries, and initial rendering
+- **Client Components**: Handle user interactions, state management, and real-time updates
+- **API Routes**: Bridge between client components and server actions
+- **Server Actions**: Handle database operations with proper validation
+
+### 6. Performance Optimization Guidelines (CRITICAL)
+- **MEASURE FIRST**: Check if performance issues actually exist before optimizing
+- **ISOLATE TESTING**: Test optimizations in separate branches first
+- **USER CONSULTATION**: Ask if "excessive" calls are actually problematic
+- **GRADUAL ROLLOUT**: Implement optimizations as optional features first
+- **NEVER modify core functions** without understanding all dependencies
+- **ALWAYS have rollback plans** for any performance changes
+
 ## 🚫 CRITICAL: Never Suggest These "Fixes"
 
 ### Database Issues (RESOLVED - Don't Fix)
@@ -113,6 +154,85 @@ WHERE trigger_name = 'on_auth_user_created';
 - **State Management**: React hooks with localStorage backup
 - **Theme System**: React Context API with CSS custom properties
 - **Deployment**: Vercel
+
+### Implementation Requirements
+
+#### 1. Admin Status Persistence
+Every admin component must:
+- **Import** `refreshGlobalAdminStatus` from `@/lib/admin-utils`
+- **Call** the refresh function after successful CRUD operations
+- **Include** admin status refresh on component mount
+- **Handle** errors gracefully with fallback to cached admin status
+
+#### 2. Client Component Pattern
+```typescript
+'use client';
+
+import { useEffect } from 'react';
+import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
+
+export default function AdminPageClient() {
+  // Refresh admin status when component mounts
+  useEffect(() => {
+    const refreshAdmin = async () => {
+      console.log('🔄 Admin page mounted - refreshing admin status');
+      await refreshGlobalAdminStatus();
+    };
+    
+    refreshAdmin();
+  }, []);
+
+  // ... component implementation
+}
+```
+
+#### 3. CRUD Operation Pattern
+```typescript
+const handleCreateItem = async (formData: FormData) => {
+  try {
+    const response = await fetch('/api/items', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    const result = await response.json();
+    
+    if (result?.success) {
+      // Refresh admin status to ensure badge persists
+      await refreshGlobalAdminStatus();
+      // ... other success handling
+    }
+  } catch (error) {
+    // ... error handling
+  }
+};
+```
+
+#### 4. Server Component Pattern
+```typescript
+import { createServerClient } from '@supabase/ssr';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
+import AdminPageClient from './AdminPageClient';
+
+export default async function AdminPage() {
+  // Authentication and admin role check
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
+  
+  const { data: roleData } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .single();
+  
+  if (!roleData) redirect('/dashboard');
+  
+  // Return client component
+  return <AdminPageClient />;
+}
+```
 
 ### Component Architecture (CRITICAL)
 - **Server Components**: Handle authentication, database queries, initial rendering

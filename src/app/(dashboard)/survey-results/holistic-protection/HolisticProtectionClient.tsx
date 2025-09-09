@@ -7,6 +7,7 @@ import RankingPoll from '@/components/dashboard/RankingPoll';
 interface PollData {
   question: string;
   options: string[];
+  questionNumber?: number;
 }
 
 export default function HolisticProtectionClient() {
@@ -14,6 +15,7 @@ export default function HolisticProtectionClient() {
   const [polls, setPolls] = useState<PollData[]>([
     {
       question: "Given the potential for over-conservatism and remediation challenges, for which contaminant classes would the initial development of Matrix Sediment Standards protective of food toxicity be most scientifically defensible and practically beneficial?",
+      questionNumber: 1,
       options: [
         "Metals known to biomagnify",
         "Polycyclic Aromatic Hydrocarbons",
@@ -25,6 +27,7 @@ export default function HolisticProtectionClient() {
     },
     {
       question: "Rank in order of highest to lowest importance the following considerations in developing and implementing the Matrix Sediment Standards Framework:",
+      questionNumber: 2,
       options: [
         "Technical Hurdles: Limited data availability for many contaminants and species native to BC",
         "Practical Challenges: Discretionary matrix sediment standards may be a barrier for some practitioners",
@@ -523,6 +526,7 @@ export default function HolisticProtectionClient() {
                   question={poll.question}
                   options={poll.options}
                   pagePath="/survey-results/holistic-protection"
+                  questionNumber={poll.questionNumber}
                   onVote={(pollIndex, optionIndex) => {
                     console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
                   }}

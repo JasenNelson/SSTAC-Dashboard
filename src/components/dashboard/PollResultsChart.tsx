@@ -6,6 +6,7 @@ interface PollOption {
   option_index: number;
   option_text: string;
   votes: number;
+  other_texts?: string[];
 }
 
 interface PollResults {
@@ -30,6 +31,7 @@ interface PollResultsChartProps {
   showVoteCount?: boolean;
   showPercentages?: boolean;
   interactive?: boolean;
+  options?: string[]; // Add options array for option labels
 }
 
 export default function PollResultsChart({
@@ -39,6 +41,7 @@ export default function PollResultsChart({
   showVoteCount = true,
   showPercentages = true,
   interactive = true,
+  options = [],
 }: PollResultsChartProps) {
   // Safety check for no results
   if (!results || results.total_votes === 0) {
@@ -89,14 +92,21 @@ export default function PollResultsChart({
     const sortedResults = [...singleChoiceResults.results].sort((a, b) => b.votes - a.votes);
     
     chartData = sortedResults.map((option, index) => {
-      // Use full option text for clarity
+      // Use option label (A, B, C, D, E) for mobile-friendly display
+      const optionLabel = `Option ${String.fromCharCode(65 + option.option_index)}`;
       const optionText = option.option_text || 'Unknown Option';
       
+      // Build description - keep it simple for "Other" options
+      let description = `${optionLabel}: ${optionText} - ${option.votes} vote${option.votes !== 1 ? 's' : ''}`;
+      // Note: We don't show other_texts in the chart to keep it simple
+      
       return {
-        label: optionText,
+        label: optionLabel,
         value: option.votes,
         color: colors[index % colors.length],
-        description: `${optionText} - ${option.votes} vote${option.votes !== 1 ? 's' : ''}`,
+        description: description,
+        fullText: optionText, // Keep full text for tooltips
+        otherTexts: option.other_texts || [], // Keep other texts for display
       };
     });
   } else {
@@ -129,18 +139,20 @@ export default function PollResultsChart({
     const rankRange = maxRank - minRank;
     
     chartData = sortedResults.map((option, index) => {
-      // Use full option text for clarity
+      // Use option label (A, B, C, D, E) for mobile-friendly display
+      const optionLabel = `Option ${String.fromCharCode(65 + option.option_index)}`;
       const optionText = option.option_text || 'Unknown Option';
       
       // Calculate inverse value for bar length (lower rank = higher value for display)
       const inverseValue = rankRange > 0 ? maxRank - option.averageRank + 1 : 1;
       
       return {
-        label: optionText,
+        label: optionLabel,
         value: inverseValue, // Use inverse value for bar length
         color: colors[index % colors.length],
-        description: `${optionText} - Average rank: ${option.averageRank.toFixed(1)} (${option.votes} vote${option.votes !== 1 ? 's' : ''})`,
+        description: `${optionLabel}: ${optionText} - Average rank: ${option.averageRank.toFixed(1)} (${option.votes} vote${option.votes !== 1 ? 's' : ''})`,
         originalValue: option.averageRank, // Keep original rank for display
+        fullText: optionText, // Keep full text for tooltips
       };
     });
     

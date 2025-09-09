@@ -39,7 +39,30 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **Frontend**: Next.js 15+ with App Router, TypeScript, Tailwind CSS v4
 - **Backend**: Supabase (PostgreSQL, Authentication, Real-time features)
 - **State Management**: React hooks with localStorage backup
+- **Theme System**: React Context API with CSS custom properties
 - **Deployment**: Vercel
+
+### **Component Architecture**
+- **Server Components**: Handle authentication, database queries, initial rendering
+- **Client Components**: Handle user interactions, state management, real-time updates
+- **API Routes**: Bridge between client components and server actions
+- **Server Actions**: Handle database operations with proper validation
+
+### **File Structure**
+```
+src/
+├── app/
+│   ├── (auth)/           # Authentication pages
+│   ├── (dashboard)/      # Main dashboard and admin
+│   ├── api/              # API routes
+│   └── globals.css       # Global styles
+├── components/            # Reusable React components
+│   ├── dashboard/        # Dashboard-specific components
+│   └── shared/           # Common UI components
+├── lib/                   # Utility functions and configurations
+│   └── supabase/         # Supabase client and middleware
+└── middleware.ts          # Route protection middleware
+```
 
 ### **Core Components**
 - **User Authentication**: Supabase Auth with role-based access control
@@ -167,8 +190,14 @@ src/
 
 ## 🗄️ **Database Setup**
 
+### **Quick Database Setup**
+1. Go to your Supabase dashboard
+2. Navigate to the SQL Editor
+3. Run the database schema from `DATABASE_GUIDE.md`
+4. This creates all tables, views, functions, and RLS policies
+
 ### **Enhanced User Management** 🆕
-The database now includes a comprehensive user management system:
+The database includes a comprehensive user management system:
 
 - **`get_users_with_emails()` Function**: Secure access to user emails
 - **`users_overview` View**: Comprehensive user activity tracking
@@ -177,12 +206,20 @@ The database now includes a comprehensive user management system:
 - **Activity Tracking**: Monitor user engagement and participation
 
 ### **Core Tables**
+- **`auth.users`**: Supabase managed authentication data
 - **`user_roles`**: User role management and access control
 - **`documents`**: File storage and management
 - **`discussions`**: Forum conversations and user engagement
-- **`likes`**: User interaction tracking
+- **`likes`**: User interaction tracking ✅ NEW
 - **`announcements`**: System notifications and updates
 - **`milestones`**: Project timeline and progress tracking
+- **`polls` & `poll_votes`**: Interactive poll system ✅ NEW
+
+### **Database Security**
+- **Row Level Security (RLS)**: All tables protected with proper policies
+- **User Isolation**: Users can only see their own data
+- **Admin Access**: Admins can manage all user data
+- **Secure Functions**: Database functions respect RLS policies
 
 ## 🔧 **Configuration**
 
@@ -284,24 +321,22 @@ npm run test:performance
 
 ## 📚 **Documentation**
 
-### **Theme System** 🆕
-- **`DEBUGGING_LESSONS.md`**: Theme implementation and debugging lessons
-- **Theme Context**: `src/contexts/ThemeContext.tsx` - Theme state management
-- **Theme Toggle**: `src/components/ThemeToggle.tsx` - Theme switching component
-- **Global Styles**: `src/app/globals.css` - Theme-specific CSS rules
+### **Core Documentation**
+- **`README.md`**: Project overview and quick start (this file)
+- **`AGENTS.md`**: AI assistant guidelines and project rules
+- **`PROJECT_MEMORY.md`**: Lessons learned and project history
+- **`PROJECT_STATUS.md`**: Current project status and completed features
 
-### **User Management** 🆕
-- **`USER_MANAGEMENT_SYSTEM.md`**: Comprehensive system documentation
-- **`migration_guide.md`**: Step-by-step migration instructions
-- **`database_schema.sql`**: Complete database structure
-- **`create_missing_views.sql`**: Current view status
-- **`PHASE_3_COMPLETION.md`**: Complete Phase 3 implementation report ✅ NEW
+### **Technical Documentation**
+- **`DATABASE_GUIDE.md`**: Complete database schema, safety protocols, and poll system
+- **`SETUP_GUIDE.md`**: Step-by-step setup and implementation instructions
 
 ### **API Documentation**
 - **Authentication**: User login and role management
 - **Documents**: File upload and management
 - **Discussions**: Forum conversation management
 - **Admin**: User and content administration
+- **Polls**: Interactive poll system with vote persistence
 
 ## 🐛 **Troubleshooting**
 

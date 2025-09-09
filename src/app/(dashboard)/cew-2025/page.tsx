@@ -359,25 +359,25 @@ export default async function Cew2025Page() {
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <a 
-            href="/core-themes/indigenous-knowledge-science"
+            href="/wiks"
             className="inline-flex items-center justify-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
           >
             Indigenous Knowledge & Science
           </a>
           <a 
-            href="/core-themes/holistic-protection"
+            href="/survey-results/holistic-protection"
             className="inline-flex items-center justify-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
           >
             Holistic Protection
           </a>
           <a 
-            href="/core-themes/tiered-framework"
+            href="/survey-results/tiered-framework"
             className="inline-flex items-center justify-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
           >
             Tiered Framework
           </a>
           <a 
-            href="/core-themes/prioritization-framework"
+            href="/survey-results/prioritization"
             className="inline-flex items-center justify-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
           >
             Prioritization Framework

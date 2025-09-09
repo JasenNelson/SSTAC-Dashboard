@@ -30,28 +30,28 @@ SELECT
     p.poll_index,
     p.question,
     p.options,
-    COUNT(pv.id) as total_votes,
+    COALESCE(option_counts.total_votes, 0) as total_votes,
     COALESCE(
         jsonb_agg(
             jsonb_build_object(
-                'option_index', pv.option_index,
-                'option_text', p.options->>pv.option_index,
+                'option_index', option_counts.option_index,
+                'option_text', p.options->>option_counts.option_index,
                 'votes', option_counts.vote_count
-            ) ORDER BY pv.option_index
-        ) FILTER (WHERE pv.id IS NOT NULL),
+            ) ORDER BY option_counts.option_index
+        ) FILTER (WHERE option_counts.option_index IS NOT NULL),
         '[]'::jsonb
     ) as results
 FROM polls p
-LEFT JOIN poll_votes pv ON p.id = pv.poll_id
 LEFT JOIN (
     SELECT 
         poll_id, 
         option_index, 
-        COUNT(*) as vote_count
+        COUNT(*) as vote_count,
+        SUM(COUNT(*)) OVER (PARTITION BY poll_id) as total_votes
     FROM poll_votes 
     GROUP BY poll_id, option_index
-) option_counts ON p.id = option_counts.poll_id AND pv.option_index = option_counts.option_index
-GROUP BY p.id, p.page_path, p.poll_index, p.question, p.options;
+) option_counts ON p.id = option_counts.poll_id
+GROUP BY p.id, p.page_path, p.poll_index, p.question, p.options, option_counts.total_votes;
 
 -- RLS Policies for polls table
 ALTER TABLE polls ENABLE ROW LEVEL SECURITY;

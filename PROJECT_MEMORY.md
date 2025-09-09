@@ -27,9 +27,9 @@
 - **API Design**: Check for existing polls before trying to fetch results
 - **User Feedback**: Clear visual indicators for vote states and submission process
 
-## 🚨 Critical Debugging Incident (2025-01-XX)
+## 🚨 Critical Debugging Incidents
 
-### Overly Complicated Color Scheme System
+### 1. Overly Complicated Color Scheme System (2025-01-XX)
 **LESSON LEARNED**: The current color scheme system is overly complicated and creates maintenance nightmares. Simple, consistent color schemes are essential for maintainable code.
 
 #### What Happened
@@ -57,7 +57,7 @@
 - **Consolidate CSS Rules**: Reduce 200+ rules to essential theming only
 - **Establish Design System**: Create consistent color tokens and theming approach
 
-### Theme System CSS Specificity Issues
+### 2. Theme System CSS Specificity Issues (2025-01-XX)
 **LESSON LEARNED**: CSS specificity is critical for theme systems - use high-specificity selectors to override conflicting styles.
 
 #### What Happened
@@ -90,9 +90,7 @@ html.light .min-h-screen {
 }
 ```
 
-## 🚨 Critical Debugging Incident (2025-09-05)
-
-### Discussions Page Failure Due to Over-Optimization
+### 3. Discussions Page Failure Due to Over-Optimization (2025-09-05)
 **LESSON LEARNED**: Never optimize working systems without explicit user request and clear justification.
 
 #### What Happened

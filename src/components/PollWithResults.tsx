@@ -19,7 +19,8 @@ interface PollWithResultsProps {
   question: string;
   options: string[];
   pagePath: string;
-  onVote?: (pollIndex: number, optionIndex: number) => void;
+  questionNumber?: number;
+  onVote?: (pollIndex: number, optionIndex: number, otherText?: string) => void;
 }
 
 export default function PollWithResults({ 
@@ -27,6 +28,7 @@ export default function PollWithResults({
   question, 
   options, 
   pagePath, 
+  questionNumber,
   onVote 
 }: PollWithResultsProps) {
   const [hasVoted, setHasVoted] = useState(false);
@@ -36,6 +38,8 @@ export default function PollWithResults({
   const [showResults, setShowResults] = useState(false);
   const [userVote, setUserVote] = useState<number | null>(null);
   const [showChangeOption, setShowChangeOption] = useState(false);
+  const [otherText, setOtherText] = useState<string>('');
+  const [userOtherText, setUserOtherText] = useState<string>('');
 
   // Fetch results when component mounts
   useEffect(() => {
@@ -46,10 +50,20 @@ export default function PollWithResults({
     if ((hasVoted && !showChangeOption) || isLoading) return;
     console.log(`[PollWithResults ${pollIndex}] Selected option ${optionIndex}`);
     setSelectedOption(optionIndex);
+    // Clear other text when selecting a new option
+    if (!isOtherOption(options[optionIndex])) {
+      setOtherText('');
+    }
   };
 
   const handleSubmitVote = async () => {
     if (selectedOption === null || isLoading) return;
+    
+    // Validate other text if "Other" is selected
+    if (isSelectedOther() && !otherText.trim()) {
+      alert('Please provide details for your "Other" selection.');
+      return;
+    }
 
     console.log(`[PollWithResults ${pollIndex}] Submitting vote for option ${selectedOption}`);
     setIsLoading(true);
@@ -65,24 +79,29 @@ export default function PollWithResults({
           pollIndex,
           question,
           options,
-          optionIndex: selectedOption
+          optionIndex: selectedOption,
+          otherText: isSelectedOther() ? otherText.trim() : undefined
         }),
       });
 
       if (response.ok) {
         const result = await response.json();
         console.log(`[PollWithResults ${pollIndex}] Vote submitted successfully:`, result);
+        console.log(`[PollWithResults ${pollIndex}] Setting vote state after successful submission`);
         setHasVoted(true);
         setShowResults(true);
         setUserVote(selectedOption);
+        setUserOtherText(isOtherOption(options[selectedOption]) ? otherText.trim() : '');
         setShowChangeOption(false);
+        setSelectedOption(null); // Clear selected option after voting
+        console.log(`[PollWithResults ${pollIndex}] Vote state set - hasVoted: true, showChangeOption: false`);
         
         // Fetch updated results
         await fetchResults();
         
         // Call parent callback if provided
         if (onVote) {
-          onVote(pollIndex, selectedOption);
+          onVote(pollIndex, selectedOption, isOtherOption(options[selectedOption]) ? otherText.trim() : undefined);
         }
       } else {
         console.error(`[PollWithResults ${pollIndex}] Failed to submit vote:`, response.status);
@@ -109,6 +128,7 @@ export default function PollWithResults({
         if (data.userVote !== null && data.userVote !== undefined) {
           console.log(`[PollWithResults ${pollIndex}] User has vote:`, data.userVote);
           setUserVote(data.userVote);
+          setUserOtherText(data.userOtherText || '');
           setHasVoted(true);
           setShowResults(true);
         } else {
@@ -126,12 +146,14 @@ export default function PollWithResults({
     setShowChangeOption(true);
     setHasVoted(false);
     setSelectedOption(null);
+    setOtherText('');
   };
 
   const handleCancelChange = () => {
     setShowChangeOption(false);
     setHasVoted(true);
     setSelectedOption(userVote);
+    setOtherText('');
   };
 
   const getPercentage = (votes: number, totalVotes: number) => {
@@ -145,10 +167,18 @@ export default function PollWithResults({
     return option?.votes || 0;
   };
 
+  const isOtherOption = (optionText: string) => {
+    return optionText.toLowerCase().includes('other');
+  };
+
+  const isSelectedOther = () => {
+    return selectedOption !== null && isOtherOption(options[selectedOption]);
+  };
+
   return (
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-lg">
       <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-8 text-center">
-        {question}
+        {questionNumber && `Question ${questionNumber}: `}{question}
       </h3>
       
       {/* User's previous vote indicator - always show when user has voted */}
@@ -158,7 +188,12 @@ export default function PollWithResults({
             <div className="flex items-center space-x-2">
               <span className="text-green-600 dark:text-green-400 font-semibold">✓</span>
               <span className="text-green-800 dark:text-green-200">
-                You voted: <strong>{options[userVote]}</strong>
+                You voted: <strong>Option {String.fromCharCode(65 + userVote)}: {options[userVote]}</strong>
+                {userOtherText && (
+                  <span className="block mt-1 text-sm">
+                    <strong>Your "Other" response:</strong> "{userOtherText}"
+                  </span>
+                )}
               </span>
             </div>
             {!showChangeOption && (
@@ -200,6 +235,16 @@ export default function PollWithResults({
           const isSelected = selectedOption === optionIndex;
           const isVoted = hasVoted;
           
+          // Debug logging
+          if (optionIndex === 0) { // Only log for first option to avoid spam
+            console.log(`[PollWithResults ${pollIndex}] Button state:`, {
+              hasVoted,
+              showChangeOption,
+              isVoted,
+              disabled: (isVoted && !showChangeOption) || isLoading
+            });
+          }
+          
           return (
             <div key={optionIndex} className="relative">
               <button
@@ -217,6 +262,9 @@ export default function PollWithResults({
                   <span className={`font-medium ${
                     isVoted ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-white'
                   }`}>
+                    <span className="font-bold text-blue-600 dark:text-blue-400 mr-2">
+                      Option {String.fromCharCode(65 + optionIndex)}:
+                    </span>
                     {option}
                   </span>
                   
@@ -259,14 +307,35 @@ export default function PollWithResults({
         })}
       </div>
 
+      {/* Other Text Input - show when "Other" is selected */}
+      {!hasVoted && isSelectedOther() && (
+        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <label htmlFor={`other-text-${pollIndex}`} className="block text-sm font-medium text-gray-900 dark:text-blue-200 mb-2">
+            Please provide details for your "Other" selection:
+          </label>
+          <textarea
+            id={`other-text-${pollIndex}`}
+            value={otherText}
+            onChange={(e) => setOtherText(e.target.value)}
+            placeholder="Enter your specific details here..."
+            className="w-full px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            rows={3}
+            maxLength={500}
+          />
+          <div className="mt-1 text-xs text-gray-900 dark:text-blue-400">
+            {otherText.length}/500 characters
+          </div>
+        </div>
+      )}
+
       {/* Submit Button - always show when not voted, disabled until option selected */}
       {!hasVoted && (
         <div className="mt-6 flex justify-center">
           <button
             onClick={handleSubmitVote}
-            disabled={selectedOption === null || isLoading}
+            disabled={selectedOption === null || isLoading || (isSelectedOther() && !otherText.trim())}
             className={`px-8 py-3 font-semibold rounded-xl transition-colors duration-300 flex items-center space-x-2 ${
-              selectedOption === null || isLoading
+              selectedOption === null || isLoading || (isSelectedOther() && !otherText.trim())
                 ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                 : 'bg-blue-600 hover:bg-blue-700 text-white'
             }`}
@@ -298,6 +367,7 @@ export default function PollWithResults({
             showVoteCount={true}
             showPercentages={true}
             interactive={true}
+            options={options}
           />
         </div>
       )}

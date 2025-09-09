@@ -74,7 +74,9 @@ export default function InteractiveBarChart({
       <div className="relative">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
         
-        <div className="space-y-3">
+        {/* Mobile-friendly container with responsive design */}
+        <div className="space-y-3 overflow-x-auto">
+          <div className="min-w-full space-y-3">
           {bars.map((bar, index) => {
             const isHovered = hoveredBar === index;
             const isSelected = selectedBar === index;
@@ -88,8 +90,8 @@ export default function InteractiveBarChart({
                 onClick={() => handleBarClick(index)}
               >
                 <div className="flex items-center space-x-3">
-                  {/* Label */}
-                  <div className="w-64 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">
+                  {/* Label - responsive width for mobile */}
+                  <div className="w-32 sm:w-48 md:w-64 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 text-right flex-shrink-0">
                     {bar.label}
                   </div>
                   
@@ -118,9 +120,9 @@ export default function InteractiveBarChart({
                     )}
                   </div>
                   
-                  {/* Percentage */}
+                  {/* Percentage - responsive for mobile */}
                   {showPercentages && (
-                    <div className="w-20 text-sm font-semibold text-gray-600 dark:text-gray-400 text-right">
+                    <div className="w-16 sm:w-20 text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 text-right flex-shrink-0">
                       {bar.percentage.toFixed(1)}%
                     </div>
                   )}
@@ -140,6 +142,7 @@ export default function InteractiveBarChart({
               </div>
             );
           })}
+          </div>
         </div>
         
         {/* Selected Bar Details */}

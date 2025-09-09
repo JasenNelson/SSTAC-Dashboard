@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
 
     let results = null;
     let userVote = null;
+    let userOtherText = null;
 
     if (pollError && pollError.code !== 'PGRST116') {
       // PGRST116 means no rows found, which is fine for new polls
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
       console.log(`Looking for user vote for poll ${pollData.id} (pollIndex: ${pollIndex})`);
       const { data: userVoteData, error: voteError } = await supabase
         .from('poll_votes')
-        .select('option_index')
+        .select('option_index, other_text')
         .eq('poll_id', pollData.id)
         .eq('user_id', user.id)
         .single();
@@ -83,7 +84,8 @@ export async function GET(request: NextRequest) {
       console.log(`User vote data for poll ${pollIndex}:`, { userVoteData, voteError });
       if (!voteError && userVoteData) {
         userVote = userVoteData.option_index;
-        console.log(`User vote found for poll ${pollIndex}:`, userVote);
+        userOtherText = userVoteData.other_text;
+        console.log(`User vote found for poll ${pollIndex}:`, userVote, userOtherText ? `with other text: "${userOtherText}"` : '');
       } else {
         console.log(`No user vote found for poll ${pollIndex}`);
       }
@@ -91,7 +93,7 @@ export async function GET(request: NextRequest) {
       console.log(`Poll does not exist yet for pollIndex ${pollIndex}`);
     }
 
-    return NextResponse.json({ results, userVote });
+    return NextResponse.json({ results, userVote, userOtherText });
   } catch (error) {
     console.error('Error in poll results API:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -4,6 +4,11 @@ import React, { useState } from 'react';
 import PollWithResults from '@/components/PollWithResults';
 import RankingPoll from '@/components/dashboard/RankingPoll';
 
+interface PollData {
+  question: string;
+  options: string[];
+  questionNumber?: number;
+}
 
 export default function TieredFrameworkClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
@@ -12,6 +17,7 @@ export default function TieredFrameworkClient() {
   const polls = [
     {
       question: "In developing Protocol 2 requirements, procedures, and a supporting model for bioavailability adjustments, would a cause-effect model (e.g., Bayesian Networks or Regression) be the best approach for a scientific framework that uses site-specific data and known toxicity-modifying factors to develop refined sediment standards?",
+      questionNumber: 1,
       options: [
         "Yes",
         "No",
@@ -22,6 +28,7 @@ export default function TieredFrameworkClient() {
     },
     {
       question: "Please rank the following lines of evidence in order of importance for developing a robust scientific framework for deriving Tier 2b site-specific sediment standards for screening-level risk assessment (1 = most important):",
+      questionNumber: 2,
       options: [
         "Environmental Conditions: Physical and chemical data",
         "Bioaccumulation Data in Tissues of Local Species",
@@ -405,6 +412,7 @@ export default function TieredFrameworkClient() {
                     question={poll.question}
                     options={poll.options}
                     pagePath="/survey-results/tiered-framework"
+                    questionNumber={poll.questionNumber}
                     onVote={(pollIndex, rankings) => {
                       console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
                     }}
@@ -418,6 +426,7 @@ export default function TieredFrameworkClient() {
                     question={poll.question}
                     options={poll.options}
                     pagePath="/survey-results/tiered-framework"
+                    questionNumber={poll.questionNumber}
                     onVote={(pollIndex, optionIndex) => {
                       console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
                     }}

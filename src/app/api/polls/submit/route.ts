@@ -28,8 +28,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { pagePath, pollIndex, question, options, optionIndex } = await request.json();
-    console.log(`[Poll Submit] Received vote for poll ${pollIndex} on page ${pagePath}, option ${optionIndex}`);
+    const { pagePath, pollIndex, question, options, optionIndex, otherText } = await request.json();
+    console.log(`[Poll Submit] Received vote for poll ${pollIndex} on page ${pagePath}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}`);
 
     // Get or create poll
     const { data: pollData, error: pollError } = await supabase
@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
     const { data: voteData, error: voteError } = await supabase
       .rpc('submit_poll_vote', {
         p_poll_id: pollData,
-        p_option_index: optionIndex
+        p_option_index: optionIndex,
+        p_other_text: otherText || null
       });
 
     if (voteError) {

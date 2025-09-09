@@ -7,6 +7,7 @@ import RankingPoll from '@/components/dashboard/RankingPoll';
 interface PollData {
   question: string;
   options: string[];
+  questionNumber?: number;
 }
 
 export default function WIKSClient() {
@@ -16,6 +17,7 @@ export default function WIKSClient() {
   const polls: PollData[] = [
     {
       question: "What is the most effective starting point for developing a holistic baseline study that combines co-located sampling (e.g., sediment, porewater, tissue, surface water) with area-based Indigenous Knowledge and Science?",
+      questionNumber: 1,
       options: [
         "A co-developed conceptual site model that uses Indigenous Knowledge to first identify key species, exposure pathways, and areas of cultural significance to guide the scientific sampling plan.",
         "A comprehensive literature and data review that compiles all existing scientific and Indigenous knowledge for the area to identify critical data gaps that the baseline study must fill.",
@@ -25,6 +27,7 @@ export default function WIKSClient() {
     },
     {
       question: "How can the scientific framework incorporate protection goals related to Indigenous Stewardship principles such as the 'connectedness of all life' and '7-generations'?",
+      questionNumber: 2,
       options: [
         "By using food-web models that scientifically map contaminant pathways between species.",
         "By developing Species Sensitivity Distributions (SSDs) that include culturally significant local species.",
@@ -35,6 +38,7 @@ export default function WIKSClient() {
     },
     {
       question: "Within a tiered framework, where can place-based Indigenous Knowledge provide the most direct scientific value for modifying a generic baseline value to be more site-specific?",
+      questionNumber: 3,
       options: [
         "Informing bioavailability models with specific knowledge of local sediment characteristics and processes.",
         "Identifying sensitive local species or life stages not included in the generic models for a more accurate risk calculation.",
@@ -256,6 +260,7 @@ export default function WIKSClient() {
                   question={poll.question}
                   options={poll.options}
                   pagePath="/wiks"
+                  questionNumber={poll.questionNumber}
                   onVote={(pollIndex, optionIndex) => {
                     console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
                   }}

@@ -14,6 +14,7 @@ interface RankingPollProps {
   question: string;
   options: string[];
   pagePath: string;
+  questionNumber?: number;
   onVote?: (pollIndex: number, rankings: number[]) => void;
 }
 
@@ -22,6 +23,7 @@ export default function RankingPoll({
   question, 
   options, 
   pagePath, 
+  questionNumber,
   onVote 
 }: RankingPollProps) {
   const [rankingOptions, setRankingOptions] = useState<RankingOption[]>([]);
@@ -206,7 +208,7 @@ export default function RankingPoll({
   return (
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-lg">
       <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-8 text-center">
-        {question}
+        {questionNumber && `Question ${questionNumber}: `}{question}
       </h3>
       
       {/* User's previous ranking indicator - always show when user has voted */}
@@ -267,6 +269,9 @@ export default function RankingPoll({
                   <span className={`font-medium ${
                     hasVoted ? 'text-gray-600 dark:text-gray-300' : 'text-gray-800 dark:text-white'
                   }`}>
+                    <span className="font-bold text-blue-600 dark:text-blue-400 mr-2">
+                      Option {String.fromCharCode(65 + index)}:
+                    </span>
                     {option.text}
                   </span>
                   
