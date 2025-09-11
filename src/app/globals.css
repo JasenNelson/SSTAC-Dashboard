@@ -1522,6 +1522,47 @@ body {
 }
 
 
+/* Fix landing page Phase 1 text - nuclear option with maximum specificity */
+html.dark .phase-1-text,
+html.light .phase-1-text,
+.phase-1-text {
+  color: #1e40af !important;
+  background-color: transparent !important;
+}
+
+/* Even more specific - target the exact structure */
+html.dark .inline-flex.items-center.px-6.py-3.bg-gray-200\/90.dark\:bg-gray-300\/90 span.phase-1-text,
+html.light .inline-flex.items-center.px-6.py-3.bg-gray-200\/90.dark\:bg-gray-300\/90 span.phase-1-text {
+  color: #1e40af !important;
+}
+
+/* Nuclear option - target everything */
+* .phase-1-text {
+  color: #1e40af !important;
+}
+
+/* Target the specific page */
+body .phase-1-text {
+  color: #1e40af !important;
+}
+
+/* FINAL NUCLEAR OPTION - MUST BE LAST */
+/* Target the actual classes present in the element with theme-specific colors */
+html.dark .inline-flex.items-center.px-6.py-3.bg-white\/90 span.text-blue-900 {
+  color: #ffffff !important; /* White text for dark mode */
+  background: transparent !important;
+}
+
+html.light .inline-flex.items-center.px-6.py-3.bg-white\/90 span.text-blue-900 {
+  color: #1e40af !important; /* Dark blue text for light mode */
+  background: transparent !important;
+}
+
+.inline-flex.items-center.px-6.py-3.bg-white\/90 span.text-blue-900 {
+  color: #1e40af !important; /* Default to dark blue */
+  background: transparent !important;
+}
+
 /* Add this to the bottom of src/app/globals.css */
 input,
 textarea {

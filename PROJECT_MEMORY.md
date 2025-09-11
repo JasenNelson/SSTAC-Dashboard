@@ -175,6 +175,62 @@ html.light .min-h-screen {
 }
 ```
 
+### 3. Landing Page Text Color Override Issue (2025-01-XX)
+**LESSON LEARNED**: When CSS overrides fail, inspect the actual element to identify the correct classes to target.
+
+#### What Happened
+- "🎯 Phase 1: Scientific Framework Development" text was dark blue on dark background in dark mode
+- Multiple attempts to override with custom classes (`phase-1-text`) failed
+- CSS rules were not being applied despite high specificity
+- Issue persisted through multiple debugging attempts
+
+#### Root Cause
+- **Wrong Target Classes**: CSS was targeting custom classes that didn't exist in the element
+- **Actual Element Classes**: The span only had `text-blue-900 text-sm font-semibold` classes
+- **Missing Element Inspection**: AI was not inspecting the actual rendered element
+
+#### Debugging Process
+1. **User Used F12 Developer Tools**: 
+   - Went to Elements tab
+   - Found the specific container
+   - Copied the element HTML
+   - Provided actual element structure: `<div class="inline-flex items-center px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full border border-white/30 shadow-lg"><span class="text-blue-900 text-sm font-semibold">🎯 Phase 1: Scientific Framework Development</span></div>`
+
+2. **Key Discovery**: 
+   - Element had no custom `phase-1-text` class
+   - Only had Tailwind classes: `text-blue-900 text-sm font-semibold`
+   - Background was `bg-white/90` (light gray), not dark
+
+3. **Solution Applied**:
+   - Targeted actual classes present in element
+   - Used high-specificity selectors
+   - Tested with bright red color first to confirm CSS was loading
+   - Applied final white color for visibility
+
+#### Final Solution
+```css
+/* Target the actual classes present in the element */
+html.dark .inline-flex.items-center.px-6.py-3.bg-white\/90 span.text-blue-900,
+html.light .inline-flex.items-center.px-6.py-3.bg-white\/90 span.text-blue-900,
+.inline-flex.items-center.px-6.py-3.bg-white\/90 span.text-blue-900 {
+  color: #ffffff !important;
+  background: transparent !important;
+}
+```
+
+#### Key Takeaways
+- **Always Inspect Actual Element**: Use F12 Developer Tools to see real element structure
+- **Target Existing Classes**: Don't assume custom classes exist - target what's actually there
+- **Test with Obvious Colors**: Use bright colors (like red) to confirm CSS is loading
+- **High Specificity Required**: Use full class chains for maximum specificity
+- **User Collaboration**: When AI debugging fails, user inspection is invaluable
+
+#### Future Prevention
+- **AI Should Request Element Inspection**: When CSS overrides fail, ask user to inspect element
+- **Use F12 Developer Tools**: Copy actual element HTML for accurate targeting
+- **Test with Bright Colors**: Always test CSS changes with obvious colors first
+- **Document Element Structure**: Keep track of actual rendered element classes
+
 ### 3. Discussions Page Failure Due to Over-Optimization (2025-09-05)
 **LESSON LEARNED**: Never optimize working systems without explicit user request and clear justification.
 
