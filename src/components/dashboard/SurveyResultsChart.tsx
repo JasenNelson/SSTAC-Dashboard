@@ -93,30 +93,6 @@ export default function SurveyResultsChart() {
             tickFormatter={(value) => `${value}%`}
             tick={{ fill: textColor }}
           />
-          <Tooltip
-            cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
-            contentStyle={{
-              backgroundColor: tooltipBg,
-              border: `1px solid ${tooltipBorder}`,
-              borderRadius: '0.5rem',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-              color: tooltipText,
-              fontSize: '12px',
-            }}
-            formatter={(value: number, name: string) => [
-              `${value}%`, 
-              name === 'effectiveness' ? 'Current Effectiveness' : 'Perceived Importance'
-            ]}
-            labelStyle={{ 
-              fontWeight: 'bold',
-              color: tooltipText,
-              fontSize: '13px',
-            }}
-            itemStyle={{
-              color: tooltipText,
-              fontSize: '12px',
-            }}
-          />
           <Legend 
             wrapperStyle={{ 
               paddingTop: '15px',

@@ -128,38 +128,12 @@ export default function InteractiveBarChart({
                   )}
                 </div>
                 
-                {/* Hover Tooltip */}
-                {isHovered && interactive && (
-                  <div className="absolute z-10 bg-gray-900 text-white text-sm rounded-lg px-3 py-2 pointer-events-none transform -translate-x-1/2 -translate-y-full mt-2">
-                    <div className="font-semibold">{bar.label}</div>
-                    <div>{bar.value} responses ({bar.percentage.toFixed(1)}%)</div>
-                    {bar.description && (
-                      <div className="text-gray-300 mt-1">{bar.description}</div>
-                    )}
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                  </div>
-                )}
               </div>
             );
           })}
           </div>
         </div>
         
-        {/* Selected Bar Details */}
-        {selectedBar !== null && data[selectedBar] && (
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h4 className="font-semibold text-blue-800 mb-2">
-              {data[selectedBar].label} - Detailed Information
-            </h4>
-            <div className="text-sm text-blue-700 space-y-1">
-              <div><strong>Responses:</strong> {data[selectedBar].value}</div>
-              <div><strong>Percentage:</strong> {bars[selectedBar].percentage.toFixed(1)}%</div>
-              {data[selectedBar].description && (
-                <div><strong>Context:</strong> {data[selectedBar].description}</div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     );
   }

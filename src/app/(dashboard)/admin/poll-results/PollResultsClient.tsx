@@ -59,6 +59,11 @@ export default function PollResultsClient() {
       '/survey-results/holistic-protection': 'Holistic Protection',
       '/survey-results/tiered-framework': 'Tiered Framework',
       '/survey-results/prioritization': 'Prioritization Framework',
+      '/survey-results/wiks': 'Indigenous Knowledge & Science',
+      '/cew-polls/holistic-protection': 'CEW: Holistic Protection',
+      '/cew-polls/tiered-framework': 'CEW: Tiered Framework',
+      '/cew-polls/prioritization': 'CEW: Prioritization',
+      '/cew-polls/wiks': 'CEW: Indigenous Knowledge',
     };
     return pathMap[pagePath] || pagePath;
   };

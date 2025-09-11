@@ -540,30 +540,30 @@ export default function HolisticProtectionClient() {
       {/* Next Steps Section */}
       <section className="py-20 px-6 bg-gradient-to-br from-gray-800 to-gray-900 text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-8 font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold mb-8 font-['Merriweather'] text-white">
             Next Steps for Implementation
           </h2>
           
           <div className="space-y-8 text-lg">
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-blue-300">Immediate Actions</h3>
-              <p className="text-gray-200 leading-relaxed">
+              <h3 className="text-2xl font-semibold mb-4 text-blue-300 !text-blue-300">Immediate Actions</h3>
+              <p className="text-gray-200 !text-gray-200 leading-relaxed">
                 Develop draft matrix standards for key contaminants, create assessment frameworks, 
                 and establish stakeholder consultation processes to refine the approach.
               </p>
             </div>
             
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-blue-300">Long-term Development</h3>
-              <p className="text-gray-200 leading-relaxed">
+              <h3 className="text-2xl font-semibold mb-4 text-blue-300 !text-blue-300">Long-term Development</h3>
+              <p className="text-gray-200 !text-gray-200 leading-relaxed">
                 Comprehensive guidance documents, training programs, and monitoring frameworks 
                 to ensure successful implementation of the matrix sediment standards framework.
               </p>
             </div>
             
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-blue-300">Your Continued Input</h3>
-              <p className="text-gray-200 mb-4">
+              <h3 className="text-2xl font-semibold mb-4 text-blue-300 !text-blue-300">Your Continued Input</h3>
+              <p className="text-gray-200 !text-gray-200 mb-4">
                 We welcome your ongoing perspectives as we develop this framework together. 
                 Your input is essential for creating effective, practical matrix standards.
               </p>

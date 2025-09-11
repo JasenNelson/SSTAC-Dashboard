@@ -93,6 +93,15 @@ src/
 - **Admin Dashboard**: Complete poll results viewing and management
 - **Database Security**: Row Level Security ensures data protection
 
+#### **Poll System Technical Details**
+- **Database Tables**: `polls`, `poll_votes`, `ranking_polls`, `ranking_votes`
+- **Result Views**: `poll_results`, `ranking_results` for aggregated data
+- **Helper Functions**: `get_or_create_poll()`, `get_or_create_ranking_poll()`
+- **API Endpoints**: `/api/polls/submit`, `/api/polls/results`, `/api/ranking-polls/submit`, `/api/ranking-polls/results`
+- **Vote Tracking**: Uses `localStorage` for CEW polls, database for authenticated users
+- **Mobile Optimization**: Responsive design with clean hover-free charts
+- **Security**: RLS policies for user isolation and admin access
+
 ### **CEW Conference Polling** 🆕
 - **Unauthenticated Access**: Conference attendees vote without creating accounts
 - **Shared Code System**: Single code (e.g., "CEW2025") for all attendees
@@ -366,6 +375,194 @@ npm run test:performance
 - **Discussions**: Forum conversation management
 - **Admin**: User and content administration
 - **Polls**: Interactive poll system with vote persistence
+
+## 🗳️ **Poll and Ranking Question System Documentation**
+
+### **System Overview**
+The poll and ranking question system provides interactive voting capabilities for both authenticated users and conference attendees. The system supports two types of polls: single-choice polls and ranking polls.
+
+### **Poll Types**
+
+#### **Single-Choice Polls**
+- **Purpose**: Users select one option from multiple choices
+- **Database**: Stored in `polls` and `poll_votes` tables
+- **UI Components**: `PollWithResults` component
+- **Vote Storage**: One vote per user per poll (upsert on change)
+- **Results**: Real-time percentage and vote count display
+
+#### **Ranking Polls**
+- **Purpose**: Users rank multiple options in order of preference
+- **Database**: Stored in `ranking_polls` and `ranking_votes` tables
+- **UI Components**: `RankingPoll` component
+- **Vote Storage**: Multiple votes per user per poll (one per option)
+- **Results**: Average rank calculation with visual bar charts
+
+### **Database Schema**
+
+#### **Core Tables**
+```sql
+-- Single-choice polls
+polls (id, page_path, poll_index, question, options, created_at, updated_at)
+poll_votes (id, poll_id, user_id, option_index, voted_at)
+
+-- Ranking polls  
+ranking_polls (id, page_path, poll_index, question, options, created_at, updated_at)
+ranking_votes (id, ranking_poll_id, user_id, option_index, rank, voted_at)
+```
+
+#### **Result Views**
+```sql
+-- Aggregated single-choice results
+poll_results (poll_id, page_path, poll_index, question, options, total_votes, results)
+
+-- Aggregated ranking results
+ranking_results (ranking_poll_id, page_path, poll_index, question, options, total_votes, results)
+```
+
+### **API Endpoints**
+
+#### **Single-Choice Polls**
+- **`POST /api/polls/submit`**: Submit or update a single-choice vote
+- **`GET /api/polls/results`**: Retrieve poll results and user's current vote
+
+#### **Ranking Polls**
+- **`POST /api/ranking-polls/submit`**: Submit or update ranking votes
+- **`GET /api/ranking-polls/results`**: Retrieve ranking results and user's current rankings
+
+### **Authentication Modes**
+
+#### **Authenticated Users**
+- **User ID**: UUID from `auth.users` table
+- **Vote Storage**: Direct database storage
+- **Change Votes**: Allowed (can modify previous choices)
+- **Session Persistence**: Votes remembered across sessions
+
+#### **CEW Conference Attendees**
+- **User ID**: CEW code (e.g., "CEW2025") stored as TEXT
+- **Vote Storage**: Database with CEW code as user_id
+- **Change Votes**: Not allowed (one vote per device)
+- **Session Persistence**: CEW code remembered in sessionStorage
+
+### **Vote Tracking System**
+
+#### **Device-Based Tracking**
+- **CEW Polls**: Uses `localStorage` with `cew_tracker_` prefix
+- **Main Dashboard**: Uses database storage with user authentication
+- **Prevention**: Prevents duplicate votes per device for CEW polls
+
+#### **Vote Persistence**
+- **Authenticated**: Votes stored in database with user UUID
+- **CEW**: Votes stored in database with CEW code
+- **Memory**: Previous votes loaded and displayed on page load
+
+### **UI/UX Design**
+
+#### **Mobile Optimization**
+- **Clean Charts**: No excessive hover tooltips for mobile readability
+- **Responsive Design**: Charts adapt to different screen sizes
+- **Touch-Friendly**: Large buttons and touch targets
+- **Fast Loading**: Optimized for conference mobile devices
+
+#### **Chart Components**
+- **Poll Results**: `PollResultsChart` with clean bar charts
+- **Ranking Results**: `PollResultsChart` with ranking visualization
+- **Interactive Features**: Hover effects without overwhelming text
+- **Real-time Updates**: Live results during voting
+
+### **Security Implementation**
+
+#### **Row Level Security (RLS)**
+- **User Isolation**: Users can only see their own votes
+- **Admin Access**: Admins can view all votes and results
+- **Anonymous Access**: CEW polls allow anonymous voting
+- **Data Protection**: All poll data protected by RLS policies
+
+#### **Vote Validation**
+- **Option Validation**: Ensures selected options exist
+- **User Validation**: Verifies user has permission to vote
+- **Duplicate Prevention**: Database constraints prevent duplicate votes
+- **Data Integrity**: Proper foreign key relationships
+
+### **Performance Optimization**
+
+#### **Database Efficiency**
+- **Indexed Queries**: Optimized for fast poll result retrieval
+- **View Materialization**: Pre-calculated aggregated results
+- **Function Caching**: Efficient poll creation and vote submission
+- **RLS Optimization**: Minimal security overhead
+
+#### **Frontend Performance**
+- **Component Optimization**: Efficient React component updates
+- **State Management**: Minimal re-renders on vote changes
+- **API Efficiency**: Single API calls for poll results
+- **Caching**: Local storage for CEW code persistence
+
+### **Error Handling**
+
+#### **Database Errors**
+- **RLS Violations**: Graceful handling of permission errors
+- **Constraint Violations**: User-friendly error messages
+- **Connection Issues**: Fallback to cached data when possible
+- **Timeout Protection**: 10-second timeout on database operations
+
+#### **UI Error States**
+- **Loading States**: Clear indication when polls are loading
+- **Error Messages**: User-friendly error notifications
+- **Retry Logic**: Automatic retry for failed operations
+- **Fallback UI**: Graceful degradation when polls fail to load
+
+### **Development Guidelines**
+
+#### **Adding New Polls**
+1. **Define Poll Data**: Create poll configuration with question and options
+2. **Component Integration**: Use `PollWithResults` or `RankingPoll` components
+3. **API Integration**: Ensure proper API endpoint usage
+4. **Testing**: Verify vote persistence and result display
+5. **Mobile Testing**: Test on mobile devices for responsiveness
+
+#### **Modifying Poll Behavior**
+1. **Database Changes**: Update schema and RLS policies if needed
+2. **API Updates**: Modify API endpoints for new functionality
+3. **Component Updates**: Update UI components for new features
+4. **Testing**: Comprehensive testing of all poll types
+5. **Documentation**: Update this documentation for changes
+
+### **Troubleshooting**
+
+#### **Common Issues**
+- **Votes Not Persisting**: Check RLS policies and user authentication
+- **Results Not Updating**: Verify API endpoints and database views
+- **Mobile Display Issues**: Check responsive design and hover tooltips
+- **CEW Code Issues**: Verify sessionStorage and localStorage usage
+
+#### **Debug Queries**
+```sql
+-- Check poll data
+SELECT * FROM polls WHERE page_path = '/survey-results/holistic-protection';
+
+-- Check user votes
+SELECT * FROM poll_votes WHERE user_id = 'user-uuid-here';
+
+-- Check poll results
+SELECT * FROM poll_results WHERE page_path = '/survey-results/holistic-protection';
+
+-- Check ranking results
+SELECT * FROM ranking_results WHERE page_path = '/survey-results/holistic-protection';
+```
+
+### **Future Enhancements**
+
+#### **Planned Features**
+- **Bulk Poll Management**: Admin interface for managing multiple polls
+- **Advanced Analytics**: Detailed poll result analysis and reporting
+- **Export Capabilities**: Download poll results in various formats
+- **Real-time Notifications**: Live updates when polls are submitted
+
+#### **Scalability Improvements**
+- **Caching Layer**: Redis for improved performance
+- **CDN Integration**: Faster poll result delivery
+- **Database Sharding**: Support for larger poll volumes
+- **API Rate Limiting**: Protection against abuse
 
 ## 🐛 **Troubleshooting**
 

@@ -231,6 +231,16 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 - **Admin Dashboard**: Complete poll results viewing and management
 - **Database Security**: Row Level Security ensures data protection
 
+#### **Poll System Technical Implementation**
+- **Database Tables**: `polls`, `poll_votes`, `ranking_polls`, `ranking_votes`
+- **Result Views**: `poll_results`, `ranking_results` for aggregated data
+- **Helper Functions**: `get_or_create_poll()`, `get_or_create_ranking_poll()`
+- **API Endpoints**: `/api/polls/submit`, `/api/polls/results`, `/api/ranking-polls/submit`, `/api/ranking-polls/results`
+- **UI Components**: `PollWithResults`, `RankingPoll`, `PollResultsChart`
+- **Vote Tracking**: `localStorage` for CEW polls, database for authenticated users
+- **Mobile Optimization**: Clean charts without excessive hover tooltips
+- **Security**: RLS policies for user isolation and admin access
+
 ### **CEW Conference Polling System** ✅ COMPLETED
 - **Unauthenticated Access**: Conference attendees vote without creating accounts
 - **Shared Code System**: Single code (e.g., "CEW2025") for all attendees

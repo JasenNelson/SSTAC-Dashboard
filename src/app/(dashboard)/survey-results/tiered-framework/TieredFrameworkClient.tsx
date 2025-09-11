@@ -441,30 +441,30 @@ export default function TieredFrameworkClient() {
       {/* Next Steps Section */}
       <section className="py-20 px-6 bg-gradient-to-br from-gray-800 to-gray-900 text-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-8 font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold mb-8 font-['Merriweather'] text-white">
             Next Steps for Implementation
           </h2>
           
           <div className="space-y-8 text-lg">
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-green-300">Immediate Actions</h3>
-              <p className="text-gray-200 leading-relaxed">
+              <h3 className="text-2xl font-semibold mb-4 text-green-300 !text-green-300">Immediate Actions</h3>
+              <p className="text-gray-200 !text-gray-200 leading-relaxed">
                 Develop tier escalation criteria, establish bioavailability adjustment protocols, and create 
                 guidance for site-specific modifications within the three-tier framework.
               </p>
             </div>
             
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-green-300">Long-term Development</h3>
-              <p className="text-gray-200 leading-relaxed">
+              <h3 className="text-2xl font-semibold mb-4 text-green-300 !text-green-300">Long-term Development</h3>
+              <p className="text-gray-200 !text-gray-200 leading-relaxed">
                 Comprehensive training programs, practitioner support tools, and continuous refinement 
                 of the tiered approach based on real-world application experience.
               </p>
             </div>
             
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-green-300">Your Continued Input</h3>
-              <p className="text-gray-200 mb-4">
+              <h3 className="text-2xl font-semibold mb-4 text-green-300 !text-green-300">Your Continued Input</h3>
+              <p className="text-gray-200 !text-gray-200 mb-4">
                 We welcome your ongoing perspectives as we develop this tiered framework together. 
                 Your input is essential for creating effective, practical assessment protocols.
               </p>

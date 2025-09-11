@@ -114,11 +114,6 @@ export default async function SurveyResultsPage() {
                   For bioaccumulation protection
                 </div>
               </div>
-              {/* Hover Tooltip */}
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-10">
-                A striking 73% stated the standards are 'Not Effective' or 'Slightly Effective' at preventing harmful bioaccumulation, pointing to a critical gap in the current framework.
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-              </div>
             </div>
 
             {/* KPI Card 2 */}
@@ -133,11 +128,6 @@ export default async function SurveyResultsPage() {
                 <div className="text-gray-600 dark:text-gray-400 text-sm">
                   As Essential or Very Important
                 </div>
-              </div>
-              {/* Hover Tooltip */}
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-10">
-                95% of respondents rate expanding the list of regulated contaminants as 'Essential' or 'Very Important' for comprehensive protection.
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
               </div>
             </div>
 
@@ -154,11 +144,6 @@ export default async function SurveyResultsPage() {
                   For modernized standards
                 </div>
               </div>
-              {/* Hover Tooltip */}
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-10">
-                91% see incorporating bioavailability adjustments as 'Essential' or 'Very Important' for scientifically robust standards.
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-              </div>
             </div>
 
             {/* KPI Card 4 */}
@@ -173,11 +158,6 @@ export default async function SurveyResultsPage() {
                 <div className="text-gray-600 dark:text-gray-400 text-sm">
                   For modernized framework
                 </div>
-              </div>
-              {/* Hover Tooltip */}
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap z-10">
-                84% believe developing new numerical standards is 'Very Important' or 'Essential' for environmental protection.
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
               </div>
             </div>
           </div>

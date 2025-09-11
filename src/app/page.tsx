@@ -29,7 +29,7 @@ export default function Home() {
               Developing a modern, robust scientific framework for updating BC's Contaminated Sites Regulation sediment standards
             </p>
             <div className="inline-flex items-center px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full border border-white/30 shadow-lg">
-              <span className="text-blue-900 text-sm font-semibold">
+              <span className="text-blue-900 dark:text-blue-900 text-sm font-semibold">
                 🎯 Phase 1: Scientific Framework Development
               </span>
             </div>

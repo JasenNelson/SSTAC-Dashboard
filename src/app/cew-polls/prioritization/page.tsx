@@ -84,6 +84,26 @@ export default function CEWPrioritizationPage() {
         "Creating a predictive model for contaminant mixture toxicity based on concentration addition.",
         "Generating sufficient toxicity data to derive new guidelines for 3-5 high-priority legacy contaminants."
       ]
+    },
+    {
+      question: "To support long-term (5+ years) strategic goals, please rank the following foundational research areas in order of importance for creating a more adaptive and forward-looking regulatory framework (1= highest importance):",
+      questionNumber: 7,
+      options: [
+        "Research into the ecosystem-level impacts of chronic, low-level contaminant exposure",
+        "Development of advanced in-vitro and high-throughput screening methods for rapid hazard assessment",
+        "Investigating the toxicological impacts of climate change variables (e.g., temperature, hypoxia) on sediment contaminant toxicity",
+        "Building a comprehensive, open-access database of sediment chemistry and toxicology data for all of BC"
+      ]
+    },
+    {
+      question: "For the Hazard Index / Concentration Addition approach to mixture assessment, what is the single greatest scientific research gap that must be addressed before it can be reliably implemented?",
+      questionNumber: 8,
+      options: [
+        "A lack of high-quality toxicity data for many individual components of common mixtures",
+        "Poor understanding of the modes of action for many contaminants to justify grouping them",
+        "Difficulty in validating model predictions with whole sediment toxicity testing results",
+        "The inability of current models to account for significant synergistic or antagonistic interactions"
+      ]
     }
   ];
 

@@ -46,6 +46,78 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **NEVER modify core functions** without understanding all dependencies
 - **ALWAYS have rollback plans** for any performance changes
 
+### 7. Poll and Ranking Question System Guidelines (CRITICAL)
+- **NEVER modify poll database schema** without understanding all dependencies
+- **ALWAYS test poll functionality** after any database changes
+- **UNDERSTAND poll types**: Single-choice polls vs ranking polls have different data structures
+- **PRESERVE vote persistence**: Votes must be remembered across sessions
+- **MAINTAIN mobile optimization**: Clean charts without excessive hover tooltips
+- **RESPECT authentication modes**: Both authenticated users and CEW conference attendees
+- **VERIFY RLS policies**: Poll data must be properly isolated by user
+- **TEST vote tracking**: Ensure device-based tracking works for CEW polls
+
+## 🗳️ **Poll and Ranking Question System Development Guidelines**
+
+### **System Architecture Understanding**
+- **Two Poll Types**: Single-choice polls (`polls` table) and ranking polls (`ranking_polls` table)
+- **Vote Storage**: `poll_votes` for single-choice, `ranking_votes` for ranking polls
+- **Result Views**: `poll_results` and `ranking_results` for aggregated data
+- **API Endpoints**: Separate endpoints for each poll type with unified authentication
+- **UI Components**: `PollWithResults`, `RankingPoll`, `PollResultsChart`
+
+### **Database Schema Requirements**
+- **NEVER modify poll tables** without understanding all dependencies
+- **PRESERVE RLS policies** for user isolation and admin access
+- **MAINTAIN data integrity** with proper foreign key relationships
+- **RESPECT user_id constraints** (UUIDs for authenticated, CEW codes for conference)
+- **VERIFY helper functions** (`get_or_create_poll`, `get_or_create_ranking_poll`)
+
+### **Authentication Modes**
+- **Authenticated Users**: Use UUID from `auth.users` table
+- **CEW Conference**: Use CEW code (e.g., "CEW2025") as TEXT user_id
+- **Vote Tracking**: `localStorage` for CEW polls, database for authenticated users
+- **Session Persistence**: Votes remembered across sessions for both modes
+
+### **Mobile Optimization Requirements**
+- **Clean Charts**: NO excessive hover tooltips for mobile readability
+- **Responsive Design**: Charts must adapt to different screen sizes
+- **Touch-Friendly**: Large buttons and touch targets
+- **Fast Loading**: Optimized for conference mobile devices
+
+### **Vote Persistence Rules**
+- **Single-Choice**: One vote per user per poll (upsert on change)
+- **Ranking**: Multiple votes per user per poll (one per option)
+- **Change Votes**: Allowed for authenticated users, NOT for CEW polls
+- **Device Tracking**: Prevents duplicate votes per device for CEW polls
+
+### **API Development Guidelines**
+- **Use Helper Functions**: Always use `get_or_create_poll()` and `get_or_create_ranking_poll()`
+- **Handle Both Auth Modes**: Support both authenticated and CEW authentication
+- **Validate Input**: Ensure selected options exist and user has permission
+- **Error Handling**: Graceful handling of RLS violations and constraint errors
+- **Performance**: Optimized queries with proper indexing
+
+### **Component Development Guidelines**
+- **PollWithResults**: For single-choice polls with real-time results
+- **RankingPoll**: For ranking polls with drag-and-drop interface
+- **PollResultsChart**: For displaying poll results with clean charts
+- **Mobile-First**: Design for mobile devices first, desktop second
+- **Accessibility**: Ensure proper ARIA labels and keyboard navigation
+
+### **Testing Requirements**
+- **Vote Persistence**: Test that votes are remembered across sessions
+- **Mobile Responsiveness**: Test on various mobile device sizes
+- **Authentication Modes**: Test both authenticated and CEW modes
+- **Error Handling**: Test RLS violations and constraint errors
+- **Performance**: Test with large numbers of votes and polls
+
+### **Common Issues and Solutions**
+- **Votes Not Persisting**: Check RLS policies and user authentication
+- **Results Not Updating**: Verify API endpoints and database views
+- **Mobile Display Issues**: Check responsive design and hover tooltips
+- **CEW Code Issues**: Verify sessionStorage and localStorage usage
+- **RLS Violations**: Ensure proper user authentication and permissions
+
 ## 🚫 CRITICAL: Never Suggest These "Fixes"
 
 ### Database Issues (RESOLVED - Don't Fix)

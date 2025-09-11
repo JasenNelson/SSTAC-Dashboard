@@ -335,8 +335,6 @@ export default function Header() {
     
     // Engagement
     { href: '/survey-results', label: 'Survey Results', icon: '📊', category: 'Engagement' },
-    { href: '/survey-results/detailed-findings', label: 'Detailed Findings', icon: '📋', category: 'Engagement', parent: 'Survey Results' },
-    { href: '/cew-2025', label: 'CEW 2025', icon: '📅', category: 'Engagement' },
     
     // Core Themes
     { href: '/wiks', label: 'Indigenous Knowledge & Science', icon: '🌿', category: 'Core Themes' },
@@ -347,6 +345,13 @@ export default function Header() {
     // Resources
     { href: '/twg/documents', label: 'Documents', icon: '📄', category: 'Resources' },
     { href: '/twg/discussions', label: 'Discussion Forum', icon: '💬', category: 'Resources' },
+    
+    // CEW Conference (moved to bottom)
+    { href: '/cew-2025', label: 'CEW 2025', icon: '📅', category: 'CEW Conference' },
+    { href: '/cew-polls/holistic-protection', label: 'CEW: Holistic Protection', icon: '🌊', category: 'CEW Conference', parent: 'CEW 2025' },
+    { href: '/cew-polls/tiered-framework', label: 'CEW: Tiered Framework', icon: '📊', category: 'CEW Conference', parent: 'CEW 2025' },
+    { href: '/cew-polls/prioritization', label: 'CEW: Prioritization', icon: '🎯', category: 'CEW Conference', parent: 'CEW 2025' },
+    { href: '/cew-polls/wiks', label: 'CEW: Indigenous Knowledge', icon: '🌱', category: 'CEW Conference', parent: 'CEW 2025' },
   ];
 
   // Admin-only navigation links
@@ -439,7 +444,7 @@ export default function Header() {
                 {isDesktopMenuOpen && (
                   <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-600 z-50">
                     <div className="py-1 max-h-96 overflow-y-auto">
-                      {['Main', 'Engagement', 'Core Themes', 'Resources'].map((category) => (
+                      {['Main', 'Engagement', 'Core Themes', 'Resources', 'CEW Conference'].map((category) => (
                         <div key={category}>
                           <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700">
                             {category}
@@ -538,7 +543,7 @@ export default function Header() {
         {session && isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4">
             <nav className="space-y-1">
-              {['Main', 'Engagement', 'Core Themes', 'Resources'].map((category) => (
+              {['Main', 'Engagement', 'Core Themes', 'Resources', 'CEW Conference'].map((category) => (
                 <div key={category}>
                   <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700">
                     {category}

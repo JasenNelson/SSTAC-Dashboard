@@ -49,6 +49,56 @@
 - **Database Integration**: Secure poll storage with Row Level Security
 - **Admin Management**: Complete poll results viewing and management
 
+#### Technical Implementation Details
+- **Database Tables**: `polls`, `poll_votes`, `ranking_polls`, `ranking_votes`
+- **Result Views**: `poll_results`, `ranking_results` for aggregated data
+- **Helper Functions**: `get_or_create_poll()`, `get_or_create_ranking_poll()`
+- **API Endpoints**: `/api/polls/submit`, `/api/polls/results`, `/api/ranking-polls/submit`, `/api/ranking-polls/results`
+- **UI Components**: `PollWithResults`, `RankingPoll`, `PollResultsChart`
+- **Vote Tracking**: `localStorage` for CEW polls, database for authenticated users
+- **Mobile Optimization**: Clean charts without excessive hover tooltips
+- **Security**: RLS policies for user isolation and admin access
+
+#### Poll System Architecture
+- **Single-Choice Polls**: Users select one option from multiple choices
+- **Ranking Polls**: Users rank multiple options in order of preference
+- **Vote Storage**: One vote per user per poll (upsert on change)
+- **Results Display**: Real-time percentage and vote count display
+- **Authentication Modes**: Both authenticated users and CEW conference attendees
+- **Device Tracking**: Prevents duplicate votes per device for CEW polls
+- **Session Persistence**: Votes remembered across sessions
+
+#### Database Schema
+```sql
+-- Single-choice polls
+polls (id, page_path, poll_index, question, options, created_at, updated_at)
+poll_votes (id, poll_id, user_id, option_index, voted_at)
+
+-- Ranking polls  
+ranking_polls (id, page_path, poll_index, question, options, created_at, updated_at)
+ranking_votes (id, ranking_poll_id, user_id, option_index, rank, voted_at)
+```
+
+#### Security Implementation
+- **Row Level Security**: Users can only see their own votes
+- **Admin Access**: Admins can view all votes and results
+- **Anonymous Access**: CEW polls allow anonymous voting
+- **Vote Validation**: Ensures selected options exist and user has permission
+- **Duplicate Prevention**: Database constraints prevent duplicate votes
+
+#### Performance Optimization
+- **Indexed Queries**: Optimized for fast poll result retrieval
+- **View Materialization**: Pre-calculated aggregated results
+- **Function Caching**: Efficient poll creation and vote submission
+- **Component Optimization**: Efficient React component updates
+- **API Efficiency**: Single API calls for poll results
+
+#### Mobile Optimization
+- **Clean Charts**: No excessive hover tooltips for mobile readability
+- **Responsive Design**: Charts adapt to different screen sizes
+- **Touch-Friendly**: Large buttons and touch targets
+- **Fast Loading**: Optimized for conference mobile devices
+
 #### Key Technical Achievements
 - **API Restructuring**: Fixed both poll APIs to handle vote persistence properly
 - **Component Architecture**: Separate components for single-choice and ranking polls

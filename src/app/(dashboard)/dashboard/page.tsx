@@ -200,7 +200,7 @@ export default async function DashboardPage() {
                   <span className="text-3xl">🌊</span>
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors mb-3">
-                  CEW
+                  CEW 2025
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   Session details and conference information for the Canadian Ecotoxicity Workshop 2025 in Victoria.
@@ -268,20 +268,6 @@ export default async function DashboardPage() {
               </div>
             </Link>
 
-            {/* Project Resources */}
-            <Link href="/survey-results" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-teal-300">
-                <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-teal-200 transition-colors">
-                  <span className="text-3xl">📚</span>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors mb-3">
-                  Project Resources
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Access project documentation, research materials, and technical resources.
-                </p>
-              </div>
-            </Link>
           </div>
         </section>
 

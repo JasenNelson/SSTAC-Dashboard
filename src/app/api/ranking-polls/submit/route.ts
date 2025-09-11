@@ -57,44 +57,21 @@ export async function POST(request: NextRequest) {
       console.log(`[Ranking Poll Submit] Authenticated user: ${finalUserId}`);
     }
 
-    // First, try to get existing poll
-    const { data: existingPoll, error: pollError } = await supabaseClient
-      .from('ranking_polls')
-      .select('id')
-      .eq('page_path', pagePath)
-      .eq('poll_index', pollIndex)
-      .single();
+    // Get or create ranking poll using the existing function
+    const { data: pollId, error: pollError } = await supabaseClient
+      .rpc('get_or_create_ranking_poll', {
+        p_page_path: pagePath,
+        p_poll_index: pollIndex,
+        p_question: question,
+        p_options: options
+      });
 
-    let pollId;
-    
-    if (pollError && pollError.code === 'PGRST116') {
-      // Poll doesn't exist, create it
-      console.log(`[Ranking Poll Submit] Creating new ranking poll for ${pagePath}, pollIndex ${pollIndex}`);
-      const { data: newPoll, error: createError } = await supabaseClient
-        .from('ranking_polls')
-        .insert({
-          page_path: pagePath,
-          poll_index: pollIndex,
-          question: question,
-          options: options
-        })
-        .select('id')
-        .single();
-
-      if (createError) {
-        console.error('Error creating ranking poll:', createError);
-        return NextResponse.json({ error: 'Failed to create ranking poll' }, { status: 500 });
-      }
-      
-      pollId = newPoll.id;
-      console.log(`[Ranking Poll Submit] Created ranking poll with ID: ${pollId}`);
-    } else if (pollError) {
-      console.error('Error fetching ranking poll:', pollError);
-      return NextResponse.json({ error: 'Failed to fetch ranking poll' }, { status: 500 });
-    } else {
-      pollId = existingPoll.id;
-      console.log(`[Ranking Poll Submit] Using existing ranking poll with ID: ${pollId}`);
+    if (pollError) {
+      console.error('Error creating/getting ranking poll:', pollError);
+      return NextResponse.json({ error: 'Failed to create/get ranking poll' }, { status: 500 });
     }
+
+    console.log(`[Ranking Poll Submit] Poll created/found for pollIndex ${pollIndex}:`, pollId);
 
     // First, delete any existing votes for this user and poll
     const { error: deleteError } = await supabaseClient

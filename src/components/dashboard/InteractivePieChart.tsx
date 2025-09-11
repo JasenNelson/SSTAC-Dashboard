@@ -187,17 +187,6 @@ export default function InteractivePieChart({
           </div>
         )}
 
-        {/* Hover Tooltip */}
-        {hoveredSlice !== null && interactive && data[hoveredSlice] && (
-          <div className="absolute z-10 bg-gray-900 text-white text-sm rounded-lg px-3 py-2 pointer-events-none transform -translate-x-1/2 -translate-y-full mt-2">
-            <div className="font-semibold">{data[hoveredSlice].label}</div>
-            <div>{data[hoveredSlice].value} responses ({slices[hoveredSlice].percentage.toFixed(1)}%)</div>
-            {data[hoveredSlice].description && (
-              <div className="text-gray-300 mt-1">{data[hoveredSlice].description}</div>
-            )}
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-          </div>
-        )}
       </div>
     </div>
   );
