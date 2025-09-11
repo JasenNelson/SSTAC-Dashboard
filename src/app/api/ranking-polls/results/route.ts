@@ -23,21 +23,49 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     const { searchParams } = new URL(request.url);
     const pagePath = searchParams.get('pagePath');
     const pollIndex = searchParams.get('pollIndex');
+    const authCode = searchParams.get('authCode');
 
     if (!pagePath || pollIndex === null) {
       return NextResponse.json({ error: 'Missing pagePath or pollIndex' }, { status: 400 });
     }
 
+    // Check if this is a CEW page
+    const isCEWPage = pagePath.startsWith('/cew-polls/');
+    
+    let userId = null;
+    let supabaseClient = supabase; // Default to authenticated connection
+    
+    if (isCEWPage && authCode) {
+      // CEW pages: use authCode as userId and anonymous connection
+      userId = authCode;
+      // Create anonymous connection for CEW pages
+      supabaseClient = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get() { return null; },
+            set() {},
+            remove() {},
+          },
+        }
+      );
+      console.log(`Looking for CEW user rankings for poll ${pollIndex} with authCode: ${authCode}`);
+    } else {
+      // Authenticated pages: use user session
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      userId = user.id;
+      console.log(`Looking for authenticated user rankings for poll ${pollIndex}`);
+    }
+
     // First, try to get the poll from ranking_polls table
-    const { data: pollData, error: pollError } = await supabase
+    const { data: pollData, error: pollError } = await supabaseClient
       .from('ranking_polls')
       .select('*')
       .eq('page_path', pagePath)
@@ -57,7 +85,7 @@ export async function GET(request: NextRequest) {
       console.log(`Poll exists for pollIndex ${pollIndex}:`, pollData);
       
       // Poll exists, get results from view
-      const { data: resultsData, error: resultsError } = await supabase
+      const { data: resultsData, error: resultsError } = await supabaseClient
         .from('ranking_results')
         .select('*')
         .eq('page_path', pagePath)
@@ -71,28 +99,30 @@ export async function GET(request: NextRequest) {
         console.log(`No results found for poll ${pollIndex}:`, resultsError);
       }
 
-      // Get user's rankings
-      console.log(`Looking for user rankings for poll ${pollData.id} (pollIndex: ${pollIndex})`);
-      const { data: userVoteData, error: voteError } = await supabase
-        .from('ranking_votes')
-        .select('option_index, rank')
-        .eq('ranking_poll_id', pollData.id)
-        .eq('user_id', user.id)
-        .order('rank');
+      // Get user's rankings if we have a userId
+      if (userId) {
+        console.log(`Looking for user rankings for poll ${pollData.id} (pollIndex: ${pollIndex}) with userId: ${userId}`);
+        const { data: userVoteData, error: voteError } = await supabaseClient
+          .from('ranking_votes')
+          .select('option_index, rank')
+          .eq('ranking_poll_id', pollData.id)
+          .eq('user_id', userId)
+          .order('rank');
 
-      console.log(`User vote data for poll ${pollIndex}:`, { userVoteData, voteError });
-      if (!voteError && userVoteData && userVoteData.length > 0) {
-        // Convert to array format where index = option_index, value = rank
-        // Find the maximum option_index to determine array size
-        const maxOptionIndex = Math.max(...userVoteData.map((vote: any) => vote.option_index));
-        const rankings = new Array(maxOptionIndex + 1);
-        userVoteData.forEach((vote: any) => {
-          rankings[vote.option_index] = vote.rank;
-        });
-        userRankings = rankings;
-        console.log(`Converted rankings for poll ${pollIndex}:`, userRankings);
-      } else {
-        console.log(`No user rankings found for poll ${pollIndex}`);
+        console.log(`User vote data for poll ${pollIndex}:`, { userVoteData, voteError });
+        if (!voteError && userVoteData && userVoteData.length > 0) {
+          // Convert to array format where index = option_index, value = rank
+          // Find the maximum option_index to determine array size
+          const maxOptionIndex = Math.max(...userVoteData.map((vote: any) => vote.option_index));
+          const rankings = new Array(maxOptionIndex + 1);
+          userVoteData.forEach((vote: any) => {
+            rankings[vote.option_index] = vote.rank;
+          });
+          userRankings = rankings;
+          console.log(`Converted rankings for poll ${pollIndex}:`, userRankings);
+        } else {
+          console.log(`No user rankings found for poll ${pollIndex}`);
+        }
       }
     } else {
       console.log(`Poll does not exist yet for pollIndex ${pollIndex}`);

@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
+import CEWCodeInput from '@/components/CEWCodeInput';
 import PollWithResults from '@/components/PollWithResults';
+import RankingPoll from '@/components/dashboard/RankingPoll';
 
 interface PollData {
   question: string;
@@ -11,67 +13,39 @@ interface PollData {
 
 export default function CEWHolisticProtectionPage() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
+  const [authCode, setAuthCode] = useState<string | null>(null);
+
+  const handleCodeEntered = (code: string) => {
+    setAuthCode(code);
+  };
+
+  if (!authCode) {
+    return <CEWCodeInput onCodeEntered={handleCodeEntered} />;
+  }
   
   // Define polls with proper structure for the new poll system
   const polls = [
     {
-      question: "What is the most important consideration when developing sediment quality standards that protect both ecological and human health?",
+      question: "Given the potential for over-conservatism and remediation challenges, for which contaminant classes would the initial development of Matrix Sediment Standards protective of food toxicity be most scientifically defensible and practically beneficial?",
       questionNumber: 1,
       options: [
-        "Protecting the most sensitive species and life stages in the ecosystem",
-        "Ensuring human health protection through food web exposure pathways",
-        "Balancing ecological protection with economic feasibility and practicality",
-        "Incorporating Indigenous Knowledge and traditional ecological knowledge",
-        "Addressing cumulative effects and multiple stressors simultaneously",
+        "Metals known to biomagnify",
+        "Polycyclic Aromatic Hydrocarbons",
+        "Polychlorinated Biphenyls",
+        "Per-and Polyfluoroalkyl Substances",
+        "All of the above",
         "Other"
       ]
     },
     {
-      question: "How should sediment quality standards account for bioaccumulation and biomagnification in food webs?",
+      question: "Rank in order of highest to lowest importance the following considerations in developing and implementing the Matrix Sediment Standards Framework:",
       questionNumber: 2,
       options: [
-        "Develop separate standards for different trophic levels based on bioaccumulation potential",
-        "Use the most sensitive endpoint (highest trophic level) as the protective standard",
-        "Apply bioaccumulation factors to existing standards to account for food web transfer",
-        "Develop integrated standards that consider both direct sediment exposure and food web exposure",
-        "Use probabilistic approaches that account for variability in bioaccumulation",
-        "Other"
-      ]
-    },
-    {
-      question: "What is the most effective approach for protecting Indigenous communities who rely on traditional food sources from contaminated sediments?",
-      questionNumber: 3,
-      options: [
-        "Develop community-specific standards based on local consumption patterns and cultural practices",
-        "Use the most conservative (protective) standards for all areas with Indigenous communities",
-        "Implement adaptive management that allows for community-specific adjustments",
-        "Develop separate standards for areas with high traditional food consumption",
-        "Include Indigenous Knowledge holders in the standard-setting process",
-        "Other"
-      ]
-    },
-    {
-      question: "How should sediment quality standards address the protection of both benthic organisms and higher trophic level species?",
-      questionNumber: 4,
-      options: [
-        "Develop separate standards for benthic and water column organisms",
-        "Use a tiered approach with different standards for different ecosystem components",
-        "Focus on protecting the most sensitive species regardless of trophic level",
-        "Develop integrated standards that protect the entire food web",
-        "Use ecosystem-based approaches that consider species interactions",
-        "Other"
-      ]
-    },
-    {
-      question: "What is the most important factor for ensuring sediment quality standards provide adequate protection for human health?",
-      questionNumber: 5,
-      options: [
-        "Including bioaccumulation and biomagnification in the risk assessment",
-        "Considering multiple exposure pathways (direct contact, food consumption, etc.)",
-        "Using appropriate uncertainty factors for human health protection",
-        "Incorporating community-specific consumption patterns and cultural practices",
-        "Developing standards that protect the most vulnerable populations",
-        "Other"
+        "Technical Hurdles: Limited data availability for many contaminants and species native to BC",
+        "Practical Challenges: Discretionary matrix sediment standards may be a barrier for some practitioners",
+        "Enhanced Protection: Comprehensive safeguards for BC's diverse aquatic ecosystems and peoples",
+        "Scientific Advancement: Opportunity to pioneer innovative approaches to sediment management",
+        "Societal Expectations: Given the challenges of modern society, holistic protection may not be feasible"
       ]
     }
   ];
@@ -99,31 +73,56 @@ export default function CEWHolisticProtectionPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Instructions */}
         <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 mb-8">
-          <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-green-100 mb-2">
             📱 Mobile-Friendly Polling
           </h3>
-          <p className="text-green-800 dark:text-green-200 text-sm">
+          <p className="text-gray-700 dark:text-green-200 text-sm">
             Select your response for each question below. Your answers will be saved anonymously and combined with other conference participants' responses.
           </p>
         </div>
 
         {/* Polls */}
         <div className="space-y-8">
-          {polls.map((poll, pollIndex) => (
-            <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-              <PollWithResults
-                key={pollIndex}
-                pollIndex={pollIndex}
-                question={poll.question}
-                options={poll.options}
-                pagePath="/cew-polls/holistic-protection"
-                questionNumber={poll.questionNumber}
-                onVote={(pollIndex, optionIndex, otherText) => {
-                  console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}`);
-                }}
-              />
-            </div>
-          ))}
+          {polls.map((poll, pollIndex) => {
+            // Check if this is a ranking question
+            const isRankingQuestion = poll.question.toLowerCase().includes('rank');
+            
+            if (isRankingQuestion) {
+              return (
+                <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                  <RankingPoll
+                    key={pollIndex}
+                    pollIndex={pollIndex}
+                    question={poll.question}
+                    options={poll.options}
+                    pagePath="/cew-polls/holistic-protection"
+                    questionNumber={poll.questionNumber}
+                    authCode={authCode}
+                    onVote={(pollIndex, rankings) => {
+                      console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
+                    }}
+                  />
+                </div>
+              );
+            } else {
+              return (
+                <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                  <PollWithResults
+                    key={pollIndex}
+                    pollIndex={pollIndex}
+                    question={poll.question}
+                    options={poll.options}
+                    pagePath="/cew-polls/holistic-protection"
+                    questionNumber={poll.questionNumber}
+                    authCode={authCode}
+                    onVote={(pollIndex, optionIndex, otherText) => {
+                      console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}`);
+                    }}
+                  />
+                </div>
+              );
+            }
+          })}
         </div>
 
         {/* Footer */}

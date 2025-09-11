@@ -24,9 +24,9 @@ export async function GET(request: NextRequest) {
     );
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    
+    // For anonymous users, we'll still return results but no user vote
+    const isAuthenticated = !!user;
 
     const { searchParams } = new URL(request.url);
     const pagePath = searchParams.get('pagePath');
@@ -72,22 +72,37 @@ export async function GET(request: NextRequest) {
         console.log(`No results found for poll ${pollIndex}:`, resultsError);
       }
 
-      // Get user's vote
-      console.log(`Looking for user vote for poll ${pollData.id} (pollIndex: ${pollIndex})`);
-      const { data: userVoteData, error: voteError } = await supabase
-        .from('poll_votes')
-        .select('option_index, other_text')
-        .eq('poll_id', pollData.id)
-        .eq('user_id', user.id)
-        .single();
+      // Get user's vote (for both authenticated users and CEW pages)
+      let userId = null;
+      
+      // Check for authCode first (CEW pages take priority)
+      const authCode = request.nextUrl.searchParams.get('authCode');
+      if (authCode) {
+        userId = authCode;
+        console.log(`Looking for CEW user vote for poll ${pollData.id} (pollIndex: ${pollIndex}) with authCode: ${authCode}`);
+      } else if (isAuthenticated) {
+        userId = user.id;
+        console.log(`Looking for authenticated user vote for poll ${pollData.id} (pollIndex: ${pollIndex})`);
+      }
 
-      console.log(`User vote data for poll ${pollIndex}:`, { userVoteData, voteError });
-      if (!voteError && userVoteData) {
-        userVote = userVoteData.option_index;
-        userOtherText = userVoteData.other_text;
-        console.log(`User vote found for poll ${pollIndex}:`, userVote, userOtherText ? `with other text: "${userOtherText}"` : '');
+      if (userId) {
+        const { data: userVoteData, error: voteError } = await supabase
+          .from('poll_votes')
+          .select('option_index, other_text')
+          .eq('poll_id', pollData.id)
+          .eq('user_id', userId)
+          .single();
+
+        console.log(`User vote data for poll ${pollIndex}:`, { userVoteData, voteError });
+        if (!voteError && userVoteData) {
+          userVote = userVoteData.option_index;
+          userOtherText = userVoteData.other_text;
+          console.log(`User vote found for poll ${pollIndex}:`, userVote, userOtherText ? `with other text: "${userOtherText}"` : '');
+        } else {
+          console.log(`No user vote found for poll ${pollIndex}`);
+        }
       } else {
-        console.log(`No user vote found for poll ${pollIndex}`);
+        console.log(`No user identifier available - no user vote lookup for poll ${pollIndex}`);
       }
     } else {
       console.log(`Poll does not exist yet for pollIndex ${pollIndex}`);

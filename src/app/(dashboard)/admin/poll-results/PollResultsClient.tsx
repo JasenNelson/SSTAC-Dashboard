@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@/components/supabase-client';
+import { createClient } from '@/lib/supabase/client';
 
 interface PollResult {
   poll_id: string;

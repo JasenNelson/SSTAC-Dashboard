@@ -198,24 +198,28 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
 
     // Create a comprehensive map of all users
     const userMap = new Map<string, UserWithRole>();
+    const processedUserIds = new Set<string>(); // Track processed users to prevent duplicates
     
     // Add users from auth.users if available (these have real emails)
     if (authUsers.length > 0) {
       for (const authUser of authUsers) {
-        userMap.set(authUser.id, {
-          id: authUser.id,
-          email: authUser.email || `User ${authUser.id.slice(0, 8)}...`,
-          created_at: authUser.created_at,
-          role: roleMap.get(authUser.id)?.role || null,
-          isAdmin: roleMap.get(authUser.id)?.role === 'admin' || false
-        });
+        if (!processedUserIds.has(authUser.id)) {
+          userMap.set(authUser.id, {
+            id: authUser.id,
+            email: authUser.email || `User ${authUser.id.slice(0, 8)}...`,
+            created_at: authUser.created_at,
+            role: roleMap.get(authUser.id)?.role || null,
+            isAdmin: roleMap.get(authUser.id)?.role === 'admin' || false
+          });
+          processedUserIds.add(authUser.id);
+        }
       }
     }
 
     // Add users from user_roles table (these are explicitly managed users)
     if (userRoles) {
       for (const userRole of userRoles) {
-        if (!userMap.has(userRole.user_id)) {
+        if (!processedUserIds.has(userRole.user_id)) {
           userMap.set(userRole.user_id, {
             id: userRole.user_id,
             email: `User ${userRole.user_id.slice(0, 8)}...`, // We'll try to get real email later
@@ -223,6 +227,7 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
             role: userRole.role,
             isAdmin: userRole.role === 'admin'
           });
+          processedUserIds.add(userRole.user_id);
         }
       }
     }
@@ -230,7 +235,7 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
     // Add users from documents table
     if (documentUsers) {
       for (const docUser of documentUsers) {
-        if (!userMap.has(docUser.user_id)) {
+        if (!processedUserIds.has(docUser.user_id)) {
           userMap.set(docUser.user_id, {
             id: docUser.user_id,
             email: docUser.user_email || `User ${docUser.user_id.slice(0, 8)}...`,
@@ -238,6 +243,7 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
             role: roleMap.get(docUser.user_id)?.role || null,
             isAdmin: roleMap.get(docUser.user_id)?.role === 'admin' || false
           });
+          processedUserIds.add(docUser.user_id);
         } else {
           // Update existing user with email if available
           const existingUser = userMap.get(docUser.user_id)!;
@@ -251,7 +257,7 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
     // Add users from discussions table
     if (discussionUsers) {
       for (const discUser of discussionUsers) {
-        if (!userMap.has(discUser.user_id)) {
+        if (!processedUserIds.has(discUser.user_id)) {
           userMap.set(discUser.user_id, {
             id: discUser.user_id,
             email: discUser.user_email || `User ${discUser.user_id.slice(0, 8)}...`,
@@ -259,6 +265,7 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
             role: roleMap.get(discUser.user_id)?.role || null,
             isAdmin: roleMap.get(discUser.user_id)?.role === 'admin' || false
           });
+          processedUserIds.add(discUser.user_id);
         } else {
           // Update existing user with email if available
           const existingUser = userMap.get(discUser.user_id)!;
@@ -272,7 +279,7 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
     // Add users from likes table
     if (likeUsers) {
       for (const likeUser of likeUsers) {
-        if (!userMap.has(likeUser.user_id)) {
+        if (!processedUserIds.has(likeUser.user_id)) {
           userMap.set(likeUser.user_id, {
             id: likeUser.user_id,
             email: `User ${likeUser.user_id.slice(0, 8)}...`,
@@ -280,12 +287,61 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
             role: roleMap.get(likeUser.user_id)?.role || null,
             isAdmin: roleMap.get(likeUser.user_id)?.role === 'admin' || false
           });
+          processedUserIds.add(likeUser.user_id);
         }
       }
     }
 
-    // Add the current user if they're not in the list
-    if (!userMap.has(currentUser.id)) {
+    // Add users from poll_votes table (CRITICAL FIX for missing users)
+    const { data: pollUsers, error: pollError } = await supabase
+      .from('poll_votes')
+      .select('user_id, voted_at')
+      .not('user_id', 'is', null);
+
+    if (pollError) {
+      console.error('Error fetching poll users:', pollError);
+      // Continue without poll users if there's an error
+    } else if (pollUsers) {
+      for (const pollUser of pollUsers) {
+        if (!processedUserIds.has(pollUser.user_id)) {
+          userMap.set(pollUser.user_id, {
+            id: pollUser.user_id,
+            email: `User ${pollUser.user_id.slice(0, 8)}...`,
+            created_at: pollUser.voted_at,
+            role: roleMap.get(pollUser.user_id)?.role || null,
+            isAdmin: roleMap.get(pollUser.user_id)?.role === 'admin' || false
+          });
+          processedUserIds.add(pollUser.user_id);
+        }
+      }
+    }
+
+    // Add users from ranking_votes table (CRITICAL FIX for missing ranking poll users)
+    const { data: rankingPollUsers, error: rankingPollError } = await supabase
+      .from('ranking_votes')
+      .select('user_id, voted_at')
+      .not('user_id', 'is', null);
+
+    if (rankingPollError) {
+      console.error('Error fetching ranking poll users:', rankingPollError);
+      // Continue without ranking poll users if there's an error
+    } else if (rankingPollUsers) {
+      for (const rankingPollUser of rankingPollUsers) {
+        if (!processedUserIds.has(rankingPollUser.user_id)) {
+          userMap.set(rankingPollUser.user_id, {
+            id: rankingPollUser.user_id,
+            email: `User ${rankingPollUser.user_id.slice(0, 8)}...`,
+            created_at: rankingPollUser.voted_at,
+            role: roleMap.get(rankingPollUser.user_id)?.role || null,
+            isAdmin: roleMap.get(rankingPollUser.user_id)?.role === 'admin' || false
+          });
+          processedUserIds.add(rankingPollUser.user_id);
+        }
+      }
+    }
+
+    // Add the current user if they're not in the list (FIXED: Only add if truly missing)
+    if (!processedUserIds.has(currentUser.id)) {
       // Get current user's full data from auth
       const { data: { user: fullUser } } = await supabase.auth.getUser();
       userMap.set(currentUser.id, {
@@ -295,6 +351,7 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
         role: 'admin',
         isAdmin: true
       });
+      processedUserIds.add(currentUser.id);
     }
 
     // Convert map to array and sort by creation date

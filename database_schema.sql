@@ -599,6 +599,11 @@ GRANT SELECT ON users_overview TO authenticated;
 GRANT SELECT ON admin_users_comprehensive TO authenticated;
 
 -- ============================================================================
+-- RANKING POLL SYSTEM TABLES (EXISTING - DO NOT MODIFY)
+-- ============================================================================
+-- Note: ranking_polls and ranking_votes tables already exist
+-- See safe_ranking_system_fixed.sql for the original implementation
+-- ============================================================================
 -- VERIFICATION QUERIES
 -- ============================================================================
 

@@ -33,6 +33,17 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **Automatic Triggers**: Self-maintaining user role system
 - **Performance Optimization**: Efficient queries and indexing
 
+### **CEW Conference Polling System** ✅ NEW
+- **Unauthenticated Polling**: Conference attendees can vote without accounts
+- **Shared Code Authentication**: Single code (e.g., "CEW2025") for all attendees
+- **Device-Based Tracking**: Prevents duplicate votes per device
+- **Session Persistence**: Code remembered for entire conference session
+- **Unified Database**: CEW votes combined with authenticated user votes
+- **Mobile-Optimized**: Perfect for conference mobile devices
+- **Real-time Results**: Live polling during presentations
+- **Conference Pages**: 4 dedicated poll pages for different survey topics
+- **Efficient Polling**: Optimized for 100 people in 15 minutes
+
 ## 🏗️ **Architecture**
 
 ### **Technology Stack**
@@ -81,6 +92,22 @@ src/
 - **Real-time Results**: Live poll results with percentage displays and progress bars
 - **Admin Dashboard**: Complete poll results viewing and management
 - **Database Security**: Row Level Security ensures data protection
+
+### **CEW Conference Polling** 🆕
+- **Unauthenticated Access**: Conference attendees vote without creating accounts
+- **Shared Code System**: Single code (e.g., "CEW2025") for all attendees
+- **Mobile-Optimized**: Perfect for conference mobile devices
+- **Device Tracking**: Prevents duplicate votes per device
+- **Session Memory**: Code remembered for entire conference session
+- **Unified Results**: CEW votes combined with authenticated user data
+- **Real-time Polling**: Live results during presentations
+- **Conference Pages**: 4 dedicated poll pages:
+  - `/cew-polls/wiks` - 3 single-choice polls
+  - `/cew-polls/holistic-protection` - 1 single-choice + 1 ranking poll
+  - `/cew-polls/prioritization` - 6 ranking polls
+  - `/cew-polls/tiered-framework` - 1 single-choice + 1 ranking poll
+- **Efficient Design**: Optimized for 100 people in 15 minutes
+- **No Change Votes**: One vote per device to prevent confusion
 
 ### **Theme System** 🆕
 - **Dark/Light Mode**: Complete theme switching with user preference persistence
@@ -214,6 +241,8 @@ The database includes a comprehensive user management system:
 - **`announcements`**: System notifications and updates
 - **`milestones`**: Project timeline and progress tracking
 - **`polls` & `poll_votes`**: Interactive poll system ✅ NEW
+- **`ranking_polls` & `ranking_votes`**: Ranking poll system ✅ NEW
+- **`poll_results` & `ranking_results`**: Aggregated poll results views ✅ NEW
 
 ### **Database Security**
 - **Row Level Security (RLS)**: All tables protected with proper policies

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import PollResultsChart from './dashboard/PollResultsChart';
+import { trackVote, hasVoted as checkHasVoted, clearVoteTracking } from '@/lib/vote-tracking';
 
 interface PollOption {
   option_index: number;
@@ -20,6 +21,7 @@ interface PollWithResultsProps {
   options: string[];
   pagePath: string;
   questionNumber?: number;
+  authCode?: string;
   onVote?: (pollIndex: number, optionIndex: number, otherText?: string) => void;
 }
 
@@ -29,6 +31,7 @@ export default function PollWithResults({
   options, 
   pagePath, 
   questionNumber,
+  authCode,
   onVote 
 }: PollWithResultsProps) {
   const [hasVoted, setHasVoted] = useState(false);
@@ -44,7 +47,34 @@ export default function PollWithResults({
   // Fetch results when component mounts
   useEffect(() => {
     fetchResults();
+    // Check for existing vote in sessionStorage for CEW pages
+    if (pagePath.startsWith('/cew-polls/')) {
+      checkCEWVoteStatus();
+      // Check if device already voted (prevent multiple votes)
+      try {
+        if (checkHasVoted && checkHasVoted(pagePath, pollIndex)) {
+          setHasVoted(true);
+          setShowResults(true);
+          console.log(`[PollWithResults ${pollIndex}] Device already voted on this poll`);
+        }
+      } catch (error) {
+        console.error(`[PollWithResults ${pollIndex}] Error checking vote status:`, error);
+      }
+    }
   }, []);
+
+  const checkCEWVoteStatus = () => {
+    const voteKey = `cew_vote_${pagePath}_${pollIndex}`;
+    const existingVote = sessionStorage.getItem(voteKey);
+    if (existingVote) {
+      const voteData = JSON.parse(existingVote);
+      setHasVoted(true);
+      setShowResults(true);
+      setUserVote(voteData.optionIndex);
+      setUserOtherText(voteData.otherText || '');
+      console.log(`[PollWithResults ${pollIndex}] Found existing CEW vote in sessionStorage:`, voteData);
+    }
+  };
 
   const handleSelectOption = (optionIndex: number) => {
     if ((hasVoted && !showChangeOption) || isLoading) return;
@@ -65,11 +95,26 @@ export default function PollWithResults({
       return;
     }
 
+    // Check if this device already voted on this poll (for CEW pages)
+    if (pagePath.startsWith('/cew-polls/')) {
+      try {
+        if (checkHasVoted && checkHasVoted(pagePath, pollIndex)) {
+          alert('You have already voted on this poll from this device. Each device can only vote once.');
+          return;
+        }
+      } catch (error) {
+        console.error(`[PollWithResults ${pollIndex}] Error checking vote status:`, error);
+      }
+    }
+
     console.log(`[PollWithResults ${pollIndex}] Submitting vote for option ${selectedOption}`);
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/polls/submit', {
+      // Use unified API endpoint for all pages
+      const apiEndpoint = '/api/polls/submit';
+      
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,7 +125,8 @@ export default function PollWithResults({
           question,
           options,
           optionIndex: selectedOption,
-          otherText: isSelectedOther() ? otherText.trim() : undefined
+          otherText: isSelectedOther() ? otherText.trim() : undefined,
+          authCode: authCode || undefined
         }),
       });
 
@@ -96,19 +142,52 @@ export default function PollWithResults({
         setSelectedOption(null); // Clear selected option after voting
         console.log(`[PollWithResults ${pollIndex}] Vote state set - hasVoted: true, showChangeOption: false`);
         
-        // Fetch updated results
+        // Save vote to sessionStorage for CEW pages
+        if (pagePath.startsWith('/cew-polls/')) {
+          const voteKey = `cew_vote_${pagePath}_${pollIndex}`;
+          const voteData = {
+            optionIndex: selectedOption,
+            otherText: isOtherOption(options[selectedOption]) ? otherText.trim() : '',
+            timestamp: Date.now()
+          };
+          sessionStorage.setItem(voteKey, JSON.stringify(voteData));
+          console.log(`[PollWithResults ${pollIndex}] Saved CEW vote to sessionStorage:`, voteData);
+          
+          // Track this vote to prevent multiple submissions from same device
+          try {
+            if (trackVote) {
+              trackVote(pagePath, pollIndex);
+            }
+          } catch (error) {
+            console.error(`[PollWithResults ${pollIndex}] Error tracking vote:`, error);
+          }
+        }
+        
+        // Fetch updated results to show new vote counts
+        console.log(`[PollWithResults ${pollIndex}] Fetching updated results after vote submission`);
         await fetchResults();
+        console.log(`[PollWithResults ${pollIndex}] Results fetch completed`);
         
         // Call parent callback if provided
         if (onVote) {
           onVote(pollIndex, selectedOption, isOtherOption(options[selectedOption]) ? otherText.trim() : undefined);
         }
       } else {
-        console.error(`[PollWithResults ${pollIndex}] Failed to submit vote:`, response.status);
+        const errorData = await response.json();
+        console.error(`[PollWithResults ${pollIndex}] Failed to submit vote:`, response.status, errorData);
+        
+        // Show specific error message to user
+        if (errorData.error) {
+          alert(errorData.error);
+        } else {
+          alert('Failed to submit vote. Please try again.');
+        }
+        
         setSelectedOption(null);
       }
     } catch (error) {
       console.error(`[PollWithResults ${pollIndex}] Error submitting vote:`, error);
+      alert('Failed to submit vote. Please try again.');
       setSelectedOption(null);
     } finally {
       setIsLoading(false);
@@ -118,13 +197,22 @@ export default function PollWithResults({
   const fetchResults = async () => {
     try {
       console.log(`[PollWithResults ${pollIndex}] Fetching results for poll ${pollIndex} on page ${pagePath}`);
-      const response = await fetch(`/api/polls/results?pagePath=${encodeURIComponent(pagePath)}&pollIndex=${pollIndex}`);
+      
+      // Use unified API endpoint for all pages
+      const apiEndpoint = '/api/polls/results';
+      
+      let url = `${apiEndpoint}?pagePath=${encodeURIComponent(pagePath)}&pollIndex=${pollIndex}`;
+      if (authCode) {
+        url += `&authCode=${encodeURIComponent(authCode)}`;
+      }
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         console.log(`[PollWithResults ${pollIndex}] API Response:`, data);
+        console.log(`[PollWithResults ${pollIndex}] Setting results state with:`, data.results);
         setResults(data.results);
         
-        // Check if user has already voted
+        // Check if user has already voted (for both authenticated and CEW pages)
         if (data.userVote !== null && data.userVote !== undefined) {
           console.log(`[PollWithResults ${pollIndex}] User has vote:`, data.userVote);
           setUserVote(data.userVote);
@@ -143,13 +231,28 @@ export default function PollWithResults({
   };
 
   const handleChangeVote = () => {
+    // Prevent change vote on CEW pages
+    if (pagePath.startsWith('/cew-polls/')) {
+      console.log(`[PollWithResults ${pollIndex}] Change vote not allowed on CEW pages`);
+      return;
+    }
+    
     setShowChangeOption(true);
     setHasVoted(false);
     setSelectedOption(null);
     setOtherText('');
+    
+    // Refresh results to show updated vote counts
+    fetchResults();
   };
 
   const handleCancelChange = () => {
+    // Prevent cancel change on CEW pages
+    if (pagePath.startsWith('/cew-polls/')) {
+      console.log(`[PollWithResults ${pollIndex}] Cancel change not allowed on CEW pages`);
+      return;
+    }
+    
     setShowChangeOption(false);
     setHasVoted(true);
     setSelectedOption(userVote);
@@ -196,7 +299,7 @@ export default function PollWithResults({
                 )}
               </span>
             </div>
-            {!showChangeOption && (
+            {!showChangeOption && !pagePath.startsWith('/cew-polls/') && (
               <button
                 onClick={handleChangeVote}
                 className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
@@ -209,7 +312,7 @@ export default function PollWithResults({
       )}
       
       {/* Change vote mode indicator */}
-      {showChangeOption && (
+      {showChangeOption && !pagePath.startsWith('/cew-polls/') && (
         <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -343,11 +446,11 @@ export default function PollWithResults({
             {isLoading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>{showChangeOption ? 'Updating Vote...' : 'Submitting Vote...'}</span>
+                <span>{showChangeOption && !pagePath.startsWith('/cew-polls/') ? 'Updating Vote...' : 'Submitting Vote...'}</span>
               </>
             ) : (
               <>
-                <span>{showChangeOption ? 'Update Vote' : 'Submit Vote'}</span>
+                <span>{showChangeOption && !pagePath.startsWith('/cew-polls/') ? 'Update Vote' : 'Submit Vote'}</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>

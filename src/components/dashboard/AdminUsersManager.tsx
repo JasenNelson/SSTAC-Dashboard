@@ -27,7 +27,7 @@ export default function AdminUsersManager() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, []); // Only fetch once on mount
 
   const fetchUsers = async () => {
     try {

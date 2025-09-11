@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import CEWCodeInput from '@/components/CEWCodeInput';
 import PollWithResults from '@/components/PollWithResults';
 
 interface PollData {
@@ -11,6 +12,15 @@ interface PollData {
 
 export default function CEWWIKSPage() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
+  const [authCode, setAuthCode] = useState<string | null>(null);
+
+  const handleCodeEntered = (code: string) => {
+    setAuthCode(code);
+  };
+
+  if (!authCode) {
+    return <CEWCodeInput onCodeEntered={handleCodeEntered} />;
+  }
   
   // Define polls with proper structure for the new poll system
   const polls = [
@@ -18,60 +28,30 @@ export default function CEWWIKSPage() {
       question: "What is the most effective starting point for developing a holistic baseline study that combines co-located sampling (e.g., sediment, porewater, tissue, surface water) with area-based Indigenous Knowledge and Science?",
       questionNumber: 1,
       options: [
-        "A co-developed conceptual site model that integrates Indigenous Knowledge with Western science from the outset",
-        "A comprehensive literature review of existing Indigenous Knowledge and Western scientific studies in the area",
-        "A pilot-scale field study to test the integration of both knowledge systems",
-        "Community engagement sessions to understand Indigenous Knowledge holders' priorities and concerns",
-        "A technical working group with equal representation from Indigenous Knowledge holders and Western scientists",
-        "Other"
+        "A co-developed conceptual site model that uses Indigenous Knowledge to first identify key species, exposure pathways, and areas of cultural significance to guide the scientific sampling plan",
+        "A comprehensive literature and data review that compiles all existing scientific and Indigenous knowledge for the area to identify critical data gaps that the baseline study must fill",
+        "A pilot-scale field study conducted collaboratively with community members to test and validate sampling methods and ensure they are effective and culturally appropriate",
+        "A series of collaborative workshops where knowledge holders and scientists share information to establish a shared understanding of the ecosystem's history, health, and stressors"
       ]
     },
     {
-      question: "How should Indigenous Knowledge and Western science be weighted when they provide conflicting information about environmental conditions or risks?",
+      question: "How can the scientific framework incorporate protection goals related to Indigenous Stewardship principles such as the 'connectedness of all life' and '7-generations'?",
       questionNumber: 2,
       options: [
-        "Equal weight (50/50) with transparent documentation of both perspectives",
-        "Indigenous Knowledge should be given priority as it represents long-term, place-based understanding",
-        "Western science should be given priority as it provides quantifiable, standardized data",
-        "Weighting should be determined on a case-by-case basis by a joint Indigenous-Western science committee",
-        "Both should be presented equally but with clear identification of the source and methodology",
-        "Other"
+        "By using food-web models that scientifically map contaminant pathways between species",
+        "By developing Species Sensitivity Distributions (SSDs) that must include culturally significant local species",
+        "By setting protective tissue residue guidelines for key indicator species to ensure long-term safety",
+        "By incorporating ecosystem function metrics (e.g., nutrient cycling) as formal scientific endpoints"
       ]
     },
     {
-      question: "What is the most important factor for ensuring Indigenous Knowledge is properly integrated into sediment quality standards development?",
+      question: "Within a tiered framework, where can place-based Indigenous Knowledge provide the most direct scientific value for modifying a generic baseline value to be more site-specific?",
       questionNumber: 3,
       options: [
-        "Early and ongoing engagement with Indigenous communities throughout the process",
-        "Training Western scientists in Indigenous Knowledge protocols and cultural sensitivity",
-        "Establishing clear intellectual property rights and data sovereignty for Indigenous Knowledge",
-        "Creating dedicated funding streams for Indigenous Knowledge holder participation",
-        "Developing standardized protocols for documenting and validating Indigenous Knowledge",
-        "Other"
-      ]
-    },
-    {
-      question: "How should conflicts between Indigenous Knowledge and Western scientific findings be resolved in the context of sediment quality assessment?",
-      questionNumber: 4,
-      options: [
-        "Through facilitated dialogue between Indigenous Knowledge holders and Western scientists",
-        "By conducting additional research that specifically addresses the conflicting information",
-        "By presenting both perspectives equally and letting decision-makers choose",
-        "Through a formal dispute resolution process involving both knowledge systems",
-        "By seeking guidance from Indigenous Knowledge holders on how to proceed",
-        "Other"
-      ]
-    },
-    {
-      question: "What is the most effective way to ensure Indigenous Knowledge holders have meaningful input into sediment quality standards development?",
-      questionNumber: 5,
-      options: [
-        "Including Indigenous Knowledge holders as equal partners in all technical working groups",
-        "Providing dedicated funding and resources for Indigenous community participation",
-        "Conducting regular community consultations and feedback sessions",
-        "Establishing Indigenous Knowledge advisory committees with decision-making authority",
-        "Creating culturally appropriate communication and engagement protocols",
-        "Other"
+        "Informing bioavailability models with specific knowledge of local sediment characteristics and processes",
+        "Identifying sensitive local species or life stages not included in the generic models for a more accurate risk calculation",
+        "Characterizing unique, site-specific contaminant exposure pathways that would alter baseline risk model assumptions",
+        "Identifying potential confounding environmental factors (e.g., freshwater seeps) influencing scientific measurements"
       ]
     }
   ];
@@ -91,6 +71,9 @@ export default function CEWWIKSPage() {
             <p className="text-gray-600 dark:text-gray-300 mt-2">
               Interactive polling for conference attendees
             </p>
+            <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              Authenticated as: <span className="font-mono font-semibold">{authCode}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -99,10 +82,10 @@ export default function CEWWIKSPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Instructions */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-8">
-          <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-blue-100 mb-2">
             📱 Mobile-Friendly Polling
           </h3>
-          <p className="text-blue-800 dark:text-blue-200 text-sm">
+          <p className="text-gray-700 dark:text-blue-200 text-sm">
             Select your response for each question below. Your answers will be saved anonymously and combined with other conference participants' responses.
           </p>
         </div>
@@ -118,6 +101,7 @@ export default function CEWWIKSPage() {
                 options={poll.options}
                 pagePath="/cew-polls/wiks"
                 questionNumber={poll.questionNumber}
+                authCode={authCode}
                 onVote={(pollIndex, optionIndex, otherText) => {
                   console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}`);
                 }}

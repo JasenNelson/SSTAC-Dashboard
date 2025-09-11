@@ -24,12 +24,20 @@ export async function POST(request: NextRequest) {
     );
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    
+    // For anonymous users (CEW pages), generate a session ID
+    let userId = user?.id;
+    if (!userId) {
+      // Generate a unique session ID for anonymous users
+      userId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      console.log(`[Poll Submit] Anonymous user, generated session ID: ${userId}`);
     }
 
-    const { pagePath, pollIndex, question, options, optionIndex, otherText } = await request.json();
-    console.log(`[Poll Submit] Received vote for poll ${pollIndex} on page ${pagePath}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}`);
+    const { pagePath, pollIndex, question, options, optionIndex, otherText, authCode } = await request.json();
+    console.log(`[Poll Submit] Received vote for poll ${pollIndex} on page ${pagePath}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}${authCode ? `, authCode: "${authCode}"` : ''}`);
+
+    // Use authCode if provided, otherwise use the generated userId
+    const finalUserId = authCode || userId;
 
     // Get or create poll
     const { data: pollData, error: pollError } = await supabase
@@ -47,13 +55,29 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Poll Submit] Poll created/found for pollIndex ${pollIndex}:`, pollData);
 
-    // Submit vote
-    const { data: voteData, error: voteError } = await supabase
-      .rpc('submit_poll_vote', {
-        p_poll_id: pollData,
-        p_option_index: optionIndex,
-        p_other_text: otherText || null
-      });
+    // Try to insert the vote, handle duplicate key error by updating
+    console.log(`[Poll Submit] Inserting vote for poll_id=${pollData}, user_id=${finalUserId}`);
+    let { data: voteData, error: voteError } = await supabase
+      .from('poll_votes')
+      .insert({
+        poll_id: pollData,
+        user_id: finalUserId,
+        option_index: optionIndex,
+        other_text: otherText || null,
+        voted_at: new Date().toISOString()
+      })
+      .select();
+    
+    console.log(`[Poll Submit] Insert result:`, { data: voteData, error: voteError });
+    
+    // If insert fails due to duplicate key, return error (no vote changes allowed on CEW pages)
+    if (voteError && voteError.code === '23505') {
+      console.log(`[Poll Submit] Duplicate key detected - vote already exists for this user/poll combination`);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'You have already voted on this poll. Each device can only vote once.' 
+      }, { status: 400 });
+    }
 
     if (voteError) {
       console.error(`[Poll Submit] Error submitting vote for pollIndex ${pollIndex}:`, voteError);

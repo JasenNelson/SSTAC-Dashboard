@@ -23,40 +23,112 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { pagePath, pollIndex, question, options, rankings, authCode } = await request.json();
+    
+    // Check if this is a CEW page
+    const isCEWPage = pagePath.startsWith('/cew-polls/');
+    
+    let finalUserId;
+    let supabaseClient = supabase; // Default to authenticated connection
+    
+    if (isCEWPage && authCode) {
+      // CEW pages: use authCode as userId and anonymous connection
+      finalUserId = authCode;
+      // Create anonymous connection for CEW pages
+      supabaseClient = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get() { return null; },
+            set() {},
+            remove() {},
+          },
+        }
+      );
+      console.log(`[Ranking Poll Submit] CEW page, using authCode: ${finalUserId}`);
+    } else {
+      // Authenticated pages: use user session
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      finalUserId = user.id;
+      console.log(`[Ranking Poll Submit] Authenticated user: ${finalUserId}`);
     }
 
-    const { pagePath, pollIndex, question, options, rankings } = await request.json();
+    // First, try to get existing poll
+    const { data: existingPoll, error: pollError } = await supabaseClient
+      .from('ranking_polls')
+      .select('id')
+      .eq('page_path', pagePath)
+      .eq('poll_index', pollIndex)
+      .single();
 
-    // Get or create ranking poll
-    const { data: pollData, error: pollError } = await supabase
-      .rpc('get_or_create_ranking_poll', {
-        p_page_path: pagePath,
-        p_poll_index: pollIndex,
-        p_question: question,
-        p_options: options
-      });
+    let pollId;
+    
+    if (pollError && pollError.code === 'PGRST116') {
+      // Poll doesn't exist, create it
+      console.log(`[Ranking Poll Submit] Creating new ranking poll for ${pagePath}, pollIndex ${pollIndex}`);
+      const { data: newPoll, error: createError } = await supabaseClient
+        .from('ranking_polls')
+        .insert({
+          page_path: pagePath,
+          poll_index: pollIndex,
+          question: question,
+          options: options
+        })
+        .select('id')
+        .single();
 
-    if (pollError) {
-      console.error('Error creating/getting ranking poll:', pollError);
-      return NextResponse.json({ error: 'Failed to create/get ranking poll' }, { status: 500 });
+      if (createError) {
+        console.error('Error creating ranking poll:', createError);
+        return NextResponse.json({ error: 'Failed to create ranking poll' }, { status: 500 });
+      }
+      
+      pollId = newPoll.id;
+      console.log(`[Ranking Poll Submit] Created ranking poll with ID: ${pollId}`);
+    } else if (pollError) {
+      console.error('Error fetching ranking poll:', pollError);
+      return NextResponse.json({ error: 'Failed to fetch ranking poll' }, { status: 500 });
+    } else {
+      pollId = existingPoll.id;
+      console.log(`[Ranking Poll Submit] Using existing ranking poll with ID: ${pollId}`);
     }
 
-    // Submit ranking votes
-    const { data: voteData, error: voteError } = await supabase
-      .rpc('submit_ranking_votes', {
-        p_ranking_poll_id: pollData,
-        p_rankings: rankings
-      });
+    // First, delete any existing votes for this user and poll
+    const { error: deleteError } = await supabaseClient
+      .from('ranking_votes')
+      .delete()
+      .eq('ranking_poll_id', pollId)
+      .eq('user_id', finalUserId);
+
+    if (deleteError) {
+      console.error('Error deleting existing ranking votes:', deleteError);
+      return NextResponse.json({ error: 'Failed to clear existing votes' }, { status: 500 });
+    }
+
+    // Submit ranking votes directly to ranking_votes table
+    const voteInserts = rankings.map((ranking: any) => ({
+      ranking_poll_id: pollId,
+      user_id: finalUserId,
+      option_index: ranking.optionIndex,
+      rank: ranking.rank,
+      voted_at: new Date().toISOString()
+    }));
+
+    const { data: voteData, error: voteError } = await supabaseClient
+      .from('ranking_votes')
+      .insert(voteInserts)
+      .select();
 
     if (voteError) {
       console.error('Error submitting ranking votes:', voteError);
       return NextResponse.json({ error: 'Failed to submit ranking votes' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, pollId: pollData });
+    console.log(`[Ranking Poll Submit] Successfully submitted ${voteInserts.length} ranking votes for poll ${pollId}`);
+    return NextResponse.json({ success: true, pollId: pollId });
   } catch (error) {
     console.error('Error in ranking poll submit API:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

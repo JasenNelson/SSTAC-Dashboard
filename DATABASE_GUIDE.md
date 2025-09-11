@@ -43,6 +43,16 @@ The SSTAC & TWG Dashboard uses Supabase (PostgreSQL) with a comprehensive schema
 - **Purpose**: Content management system
 - **Features**: File storage, categorization, project timeline
 
+#### **`polls` & `poll_votes`** (Poll System)
+- **Purpose**: Interactive single-choice poll system
+- **Features**: Vote persistence, real-time results, admin management
+- **Security**: RLS policies for user isolation and admin access
+
+#### **`ranking_polls` & `ranking_votes`** (Ranking Poll System)
+- **Purpose**: Interactive ranking poll system
+- **Features**: Multi-option ranking, average rank calculation, real-time results
+- **Security**: RLS policies for user isolation and admin access
+
 ### **Critical Database Views**
 
 #### **`users_overview`**
@@ -62,6 +72,16 @@ The SSTAC & TWG Dashboard uses Supabase (PostgreSQL) with a comprehensive schema
 #### **`documents_with_tags`**
 - **Purpose**: Document-tag relationships for efficient querying
 - **Features**: Tag aggregation, document metadata
+
+#### **`poll_results`** (Poll System View)
+- **Purpose**: Aggregated single-choice poll results
+- **Features**: Vote counts, percentage calculations, real-time updates
+- **Data Sources**: `polls`, `poll_votes` tables
+
+#### **`ranking_results`** (Ranking Poll System View)
+- **Purpose**: Aggregated ranking poll results
+- **Features**: Average rank calculations, vote counts, option text mapping
+- **Data Sources**: `ranking_polls`, `ranking_votes` tables
 
 ### **Database Functions**
 
@@ -379,6 +399,139 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
+
+## 🗳️ **CEW Conference Polling System Database Schema**
+
+### **CEW Poll System Overview**
+
+The CEW Conference Polling System allows unauthenticated conference attendees to vote using a shared authentication code (e.g., "CEW2025"). This system integrates with the existing poll infrastructure while providing anonymous access.
+
+### **CEW Poll System Modifications**
+
+#### **Modified `poll_votes` Table for CEW Support**
+```sql
+-- Modified user_id column to support both UUIDs and CEW codes
+ALTER TABLE poll_votes 
+ALTER COLUMN user_id TYPE TEXT;
+
+-- Add CHECK constraint to validate user_id format
+ALTER TABLE poll_votes 
+ADD CONSTRAINT check_user_id_format 
+CHECK (user_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' OR user_id ~ '^CEW[0-9]{4}$');
+
+-- Update unique constraint
+ALTER TABLE poll_votes 
+DROP CONSTRAINT IF EXISTS poll_votes_poll_id_user_id_key;
+ALTER TABLE poll_votes 
+ADD CONSTRAINT poll_votes_poll_id_user_id_key UNIQUE (poll_id, user_id);
+```
+
+#### **Modified `ranking_votes` Table for CEW Support**
+```sql
+-- Modified user_id column to support both UUIDs and CEW codes
+ALTER TABLE ranking_votes 
+ALTER COLUMN user_id TYPE TEXT;
+
+-- Add CHECK constraint to validate user_id format
+ALTER TABLE ranking_votes 
+ADD CONSTRAINT check_ranking_user_id_format 
+CHECK (user_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' OR user_id ~ '^CEW[0-9]{4}$');
+
+-- Update unique constraint
+ALTER TABLE ranking_votes 
+DROP CONSTRAINT IF EXISTS ranking_votes_ranking_poll_id_user_id_key;
+ALTER TABLE ranking_votes 
+ADD CONSTRAINT ranking_votes_ranking_poll_id_user_id_key UNIQUE (ranking_poll_id, user_id);
+```
+
+### **CEW Poll System RLS Policies**
+
+#### **Anonymous User Policies for Polls**
+```sql
+-- Allow anonymous users to read polls
+CREATE POLICY "Allow anonymous users to read polls" ON polls
+    FOR SELECT TO anon
+    USING (true);
+
+-- Allow anonymous users to read poll results
+CREATE POLICY "Allow anonymous users to read poll results" ON poll_votes
+    FOR SELECT TO anon
+    USING (true);
+```
+
+#### **Anonymous User Policies for Poll Votes**
+```sql
+-- Allow anonymous users to insert poll votes
+CREATE POLICY "Allow anonymous users to insert poll votes" ON poll_votes
+    FOR INSERT TO anon
+    USING (true);
+
+-- Allow anonymous users to read poll votes
+CREATE POLICY "Allow anonymous users to read poll votes" ON poll_votes
+    FOR SELECT TO anon
+    USING (true);
+```
+
+#### **Anonymous User Policies for Ranking Polls**
+```sql
+-- Allow anonymous users to read ranking polls
+CREATE POLICY "Allow anonymous users to read ranking polls" ON ranking_polls
+    FOR SELECT TO anon
+    USING (true);
+
+-- Allow anonymous users to insert ranking votes
+CREATE POLICY "Allow anonymous users to insert ranking votes" ON ranking_votes
+    FOR INSERT TO anon
+    USING (true);
+
+-- Allow anonymous users to read ranking votes
+CREATE POLICY "Allow anonymous users to read ranking votes" ON ranking_votes
+    FOR SELECT TO anon
+    USING (true);
+```
+
+### **CEW Poll System API Architecture**
+
+#### **Unified API Endpoints**
+- **`/api/polls/submit`**: Handles both authenticated and CEW poll submissions
+- **`/api/polls/results`**: Handles both authenticated and CEW poll results
+- **`/api/ranking-polls/submit`**: Handles both authenticated and CEW ranking submissions
+- **`/api/ranking-polls/results`**: Handles both authenticated and CEW ranking results
+
+#### **CEW Authentication Flow**
+1. **Code Entry**: User enters shared code (e.g., "CEW2025")
+2. **Session Storage**: Code stored in browser sessionStorage
+3. **API Calls**: Code passed to API endpoints as `authCode` parameter
+4. **Database Storage**: Code used as `user_id` for vote storage
+5. **Device Tracking**: Prevents duplicate votes per device
+
+### **CEW Poll System Security**
+
+#### **Data Isolation**
+- **CEW Votes**: Stored with CEW codes as user_id
+- **Authenticated Votes**: Stored with UUIDs as user_id
+- **Unified Results**: Both types combined in result views
+- **RLS Policies**: Separate policies for anonymous and authenticated access
+
+#### **Vote Prevention**
+- **Device Tracking**: localStorage prevents multiple votes per device
+- **Session Persistence**: sessionStorage remembers CEW code
+- **No Change Votes**: CEW users cannot change votes (one vote per device)
+- **Duplicate Prevention**: Database constraints prevent duplicate votes
+
+### **CEW Poll System Performance**
+
+#### **Optimized for Conference Use**
+- **Fast Polling**: Optimized for 100 people in 15 minutes
+- **Mobile-Friendly**: Responsive design for mobile devices
+- **Real-time Results**: Live updates during presentations
+- **Efficient Queries**: Optimized database queries for large audiences
+
+#### **Scalability Features**
+- **Anonymous Access**: No user account creation required
+- **Shared Authentication**: Single code for all attendees
+- **Device-Based Tracking**: Prevents duplicate votes efficiently
+- **Unified Database**: All votes stored in same system
 
 ## 📈 **Performance Optimization**
 

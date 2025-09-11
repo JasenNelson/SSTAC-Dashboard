@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { createClient } from '@/components/supabase-client';
+import { createClient } from '@/lib/supabase/client';
 import type { Session } from '@supabase/supabase-js';
 import Link from 'next/link';
 import NewDiscussionForm from '@/components/dashboard/NewDiscussionForm';

@@ -1,7 +1,7 @@
 // src/lib/admin-utils.ts
 // Utility functions for admin status management across components
 
-import { createClient } from '@/components/supabase-client';
+import { createClient } from '@/lib/supabase/client';
 
 /**
  * Global function to refresh admin status

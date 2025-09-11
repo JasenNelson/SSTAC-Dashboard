@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import PollResultsChart from './PollResultsChart';
+import { trackVote, hasVoted as checkHasVoted, clearVoteTracking } from '@/lib/vote-tracking';
 
 interface RankingOption {
   id: string;
@@ -15,6 +16,7 @@ interface RankingPollProps {
   options: string[];
   pagePath: string;
   questionNumber?: number;
+  authCode?: string;
   onVote?: (pollIndex: number, rankings: number[]) => void;
 }
 
@@ -24,6 +26,7 @@ export default function RankingPoll({
   options, 
   pagePath, 
   questionNumber,
+  authCode,
   onVote 
 }: RankingPollProps) {
   const [rankingOptions, setRankingOptions] = useState<RankingOption[]>([]);
@@ -37,13 +40,21 @@ export default function RankingPoll({
   const fetchResults = useCallback(async () => {
     try {
       console.log(`[RankingPoll ${pollIndex}] Fetching results for poll ${pollIndex} on page ${pagePath}`);
-      const response = await fetch(`/api/ranking-polls/results?pagePath=${encodeURIComponent(pagePath)}&pollIndex=${pollIndex}`);
+      // Determine API endpoint based on page path
+      // Use unified API endpoint for all pages
+      const apiEndpoint = '/api/ranking-polls/results';
+      
+      let url = `${apiEndpoint}?pagePath=${encodeURIComponent(pagePath)}&pollIndex=${pollIndex}`;
+      if (authCode) {
+        url += `&authCode=${encodeURIComponent(authCode)}`;
+      }
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         console.log(`[RankingPoll ${pollIndex}] API Response:`, data);
         setResults(data.results);
         
-        // Check if user has already voted
+        // Check if user has already voted (for both authenticated and CEW pages)
         if (data.userRankings && data.userRankings.length > 0) {
           console.log(`[RankingPoll ${pollIndex}] User has rankings:`, data.userRankings);
           setUserRankings(data.userRankings);
@@ -80,7 +91,42 @@ export default function RankingPoll({
     
     // Check for existing vote
     fetchResults();
+    
+    // Check for CEW ranking in sessionStorage
+    if (pagePath.startsWith('/cew-polls/')) {
+      checkCEWRankingStatus();
+      // Check if device already voted (prevent multiple votes)
+      try {
+        if (checkHasVoted && checkHasVoted(pagePath, pollIndex)) {
+          setHasVoted(true);
+          setShowResults(true);
+          console.log(`[RankingPoll ${pollIndex}] Device already voted on this poll`);
+        }
+      } catch (error) {
+        console.error(`[RankingPoll ${pollIndex}] Error checking vote status:`, error);
+      }
+    }
   }, [fetchResults]);
+
+  const checkCEWRankingStatus = () => {
+    const rankingKey = `cew_ranking_${pagePath}_${pollIndex}`;
+    const existingRanking = sessionStorage.getItem(rankingKey);
+    if (existingRanking) {
+      const rankingData = JSON.parse(existingRanking);
+      setHasVoted(true);
+      setShowResults(true);
+      setUserRankings(rankingData.rankings);
+      
+      // Set the user's previous rankings
+      const updatedOptions = options.map((option, index) => ({
+        id: `option-${index}`,
+        text: option,
+        rank: rankingData.rankings[index] || null
+      }));
+      setRankingOptions(updatedOptions);
+      console.log(`[RankingPoll ${pollIndex}] Found existing CEW ranking in sessionStorage:`, rankingData);
+    }
+  };
 
   const handleRankChange = (optionId: string, newRank: number) => {
     setRankingOptions(prev => {
@@ -118,6 +164,18 @@ export default function RankingPoll({
       return;
     }
 
+    // Check if this device already voted on this poll (for CEW pages)
+    if (pagePath.startsWith('/cew-polls/')) {
+      try {
+        if (checkHasVoted && checkHasVoted(pagePath, pollIndex)) {
+          alert('You have already voted on this poll from this device. Each device can only vote once.');
+          return;
+        }
+      } catch (error) {
+        console.error(`[RankingPoll ${pollIndex}] Error checking vote status:`, error);
+      }
+    }
+
     setIsLoading(true);
 
     try {
@@ -135,7 +193,11 @@ export default function RankingPoll({
         rank: rank + 1
       }));
 
-      const response = await fetch('/api/ranking-polls/submit', {
+      // Determine API endpoint based on page path
+      // Use unified API endpoint for all pages
+      const apiEndpoint = '/api/ranking-polls/submit';
+      
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,7 +207,8 @@ export default function RankingPoll({
           pollIndex,
           question,
           options,
-          rankings: rankingsData
+          rankings: rankingsData,
+          authCode: authCode || undefined
         }),
       });
 
@@ -155,6 +218,26 @@ export default function RankingPoll({
         setShowResults(true);
         setUserRankings(rankings);
         setShowChangeOption(false);
+        
+        // Save ranking to sessionStorage for CEW pages
+        if (pagePath.startsWith('/cew-polls/')) {
+          const rankingKey = `cew_ranking_${pagePath}_${pollIndex}`;
+          const rankingData = {
+            rankings: rankings,
+            timestamp: Date.now()
+          };
+          sessionStorage.setItem(rankingKey, JSON.stringify(rankingData));
+          console.log(`[RankingPoll ${pollIndex}] Saved CEW ranking to sessionStorage:`, rankingData);
+          
+          // Track this vote to prevent multiple submissions from same device
+          try {
+            if (trackVote) {
+              trackVote(pagePath, pollIndex);
+            }
+          } catch (error) {
+            console.error(`[RankingPoll ${pollIndex}] Error tracking vote:`, error);
+          }
+        }
         
         // Fetch updated results
         await fetchResults();
@@ -178,6 +261,17 @@ export default function RankingPoll({
     setHasVoted(false);
     // Reset rankings to allow new selection
     setRankingOptions(prev => prev.map(opt => ({ ...opt, rank: null })));
+    
+    // Clear vote tracking to allow re-voting (for CEW pages)
+    if (pagePath.startsWith('/cew-polls/')) {
+      try {
+        if (clearVoteTracking) {
+          clearVoteTracking(pagePath, pollIndex);
+        }
+      } catch (error) {
+        console.error(`[RankingPoll ${pollIndex}] Error clearing vote tracking:`, error);
+      }
+    }
   };
 
   const handleCancelChange = () => {
