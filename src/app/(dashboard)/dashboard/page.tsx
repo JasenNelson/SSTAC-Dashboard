@@ -55,7 +55,7 @@ export default async function DashboardPage() {
                Sediment Standards Project
              </h1>
             <p className="text-xl text-blue-100 max-w-4xl mx-auto leading-relaxed mb-8">
-              Developing a modern, robust scientific framework for updating BC's Contaminated Sites Regulation sediment standards
+              Developing a modern, robust scientific framework for updating BC&apos;s Contaminated Sites Regulation sediment standards
             </p>
             <div className="inline-flex items-center px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full border border-white/30 shadow-lg">
               <span className="text-blue-900 text-sm font-semibold">
@@ -248,7 +248,7 @@ export default async function DashboardPage() {
                   WIKS
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                  Explore the strategic plan to integrate Indigenous-led WQCIU framework into BC's modernized sediment standards.
+                  Explore the strategic plan to integrate Indigenous-led WQCIU framework into BC&apos;s modernized sediment standards.
                 </p>
               </div>
             </Link>
@@ -304,7 +304,7 @@ export default async function DashboardPage() {
                 <ul className="space-y-4 text-green-100">
                   <li className="flex items-start">
                     <span className="text-blue-200 mr-3 mt-1">📋</span>
-                    <span>TWG review of "What We Heard" report begins mid-August 2025</span>
+                    <span>TWG review of &ldquo;What We Heard&rdquo; report begins mid-August 2025</span>
                   </li>
                   <li className="flex items-start">
                     <span className="text-blue-200 mr-3 mt-1">📋</span>

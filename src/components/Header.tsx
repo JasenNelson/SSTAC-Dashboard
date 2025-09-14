@@ -335,6 +335,7 @@ export default function Header() {
     
     // Engagement
     { href: '/survey-results', label: 'Survey Results', icon: '📊', category: 'Engagement' },
+    { href: '/twg/review', label: 'TWG White Paper Review', icon: '📝', category: 'Engagement' },
     
     // Core Themes
     { href: '/wiks', label: 'Indigenous Knowledge & Science', icon: '🌿', category: 'Core Themes' },
@@ -347,11 +348,11 @@ export default function Header() {
     { href: '/twg/discussions', label: 'Discussion Forum', icon: '💬', category: 'Resources' },
     
     // CEW Conference (moved to bottom)
-    { href: '/cew-2025', label: 'CEW 2025', icon: '📅', category: 'CEW Conference' },
-    { href: '/cew-polls/holistic-protection', label: 'CEW: Holistic Protection', icon: '🌊', category: 'CEW Conference', parent: 'CEW 2025' },
-    { href: '/cew-polls/tiered-framework', label: 'CEW: Tiered Framework', icon: '📊', category: 'CEW Conference', parent: 'CEW 2025' },
-    { href: '/cew-polls/prioritization', label: 'CEW: Prioritization', icon: '🎯', category: 'CEW Conference', parent: 'CEW 2025' },
-    { href: '/cew-polls/wiks', label: 'CEW: Indigenous Knowledge', icon: '🌱', category: 'CEW Conference', parent: 'CEW 2025' },
+    { href: '/cew-2025', label: 'SABCS Session', icon: '📅', category: 'CEW Conference' },
+    { href: '/cew-polls/holistic-protection', label: 'CEW: Holistic Protection', icon: '🌊', category: 'CEW Conference', parent: 'SABCS Session' },
+    { href: '/cew-polls/tiered-framework', label: 'CEW: Tiered Framework', icon: '📊', category: 'CEW Conference', parent: 'SABCS Session' },
+    { href: '/cew-polls/prioritization', label: 'CEW: Prioritization', icon: '🎯', category: 'CEW Conference', parent: 'SABCS Session' },
+    { href: '/cew-polls/wiks', label: 'CEW: Indigenous Knowledge', icon: '🌱', category: 'CEW Conference', parent: 'SABCS Session' },
   ];
 
   // Admin-only navigation links

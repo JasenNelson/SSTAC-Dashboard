@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import PollResultsChart from './PollResultsChart';
-import { trackVote, hasVoted as checkHasVoted, clearVoteTracking } from '@/lib/vote-tracking';
 
 interface RankingOption {
   id: string;
@@ -32,9 +31,18 @@ export default function RankingPoll({
   const [rankingOptions, setRankingOptions] = useState<RankingOption[]>([]);
   const [hasVoted, setHasVoted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<any>(null);
+  const [results, setResults] = useState<{
+    total_votes: number;
+    results: Array<{
+      option_index: number;
+      option_text: string;
+      averageRank: number;
+      votes: number;
+    }>;
+  } | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [userRankings, setUserRankings] = useState<number[] | null>(null);
+
   const [showChangeOption, setShowChangeOption] = useState(false);
 
   const fetchResults = useCallback(async () => {
@@ -54,21 +62,35 @@ export default function RankingPoll({
         console.log(`[RankingPoll ${pollIndex}] API Response:`, data);
         setResults(data.results);
         
-        // Check if user has already voted (for both authenticated and CEW pages)
+        // Check if user has already voted
         if (data.userRankings && data.userRankings.length > 0) {
           console.log(`[RankingPoll ${pollIndex}] User has rankings:`, data.userRankings);
           setUserRankings(data.userRankings);
-          setHasVoted(true);
-          setShowResults(true);
           
-          // Set the user's previous rankings
-          const updatedOptions = options.map((option, index) => ({
-            id: `option-${index}`,
-            text: option,
-            rank: data.userRankings[index] || null
-          }));
-          setRankingOptions(updatedOptions);
-          console.log(`[RankingPoll ${pollIndex}] Updated ranking options:`, updatedOptions);
+          // For CEW pages, show previous rankings but don't disable submit button
+          // This allows users to see their previous choice while still being able to vote again
+          if (pagePath.startsWith('/cew-polls/')) {
+            setShowResults(true);
+            // Set the user's previous rankings for display only
+            const updatedOptions = options.map((option, index) => ({
+              id: `option-${index}`,
+              text: option,
+              rank: data.userRankings[index] || null
+            }));
+            setRankingOptions(updatedOptions);
+            console.log(`[RankingPoll ${pollIndex}] Updated ranking options for display:`, updatedOptions);
+          } else {
+            // For authenticated pages, disable submit button as usual
+            setHasVoted(true);
+            setShowResults(true);
+            const updatedOptions = options.map((option, index) => ({
+              id: `option-${index}`,
+              text: option,
+              rank: data.userRankings[index] || null
+            }));
+            setRankingOptions(updatedOptions);
+            console.log(`[RankingPoll ${pollIndex}] Updated ranking options:`, updatedOptions);
+          }
         } else {
           console.log(`[RankingPoll ${pollIndex}] No user rankings found`);
         }
@@ -95,37 +117,13 @@ export default function RankingPoll({
     // Check for CEW ranking in sessionStorage
     if (pagePath.startsWith('/cew-polls/')) {
       checkCEWRankingStatus();
-      // Check if device already voted (prevent multiple votes)
-      try {
-        if (checkHasVoted && checkHasVoted(pagePath, pollIndex)) {
-          setHasVoted(true);
-          setShowResults(true);
-          console.log(`[RankingPoll ${pollIndex}] Device already voted on this poll`);
-        }
-      } catch (error) {
-        console.error(`[RankingPoll ${pollIndex}] Error checking vote status:`, error);
-      }
     }
   }, [fetchResults]);
 
   const checkCEWRankingStatus = () => {
-    const rankingKey = `cew_ranking_${pagePath}_${pollIndex}`;
-    const existingRanking = sessionStorage.getItem(rankingKey);
-    if (existingRanking) {
-      const rankingData = JSON.parse(existingRanking);
-      setHasVoted(true);
-      setShowResults(true);
-      setUserRankings(rankingData.rankings);
-      
-      // Set the user's previous rankings
-      const updatedOptions = options.map((option, index) => ({
-        id: `option-${index}`,
-        text: option,
-        rank: rankingData.rankings[index] || null
-      }));
-      setRankingOptions(updatedOptions);
-      console.log(`[RankingPoll ${pollIndex}] Found existing CEW ranking in sessionStorage:`, rankingData);
-    }
+    // For CEW pages, don't persist rankings at all - start fresh each time
+    // This ensures true privacy in incognito mode
+    console.log(`[RankingPoll ${pollIndex}] CEW poll - no ranking persistence for privacy`);
   };
 
   const handleRankChange = (optionId: string, newRank: number) => {
@@ -155,27 +153,19 @@ export default function RankingPoll({
   };
 
   const handleSubmitRanking = async () => {
-    if ((hasVoted && !showChangeOption) || isLoading) return;
+    if ((hasVoted && !showChangeOption) || isLoading) {
+      return;
+    }
 
     // Check if all options are ranked
     const allRanked = rankingOptions.every(opt => opt.rank !== null);
+    
     if (!allRanked) {
       alert('Please rank all options before submitting.');
       return;
     }
 
-    // Check if this device already voted on this poll (for CEW pages)
-    if (pagePath.startsWith('/cew-polls/')) {
-      try {
-        if (checkHasVoted && checkHasVoted(pagePath, pollIndex)) {
-          alert('You have already voted on this poll from this device. Each device can only vote once.');
-          return;
-        }
-      } catch (error) {
-        console.error(`[RankingPoll ${pollIndex}] Error checking vote status:`, error);
-      }
-    }
-
+    // No device tracking for CEW pages - allow multiple votes
     setIsLoading(true);
 
     try {
@@ -220,23 +210,9 @@ export default function RankingPoll({
         setShowChangeOption(false);
         
         // Save ranking to sessionStorage for CEW pages
+        // For CEW pages, don't save rankings locally for privacy
         if (pagePath.startsWith('/cew-polls/')) {
-          const rankingKey = `cew_ranking_${pagePath}_${pollIndex}`;
-          const rankingData = {
-            rankings: rankings,
-            timestamp: Date.now()
-          };
-          sessionStorage.setItem(rankingKey, JSON.stringify(rankingData));
-          console.log(`[RankingPoll ${pollIndex}] Saved CEW ranking to sessionStorage:`, rankingData);
-          
-          // Track this vote to prevent multiple submissions from same device
-          try {
-            if (trackVote) {
-              trackVote(pagePath, pollIndex);
-            }
-          } catch (error) {
-            console.error(`[RankingPoll ${pollIndex}] Error tracking vote:`, error);
-          }
+          console.log(`[RankingPoll ${pollIndex}] CEW poll - ranking submitted but not persisted locally for privacy`);
         }
         
         // Fetch updated results
@@ -262,16 +238,7 @@ export default function RankingPoll({
     // Reset rankings to allow new selection
     setRankingOptions(prev => prev.map(opt => ({ ...opt, rank: null })));
     
-    // Clear vote tracking to allow re-voting (for CEW pages)
-    if (pagePath.startsWith('/cew-polls/')) {
-      try {
-        if (clearVoteTracking) {
-          clearVoteTracking(pagePath, pollIndex);
-        }
-      } catch (error) {
-        console.error(`[RankingPoll ${pollIndex}] Error clearing vote tracking:`, error);
-      }
-    }
+    // No device tracking for CEW pages - allow re-voting
   };
 
   const handleCancelChange = () => {
@@ -295,7 +262,7 @@ export default function RankingPoll({
 
   const getAverageRanking = (optionIndex: number) => {
     if (!results?.results) return null;
-    const option = results.results.find((r: any) => r.optionIndex === optionIndex);
+    const option = results.results.find((r: { option_index: number }) => r.option_index === optionIndex);
     return option?.averageRank || null;
   };
 
@@ -393,7 +360,7 @@ export default function RankingPoll({
                         className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                           option.rank === rankNum + 1
                             ? 'bg-blue-600 text-white'
-                            : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-blue-200 dark:hover:bg-blue-700'
+                            : 'bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200 hover:bg-blue-200 dark:hover:bg-blue-700 hover:text-gray-900 dark:hover:text-gray-100 border border-gray-300 dark:border-gray-500'
                         }`}
                       >
                         {getRankingText(rankNum + 1)}
@@ -407,10 +374,13 @@ export default function RankingPoll({
         })}
       </div>
 
+
       {(!hasVoted || showChangeOption) && (
         <div className="mt-8 text-center">
           <button
-            onClick={handleSubmitRanking}
+            onClick={() => {
+              handleSubmitRanking();
+            }}
             disabled={isLoading || !rankingOptions.every(opt => opt.rank !== null)}
             className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
               isLoading || !rankingOptions.every(opt => opt.rank !== null)

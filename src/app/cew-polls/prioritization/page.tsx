@@ -137,7 +137,7 @@ export default function CEWPrioritizationPage() {
             📱 Mobile-Friendly Polling
           </h3>
           <p className="text-gray-700 dark:text-orange-200 text-sm">
-            Select your response for each question below. Your answers will be saved anonymously and combined with other conference participants' responses.
+            Select your response for each question below. Your answers will be saved anonymously and combined with other conference participants&apos; responses.
           </p>
         </div>
 

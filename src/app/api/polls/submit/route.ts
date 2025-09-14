@@ -4,40 +4,64 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            try { cookieStore.set({ name, value, ...options }); } catch (error) {}
-          },
-          remove(name: string, options: CookieOptions) {
-            try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
-          },
-        },
-      }
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    // For anonymous users (CEW pages), generate a session ID
-    let userId = user?.id;
-    if (!userId) {
-      // Generate a unique session ID for anonymous users
-      userId = `anon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      console.log(`[Poll Submit] Anonymous user, generated session ID: ${userId}`);
-    }
-
     const { pagePath, pollIndex, question, options, optionIndex, otherText, authCode } = await request.json();
     console.log(`[Poll Submit] Received vote for poll ${pollIndex} on page ${pagePath}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}${authCode ? `, authCode: "${authCode}"` : ''}`);
 
-    // Use authCode if provided, otherwise use the generated userId
-    const finalUserId = authCode || userId;
+    // Determine if this is a CEW page
+    const isCEWPage = pagePath.startsWith('/cew-polls/');
+    console.log(`[Poll Submit] isCEWPage: ${isCEWPage}, authCode: "${authCode}"`);
+    let supabase, finalUserId;
+
+    if (isCEWPage) {
+      // CEW pages: Use anonymous connection with authCode as userId
+      const cookieStore = await cookies();
+      supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get() { return null; },
+            set() {},
+            remove() {},
+          },
+        }
+      );
+      
+      // Test if the anonymous client is truly anonymous
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log(`[Poll Submit] Anonymous client user check:`, user);
+      
+      finalUserId = authCode || 'CEW2025';
+      console.log(`[Poll Submit] CEW page, using authCode: ${finalUserId}`);
+      console.log(`[Poll Submit] Supabase client created for CEW page`);
+    } else {
+      // Authenticated pages: Use authenticated connection
+      const cookieStore = await cookies();
+      supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value;
+            },
+            set(name: string, value: string, options: CookieOptions) {
+              try { cookieStore.set({ name, value, ...options }); } catch (error) {}
+            },
+            remove(name: string, options: CookieOptions) {
+              try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
+            },
+          },
+        }
+      );
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      finalUserId = user.id;
+      console.log(`[Poll Submit] Authenticated user: ${finalUserId}`);
+    }
 
     // Get or create poll
     const { data: pollData, error: pollError } = await supabase
@@ -55,33 +79,50 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Poll Submit] Poll created/found for pollIndex ${pollIndex}:`, pollData);
 
-    // Try to insert the vote, handle duplicate key error by updating
-    console.log(`[Poll Submit] Inserting vote for poll_id=${pollData}, user_id=${finalUserId}`);
-    let { data: voteData, error: voteError } = await supabase
-      .from('poll_votes')
-      .insert({
-        poll_id: pollData,
-        user_id: finalUserId,
-        option_index: optionIndex,
-        other_text: otherText || null,
-        voted_at: new Date().toISOString()
-      })
-      .select();
+    // For CEW pages, allow multiple votes by inserting new records
+    // For authenticated users, use upsert to allow vote changes
+    console.log(`[Poll Submit] Submitting vote for poll_id=${pollData}, user_id=${finalUserId}`);
     
-    console.log(`[Poll Submit] Insert result:`, { data: voteData, error: voteError });
+    let voteData, voteError;
     
-    // If insert fails due to duplicate key, return error (no vote changes allowed on CEW pages)
-    if (voteError && voteError.code === '23505') {
-      console.log(`[Poll Submit] Duplicate key detected - vote already exists for this user/poll combination`);
-      return NextResponse.json({ 
-        success: false, 
-        error: 'You have already voted on this poll. Each device can only vote once.' 
-      }, { status: 400 });
+    if (authCode) {
+      // CEW pages: Always insert new vote (allow multiple votes per CEW code)
+      const { data, error } = await supabase
+        .from('poll_votes')
+        .insert({
+          poll_id: pollData,
+          user_id: finalUserId,
+          option_index: optionIndex,
+          other_text: otherText || null,
+          voted_at: new Date().toISOString()
+        })
+        .select();
+      
+      voteData = data;
+      voteError = error;
+    } else {
+      // Authenticated users: Use upsert to allow vote changes
+      const { data, error } = await supabase
+        .from('poll_votes')
+        .upsert({
+          poll_id: pollData,
+          user_id: finalUserId,
+          option_index: optionIndex,
+          other_text: otherText || null,
+          voted_at: new Date().toISOString()
+        })
+        .select();
+      
+      voteData = data;
+      voteError = error;
     }
+    
+    console.log(`[Poll Submit] Submit result:`, { data: voteData, error: voteError });
 
     if (voteError) {
       console.error(`[Poll Submit] Error submitting vote for pollIndex ${pollIndex}:`, voteError);
-      return NextResponse.json({ error: 'Failed to submit vote' }, { status: 500 });
+      console.error(`[Poll Submit] Vote error details:`, JSON.stringify(voteError, null, 2));
+      return NextResponse.json({ error: 'Failed to submit vote', details: voteError.message }, { status: 500 });
     }
 
     console.log(`[Poll Submit] Vote submitted successfully for pollIndex ${pollIndex}:`, voteData);

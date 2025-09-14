@@ -4,37 +4,16 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            try { cookieStore.set({ name, value, ...options }); } catch (error) {}
-          },
-          remove(name: string, options: CookieOptions) {
-            try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
-          },
-        },
-      }
-    );
-
     const { pagePath, pollIndex, question, options, rankings, authCode } = await request.json();
+    console.log(`[Ranking Poll Submit] Received ranking for poll ${pollIndex} on page ${pagePath}${authCode ? `, authCode: "${authCode}"` : ''}`);
     
     // Check if this is a CEW page
     const isCEWPage = pagePath.startsWith('/cew-polls/');
+    console.log(`[Ranking Poll Submit] isCEWPage: ${isCEWPage}, authCode: "${authCode}"`);
+    let supabaseClient, finalUserId;
     
-    let finalUserId;
-    let supabaseClient = supabase; // Default to authenticated connection
-    
-    if (isCEWPage && authCode) {
-      // CEW pages: use authCode as userId and anonymous connection
-      finalUserId = authCode;
-      // Create anonymous connection for CEW pages
+    if (isCEWPage) {
+      // CEW pages: Use anonymous connection with authCode as userId
       supabaseClient = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -46,10 +25,36 @@ export async function POST(request: NextRequest) {
           },
         }
       );
+      
+      // Test if the anonymous client is truly anonymous
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      console.log(`[Ranking Poll Submit] Anonymous client user check:`, user);
+      
+      finalUserId = authCode || 'CEW2025';
       console.log(`[Ranking Poll Submit] CEW page, using authCode: ${finalUserId}`);
+      console.log(`[Ranking Poll Submit] Supabase client created for CEW page`);
     } else {
-      // Authenticated pages: use user session
-      const { data: { user } } = await supabase.auth.getUser();
+      // Authenticated pages: Use authenticated connection
+      const cookieStore = await cookies();
+      supabaseClient = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value;
+            },
+            set(name: string, value: string, options: CookieOptions) {
+              try { cookieStore.set({ name, value, ...options }); } catch (error) {}
+            },
+            remove(name: string, options: CookieOptions) {
+              try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
+            },
+          },
+        }
+      );
+
+      const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
@@ -73,20 +78,28 @@ export async function POST(request: NextRequest) {
 
     console.log(`[Ranking Poll Submit] Poll created/found for pollIndex ${pollIndex}:`, pollId);
 
-    // First, delete any existing votes for this user and poll
-    const { error: deleteError } = await supabaseClient
-      .from('ranking_votes')
-      .delete()
-      .eq('ranking_poll_id', pollId)
-      .eq('user_id', finalUserId);
+    // For CEW pages, allow multiple votes by inserting new records
+    // For authenticated users, delete existing and insert new ones
+    if (isCEWPage && authCode) {
+      // CEW pages: Always insert new votes (allow multiple votes per CEW code)
+      console.log(`[Ranking Poll Submit] CEW page - inserting new ranking votes`);
+    } else {
+      // Authenticated users: Delete existing votes first
+      console.log(`[Ranking Poll Submit] Authenticated user - deleting existing votes first`);
+      const { error: deleteError } = await supabaseClient
+        .from('ranking_votes')
+        .delete()
+        .eq('ranking_poll_id', pollId)
+        .eq('user_id', finalUserId);
 
-    if (deleteError) {
-      console.error('Error deleting existing ranking votes:', deleteError);
-      return NextResponse.json({ error: 'Failed to clear existing votes' }, { status: 500 });
+      if (deleteError) {
+        console.error('Error deleting existing ranking votes:', deleteError);
+        console.log('Continuing with vote submission despite delete error');
+      }
     }
 
     // Submit ranking votes directly to ranking_votes table
-    const voteInserts = rankings.map((ranking: any) => ({
+    const voteInserts = rankings.map((ranking: { optionIndex: number; rank: number }) => ({
       ranking_poll_id: pollId,
       user_id: finalUserId,
       option_index: ranking.optionIndex,
@@ -101,7 +114,8 @@ export async function POST(request: NextRequest) {
 
     if (voteError) {
       console.error('Error submitting ranking votes:', voteError);
-      return NextResponse.json({ error: 'Failed to submit ranking votes' }, { status: 500 });
+      console.error(`[Ranking Poll Submit] Vote error details:`, JSON.stringify(voteError, null, 2));
+      return NextResponse.json({ error: 'Failed to submit ranking votes', details: voteError.message }, { status: 500 });
     }
 
     console.log(`[Ranking Poll Submit] Successfully submitted ${voteInserts.length} ranking votes for poll ${pollId}`);

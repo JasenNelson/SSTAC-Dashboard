@@ -62,7 +62,7 @@ const SignupPage: NextPage = () => {
           router.push('/login');
         }, 2000);
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);

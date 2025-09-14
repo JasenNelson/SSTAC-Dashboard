@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
       // Check for authCode first (CEW pages take priority)
       const authCode = request.nextUrl.searchParams.get('authCode');
       if (authCode) {
-        userId = authCode;
-        console.log(`Looking for CEW user vote for poll ${pollData.id} (pollIndex: ${pollIndex}) with authCode: ${authCode}`);
+        // For CEW pages, don't return user votes for privacy
+        console.log(`CEW poll - not returning user vote for privacy (pollIndex: ${pollIndex})`);
       } else if (isAuthenticated) {
         userId = user.id;
         console.log(`Looking for authenticated user vote for poll ${pollData.id} (pollIndex: ${pollIndex})`);

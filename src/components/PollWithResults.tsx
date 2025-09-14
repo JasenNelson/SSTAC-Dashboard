@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import PollResultsChart from './dashboard/PollResultsChart';
-import { trackVote, hasVoted as checkHasVoted, clearVoteTracking } from '@/lib/vote-tracking';
 
 interface PollOption {
   option_index: number;
@@ -40,6 +39,7 @@ export default function PollWithResults({
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [userVote, setUserVote] = useState<number | null>(null);
+
   const [showChangeOption, setShowChangeOption] = useState(false);
   const [otherText, setOtherText] = useState<string>('');
   const [userOtherText, setUserOtherText] = useState<string>('');
@@ -50,30 +50,13 @@ export default function PollWithResults({
     // Check for existing vote in sessionStorage for CEW pages
     if (pagePath.startsWith('/cew-polls/')) {
       checkCEWVoteStatus();
-      // Check if device already voted (prevent multiple votes)
-      try {
-        if (checkHasVoted && checkHasVoted(pagePath, pollIndex)) {
-          setHasVoted(true);
-          setShowResults(true);
-          console.log(`[PollWithResults ${pollIndex}] Device already voted on this poll`);
-        }
-      } catch (error) {
-        console.error(`[PollWithResults ${pollIndex}] Error checking vote status:`, error);
-      }
     }
   }, []);
 
   const checkCEWVoteStatus = () => {
-    const voteKey = `cew_vote_${pagePath}_${pollIndex}`;
-    const existingVote = sessionStorage.getItem(voteKey);
-    if (existingVote) {
-      const voteData = JSON.parse(existingVote);
-      setHasVoted(true);
-      setShowResults(true);
-      setUserVote(voteData.optionIndex);
-      setUserOtherText(voteData.otherText || '');
-      console.log(`[PollWithResults ${pollIndex}] Found existing CEW vote in sessionStorage:`, voteData);
-    }
+    // For CEW pages, don't persist votes at all - start fresh each time
+    // This ensures true privacy in incognito mode
+    console.log(`[PollWithResults ${pollIndex}] CEW poll - no vote persistence for privacy`);
   };
 
   const handleSelectOption = (optionIndex: number) => {
@@ -87,7 +70,9 @@ export default function PollWithResults({
   };
 
   const handleSubmitVote = async () => {
-    if (selectedOption === null || isLoading) return;
+    if (selectedOption === null || isLoading) {
+      return;
+    }
     
     // Validate other text if "Other" is selected
     if (isSelectedOther() && !otherText.trim()) {
@@ -95,19 +80,7 @@ export default function PollWithResults({
       return;
     }
 
-    // Check if this device already voted on this poll (for CEW pages)
-    if (pagePath.startsWith('/cew-polls/')) {
-      try {
-        if (checkHasVoted && checkHasVoted(pagePath, pollIndex)) {
-          alert('You have already voted on this poll from this device. Each device can only vote once.');
-          return;
-        }
-      } catch (error) {
-        console.error(`[PollWithResults ${pollIndex}] Error checking vote status:`, error);
-      }
-    }
-
-    console.log(`[PollWithResults ${pollIndex}] Submitting vote for option ${selectedOption}`);
+    // No device tracking for CEW pages - allow multiple votes
     setIsLoading(true);
 
     try {
@@ -132,35 +105,17 @@ export default function PollWithResults({
 
       if (response.ok) {
         const result = await response.json();
-        console.log(`[PollWithResults ${pollIndex}] Vote submitted successfully:`, result);
-        console.log(`[PollWithResults ${pollIndex}] Setting vote state after successful submission`);
         setHasVoted(true);
         setShowResults(true);
         setUserVote(selectedOption);
         setUserOtherText(isOtherOption(options[selectedOption]) ? otherText.trim() : '');
         setShowChangeOption(false);
         setSelectedOption(null); // Clear selected option after voting
-        console.log(`[PollWithResults ${pollIndex}] Vote state set - hasVoted: true, showChangeOption: false`);
         
         // Save vote to sessionStorage for CEW pages
+        // For CEW pages, don't save votes locally for privacy
         if (pagePath.startsWith('/cew-polls/')) {
-          const voteKey = `cew_vote_${pagePath}_${pollIndex}`;
-          const voteData = {
-            optionIndex: selectedOption,
-            otherText: isOtherOption(options[selectedOption]) ? otherText.trim() : '',
-            timestamp: Date.now()
-          };
-          sessionStorage.setItem(voteKey, JSON.stringify(voteData));
-          console.log(`[PollWithResults ${pollIndex}] Saved CEW vote to sessionStorage:`, voteData);
-          
-          // Track this vote to prevent multiple submissions from same device
-          try {
-            if (trackVote) {
-              trackVote(pagePath, pollIndex);
-            }
-          } catch (error) {
-            console.error(`[PollWithResults ${pollIndex}] Error tracking vote:`, error);
-          }
+          console.log(`[PollWithResults ${pollIndex}] CEW poll - vote submitted but not persisted locally for privacy`);
         }
         
         // Fetch updated results to show new vote counts
@@ -174,7 +129,6 @@ export default function PollWithResults({
         }
       } else {
         const errorData = await response.json();
-        console.error(`[PollWithResults ${pollIndex}] Failed to submit vote:`, response.status, errorData);
         
         // Show specific error message to user
         if (errorData.error) {
@@ -186,7 +140,6 @@ export default function PollWithResults({
         setSelectedOption(null);
       }
     } catch (error) {
-      console.error(`[PollWithResults ${pollIndex}] Error submitting vote:`, error);
       alert('Failed to submit vote. Please try again.');
       setSelectedOption(null);
     } finally {
@@ -431,11 +384,14 @@ export default function PollWithResults({
         </div>
       )}
 
+
       {/* Submit Button - always show when not voted, disabled until option selected */}
       {!hasVoted && (
         <div className="mt-6 flex justify-center">
           <button
-            onClick={handleSubmitVote}
+            onClick={() => {
+              handleSubmitVote();
+            }}
             disabled={selectedOption === null || isLoading || (isSelectedOther() && !otherText.trim())}
             className={`px-8 py-3 font-semibold rounded-xl transition-colors duration-300 flex items-center space-x-2 ${
               selectedOption === null || isLoading || (isSelectedOther() && !otherText.trim())

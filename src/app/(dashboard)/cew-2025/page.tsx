@@ -398,7 +398,7 @@ export default async function Cew2025Page() {
             </p>
             <p className="text-indigo-100 leading-relaxed">
               These poll links are <strong>ONLY for use during the CEW session on October 7, 2025</strong>. 
-              SSTAC & TWG members should use the pages under "Core Themes" above to participate in the CEW poll questions.
+              SSTAC & TWG members should use the pages under &ldquo;Core Themes&rdquo; above to participate in the CEW poll questions.
             </p>
           </div>
           

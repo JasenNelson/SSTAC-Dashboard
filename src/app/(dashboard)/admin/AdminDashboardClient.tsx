@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { 
   Users, 
@@ -10,7 +10,8 @@ import {
   FileText, 
   MessageSquare,
   BarChart3,
-  Vote
+  Vote,
+  FileSearch
 } from 'lucide-react';
 
 
@@ -213,6 +214,21 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                 </h3>
                 <p className="text-gray-600 text-sm">
                   View and analyze poll responses
+                </p>
+              </div>
+            </Link>
+
+            {/* TWG White Paper Synthesis */}
+            <Link href="/admin/twg-synthesis" className="group">
+              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-purple-300">
+                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-200 transition-colors">
+                  <FileSearch className="w-8 h-8 text-purple-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-purple-600 transition-colors mb-2">
+                  TWG White Paper Synthesis
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Analyze and synthesize TWG review feedback
                 </p>
               </div>
             </Link>

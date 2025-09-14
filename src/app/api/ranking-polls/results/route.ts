@@ -39,8 +39,9 @@ export async function GET(request: NextRequest) {
     let supabaseClient = supabase; // Default to authenticated connection
     
     if (isCEWPage && authCode) {
-      // CEW pages: use authCode as userId and anonymous connection
-      userId = authCode;
+      // CEW pages: don't return user votes for privacy
+      userId = null;
+      console.log(`CEW ranking poll - not returning user rankings for privacy (pollIndex: ${pollIndex})`);
       // Create anonymous connection for CEW pages
       supabaseClient = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -113,9 +114,9 @@ export async function GET(request: NextRequest) {
         if (!voteError && userVoteData && userVoteData.length > 0) {
           // Convert to array format where index = option_index, value = rank
           // Find the maximum option_index to determine array size
-          const maxOptionIndex = Math.max(...userVoteData.map((vote: any) => vote.option_index));
+          const maxOptionIndex = Math.max(...userVoteData.map((vote: { option_index: number }) => vote.option_index));
           const rankings = new Array(maxOptionIndex + 1);
-          userVoteData.forEach((vote: any) => {
+          userVoteData.forEach((vote: { option_index: number; rank: number }) => {
             rankings[vote.option_index] = vote.rank;
           });
           userRankings = rankings;
