@@ -374,9 +374,9 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
               {files.map(file => (
                 <div key={file.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{file.filename}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{file.file_name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {(file.file_size / 1024 / 1024).toFixed(2)} MB • {new Date(file.uploaded_at).toLocaleDateString()}
+                      {(file.file_size / 1024 / 1024).toFixed(2)} MB • {new Date(file.created_at).toLocaleDateString()}
                     </p>
                   </div>
                   <button
