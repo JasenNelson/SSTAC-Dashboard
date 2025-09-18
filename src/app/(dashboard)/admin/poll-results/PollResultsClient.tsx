@@ -52,27 +52,36 @@ export default function PollResultsClient() {
     try {
       setLoading(true);
       
-      // Fetch both single-choice and ranking poll results
+      // Fetch both single-choice and ranking poll results with error handling
       const [singleChoiceResult, rankingResult] = await Promise.all([
         supabase.from('poll_results').select('*').order('page_path', { ascending: true }).order('poll_index', { ascending: true }),
         supabase.from('ranking_results').select('*').order('page_path', { ascending: true }).order('poll_index', { ascending: true })
       ]);
 
-      
-
-      if (singleChoiceResult.error) throw singleChoiceResult.error;
-      if (rankingResult.error) throw rankingResult.error;
+      // Handle errors gracefully without breaking admin status
+      if (singleChoiceResult.error) {
+        console.error('Error fetching single-choice poll results:', singleChoiceResult.error);
+        // Don't throw error, just log it and continue
+      }
+      if (rankingResult.error) {
+        console.error('Error fetching ranking poll results:', rankingResult.error);
+        // Don't throw error, just log it and continue
+      }
 
       // Debug: Log raw data for all polls
       console.log('🔍 Raw single-choice data:', singleChoiceResult.data);
       console.log('🔍 Raw ranking data:', rankingResult.data);
+
+      // Process results with fallback for missing data
+      const singleChoiceData = singleChoiceResult.data || [];
+      const rankingData = rankingResult.data || [];
       
       // Debug: Log specific data for tiered-framework
       console.log('🔍 Raw single-choice data for tiered-framework:', 
-        (singleChoiceResult.data || []).filter(p => p.page_path.includes('tiered-framework'))
+        singleChoiceData.filter(p => p.page_path.includes('tiered-framework'))
       );
       console.log('🔍 Raw ranking data for tiered-framework:', 
-        (rankingResult.data || []).filter(p => p.page_path.includes('tiered-framework'))
+        rankingData.filter(p => p.page_path.includes('tiered-framework'))
       );
 
       // Define current active polls to filter out old/test data
@@ -116,7 +125,7 @@ export default function PollResultsClient() {
       }>();
 
       // Process single-choice polls
-      (singleChoiceResult.data || []).forEach(poll => {
+      singleChoiceData.forEach(poll => {
         // Only process polls that match current active questions
         const matchesCurrentQuestion = currentPollQuestions.some(question => 
           poll.question.includes(question.substring(0, 50)) || 
@@ -167,7 +176,7 @@ export default function PollResultsClient() {
       });
 
       // Process ranking polls
-      (rankingResult.data || []).forEach(poll => {
+      rankingData.forEach(poll => {
         // Only process polls that match current active questions
         const matchesCurrentQuestion = currentPollQuestions.some(question => 
           poll.question.includes(question.substring(0, 50)) || 
@@ -390,13 +399,13 @@ export default function PollResultsClient() {
       // If no combined results, fallback to showing raw data
       if (combinedResults.length === 0) {
         const fallbackResults = [
-          ...(singleChoiceResult.data || []).map(poll => ({ 
+          ...singleChoiceData.map(poll => ({ 
             ...poll, 
             is_ranking: false,
             combined_survey_votes: poll.total_votes || 0,
             combined_cew_votes: 0
           })),
-          ...(rankingResult.data || []).map(poll => ({ 
+          ...rankingData.map(poll => ({ 
             ...poll, 
             is_ranking: true,
             combined_survey_votes: poll.total_votes || 0,
