@@ -2,6 +2,38 @@
 -- Comprehensive database structure for admin management and user engagement
 -- Updated with enhanced user management capabilities
 
+-- ============================================================================
+-- CRITICAL DEBUGGING NOTES & LESSONS LEARNED
+-- ============================================================================
+
+-- POLL SYSTEM DEBUGGING GUIDELINES:
+-- 1. VOTE COUNTING LOGIC:
+--    - Ranking polls: Use total_votes field (represents unique participants)
+--    - Single-choice polls: Sum votes from results array
+--    - Each user ranks ALL options in ranking polls = 1 response
+--    - Each user selects ONE option in single-choice polls = 1 response
+
+-- 2. PATH RECOGNITION:
+--    - Survey polls: /survey-results/* OR /wiks
+--    - CEW polls: /cew-polls/*
+--    - All paths must be consistent for proper data grouping
+
+-- 3. DATA COMBINATION:
+--    - Group polls by topic_name_${poll_index} key
+--    - Store original survey/CEW data separately for filtering
+--    - Use consistent question text and options from CEW when available
+
+-- 4. TYPE SAFETY:
+--    - Always use explicit type annotations in TypeScript
+--    - No implicit 'any' types allowed
+--    - Test builds frequently during development
+
+-- 5. COMMON ISSUES TO AVOID:
+--    - Don't assume poll_index values match question numbers
+--    - Verify data sources before implementing complex logic
+--    - Test data combination with known data sets
+--    - Add comprehensive logging for data flow debugging
+
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -599,9 +631,205 @@ GRANT SELECT ON users_overview TO authenticated;
 GRANT SELECT ON admin_users_comprehensive TO authenticated;
 
 -- ============================================================================
--- RANKING POLL SYSTEM TABLES (EXISTING - DO NOT MODIFY)
+-- POLL SYSTEM TABLES (SINGLE-CHOICE AND RANKING POLLS)
 -- ============================================================================
--- Note: ranking_polls and ranking_votes tables already exist
+
+-- Polls table to store single-choice poll definitions
+CREATE TABLE IF NOT EXISTS polls (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    page_path VARCHAR(255) NOT NULL, -- e.g., '/survey-results/holistic-protection'
+    poll_index INTEGER NOT NULL, -- 0-based index of poll on the page
+    question TEXT NOT NULL,
+    options JSONB NOT NULL, -- Array of option strings
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Poll votes table to store individual single-choice votes
+-- Updated to support both authenticated users (UUID) and CEW conference codes (TEXT)
+CREATE TABLE IF NOT EXISTS poll_votes (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    poll_id UUID REFERENCES polls(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL, -- Can be UUID (authenticated) or CEW code (e.g., "CEW2025")
+    option_index INTEGER NOT NULL, -- 0-based index of selected option
+    other_text TEXT, -- For "Other" option responses
+    voted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    -- NOTE: Unique constraints removed for CEW polls - handled in application logic
+);
+
+-- Ranking polls table to store ranking poll definitions
+CREATE TABLE IF NOT EXISTS ranking_polls (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    page_path VARCHAR(255) NOT NULL, -- e.g., '/survey-results/holistic-protection'
+    poll_index INTEGER NOT NULL, -- 0-based index of poll on the page
+    question TEXT NOT NULL,
+    options JSONB NOT NULL, -- Array of option strings to be ranked
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Ranking votes table to store individual ranking votes
+-- Updated to support both authenticated users (UUID) and CEW conference codes (TEXT)
+CREATE TABLE IF NOT EXISTS ranking_votes (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    ranking_poll_id UUID REFERENCES ranking_polls(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL, -- Can be UUID (authenticated) or CEW code (e.g., "CEW2025")
+    option_index INTEGER NOT NULL, -- 0-based index of ranked option
+    rank INTEGER NOT NULL, -- 1-based rank (1 = highest priority)
+    voted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    -- NOTE: Unique constraints removed for CEW polls - handled in application logic
+);
+
+-- Enable RLS on poll tables
+ALTER TABLE polls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE poll_votes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ranking_polls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ranking_votes ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies for polls (allow anonymous access for CEW polls)
+CREATE POLICY "Anyone can view polls" ON polls FOR SELECT USING (true);
+CREATE POLICY "Anyone can create polls" ON polls FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can vote in polls" ON poll_votes FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can view poll votes" ON poll_votes FOR SELECT USING (true);
+
+-- RLS policies for ranking polls (allow anonymous access for CEW polls)
+CREATE POLICY "Anyone can view ranking polls" ON ranking_polls FOR SELECT USING (true);
+CREATE POLICY "Anyone can create ranking polls" ON ranking_polls FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can vote in ranking polls" ON ranking_votes FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can view ranking votes" ON ranking_votes FOR SELECT USING (true);
+
+-- Poll results view for aggregated single-choice poll data
+CREATE OR REPLACE VIEW poll_results AS
+SELECT 
+    p.id as poll_id,
+    p.page_path,
+    p.poll_index,
+    p.question,
+    p.options,
+    p.created_at,
+    p.updated_at,
+    COALESCE(option_counts.total_votes, 0) as total_votes,
+    COALESCE(
+        jsonb_agg(
+            jsonb_build_object(
+                'option_index', option_counts.option_index,
+                'option_text', p.options->>option_counts.option_index,
+                'votes', option_counts.vote_count
+            ) ORDER BY option_counts.option_index
+        ) FILTER (WHERE option_counts.option_index IS NOT NULL),
+        '[]'::jsonb
+    ) as results
+FROM polls p
+LEFT JOIN (
+    SELECT 
+        poll_id,
+        option_index,
+        COUNT(*) as vote_count,
+        COUNT(*) as total_votes
+    FROM poll_votes
+    GROUP BY poll_id, option_index
+) option_counts ON p.id = option_counts.poll_id
+GROUP BY p.id, p.page_path, p.poll_index, p.question, p.options, p.created_at, p.updated_at, option_counts.total_votes;
+
+-- Ranking results view for aggregated ranking poll data (FIXED VERSION)
+CREATE OR REPLACE VIEW ranking_results AS
+SELECT 
+    rp.id as ranking_poll_id,
+    rp.page_path,
+    rp.poll_index,
+    rp.question,
+    rp.options,
+    rp.created_at,
+    rp.updated_at,
+    COUNT(DISTINCT rv.user_id) as total_votes, -- Count unique users, not individual votes
+    COALESCE(
+        (
+            SELECT jsonb_agg(
+                jsonb_build_object(
+                    'option_index', option_stats.option_index,
+                    'option_text', rp.options[option_stats.option_index + 1],
+                    'averageRank', option_stats.avg_rank,
+                    'votes', option_stats.vote_count
+                ) ORDER BY option_stats.option_index
+            )
+            FROM (
+                SELECT 
+                    rv2.option_index,
+                    AVG(rv2.rank::numeric) as avg_rank,
+                    COUNT(rv2.id) as vote_count
+                FROM ranking_votes rv2
+                WHERE rv2.ranking_poll_id = rp.id
+                GROUP BY rv2.option_index
+            ) option_stats
+        ),
+        '[]'::jsonb
+    ) as results
+FROM ranking_polls rp
+LEFT JOIN ranking_votes rv ON rp.id = rv.ranking_poll_id
+GROUP BY rp.id, rp.page_path, rp.poll_index, rp.question, rp.options, rp.created_at, rp.updated_at;
+
+-- Grant permissions on poll tables and views
+GRANT SELECT, INSERT, UPDATE, DELETE ON polls TO authenticated, anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON poll_votes TO authenticated, anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ranking_polls TO authenticated, anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ranking_votes TO authenticated, anon;
+GRANT SELECT ON poll_results TO authenticated, anon;
+GRANT SELECT ON ranking_results TO authenticated, anon;
+
+-- Helper functions for poll creation and management
+CREATE OR REPLACE FUNCTION get_or_create_poll(
+    p_page_path TEXT,
+    p_poll_index INTEGER,
+    p_question TEXT,
+    p_options JSONB
+) RETURNS UUID AS $$
+DECLARE
+    poll_id UUID;
+BEGIN
+    -- Try to get existing poll
+    SELECT id INTO poll_id 
+    FROM polls 
+    WHERE page_path = p_page_path AND poll_index = p_poll_index;
+    
+    -- Create poll if it doesn't exist
+    IF poll_id IS NULL THEN
+        INSERT INTO polls (page_path, poll_index, question, options)
+        VALUES (p_page_path, p_poll_index, p_question, p_options)
+        RETURNING id INTO poll_id;
+    END IF;
+    
+    RETURN poll_id;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION get_or_create_ranking_poll(
+    p_page_path TEXT,
+    p_poll_index INTEGER,
+    p_question TEXT,
+    p_options JSONB
+) RETURNS UUID AS $$
+DECLARE
+    poll_id UUID;
+BEGIN
+    -- Try to get existing ranking poll
+    SELECT id INTO poll_id 
+    FROM ranking_polls 
+    WHERE page_path = p_page_path AND poll_index = p_poll_index;
+    
+    -- Create ranking poll if it doesn't exist
+    IF poll_id IS NULL THEN
+        INSERT INTO ranking_polls (page_path, poll_index, question, options)
+        VALUES (p_page_path, p_poll_index, p_question, p_options)
+        RETURNING id INTO poll_id;
+    END IF;
+    
+    RETURN poll_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Grant execute permissions on helper functions
+GRANT EXECUTE ON FUNCTION get_or_create_poll TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION get_or_create_ranking_poll TO authenticated, anon;
 -- See safe_ranking_system_fixed.sql for the original implementation
 -- ============================================================================
 -- VERIFICATION QUERIES

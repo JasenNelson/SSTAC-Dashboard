@@ -485,7 +485,7 @@ export default function Header() {
             {session ? (
               <>
                 {/* User Info */}
-                <div className="hidden sm:flex items-center space-x-3">
+                <div className="hidden md:flex items-center space-x-3">
                   <div className="text-sm text-gray-700 dark:text-gray-300">
                     <span className="font-medium">{session.user.email}</span>
                     {isAdmin && (

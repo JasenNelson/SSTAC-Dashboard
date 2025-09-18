@@ -43,15 +43,19 @@ The SSTAC & TWG Dashboard uses Supabase (PostgreSQL) with a comprehensive schema
 - **Purpose**: Content management system
 - **Features**: File storage, categorization, project timeline
 
-#### **`polls` & `poll_votes`** (Poll System)
+#### **`polls` & `poll_votes`** (Single-Choice Poll System)
 - **Purpose**: Interactive single-choice poll system
 - **Features**: Vote persistence, real-time results, admin management
-- **Security**: RLS policies for user isolation and admin access
+- **CEW Support**: Accepts both UUID (authenticated) and CEW codes (e.g., "CEW2025")
+- **Constraints**: Simplified - no unique constraints (handled in application logic)
+- **Security**: RLS policies allow anonymous access for CEW polls
 
 #### **`ranking_polls` & `ranking_votes`** (Ranking Poll System)
 - **Purpose**: Interactive ranking poll system
 - **Features**: Multi-option ranking, average rank calculation, real-time results
-- **Security**: RLS policies for user isolation and admin access
+- **CEW Support**: Accepts both UUID (authenticated) and CEW codes (e.g., "CEW2025")
+- **Constraints**: Simplified - no unique constraints (handled in application logic)
+- **Security**: RLS policies allow anonymous access for CEW polls
 
 ### **Critical Database Views**
 
@@ -73,15 +77,51 @@ The SSTAC & TWG Dashboard uses Supabase (PostgreSQL) with a comprehensive schema
 - **Purpose**: Document-tag relationships for efficient querying
 - **Features**: Tag aggregation, document metadata
 
-#### **`poll_results`** (Poll System View)
+#### **`poll_results`** (Single-Choice Poll System View)
 - **Purpose**: Aggregated single-choice poll results
 - **Features**: Vote counts, percentage calculations, real-time updates
+- **CEW Support**: Includes both authenticated and CEW conference votes
 - **Data Sources**: `polls`, `poll_votes` tables
+- **Performance**: Optimized for fast poll result retrieval
 
-#### **`ranking_results`** (Ranking Poll System View)
+#### **`ranking_results`** (Ranking Poll System View - FIXED VERSION)
 - **Purpose**: Aggregated ranking poll results
 - **Features**: Average rank calculations, vote counts, option text mapping
+- **CEW Support**: Includes both authenticated and CEW conference votes
 - **Data Sources**: `ranking_polls`, `ranking_votes` tables
+- **Performance**: Optimized with subquery approach to avoid aggregate function nesting
+- **Fix Applied**: Corrected to count unique users instead of individual ranking votes
+
+### **CEW Conference Polling System** ✅ COMPLETED (FINAL VERSION)
+
+#### **System Overview**
+The CEW conference polling system supports both authenticated dashboard users and anonymous conference attendees through a unified database schema.
+
+#### **Key Design Decisions**
+1. **Simplified Constraints**: Removed complex unique constraints that caused submission failures
+2. **Privacy-Focused**: No client-side persistence for true privacy in incognito mode
+3. **Anonymous Access**: RLS policies allow anonymous voting for CEW polls
+4. **Unified Database**: CEW votes combined with authenticated user votes in same tables
+5. **Application-Level Uniqueness**: Vote uniqueness handled in application logic, not database constraints
+
+#### **Database Schema Changes**
+- **`poll_votes.user_id`**: Changed from UUID to TEXT to accept both UUIDs and CEW codes
+- **`ranking_votes.user_id`**: Changed from UUID to TEXT to accept both UUIDs and CEW codes
+- **Unique Constraints**: Removed `UNIQUE(poll_id, user_id)` and `UNIQUE(ranking_poll_id, user_id)`
+- **RLS Policies**: Updated to allow anonymous access for CEW polls
+- **Helper Functions**: Enhanced to support both authentication modes
+
+#### **CEW Poll Authentication Flow**
+```
+Conference Attendee → Enter "CEW2025" → Anonymous Supabase Client → Vote Submission
+Dashboard User → Authenticated Session → Authenticated Supabase Client → Vote Submission
+```
+
+#### **Privacy Implementation**
+- **No localStorage/sessionStorage**: CEW polls don't persist votes client-side
+- **Anonymous Supabase Clients**: API routes use null cookie handlers for true anonymity
+- **No Vote Retrieval**: CEW poll results APIs don't return user-specific vote data
+- **Incognito Mode Compatible**: True privacy in incognito/private browsing modes
 
 ### **Database Functions**
 

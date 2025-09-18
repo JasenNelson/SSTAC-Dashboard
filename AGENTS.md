@@ -48,6 +48,10 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 
 ### 7. Poll and Ranking Question System Guidelines (CRITICAL)
 - **NEVER modify poll database schema** without understanding all dependencies
+- **PRIVACY FIRST**: For CEW polls, avoid client-side persistence to ensure true privacy in incognito mode
+- **SIMPLIFY CONSTRAINTS**: Complex unique constraints can cause submission failures - prefer application-level uniqueness
+- **ANONYMOUS CLIENTS**: Use null cookie handlers for Supabase clients in CEW poll API routes
+- **UI CONTRAST**: Ensure ranking buttons have proper contrast in both light and dark modes
 - **ALWAYS test poll functionality** after any database changes
 - **UNDERSTAND poll types**: Single-choice polls vs ranking polls have different data structures
 - **PRESERVE vote persistence**: Votes must be remembered across sessions
@@ -55,6 +59,42 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **RESPECT authentication modes**: Both authenticated users and CEW conference attendees
 - **VERIFY RLS policies**: Poll data must be properly isolated by user
 - **TEST vote tracking**: Ensure device-based tracking works for CEW polls
+
+### 8. Code Quality and Production Readiness Guidelines (CRITICAL)
+- **BUILD SUCCESS**: Always ensure successful production build before committing
+- **TYPE SAFETY**: Replace TypeScript `any` types with proper type definitions
+- **JSX COMPLIANCE**: Fix all unescaped quotes in JSX components using proper HTML entities
+- **IMPORT CLEANUP**: Remove unused imports and variables
+- **LINTING**: Address critical linting errors, warnings are acceptable for non-critical issues
+- **PRODUCTION READY**: Code must be suitable for production deployment
+- **QUOTE ESCAPING**: Use `&apos;` for apostrophes, `&ldquo;` and `&rdquo;` for quotes
+- **TYPE DEFINITIONS**: Create proper interfaces for API responses and component props
+- **BUILD VERIFICATION**: Run `npm run build` to verify compilation success
+
+### 9. UI/UX Color Contrast Guidelines (CRITICAL)
+- **LIGHT MODE**: Colored backgrounds MUST use dark text (`text-gray-900`) for proper contrast and readability
+- **DARK MODE**: Colored backgrounds MUST use light text (`text-white` or theme-specific light colors) for proper contrast
+- **NEVER USE**: Light text on light backgrounds or dark text on dark backgrounds
+- **APPLIES TO**: All buttons, cards, containers, and interactive elements
+- **TEST BOTH MODES**: Always verify proper contrast ratios in both light and dark modes for accessibility
+- **HISTORICAL CONTEXT**: This has been a recurring issue requiring multiple fixes for proper readability
+
+### 10. Complex Data Integration Debugging Guidelines (CRITICAL)
+- **ALWAYS verify data sources** before implementing complex data combination logic
+- **UNDERSTAND data types** - Ranking polls vs single-choice polls have different vote counting logic
+- **TEST data combination** with known data sets before deploying
+- **ADD comprehensive logging** for data flow through complex systems
+- **VERIFY path patterns** - Ensure all poll paths follow consistent patterns
+- **DOCUMENT data flow** - Map out how data moves through the system
+- **TEST edge cases** - Empty data, missing fields, type mismatches
+- **HISTORICAL CONTEXT**: Admin poll results system had complex data integration issues causing incorrect vote counts
+
+### 11. TypeScript Build Safety Guidelines (CRITICAL)
+- **NO implicit `any` types** - Always provide explicit type annotations
+- **FIX TypeScript errors** before attempting production builds
+- **USE proper type definitions** for complex data structures
+- **TEST builds frequently** during development to catch type issues early
+- **HISTORICAL CONTEXT**: Missing type annotations caused production build failures
 
 ## 🗳️ **Poll and Ranking Question System Development Guidelines**
 
