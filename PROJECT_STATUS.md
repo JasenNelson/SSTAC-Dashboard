@@ -6,6 +6,12 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 
 ## 🚀 **Recent Major Updates**
 
+### **TWG Review Access & Schema Sync** ✅ COMPLETED (2025-09-18)
+- Reordered TWG Review: Line-by-Line Comments is now Part 3 with Sections I–V and Appendices C & D (5,000 chars each)
+- Server-side fallback on `/twg/review` assigns `member` if missing, eliminating manual SQL for new signups
+- Admin role checks updated to `.maybeSingle()` across server/client
+- Schema synced: `review_files` uses `file_name`, `mime_type`, `created_at`; admin view aliases `submission_created_at`, `submission_updated_at`
+
 ### **Poll Results UI/UX Improvements** ✅ COMPLETED (2025-01-18)
 - **Single Question Display**: Poll results now show only the selected question for focused viewing
 - **Expandable Poll Groups**: Left panel groups can be expanded to reveal individual question links

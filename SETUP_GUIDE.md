@@ -555,6 +555,17 @@ JOIN user_roles ur ON u.id = ur.user_id
 WHERE ur.role = 'admin';
 ```
 
+### **TWG Review Access Verification** ✅ NEW
+
+1. Sign up a brand-new test user (e.g., `testX@example.com`).
+2. Visit `/twg/review` once while logged in.
+3. If the `on_auth_user_created` trigger lags, the page performs a safe one-time self-assign of `member`. A single refresh completes access.
+4. Verify role:
+```sql
+SELECT user_id, role FROM public.user_roles
+WHERE user_id = (SELECT id FROM auth.users WHERE email = 'testX@example.com');
+```
+
 ### **Like System Verification** ✅ NEW
 
 Test the like system functionality:

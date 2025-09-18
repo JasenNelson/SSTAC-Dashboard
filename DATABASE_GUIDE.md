@@ -141,6 +141,17 @@ Dashboard User → Authenticated Session → Authenticated Supabase Client → V
 -- Maintains data integrity
 ```
 
+### **TWG Review Data & Files**
+
+#### **`review_files` Column Names**
+Standardized columns are: `file_name`, `mime_type`, `created_at` (superseding older references `filename`, `mimetype`, `uploaded_at`).
+
+#### **`admin_review_submissions` Aliases**
+Exposes `submission_created_at` and `submission_updated_at` for clarity in server components.
+
+#### **TWG Review Role Fallback**
+`/twg/review` server component includes a safe, one-time fallback that inserts a `member` role for the current confirmed user if the `on_auth_user_created` trigger has not yet populated `user_roles`. This removes the need for manual role assignment and does not affect existing policies.
+
 #### **`update_updated_at_column()`**
 ```sql
 -- Automatic timestamp updates

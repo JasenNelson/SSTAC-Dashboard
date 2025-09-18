@@ -4,6 +4,12 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 
 ## 🚀 **Recent Major Updates**
 
+### **TWG Review & Auth Reliability** ✅ NEW (2025-09-18)
+- **TWG Review Reordering**: Moved Line-by-Line Comments to Part 3; added six 5,000-character fields (Sections I–V and Appendices C & D)
+- **Auth Robustness**: Server-side fallback now auto-assigns `member` on first `/twg/review` visit if trigger lag occurs
+- **Admin Role Checks**: Switched server/client checks from `.single()` to `.maybeSingle()` to avoid 406 errors for non-admins
+- **Schema Alignment**: `review_files` columns renamed (`file_name`, `mime_type`, `created_at`); `admin_review_submissions` exposes `submission_created_at`, `submission_updated_at`
+
 ### **Poll Results UI/UX Improvements** ✅ NEW (2025-01-18)
 - **Single Question Display**: Poll results now show only the selected question for focused viewing
 - **Expandable Poll Groups**: Left panel groups can be expanded to reveal individual question links
