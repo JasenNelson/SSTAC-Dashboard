@@ -67,28 +67,28 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
       completed.push(2)
     }
     
-    // Check Part 3: Matrix Sediment Standards Framework
-    if (formData.part3?.ranking && formData.part3?.challenges) {
+    // Check Part 3: Line-by-Line Comments (formerly Part 7)
+    if (formData.part3?.sectionI || formData.part3?.sectionII || formData.part3?.sectionIII || formData.part3?.sectionIV || formData.part3?.sectionV || formData.part3?.appendicesCD) {
       completed.push(3)
     }
     
-    // Check Part 4: Tiered Assessment Approach
-    if (formData.part4?.bioavailability && formData.part4?.evidence && formData.part4?.guidance) {
+    // Check Part 4: Matrix Sediment Standards Framework (formerly Part 3)
+    if (formData.part4?.ranking && formData.part4?.challenges) {
       completed.push(4)
     }
     
-    // Check Part 5: Integration of Indigenous Knowledge
-    if (formData.part5?.opportunities && formData.part5?.challenges) {
+    // Check Part 5: Tiered Assessment Approach (formerly Part 4)
+    if (formData.part5?.bioavailability && formData.part5?.evidence && formData.part5?.guidance) {
       completed.push(5)
     }
     
-    // Check Part 6: Prioritization and Strategic Direction
-    if (formData.part6?.modernization && formData.part6?.research) {
+    // Check Part 6: Integration of Indigenous Knowledge (formerly Part 5)
+    if (formData.part6?.tier0Approaches && formData.part6?.frameworkElements && formData.part6?.studyComponents) {
       completed.push(6)
     }
     
-    // Check Part 7: Line-by-Line Comments
-    if (formData.part7?.comments || formData.part7?.files?.length > 0) {
+    // Check Part 7: Prioritization and Strategic Direction (formerly Part 6)
+    if (formData.part7?.modernization && formData.part7?.research) {
       completed.push(7)
     }
     
@@ -183,11 +183,11 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
   const sections = [
     { id: 1, title: 'Reviewer Information', description: 'Optional background information' },
     { id: 2, title: 'High-Level Report Assessment', description: 'Overall impressions and ratings' },
-    { id: 3, title: 'Matrix Sediment Standards Framework', description: 'Dual standard approach feedback' },
-    { id: 4, title: 'Tiered Assessment Approach', description: 'Scientific framework evaluation' },
-    { id: 5, title: 'Integration of Indigenous Knowledge', description: 'Knowledge systems integration' },
-    { id: 6, title: 'Prioritization and Strategic Direction', description: 'Research and implementation priorities' },
-    { id: 7, title: 'Line-by-Line Comments', description: 'Detailed feedback and document upload' },
+    { id: 3, title: 'Line-by-Line Comments', description: 'Detailed feedback by section' },
+    { id: 4, title: 'Matrix Sediment Standards Framework', description: 'Dual standard approach feedback' },
+    { id: 5, title: 'Tiered Assessment Approach', description: 'Scientific framework evaluation' },
+    { id: 6, title: 'Integration of Indigenous Knowledge', description: 'Knowledge systems integration' },
+    { id: 7, title: 'Prioritization and Strategic Direction', description: 'Research and implementation priorities' },
     { id: 8, title: 'Final Recommendations', description: 'Critical gaps and suggestions' }
   ]
 
@@ -428,35 +428,35 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
           )}
           
           {currentSection === 3 && (
-            <Part3MatrixFramework 
+            <Part3LineByLineComments 
               data={formData.part3 || {}} 
               onChange={(data) => updateFormData('part3', data)} 
             />
           )}
           
           {currentSection === 4 && (
-            <Part4TieredApproach 
+            <Part4MatrixFramework 
               data={formData.part4 || {}} 
               onChange={(data) => updateFormData('part4', data)} 
             />
           )}
           
           {currentSection === 5 && (
-            <Part5IndigenousKnowledge 
+            <Part5TieredApproach 
               data={formData.part5 || {}} 
               onChange={(data) => updateFormData('part5', data)} 
             />
           )}
           
           {currentSection === 6 && (
-            <Part6Prioritization 
+            <Part6IndigenousKnowledge 
               data={formData.part6 || {}} 
               onChange={(data) => updateFormData('part6', data)} 
             />
           )}
           
           {currentSection === 7 && (
-            <Part7LineByLineComments 
+            <Part7Prioritization 
               data={formData.part7 || {}} 
               onChange={(data) => updateFormData('part7', data)} 
             />
@@ -663,7 +663,141 @@ function Part2HighLevelAssessment({ data, onChange }: { data: any, onChange: (da
   )
 }
 
-function Part3MatrixFramework({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part3LineByLineComments({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        Part 3: Line-by-Line Comments
+      </h3>
+      
+      <div className="space-y-6">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <p className="text-gray-700 dark:text-gray-300">
+            Please provide detailed, line-by-line comments for each section of the report. 
+            Reference specific page numbers, sections, and line numbers to ensure clarity. 
+            Each text area allows up to 5,000 characters.
+          </p>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Section I - Introduction:
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.sectionI || ''}
+              onChange={(e) => onChange({ ...data, sectionI: e.target.value })}
+              rows={8}
+              maxLength={5000}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Enter your line-by-line comments for Section I - Introduction here..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.sectionI || '').length}/5000 characters
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Section II - Preliminary Scientific Research Findings:
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.sectionII || ''}
+              onChange={(e) => onChange({ ...data, sectionII: e.target.value })}
+              rows={8}
+              maxLength={5000}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Enter your line-by-line comments for Section II - Preliminary Scientific Research Findings here..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.sectionII || '').length}/5000 characters
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Section III - Jurisdictional Scan:
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.sectionIII || ''}
+              onChange={(e) => onChange({ ...data, sectionIII: e.target.value })}
+              rows={8}
+              maxLength={5000}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Enter your line-by-line comments for Section III - Jurisdictional Scan here..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.sectionIII || '').length}/5000 characters
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Section IV - Community and Stakeholder Engagement Insights:
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.sectionIV || ''}
+              onChange={(e) => onChange({ ...data, sectionIV: e.target.value })}
+              rows={8}
+              maxLength={5000}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Enter your line-by-line comments for Section IV - Community and Stakeholder Engagement Insights here..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.sectionIV || '').length}/5000 characters
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Section V - Proposed Framework for Modernized Sediment Standards:
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.sectionV || ''}
+              onChange={(e) => onChange({ ...data, sectionV: e.target.value })}
+              rows={8}
+              maxLength={5000}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Enter your line-by-line comments for Section V - Proposed Framework for Modernized Sediment Standards here..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.sectionV || '').length}/5000 characters
+            </div>
+          </div>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Appendices C & D:
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.appendicesCD || ''}
+              onChange={(e) => onChange({ ...data, appendicesCD: e.target.value })}
+              rows={8}
+              maxLength={5000}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Enter your line-by-line comments for Appendices C & D here..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.appendicesCD || '').length}/5000 characters
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Part4MatrixFramework({ data, onChange }: { data: any, onChange: (data: any) => void }) {
   const contaminantGroups = [
     'Mercury and its compounds',
     'Polychlorinated Biphenyls (PCBs)',
@@ -780,7 +914,7 @@ function Part3MatrixFramework({ data, onChange }: { data: any, onChange: (data: 
   )
 }
 
-function Part4TieredApproach({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part5TieredApproach({ data, onChange }: { data: any, onChange: (data: any) => void }) {
   const bioavailabilityOptions = [
     'Equilibrium partitioning models (e.g., based on organic carbon content)',
     'Normalization using Acid-Volatile Sulfides/Simultaneously Extracted Metals (AVS/SEM)',
@@ -798,7 +932,7 @@ function Part4TieredApproach({ data, onChange }: { data: any, onChange: (data: a
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Part 4: The Tiered Assessment Approach
+        Part 5: The Tiered Assessment Approach
       </h3>
       
       <div className="space-y-6">
@@ -948,7 +1082,7 @@ function Part4TieredApproach({ data, onChange }: { data: any, onChange: (data: a
   )
 }
 
-function Part5IndigenousKnowledge({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part6IndigenousKnowledge({ data, onChange }: { data: any, onChange: (data: any) => void }) {
   const tier0Options = [
     'Implement Tier 0 anti-degradation provisions for sediment quality',
     'Establish baseline sediment quality conditions for reference',
@@ -978,7 +1112,7 @@ function Part5IndigenousKnowledge({ data, onChange }: { data: any, onChange: (da
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Part 5: WQCIU Approaches for Indigenous Uses Integration
+        Part 6: WQCIU Approaches for Indigenous Uses Integration
       </h3>
       
       <div className="space-y-6">
@@ -1147,7 +1281,7 @@ function Part5IndigenousKnowledge({ data, onChange }: { data: any, onChange: (da
   )
 }
 
-function Part6Prioritization({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part7Prioritization({ data, onChange }: { data: any, onChange: (data: any) => void }) {
   const modernizationOptions = [
     'Development of a Scientific Framework for Deriving Site-Specific Sediment Standards (Bioavailability Adjustment)',
     'Development of a Matrix Sediment Standards Framework - Focus on Ecological Protection',
@@ -1165,7 +1299,7 @@ function Part6Prioritization({ data, onChange }: { data: any, onChange: (data: a
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Part 6: Prioritization and Strategic Direction
+        Part 7: Prioritization and Strategic Direction
       </h3>
       
       <div className="space-y-8">
@@ -1286,112 +1420,6 @@ function Part6Prioritization({ data, onChange }: { data: any, onChange: (data: a
   )
 }
 
-function Part7LineByLineComments({ data, onChange }: { data: any, onChange: (data: any) => void }) {
-  const [uploading, setUploading] = useState(false)
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    setUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('submissionId', data.submissionId || 'temp')
-
-      const response = await fetch('/api/review/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      const result = await response.json()
-      if (result.success) {
-        const newFiles = [...(data.files || []), result.file]
-        onChange({ ...data, files: newFiles })
-      } else {
-        alert('Error uploading file. Please try again.')
-      }
-    } catch (error) {
-      console.error('Error uploading file:', error)
-      alert('Error uploading file. Please try again.')
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Part 7: Line-by-Line Comments and Document Upload
-      </h3>
-      
-      <div className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Please use the space below to provide any specific, line-by-line comments. Please reference the 
-            relevant Page Number, Section, and Line Number to ensure clarity:
-          </label>
-          <div className="relative">
-            <textarea
-              value={data.comments || ''}
-              onChange={(e) => onChange({ ...data, comments: e.target.value })}
-              rows={8}
-              maxLength={5000}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-              placeholder="Enter your line-by-line comments here..."
-            />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
-              {(data.comments || '').length}/5000 characters
-            </div>
-          </div>
-        </div>
-        
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Alternatively, if you have suggested edits or commented directly on the report document, you may upload your annotated file here. 
-            (Accepted formats: DOCX, PDF, Google Docs. Max file size: 10MB):
-          </label>
-          
-          <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
-            <input
-              type="file"
-              accept=".docx,.pdf,.gdoc"
-              onChange={handleFileUpload}
-              disabled={uploading}
-              className="hidden"
-              id="file-upload"
-            />
-            <label
-              htmlFor="file-upload"
-              className="cursor-pointer inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
-            >
-              {uploading ? 'Uploading...' : 'Upload File'}
-            </label>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-              DOCX, PDF, Google Docs up to 10MB
-            </p>
-          </div>
-          
-          {data.files && data.files.length > 0 && (
-            <div className="mt-4">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Uploaded Files:</h4>
-              <ul className="space-y-2">
-                {data.files.map((file: any, index: number) => (
-                  <li key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{file.filename}</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {(file.file_size / 1024 / 1024).toFixed(2)} MB
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function Part8FinalRecommendations({ data, onChange }: { data: any, onChange: (data: any) => void }) {
   return (
