@@ -39,7 +39,7 @@ export default async function TWGSynthesisPage() {
   const { data: submissions, error: submissionsError } = await supabase
     .from('admin_review_submissions')
     .select('*')
-    .order('submission_created_at', { ascending: false })
+    .order('created_at', { ascending: false })
 
   // Get review files
   const { data: files, error: filesError } = await supabase
