@@ -28,22 +28,39 @@ export default function InteractivePieChart({
   const [hoveredSlice, setHoveredSlice] = useState<number | null>(null);
   const [selectedSlice, setSelectedSlice] = useState<number | null>(null);
 
-  // Calculate total for percentages
-  const total = data.reduce((sum, item) => sum + item.value, 0);
+  // Safety check for empty data
+  if (!data || data.length === 0) {
+    return (
+      <div className="relative">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">{title}</h3>
+        <div className="text-center text-gray-500 py-8">
+          No data available
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate total for percentages with NaN protection
+  const total = data.reduce((sum, item) => {
+    const value = isNaN(item.value) ? 0 : item.value;
+    return sum + value;
+  }, 0);
   
-  // Calculate angles for pie slices
+  // Calculate angles for pie slices with NaN protection
   let currentAngle = 0;
   const slices = data.map((item, index) => {
-    const percentage = (item.value / total) * 100;
+    const value = isNaN(item.value) ? 0 : item.value;
+    const percentage = total > 0 ? (value / total) * 100 : 0;
     const startAngle = currentAngle;
     const endAngle = currentAngle + (percentage / 100) * 360;
     currentAngle = endAngle;
     
     return {
       ...item,
-      percentage,
-      startAngle,
-      endAngle,
+      value: value,
+      percentage: isNaN(percentage) ? 0 : percentage,
+      startAngle: isNaN(startAngle) ? 0 : startAngle,
+      endAngle: isNaN(endAngle) ? 0 : endAngle,
       index,
     };
   });
@@ -61,7 +78,9 @@ export default function InteractivePieChart({
 
   // Convert polar coordinates to Cartesian
   const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
-    const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+    // Ensure angleInDegrees is a valid number
+    const validAngle = isNaN(angleInDegrees) ? 0 : angleInDegrees;
+    const angleInRadians = (validAngle - 90) * Math.PI / 180.0;
     return {
       x: centerX + (radius * Math.cos(angleInRadians)),
       y: centerY + (radius * Math.sin(angleInRadians)),

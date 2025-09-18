@@ -224,29 +224,29 @@ export default function Header() {
 
   // Listen for route changes to refresh admin status
   useEffect(() => {
-    if (session?.user && isAdmin) {
-      // Refresh admin status when navigating to admin pages
+    if (session?.user) {
+      // Always refresh admin status when navigating to admin pages
       if (pathname.startsWith('/admin')) {
         console.log('🔄 Admin page navigation detected - refreshing admin status');
-        refreshGlobalAdminStatus().then((isStillAdmin) => {
+        refreshGlobalAdminStatus(true).then((isStillAdmin) => {
+          setIsAdmin(isStillAdmin);
           if (!isStillAdmin) {
             console.log('⚠️ Admin status lost during navigation');
-            setIsAdmin(false);
           }
         });
       }
     }
-  }, [pathname, session?.user, isAdmin]);
+  }, [pathname, session?.user]);
 
   // Listen for navigation events to refresh admin status
   useEffect(() => {
     const handleRouteChange = () => {
-      if (session?.user && isAdmin && pathname.startsWith('/admin')) {
+      if (session?.user && pathname.startsWith('/admin')) {
         console.log('🔄 Navigation event detected - refreshing admin status');
-        refreshGlobalAdminStatus().then((isStillAdmin) => {
+        refreshGlobalAdminStatus(true).then((isStillAdmin) => {
+          setIsAdmin(isStillAdmin);
           if (!isStillAdmin) {
             console.log('⚠️ Admin status lost during navigation event');
-            setIsAdmin(false);
           }
         });
       }
@@ -278,20 +278,20 @@ export default function Header() {
 
   // Periodic admin status check to ensure badge persists
   useEffect(() => {
-    if (session?.user && isAdmin) {
+    if (session?.user) {
       const intervalId = setInterval(async () => {
         if (session?.user) {
           const isStillAdmin = await refreshGlobalAdminStatus();
+          setIsAdmin(isStillAdmin);
           if (!isStillAdmin) {
             console.log('⚠️ Admin status lost during periodic check');
-            setIsAdmin(false);
           }
         }
-      }, 60000); // Check every 60 seconds
+      }, 30000); // Check every 30 seconds (more frequent)
 
       return () => clearInterval(intervalId);
     }
-  }, [session?.user, isAdmin]);
+  }, [session?.user]);
 
   const handleLogout = async () => {
     console.log('🔄 Logout initiated for user:', session?.user?.email);

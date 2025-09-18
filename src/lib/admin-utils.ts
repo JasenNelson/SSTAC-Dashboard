@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 
 // Throttling mechanism to prevent excessive calls
 let lastRefreshTime = 0;
-const REFRESH_THROTTLE_MS = 500; // 500ms minimum between calls (reduced for production)
+const REFRESH_THROTTLE_MS = 50; // 50ms minimum between calls (minimal throttling for production)
 
 /**
  * Global function to refresh admin status
@@ -17,6 +17,17 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
     const now = Date.now();
     if (!force && now - lastRefreshTime < REFRESH_THROTTLE_MS) {
       console.log('⏰ Admin status refresh throttled - too soon since last call');
+      // Return cached admin status instead of false
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const backupAdminStatus = localStorage.getItem(`admin_status_${user.id}`);
+          return backupAdminStatus === 'true';
+        }
+      } catch (error) {
+        console.error('❌ Error checking cached admin status:', error);
+      }
       return false;
     }
     lastRefreshTime = now;
@@ -39,7 +50,7 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
       .select('role')
       .eq('user_id', user.id)
       .eq('role', 'admin')
-      .single();
+      .maybeSingle();
 
     if (roleError) {
       console.error('❌ Error checking admin role:', roleError);
@@ -108,7 +119,7 @@ export async function checkCurrentUserAdminStatus(): Promise<boolean> {
       .select('role')
       .eq('user_id', user.id)
       .eq('role', 'admin')
-      .single();
+      .maybeSingle();
 
     if (roleError) {
       // Check localStorage backup

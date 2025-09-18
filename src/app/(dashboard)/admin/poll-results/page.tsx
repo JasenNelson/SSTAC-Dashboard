@@ -34,7 +34,7 @@ export default async function PollResultsPage() {
     .select('role')
     .eq('user_id', user.id)
     .eq('role', 'admin')
-    .single();
+    .maybeSingle();
 
   const isAdmin = !!roleData;
   

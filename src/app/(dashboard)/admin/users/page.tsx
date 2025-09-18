@@ -31,7 +31,7 @@ export default async function AdminUsersPage() {
     .select('role')
     .eq('user_id', user.id)
     .eq('role', 'admin')
-    .single();
+    .maybeSingle();
 
   const isAdmin = !!roleData;
   

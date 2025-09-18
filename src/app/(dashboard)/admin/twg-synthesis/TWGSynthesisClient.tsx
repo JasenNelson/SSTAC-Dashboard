@@ -92,13 +92,17 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
   const processRatingData = (part: string, field: string) => {
     const ratings = ['Excellent', 'Good', 'Fair', 'Poor']
     const colors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'] // Green, Blue, Yellow, Red
-    const data = ratings.map((rating, index) => ({
-      label: rating,
-      value: submissions.filter(sub => 
+    const data = ratings.map((rating, index) => {
+      const count = submissions.filter(sub => 
         sub.form_data?.[part]?.[field] === rating
-      ).length,
-      color: colors[index]
-    }))
+      ).length
+      
+      return {
+        label: rating,
+        value: isNaN(count) ? 0 : count,
+        color: colors[index]
+      }
+    })
     return data
   }
 
@@ -122,13 +126,26 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
     })
 
     const colors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'] // Various colors for ranking options
-    return options.map((option, index) => ({
-      label: option,
-      value: rankingData[option].length > 0 
-        ? rankingData[option].reduce((sum, rank) => sum + (6 - rank), 0) / rankingData[option].length
-        : 0,
-      color: colors[index % colors.length]
-    }))
+    return options.map((option, index) => {
+      const ranks = rankingData[option]
+      let value = 0
+      
+      if (ranks.length > 0) {
+        const sum = ranks.reduce((sum, rank) => {
+          const numericRank = parseInt(rank.toString())
+          return sum + (isNaN(numericRank) ? 0 : (6 - numericRank))
+        }, 0)
+        value = sum / ranks.length
+        // Ensure value is a valid number
+        value = isNaN(value) ? 0 : value
+      }
+      
+      return {
+        label: option,
+        value: value,
+        color: colors[index % colors.length]
+      }
+    })
   }
 
   // Export data to CSV
