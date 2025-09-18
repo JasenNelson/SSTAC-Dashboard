@@ -374,7 +374,12 @@ export default function Header() {
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="text-xl font-bold text-gray-900 dark:text-white">SSTAC & TWG Dashboard</div>
+            <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
+              <div className="text-center">
+                <div className="leading-tight">SSTAC & TWG</div>
+                <div className="text-sm sm:text-lg leading-tight">Dashboard</div>
+              </div>
+            </div>
             <div className="text-gray-500">Loading...</div>
           </div>
         </div>
@@ -388,8 +393,11 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo/Brand */}
           <div className="flex items-center">
-            <Link href="/dashboard" className="text-xl font-bold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-              SSTAC & TWG Dashboard
+            <Link href="/dashboard" className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+              <div className="text-center">
+                <div className="leading-tight">SSTAC & TWG</div>
+                <div className="text-sm sm:text-lg leading-tight">Dashboard</div>
+              </div>
             </Link>
           </div>
 
@@ -486,14 +494,11 @@ export default function Header() {
               <>
                 {/* User Info */}
                 <div className="hidden md:flex items-center space-x-3">
-                  <div className="text-sm text-gray-700 dark:text-gray-300">
-                    <span className="font-medium">{session.user.email}</span>
-                    {isAdmin && (
-                      <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                        Admin
-                      </span>
-                    )}
-                  </div>
+                  {isAdmin && (
+                    <div className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                      Admin
+                    </div>
+                  )}
                   
                   {/* Theme Toggle */}
                   <ThemeToggle />
@@ -601,14 +606,13 @@ export default function Header() {
               
               {/* User Info & Logout for All Users */}
               <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                <div className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">{session.user.email}</span>
-                  {isAdmin && (
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                {isAdmin && (
+                  <div className="px-3 py-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
                       Admin
                     </span>
-                  )}
-                </div>
+                  </div>
+                )}
                 
                 {/* Theme Toggle for Mobile */}
                 <div className="px-3 py-2">

@@ -1568,3 +1568,45 @@ input,
 textarea {
   color: #171717; /* A dark color like --foreground for light mode */
 }
+
+/* Fix status badge text colors - override the global input rule */
+.light .bg-yellow-100 .text-black,
+.light .bg-green-100 .text-black,
+.light span.text-black {
+  color: #000000 !important;
+}
+
+.dark .bg-yellow-100 .text-yellow-200,
+.dark .bg-green-100 .text-green-200,
+.dark span.text-yellow-200,
+.dark span.text-green-200 {
+  color: #fde047 !important; /* Light yellow for dark mode */
+}
+
+/* Fix form input text colors - override global input rule */
+/* For inputs with dark backgrounds, always use white text */
+.light input[type="text"].dark\:bg-gray-700,
+.light input[type="email"].dark\:bg-gray-700,
+.light textarea.dark\:bg-gray-700,
+.light select.dark\:bg-gray-700,
+html.light input.dark\:bg-gray-700,
+html.light textarea.dark\:bg-gray-700,
+html.light select.dark\:bg-gray-700 {
+  color: #f9fafb !important; /* White text for dark backgrounds */
+}
+
+/* For regular inputs with light backgrounds, use dark text */
+.light input[type="text"]:not(.dark\:bg-gray-700),
+.light input[type="email"]:not(.dark\:bg-gray-700),
+.light textarea:not(.dark\:bg-gray-700),
+.light select:not(.dark\:bg-gray-700) {
+  color: #111827 !important; /* Dark text for light backgrounds */
+}
+
+/* Dark mode - all form elements should have light text */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark textarea,
+.dark select {
+  color: #f9fafb !important; /* Light text for dark mode */
+}

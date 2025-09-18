@@ -54,16 +54,64 @@ export default async function AdminDashboardPage() {
     redirect('/dashboard');
   }
 
-  // Fetch key metrics (we'll implement these with real data later)
-  // For now, using placeholder data to get the UI working
+  // Fetch key metrics with real data
+  const [
+    usersResult,
+    documentsResult,
+    discussionsResult,
+    announcementsResult,
+    milestonesResult,
+    pollVotesResult
+  ] = await Promise.all([
+    // Total users
+    supabase
+      .from('user_roles')
+      .select('id', { count: 'exact' }),
+    
+    // Documents this month
+    supabase
+      .from('documents')
+      .select('id', { count: 'exact' })
+      .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
+    
+    // Total discussion threads
+    supabase
+      .from('discussions')
+      .select('id', { count: 'exact' }),
+    
+    // Active announcements
+    supabase
+      .from('announcements')
+      .select('id', { count: 'exact' })
+      .eq('is_active', true),
+    
+    // Milestones
+    supabase
+      .from('milestones')
+      .select('id, status', { count: 'exact' }),
+    
+    // Total poll votes (from both poll_votes and ranking_votes tables)
+    Promise.all([
+      supabase
+        .from('poll_votes')
+        .select('id', { count: 'exact' }),
+      supabase
+        .from('ranking_votes')
+        .select('id', { count: 'exact' })
+    ])
+  ]);
+
+  const completedMilestones = milestonesResult.data?.filter(m => m.status === 'completed').length || 0;
+  const totalPollVotes = (pollVotesResult[0].count || 0) + (pollVotesResult[1].count || 0);
+
   const metrics = {
-    totalUsers: 12,
-    newDocumentsThisMonth: 8,
-    totalDiscussionThreads: 15,
-    activeAnnouncements: 3,
-    totalMilestones: 7,
-    completedMilestones: 4,
-    totalPollVotes: 0
+    totalUsers: usersResult.count || 0,
+    newDocumentsThisMonth: documentsResult.count || 0,
+    totalDiscussionThreads: discussionsResult.count || 0,
+    activeAnnouncements: announcementsResult.count || 0,
+    totalMilestones: milestonesResult.count || 0,
+    completedMilestones,
+    totalPollVotes
   };
 
   return <AdminDashboardClient metrics={metrics} />;

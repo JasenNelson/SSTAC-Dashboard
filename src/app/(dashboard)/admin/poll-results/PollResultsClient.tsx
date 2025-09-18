@@ -39,6 +39,8 @@ export default function PollResultsClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedPoll, setExpandedPoll] = useState<string | null>(null);
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<'all' | 'twg' | 'cew'>('all');
   const supabase = createClient();
 
@@ -605,30 +607,95 @@ export default function PollResultsClient() {
           <div className="mt-8">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Poll Groups</h3>
             <div className="space-y-2">
-              <button
-                onClick={() => scrollToSection('holistic-protection')}
-                className="w-full px-4 py-3 rounded-lg font-medium transition-colors text-left bg-blue-50 dark:bg-blue-900/20 text-gray-900 dark:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-900/30"
-              >
-                Holistic Protection
-              </button>
-              <button
-                onClick={() => scrollToSection('tiered-framework')}
-                className="w-full px-4 py-3 rounded-lg font-medium transition-colors text-left bg-orange-50 dark:bg-orange-600/20 text-gray-900 dark:text-orange-200 hover:bg-orange-100 dark:hover:bg-orange-600/30"
-              >
-                Tiered Framework
-              </button>
-              <button
-                onClick={() => scrollToSection('prioritization')}
-                className="w-full px-4 py-3 rounded-lg font-medium transition-colors text-left bg-purple-50 dark:bg-purple-900/20 text-gray-900 dark:text-purple-100 hover:bg-purple-100 dark:hover:bg-purple-900/30"
-              >
-                Prioritization
-              </button>
-              <button
-                onClick={() => scrollToSection('wiks')}
-                className="w-full px-4 py-3 rounded-lg font-medium transition-colors text-left bg-green-50 dark:bg-green-800/20 text-gray-900 dark:text-green-100 hover:bg-green-100 dark:hover:bg-green-800/30"
-              >
-                Weaving Indigenous Knowledge & Science
-              </button>
+              {Object.entries(groupPollsByTheme(filteredPolls)).map(([themeId, theme]) => {
+                if (theme.polls.length === 0) return null;
+                
+                const isExpanded = expandedGroup === themeId;
+                const getThemeColors = (themeId: string) => {
+                  switch (themeId) {
+                    case 'holistic-protection':
+                      return {
+                        bg: 'bg-blue-50 dark:bg-blue-900/20',
+                        hover: 'hover:bg-blue-100 dark:hover:bg-blue-900/30',
+                        text: 'text-gray-900 dark:text-blue-100',
+                        questionBg: 'bg-blue-100 dark:bg-blue-800/30',
+                        questionHover: 'hover:bg-blue-200 dark:hover:bg-blue-800/40'
+                      };
+                    case 'tiered-framework':
+                      return {
+                        bg: 'bg-orange-50 dark:bg-orange-600/20',
+                        hover: 'hover:bg-orange-100 dark:hover:bg-orange-600/30',
+                        text: 'text-gray-900 dark:text-orange-200',
+                        questionBg: 'bg-orange-100 dark:bg-orange-700/30',
+                        questionHover: 'hover:bg-orange-200 dark:hover:bg-orange-700/40'
+                      };
+                    case 'prioritization':
+                      return {
+                        bg: 'bg-purple-50 dark:bg-purple-900/20',
+                        hover: 'hover:bg-purple-100 dark:hover:bg-purple-900/30',
+                        text: 'text-gray-900 dark:text-purple-100',
+                        questionBg: 'bg-purple-100 dark:bg-purple-800/30',
+                        questionHover: 'hover:bg-purple-200 dark:hover:bg-purple-800/40'
+                      };
+                    case 'wiks':
+                      return {
+                        bg: 'bg-green-50 dark:bg-green-800/20',
+                        hover: 'hover:bg-green-100 dark:hover:bg-green-800/30',
+                        text: 'text-gray-900 dark:text-green-100',
+                        questionBg: 'bg-green-100 dark:bg-green-700/30',
+                        questionHover: 'hover:bg-green-200 dark:hover:bg-green-700/40'
+                      };
+                    default:
+                      return {
+                        bg: 'bg-gray-50 dark:bg-gray-700/20',
+                        hover: 'hover:bg-gray-100 dark:hover:bg-gray-700/30',
+                        text: 'text-gray-900 dark:text-gray-100',
+                        questionBg: 'bg-gray-100 dark:bg-gray-600/30',
+                        questionHover: 'hover:bg-gray-200 dark:hover:bg-gray-600/40'
+                      };
+                  }
+                };
+                
+                const colors = getThemeColors(themeId);
+                
+                return (
+                  <div key={themeId} className="space-y-1">
+                    <button
+                      onClick={() => setExpandedGroup(isExpanded ? null : themeId)}
+                      className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${colors.bg} ${colors.text} ${colors.hover} flex items-center justify-between`}
+                    >
+                      <span>{theme.name}</span>
+                      <span className="text-sm">
+                        {isExpanded ? '▼' : '▶'}
+                      </span>
+                    </button>
+                    
+                    {isExpanded && (
+                      <div className="ml-4 space-y-1">
+                        {theme.polls.map((poll) => {
+                          const pollKey = poll.poll_id || poll.ranking_poll_id || `poll-${poll.page_path}-${poll.poll_index}`;
+                          const totalVotes = getFilteredPollResults(poll).reduce((sum, r) => sum + r.votes, 0);
+                          
+                          return (
+                            <button
+                              key={pollKey}
+                              onClick={() => setSelectedQuestion(pollKey)}
+                              className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${colors.questionBg} ${colors.text} ${colors.questionHover} flex items-center justify-between ${
+                                selectedQuestion === pollKey ? 'ring-2 ring-blue-500' : ''
+                              }`}
+                            >
+                              <span>Question {poll.poll_index + 1}</span>
+                              <span className="text-xs bg-white dark:bg-gray-600 px-2 py-1 rounded-full">
+                                {totalVotes} votes
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
           
@@ -668,21 +735,32 @@ export default function PollResultsClient() {
             <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Poll Results Yet</h3>
             <p className="text-gray-500 dark:text-gray-500">Poll results will appear here once users start voting.</p>
           </div>
+        ) : !selectedQuestion ? (
+          <div className="text-center py-12">
+            <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">📋</div>
+            <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">Select a Question</h3>
+            <p className="text-gray-500 dark:text-gray-500">Choose a question from the left panel to view its results.</p>
+          </div>
         ) : (
-          <div className="space-y-12">
-            {Object.entries(groupPollsByTheme(filteredPolls)).map(([themeId, theme]) => {
-              if (theme.polls.length === 0) return null;
+          <div>
+            {(() => {
+              // Find the selected poll
+              const selectedPoll = filteredPolls.find(poll => {
+                const pollKey = poll.poll_id || poll.ranking_poll_id || `poll-${poll.page_path}-${poll.poll_index}`;
+                return pollKey === selectedQuestion;
+              });
               
-              return (
-                <div key={themeId} id={themeId} className="scroll-mt-8">
-                  <div className="mb-8">
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{theme.name}</h2>
-                    <div className="h-1 w-20 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+              if (!selectedPoll) {
+                return (
+                  <div className="text-center py-12">
+                    <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">❌</div>
+                    <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">Question Not Found</h3>
+                    <p className="text-gray-500 dark:text-gray-500">The selected question could not be found.</p>
                   </div>
-                  
-          <div className="space-y-8">
-                    {theme.polls.map((poll, index) => {
-              const pollKey = poll.poll_id || poll.ranking_poll_id || `poll-${poll.page_path}-${poll.poll_index}-${index}`;
+                );
+              }
+              
+              const pollKey = selectedPoll.poll_id || selectedPoll.ranking_poll_id || `poll-${selectedPoll.page_path}-${selectedPoll.poll_index}`;
               const isExpanded = expandedPoll === pollKey;
               
               return (
@@ -692,13 +770,13 @@ export default function PollResultsClient() {
                   <div className={isExpanded ? 'p-4 flex-1 flex flex-col' : ''}>
                   <div className={`flex items-center justify-between ${isExpanded ? 'mb-3' : 'mb-4'}`}>
                     <h3 className={`font-bold text-gray-800 dark:text-white ${isExpanded ? 'text-2xl' : 'text-2xl'}`}>
-                      {getPageTitle(poll.page_path)} - Question {poll.poll_index + 1}
+                      {getPageTitle(selectedPoll.page_path)} - Question {selectedPoll.poll_index + 1}
                     </h3>
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
                         <div className={`font-bold text-blue-600 dark:text-blue-400 ${isExpanded ? 'text-3xl' : 'text-3xl'}`}>
                           {(() => {
-                            const filteredResults = getFilteredPollResults(poll);
+                            const filteredResults = getFilteredPollResults(selectedPoll);
                             return filteredResults.reduce((sum, r) => sum + r.votes, 0);
                           })()}
                         </div>
@@ -718,44 +796,37 @@ export default function PollResultsClient() {
                       </button>
                     </div>
                   </div>
-                  <p className={`text-gray-700 dark:text-gray-300 leading-relaxed ${isExpanded ? 'text-lg mb-3' : 'text-lg'}`}>{poll.question}</p>
+                  <p className={`text-gray-700 dark:text-gray-300 leading-relaxed ${isExpanded ? 'text-lg mb-3' : 'text-lg'}`}>{selectedPoll.question}</p>
                   
                   {/* Combined vote breakdown */}
                   <div className="mt-4 flex flex-wrap gap-4 text-sm">
                     {filterMode === 'all' && (
                       <>
                         <div className="bg-blue-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
-                          TWG/SSTAC: {poll.combined_survey_votes || 0} responses
+                          TWG/SSTAC: {selectedPoll.combined_survey_votes || 0} responses
                         </div>
                         <div className="bg-green-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
-                          CEW: {poll.combined_cew_votes || 0} responses
+                          CEW: {selectedPoll.combined_cew_votes || 0} responses
                         </div>
                       </>
                     )}
                     {filterMode === 'twg' && (
                       <div className="bg-blue-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
-                        TWG/SSTAC: {poll.combined_survey_votes || 0} responses
+                        TWG/SSTAC: {selectedPoll.combined_survey_votes || 0} responses
                       </div>
                     )}
                     {filterMode === 'cew' && (
                       <div className="bg-green-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
-                        CEW: {poll.combined_cew_votes || 0} responses
-                      </div>
-                    )}
-                    
-                    {/* Debug logging for Holistic Protection Q2 */}
-                    {poll.page_path.includes('holistic-protection') && poll.poll_index === 1 && (
-                      <div className="text-xs text-gray-500 mt-2">
-                        DEBUG: Total={poll.total_votes}, Survey={poll.combined_survey_votes}, CEW={poll.combined_cew_votes}
+                        CEW: {selectedPoll.combined_cew_votes || 0} responses
                       </div>
                     )}
                   </div>
                 </div>
 
                 <div className={`space-y-4 ${isExpanded ? 'space-y-2 flex-1' : ''}`}>
-                  {poll.is_ranking ? (
+                  {selectedPoll.is_ranking ? (
                     // For ranking polls, sort by average rank (lower is better)
-                    [...getFilteredPollResults(poll)].sort((a, b) => (a.averageRank || 0) - (b.averageRank || 0)).map((result, index) => {
+                    [...getFilteredPollResults(selectedPoll)].sort((a, b) => (a.averageRank || 0) - (b.averageRank || 0)).map((result, index) => {
                       const isTopChoice = index === 0; // First item after sorting by rank
                       
                     return (
@@ -808,7 +879,7 @@ export default function PollResultsClient() {
                               style={{ 
                                 width: `${(() => {
                                   // Use the same logic as PollResultsChart for ranking polls
-                                  const validResults = poll.results.filter(r => 
+                                  const validResults = selectedPoll.results.filter(r => 
                                     r.averageRank !== null && r.averageRank !== undefined
                                   );
                                   const maxRank = Math.max(...validResults.map(r => r.averageRank || 0));
@@ -832,7 +903,7 @@ export default function PollResultsClient() {
                   ) : (
                     // For single-choice polls, use the original logic
                     (() => {
-                      const filteredResults = getFilteredPollResults(poll);
+                      const filteredResults = getFilteredPollResults(selectedPoll);
                       const maxVotes = Math.max(...filteredResults.map(r => r.votes));
                       return filteredResults.map((result, index) => {
                         const filteredTotal = filteredResults.reduce((sum, r) => sum + r.votes, 0);
@@ -894,14 +965,10 @@ export default function PollResultsClient() {
                       });
                     })()
                   )}
-                        </div>
-                      </div>
-                    );
-                  })}
                 </div>
               </div>
               );
-            })}
+            })()}
           </div>
         )}
 
