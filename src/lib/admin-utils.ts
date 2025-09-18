@@ -3,12 +3,23 @@
 
 import { createClient } from '@/lib/supabase/client';
 
+// Throttling mechanism to prevent excessive calls
+let lastRefreshTime = 0;
+const REFRESH_THROTTLE_MS = 2000; // 2 seconds minimum between calls
+
 /**
  * Global function to refresh admin status
  * This can be called from any component to ensure admin badge persistence
  */
 export async function refreshGlobalAdminStatus(): Promise<boolean> {
   try {
+    // Throttle calls to prevent excessive database queries
+    const now = Date.now();
+    if (now - lastRefreshTime < REFRESH_THROTTLE_MS) {
+      console.log('⏰ Admin status refresh throttled - too soon since last call');
+      return false;
+    }
+    lastRefreshTime = now;
 
     const supabase = createClient();
     

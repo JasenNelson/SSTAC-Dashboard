@@ -355,10 +355,8 @@ export default function Header() {
     { href: '/cew-polls/wiks', label: 'CEW: Indigenous Knowledge', icon: '🌱', category: 'CEW Conference', parent: 'SABCS Session' },
   ];
 
-  // Admin-only navigation links
-  const adminLinks = [
-    { href: '/admin', label: 'Admin', icon: '⚙️' },
-  ];
+  // Admin-only navigation links - simplified to single dashboard link
+  // Individual admin pages are accessed through the main admin dashboard
 
   // Helper function to check if a link is active
   const isActiveLink = (href: string) => {
@@ -419,23 +417,19 @@ export default function Header() {
                 </Link>
               ))}
               
-              {/* Admin Links */}
+              {/* Admin Link */}
               {isAdmin && (
                 <div className="ml-4 pl-4 border-l border-gray-300">
-                  {adminLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                        isActiveLink(link.href)
-                          ? 'bg-green-100 text-green-700'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                      }`}
-                    >
-                      <span className="mr-2">{link.icon}</span>
-                      {link.label}
-                    </Link>
-                  ))}
+                  <Link
+                    href="/admin"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                      isActiveLink('/admin')
+                        ? 'bg-green-100 text-green-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    Admin
+                  </Link>
                 </div>
               )}
 
@@ -578,30 +572,21 @@ export default function Header() {
                 </div>
               ))}
               
-              {/* Admin Links */}
+              {/* Admin Link */}
               {isAdmin && (
-                <>
-                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700">
-                      Admin
-                    </div>
-                    {adminLinks.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                          isActiveLink(link.href)
-                            ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
-                            : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        <span className="mr-3">{link.icon}</span>
-                        {link.label}
-                      </Link>
-                    ))}
-                  </div>
-                </>
+                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      isActiveLink('/admin')
+                        ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    Admin
+                  </Link>
+                </div>
               )}
               
               {/* User Info & Logout for All Users */}

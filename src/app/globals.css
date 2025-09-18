@@ -1563,10 +1563,23 @@ html.light .inline-flex.items-center.px-6.py-3.bg-white\/90 span.text-blue-900 {
   background: transparent !important;
 }
 
-/* Add this to the bottom of src/app/globals.css */
-input,
-textarea {
-  color: #171717; /* A dark color like --foreground for light mode */
+/* Fix form input text colors with high specificity */
+/* Light mode - dark text on light backgrounds */
+html.light input[type="text"],
+html.light input[type="email"],
+html.light input[type="password"],
+html.light textarea,
+html.light select {
+  color: #111827 !important; /* Dark text for light mode */
+}
+
+/* Dark mode - light text on dark backgrounds */
+html.dark input[type="text"],
+html.dark input[type="email"],
+html.dark input[type="password"],
+html.dark textarea,
+html.dark select {
+  color: #f9fafb !important; /* Light text for dark mode */
 }
 
 /* Fix status badge text colors - override the global input rule */
@@ -1583,30 +1596,28 @@ textarea {
   color: #fde047 !important; /* Light yellow for dark mode */
 }
 
-/* Fix form input text colors - override global input rule */
-/* For inputs with dark backgrounds, always use white text */
-.light input[type="text"].dark\:bg-gray-700,
-.light input[type="email"].dark\:bg-gray-700,
-.light textarea.dark\:bg-gray-700,
-.light select.dark\:bg-gray-700,
-html.light input.dark\:bg-gray-700,
-html.light textarea.dark\:bg-gray-700,
-html.light select.dark\:bg-gray-700 {
-  color: #f9fafb !important; /* White text for dark backgrounds */
+/* Additional specificity for form elements in containers */
+html.light .bg-white input[type="text"],
+html.light .bg-white input[type="email"],
+html.light .bg-white textarea,
+html.light .bg-white select {
+  color: #111827 !important; /* Dark text on white backgrounds */
 }
 
-/* For regular inputs with light backgrounds, use dark text */
-.light input[type="text"]:not(.dark\:bg-gray-700),
-.light input[type="email"]:not(.dark\:bg-gray-700),
-.light textarea:not(.dark\:bg-gray-700),
-.light select:not(.dark\:bg-gray-700) {
-  color: #111827 !important; /* Dark text for light backgrounds */
+html.dark .bg-white input[type="text"],
+html.dark .bg-white input[type="email"],
+html.dark .bg-white textarea,
+html.dark .bg-white select {
+  color: #f9fafb !important; /* Light text on dark backgrounds */
 }
 
-/* Dark mode - all form elements should have light text */
-.dark input[type="text"],
-.dark input[type="email"],
-.dark textarea,
-.dark select {
+/* Fix TWG Review form specifically */
+html.light .bg-white.dark\:bg-gray-800 input[type="text"],
+html.light .bg-white.dark\:bg-gray-800 textarea {
+  color: #111827 !important; /* Dark text for light mode */
+}
+
+html.dark .bg-white.dark\:bg-gray-800 input[type="text"],
+html.dark .bg-white.dark\:bg-gray-800 textarea {
   color: #f9fafb !important; /* Light text for dark mode */
 }

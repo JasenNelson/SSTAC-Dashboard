@@ -194,7 +194,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
   return (
     <div className="flex min-h-screen">
       {/* Navigation Sidebar */}
-      <div className="hidden lg:block w-80 bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700">
+      <div className="hidden lg:block w-80 bg-blue-100 dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700">
         <div className="p-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             TWG Review
@@ -292,7 +292,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
         {/* Mobile Navigation Overlay */}
         {isMobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="fixed inset-y-0 left-0 w-80 bg-white dark:bg-gray-800 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-y-0 left-0 w-80 bg-blue-100 dark:bg-gray-800 shadow-xl" onClick={(e) => e.stopPropagation()}>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">TWG Review</h1>

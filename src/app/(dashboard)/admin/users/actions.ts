@@ -135,13 +135,20 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
     }
 
     // Create a map of user roles for quick lookup
+    // Handle users with multiple roles by prioritizing admin role
     const roleMap = new Map<string, { role: string; created_at: string }>();
     if (userRoles) {
       for (const userRole of userRoles) {
-        roleMap.set(userRole.user_id, {
-          role: userRole.role,
-          created_at: userRole.created_at
-        });
+        const existingRole = roleMap.get(userRole.user_id);
+        
+        // If user already has a role, prioritize admin over member
+        if (!existingRole || 
+            (userRole.role === 'admin' && existingRole.role === 'member')) {
+          roleMap.set(userRole.user_id, {
+            role: userRole.role,
+            created_at: userRole.created_at
+          });
+        }
       }
     }
 
@@ -204,12 +211,13 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
     if (authUsers.length > 0) {
       for (const authUser of authUsers) {
         if (!processedUserIds.has(authUser.id)) {
+          const userRole = roleMap.get(authUser.id);
           userMap.set(authUser.id, {
             id: authUser.id,
             email: authUser.email || `User ${authUser.id.slice(0, 8)}...`,
             created_at: authUser.created_at,
-            role: roleMap.get(authUser.id)?.role || null,
-            isAdmin: roleMap.get(authUser.id)?.role === 'admin' || false
+            role: userRole?.role || null,
+            isAdmin: userRole?.role === 'admin' || false
           });
           processedUserIds.add(authUser.id);
         }
@@ -217,20 +225,7 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
     }
 
     // Add users from user_roles table (these are explicitly managed users)
-    if (userRoles) {
-      for (const userRole of userRoles) {
-        if (!processedUserIds.has(userRole.user_id)) {
-          userMap.set(userRole.user_id, {
-            id: userRole.user_id,
-            email: `User ${userRole.user_id.slice(0, 8)}...`, // We'll try to get real email later
-            created_at: userRole.created_at,
-            role: userRole.role,
-            isAdmin: userRole.role === 'admin'
-          });
-          processedUserIds.add(userRole.user_id);
-        }
-      }
-    }
+    // Skip this section to avoid duplicates - we already processed these users above
 
     // Add users from documents table
     if (documentUsers) {
