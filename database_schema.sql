@@ -34,6 +34,13 @@
 --    - Test data combination with known data sets
 --    - Add comprehensive logging for data flow debugging
 
+-- 6. POLL RESULTS UI IMPROVEMENTS (2025-01-18):
+--    - Single question display for focused viewing
+--    - Expandable poll groups in navigation panel
+--    - Visual selection feedback with blue ring highlights
+--    - Clean interface without debug logging
+--    - Mobile-optimized responsive design
+
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
