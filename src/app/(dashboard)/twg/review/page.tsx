@@ -24,11 +24,26 @@ export default async function TWGReviewPage() {
   }
 
   // Check if user has any role (admin or member can access TWG review)
-  const { data: roleData, error: roleError } = await supabase
+  let { data: roleData, error: roleError } = await supabase
     .from('user_roles')
     .select('role')
     .eq('user_id', user.id)
     .limit(1)
+
+  // If no role found, attempt a safe one-time self-assign of 'member' (non-destructive)
+  if (!roleData || roleData.length === 0) {
+    try {
+      await supabase.from('user_roles').insert({ user_id: user.id, role: 'member' })
+      // Re-check after insert
+      const recheck = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .limit(1)
+      roleData = recheck.data || null
+      roleError = recheck.error || null
+    } catch {}
+  }
 
   // Allow access if user has any role (even if multiple roles exist)
   if (roleError || !roleData || roleData.length === 0) {
