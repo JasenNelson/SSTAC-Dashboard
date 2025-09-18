@@ -36,16 +36,24 @@ export default async function TWGSynthesisPage() {
   }
 
   // Get review submissions data
-  const { data: submissions } = await supabase
+  const { data: submissions, error: submissionsError } = await supabase
     .from('admin_review_submissions')
+    .select('*')
+    .order('submission_created_at', { ascending: false })
+
+  // Get review files
+  const { data: files, error: filesError } = await supabase
+    .from('review_files')
     .select('*')
     .order('created_at', { ascending: false })
 
-  // Get review files
-  const { data: files } = await supabase
-    .from('review_files')
-    .select('*')
-    .order('uploaded_at', { ascending: false })
+  // Log errors but don't let them break the page
+  if (submissionsError) {
+    console.error('Error fetching submissions:', submissionsError)
+  }
+  if (filesError) {
+    console.error('Error fetching files:', filesError)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">

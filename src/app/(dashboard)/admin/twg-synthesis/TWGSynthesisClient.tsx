@@ -20,11 +20,11 @@ interface ReviewSubmission {
 interface ReviewFile {
   id: string
   submission_id: string
-  filename: string
+  file_name: string
   file_path: string
-  mimetype: string
+  mime_type: string
   file_size: number
-  uploaded_at: string
+  created_at: string
 }
 
 interface TWGSynthesisClientProps {
