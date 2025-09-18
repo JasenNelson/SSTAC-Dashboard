@@ -34,6 +34,13 @@ interface TWGSynthesisClientProps {
 }
 
 export default function TWGSynthesisClient({ user, submissions, files }: TWGSynthesisClientProps) {
+  const formatDate = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toISOString().slice(0, 10)
+    } catch {
+      return ''
+    }
+  }
   const [filteredSubmissions, setFilteredSubmissions] = useState<ReviewSubmission[]>(submissions)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_PROGRESS' | 'SUBMITTED'>('ALL')
@@ -347,7 +354,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                       {submission.form_data?.part1?.name || submission.email}
                     </h4>
                     <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(submission.updated_at).toLocaleDateString()}
+                      {formatDate(submission.updated_at)}
                     </span>
                   </div>
                   
@@ -393,7 +400,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{file.file_name}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {(file.file_size / 1024 / 1024).toFixed(2)} MB • {new Date(file.created_at).toLocaleDateString()}
+                      {(file.file_size / 1024 / 1024).toFixed(2)} MB • {formatDate(file.created_at)}
                     </p>
                   </div>
                   <button
@@ -464,7 +471,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                     {submission.form_data?.part1?.expertise?.join(', ') || 'Not specified'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {new Date(submission.updated_at).toLocaleDateString()}
+                    {formatDate(submission.updated_at)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {submission.file_count}

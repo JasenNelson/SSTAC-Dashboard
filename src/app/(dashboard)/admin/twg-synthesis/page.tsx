@@ -35,17 +35,26 @@ export default async function TWGSynthesisPage() {
     redirect('/dashboard')
   }
 
-  // Get review submissions data
-  const { data: submissions, error: submissionsError } = await supabase
-    .from('admin_review_submissions')
-    .select('*')
+  // Prefer querying base table to avoid auth.users permissions via views
+  const { data: baseSubmissions, error: submissionsError } = await supabase
+    .from('review_submissions')
+    .select('id, user_id, status, form_data, created_at, updated_at')
     .order('created_at', { ascending: false })
+
+  // Build email map via safe function (does not require direct auth.users access)
+  let emailMap: Record<string, string> = {}
+  try {
+    const { data: emailRows } = await supabase.rpc('get_users_with_emails')
+    if (emailRows && Array.isArray(emailRows)) {
+      emailMap = Object.fromEntries(emailRows.map((r: any) => [r.id, r.email]))
+    }
+  } catch {}
 
   // Get review files
   const { data: files, error: filesError } = await supabase
     .from('review_files')
-    .select('*')
-    .order('created_at', { ascending: false })
+    .select('id, submission_id, file_name:filename, file_path, mime_type:mimetype, file_size, created_at:uploaded_at')
+    .order('uploaded_at', { ascending: false })
 
   // Log errors but don't let them break the page
   if (submissionsError) {
@@ -55,11 +64,23 @@ export default async function TWGSynthesisPage() {
     console.error('Error fetching files:', filesError)
   }
 
+  // Shape submissions to expected structure for client, including email
+  const mappedSubmissions = (baseSubmissions || []).map((s: any) => ({
+    id: s.id,
+    user_id: s.user_id,
+    email: emailMap[s.user_id] || `User ${String(s.user_id).slice(0, 8)}...`,
+    status: s.status,
+    form_data: s.form_data,
+    created_at: s.created_at,
+    updated_at: s.updated_at,
+    file_count: 0, // not used for filtering; files listed separately
+  }))
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
       <TWGSynthesisClient 
         user={user}
-        submissions={submissions || []}
+        submissions={mappedSubmissions}
         files={files || []}
       />
     </div>
