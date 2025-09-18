@@ -306,11 +306,11 @@ CREATE POLICY "Admins can view all submissions" ON review_submissions
 CREATE TABLE IF NOT EXISTS review_files (
     id BIGSERIAL PRIMARY KEY,
     submission_id BIGINT NOT NULL REFERENCES review_submissions(id) ON DELETE CASCADE,
-    filename TEXT NOT NULL,
+    file_name TEXT NOT NULL,
     file_path TEXT NOT NULL,
-    mimetype TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
     file_size BIGINT NOT NULL,
-    uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Enable RLS on review_files
@@ -352,8 +352,8 @@ SELECT
     ) as email,
     rs.status,
     rs.form_data,
-    rs.created_at,
-    rs.updated_at,
+    rs.created_at as submission_created_at,
+    rs.updated_at as submission_updated_at,
     COALESCE(
         (SELECT COUNT(*) FROM review_files rf WHERE rf.submission_id = rs.id),
         0
