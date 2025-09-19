@@ -204,6 +204,7 @@ const SignupPage: NextPage = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoComplete="new-password"
             style={{ 
               width: '100%', 
               padding: '12px 16px', 
@@ -235,6 +236,7 @@ const SignupPage: NextPage = () => {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
+            autoComplete="new-password"
             style={{ 
               width: '100%', 
               padding: '12px 16px', 

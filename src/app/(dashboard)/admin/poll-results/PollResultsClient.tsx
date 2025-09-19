@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import QRCodeDisplay from '@/components/dashboard/QRCodeDisplay';
 
 interface PollResult {
   poll_id?: string;
@@ -505,6 +506,14 @@ export default function PollResultsClient() {
     return pathMap[pagePath] || pagePath;
   };
 
+  const getPollGroup = (pagePath: string): 'holistic-protection' | 'tiered-framework' | 'prioritization' | 'wiks' | null => {
+    if (pagePath.includes('holistic-protection')) return 'holistic-protection';
+    if (pagePath.includes('tiered-framework')) return 'tiered-framework';
+    if (pagePath.includes('prioritization')) return 'prioritization';
+    if (pagePath.includes('wiks')) return 'wiks';
+    return null;
+  };
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -777,35 +786,41 @@ export default function PollResultsClient() {
                   isExpanded ? 'fixed top-4 right-4 bottom-4 left-80 z-50 flex flex-col' : 'p-8'
                 }`}>
                   <div className={isExpanded ? 'p-4 flex-1 flex flex-col' : ''}>
-                  <div className={`flex items-center justify-between ${isExpanded ? 'mb-3' : 'mb-4'}`}>
-                    <h3 className={`font-bold text-gray-800 dark:text-white ${isExpanded ? 'text-2xl' : 'text-2xl'}`}>
+                  <div className={`${isExpanded ? 'mb-3' : 'mb-4'}`}>
+                    <h3 className={`font-bold text-gray-800 dark:text-white ${isExpanded ? 'text-2xl' : 'text-2xl'} mb-2`}>
                       {getPageTitle(selectedPoll.page_path)} - Question {selectedPoll.poll_index + 1}
                     </h3>
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <div className={`font-bold text-blue-600 dark:text-blue-400 ${isExpanded ? 'text-3xl' : 'text-3xl'}`}>
-                          {(() => {
-                            const filteredResults = getFilteredPollResults(selectedPoll);
-                            return filteredResults.reduce((sum, r) => sum + r.votes, 0);
-                          })()}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          Total Responses
-                        </div>
+                    <div className="flex items-start space-x-4">
+                      <p className={`text-gray-700 dark:text-gray-300 leading-relaxed flex-1 ${isExpanded ? 'text-lg mb-3' : 'text-lg'}`}>{selectedPoll.question}</p>
+                      <div className="flex items-start space-x-2 flex-shrink-0 -mt-8">
+                        <button
+                          onClick={() => setExpandedPoll(isExpanded ? null : pollKey)}
+                          className="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                          title={isExpanded ? 'Close expanded view' : 'Expand to fit screen'}
+                        >
+                          {isExpanded ? (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                            </svg>
+                          )}
+                        </button>
+                        {/* QR Code for specific poll groups - positioned beside expand button */}
+                        {(() => {
+                          const pollGroup = getPollGroup(selectedPoll.page_path);
+                          return pollGroup ? (
+                            <QRCodeDisplay 
+                              pollGroup={pollGroup} 
+                              className={isExpanded ? 'scale-75' : ''} 
+                            />
+                          ) : null;
+                        })()}
                       </div>
-                      <button
-                        onClick={() => setExpandedPoll(isExpanded ? null : pollKey)}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                          isExpanded
-                            ? 'bg-red-500 hover:bg-red-600 text-white'
-                            : 'bg-blue-500 hover:bg-blue-600 text-white'
-                        }`}
-                      >
-                        {isExpanded ? 'Close' : 'Expand to Fit Screen'}
-                      </button>
                     </div>
                   </div>
-                  <p className={`text-gray-700 dark:text-gray-300 leading-relaxed ${isExpanded ? 'text-lg mb-3' : 'text-lg'}`}>{selectedPoll.question}</p>
                   
                   {/* Combined vote breakdown */}
                   <div className="mt-4 flex flex-wrap gap-4 text-sm">
