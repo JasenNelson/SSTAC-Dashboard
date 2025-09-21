@@ -43,6 +43,10 @@ export default function PollResultsClient() {
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<'all' | 'twg' | 'cew'>('all');
+  const [leftPanelVisible, setLeftPanelVisible] = useState(true);
+  const [qrCodeExpanded, setQrCodeExpanded] = useState(false);
+  const [expandedPollGroup, setExpandedPollGroup] = useState<string | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const supabase = createClient();
 
   useEffect(() => {
@@ -88,31 +92,23 @@ export default function PollResultsClient() {
       // Define current active polls to filter out old/test data
       // Use more specific matching patterns to avoid false positives
       const currentPollQuestions = [
-        // Holistic Protection Questions
+        // Holistic Protection Questions (only current page questions)
         "Given the potential for over-conservatism and remediation challenges, for which contaminant classes would the initial development of Matrix Sediment Standards protective of food toxicity be most scientifically defensible and practically beneficial?",
-        "What is the most important consideration when developing sediment quality standards that protect both ecological and human health?",
         "Rank in order of highest to lowest importance the following considerations in developing and implementing the Matrix Sediment Standards Framework:",
         
-        // Tiered Framework Questions
+        // Tiered Framework Questions (exactly matching survey-results and cew-polls pages)
         "In developing Protocol 2 requirements, procedures, and a supporting model for bioavailability adjustments, would a cause-effect model (e.g., Bayesian Networks or Regression) be the best approach for a scientific framework that uses site-specific data and known toxicity-modifying factors to develop refined sediment standards?",
-        "What is the most important factor for determining which tier a contaminated site should be assigned to in a tiered framework?",
-        "Please rank the following lines of evidence in order of importance for developing a robust scientific framework for deriving Tier 2b site-specific sediment standards for screening-level risk assessment",
+        "Please rank the following lines of evidence in order of importance for developing a robust scientific framework for deriving Tier 2b site-specific sediment standards for screening-level risk assessment (1 = most important):",
         
-        // WIKS Questions
-        "What is the most effective starting point for developing a holistic baseline study that combines co-located sampling",
-        "How can the scientific framework incorporate protection goals related to Indigenous Stewardship principles",
-        "Within a tiered framework, where can place-based Indigenous Knowledge provide the most direct scientific value",
-        
-        // Prioritization Questions
-        "Which scientific approach to bioavailability holds the most promise for practical and defensible application",
-        "For the Hazard Index / Concentration Addition approach to mixture assessment, what is the single greatest scientific research gap",
-        "In developing Protocol 2 requirements, procedures, and a supporting model for bioavailability adjustments",
-        "Please rank these potential feasibility criteria to help inform the development of a prioritization framework",
-        "Please rank these timeframe considerations for developing a prioritization framework and strategic planning",
-        "Based on Today's discussion and your experience, please rank these four areas for modernization priority",
-        "When considering contaminant mixtures, rank the following approaches from most to least scientifically defensible",
-        "Within a medium-term (3-5 year) research plan, rank the following scientific objectives from most to least critical",
-        "To support long-term (5+ years) strategic goals, please rank the following foundational research areas"
+        // Prioritization Questions (exactly matching cew-polls page)
+        "Please rank these potential feasibility criteria to help inform the development of a prioritization framework (1= highest):",
+        "Please rank these timeframe considerations for developing a prioritization framework and strategic planning for research to support modernizing BC's sediment standards (1= highest):",
+        "Based on Today's discussion and your experience, please rank these four areas for modernization priority in BC's sediment standards (1= highest):",
+        "Which scientific approach to bioavailability holds the most promise for practical and defensible application in BC's regulatory framework?",
+        "When considering contaminant mixtures, rank the following approaches from most to least scientifically defensible and practically achievable for BC's regulatory framework (1= highest):",
+        "Within a medium-term (3-5 year) research plan, rank the following scientific objectives from most to least critical for modernizing BC's sediment standards?",
+        "To support long-term (5+ years) strategic goals, please rank the following foundational research areas in order of importance for creating a more adaptive and forward-looking regulatory framework (1= highest importance):",
+        "For the Hazard Index / Concentration Addition approach to mixture assessment, what is the single greatest scientific research gap that must be addressed before it can be reliably implemented?"
       ];
 
       // Group polls by question to combine survey-results and cew-polls data
@@ -331,24 +327,58 @@ export default function PollResultsClient() {
           }
 
         } else {
-          // Combine single-choice poll results
-          const optionMap = new Map<number, { votes: number, option_text: string }>();
-          
-          [...(surveyPoll?.results || []), ...(cewPoll?.results || [])].forEach(result => {
-            if (!optionMap.has(result.option_index)) {
-              optionMap.set(result.option_index, {
-                votes: 0,
-                option_text: result.option_text || group.options[result.option_index] || ''
-              });
-            }
-            optionMap.get(result.option_index)!.votes += result.votes || 0;
-          });
-          
-          pollResults = Array.from(optionMap.entries()).map(([optionIndex, data]) => ({
-            option_index: optionIndex,
-            option_text: data.option_text,
-            votes: data.votes
-          })).sort((a, b) => b.votes - a.votes);
+          // Create separate results for survey and CEW polls
+          if (surveyPoll && cewPoll) {
+            // Store original results separately
+            surveyResults = (surveyPoll.results || []).map((result: any) => ({
+              option_index: result.option_index,
+              option_text: result.option_text,
+              votes: result.votes || 0
+            })).sort((a: any, b: any) => b.votes - a.votes);
+            
+            cewResults = (cewPoll.results || []).map((result: any) => ({
+              option_index: result.option_index,
+              option_text: result.option_text,
+              votes: result.votes || 0
+            })).sort((a: any, b: any) => b.votes - a.votes);
+            
+            // Combine single-choice poll results
+            const optionMap = new Map<number, { votes: number, option_text: string }>();
+            
+            [...(surveyPoll?.results || []), ...(cewPoll?.results || [])].forEach(result => {
+              if (!optionMap.has(result.option_index)) {
+                optionMap.set(result.option_index, {
+                  votes: 0,
+                  option_text: result.option_text || group.options[result.option_index] || ''
+                });
+              }
+              optionMap.get(result.option_index)!.votes += result.votes || 0;
+            });
+            
+            pollResults = Array.from(optionMap.entries()).map(([optionIndex, data]) => ({
+              option_index: optionIndex,
+              option_text: data.option_text,
+              votes: data.votes
+            })).sort((a: any, b: any) => b.votes - a.votes);
+          } else if (surveyPoll) {
+            // Only survey data
+            surveyResults = (surveyPoll.results || []).map((result: any) => ({
+              option_index: result.option_index,
+              option_text: result.option_text,
+              votes: result.votes || 0
+            })).sort((a: any, b: any) => b.votes - a.votes);
+            pollResults = surveyResults;
+          } else if (cewPoll) {
+            // Only CEW data
+            cewResults = (cewPoll.results || []).map((result: any) => ({
+              option_index: result.option_index,
+              option_text: result.option_text,
+              votes: result.votes || 0
+            })).sort((a: any, b: any) => b.votes - a.votes);
+            pollResults = cewResults;
+          } else {
+            pollResults = [];
+          }
         }
 
         // Create combined poll result
@@ -469,23 +499,57 @@ export default function PollResultsClient() {
       // Fallback to combined results if original data not available
       return poll.results;
     } else {
-      // For single-choice polls, scale down the combined results proportionally
-      if (filterMode === 'twg') {
-        const scaleFactor = (poll.combined_survey_votes || 0) / (poll.total_votes || 1);
-        return poll.results.map(result => ({
-          ...result,
-          votes: Math.round(result.votes * scaleFactor)
-        }));
-      } else if (filterMode === 'cew') {
-        const scaleFactor = (poll.combined_cew_votes || 0) / (poll.total_votes || 1);
-        return poll.results.map(result => ({
-          ...result,
-          votes: Math.round(result.votes * scaleFactor)
-        }));
+      // For single-choice polls, use the actual separate results
+      if (filterMode === 'twg' && poll.survey_results) {
+        return poll.survey_results;
+      } else if (filterMode === 'cew' && poll.cew_results) {
+        return poll.cew_results;
       }
     }
     
     return poll.results;
+  };
+
+  const navigateToNextQuestion = (currentPoll: PollResult) => {
+    // Get all polls in the same group
+    const pollGroup = getPollGroup(currentPoll.page_path);
+    const groupPolls = filteredPolls.filter(poll => getPollGroup(poll.page_path) === pollGroup);
+    
+    // Find current poll index
+    const currentIndex = groupPolls.findIndex(poll => 
+      poll.page_path === currentPoll.page_path && poll.poll_index === currentPoll.poll_index
+    );
+    
+    // Navigate to next poll (wrap around to first if at end)
+    const nextIndex = (currentIndex + 1) % groupPolls.length;
+    const nextPoll = groupPolls[nextIndex];
+    
+    if (nextPoll) {
+      const nextPollKey = nextPoll.poll_id || nextPoll.ranking_poll_id || `poll-${nextPoll.page_path}-${nextPoll.poll_index}`;
+      setSelectedQuestion(nextPollKey);
+      setCurrentQuestionIndex(nextIndex);
+    }
+  };
+
+  const navigateToPreviousQuestion = (currentPoll: PollResult) => {
+    // Get all polls in the same group
+    const pollGroup = getPollGroup(currentPoll.page_path);
+    const groupPolls = filteredPolls.filter(poll => getPollGroup(poll.page_path) === pollGroup);
+    
+    // Find current poll index
+    const currentIndex = groupPolls.findIndex(poll => 
+      poll.page_path === currentPoll.page_path && poll.poll_index === currentPoll.poll_index
+    );
+    
+    // Navigate to previous poll (wrap around to last if at beginning)
+    const prevIndex = currentIndex === 0 ? groupPolls.length - 1 : currentIndex - 1;
+    const prevPoll = groupPolls[prevIndex];
+    
+    if (prevPoll) {
+      const prevPollKey = prevPoll.poll_id || prevPoll.ranking_poll_id || `poll-${prevPoll.page_path}-${prevPoll.poll_index}`;
+      setSelectedQuestion(prevPollKey);
+      setCurrentQuestionIndex(prevIndex);
+    }
   };
 
   const getPageTitle = (pagePath: string) => {
@@ -493,24 +557,20 @@ export default function PollResultsClient() {
       '/survey-results/holistic-protection': 'Holistic Protection',
       '/survey-results/tiered-framework': 'Tiered Framework',
       '/survey-results/prioritization': 'Prioritization Framework',
-      '/survey-results/wiks': 'Weaving Indigenous Knowledge & Science',
       '/survey-results/effectiveness': 'Effectiveness of Current Standards',
       '/survey-results/technical-standards': 'Technical Standards',
       '/survey-results/detailed-findings': 'Detailed Findings',
-      '/wiks': 'Weaving Indigenous Knowledge & Science',
       '/cew-polls/holistic-protection': 'Holistic Protection', // Same as survey-results
       '/cew-polls/tiered-framework': 'Tiered Framework', // Same as survey-results
       '/cew-polls/prioritization': 'Prioritization Framework', // Same as survey-results
-      '/cew-polls/wiks': 'Weaving Indigenous Knowledge & Science',
     };
     return pathMap[pagePath] || pagePath;
   };
 
-  const getPollGroup = (pagePath: string): 'holistic-protection' | 'tiered-framework' | 'prioritization' | 'wiks' | null => {
+  const getPollGroup = (pagePath: string): 'holistic-protection' | 'tiered-framework' | 'prioritization' | null => {
     if (pagePath.includes('holistic-protection')) return 'holistic-protection';
     if (pagePath.includes('tiered-framework')) return 'tiered-framework';
     if (pagePath.includes('prioritization')) return 'prioritization';
-    if (pagePath.includes('wiks')) return 'wiks';
     return null;
   };
 
@@ -539,12 +599,6 @@ export default function PollResultsClient() {
         name: 'Prioritization',
         polls: polls.filter(poll => 
           poll.page_path.includes('prioritization')
-        )
-      },
-      'wiks': {
-        name: 'Weaving Indigenous Knowledge & Science',
-        polls: polls.filter(poll => 
-          poll.page_path.includes('wiks')
         )
       }
     };
@@ -583,7 +637,8 @@ export default function PollResultsClient() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       {/* Fixed Left Panel */}
-      <div className="fixed left-0 top-0 w-80 h-screen bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 flex-shrink-0 overflow-y-auto z-10">
+      {leftPanelVisible && (
+        <div className="fixed left-0 top-0 w-80 h-screen bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 flex-shrink-0 overflow-y-auto z-10">
         <div className="p-6">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Filter Results</h2>
           
@@ -655,14 +710,6 @@ export default function PollResultsClient() {
                         questionBg: 'bg-purple-100 dark:bg-purple-800/30',
                         questionHover: 'hover:bg-purple-200 dark:hover:bg-purple-800/40'
                       };
-                    case 'wiks':
-                      return {
-                        bg: 'bg-green-50 dark:bg-green-800/20',
-                        hover: 'hover:bg-green-100 dark:hover:bg-green-800/30',
-                        text: 'text-gray-900 dark:text-green-100',
-                        questionBg: 'bg-green-100 dark:bg-green-700/30',
-                        questionHover: 'hover:bg-green-200 dark:hover:bg-green-700/40'
-                      };
                     default:
                       return {
                         bg: 'bg-gray-50 dark:bg-gray-700/20',
@@ -692,7 +739,10 @@ export default function PollResultsClient() {
                       <div className="ml-4 space-y-1">
                         {theme.polls.map((poll) => {
                           const pollKey = poll.poll_id || poll.ranking_poll_id || `poll-${poll.page_path}-${poll.poll_index}`;
-                          const totalVotes = getFilteredPollResults(poll).reduce((sum, r) => sum + r.votes, 0);
+                          // For ranking polls, show participant count (responses). For single-choice, show total votes.
+                          const totalVotes = poll.is_ranking ? 
+                            (poll.combined_survey_votes || 0) + (poll.combined_cew_votes || 0) :
+                            getFilteredPollResults(poll).reduce((sum, r) => sum + r.votes, 0);
                           
                           return (
                             <button
@@ -704,7 +754,7 @@ export default function PollResultsClient() {
                             >
                               <span>Question {poll.poll_index + 1}</span>
                               <span className="text-xs bg-white dark:bg-gray-600 px-2 py-1 rounded-full">
-                                {totalVotes} votes
+                                {totalVotes} {poll.is_ranking ? 'responses' : 'votes'}
                               </span>
                             </button>
                           );
@@ -736,11 +786,55 @@ export default function PollResultsClient() {
               )}
             </button>
           </div>
+
+          {/* Hide Panel Button */}
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={() => setLeftPanelVisible(false)}
+              className="flex items-center justify-center w-10 h-10 bg-gray-600 dark:bg-gray-500 text-white rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors shadow-lg"
+              title="Hide filter panel"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
+      )}
+
+      {/* Show Panel Button - appears when panel is hidden */}
+      {!leftPanelVisible && (
+        <div className="fixed left-4 top-20 z-50">
+          <button
+            onClick={() => setLeftPanelVisible(true)}
+            className="flex items-center justify-center w-12 h-12 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-xl border-2 border-white dark:border-gray-800"
+            title="Show filter panel"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Refresh Results Button - appears when panel is hidden */}
+      {!leftPanelVisible && (
+        <div className="fixed left-4 top-32 z-50">
+          <button
+            onClick={() => fetchPollResults()}
+            className="flex items-center justify-center w-12 h-12 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors shadow-xl border-2 border-white dark:border-gray-800"
+            title="Refresh results"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto ml-80">
+      <div className={`flex-1 overflow-y-auto ${leftPanelVisible ? 'ml-80' : 'ml-0'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Live Poll Results Dashboard</h1>
@@ -783,40 +877,124 @@ export default function PollResultsClient() {
               
               return (
                 <div key={pollKey} className={`bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 transition-all duration-300 ${
-                  isExpanded ? 'fixed top-4 right-4 bottom-4 left-80 z-50 flex flex-col' : 'p-8'
+                  isExpanded ? `fixed top-20 right-4 bottom-4 ${leftPanelVisible ? 'left-80' : 'left-20'} z-[60] flex flex-col` : 'p-8'
                 }`}>
                   <div className={isExpanded ? 'p-4 flex-1 flex flex-col' : ''}>
                   <div className={`${isExpanded ? 'mb-3' : 'mb-4'}`}>
-                    <h3 className={`font-bold text-gray-800 dark:text-white ${isExpanded ? 'text-2xl' : 'text-2xl'} mb-2`}>
-                      {getPageTitle(selectedPoll.page_path)} - Question {selectedPoll.poll_index + 1}
-                    </h3>
-                    <div className="flex items-start space-x-4">
-                      <p className={`text-gray-700 dark:text-gray-300 leading-relaxed flex-1 ${isExpanded ? 'text-lg mb-3' : 'text-lg'}`}>{selectedPoll.question}</p>
-                      <div className="flex items-start space-x-2 flex-shrink-0 -mt-8">
-                        <button
-                          onClick={() => setExpandedPoll(isExpanded ? null : pollKey)}
-                          className="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                          title={isExpanded ? 'Close expanded view' : 'Expand to fit screen'}
-                        >
-                          {isExpanded ? (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex-1 max-w-3xl mr-4">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h3 className={`font-bold text-gray-800 dark:text-white ${isExpanded ? 'text-2xl' : 'text-2xl'}`}>
+                            {getPageTitle(selectedPoll.page_path)} - Question {selectedPoll.poll_index + 1}
+                          </h3>
+                          <button
+                            onClick={() => navigateToPreviousQuestion(selectedPoll)}
+                            className="flex items-center justify-center w-6 h-6 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            title="Previous question in group"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
-                          ) : (
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                          </button>
+                          <button
+                            onClick={() => navigateToNextQuestion(selectedPoll)}
+                            className="flex items-center justify-center w-6 h-6 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            title="Next question in group"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
-                          )}
-                        </button>
-                        {/* QR Code for specific poll groups - positioned beside expand button */}
+                          </button>
+                          <button
+                            onClick={() => setExpandedPoll(isExpanded ? null : pollKey)}
+                            className="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            title={isExpanded ? 'Close expanded view' : 'Expand to fit screen'}
+                          >
+                            {isExpanded ? (
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            ) : (
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                        <p className={`text-gray-700 dark:text-gray-300 leading-relaxed ${isExpanded ? 'text-lg mb-3' : 'text-lg'}`}>{selectedPoll.question}</p>
+                      </div>
+                      
+                      {/* QR Code and Join at containers - positioned on the right */}
+                      <div className="flex items-start space-x-3 flex-shrink-0">
                         {(() => {
                           const pollGroup = getPollGroup(selectedPoll.page_path);
-                          return pollGroup ? (
-                            <QRCodeDisplay 
-                              pollGroup={pollGroup} 
-                              className={isExpanded ? 'scale-75' : ''} 
-                            />
-                          ) : null;
+                          if (!pollGroup) return null;
+                          
+                          const getWebAddress = (group: string) => {
+                            switch (group) {
+                              case 'holistic-protection':
+                                return 'bit.ly/SABCS-Holistic';
+                              case 'tiered-framework':
+                                return 'bit.ly/SABCS-Tiered';
+                              case 'prioritization':
+                                return 'bit.ly/SABCS-Prio';
+                              default:
+                                return null;
+                            }
+                          };
+                          
+                          const webAddress = getWebAddress(pollGroup);
+                          
+                          return (
+                            <div className="flex items-start space-x-3">
+                              {/* Web Address and Password */}
+                              {webAddress && (
+                                <div 
+                                  className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-200"
+                                  onClick={() => {
+                                    setExpandedPollGroup(pollGroup);
+                                    setQrCodeExpanded(!qrCodeExpanded);
+                                  }}
+                                  title="Click to expand for conference display"
+                                >
+                                  {/* Join at section */}
+                                  <div className="flex flex-col items-center">
+                                    <div className="text-sm font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                                      Join at:
+                                    </div>
+                                    <div className="text-lg font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                                      {webAddress}
+                                    </div>
+                                  </div>
+                                  {/* Spacing */}
+                                  <div className="h-2"></div>
+                                  {/* Password section */}
+                                  <div className="flex flex-col items-center">
+                                    <div className="text-sm font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                                      Password:
+                                    </div>
+                                    <div className="text-lg font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                                      CEW2025
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                              {/* QR Code */}
+                              <div 
+                                className="cursor-pointer hover:opacity-80 transition-opacity duration-200"
+                                onClick={() => {
+                                  setExpandedPollGroup(pollGroup);
+                                  setQrCodeExpanded(!qrCodeExpanded);
+                                }}
+                                title="Click to expand for conference display"
+                              >
+                                <QRCodeDisplay 
+                                  pollGroup={pollGroup} 
+                                  className={isExpanded ? 'scale-75' : ''} 
+                                />
+                              </div>
+                            </div>
+                          );
                         })()}
                       </div>
                     </div>
@@ -890,11 +1068,11 @@ export default function PollResultsClient() {
                             </div>
                           </div>
                           <div className={`w-full max-w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden ${
-                            isExpanded ? 'h-6' : 'h-3'
+                            isExpanded ? 'h-8' : 'h-5'
                           }`}>
                             <div
                               className={`rounded-full transition-all duration-700 max-w-full ${
-                                isExpanded ? 'h-6' : 'h-3'
+                                isExpanded ? 'h-8' : 'h-5'
                               } ${
                                 isTopChoice 
                                   ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
@@ -971,11 +1149,11 @@ export default function PollResultsClient() {
                               </div>
                             </div>
                             <div className={`w-full max-w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden ${
-                              isExpanded ? 'h-6' : 'h-3'
+                              isExpanded ? 'h-8' : 'h-5'
                             }`}>
                               <div
                                 className={`rounded-full transition-all duration-700 max-w-full ${
-                                  isExpanded ? 'h-6' : 'h-3'
+                                  isExpanded ? 'h-8' : 'h-5'
                                 } ${
                                   isTopChoice 
                                     ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
@@ -998,6 +1176,86 @@ export default function PollResultsClient() {
 
         </div>
       </div>
+
+      {/* Expanded QR Code and Join at Overlay */}
+      {qrCodeExpanded && (
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setQrCodeExpanded(false)}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-5xl mx-4 relative transform scale-[1.3]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setQrCodeExpanded(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Expanded content */}
+            <div className="flex flex-col items-center space-y-8">
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white text-center">
+                Conference Poll Access
+              </h3>
+              
+              <div className="flex flex-col lg:flex-row items-center justify-center space-y-8 lg:space-y-0 lg:space-x-12 w-full">
+                {/* Expanded Join at container */}
+                <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-800 w-full lg:w-auto lg:min-w-[400px] lg:max-w-[450px]">
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="text-2xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                      Join at:
+                    </div>
+                    <div className="text-4xl font-bold text-blue-700 dark:text-white whitespace-nowrap text-center" style={{color: '#1d4ed8'}}>
+                      {(() => {
+                        const getWebAddress = (group: string) => {
+                          switch (group) {
+                            case 'holistic-protection':
+                              return 'bit.ly/SABCS-Holistic';
+                            case 'tiered-framework':
+                              return 'bit.ly/SABCS-Tiered';
+                            case 'prioritization':
+                              return 'bit.ly/SABCS-Prio';
+                            default:
+                              return 'bit.ly/SABCS-Holistic'; // Default fallback
+                          }
+                        };
+                        
+                        return getWebAddress(expandedPollGroup || 'holistic-protection');
+                      })()}
+                    </div>
+                  </div>
+                  
+                  <div className="h-6"></div>
+                  
+                  <div className="flex flex-col items-center space-y-4">
+                    <div className="text-2xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                      Password:
+                    </div>
+                    <div className="text-4xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                      CEW2025
+                    </div>
+                  </div>
+                </div>
+
+                {/* Expanded QR Code */}
+                <div className="flex items-center justify-center">
+                  <div className="transform scale-125">
+                    <QRCodeDisplay 
+                      pollGroup={(expandedPollGroup || 'holistic-protection') as 'holistic-protection' | 'tiered-framework' | 'prioritization' | 'wiks'} 
+                    />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

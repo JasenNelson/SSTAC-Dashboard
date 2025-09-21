@@ -84,13 +84,15 @@ The SSTAC & TWG Dashboard uses Supabase (PostgreSQL) with a comprehensive schema
 - **Data Sources**: `polls`, `poll_votes` tables
 - **Performance**: Optimized for fast poll result retrieval
 
-#### **`ranking_results`** (Ranking Poll System View - FIXED VERSION)
+#### **`ranking_results`** (Ranking Poll System View - CRITICAL FIX APPLIED)
 - **Purpose**: Aggregated ranking poll results
 - **Features**: Average rank calculations, vote counts, option text mapping
 - **CEW Support**: Includes both authenticated and CEW conference votes
 - **Data Sources**: `ranking_polls`, `ranking_votes` tables
 - **Performance**: Optimized with subquery approach to avoid aggregate function nesting
 - **Fix Applied**: Corrected to count unique users instead of individual ranking votes
+- **CRITICAL ARRAY INDEXING**: Uses `rp.options[option_stats.option_index]` (NOT +1) - 0-based indexing throughout
+- **NEVER MODIFY**: The line `'option_text', rp.options[option_stats.option_index]` - adding +1 breaks option text mapping
 
 ### **CEW Conference Polling System** ✅ COMPLETED (FINAL VERSION)
 
@@ -294,6 +296,37 @@ If something breaks:
 5. **Document lessons learned** for future reference
 
 ## 🗳️ **Poll System Database Schema**
+
+### **🚨 CRITICAL POLL SYSTEM KNOWLEDGE (2025-01-18)**
+
+#### **Three-Way Synchronization Required**
+Every poll question must exist in **THREE places** with identical content:
+1. **Database tables**: `polls` and `ranking_polls` with exact question text and options
+2. **Survey Results pages**: `/survey-results/[topic]` with matching questions  
+3. **CEW Poll pages**: `/cew-polls/[topic]` with matching questions
+
+#### **Admin Panel Question Matching Logic**
+The admin panel uses strict question matching in `PollResultsClient.tsx`:
+```javascript
+const currentPollQuestions = [
+  // Must match EXACTLY with database questions
+  "Given the potential for over-conservatism...",
+  "Rank in order of highest to lowest importance...",
+  // ... etc
+];
+```
+**CRITICAL**: If database questions don't match `currentPollQuestions` array, polls get filtered out and show 0 responses.
+
+#### **Vote Counting Logic Differences**
+- **Single-choice polls**: Sum all votes from results array
+- **Ranking polls**: Use `total_votes` field (unique participants count)
+- **Display**: Show "votes" for single-choice, "responses" for ranking polls
+
+#### **CEW vs Survey Data Handling**
+- **Survey data**: Paths starting with `/survey-results` or `/wiks`
+- **CEW data**: Paths starting with `/cew-polls`
+- **Filtering**: Store original survey/CEW data separately for accurate filtering
+- **Combination**: Merge data for "All" view, use separate data for filtered views
 
 ### **Poll Tables Structure**
 

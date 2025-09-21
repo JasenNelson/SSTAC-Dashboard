@@ -32,13 +32,23 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **Use the global refresh function** `refreshGlobalAdminStatus()` after CRUD operations
 - **Include localStorage backup** for temporary database issues
 
-### 5. Component Architecture
+### 5. Admin Panel Navigation & UI Guidelines (CRITICAL)
+- **Bidirectional Question Navigation**: Left/right arrow buttons between question number and expand button
+- **Smart Group Navigation**: Navigate only within current poll group (Holistic Protection, Tiered Framework, etc.)
+- **Wrap-Around Behavior**: Seamlessly cycle from last question back to first, and vice versa
+- **QR Code Expansion**: Click-to-expand functionality for conference display with proper z-index management
+- **Enhanced Blue Bars**: Use h-5 (20px) for normal view, h-8 (32px) for expanded view for better visibility
+- **Z-Index Layering**: Expanded view uses z-[60], refresh button uses z-50, ensure proper layering
+- **Responsive Positioning**: Expanded view uses left-20 when panel hidden to avoid refresh button obstruction
+- **Header Clearance**: Expanded view positioned at top-20 to avoid header overlap
+
+### 6. Component Architecture
 - **Server Components**: Handle authentication, database queries, and initial rendering
 - **Client Components**: Handle user interactions, state management, and real-time updates
 - **API Routes**: Bridge between client components and server actions
 - **Server Actions**: Handle database operations with proper validation
 
-### 6. Performance Optimization Guidelines (CRITICAL)
+### 7. Performance Optimization Guidelines (CRITICAL)
 - **MEASURE FIRST**: Check if performance issues actually exist before optimizing
 - **ISOLATE TESTING**: Test optimizations in separate branches first
 - **USER CONSULTATION**: Ask if "excessive" calls are actually problematic
@@ -46,8 +56,9 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **NEVER modify core functions** without understanding all dependencies
 - **ALWAYS have rollback plans** for any performance changes
 
-### 7. Poll and Ranking Question System Guidelines (CRITICAL)
+### 8. Poll and Ranking Question System Guidelines (CRITICAL)
 - **NEVER modify poll database schema** without understanding all dependencies
+- **CRITICAL: ranking_results View Array Indexing**: The ranking_results view uses `rp.options[option_stats.option_index]` (NOT +1). The option_index values in ranking_votes table are 0-based (0,1,2,3) and the options JSONB array is also 0-based. Adding +1 breaks the mapping and causes blank option text in admin panel. NEVER modify this line: `'option_text', rp.options[option_stats.option_index]`. The system uses 0-based indexing throughout - do not "fix" what appears to be a 1-based vs 0-based issue.
 - **PRIVACY FIRST**: For CEW polls, avoid client-side persistence to ensure true privacy in incognito mode
 - **SIMPLIFY CONSTRAINTS**: Complex unique constraints can cause submission failures - prefer application-level uniqueness
 - **ANONYMOUS CLIENTS**: Use null cookie handlers for Supabase clients in CEW poll API routes
@@ -60,7 +71,7 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **VERIFY RLS policies**: Poll data must be properly isolated by user
 - **TEST vote tracking**: Ensure device-based tracking works for CEW polls
 
-### 8. Code Quality and Production Readiness Guidelines (CRITICAL)
+### 9. Code Quality and Production Readiness Guidelines (CRITICAL)
 - **BUILD SUCCESS**: Always ensure successful production build before committing
 - **TYPE SAFETY**: Replace TypeScript `any` types with proper type definitions
 - **JSX COMPLIANCE**: Fix all unescaped quotes in JSX components using proper HTML entities
@@ -71,7 +82,7 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **TYPE DEFINITIONS**: Create proper interfaces for API responses and component props
 - **BUILD VERIFICATION**: Run `npm run build` to verify compilation success
 
-### 9. UI/UX Color Contrast Guidelines (CRITICAL)
+### 10. UI/UX Color Contrast Guidelines (CRITICAL)
 - **LIGHT MODE**: Colored backgrounds MUST use dark text (`text-gray-900`) for proper contrast and readability
 - **DARK MODE**: Colored backgrounds MUST use light text (`text-white` or theme-specific light colors) for proper contrast
 - **NEVER USE**: Light text on light backgrounds or dark text on dark backgrounds
@@ -79,7 +90,7 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **TEST BOTH MODES**: Always verify proper contrast ratios in both light and dark modes for accessibility
 - **HISTORICAL CONTEXT**: This has been a recurring issue requiring multiple fixes for proper readability
 
-### 10. Complex Data Integration Debugging Guidelines (CRITICAL)
+### 11. Complex Data Integration Debugging Guidelines (CRITICAL)
 - **ALWAYS verify data sources** before implementing complex data combination logic
 - **UNDERSTAND data types** - Ranking polls vs single-choice polls have different vote counting logic
 - **TEST data combination** with known data sets before deploying
@@ -89,7 +100,7 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **TEST edge cases** - Empty data, missing fields, type mismatches
 - **HISTORICAL CONTEXT**: Admin poll results system had complex data integration issues causing incorrect vote counts
 
-### 11. TypeScript Build Safety Guidelines (CRITICAL)
+### 12. TypeScript Build Safety Guidelines (CRITICAL)
 - **NO implicit `any` types** - Always provide explicit type annotations
 - **FIX TypeScript errors** before attempting production builds
 - **USE proper type definitions** for complex data structures

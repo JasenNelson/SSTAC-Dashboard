@@ -1,52 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import PollWithResults from '@/components/PollWithResults';
-import RankingPoll from '@/components/dashboard/RankingPoll';
-
-interface PollData {
-  question: string;
-  options: string[];
-  questionNumber?: number;
-}
 
 export default function WIKSClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
-  
-  // Define polls with proper structure for the new poll system
-  const polls: PollData[] = [
-    {
-      question: "What is the most effective starting point for developing a holistic baseline study that combines co-located sampling (e.g., sediment, porewater, tissue, surface water) with area-based Indigenous Knowledge and Science?",
-      questionNumber: 1,
-      options: [
-        "A co-developed conceptual site model that uses Indigenous Knowledge to first identify key species, exposure pathways, and areas of cultural significance to guide the scientific sampling plan.",
-        "A comprehensive literature and data review that compiles all existing scientific and Indigenous knowledge for the area to identify critical data gaps that the baseline study must fill.",
-        "A pilot-scale field study conducted collaboratively with community members to test and validate sampling methods and ensure they are effective and culturally appropriate.",
-        "A series of collaborative workshops where knowledge holders and scientists share information to establish a shared understanding of the ecosystem's history, health, and stressors."
-      ]
-    },
-    {
-      question: "How can the scientific framework incorporate protection goals related to Indigenous Stewardship principles such as the 'connectedness of all life' and '7-generations'?",
-      questionNumber: 2,
-      options: [
-        "By using food-web models that scientifically map contaminant pathways between species.",
-        "By developing Species Sensitivity Distributions (SSDs) that include culturally significant local species.",
-        "By setting protective tissue residue guidelines for key indicator species to ensure long-term safety.",
-        "By incorporating ecosystem function metrics (e.g., nutrient cycling) as formal scientific endpoints.",
-        "By developing standards to protect the fitness of resources for various traditional uses, such as medicinal plants."
-      ]
-    },
-    {
-      question: "Within a tiered framework, where can place-based Indigenous Knowledge provide the most direct scientific value for modifying a generic baseline value to be more site-specific?",
-      questionNumber: 3,
-      options: [
-        "Informing bioavailability models with specific knowledge of local sediment characteristics and processes.",
-        "Identifying sensitive local species or life stages not included in the generic models for a more accurate risk calculation.",
-        "Characterizing unique, site-specific contaminant exposure pathways that would alter baseline risk model assumptions.",
-        "Identifying potential confounding environmental factors (e.g., freshwater seeps) influencing scientific measurements."
-      ]
-    }
-  ];
 
   const toggleAccordion = (id: string) => {
     setActiveAccordion(activeAccordion === id ? null : id);
@@ -224,52 +181,6 @@ export default function WIKSClient() {
         </div>
       </section>
 
-      {/* Interactive Polls Section */}
-      <section className="py-20 px-6 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-8 text-gray-800 font-['Merriweather']">
-            The Questions We Face
-          </h2>
-          <p className="text-xl text-center text-gray-600 mb-16 max-w-4xl mx-auto">
-            Your insights will help inform this collaborative process. Please share your thoughts on the following questions.
-          </p>
-          
-          <div className="space-y-16">
-            {polls.map((poll, pollIndex) => {
-              // Use RankingPoll if question contains "rank"
-              if (poll.question.toLowerCase().includes('rank')) {
-                return (
-                  <RankingPoll
-                    key={pollIndex}
-                    pollIndex={pollIndex}
-                    question={poll.question}
-                    options={poll.options}
-                    pagePath="/survey-results/wiks"
-                    onVote={(pollIndex, rankings) => {
-                      console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
-                    }}
-                  />
-                );
-              }
-              
-              // Use regular PollWithResults for single-choice questions
-              return (
-                <PollWithResults
-                  key={pollIndex}
-                  pollIndex={pollIndex}
-                  question={poll.question}
-                  options={poll.options}
-                  pagePath="/wiks"
-                  questionNumber={poll.questionNumber}
-                  onVote={(pollIndex, optionIndex) => {
-                    console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
-                  }}
-                />
-              );
-            })}
-          </div>
-        </div>
-      </section>
 
       {/* Next Steps & Contact Section */}
       <section className="py-20 px-6 bg-gradient-to-br from-gray-800 to-gray-900 text-white">

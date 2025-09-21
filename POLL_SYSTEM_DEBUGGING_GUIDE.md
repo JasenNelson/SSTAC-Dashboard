@@ -3,6 +3,114 @@
 ## Overview
 This guide documents critical debugging issues encountered with the admin poll results system and provides solutions to prevent future problems.
 
+## ✅ Admin Panel Navigation Features (2025-01-20)
+
+### **Bidirectional Question Navigation Implementation**
+The admin poll results panel now includes advanced navigation features:
+
+#### **Navigation Controls**
+- **Left Arrow Button**: Navigate to previous question in current poll group
+- **Right Arrow Button**: Navigate to next question in current poll group
+- **Positioning**: Located between question number and expand button
+- **Styling**: Small, subtle buttons with hover effects
+
+#### **Smart Group Navigation**
+- **Group-Aware**: Only navigates within current poll group (Holistic Protection, Tiered Framework, etc.)
+- **Wrap-Around**: Seamlessly cycles from last question back to first, and vice versa
+- **State Management**: Updates both `selectedQuestion` and `currentQuestionIndex`
+
+#### **Technical Implementation**
+```javascript
+const navigateToNextQuestion = (currentPoll: PollResult) => {
+  const pollGroup = getPollGroup(currentPoll.page_path);
+  const groupPolls = filteredPolls.filter(poll => getPollGroup(poll.page_path) === pollGroup);
+  const currentIndex = groupPolls.findIndex(poll => 
+    poll.page_path === currentPoll.page_path && poll.poll_index === currentPoll.poll_index
+  );
+  const nextIndex = (currentIndex + 1) % groupPolls.length;
+  const nextPoll = groupPolls[nextIndex];
+  if (nextPoll) {
+    const nextPollKey = nextPoll.poll_id || nextPoll.ranking_poll_id || `poll-${nextPoll.page_path}-${nextPoll.poll_index}`;
+    setSelectedQuestion(nextPollKey);
+    setCurrentQuestionIndex(nextIndex);
+  }
+};
+```
+
+### **QR Code Expansion System**
+#### **Click-to-Expand Functionality**
+- **Clickable Elements**: Both "Join at" container and QR code are clickable
+- **Conference Display**: 4x larger display centered on screen for conference attendees
+- **Dynamic Content**: Shows correct web address and QR code for each poll group
+- **Easy Dismissal**: Click outside overlay or close button to dismiss
+
+#### **Z-Index Management**
+- **Expanded View**: Uses `z-[60]` to appear above refresh button (`z-50`)
+- **Header Clearance**: Positioned at `top-20` to avoid header overlap
+- **Refresh Button Access**: Uses `left-20` when panel hidden to avoid obstruction
+
+### **Enhanced Blue Bar Visibility**
+#### **Height Improvements**
+- **Normal View**: Increased from `h-3` (12px) to `h-5` (20px) - 67% increase
+- **Expanded View**: Increased from `h-6` (24px) to `h-8` (32px) - 33% increase
+- **Consistent Application**: Applied to both ranking polls and single-choice polls
+- **No Layout Issues**: Adequate spacing maintained between response options
+
+## 🚨 CRITICAL: Poll Question & Option Updates (2025-01-18)
+
+### **MANDATORY PROTOCOL FOR UPDATING POLL QUESTIONS**
+When updating poll questions and options across the system, follow this exact protocol to prevent system-wide failures:
+
+#### **1. Database-First Approach**
+- **ALWAYS update database first** with new poll questions and options
+- **NEVER update UI pages** without corresponding database changes
+- **VERIFY database state** before making any UI changes
+
+#### **2. Three-Way Synchronization Required**
+Every poll question must exist in **THREE places** with identical content:
+1. **Database tables**: `polls` and `ranking_polls` with exact question text and options
+2. **Survey Results pages**: `/survey-results/[topic]` with matching questions
+3. **CEW Poll pages**: `/cew-polls/[topic]` with matching questions
+
+#### **3. Admin Panel Question Matching Logic**
+The admin panel (`PollResultsClient.tsx`) uses strict question matching:
+```javascript
+const currentPollQuestions = [
+  // Must match EXACTLY with database questions
+  "Given the potential for over-conservatism...",
+  "Rank in order of highest to lowest importance...",
+  // ... etc
+];
+
+const matchesCurrentQuestion = currentPollQuestions.some(question => 
+  poll.question.includes(question.substring(0, 50)) || 
+  question.includes(poll.question.substring(0, 50))
+);
+```
+
+**CRITICAL**: If database questions don't match `currentPollQuestions` array, polls get filtered out and show 0 responses.
+
+#### **4. Safe Update Protocol**
+```sql
+-- 1. FIRST: Backup existing data
+CREATE TABLE polls_backup AS SELECT * FROM polls;
+CREATE TABLE ranking_polls_backup AS SELECT * FROM ranking_polls;
+
+-- 2. SECOND: Update database questions to match new requirements
+UPDATE polls SET question = 'New question text', options = '["option1", "option2"]' 
+WHERE page_path = '/survey-results/topic' AND poll_index = 0;
+
+-- 3. THIRD: Update admin panel currentPollQuestions array
+-- 4. FOURTH: Update survey-results and cew-polls pages
+-- 5. FIFTH: Test all three systems work together
+```
+
+#### **5. Common Failure Points**
+- **Question text mismatch**: Even minor differences cause filtering failures
+- **Options array mismatch**: Different option order breaks result display
+- **Missing polls**: If database poll doesn't exist, UI shows empty state
+- **Index misalignment**: `poll_index` must match between database and UI
+
 ## 🚨 Critical Issues Resolved
 
 ### 1. Vote Counting Logic Errors
@@ -124,6 +232,43 @@ const getFilteredPollResults = (poll: PollResult) => {
   // ... rest of filtering logic
 };
 ```
+
+### 7. Ranking Results View Array Indexing (CRITICAL)
+**Problem**: Blank/empty option text appearing in admin panel for ranking polls
+
+**Root Cause**: `ranking_results` view incorrectly using `+1` offset for array indexing
+```sql
+-- WRONG: This causes blank option text
+'option_text', rp.options[(option_stats.option_index + 1)]
+
+-- CORRECT: Use 0-based indexing
+'option_text', rp.options[option_stats.option_index]
+```
+
+**Critical Fix Applied**: The `ranking_results` view was recreated to use correct 0-based indexing:
+```sql
+CREATE OR REPLACE VIEW ranking_results AS
+SELECT rp.id AS ranking_poll_id,
+    rp.page_path,
+    rp.poll_index,
+    rp.question,
+    rp.options,
+    rp.created_at,
+    rp.updated_at,
+    count(DISTINCT rv.user_id) AS total_votes,
+    COALESCE(( SELECT jsonb_agg(jsonb_build_object('option_index', option_stats.option_index, 'option_text', rp.options[option_stats.option_index], 'averageRank', option_stats.avg_rank, 'votes', option_stats.vote_count) ORDER BY option_stats.option_index) AS jsonb_agg
+           FROM ( SELECT rv2.option_index,
+                    avg((rv2.rank)::numeric) AS avg_rank,
+                    count(rv2.id) AS vote_count
+                   FROM ranking_votes rv2
+                  WHERE (rv2.ranking_poll_id = rp.id)
+                  GROUP BY rv2.option_index) option_stats), '[]'::jsonb) AS results
+   FROM (ranking_polls rp
+     LEFT JOIN ranking_votes rv ON ((rp.id = rv.ranking_poll_id)))
+  GROUP BY rp.id, rp.page_path, rp.poll_index, rp.question, rp.options, rp.created_at, rp.updated_at;
+```
+
+**Key Learning**: The system uses 0-based indexing throughout - do not "fix" what appears to be a 1-based vs 0-based issue.
 
 ## 🔍 Debugging Checklist
 
