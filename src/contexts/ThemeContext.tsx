@@ -50,9 +50,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-        {children}
-      </div>
+      <ThemeContext.Provider value={{ theme: 'light', toggleTheme: () => {}, setTheme: () => {} }}>
+        <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+          {children}
+        </div>
+      </ThemeContext.Provider>
     );
   }
 
