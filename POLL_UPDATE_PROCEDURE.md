@@ -2,7 +2,27 @@
 
 ## 🚨 CRITICAL: This Procedure Prevents System-Wide Failures
 
-**HISTORICAL CONTEXT**: This procedure was developed after January 2025 debugging incidents where poll updates caused "CEW: 0 responses", blank option text, and filtering failures. Following this protocol prevents such issues.
+**HISTORICAL CONTEXT**: This procedure was developed after January 2025 debugging incidents where poll updates caused "CEW: 0 responses", blank option text, and filtering failures. The AI made multiple incorrect assumptions despite reviewing markdowns and running queries - only CSV exports revealed the true system structure. Following this protocol prevents such issues.
+
+## 🚨 CRITICAL: Two Completely Separate Poll Systems
+
+### **Single-Choice Polls System**
+- **Table**: `polls`
+- **Votes Table**: `poll_votes` 
+- **Results View**: `poll_results`
+- **Vote Counting**: Sum of all individual votes
+
+### **Ranking Polls System**
+- **Table**: `ranking_polls`
+- **Votes Table**: `ranking_votes`
+- **Results View**: `ranking_results` 
+- **Vote Counting**: Count of unique participants
+
+### **CRITICAL RULES**
+- ❌ **NEVER** put ranking questions in `polls` table
+- ❌ **NEVER** put single-choice questions in `ranking_polls` table
+- ✅ **ALWAYS** use correct table for correct poll type
+- ✅ **CSV exports are truth** - verify with actual data, not assumptions
 
 ## 📋 Pre-Update Safety Protocol
 
@@ -19,12 +39,13 @@ SELECT 'poll_votes' as table_name, COUNT(*) as record_count FROM poll_votes
 UNION ALL
 SELECT 'ranking_votes' as table_name, COUNT(*) as record_count FROM ranking_votes;
 
--- Check existing poll questions and options
-SELECT page_path, poll_index, question, options, created_at 
+-- Check existing SINGLE-CHOICE poll questions and options
+SELECT 'SINGLE-CHOICE POLLS' as poll_type, page_path, poll_index, LEFT(question, 50) as question_preview, jsonb_array_length(options) as option_count
 FROM polls 
 ORDER BY page_path, poll_index;
 
-SELECT page_path, poll_index, question, options, created_at 
+-- Check existing RANKING poll questions and options
+SELECT 'RANKING POLLS' as poll_type, page_path, poll_index, LEFT(question, 50) as question_preview, jsonb_array_length(options) as option_count
 FROM ranking_polls 
 ORDER BY page_path, poll_index;
 ```

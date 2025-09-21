@@ -57,8 +57,18 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **ALWAYS have rollback plans** for any performance changes
 
 ### 8. Poll and Ranking Question System Guidelines (CRITICAL)
-- **NEVER modify poll database schema** without understanding all dependencies
+- **TWO COMPLETELY SEPARATE SYSTEMS**: Single-choice polls and ranking polls are independent systems
+  - **Single-choice**: `polls` table + `poll_votes` table + `poll_results` view
+  - **Ranking**: `ranking_polls` table + `ranking_votes` table + `ranking_results` view
+  - **NEVER mix**: Don't put ranking questions in `polls` table or single-choice in `ranking_polls` table
+- **VOTE COUNTING DIFFERS**: 
+  - **Single-choice**: Sum of all individual votes (5 users = 5 votes displayed)
+  - **Ranking**: Count of unique participants (3 users rank 4 options each = 3 responses displayed, not 12)
 - **CRITICAL: ranking_results View Array Indexing**: The ranking_results view uses `rp.options[option_stats.option_index]` (NOT +1). The option_index values in ranking_votes table are 0-based (0,1,2,3) and the options JSONB array is also 0-based. Adding +1 breaks the mapping and causes blank option text in admin panel. NEVER modify this line: `'option_text', rp.options[option_stats.option_index]`. The system uses 0-based indexing throughout - do not "fix" what appears to be a 1-based vs 0-based issue.
+- **CRITICAL: View Security Invoker (RECURRING ISSUE)**: Supabase repeatedly warns about missing `WITH (security_invoker = on)` in view definitions. This is a RECURRING issue that occurs multiple times. ALWAYS include `WITH (security_invoker = on)` when creating or updating views. Apply to ALL views for consistency and security. This prevents security vulnerabilities in production.
+- **CSV EXPORTS ARE TRUTH**: Always verify system state with actual database exports, not assumptions
+- **ADMIN PANEL COMPLEXITY**: Question matching logic between survey and CEW versions is sophisticated
+- **NEVER ASSUME MISSING DATA**: Check both `polls` and `ranking_polls` tables before concluding polls are missing
 - **PRIVACY FIRST**: For CEW polls, avoid client-side persistence to ensure true privacy in incognito mode
 - **SIMPLIFY CONSTRAINTS**: Complex unique constraints can cause submission failures - prefer application-level uniqueness
 - **ANONYMOUS CLIENTS**: Use null cookie handlers for Supabase clients in CEW poll API routes

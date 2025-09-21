@@ -3,6 +3,46 @@
 ## Overview
 This guide documents critical debugging issues encountered with the admin poll results system and provides solutions to prevent future problems.
 
+## 🚨 CRITICAL: Recurring Security & Indexing Issues (2025-01-20)
+
+### **Supabase Security Invoker Warning (RECURRING ISSUE)**
+**Problem**: Supabase repeatedly warns about missing `security_invoker = on` in view definitions
+**Frequency**: This occurs multiple times as Supabase automatically detects security improvements
+**Root Cause**: Views created without explicit security settings use default creator permissions
+**Impact**: Potential security vulnerabilities in production
+
+**Solution Applied**:
+```sql
+-- Update both views with security_invoker
+CREATE OR REPLACE VIEW poll_results WITH (security_invoker = on) AS ...
+CREATE OR REPLACE VIEW ranking_results WITH (security_invoker = on) AS ...
+```
+
+**Prevention Protocol**:
+- ✅ **ALWAYS include** `WITH (security_invoker = on)` when creating/updating views
+- ✅ **Document this requirement** in database schema files
+- ✅ **Apply to ALL views** for consistency and security
+
+### **Ranking Results View Array Indexing Bug (RECURRING ISSUE)**
+**Problem**: The `+1` offset keeps getting reintroduced in `ranking_results` view definition
+**Frequency**: This bug has occurred multiple times during system updates
+**Root Cause**: Misunderstanding of 0-based vs 1-based array indexing in PostgreSQL
+**Impact**: Blank option text in admin panel for ranking polls
+
+**Critical Fix**:
+```sql
+-- WRONG (causes blank options):
+'option_text', rp.options[option_stats.option_index + 1]
+
+-- CORRECT (working version):
+'option_text', rp.options[option_stats.option_index]
+```
+
+**Safeguard Added to AGENTS.md**:
+```markdown
+- **CRITICAL: ranking_results View Array Indexing**: The ranking_results view uses `rp.options[option_stats.option_index]` (NOT +1). The option_index values in ranking_votes table are 0-based (0,1,2,3) and the options JSONB array is also 0-based. Adding +1 breaks the mapping and causes blank option text in admin panel. NEVER modify this line: `'option_text', rp.options[option_stats.option_index]`. The system uses 0-based indexing throughout - do not "fix" what appears to be a 1-based vs 0-based issue.
+```
+
 ## ✅ Admin Panel Navigation Features (2025-01-20)
 
 ### **Bidirectional Question Navigation Implementation**

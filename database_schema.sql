@@ -807,7 +807,7 @@ CREATE POLICY "Anyone can vote in ranking polls" ON ranking_votes FOR INSERT WIT
 CREATE POLICY "Anyone can view ranking votes" ON ranking_votes FOR SELECT USING (true);
 
 -- Poll results view for aggregated single-choice poll data
-CREATE OR REPLACE VIEW poll_results AS
+CREATE OR REPLACE VIEW poll_results WITH (security_invoker = on) AS
 SELECT 
     p.id as poll_id,
     p.page_path,
@@ -840,7 +840,7 @@ LEFT JOIN (
 GROUP BY p.id, p.page_path, p.poll_index, p.question, p.options, p.created_at, p.updated_at, option_counts.total_votes;
 
 -- Ranking results view for aggregated ranking poll data (FIXED VERSION)
-CREATE OR REPLACE VIEW ranking_results AS
+CREATE OR REPLACE VIEW ranking_results WITH (security_invoker = on) AS
 SELECT 
     rp.id as ranking_poll_id,
     rp.page_path,
@@ -855,7 +855,7 @@ SELECT
             SELECT jsonb_agg(
                 jsonb_build_object(
                     'option_index', option_stats.option_index,
-                    'option_text', rp.options[option_stats.option_index + 1],
+                    'option_text', rp.options[option_stats.option_index],
                     'averageRank', option_stats.avg_rank,
                     'votes', option_stats.vote_count
                 ) ORDER BY option_stats.option_index

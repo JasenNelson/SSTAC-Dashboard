@@ -47,6 +47,8 @@ The SSTAC & TWG Dashboard uses Supabase (PostgreSQL) with a comprehensive schema
 - **Purpose**: Interactive single-choice poll system
 - **Features**: Vote persistence, real-time results, admin management
 - **CEW Support**: Accepts both UUID (authenticated) and CEW codes (e.g., "CEW2025")
+- **Vote Storage**: One vote per user per poll (upsert on change)
+- **Vote Counting**: Sum of all individual votes
 - **Constraints**: Simplified - no unique constraints (handled in application logic)
 - **Security**: RLS policies allow anonymous access for CEW polls
 
@@ -54,8 +56,16 @@ The SSTAC & TWG Dashboard uses Supabase (PostgreSQL) with a comprehensive schema
 - **Purpose**: Interactive ranking poll system
 - **Features**: Multi-option ranking, average rank calculation, real-time results
 - **CEW Support**: Accepts both UUID (authenticated) and CEW codes (e.g., "CEW2025")
+- **Vote Storage**: Multiple votes per user per poll (one per option with rank)
+- **Vote Counting**: Count of unique participants (not sum of individual votes)
 - **Constraints**: Simplified - no unique constraints (handled in application logic)
 - **Security**: RLS policies allow anonymous access for CEW polls
+
+### **CRITICAL POLL SYSTEM RULES**
+- ❌ **NEVER** put ranking questions in `polls` table
+- ❌ **NEVER** put single-choice questions in `ranking_polls` table
+- ✅ **ALWAYS** use correct table for correct poll type
+- ✅ **Vote counting differs**: Single-choice sums votes, ranking counts participants
 
 ### **Critical Database Views**
 
@@ -84,15 +94,15 @@ The SSTAC & TWG Dashboard uses Supabase (PostgreSQL) with a comprehensive schema
 - **Data Sources**: `polls`, `poll_votes` tables
 - **Performance**: Optimized for fast poll result retrieval
 
-#### **`ranking_results`** (Ranking Poll System View - CRITICAL FIX APPLIED)
+#### **`ranking_results`** (Ranking Poll System View - CRITICAL ARRAY INDEXING)
 - **Purpose**: Aggregated ranking poll results
 - **Features**: Average rank calculations, vote counts, option text mapping
 - **CEW Support**: Includes both authenticated and CEW conference votes
 - **Data Sources**: `ranking_polls`, `ranking_votes` tables
 - **Performance**: Optimized with subquery approach to avoid aggregate function nesting
+- **🚨 CRITICAL**: Uses `rp.options[option_stats.option_index]` (NOT +1) - 0-based indexing
+- **🚨 NEVER MODIFY**: The array indexing line - adding +1 breaks option text display
 - **Fix Applied**: Corrected to count unique users instead of individual ranking votes
-- **CRITICAL ARRAY INDEXING**: Uses `rp.options[option_stats.option_index]` (NOT +1) - 0-based indexing throughout
-- **NEVER MODIFY**: The line `'option_text', rp.options[option_stats.option_index]` - adding +1 breaks option text mapping
 
 ### **CEW Conference Polling System** ✅ COMPLETED (FINAL VERSION)
 

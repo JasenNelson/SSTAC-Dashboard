@@ -528,6 +528,11 @@ export default function PollResultsClient() {
       const nextPollKey = nextPoll.poll_id || nextPoll.ranking_poll_id || `poll-${nextPoll.page_path}-${nextPoll.poll_index}`;
       setSelectedQuestion(nextPollKey);
       setCurrentQuestionIndex(nextIndex);
+      
+      // If currently expanded, keep the new question expanded
+      if (expandedPoll) {
+        setExpandedPoll(nextPollKey);
+      }
     }
   };
 
@@ -549,6 +554,11 @@ export default function PollResultsClient() {
       const prevPollKey = prevPoll.poll_id || prevPoll.ranking_poll_id || `poll-${prevPoll.page_path}-${prevPoll.poll_index}`;
       setSelectedQuestion(prevPollKey);
       setCurrentQuestionIndex(prevIndex);
+      
+      // If currently expanded, keep the new question expanded
+      if (expandedPoll) {
+        setExpandedPoll(prevPollKey);
+      }
     }
   };
 
@@ -879,29 +889,29 @@ export default function PollResultsClient() {
                 <div key={pollKey} className={`bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 transition-all duration-300 ${
                   isExpanded ? `fixed top-20 right-4 bottom-4 ${leftPanelVisible ? 'left-80' : 'left-20'} z-[60] flex flex-col` : 'p-8'
                 }`}>
-                  <div className={isExpanded ? 'p-4 flex-1 flex flex-col' : ''}>
+                  <div className={isExpanded ? 'p-8 flex-1 flex flex-col' : ''}>
                   <div className={`${isExpanded ? 'mb-3' : 'mb-4'}`}>
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1 max-w-3xl mr-4">
+                      <div className={`flex-1 mr-4 ${isExpanded ? 'max-w-4xl' : 'max-w-3xl'}`}>
                         <div className="flex items-center space-x-2 mb-2">
-                          <h3 className={`font-bold text-gray-800 dark:text-white ${isExpanded ? 'text-2xl' : 'text-2xl'}`}>
+                          <h3 className={`font-bold text-gray-800 dark:text-white ${isExpanded ? 'text-3xl' : 'text-2xl'}`}>
                             {getPageTitle(selectedPoll.page_path)} - Question {selectedPoll.poll_index + 1}
                           </h3>
                           <button
                             onClick={() => navigateToPreviousQuestion(selectedPoll)}
-                            className="flex items-center justify-center w-6 h-6 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            className={`flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ${isExpanded ? 'w-8 h-8' : 'w-6 h-6'}`}
                             title="Previous question in group"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`fill="none" stroke="currentColor" viewBox="0 0 24 24" ${isExpanded ? 'w-5 h-5' : 'w-4 h-4'}`}>
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                           </button>
                           <button
                             onClick={() => navigateToNextQuestion(selectedPoll)}
-                            className="flex items-center justify-center w-6 h-6 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            className={`flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ${isExpanded ? 'w-8 h-8' : 'w-6 h-6'}`}
                             title="Next question in group"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className={`fill="none" stroke="currentColor" viewBox="0 0 24 24" ${isExpanded ? 'w-5 h-5' : 'w-4 h-4'}`}>
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                           </button>
@@ -921,11 +931,11 @@ export default function PollResultsClient() {
                             )}
                           </button>
                         </div>
-                        <p className={`text-gray-700 dark:text-gray-300 leading-relaxed ${isExpanded ? 'text-lg mb-3' : 'text-lg'}`}>{selectedPoll.question}</p>
+                        <p className={`text-gray-700 dark:text-gray-300 leading-relaxed ${isExpanded ? 'text-xl mb-3' : 'text-lg'}`}>{selectedPoll.question}</p>
                       </div>
                       
                       {/* QR Code and Join at containers - positioned on the right */}
-                      <div className="flex items-start space-x-3 flex-shrink-0">
+                      <div className={`flex items-start flex-shrink-0 ${isExpanded ? 'space-x-3 -ml-8 mt-2' : 'space-x-3'}`}>
                         {(() => {
                           const pollGroup = getPollGroup(selectedPoll.page_path);
                           if (!pollGroup) return null;
@@ -946,11 +956,11 @@ export default function PollResultsClient() {
                           const webAddress = getWebAddress(pollGroup);
                           
                           return (
-                            <div className="flex items-start space-x-3">
+                            <div className={`flex items-start ${isExpanded ? 'space-x-26' : 'space-x-3'}`}>
                               {/* Web Address and Password */}
                               {webAddress && (
                                 <div 
-                                  className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-200"
+                                  className={`flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-200 ${isExpanded ? 'p-5 transform scale-[1.45]' : 'p-3'}`}
                                   onClick={() => {
                                     setExpandedPollGroup(pollGroup);
                                     setQrCodeExpanded(!qrCodeExpanded);
@@ -959,10 +969,10 @@ export default function PollResultsClient() {
                                 >
                                   {/* Join at section */}
                                   <div className="flex flex-col items-center">
-                                    <div className="text-sm font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                                    <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-base' : 'text-sm'}`} style={{color: '#1d4ed8'}}>
                                       Join at:
                                     </div>
-                                    <div className="text-lg font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                                    <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-xl' : 'text-lg'}`} style={{color: '#1d4ed8'}}>
                                       {webAddress}
                                     </div>
                                   </div>
@@ -970,10 +980,10 @@ export default function PollResultsClient() {
                                   <div className="h-2"></div>
                                   {/* Password section */}
                                   <div className="flex flex-col items-center">
-                                    <div className="text-sm font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                                    <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-base' : 'text-sm'}`} style={{color: '#1d4ed8'}}>
                                       Password:
                                     </div>
-                                    <div className="text-lg font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                                    <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-xl' : 'text-lg'}`} style={{color: '#1d4ed8'}}>
                                       CEW2025
                                     </div>
                                   </div>
@@ -981,7 +991,7 @@ export default function PollResultsClient() {
                               )}
                               {/* QR Code */}
                               <div 
-                                className="cursor-pointer hover:opacity-80 transition-opacity duration-200"
+                                className={`cursor-pointer hover:opacity-80 transition-opacity duration-200 ${isExpanded ? 'transform scale-[1.45] ml-8' : ''}`}
                                 onClick={() => {
                                   setExpandedPollGroup(pollGroup);
                                   setQrCodeExpanded(!qrCodeExpanded);
@@ -990,7 +1000,6 @@ export default function PollResultsClient() {
                               >
                                 <QRCodeDisplay 
                                   pollGroup={pollGroup} 
-                                  className={isExpanded ? 'scale-75' : ''} 
                                 />
                               </div>
                             </div>
@@ -1025,7 +1034,7 @@ export default function PollResultsClient() {
                   </div>
                 </div>
 
-                <div className={`space-y-4 ${isExpanded ? 'space-y-2 flex-1' : ''}`}>
+                <div className={`space-y-4 ${isExpanded ? 'space-y-2 flex-1 px-4' : ''}`}>
                   {selectedPoll.is_ranking ? (
                     // For ranking polls, sort by average rank (lower is better)
                     [...getFilteredPollResults(selectedPoll)].sort((a, b) => (a.averageRank || 0) - (b.averageRank || 0)).map((result, index) => {
@@ -1049,19 +1058,19 @@ export default function PollResultsClient() {
                                 </div>
                               )}
                               <span className={`font-medium ${
-                                isExpanded ? 'text-base' : 'text-base'
+                                isExpanded ? 'text-lg' : 'text-base'
                               } text-gray-900 dark:text-gray-100`}>
-                              {result.option_text}
-                            </span>
+                                {result.option_text}
+                              </span>
                             </div>
                             <div className="text-right">
                               <div className={`font-bold text-blue-600 dark:text-blue-400 ${
-                                isExpanded ? 'text-2xl' : 'text-2xl'
+                                isExpanded ? 'text-3xl' : 'text-2xl'
                               }`}>
                                 {result.averageRank?.toFixed(1) || 'N/A'}
                               </div>
                               <div className={`text-gray-600 dark:text-gray-400 ${
-                                isExpanded ? 'text-sm' : 'text-sm'
+                                isExpanded ? 'text-base' : 'text-sm'
                               }`}>
                                 Avg Rank
                               </div>
@@ -1129,20 +1138,20 @@ export default function PollResultsClient() {
                                     🏆
                                   </div>
                                 )}
-                                <span className={`font-medium ${
-                                  isExpanded ? 'text-base' : 'text-base'
-                                } text-gray-900 dark:text-gray-100`}>
-                                  {result.option_text}
-                                </span>
+                              <span className={`font-medium ${
+                                isExpanded ? 'text-lg' : 'text-base'
+                              } text-gray-900 dark:text-gray-100`}>
+                                {result.option_text}
+                              </span>
                               </div>
                               <div className="text-right">
                                 <div className={`font-bold text-gray-900 dark:text-gray-100 ${
-                                  isExpanded ? 'text-2xl' : 'text-2xl'
+                                  isExpanded ? 'text-3xl' : 'text-2xl'
                                 }`}>
                                   {result.votes}
                                 </div>
                                 <div className={`text-gray-600 dark:text-gray-400 ${
-                                  isExpanded ? 'text-sm' : 'text-sm'
+                                  isExpanded ? 'text-base' : 'text-sm'
                                 }`}>
                                   {percentage}%
                                 </div>
@@ -1184,7 +1193,7 @@ export default function PollResultsClient() {
           onClick={() => setQrCodeExpanded(false)}
         >
           <div 
-            className="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-5xl mx-4 relative transform scale-[1.3]"
+            className="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-5xl mx-4 relative transform scale-[1.5]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Close button */}
@@ -1199,7 +1208,7 @@ export default function PollResultsClient() {
 
             {/* Expanded content */}
             <div className="flex flex-col items-center space-y-8">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white text-center">
+              <h3 className="text-3xl font-bold text-gray-800 dark:text-white text-center">
                 Conference Poll Access
               </h3>
               
@@ -1207,10 +1216,10 @@ export default function PollResultsClient() {
                 {/* Expanded Join at container */}
                 <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-800 w-full lg:w-auto lg:min-w-[400px] lg:max-w-[450px]">
                   <div className="flex flex-col items-center space-y-4">
-                    <div className="text-2xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                    <div className="text-3xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
                       Join at:
                     </div>
-                    <div className="text-4xl font-bold text-blue-700 dark:text-white whitespace-nowrap text-center" style={{color: '#1d4ed8'}}>
+                    <div className="text-5xl font-bold text-blue-700 dark:text-white whitespace-nowrap text-center" style={{color: '#1d4ed8'}}>
                       {(() => {
                         const getWebAddress = (group: string) => {
                           switch (group) {
@@ -1233,10 +1242,10 @@ export default function PollResultsClient() {
                   <div className="h-6"></div>
                   
                   <div className="flex flex-col items-center space-y-4">
-                    <div className="text-2xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                    <div className="text-3xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
                       Password:
                     </div>
-                    <div className="text-4xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
+                    <div className="text-5xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
                       CEW2025
                     </div>
                   </div>
@@ -1244,7 +1253,7 @@ export default function PollResultsClient() {
 
                 {/* Expanded QR Code */}
                 <div className="flex items-center justify-center">
-                  <div className="transform scale-125">
+                  <div className="transform scale-150">
                     <QRCodeDisplay 
                       pollGroup={(expandedPollGroup || 'holistic-protection') as 'holistic-protection' | 'tiered-framework' | 'prioritization' | 'wiks'} 
                     />

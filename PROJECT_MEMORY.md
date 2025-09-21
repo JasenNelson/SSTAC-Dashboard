@@ -1,5 +1,50 @@
 # 🧠 SSTAC & TWG Dashboard Project Memory
 
+## 🚨 CRITICAL: Recurring Security & Indexing Issues (2025-01-20)
+
+### Supabase Security Invoker Warning - RECURRING ISSUE
+**PROBLEM**: Supabase repeatedly detects and warns about missing `security_invoker = on` in view definitions
+**FREQUENCY**: This issue occurs MULTIPLE TIMES as Supabase automatically identifies security improvements
+**IMPACT**: Potential security vulnerabilities in production environment
+**ROOT CAUSE**: Views created without explicit security settings default to creator permissions
+
+**SOLUTION APPLIED**:
+- Updated both `poll_results` and `ranking_results` views with `WITH (security_invoker = on)`
+- Applied security invoker to ALL views for consistency
+- Documented requirement in database schema files
+
+**PREVENTION PROTOCOL**:
+- ✅ **ALWAYS include** `WITH (security_invoker = on)` when creating/updating views
+- ✅ **Document this requirement** in all database schema files
+- ✅ **Apply to ALL views** for comprehensive security coverage
+
+### Ranking Results View Array Indexing Bug - RECURRING ISSUE
+**PROBLEM**: The `+1` offset keeps getting reintroduced in `ranking_results` view definition
+**FREQUENCY**: This bug has occurred MULTIPLE TIMES during system updates and AI-assisted changes
+**IMPACT**: Blank option text in admin panel for ranking polls, breaking user interface
+**ROOT CAUSE**: Misunderstanding of 0-based vs 1-based array indexing in PostgreSQL
+
+**CRITICAL FIX APPLIED**:
+```sql
+-- WRONG (causes blank options):
+'option_text', rp.options[option_stats.option_index + 1]
+
+-- CORRECT (working version):
+'option_text', rp.options[option_stats.option_index]
+```
+
+**SAFEGUARDS IMPLEMENTED**:
+- ✅ **Added to AGENTS.md**: Critical safeguard warning about array indexing
+- ✅ **Documented in POLL_SYSTEM_DEBUGGING_GUIDE.md**: Complete troubleshooting guide
+- ✅ **Updated database_schema.sql**: Corrected view definition with security invoker
+- ✅ **Created apply-security-improvements.sql**: Ready-to-run fix script
+
+**KEY LEARNINGS**:
+- The system uses 0-based indexing throughout (option_index: 0,1,2,3)
+- The options JSONB array is also 0-based
+- Adding +1 breaks the mapping and causes blank option text
+- This is NOT a bug to "fix" - it's the correct implementation
+
 ## ✅ Admin Panel Navigation & UI Enhancements Success (2025-01-20)
 
 ### Advanced Navigation and UI Improvements - FINAL VERSION
@@ -870,6 +915,35 @@ The enhanced like system has been successfully implemented with:
 - **User feedback** for feature improvements
 - **Bug tracking** for issue resolution
 
+## 🚨 Critical Poll System Misunderstandings (January 2025)
+
+### **Issue**: Multiple Incorrect Assumptions Despite Documentation Review
+**Problem**: AI made multiple wrong assumptions about poll system despite:
+- Reviewing existing markdown files
+- Running multiple diagnostic queries
+- Having access to system documentation
+
+**Only Solution**: User provided CSV exports of actual database tables
+**Root Cause**: 
+- Assumed polls table contained all questions
+- Assumed missing polls without checking ranking_polls table
+- Misunderstood vote counting differences between poll types
+- Assumed CEW polls didn't exist based on admin panel display issues
+
+**Key Learnings**:
+1. **Two separate systems**: Single-choice and ranking polls are completely independent
+2. **CSV exports are truth**: Always verify with actual data exports
+3. **Admin panel complexity**: Question matching logic is sophisticated
+4. **Vote counting differs**: Single-choice sums votes, ranking counts participants
+5. **Never assume missing data**: Check both tables before concluding polls are missing
+
+**Prevention Protocol**:
+- ✅ **Always verify system state** with CSV exports
+- ✅ **Understand that polls and ranking_polls** are separate systems
+- ✅ **Recognize that vote counting logic** differs between poll types
+- ✅ **Don't assume admin panel issues** mean missing data
+- ✅ **Check both tables** before concluding polls are missing
+
 ## 📝 Important Notes
 
 1. **The dashboard is working well** - Focus on new features, not fixing working systems
@@ -879,3 +953,5 @@ The enhanced like system has been successfully implemented with:
 5. **Test thoroughly** - Ensure new features don't break existing functionality
 6. **Document all changes** - Keep documentation current and accurate
 7. **Maintain performance** - Keep the dashboard fast and responsive
+8. **CSV exports are truth** - Always verify system state with actual data
+9. **Two poll systems exist** - Single-choice and ranking polls are completely separate
