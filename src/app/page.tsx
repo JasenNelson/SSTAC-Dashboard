@@ -3,7 +3,6 @@
 import Image from "next/image";
 import ThemeToggle from "@/components/ThemeToggle";
 import ProjectPhases from "@/components/dashboard/ProjectPhases";
-import ThemeTest from "@/components/ThemeTest";
 
 export default function Home() {
   return (
@@ -119,8 +118,6 @@ export default function Home() {
           </a>
         </div>
 
-        {/* Theme Test Section */}
-        <ThemeTest />
 
         {/* Authentication Section */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-8 text-center">
