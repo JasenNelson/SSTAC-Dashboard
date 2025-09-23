@@ -47,17 +47,20 @@ export default function TieredFrameworkClient() {
       {/* Hero/Header Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-no-repeat z-0"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')",
-            backgroundPosition: "center 30%",
-            filter: "brightness(0.8)"
-          }}
-        />
+        <div className="absolute inset-0 overflow-hidden z-0">
+          <img 
+            src="/Malcolm2.jpg" 
+            alt="Malcolm landscape for tiered framework assessment"
+            className="w-full h-full object-cover"
+            style={{ 
+              objectPosition: "center 30%",
+              filter: "brightness(0.6)" 
+            }}
+          />
+        </div>
         
         {/* Dark Overlay for Better Text Readability */}
-        <div className="absolute inset-0 bg-black/20 z-10"></div>
+        <div className="absolute inset-0 bg-black/30 z-10"></div>
         
         {/* Navigation */}
         <div className="absolute top-6 left-6 z-30">

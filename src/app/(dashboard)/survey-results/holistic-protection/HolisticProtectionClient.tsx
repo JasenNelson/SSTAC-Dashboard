@@ -47,13 +47,17 @@ export default function HolisticProtectionClient() {
       {/* Hero/Header Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1559827260-dc66d52bef19?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')",
-            filter: "brightness(0.8)"
-          }}
-        />
+        <div className="absolute inset-0 overflow-hidden">
+          <img 
+            src="/Minnekhada2.JPG" 
+            alt="Minnekhada Regional Park landscape for holistic protection"
+            className="w-full h-full object-cover"
+            style={{ filter: "brightness(0.6)" }}
+          />
+        </div>
+        
+        {/* Dark Overlay for Better Text Readability */}
+        <div className="absolute inset-0 bg-black/20"></div>
         
         {/* Navigation */}
         <div className="absolute top-6 left-6 z-20">

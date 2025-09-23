@@ -14,13 +14,17 @@ export default function WIKSClient() {
       {/* Hero/Header Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80')",
-            filter: "brightness(0.7)"
-          }}
-        />
+        <div className="absolute inset-0 overflow-hidden">
+          <img 
+            src="/HoweSound3.JPG?v=1" 
+            alt="Howe Sound landscape for Indigenous Knowledge and Science"
+            className="w-full h-full object-cover"
+            style={{ filter: "brightness(0.55)" }}
+          />
+        </div>
+        
+        {/* Dark Overlay for Better Text Readability */}
+        <div className="absolute inset-0 bg-black/20"></div>
         
         {/* Content Overlay */}
         <div className="relative z-10 text-center text-white px-6 max-w-6xl mx-auto">
