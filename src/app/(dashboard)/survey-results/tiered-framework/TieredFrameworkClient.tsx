@@ -16,23 +16,35 @@ export default function TieredFrameworkClient() {
   // Define polls with proper structure for the new poll system
   const polls = [
     {
-      question: "In developing Protocol 2 requirements, procedures, and a supporting model for bioavailability adjustments, would a cause-effect model (e.g., Bayesian Networks or Regression) be the best approach for a scientific framework that uses site-specific data and known toxicity-modifying factors to develop refined sediment standards?",
+      question: "What is the primary regulatory advantage of using a probabilistic framework (e.g., Bayesian) to integrate EqP and BLM predictions into a scientific framework for deriving site-specific sediment standards (Tier 2)?",
       questionNumber: 1,
       options: [
-        "Yes",
-        "No",
-        "It depends",
-        "Unsure",
+        "It provides a formal structure for quantifying and communicating uncertainty in the final standard.",
+        "It allows for the systematic integration of existing literature data as priors, reducing site-specific data needs.",
+        "It produces a full risk distribution rather than a single point value, allowing for more flexible management decisions.",
+        "It improves the technical defensibility by making all assumptions (priors, model structure) explicit",
         "Other"
       ]
     },
     {
-      question: "Please rank the following lines of evidence in order of importance for developing a robust scientific framework for deriving Tier 2b site-specific sediment standards for screening-level risk assessment (1 = most important):",
+      question: "In developing a probabilistic framework for deriving site-specific sediment standards (Tier 2), which data type is most critical for effectively narrowing the uncertainty of the final risk estimate?",
       questionNumber: 2,
       options: [
-        "Environmental Conditions: Physical and chemical data",
-        "Bioaccumulation Data in Tissues of Local Species",
-        "Benthic Community Structure Analysis",
+        "A large number of sediment chemistry samples to better characterize spatial heterogeneity.",
+        "High-quality, in-situ passive sampling data to directly measure and constrain bioavailable concentrations.",
+        "Site-specific toxicity testing data to develop more relevant priors for the dose-response relationship.",
+        "Detailed measurements of secondary geochemical parameters (e.g., black carbon, iron oxides) that influence partitioning.",
+        "Other"
+      ]
+    },
+    {
+      question: "What is the biggest practical hurdle to overcome when implementing a Bayesian framework in the development of a scientific framework for deriving site-specific sediment standards (Tier 2)?",
+      questionNumber: 3,
+      options: [
+        "Defining appropriate priors, especially when site-specific information is sparse and literature values vary widely",
+        "The high level of statistical expertise required by both the practitioner and the regulatory reviewer to ensure proper application.",
+        "The challenge of communicating probabilistic outputs (e.g., posterior distributions) to non-technical stakeholders and decision-makers.",
+        "The lack of standardized software and guidance, leading to potential inconsistencies across different site assessments.",
         "Other"
       ]
     }

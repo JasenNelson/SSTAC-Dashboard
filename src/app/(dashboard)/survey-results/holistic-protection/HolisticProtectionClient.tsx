@@ -14,26 +14,33 @@ export default function HolisticProtectionClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
   const [polls, setPolls] = useState<PollData[]>([
     {
-      question: "Given the potential for over-conservatism and remediation challenges, for which contaminant classes would the initial development of Matrix Sediment Standards protective of food toxicity be most scientifically defensible and practically beneficial?",
+      question: "How would you rank the regulatory need / priority of developing Matrix Sediment Standards for the following? Please rank (1 = highest priority; 4 = lowest priority).",
       questionNumber: 1,
       options: [
-        "Metals known to biomagnify",
-        "Polycyclic Aromatic Hydrocarbons",
-        "Polychlorinated Biphenyls",
-        "Per-and Polyfluoroalkyl Substances",
-        "All of the above",
-        "Other"
+        "Direct Toxicity (SedS-direct) - Ecological Health",
+        "Direct Toxicity (SedS-direct) - Human Health",
+        "Food Pathway Toxicity (SedS-food) - Ecological Health",
+        "Food Pathway Toxicity (SedS-food) - Human Health"
       ]
     },
     {
-      question: "Rank in order of highest to lowest importance the following considerations in developing and implementing the Matrix Sediment Standards Framework:",
+      question: "How would you rank the anticipated scientific defensibility of SedS-foodHH (Matrix Sediment Standards designed to protect human health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).",
       questionNumber: 2,
       options: [
-        "Technical Hurdles: Limited data availability for many contaminants and species native to BC",
-        "Practical Challenges: Discretionary matrix sediment standards may be a barrier for some practitioners",
-        "Enhanced Protection: Comprehensive safeguards for BC's diverse aquatic ecosystems and peoples",
-        "Scientific Advancement: Opportunity to pioneer innovative approaches to sediment management",
-        "Societal Expectations: Given the challenges of modern society, holistic protection may not be feasible"
+        "Metals known to biomagnify",
+        "Polycyclic aromatic hydrocarbons",
+        "Polychlorinated biphenyls",
+        "Per- and polyfluoroalkyl substances"
+      ]
+    },
+    {
+      question: "How would you rank the anticipated scientific defensibility of SedS-foodECO (Matrix Sediment Standards designed to protect ecological health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).",
+      questionNumber: 3,
+      options: [
+        "Metals known to biomagnify",
+        "Polycyclic aromatic hydrocarbons",
+        "Polychlorinated biphenyls",
+        "Per- and polyfluoroalkyl substances"
       ]
     }
   ]);

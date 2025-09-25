@@ -93,12 +93,14 @@ export default function PollResultsClient() {
       // Use more specific matching patterns to avoid false positives
       const currentPollQuestions = [
         // Holistic Protection Questions (only current page questions)
-        "Given the potential for over-conservatism and remediation challenges, for which contaminant classes would the initial development of Matrix Sediment Standards protective of food toxicity be most scientifically defensible and practically beneficial?",
-        "Rank in order of highest to lowest importance the following considerations in developing and implementing the Matrix Sediment Standards Framework:",
+        "How would you rank the regulatory need / priority of developing Matrix Sediment Standards for the following? Please rank (1 = highest priority; 4 = lowest priority).",
+        "How would you rank the anticipated scientific defensibility of SedS-foodHH (Matrix Sediment Standards designed to protect human health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).",
+        "How would you rank the anticipated scientific defensibility of SedS-foodECO (Matrix Sediment Standards designed to protect ecological health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).",
         
         // Tiered Framework Questions (exactly matching survey-results and cew-polls pages)
-        "In developing Protocol 2 requirements, procedures, and a supporting model for bioavailability adjustments, would a cause-effect model (e.g., Bayesian Networks or Regression) be the best approach for a scientific framework that uses site-specific data and known toxicity-modifying factors to develop refined sediment standards?",
-        "Please rank the following lines of evidence in order of importance for developing a robust scientific framework for deriving Tier 2b site-specific sediment standards for screening-level risk assessment (1 = most important):",
+        "What is the primary regulatory advantage of using a probabilistic framework (e.g., Bayesian) to integrate EqP and BLM predictions into a scientific framework for deriving site-specific sediment standards (Tier 2)?",
+        "In developing a probabilistic framework for deriving site-specific sediment standards (Tier 2), which data type is most critical for effectively narrowing the uncertainty of the final risk estimate?",
+        "What is the biggest practical hurdle to overcome when implementing a Bayesian framework in the development of a scientific framework for deriving site-specific sediment standards (Tier 2)?",
         
         // Prioritization Questions (exactly matching cew-polls page)
         "Please rank these potential feasibility criteria to help inform the development of a prioritization framework (1= highest):",
@@ -1219,7 +1221,7 @@ export default function PollResultsClient() {
                     <div className="text-3xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
                       Join at:
                     </div>
-                    <div className="text-5xl font-bold text-blue-700 dark:text-white whitespace-nowrap text-center" style={{color: '#1d4ed8'}}>
+                    <div className="text-4xl font-bold text-blue-700 dark:text-white whitespace-nowrap text-center" style={{color: '#1d4ed8'}}>
                       {(() => {
                         const getWebAddress = (group: string) => {
                           switch (group) {
@@ -1253,7 +1255,7 @@ export default function PollResultsClient() {
 
                 {/* Expanded QR Code */}
                 <div className="flex items-center justify-center">
-                  <div className="transform scale-150">
+                  <div className="transform scale-140">
                     <QRCodeDisplay 
                       pollGroup={(expandedPollGroup || 'holistic-protection') as 'holistic-protection' | 'tiered-framework' | 'prioritization' | 'wiks'} 
                     />
