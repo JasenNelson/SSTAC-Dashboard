@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface WordCloudData {
   text: string;
@@ -22,43 +22,71 @@ export default function CustomWordCloud({
   words,
   width = 800,
   height = 400,
-  colors = ['#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'],
+  colors = ['#1e3a8a', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'],
   fontFamily = 'Inter, system-ui, sans-serif',
   fontWeight = 'normal',
   minSize = 12,
   maxSize = 60
 }: CustomWordCloudProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    
+    checkDarkMode();
+    
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
-    console.log('CustomWordCloud useEffect called with words:', words);
-    console.log('CustomWordCloud: Canvas ref:', canvasRef.current);
-    
     if (!words || words.length === 0) {
-      console.log('CustomWordCloud: No words provided, returning early');
       return;
     }
     
     if (!canvasRef.current) {
-      console.log('CustomWordCloud: No canvas ref, returning early');
       return;
     }
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) {
-      console.log('CustomWordCloud: No canvas context');
       return;
     }
-    
-    console.log('CustomWordCloud: Starting to render with', words.length, 'words');
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // High-DPI canvas setup for crisp text rendering
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    const displayWidth = width;
+    const displayHeight = height;
     
-    // Clear canvas with white background
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Set actual canvas size in memory (scaled up for high DPI)
+    canvas.width = displayWidth * devicePixelRatio;
+    canvas.height = displayHeight * devicePixelRatio;
+    
+    // Scale the canvas back down using CSS
+    canvas.style.width = displayWidth + 'px';
+    canvas.style.height = displayHeight + 'px';
+    
+    // Scale the drawing context so everything draws at the correct size
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    
+    // Enable text rendering optimizations
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'left';
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    // Clear canvas with transparent background
+    ctx.clearRect(0, 0, displayWidth, displayHeight);
 
     // Calculate max value for scaling
     const maxValue = Math.max(...words.map(w => w.value));
@@ -67,13 +95,64 @@ export default function CustomWordCloud({
     const valueRange = maxValue - minValue;
 
     // Simple wordcloud layout - place words in a grid pattern
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
+    const centerX = displayWidth / 2;
+    const centerY = displayHeight / 2;
     
     // Sort words by value (largest first)
     const sortedWords = [...words].sort((a, b) => b.value - a.value);
     
-    // No test word needed - rendering is working!
+    // Grid-based layout with collision detection for better readability
+    const placedWords: Array<{x: number, y: number, width: number, height: number}> = [];
+    const gridSize = 20; // Grid cell size for collision detection
+    
+    // Helper function to check if a position collides with existing words
+    const hasCollision = (x: number, y: number, width: number, height: number, padding: number = 25) => {
+      return placedWords.some(placed => 
+        x < placed.x + placed.width + padding &&
+        x + width + padding > placed.x &&
+        y < placed.y + placed.height + padding &&
+        y + height + padding > placed.y
+      );
+    };
+    
+    // Helper function to find a good position for a word
+    const findPosition = (textWidth: number, textHeight: number) => {
+      const padding = 25;
+      const maxAttempts = 100;
+      
+      // Try positions in expanding squares around center
+      for (let radius = 0; radius < Math.min(displayWidth, displayHeight) / 2; radius += 20) {
+        const positions = [];
+        
+        // Generate positions in a square pattern around center
+        for (let x = centerX - radius; x <= centerX + radius; x += gridSize) {
+          for (let y = centerY - radius; y <= centerY + radius; y += gridSize) {
+            // Only consider positions on the perimeter of the square
+            if (x === centerX - radius || x === centerX + radius || 
+                y === centerY - radius || y === centerY + radius) {
+              positions.push({ x: x - textWidth / 2, y: y + textHeight / 4 });
+            }
+          }
+        }
+        
+        // Shuffle positions for variety
+        positions.sort(() => Math.random() - 0.5);
+        
+        for (const pos of positions) {
+          if (!hasCollision(pos.x, pos.y, textWidth, textHeight, padding) &&
+              pos.x >= 10 && pos.x + textWidth <= displayWidth - 10 &&
+              pos.y >= textHeight + 10 && pos.y <= displayHeight - 10) {
+            return pos;
+          }
+        }
+      }
+      
+      // Fallback: place randomly if no good position found
+      return {
+        x: Math.random() * (displayWidth - textWidth - 20) + 10,
+        y: Math.random() * (displayHeight - textHeight - 20) + textHeight + 10
+      };
+    };
     
     sortedWords.forEach((word, index) => {
       // Calculate font size based on value
@@ -85,23 +164,26 @@ export default function CustomWordCloud({
       const textWidth = textMetrics.width;
       const textHeight = fontSize;
 
-      // Simple positioning - place words in a circle around center
-      const angle = (index * 2 * Math.PI) / sortedWords.length;
-      const radius = Math.min(canvas.width, canvas.height) * 0.3;
+      // Find a good position without collisions
+      const position = findPosition(textWidth, textHeight);
+      const x = position.x;
+      const y = position.y;
       
-      let x = centerX + Math.cos(angle) * radius - textWidth / 2;
-      let y = centerY + Math.sin(angle) * radius + textHeight / 4;
+      // Store this word's position for collision detection
+      placedWords.push({ x, y, width: textWidth, height: textHeight });
+
+      // Choose color based on word value and theme
+      const colorIndex = Math.floor((1 - normalizedValue) * (colors.length - 1));
       
-      // Ensure it stays within canvas bounds
-      x = Math.max(10, Math.min(x, canvas.width - textWidth - 10));
-      y = Math.max(textHeight + 10, Math.min(y, canvas.height - 10));
+      // Use different color palettes for light and dark modes
+      const lightColors = ['#1e3a8a', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
+      const darkColors = ['#dbeafe', '#93c5fd', '#60a5fa', '#3b82f6', '#2563eb', '#1e40af'];
+      
+      const colorPalette = isDarkMode ? darkColors : lightColors;
+      ctx.fillStyle = colorPalette[colorIndex];
 
-      // Choose color based on word value
-      const colorIndex = Math.floor(normalizedValue * (colors.length - 1));
-      ctx.fillStyle = colors[colorIndex];
-
-      // Add slight rotation for variety
-      const rotation = (Math.random() - 0.5) * 0.5;
+      // Add very slight rotation for variety (minimal for better readability)
+      const rotation = (Math.random() - 0.5) * 0.1;
       
       ctx.save();
       ctx.translate(x + textWidth / 2, y + textHeight / 2);
@@ -109,7 +191,7 @@ export default function CustomWordCloud({
       ctx.fillText(word.text, -textWidth / 2, textHeight / 4);
       ctx.restore();
     });
-  }, [words, width, height, colors, fontFamily, fontWeight, minSize, maxSize]);
+  }, [words, width, height, colors, fontFamily, fontWeight, minSize, maxSize, isDarkMode]);
 
   if (!words || words.length === 0) {
     return (

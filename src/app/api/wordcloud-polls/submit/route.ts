@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     console.log(`[Wordcloud Submit] isCEWPage: ${isCEWPage}, authCode: "${authCode}"`);
     let supabase, finalUserId;
 
-    if (isCEWPage || authCode) {
+    if (isCEWPage) {
       // CEW pages: Use anonymous connection with authCode as userId
       const cookieStore = await cookies();
       supabase = createServerClient(
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       finalUserId = authCode || 'CEW2025';
       console.log(`[Wordcloud Submit] CEW page, using authCode: ${finalUserId}`);
     } else {
-      // Authenticated pages: Use authenticated connection
+      // Survey-results pages: Use authenticated connection (require login)
       const cookieStore = await cookies();
       supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,

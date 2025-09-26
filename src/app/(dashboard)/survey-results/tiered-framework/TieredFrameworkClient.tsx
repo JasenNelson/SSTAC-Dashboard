@@ -2,25 +2,19 @@
 
 import React, { useState } from 'react';
 import PollWithResults from '@/components/PollWithResults';
-import RankingPoll from '@/components/dashboard/RankingPoll';
-import WordCloudPoll from '@/components/dashboard/WordCloudPoll';
 
 interface PollData {
   question: string;
   options: string[];
   questionNumber?: number;
-  isRanking?: boolean;
-  isWordcloud?: boolean;
-  maxWords?: number;
-  wordLimit?: number;
 }
 
 export default function TieredFrameworkClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
   
-  // Define polls with proper structure for the new poll system - 12 questions total
+  // Define polls with proper structure for the Tiered Framework - 3 questions total
   const polls = [
-    // Questions 1-3: Single-choice polls
+    // Question 1: Single-choice poll
     {
       question: "What is the primary regulatory advantage of using a probabilistic framework (e.g., Bayesian) to integrate EqP and BLM predictions into a scientific framework for deriving site-specific sediment standards (Tier 2)?",
       questionNumber: 1,
@@ -32,6 +26,7 @@ export default function TieredFrameworkClient() {
         "Other"
       ]
     },
+    // Question 2: Single-choice poll
     {
       question: "In developing a probabilistic framework for deriving site-specific sediment standards (Tier 2), which data type is most critical for effectively narrowing the uncertainty of the final risk estimate?",
       questionNumber: 2,
@@ -43,6 +38,7 @@ export default function TieredFrameworkClient() {
         "Other"
       ]
     },
+    // Question 3: Single-choice poll
     {
       question: "What is the biggest practical hurdle to overcome when implementing a Bayesian framework in the development of a scientific framework for deriving site-specific sediment standards (Tier 2)?",
       questionNumber: 3,
@@ -53,64 +49,6 @@ export default function TieredFrameworkClient() {
         "The lack of standardized software and guidance, leading to potential inconsistencies across different site assessments.",
         "Other"
       ]
-    },
-    // Questions 4-11: Ranking polls
-    {
-      question: "Rank the importance of developing a framework for deriving site-specific sediment standards, based on bioavailability adjustment, to provide an enhanced numerical assessment option (Tier 2), between generic numerical (Tier 1) and risk-based (Tier 3) assessments. (1 = very important to 5 = not important)",
-      questionNumber: 4,
-      options: ["Very Important", "Important", "Moderately Important", "Less Important", "Not Important"],
-      isRanking: true
-    },
-    {
-      question: "Rank the feasibility of developing the framework for deriving site-specific sediment standards, based on an integrated approach using Equilibrium Partitioning and Biotic Ligand Models. (1 = easily achievable to 5 = not feasible)",
-      questionNumber: 5,
-      options: ["Easily Achievable", "Achievable", "Moderately Achievable", "Difficult", "Not Feasible"],
-      isRanking: true
-    },
-    {
-      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = very important to 5 = not important)",
-      questionNumber: 6,
-      options: ["Very Important", "Important", "Moderately Important", "Less Important", "Not Important"],
-      isRanking: true
-    },
-    {
-      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
-      questionNumber: 7,
-      options: ["Easily Achievable", "Achievable", "Moderately Achievable", "Difficult", "Not Feasible"],
-      isRanking: true
-    },
-    {
-      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = very important to 5 = not important)",
-      questionNumber: 8,
-      options: ["Very Important", "Important", "Moderately Important", "Less Important", "Not Important"],
-      isRanking: true
-    },
-    {
-      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
-      questionNumber: 9,
-      options: ["Easily Achievable", "Achievable", "Moderately Achievable", "Difficult", "Not Feasible"],
-      isRanking: true
-    },
-    {
-      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = very important to 5 = not important)",
-      questionNumber: 10,
-      options: ["Very Important", "Important", "Moderately Important", "Less Important", "Not Important"],
-      isRanking: true
-    },
-    {
-      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = easily achievable to 5 = not feasible)",
-      questionNumber: 11,
-      options: ["Easily Achievable", "Achievable", "Moderately Achievable", "Difficult", "Not Feasible"],
-      isRanking: true
-    },
-    // Question 12: Wordcloud poll
-    {
-      question: "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?",
-      questionNumber: 12,
-      options: [],
-      isWordcloud: true,
-      maxWords: 3,
-      wordLimit: 20
     }
   ];
 
@@ -480,51 +418,20 @@ export default function TieredFrameworkClient() {
           
           <div className="space-y-16">
             {polls.map((poll, pollIndex) => {
-              // Handle different poll types
-              if (poll.isWordcloud) {
-                return (
-                  <WordCloudPoll
-                    key={pollIndex}
-                    pollIndex={pollIndex}
-                    question={poll.question}
-                    maxWords={poll.maxWords || 3}
-                    wordLimit={poll.wordLimit || 20}
-                    pagePath="/survey-results/tiered-framework"
-                    questionNumber={poll.questionNumber}
-                    onVote={(pollIndex, words) => {
-                      console.log(`Words submitted for poll ${pollIndex}:`, words);
-                    }}
-                  />
-                );
-              } else if (poll.isRanking) {
-                return (
-                  <RankingPoll
-                    key={pollIndex}
-                    pollIndex={pollIndex}
-                    question={poll.question}
-                    options={poll.options}
-                    pagePath="/survey-results/tiered-framework"
-                    questionNumber={poll.questionNumber}
-                    onVote={(pollIndex, rankings) => {
-                      console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
-                    }}
-                  />
-                );
-              } else {
-                return (
-                  <PollWithResults
-                    key={pollIndex}
-                    pollIndex={pollIndex}
-                    question={poll.question}
-                    options={poll.options}
-                    pagePath="/survey-results/tiered-framework"
-                    questionNumber={poll.questionNumber}
-                    onVote={(pollIndex, optionIndex) => {
-                      console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
-                    }}
-                  />
-                );
-              }
+              // All Tiered Framework polls are single-choice polls
+              return (
+                <PollWithResults
+                  key={pollIndex}
+                  pollIndex={pollIndex}
+                  question={poll.question}
+                  options={poll.options}
+                  pagePath="/survey-results/tiered-framework"
+                  questionNumber={poll.questionNumber}
+                  onVote={(pollIndex, optionIndex) => {
+                    console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
+                  }}
+                />
+              );
             })}
           </div>
         </div>

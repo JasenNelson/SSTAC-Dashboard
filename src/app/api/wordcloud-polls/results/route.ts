@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     const isCEWPage = pagePath.startsWith('/cew-polls/');
     let supabase, userId: string | null = null;
 
-    if (isCEWPage || authCode) {
+    if (isCEWPage) {
       // CEW pages: Use anonymous connection
       const cookieStore = await cookies();
       supabase = createServerClient(
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       
       userId = authCode || 'CEW2025';
     } else {
-      // Authenticated pages: Use authenticated connection
+      // Survey-results pages: Use authenticated connection (require login)
       const cookieStore = await cookies();
       supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
