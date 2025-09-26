@@ -3,7 +3,32 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import QRCodeDisplay from '@/components/dashboard/QRCodeDisplay';
-import ReactWordcloud from 'react-wordcloud';
+import CustomWordCloud from '@/components/dashboard/CustomWordCloud';
+import PrioritizationMatrixGraph from '@/components/graphs/PrioritizationMatrixGraph';
+
+// Simple Error Boundary Component
+class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallback: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode; fallback: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('WordCloud Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+
+    return this.props.children;
+  }
+}
 
 interface PollResult {
   poll_id?: string;
@@ -42,10 +67,18 @@ interface PollResult {
   }>;
 }
 
+interface MatrixData {
+  title: string;
+  avgImportance: number;
+  avgFeasibility: number;
+  responses: number;
+}
+
 export default function PollResultsClient() {
   const [pollResults, setPollResults] = useState<PollResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [matrixData, setMatrixData] = useState<MatrixData[]>([]);
   const [expandedPoll, setExpandedPoll] = useState<string | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
@@ -59,6 +92,23 @@ export default function PollResultsClient() {
   useEffect(() => {
     fetchPollResults();
   }, []);
+
+  // Fetch matrix data for prioritization graphs
+  useEffect(() => {
+    const fetchMatrixData = async () => {
+      try {
+        const response = await fetch('/api/graphs/prioritization-matrix');
+        if (response.ok) {
+          const data = await response.json();
+          setMatrixData(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch matrix graph data:", error);
+      }
+    };
+
+    fetchMatrixData();
+  }, [pollResults]); // Re-run when poll data changes
 
   const fetchPollResults = async () => {
     try {
@@ -84,11 +134,6 @@ export default function PollResultsClient() {
         console.error('Error fetching wordcloud poll results:', wordcloudResult.error);
         // Don't throw error, just log it and continue
       }
-
-      // Debug: Log raw data for all polls
-      console.log('🔍 Raw single-choice data:', singleChoiceResult.data);
-      console.log('🔍 Raw ranking data:', rankingResult.data);
-      console.log('🔍 Raw wordcloud data:', wordcloudResult.data);
 
       // Process results with fallback for missing data
       const singleChoiceData = singleChoiceResult.data || [];
@@ -137,7 +182,12 @@ export default function PollResultsClient() {
         "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = very important to 5 = not important)",
         "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
         "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = very important to 5 = not important)",
-        "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = easily achievable to 5 = not feasible)"
+        "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = easily achievable to 5 = not feasible)",
+        "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = very important to 5 = not important)",
+        "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = easily achievable to 5 = not feasible)",
+        "To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve development of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.",
+        "Of the four options below, what focus will provide greatest value to holistic sediment management in BC? (1 = top priority; 4 = lowest priority)",
+        "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?"
       ];
 
       // Group polls by question to combine survey-results and cew-polls data
@@ -313,6 +363,7 @@ export default function PollResultsClient() {
 
       // Convert aggregated wordcloud data to poll groups
       wordcloudPollsMap.forEach((pollData, pollId) => {
+        
         // Create a key that groups polls by topic and poll_index
         let key;
         if (pollData.page_path.includes('tiered-framework')) {
@@ -788,19 +839,20 @@ export default function PollResultsClient() {
         name: 'Holistic Protection',
         polls: polls.filter(poll => 
           poll.page_path.includes('holistic-protection')
-        )
+        ).sort((a, b) => a.poll_index - b.poll_index)
       },
       'tiered-framework': {
         name: 'Tiered Framework',
         polls: polls.filter(poll => 
           poll.page_path.includes('tiered-framework')
-        )
+        ).sort((a, b) => a.poll_index - b.poll_index)
       },
       'prioritization': {
         name: 'Prioritization',
         polls: polls.filter(poll => 
           poll.page_path.includes('prioritization')
-        )
+        ).sort((a, b) => a.poll_index - b.poll_index),
+        showGraphs: true
       }
     };
     return themes;
@@ -940,8 +992,8 @@ export default function PollResultsClient() {
                       <div className="ml-4 space-y-1">
                         {theme.polls.map((poll) => {
                           const pollKey = poll.poll_id || poll.ranking_poll_id || `poll-${poll.page_path}-${poll.poll_index}`;
-                          // For ranking polls, show participant count (responses). For single-choice, show total votes.
-                          const totalVotes = poll.is_ranking ? 
+                          // For ranking and wordcloud polls, show participant count (responses). For single-choice, show total votes.
+                          const totalVotes = (poll.is_ranking || poll.is_wordcloud) ? 
                             (poll.combined_survey_votes || 0) + (poll.combined_cew_votes || 0) :
                             getFilteredPollResults(poll).reduce((sum, r) => sum + r.votes, 0);
                           
@@ -955,7 +1007,7 @@ export default function PollResultsClient() {
                             >
                               <span>Question {poll.poll_index + 1}</span>
                               <span className="text-xs bg-white dark:bg-gray-600 px-2 py-1 rounded-full">
-                                {totalVotes} {poll.is_ranking ? 'responses' : 'votes'}
+                                {totalVotes} {(poll.is_ranking || poll.is_wordcloud) ? 'responses' : 'votes'}
                               </span>
                             </button>
                           );
@@ -1225,6 +1277,7 @@ export default function PollResultsClient() {
                   </div>
                 </div>
 
+
                 <div className={`space-y-4 ${isExpanded ? 'space-y-2 flex-1 px-4' : ''}`}>
                   {selectedPoll.is_wordcloud ? (
                     // For wordcloud polls, display word cloud visualization
@@ -1238,24 +1291,41 @@ export default function PollResultsClient() {
                             </h4>
                           </div>
                           <div style={{ height: '400px', width: '100%' }}>
-                            <ReactWordcloud
-                              words={selectedPoll.wordcloud_words}
-                              options={{
-                                colors: ['#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'],
-                                enableTooltip: true,
-                                deterministic: false,
-                                fontFamily: 'Inter, system-ui, sans-serif',
-                                fontSizes: [12, 60],
-                                fontStyle: 'normal',
-                                fontWeight: 'normal',
-                                padding: 1,
-                                rotations: 3,
-                                rotationAngles: [0, 90],
-                                scale: 'sqrt',
-                                spiral: 'archimedean',
-                                transitionDuration: 1000,
-                              }}
-                            />
+                            {selectedPoll.wordcloud_words.every(word => 
+                              word && 
+                              typeof word === 'object' && 
+                              word.text && 
+                              typeof word.text === 'string' && 
+                              word.text.trim().length > 0 &&
+                              typeof word.value === 'number' && 
+                              word.value > 0
+                            ) ? (
+                              <ErrorBoundary fallback={
+                                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                                  <div className="text-center">
+                                    <div className="text-4xl mb-2">⚠️</div>
+                                    <p>Error displaying wordcloud</p>
+                                    <p className="text-sm">Please refresh the page</p>
+                                  </div>
+                                </div>
+                              }>
+             <CustomWordCloud
+               words={selectedPoll.wordcloud_words}
+               colors={['#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe']}
+               fontFamily="Inter, system-ui, sans-serif"
+               fontWeight="normal"
+               minSize={12}
+               maxSize={60}
+             />
+                              </ErrorBoundary>
+                            ) : (
+                              <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                                <div className="text-center">
+                                  <div className="text-4xl mb-2">☁️</div>
+                                  <p>No valid words to display</p>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ) : (
@@ -1437,6 +1507,30 @@ export default function PollResultsClient() {
                     })()
                   )}
                 </div>
+
+                {/* Prioritization Matrix Graphs - Show on second question of each pair (2, 4, 6, 8, 10) */}
+                {selectedPoll.page_path.includes('prioritization') && 
+                 [1, 3, 5, 7, 9].includes(selectedPoll.poll_index) && 
+                 matrixData.length > 0 && (() => {
+                  // Find the specific graph for this question pair
+                  const questionPairIndex = [1, 3, 5, 7, 9].indexOf(selectedPoll.poll_index);
+                  const specificGraph = matrixData[questionPairIndex];
+                  
+                  if (!specificGraph) return null;
+                  
+                  return (
+                    <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                      <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">
+                        Prioritization Matrix Results
+                      </h3>
+                      <div className="flex justify-center">
+                        <div className="w-full max-w-4xl">
+                          <PrioritizationMatrixGraph key={specificGraph.title} {...specificGraph} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
               );
             })()}

@@ -42,10 +42,9 @@ export async function GET(request: NextRequest) {
 
     // Get wordcloud poll results using the helper function
     const { data: resultsData, error: resultsError } = await supabase
-      .rpc('get_wordcloud_poll_results', {
+      .rpc('get_wordcloud_word_counts', {
         p_page_path: pagePath,
-        p_poll_index: pollIndexNum,
-        p_user_id: userId
+        p_poll_index: pollIndexNum
       });
 
     if (resultsError) {
@@ -56,7 +55,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Check if poll exists
+    // Process the word counts data
     if (!resultsData || resultsData.length === 0) {
       return NextResponse.json({
         results: {
@@ -67,13 +66,19 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const result = resultsData[0];
+    // Aggregate words and get total votes
+    const words = resultsData.map((item: any) => ({
+      text: item.word,
+      value: item.frequency
+    }));
+
+    const totalVotes = resultsData.length > 0 ? resultsData[0].total_votes : 0;
 
     return NextResponse.json({
       results: {
-        total_votes: result.total_votes || 0,
-        words: result.words || [],
-        user_words: result.user_words || null
+        total_votes: totalVotes,
+        words: words,
+        user_words: null // We'll implement user-specific words later if needed
       }
     });
 

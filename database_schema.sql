@@ -41,6 +41,13 @@
 --    - Clean interface without debug logging
 --    - Mobile-optimized responsive design
 
+-- 7. WORDCLOUD POLL SYSTEM (2025-01-20):
+--    - Custom Canvas-based wordcloud rendering (React 19 compatible)
+--    - Division by zero protection in wordcloud_results view
+--    - Size-based positioning with largest words in center
+--    - Aquatic blue/green color scheme
+--    - 1-3 words per submission, 20 character limit
+
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -776,6 +783,19 @@ CREATE TABLE IF NOT EXISTS ranking_polls (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Wordcloud polls table for open-ended word submissions
+-- Supports 1-3 words per submission with character limits
+CREATE TABLE IF NOT EXISTS wordcloud_polls (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    page_path VARCHAR(255) NOT NULL, -- e.g., '/survey-results/prioritization'
+    poll_index INTEGER NOT NULL, -- 0-based index of poll on the page
+    question TEXT NOT NULL,
+    max_words INTEGER DEFAULT 3, -- Maximum words per submission (1-3)
+    word_limit INTEGER DEFAULT 20, -- Maximum characters per word
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Ranking votes table to store individual ranking votes
 -- Updated to support both authenticated users (UUID) and CEW conference codes (TEXT)
 CREATE TABLE IF NOT EXISTS ranking_votes (
@@ -788,11 +808,24 @@ CREATE TABLE IF NOT EXISTS ranking_votes (
     -- NOTE: Unique constraints removed for CEW polls - handled in application logic
 );
 
+-- Wordcloud votes table to store individual word submissions
+-- Each word is stored as a separate record for frequency aggregation
+CREATE TABLE IF NOT EXISTS wordcloud_votes (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    poll_id UUID REFERENCES wordcloud_polls(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL, -- Can be UUID (authenticated) or CEW code (e.g., "CEW2025")
+    word TEXT NOT NULL, -- Individual word submission
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(poll_id, user_id, word) -- Prevent duplicate words from same user
+);
+
 -- Enable RLS on poll tables
 ALTER TABLE polls ENABLE ROW LEVEL SECURITY;
 ALTER TABLE poll_votes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ranking_polls ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ranking_votes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wordcloud_polls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wordcloud_votes ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies for polls (allow anonymous access for CEW polls)
 CREATE POLICY "Anyone can view polls" ON polls FOR SELECT USING (true);
@@ -805,6 +838,12 @@ CREATE POLICY "Anyone can view ranking polls" ON ranking_polls FOR SELECT USING 
 CREATE POLICY "Anyone can create ranking polls" ON ranking_polls FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can vote in ranking polls" ON ranking_votes FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can view ranking votes" ON ranking_votes FOR SELECT USING (true);
+
+-- RLS policies for wordcloud polls (allow anonymous access for CEW polls)
+CREATE POLICY "Anyone can view wordcloud polls" ON wordcloud_polls FOR SELECT USING (true);
+CREATE POLICY "Anyone can create wordcloud polls" ON wordcloud_polls FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can vote in wordcloud polls" ON wordcloud_votes FOR INSERT WITH CHECK (true);
+CREATE POLICY "Anyone can view wordcloud votes" ON wordcloud_votes FOR SELECT USING (true);
 
 -- Poll results view for aggregated single-choice poll data
 CREATE OR REPLACE VIEW poll_results WITH (security_invoker = on) AS
@@ -876,13 +915,73 @@ FROM ranking_polls rp
 LEFT JOIN ranking_votes rv ON rp.id = rv.ranking_poll_id
 GROUP BY rp.id, rp.page_path, rp.poll_index, rp.question, rp.options, rp.created_at, rp.updated_at;
 
+-- Wordcloud results view for aggregated wordcloud poll data
+-- Includes division by zero protection for percentage calculations
+CREATE OR REPLACE VIEW wordcloud_results WITH (security_invoker = on) AS
+WITH wordcloud_data AS (
+    SELECT
+        wp.id AS poll_id,
+        wp.page_path,
+        wp.poll_index,
+        wp.question,
+        wp.max_words,
+        wp.word_limit,
+        wv.word,
+        COUNT(wv.word) AS frequency,
+        COUNT(DISTINCT wv.user_id) AS unique_users
+    FROM
+        wordcloud_polls wp
+    LEFT JOIN
+        wordcloud_votes wv ON wp.id = wv.poll_id
+    GROUP BY
+        wp.id, wp.page_path, wp.poll_index, wp.question, wp.max_words, wp.word_limit, wv.word
+),
+total_counts AS (
+    SELECT
+        poll_id,
+        SUM(frequency) AS total_words,
+        COUNT(DISTINCT unique_users) AS total_responses
+    FROM
+        wordcloud_data
+    WHERE
+        word IS NOT NULL
+    GROUP BY
+        poll_id
+)
+SELECT
+    wd.poll_id,
+    wd.page_path,
+    wd.poll_index,
+    wd.question,
+    wd.max_words,
+    wd.word_limit,
+    COALESCE(tc.total_responses, 0) AS total_responses,
+    wd.word,
+    wd.frequency,
+    CASE 
+        WHEN tc.total_words IS NULL OR tc.total_words = 0 
+        THEN 0.0
+        ELSE ROUND((wd.frequency::numeric / tc.total_words::numeric) * 100, 2)
+    END AS percentage
+FROM
+    wordcloud_data wd
+LEFT JOIN
+    total_counts tc ON wd.poll_id = tc.poll_id
+WHERE
+    wd.word IS NOT NULL
+ORDER BY
+    wd.poll_id, wd.frequency DESC, wd.word;
+
 -- Grant permissions on poll tables and views
 GRANT SELECT, INSERT, UPDATE, DELETE ON polls TO authenticated, anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON poll_votes TO authenticated, anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ranking_polls TO authenticated, anon;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ranking_votes TO authenticated, anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON wordcloud_polls TO authenticated, anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON wordcloud_votes TO authenticated, anon;
 GRANT SELECT ON poll_results TO authenticated, anon;
 GRANT SELECT ON ranking_results TO authenticated, anon;
+GRANT SELECT ON wordcloud_results TO authenticated, anon;
 
 -- Helper functions for poll creation and management
 CREATE OR REPLACE FUNCTION get_or_create_poll(
@@ -935,9 +1034,73 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Wordcloud poll helper function
+CREATE OR REPLACE FUNCTION get_or_create_wordcloud_poll_fixed(
+    p_page_path VARCHAR(255),
+    p_poll_index INTEGER,
+    p_question TEXT,
+    p_max_words INTEGER DEFAULT 3,
+    p_word_limit INTEGER DEFAULT 20
+) RETURNS UUID AS $$
+DECLARE
+    poll_id UUID;
+BEGIN
+    -- Try to find existing poll
+    SELECT id INTO poll_id
+    FROM wordcloud_polls
+    WHERE page_path = p_page_path AND poll_index = p_poll_index;
+    
+    -- If not found, create new poll
+    IF poll_id IS NULL THEN
+        INSERT INTO wordcloud_polls (page_path, poll_index, question, max_words, word_limit)
+        VALUES (p_page_path, p_poll_index, p_question, p_max_words, p_word_limit)
+        RETURNING id INTO poll_id;
+    END IF;
+    
+    RETURN poll_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Wordcloud word counts helper function
+CREATE OR REPLACE FUNCTION get_wordcloud_word_counts(
+    p_page_path VARCHAR(255),
+    p_poll_index INTEGER
+) RETURNS TABLE(
+    poll_id UUID,
+    page_path TEXT,
+    poll_index INTEGER,
+    question TEXT,
+    max_words INTEGER,
+    word_limit INTEGER,
+    total_votes BIGINT,
+    word TEXT,
+    frequency BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        wp.id,
+        wp.page_path,
+        wp.poll_index,
+        wp.question,
+        wp.max_words,
+        wp.word_limit,
+        COUNT(DISTINCT wv.user_id) as total_votes,
+        wv.word,
+        COUNT(wv.word) as frequency
+    FROM wordcloud_polls wp
+    LEFT JOIN wordcloud_votes wv ON wp.id = wv.poll_id
+    WHERE wp.page_path = p_page_path AND wp.poll_index = p_poll_index
+    GROUP BY wp.id, wp.page_path, wp.poll_index, wp.question, wp.max_words, wp.word_limit, wv.word
+    ORDER BY frequency DESC, wv.word;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Grant execute permissions on helper functions
 GRANT EXECUTE ON FUNCTION get_or_create_poll TO authenticated, anon;
 GRANT EXECUTE ON FUNCTION get_or_create_ranking_poll TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION get_or_create_wordcloud_poll_fixed TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION get_wordcloud_word_counts TO authenticated, anon;
 -- See safe_ranking_system_fixed.sql for the original implementation
 -- ============================================================================
 -- VERIFICATION QUERIES

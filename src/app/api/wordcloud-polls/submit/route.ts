@@ -5,6 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { pagePath, pollIndex, question, maxWords, wordLimit, words, authCode } = body;
+    
 
     // Validate required fields
     if (!pagePath || pollIndex === undefined || !question || !words || !Array.isArray(words)) {
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Get or create the wordcloud poll
     const { data: pollData, error: pollError } = await supabase
-      .rpc('get_or_create_wordcloud_poll', {
+      .rpc('get_or_create_wordcloud_poll_fixed', {
         p_page_path: pagePath,
         p_poll_index: pollIndex,
         p_question: question,
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
     if (pollError) {
       console.error('Error getting/creating wordcloud poll:', pollError);
       return NextResponse.json(
-        { error: 'Failed to get or create poll' },
+        { error: `Failed to get or create poll: ${pollError.message}` },
         { status: 500 }
       );
     }
@@ -99,26 +100,41 @@ export async function POST(request: NextRequest) {
     if (checkError && checkError.code !== 'PGRST116') {
       console.error('Error checking existing vote:', checkError);
       return NextResponse.json(
-        { error: 'Failed to check existing vote' },
+        { error: `Failed to check existing vote: ${checkError.message}` },
         { status: 500 }
       );
     }
 
-    // Upsert the vote (insert or update)
+    // Delete existing votes for this user and poll
+    const { error: deleteError } = await supabase
+      .from('wordcloud_votes')
+      .delete()
+      .eq('poll_id', pollId)
+      .eq('user_id', userId);
+
+    if (deleteError) {
+      console.error('Error deleting existing votes:', deleteError);
+      return NextResponse.json(
+        { error: `Failed to clear existing votes: ${deleteError.message}` },
+        { status: 500 }
+      );
+    }
+
+    // Insert new votes (one record per word)
+    const voteRecords = words.map((word: string) => ({
+      poll_id: pollId,
+      user_id: userId,
+      word: word.toLowerCase().trim()
+    }));
+
     const { error: voteError } = await supabase
       .from('wordcloud_votes')
-      .upsert({
-        poll_id: pollId,
-        user_id: userId,
-        words: words
-      }, {
-        onConflict: 'poll_id,user_id'
-      });
+      .insert(voteRecords);
 
     if (voteError) {
       console.error('Error submitting wordcloud vote:', voteError);
       return NextResponse.json(
-        { error: 'Failed to submit words' },
+        { error: `Failed to submit words: ${voteError.message}` },
         { status: 500 }
       );
     }

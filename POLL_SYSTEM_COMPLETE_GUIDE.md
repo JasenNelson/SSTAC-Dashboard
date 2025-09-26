@@ -6,7 +6,7 @@
 
 ## 📊 **ACTUAL Database Structure (Based on CSV Analysis)**
 
-### **Two Completely Separate Poll Systems**
+### **Three Completely Separate Poll Systems**
 
 #### **1. Single-Choice Polls System**
 - **Table**: `polls`
@@ -21,6 +21,18 @@
 - **Results View**: `ranking_results`
 - **Vote Storage**: Multiple votes per user per poll (one per option with rank)
 - **Vote Counting**: Count of unique participants (not sum of individual votes)
+
+#### **3. Wordcloud Polls System** ✅ **COMPLETED (January 2025)**
+- **Table**: `wordcloud_polls`
+- **Votes Table**: `wordcloud_votes`
+- **Results View**: `wordcloud_results`
+- **Vote Storage**: Multiple words per user per poll (1-3 words, 20 char limit)
+- **Vote Counting**: Count of unique participants and word frequency aggregation
+- **Features**: Custom Canvas-based wordcloud rendering, aquatic blue/green color scheme
+- **Predefined Options**: Display descriptive options but submit simplified keywords
+- **Either/Or Selection**: Users can select predefined options OR enter custom words, not both
+- **Immediate Display**: Submitted words appear instantly in wordcloud and frequency table
+- **Error Handling**: Division by zero protection and comprehensive error boundaries
 
 ### **Current Database State (Post-Cleanup)**
 
@@ -286,13 +298,42 @@ SELECT COUNT(*) FROM ranking_results;
 3. **Verify functionality**: Test admin panel after cleanup
 4. **Document changes**: Record what was removed/added
 
+## 🚨 **CRITICAL: Wordcloud System Implementation (January 2025)**
+
+### **Division by Zero Protection**
+**ALWAYS include division by zero protection** in wordcloud_results view percentage calculations:
+
+```sql
+CASE 
+    WHEN tc.total_words IS NULL OR tc.total_words = 0 
+    THEN 0.0
+    ELSE ROUND((wd.frequency::numeric / tc.total_words::numeric) * 100, 2)
+END AS percentage
+```
+
+Without this protection, empty wordcloud polls cause division by zero errors and prevent admin panel from loading.
+
+### **Custom Wordcloud Component**
+- **Library**: Custom Canvas-based implementation (no external dependencies)
+- **React 19 Compatible**: Replaces react-wordcloud and wordcloud2.js
+- **Layout Algorithm**: Size-based positioning with largest words in center
+- **Color Scheme**: Aquatic blue and green gradient
+- **Features**: Collision detection, dynamic sizing, rotation variety
+
+### **Wordcloud Poll Configuration**
+- **Max Words**: 1-3 words per submission
+- **Character Limit**: 20 characters per word
+- **Vote Storage**: Individual word records in wordcloud_votes table
+- **Aggregation**: Real-time word frequency calculation
+
 ## 📝 **Key Takeaways**
 
-1. **Two separate systems**: Single-choice and ranking polls are completely independent
-2. **CSV exports are truth**: Always verify with actual data exports
-3. **Admin panel complexity**: Question matching logic is sophisticated
-4. **Vote counting differs**: Single-choice sums votes, ranking counts participants
-5. **CEW vs Survey**: Same questions, different user_id values
-6. **Views are critical**: Use `poll_results` and `ranking_results` for aggregated data
+1. **Three separate systems**: Single-choice, ranking, and wordcloud polls are completely independent
+2. **Vote counting differs**: Sum vs count of participants vs word frequency aggregation
+3. **CSV exports are truth**: Always verify with actual data exports
+4. **Admin panel complexity**: Question matching logic is sophisticated
+5. **Wordcloud division by zero**: Always protect against empty polls in percentage calculations
+6. **CEW vs Survey**: Same questions, different user_id values
+7. **Views are critical**: Use `poll_results`, `ranking_results`, and `wordcloud_results` for aggregated data
 
 This guide should prevent future misunderstandings about the poll system structure and functionality.

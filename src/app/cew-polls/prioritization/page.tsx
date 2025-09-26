@@ -8,12 +8,13 @@ import WordCloudPoll from '@/components/dashboard/WordCloudPoll';
 
 interface PollData {
   question: string;
-  options: string[];
+  options?: string[];
   questionNumber?: number;
   isRanking?: boolean;
   isWordcloud?: boolean;
   maxWords?: number;
   wordLimit?: number;
+  predefinedOptions?: Array<{ display: string; keyword: string }>;
 }
 
 export default function CEWPrioritizationPage() {
@@ -28,50 +29,16 @@ export default function CEWPrioritizationPage() {
     return <CEWCodeInput onCodeEntered={handleCodeEntered} />;
   }
   
-  // Define polls with proper structure for the new poll system - 12 Tiered Framework Questions
+  // Define polls with proper structure for the new poll system - 13 Prioritization Questions
+  // Based on CEW_Poll_Questions.txt lines 50+ (Prioritization Polling Questions)
   const polls = [
-    // Questions 1-3: Single-Choice Polls
-    {
-      question: "What is the primary regulatory advantage of using a probabilistic framework (e.g., Bayesian) to integrate EqP and BLM predictions into a scientific framework for deriving site-specific sediment standards (Tier 2)?",
-      questionNumber: 1,
-      options: [
-        "It provides a formal structure for quantifying and communicating uncertainty in the final standard.",
-        "It allows for the systematic integration of existing literature data as priors, reducing site-specific data needs.",
-        "It produces a full risk distribution rather than a single point value, allowing for more flexible management decisions.",
-        "It improves the technical defensibility by making all assumptions (priors, model structure) explicit",
-        "Other"
-      ]
-    },
-    {
-      question: "In developing a probabilistic framework for deriving site-specific sediment standards (Tier 2), which data type is most critical for effectively narrowing the uncertainty of the final risk estimate?",
-      questionNumber: 2,
-      options: [
-        "A large number of sediment chemistry samples to better characterize spatial heterogeneity.",
-        "High-quality, in-situ passive sampling data to directly measure and constrain bioavailable concentrations.",
-        "Site-specific toxicity testing data to develop more relevant priors for the dose-response relationship.",
-        "Detailed measurements of secondary geochemical parameters (e.g., black carbon, iron oxides) that influence partitioning.",
-        "Other"
-      ]
-    },
-    {
-      question: "What is the biggest practical hurdle to overcome when implementing a Bayesian framework in the development of a scientific framework for deriving site-specific sediment standards (Tier 2)?",
-      questionNumber: 3,
-      options: [
-        "Defining appropriate priors, especially when site-specific information is sparse and literature values vary widely",
-        "The high level of statistical expertise required by both the practitioner and the regulatory reviewer to ensure proper application.",
-        "The challenge of communicating probabilistic outputs (e.g., posterior distributions) to non-technical stakeholders and decision-makers.",
-        "The lack of standardized software and guidance, leading to potential inconsistencies across different site assessments.",
-        "Other"
-      ]
-    },
-    // Questions 4-11: Ranking Polls
+    // Questions 1-10: Single-Choice Polls (not ranking - despite "rank" in question text)
     {
       question: "Rank the importance of developing a framework for deriving site-specific sediment standards, based on bioavailability adjustment, to provide an enhanced numerical assessment option (Tier 2), between generic numerical (Tier 1) and risk-based (Tier 3) assessments. (1 = very important to 5 = not important)",
-      questionNumber: 4,
-      isRanking: true,
+      questionNumber: 1,
       options: [
         "Very Important",
-        "Important",
+        "Important", 
         "Moderately Important",
         "Less Important",
         "Not Important"
@@ -79,32 +46,29 @@ export default function CEWPrioritizationPage() {
     },
     {
       question: "Rank the feasibility of developing the framework for deriving site-specific sediment standards, based on an integrated approach using Equilibrium Partitioning and Biotic Ligand Models. (1 = easily achievable to 5 = not feasible)",
-      questionNumber: 5,
-      isRanking: true,
+      questionNumber: 2,
       options: [
         "Easily Achievable",
         "Achievable",
-        "Moderately Achievable",
+        "Moderately Achievable", 
         "Difficult",
         "Not Feasible"
       ]
     },
     {
       question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = very important to 5 = not important)",
-      questionNumber: 6,
-      isRanking: true,
+      questionNumber: 3,
       options: [
         "Very Important",
         "Important",
         "Moderately Important",
-        "Less Important",
+        "Less Important", 
         "Not Important"
       ]
     },
     {
       question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
-      questionNumber: 7,
-      isRanking: true,
+      questionNumber: 4,
       options: [
         "Easily Achievable",
         "Achievable",
@@ -115,8 +79,7 @@ export default function CEWPrioritizationPage() {
     },
     {
       question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = very important to 5 = not important)",
-      questionNumber: 8,
-      isRanking: true,
+      questionNumber: 5,
       options: [
         "Very Important",
         "Important",
@@ -127,8 +90,7 @@ export default function CEWPrioritizationPage() {
     },
     {
       question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
-      questionNumber: 9,
-      isRanking: true,
+      questionNumber: 6,
       options: [
         "Easily Achievable",
         "Achievable",
@@ -139,8 +101,7 @@ export default function CEWPrioritizationPage() {
     },
     {
       question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = very important to 5 = not important)",
-      questionNumber: 10,
-      isRanking: true,
+      questionNumber: 7,
       options: [
         "Very Important",
         "Important",
@@ -151,8 +112,7 @@ export default function CEWPrioritizationPage() {
     },
     {
       question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = easily achievable to 5 = not feasible)",
-      questionNumber: 11,
-      isRanking: true,
+      questionNumber: 8,
       options: [
         "Easily Achievable",
         "Achievable",
@@ -161,14 +121,64 @@ export default function CEWPrioritizationPage() {
         "Not Feasible"
       ]
     },
-    // Question 12: Wordcloud Poll
+    {
+      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = very important to 5 = not important)",
+      questionNumber: 9,
+      options: [
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important",
+        "Not Important"
+      ]
+    },
+    {
+      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = easily achievable to 5 = not feasible)",
+      questionNumber: 10,
+      options: [
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
+      ]
+    },
+    // Questions 11-12: Ranking Polls (actual ranking with multiple options)
+    {
+      question: "To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve development of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.",
+      questionNumber: 11,
+      isRanking: true,
+      options: [
+        "Developing the technical approach to define what \"direct toxicity\" and \"food pathway toxicity\" mean for the framework.",
+        "Determining what approach ENV should take to develop human health standards, given there are other agencies working on like standards.",
+        "Developing the technical approach to address how matrix standards would be applied in a spatial context (e.g., over what spatial areas, for what depths, etc.).",
+        "Determining if environmental sensitivity should be factored into matrix standards for ecological health."
+      ]
+    },
+    {
+      question: "Of the four options below, what focus will provide greatest value to holistic sediment management in BC? (1 = top priority; 4 = lowest priority)",
+      questionNumber: 12,
+      isRanking: true,
+      options: [
+        "Selecting and using models and other tools to help develop Site-Specific Sediment Standards (Tier 2) for ecological health (these would include, for example, acid volatile sulphides/simultaneously extractable metals (AVS/SEM), equilibrium partitioning (EqP), target lipid model)",
+        "Selecting and using approaches to develop Sediment Standards for contaminants with an analogue (e.g., quantitative structure-activity relationship (QSAR))",
+        "Developing guidance and/or framework to use site-specific toxicity testing to evaluate the risks of mixtures to ecological receptors.",
+        "Developing models and/or approaches to derive mixture-specific sediment standards for ecological receptors (e.g., for water quality, there are biotic ligand models for metals mixtures)."
+      ]
+    },
+    // Question 13: Wordcloud Poll
     {
       question: "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?",
-      questionNumber: 12,
+      questionNumber: 13,
       isWordcloud: true,
       maxWords: 3,
       wordLimit: 20,
-      options: [] // Wordcloud doesn't use options array
+      predefinedOptions: [
+        { display: "Data availability", keyword: "Data" },
+        { display: "Tools (models, test protocols, decision trees)", keyword: "Tools" },
+        { display: "Agreement on protection goals and spatial scale", keyword: "Policy" },
+        { display: "Resourcing (e.g., developing approach/tools, agreeing across peers)", keyword: "Resourcing" }
+      ]
     }
   ];
 
@@ -222,6 +232,7 @@ export default function CEWPrioritizationPage() {
                     pagePath="/cew-polls/prioritization"
                     questionNumber={poll.questionNumber}
                     authCode={authCode}
+                    predefinedOptions={poll.predefinedOptions}
                     onVote={(pollIndex, words) => {
                       console.log(`Words submitted for poll ${pollIndex}:`, words);
                     }}
@@ -235,7 +246,7 @@ export default function CEWPrioritizationPage() {
                     key={pollIndex}
                     pollIndex={pollIndex}
                     question={poll.question}
-                    options={poll.options}
+                    options={poll.options || []}
                     pagePath="/cew-polls/prioritization"
                     questionNumber={poll.questionNumber}
                     authCode={authCode}
@@ -252,7 +263,7 @@ export default function CEWPrioritizationPage() {
                     key={pollIndex}
                     pollIndex={pollIndex}
                     question={poll.question}
-                    options={poll.options}
+                    options={poll.options || []}
                     pagePath="/cew-polls/prioritization"
                     questionNumber={poll.questionNumber}
                     authCode={authCode}

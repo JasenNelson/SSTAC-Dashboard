@@ -5,6 +5,42 @@ This guide documents critical debugging issues encountered with the admin poll r
 
 ## 🚨 CRITICAL: Recurring Security & Indexing Issues (2025-01-20)
 
+## 🚨 CRITICAL: Wordcloud Division by Zero Error (2025-01-20)
+
+### **Wordcloud Results View Division by Zero (NEW ISSUE)**
+**Problem**: `wordcloud_results` view causes division by zero error when no votes exist
+**Error**: `{code: '22012', details: null, hint: null, message: 'division by zero'}`
+**Impact**: Admin panel fails to load with 400 Bad Request error
+**Root Cause**: Percentage calculation divides by zero when total word count is 0
+
+**Solution Applied**:
+```sql
+-- Robust wordcloud_results view with division by zero protection
+CREATE OR REPLACE VIEW wordcloud_results AS
+WITH wordcloud_data AS (
+    -- ... data aggregation logic
+),
+total_counts AS (
+    -- ... total calculation logic
+)
+SELECT
+    -- ... other fields
+    CASE 
+        WHEN tc.total_words IS NULL OR tc.total_words = 0 
+        THEN 0.0
+        ELSE ROUND((wd.frequency::numeric / tc.total_words::numeric) * 100, 2)
+    END AS percentage
+FROM wordcloud_data wd
+LEFT JOIN total_counts tc ON wd.poll_id = tc.poll_id
+WHERE wd.word IS NOT NULL;
+```
+
+**Prevention Protocol**:
+- ✅ **ALWAYS include division by zero protection** in percentage calculations
+- ✅ **Use CTE structure** to separate data aggregation from calculations
+- ✅ **Test with empty polls** to ensure no division by zero errors
+- ✅ **Use COALESCE and explicit zero checks** for robust error handling
+
 ### **Supabase Security Invoker Warning (RECURRING ISSUE)**
 **Problem**: Supabase repeatedly warns about missing `security_invoker = on` in view definitions
 **Frequency**: This occurs multiple times as Supabase automatically detects security improvements

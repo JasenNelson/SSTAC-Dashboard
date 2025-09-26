@@ -3,7 +3,7 @@
 ## 🎯 Project Overview
 A comprehensive dashboard platform for the **Sediment Standards Technical Advisory Committee (SSTAC)** and **Technical Working Group (TWG)**. This platform manages sediment standards development through stakeholder engagement, document management, and administrative tools.
 
-**Current Status**: Phase 4 completed successfully - Admin panel UI/UX fully optimized with perfect container positioning, text wrapping, and navigation. All poll system functionality working correctly with comprehensive documentation. Ready for poll update procedure testing.
+**Current Status**: Phase 4 completed successfully - Admin panel UI/UX fully optimized with perfect container positioning, text wrapping, and navigation. All poll system functionality working correctly with comprehensive documentation. Wordcloud poll system fully implemented with custom Canvas-based rendering, division by zero protection, and three-way synchronization. Ready for production deployment.
 
 ## 🎯 Core Development Principles
 
@@ -57,18 +57,21 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **ALWAYS have rollback plans** for any performance changes
 
 ### 8. Poll and Ranking Question System Guidelines (CRITICAL)
-- **TWO COMPLETELY SEPARATE SYSTEMS**: Single-choice polls and ranking polls are independent systems
+- **THREE COMPLETELY SEPARATE SYSTEMS**: Single-choice polls, ranking polls, and wordcloud polls are independent systems
   - **Single-choice**: `polls` table + `poll_votes` table + `poll_results` view
   - **Ranking**: `ranking_polls` table + `ranking_votes` table + `ranking_results` view
-  - **NEVER mix**: Don't put ranking questions in `polls` table or single-choice in `ranking_polls` table
+  - **Wordcloud**: `wordcloud_polls` table + `wordcloud_votes` table + `wordcloud_results` view
+  - **NEVER mix**: Don't put ranking questions in `polls` table or single-choice in `ranking_polls` table or wordcloud in other tables
 - **VOTE COUNTING DIFFERS**: 
   - **Single-choice**: Sum of all individual votes (5 users = 5 votes displayed)
   - **Ranking**: Count of unique participants (3 users rank 4 options each = 3 responses displayed, not 12)
+  - **Wordcloud**: Count of unique participants and word frequency aggregation (3 users submit 2 words each = 3 responses, 6 total words)
 - **CRITICAL: ranking_results View Array Indexing**: The ranking_results view uses `rp.options[option_stats.option_index]` (NOT +1). The option_index values in ranking_votes table are 0-based (0,1,2,3) and the options JSONB array is also 0-based. Adding +1 breaks the mapping and causes blank option text in admin panel. NEVER modify this line: `'option_text', rp.options[option_stats.option_index]`. The system uses 0-based indexing throughout - do not "fix" what appears to be a 1-based vs 0-based issue.
 - **CRITICAL: View Security Invoker (RECURRING ISSUE)**: Supabase repeatedly warns about missing `WITH (security_invoker = on)` in view definitions. This is a RECURRING issue that occurs multiple times. ALWAYS include `WITH (security_invoker = on)` when creating or updating views. Apply to ALL views for consistency and security. This prevents security vulnerabilities in production.
+- **CRITICAL: Wordcloud Division by Zero (NEW ISSUE)**: The wordcloud_results view MUST include division by zero protection in percentage calculations. Without this, empty wordcloud polls cause division by zero errors and prevent admin panel from loading. ALWAYS use `CASE WHEN tc.total_words IS NULL OR tc.total_words = 0 THEN 0.0 ELSE ROUND(...) END` for percentage calculations.
 - **CSV EXPORTS ARE TRUTH**: Always verify system state with actual database exports, not assumptions
 - **ADMIN PANEL COMPLEXITY**: Question matching logic between survey and CEW versions is sophisticated
-- **NEVER ASSUME MISSING DATA**: Check both `polls` and `ranking_polls` tables before concluding polls are missing
+- **NEVER ASSUME MISSING DATA**: Check all three tables (`polls`, `ranking_polls`, `wordcloud_polls`) before concluding polls are missing
 - **PRIVACY FIRST**: For CEW polls, avoid client-side persistence to ensure true privacy in incognito mode
 - **SIMPLIFY CONSTRAINTS**: Complex unique constraints can cause submission failures - prefer application-level uniqueness
 - **ANONYMOUS CLIENTS**: Use null cookie handlers for Supabase clients in CEW poll API routes

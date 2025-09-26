@@ -3,96 +3,172 @@
 import React, { useState } from 'react';
 import PollWithResults from '@/components/PollWithResults';
 import RankingPoll from '@/components/dashboard/RankingPoll';
+import WordCloudPoll from '@/components/dashboard/WordCloudPoll';
 
 interface PollData {
   question: string;
-  options: string[];
+  options?: string[];
   questionNumber?: number;
+  isRanking?: boolean;
+  isWordcloud?: boolean;
+  maxWords?: number;
+  wordLimit?: number;
+  predefinedOptions?: Array<{ display: string; keyword: string }>;
 }
 
 export default function PrioritizationClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
   
   // Define polls with proper structure for the new poll system
+  // Define polls with proper structure for the new poll system - 13 Prioritization Questions
+  // Based on CEW_Poll_Questions.txt lines 50+ (Prioritization Polling Questions)
   const polls = [
+    // Questions 1-10: Single-Choice Polls (not ranking - despite "rank" in question text)
     {
-      question: "Please rank these potential feasibility criteria to help inform the development of a prioritization framework (1= highest):",
+      question: "Rank the importance of developing a framework for deriving site-specific sediment standards, based on bioavailability adjustment, to provide an enhanced numerical assessment option (Tier 2), between generic numerical (Tier 1) and risk-based (Tier 3) assessments. (1 = very important to 5 = not important)",
       questionNumber: 1,
       options: [
-        "Adequacy and reliability of available data for key research topics",
-        "Need for new or specialized technologies",
-        "Level of complexity and corresponding expertise and resource requirements",
-        "Level of likelihood/uncertainty in successful completion of project or meeting research goals"
+        "Very Important",
+        "Important", 
+        "Moderately Important",
+        "Less Important",
+        "Not Important"
       ]
     },
     {
-      question: "Please rank these timeframe considerations for developing a prioritization framework and strategic planning for research to support modernizing BC's sediment standards (1= highest):",
+      question: "Rank the feasibility of developing the framework for deriving site-specific sediment standards, based on an integrated approach using Equilibrium Partitioning and Biotic Ligand Models. (1 = easily achievable to 5 = not feasible)",
       questionNumber: 2,
       options: [
-        "Outcome-driven priority, regardless of timeframe (i.e., disregard timeframe when prioritizing research)",
-        "Focus on short-term progress (e.g., identify opportunities to quickly address regulatory gaps)",
-        "Focus on progressing the highest potential impact, following a clear long-term strategic goal, avoiding convenient short-term efforts if they will distract from the goal and divert resources away from more meaningful progress.",
-        "Consistent progress prioritized, with a balance of short- and long-term research efforts."
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable", 
+        "Difficult",
+        "Not Feasible"
       ]
     },
     {
-      question: "Based on Today's discussion and your experience, please rank these four areas for modernization priority in BC's sediment standards (1= highest):",
+      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = very important to 5 = not important)",
       questionNumber: 3,
       options: [
-        "Development of a Scientific Framework for Deriving Site-Specific Sediment Standards (Bioavailability Adjustment)",
-        "Development of a Matrix Sediment Standards Framework - Focus on Ecological Protection",
-        "Development of a Matrix Sediment Standards Framework - Focus on Human Health Protection",
-        "Develop Sediment Standards for Non-scheduled Contaminants & Mixtures"
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important", 
+        "Not Important"
       ]
     },
     {
-      question: "Which scientific approach to bioavailability holds the most promise for practical and defensible application in BC's regulatory framework?",
+      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
       questionNumber: 4,
       options: [
-        "Equilibrium partitioning models (e.g., based on organic carbon content).",
-        "Normalization using Acid-Volatile Sulfides and Simultaneously Extracted Metals (AVS/SEM)",
-        "Application of the Biotic Ligand Model (BLM) for sediments",
-        "Direct measurement using passive sampling devices (PSDs)"
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
       ]
     },
     {
-      question: "When considering contaminant mixtures, rank the following approaches from most to least scientifically defensible and practically achievable for BC's regulatory framework (1= highest):",
+      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = very important to 5 = not important)",
       questionNumber: 5,
       options: [
-        "A simple additive model (e.g., hazard index)",
-        "A weighted approach based on toxicological similarity",
-        "Site-specific toxicity testing for all complex mixtures",
-        "The development of new, mixture-specific standards"
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important",
+        "Not Important"
       ]
     },
     {
-      question: "Within a medium-term (3-5 year) research plan, rank the following scientific objectives from most to least critical for modernizing BC's sediment standards?",
+      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
       questionNumber: 6,
       options: [
-        "Developing a robust framework for assessing the bioavailability of metals and metalloids.",
-        "Establishing standardized analytical methods for a priority list of contaminants of emerging concern (CECs).",
-        "Creating a predictive model for contaminant mixture toxicity based on concentration addition.",
-        "Generating sufficient toxicity data to derive new guidelines for 3-5 high-priority legacy contaminants."
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
       ]
     },
     {
-      question: "To support long-term (5+ years) strategic goals, please rank the following foundational research areas in order of importance for creating a more adaptive and forward-looking regulatory framework (1= highest importance):",
+      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = very important to 5 = not important)",
       questionNumber: 7,
       options: [
-        "Research into the ecosystem-level impacts of chronic, low-level contaminant exposure",
-        "Development of advanced in-vitro and high-throughput screening methods for rapid hazard assessment",
-        "Investigating the toxicological impacts of climate change variables (e.g., temperature, hypoxia) on sediment contaminant toxicity",
-        "Building a comprehensive, open-access database of sediment chemistry and toxicology data for all of BC"
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important",
+        "Not Important"
       ]
     },
     {
-      question: "For the Hazard Index / Concentration Addition approach to mixture assessment, what is the single greatest scientific research gap that must be addressed before it can be reliably implemented?",
+      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = easily achievable to 5 = not feasible)",
       questionNumber: 8,
       options: [
-        "A lack of high-quality toxicity data for many individual components of common mixtures",
-        "Poor understanding of the modes of action for many contaminants to justify grouping them",
-        "Difficulty in validating model predictions with whole sediment toxicity testing results",
-        "The inability of current models to account for significant synergistic or antagonistic interactions"
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
+      ]
+    },
+    {
+      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = very important to 5 = not important)",
+      questionNumber: 9,
+      options: [
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important",
+        "Not Important"
+      ]
+    },
+    {
+      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = easily achievable to 5 = not feasible)",
+      questionNumber: 10,
+      options: [
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
+      ]
+    },
+    // Questions 11-12: Ranking Polls (actual ranking with multiple options)
+    {
+      question: "To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve development of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.",
+      questionNumber: 11,
+      isRanking: true,
+      options: [
+        "Developing the technical approach to define what \"direct toxicity\" and \"food pathway toxicity\" mean for the framework.",
+        "Determining what approach ENV should take to develop human health standards, given there are other agencies working on like standards.",
+        "Developing the technical approach to address how matrix standards would be applied in a spatial context (e.g., over what spatial areas, for what depths, etc.).",
+        "Determining if environmental sensitivity should be factored into matrix standards for ecological health."
+      ]
+    },
+    {
+      question: "Of the four options below, what focus will provide greatest value to holistic sediment management in BC? (1 = top priority; 4 = lowest priority)",
+      questionNumber: 12,
+      isRanking: true,
+      options: [
+        "Selecting and using models and other tools to help develop Site-Specific Sediment Standards (Tier 2) for ecological health (these would include, for example, acid volatile sulphides/simultaneously extractable metals (AVS/SEM), equilibrium partitioning (EqP), target lipid model)",
+        "Selecting and using approaches to develop Sediment Standards for contaminants with an analogue (e.g., quantitative structure-activity relationship (QSAR))",
+        "Developing guidance and/or framework to use site-specific toxicity testing to evaluate the risks of mixtures to ecological receptors.",
+        "Developing models and/or approaches to derive mixture-specific sediment standards for ecological receptors (e.g., for water quality, there are biotic ligand models for metals mixtures)."
+      ]
+    },
+    // Question 13: Wordcloud Poll
+    {
+      question: "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?",
+      questionNumber: 13,
+      isWordcloud: true,
+      maxWords: 3,
+      wordLimit: 20,
+      predefinedOptions: [
+        { display: "Data availability", keyword: "Data" },
+        { display: "Tools (models, test protocols, decision trees)", keyword: "Tools" },
+        { display: "Agreement on protection goals and spatial scale", keyword: "Policy" },
+        { display: "Resourcing (e.g., developing approach/tools, agreeing across peers)", keyword: "Resourcing" }
       ]
     }
   ];
@@ -400,36 +476,56 @@ export default function PrioritizationClient() {
           
           <div className="space-y-16">
             {polls.map((poll, pollIndex) => {
-              // Check if this is a ranking question
-              const isRankingQuestion = poll.question.toLowerCase().includes('rank');
-              
-              if (isRankingQuestion) {
+              // Handle different poll types
+              if (poll.isWordcloud) {
                 return (
-                  <RankingPoll
-                    key={pollIndex}
-                    pollIndex={pollIndex}
-                    question={poll.question}
-                    options={poll.options}
-                    pagePath="/survey-results/prioritization"
-                    questionNumber={poll.questionNumber}
-                    onVote={(pollIndex, rankings) => {
-                      console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
-                    }}
-                  />
+                  <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                    <WordCloudPoll
+                      key={pollIndex}
+                      pollIndex={pollIndex}
+                      question={poll.question}
+                      maxWords={poll.maxWords || 3}
+                      wordLimit={poll.wordLimit || 20}
+                      pagePath="/survey-results/prioritization"
+                      questionNumber={poll.questionNumber}
+                      predefinedOptions={poll.predefinedOptions}
+                      onVote={(pollIndex, words) => {
+                        console.log(`Words submitted for poll ${pollIndex}:`, words);
+                      }}
+                    />
+                  </div>
+                );
+              } else if (poll.isRanking) {
+                return (
+                  <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                    <RankingPoll
+                      key={pollIndex}
+                      pollIndex={pollIndex}
+                      question={poll.question}
+                      options={poll.options || []}
+                      pagePath="/survey-results/prioritization"
+                      questionNumber={poll.questionNumber}
+                      onVote={(pollIndex, rankings) => {
+                        console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
+                      }}
+                    />
+                  </div>
                 );
               } else {
                 return (
-                  <PollWithResults
-                    key={pollIndex}
-                    pollIndex={pollIndex}
-                    question={poll.question}
-                    options={poll.options}
-                    pagePath="/survey-results/prioritization"
-                    questionNumber={poll.questionNumber}
-                    onVote={(pollIndex, optionIndex) => {
-                      console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
-                    }}
-                  />
+                  <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                    <PollWithResults
+                      key={pollIndex}
+                      pollIndex={pollIndex}
+                      question={poll.question}
+                      options={poll.options || []}
+                      pagePath="/survey-results/prioritization"
+                      questionNumber={poll.questionNumber}
+                      onVote={(pollIndex, optionIndex) => {
+                        console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
+                      }}
+                    />
+                  </div>
                 );
               }
             })}
