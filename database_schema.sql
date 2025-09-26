@@ -801,12 +801,13 @@ CREATE TABLE IF NOT EXISTS ranking_polls (
 
 -- Wordcloud polls table for open-ended word submissions
 -- Supports 1-3 words per submission with character limits
+-- Question 13 uses max_words=1 for single-choice behavior
 CREATE TABLE IF NOT EXISTS wordcloud_polls (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     page_path VARCHAR(255) NOT NULL, -- e.g., '/survey-results/prioritization'
     poll_index INTEGER NOT NULL, -- 0-based index of poll on the page
     question TEXT NOT NULL,
-    max_words INTEGER DEFAULT 3, -- Maximum words per submission (1-3)
+    max_words INTEGER DEFAULT 3, -- Maximum words per submission (1 for Question 13, 1-3 for others)
     word_limit INTEGER DEFAULT 20, -- Maximum characters per word
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

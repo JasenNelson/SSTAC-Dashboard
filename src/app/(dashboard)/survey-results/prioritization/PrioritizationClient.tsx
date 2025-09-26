@@ -162,7 +162,7 @@ export default function PrioritizationClient() {
       question: "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?",
       questionNumber: 13,
       isWordcloud: true,
-      maxWords: 3,
+      maxWords: 1,
       wordLimit: 20,
       predefinedOptions: [
         { display: "Data availability", keyword: "Data" },

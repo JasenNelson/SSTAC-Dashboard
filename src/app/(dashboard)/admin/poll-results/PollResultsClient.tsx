@@ -87,11 +87,13 @@ export default function PollResultsClient() {
   const [qrCodeExpanded, setQrCodeExpanded] = useState(false);
   const [expandedPollGroup, setExpandedPollGroup] = useState<string | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const supabase = createClient();
 
   useEffect(() => {
     fetchPollResults();
   }, []);
+
 
   // Fetch matrix data for prioritization graphs
   useEffect(() => {
@@ -146,6 +148,11 @@ export default function PollResultsClient() {
       );
       console.log('🔍 Raw ranking data for tiered-framework:', 
         rankingData.filter(p => p.page_path.includes('tiered-framework'))
+      );
+      
+      // Debug: Log wordcloud data for prioritization
+      console.log('🔍 Raw wordcloud data for prioritization:', 
+        wordcloudData.filter(p => p.page_path.includes('prioritization'))
       );
 
       // Define current active polls to filter out old/test data
@@ -326,7 +333,7 @@ export default function PollResultsClient() {
             question: poll.question,
             max_words: poll.max_words || 3,
             word_limit: poll.word_limit || 20,
-            total_votes: poll.total_votes || 0,
+            total_votes: poll.total_responses || 0,
             words: [],
             surveyWords: [],
             cewWords: []
@@ -391,7 +398,7 @@ export default function PollResultsClient() {
           group.surveyPoll = {
             ...pollData,
             words: pollData.surveyWords,
-            total_votes: pollData.surveyWords.reduce((sum, word) => sum + word.value, 0)
+            total_votes: pollData.total_votes // Use database total_responses, not word frequency sum
           };
         }
         
@@ -399,8 +406,37 @@ export default function PollResultsClient() {
           group.cewPoll = {
             ...pollData,
             words: pollData.cewWords,
-            total_votes: pollData.cewWords.reduce((sum, word) => sum + word.value, 0)
+            total_votes: pollData.total_votes // Use database total_responses, not word frequency sum
           };
+        }
+        
+        // Also create poll objects even if no words yet, but with correct total_votes
+        if (pollData.surveyWords.length === 0 && pollData.cewWords.length === 0) {
+          // No words yet, but we still need to create the poll structure
+          group.surveyPoll = {
+            ...pollData,
+            words: [],
+            total_votes: pollData.total_votes // Use database total_responses
+          };
+          group.cewPoll = {
+            ...pollData,
+            words: [],
+            total_votes: pollData.total_votes // Use database total_responses
+          };
+        }
+        
+        // Debug: Log wordcloud poll data processing
+        if (pollData.page_path.includes('prioritization')) {
+          console.log('🔍 Wordcloud poll data processing:', {
+            pollId: pollData.poll_id,
+            pagePath: pollData.page_path,
+            pollIndex: pollData.poll_index,
+            totalVotes: pollData.total_votes,
+            surveyWords: pollData.surveyWords,
+            cewWords: pollData.cewWords,
+            surveyPoll: group.surveyPoll ? { total_votes: group.surveyPoll.total_votes } : null,
+            cewPoll: group.cewPoll ? { total_votes: group.cewPoll.total_votes } : null
+          });
         }
       });
 
@@ -427,10 +463,30 @@ export default function PollResultsClient() {
           surveyVotes = surveyPoll ? (surveyPoll.total_votes || 0) : 0;
           cewVotes = cewPoll ? (cewPoll.total_votes || 0) : 0;
         } else if (group.isWordcloud) {
-          // For wordcloud polls, use total_votes field which represents unique participants
-          // Each user submits words, so total_votes = number of participants
+          // For wordcloud polls, use total_responses from database which represents unique participants
+          // This is the correct way to count responses for wordcloud polls
           surveyVotes = surveyPoll ? (surveyPoll.total_votes || 0) : 0;
           cewVotes = cewPoll ? (cewPoll.total_votes || 0) : 0;
+          
+          // Debug: Log wordcloud vote calculation
+          if (key.includes('prioritization')) {
+            console.log('🔍 Wordcloud vote calculation:', {
+              key,
+              surveyVotes,
+              cewVotes,
+              totalVotes: surveyVotes + cewVotes,
+              surveyPoll: surveyPoll ? { 
+                total_votes: surveyPoll.total_votes, 
+                words: surveyPoll.words?.length,
+                wordValues: surveyPoll.words?.map((w: any) => w.value) || []
+              } : null,
+              cewPoll: cewPoll ? { 
+                total_votes: cewPoll.total_votes, 
+                words: cewPoll.words?.length,
+                wordValues: cewPoll.words?.map((w: any) => w.value) || []
+              } : null
+            });
+          }
         } else {
           // For single-choice polls, sum up all votes in the results
           // Each user selects ONE option, so sum of votes = total responses
@@ -1010,7 +1066,10 @@ export default function PollResultsClient() {
           {/* Refresh Button */}
           <div className="mt-6">
             <button
-              onClick={fetchPollResults}
+              onClick={() => {
+                fetchPollResults();
+                setLastRefresh(new Date());
+              }}
               disabled={loading}
               className="w-full px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
@@ -1062,7 +1121,10 @@ export default function PollResultsClient() {
       {!leftPanelVisible && (
         <div className="fixed left-4 top-32 z-50">
           <button
-            onClick={() => fetchPollResults()}
+            onClick={() => {
+              fetchPollResults();
+              setLastRefresh(new Date());
+            }}
             className="flex items-center justify-center w-12 h-12 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors shadow-xl border-2 border-white dark:border-gray-800"
             title="Refresh results"
           >
@@ -1077,7 +1139,12 @@ export default function PollResultsClient() {
       <div className={`flex-1 overflow-y-auto ${leftPanelVisible ? 'ml-80' : 'ml-0'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Live Poll Results Dashboard</h1>
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Live Poll Results Dashboard</h1>
+            <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center space-x-2">
+              <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
+            </div>
+          </div>
           <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">Combined results from TWG & SSTAC members (via dashboard) and CEW conference attendees (live event)</p>
         </div>
 

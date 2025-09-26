@@ -640,6 +640,36 @@ const colors = isDarkMode ? darkColors : lightColors;
 - ✅ **Test TypeScript builds** after component changes
 - ✅ **Simplify component logic** when only one poll type is used
 
+### **Question 13 Wordcloud Configuration Fix (RESOLVED)**
+**Problem**: Question 13 wordcloud was allowing 3 words instead of single-choice behavior
+**Error**: Users could submit multiple words when only one option should be allowed
+**Impact**: Incorrect wordcloud behavior for single-choice question
+**Root Cause**: Question 13 configured with `maxWords: 3` instead of `maxWords: 1`
+
+**Solution Applied**:
+```typescript
+// Fixed Question 13 configuration in both CEW and survey-results pages
+{
+  question: "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?",
+  questionNumber: 13,
+  isWordcloud: true,
+  maxWords: 1, // Changed from 3 to 1 for single-choice behavior
+  wordLimit: 20,
+  predefinedOptions: [
+    { display: "Data availability", keyword: "Data" },
+    { display: "Tools (models, test protocols, decision trees)", keyword: "Tools" },
+    { display: "Agreement on protection goals and spatial scale", keyword: "Policy" },
+    { display: "Resourcing (e.g., developing approach/tools, agreeing across peers)", keyword: "Resourcing" }
+  ]
+}
+```
+
+**Prevention Protocol**:
+- ✅ **Verify question requirements** before setting maxWords configuration
+- ✅ **Update both CEW and survey-results pages** simultaneously
+- ✅ **Test wordcloud behavior** after configuration changes
+- ✅ **Document question-specific configurations** in markdown files
+
 ---
 
 **Remember**: The poll system is complex and requires careful debugging. Always verify data sources, test thoroughly, and document solutions for future reference.

@@ -17,7 +17,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **Division by Zero Protection**: Robust error handling for empty polls in admin panel
 - **Three-Way Synchronization**: Database, UI pages, and admin panel fully synchronized
 - **13 Prioritization Questions**: 10 single-choice, 2 ranking, 1 wordcloud question
-- **Character Limits**: 1-3 words per submission, 20 characters per word
+- **Character Limits**: 1 word for Question 13 (single choice), 1-3 words for other wordcloud polls, 20 characters per word
 - **Real-Time Aggregation**: Word frequency calculation with percentage display
 - **Error Boundary Protection**: Comprehensive error handling for wordcloud rendering
 - **Predefined Options**: Display descriptive options but submit simplified keywords
@@ -35,6 +35,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **Professional Appearance**: Clean, organized wordcloud suitable for conference presentations
 - **TypeScript Error Fixes**: Resolved isWordcloud and isRanking property errors in Tiered Framework components
 - **K6 Test Improvements**: Enhanced test to generate proper word frequency distribution for realistic testing
+- **Question 13 Configuration Fix**: Updated wordcloud to allow only 1 word (single choice) instead of 3 words
 
 ### **Prioritization Matrix Graph Integration** ✅ COMPLETED (2025-01-20)
 - **Five Matrix Graphs**: Visual prioritization analysis for question pairs 1-2, 3-4, 5-6, 7-8, 9-10

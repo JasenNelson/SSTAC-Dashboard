@@ -70,11 +70,11 @@ export async function POST(request: NextRequest) {
         }
       );
       
-      // Generate unique user ID for each CEW submission to allow multiple responses
-      // Format: {authCode}_{timestamp}_{random} to ensure uniqueness
+      // Generate unique user_id for each CEW submission to count unique participants
+      // This allows multiple people to submit and be counted as separate responses
       const timestamp = Date.now();
-      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-      finalUserId = `${authCode || 'CEW2025'}_${timestamp}_${random}`;
+      const randomSuffix = Math.random().toString(36).substring(2, 8);
+      finalUserId = `${authCode || 'CEW2025'}_${timestamp}_${randomSuffix}`;
       console.log(`[Wordcloud Submit] CEW page, using unique userId: ${finalUserId}`);
     } else {
       // Survey-results pages: Use authenticated connection (require login)
@@ -125,35 +125,24 @@ export async function POST(request: NextRequest) {
 
     const pollId = pollData;
 
-    // Check if user has already voted
-    const { data: existingVote, error: checkError } = await supabase
-      .from('wordcloud_votes')
-      .select('id')
-      .eq('poll_id', pollId)
-      .eq('user_id', finalUserId)
-      .single();
+    // For CEW pages, allow multiple votes by inserting new records
+    // For authenticated users, delete existing and insert new ones
+    if (isCEWPage) {
+      // CEW pages: Always insert new votes (allow multiple votes per CEW code)
+      console.log(`[Wordcloud Submit] CEW page - inserting new wordcloud votes`);
+    } else {
+      // Authenticated users: Delete existing votes first
+      console.log(`[Wordcloud Submit] Authenticated user - deleting existing votes first`);
+      const { error: deleteError } = await supabase
+        .from('wordcloud_votes')
+        .delete()
+        .eq('poll_id', pollId)
+        .eq('user_id', finalUserId);
 
-    if (checkError && checkError.code !== 'PGRST116') {
-      console.error('Error checking existing vote:', checkError);
-      return NextResponse.json(
-        { error: `Failed to check existing vote: ${checkError.message}` },
-        { status: 500 }
-      );
-    }
-
-    // Delete existing votes for this user and poll
-    const { error: deleteError } = await supabase
-      .from('wordcloud_votes')
-      .delete()
-      .eq('poll_id', pollId)
-      .eq('user_id', finalUserId);
-
-    if (deleteError) {
-      console.error('Error deleting existing votes:', deleteError);
-      return NextResponse.json(
-        { error: `Failed to clear existing votes: ${deleteError.message}` },
-        { status: 500 }
-      );
+      if (deleteError) {
+        console.error('Error deleting existing wordcloud votes:', deleteError);
+        console.log('Continuing with vote submission despite delete error');
+      }
     }
 
     // Insert new votes (one record per word)

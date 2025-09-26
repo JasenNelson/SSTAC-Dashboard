@@ -26,7 +26,7 @@
 - **Table**: `wordcloud_polls`
 - **Votes Table**: `wordcloud_votes`
 - **Results View**: `wordcloud_results`
-- **Vote Storage**: Multiple words per user per poll (1-3 words, 20 char limit)
+- **Vote Storage**: Multiple words per user per poll (1 word for Question 13, 1-3 words for other wordcloud polls, 20 char limit)
 - **Vote Counting**: Count of unique participants and word frequency aggregation
 - **Features**: Custom Canvas-based wordcloud rendering, aquatic blue/green color scheme
 - **High-DPI Canvas Rendering**: Crisp, non-pixelated text with proper device pixel ratio scaling
@@ -38,6 +38,8 @@
 - **Either/Or Selection**: Users can select predefined options OR enter custom words, not both
 - **Immediate Display**: Submitted words appear instantly in wordcloud and frequency table
 - **Error Handling**: Division by zero protection and comprehensive error boundaries
+- **CEW Multiple Submissions**: Unique user_id generation allows multiple submissions from same conference code
+- **Unique Constraint**: `UNIQUE(poll_id, user_id, word)` prevents duplicate words from same user
 
 #### **4. Prioritization Matrix Graph System** ✅ **COMPLETED (January 2025)**
 - **API Endpoint**: `/api/graphs/prioritization-matrix`
@@ -340,10 +342,13 @@ Without this protection, empty wordcloud polls cause division by zero errors and
 - **Features**: Collision detection, dynamic sizing, rotation variety
 
 ### **Wordcloud Poll Configuration**
-- **Max Words**: 1-3 words per submission
+- **Max Words**: 1 word for Question 13 (single choice), 1-3 words for other wordcloud polls
 - **Character Limit**: 20 characters per word
 - **Vote Storage**: Individual word records in wordcloud_votes table
 - **Aggregation**: Real-time word frequency calculation
+- **Question 13 Specific**: Single-choice wordcloud with predefined options + custom input
+- **CEW Submission Behavior**: Multiple submissions allowed with unique user_id generation
+- **Unique Constraint**: Prevents duplicate words from same user while allowing multiple submissions
 
 ## 📝 **Key Takeaways**
 
@@ -354,5 +359,7 @@ Without this protection, empty wordcloud polls cause division by zero errors and
 5. **Wordcloud division by zero**: Always protect against empty polls in percentage calculations
 6. **CEW vs Survey**: Same questions, different user_id values
 7. **Views are critical**: Use `poll_results`, `ranking_results`, and `wordcloud_results` for aggregated data
+8. **Wordcloud CEW behavior**: Multiple submissions allowed with unique user_id generation for conference attendees
+9. **Question 13 configuration**: Single-choice wordcloud (max_words=1) with predefined options
 
 This guide should prevent future misunderstandings about the poll system structure and functionality.
