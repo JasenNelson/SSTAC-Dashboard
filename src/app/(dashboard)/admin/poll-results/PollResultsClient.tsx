@@ -3,10 +3,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import QRCodeDisplay from '@/components/dashboard/QRCodeDisplay';
+import ReactWordcloud from 'react-wordcloud';
 
 interface PollResult {
   poll_id?: string;
   ranking_poll_id?: string;
+  wordcloud_poll_id?: string;
   page_path: string;
   poll_index: number;
   question: string;
@@ -19,6 +21,11 @@ interface PollResult {
     averageRank?: number;
   }>;
   is_ranking?: boolean;
+  is_wordcloud?: boolean;
+  wordcloud_words?: Array<{
+    text: string;
+    value: number;
+  }>;
   combined_survey_votes?: number;
   combined_cew_votes?: number;
   survey_results?: Array<{
@@ -57,10 +64,11 @@ export default function PollResultsClient() {
     try {
       setLoading(true);
       
-      // Fetch both single-choice and ranking poll results with error handling
-      const [singleChoiceResult, rankingResult] = await Promise.all([
+      // Fetch single-choice, ranking, and wordcloud poll results with error handling
+      const [singleChoiceResult, rankingResult, wordcloudResult] = await Promise.all([
         supabase.from('poll_results').select('*').order('page_path', { ascending: true }).order('poll_index', { ascending: true }),
-        supabase.from('ranking_results').select('*').order('page_path', { ascending: true }).order('poll_index', { ascending: true })
+        supabase.from('ranking_results').select('*').order('page_path', { ascending: true }).order('poll_index', { ascending: true }),
+        supabase.from('wordcloud_results').select('*').order('page_path', { ascending: true }).order('poll_index', { ascending: true })
       ]);
 
       // Handle errors gracefully without breaking admin status
@@ -72,14 +80,20 @@ export default function PollResultsClient() {
         console.error('Error fetching ranking poll results:', rankingResult.error);
         // Don't throw error, just log it and continue
       }
+      if (wordcloudResult.error) {
+        console.error('Error fetching wordcloud poll results:', wordcloudResult.error);
+        // Don't throw error, just log it and continue
+      }
 
       // Debug: Log raw data for all polls
       console.log('🔍 Raw single-choice data:', singleChoiceResult.data);
       console.log('🔍 Raw ranking data:', rankingResult.data);
+      console.log('🔍 Raw wordcloud data:', wordcloudResult.data);
 
       // Process results with fallback for missing data
       const singleChoiceData = singleChoiceResult.data || [];
       const rankingData = rankingResult.data || [];
+      const wordcloudData = wordcloudResult.data || [];
       
       // Debug: Log specific data for tiered-framework
       console.log('🔍 Raw single-choice data for tiered-framework:', 
@@ -110,7 +124,20 @@ export default function PollResultsClient() {
         "When considering contaminant mixtures, rank the following approaches from most to least scientifically defensible and practically achievable for BC's regulatory framework (1= highest):",
         "Within a medium-term (3-5 year) research plan, rank the following scientific objectives from most to least critical for modernizing BC's sediment standards?",
         "To support long-term (5+ years) strategic goals, please rank the following foundational research areas in order of importance for creating a more adaptive and forward-looking regulatory framework (1= highest importance):",
-        "For the Hazard Index / Concentration Addition approach to mixture assessment, what is the single greatest scientific research gap that must be addressed before it can be reliably implemented?"
+        "For the Hazard Index / Concentration Addition approach to mixture assessment, what is the single greatest scientific research gap that must be addressed before it can be reliably implemented?",
+        
+        // Wordcloud Questions
+        "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?",
+        
+        // New Tiered Framework Questions (Questions 4-12)
+        "Rank the importance of developing a framework for deriving site-specific sediment standards, based on bioavailability adjustment, to provide an enhanced numerical assessment option (Tier 2), between generic numerical (Tier 1) and risk-based (Tier 3) assessments. (1 = very important to 5 = not important)",
+        "Rank the feasibility of developing the framework for deriving site-specific sediment standards, based on an integrated approach using Equilibrium Partitioning and Biotic Ligand Models. (1 = easily achievable to 5 = not feasible)",
+        "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = very important to 5 = not important)",
+        "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
+        "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = very important to 5 = not important)",
+        "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
+        "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = very important to 5 = not important)",
+        "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = easily achievable to 5 = not feasible)"
       ];
 
       // Group polls by question to combine survey-results and cew-polls data
@@ -118,6 +145,7 @@ export default function PollResultsClient() {
         surveyPoll?: any;
         cewPoll?: any;
         isRanking: boolean;
+        isWordcloud?: boolean;
         question: string;
         poll_index: number;
         options: string[];
@@ -228,6 +256,116 @@ export default function PollResultsClient() {
         }
       });
 
+      // Process wordcloud polls - aggregate by poll_id first
+      const wordcloudPollsMap = new Map<string, {
+        poll_id: string;
+        page_path: string;
+        poll_index: number;
+        question: string;
+        max_words: number;
+        word_limit: number;
+        total_votes: number;
+        words: Array<{ text: string; value: number }>;
+        surveyWords: Array<{ text: string; value: number }>;
+        cewWords: Array<{ text: string; value: number }>;
+      }>();
+
+      wordcloudData.forEach(poll => {
+        // Only process polls that match current active questions
+        const matchesCurrentQuestion = currentPollQuestions.some(question => 
+          poll.question.includes(question.substring(0, 50)) || 
+          question.includes(poll.question.substring(0, 50))
+        );
+        if (!matchesCurrentQuestion) {
+          return;
+        }
+
+        const pollId = poll.poll_id;
+        if (!wordcloudPollsMap.has(pollId)) {
+          wordcloudPollsMap.set(pollId, {
+            poll_id: pollId,
+            page_path: poll.page_path,
+            poll_index: poll.poll_index,
+            question: poll.question,
+            max_words: poll.max_words || 3,
+            word_limit: poll.word_limit || 20,
+            total_votes: poll.total_votes || 0,
+            words: [],
+            surveyWords: [],
+            cewWords: []
+          });
+        }
+
+        const pollData = wordcloudPollsMap.get(pollId)!;
+        
+        // Add word data
+        if (poll.word && poll.frequency) {
+          const wordData = { text: poll.word, value: poll.frequency };
+          pollData.words.push(wordData);
+          
+          if (poll.page_path.startsWith('/survey-results') || poll.page_path === '/wiks') {
+            pollData.surveyWords.push(wordData);
+          } else if (poll.page_path.startsWith('/cew-polls')) {
+            pollData.cewWords.push(wordData);
+          }
+        }
+      });
+
+      // Convert aggregated wordcloud data to poll groups
+      wordcloudPollsMap.forEach((pollData, pollId) => {
+        // Create a key that groups polls by topic and poll_index
+        let key;
+        if (pollData.page_path.includes('tiered-framework')) {
+          key = `tiered-framework_${pollData.poll_index}`;
+        } else if (pollData.page_path.includes('holistic-protection')) {
+          key = `holistic-protection_${pollData.poll_index}`;
+        } else if (pollData.page_path.includes('prioritization')) {
+          key = `prioritization_${pollData.poll_index}`;
+        } else if (pollData.page_path.includes('wiks')) {
+          key = `wiks_${pollData.poll_index}`;
+        } else {
+          const topic = pollData.page_path.split('/').pop() || 'unknown';
+          key = `${topic}_${pollData.poll_index}`;
+        }
+
+        // Sort words by frequency
+        pollData.words.sort((a, b) => b.value - a.value);
+        pollData.surveyWords.sort((a, b) => b.value - a.value);
+        pollData.cewWords.sort((a, b) => b.value - a.value);
+
+        if (!pollGroups.has(key)) {
+          pollGroups.set(key, {
+            isRanking: false,
+            isWordcloud: true,
+            question: pollData.question,
+            poll_index: pollData.poll_index,
+            options: []
+          });
+        } else {
+          const group = pollGroups.get(key)!;
+          group.isWordcloud = true;
+        }
+
+        const group = pollGroups.get(key)!;
+        
+        // Create survey and CEW poll objects
+        if (pollData.surveyWords.length > 0) {
+          group.surveyPoll = {
+            ...pollData,
+            words: pollData.surveyWords,
+            total_votes: pollData.surveyWords.reduce((sum, word) => sum + word.value, 0)
+          };
+        }
+        
+        if (pollData.cewWords.length > 0) {
+          group.cewPoll = {
+            ...pollData,
+            words: pollData.cewWords,
+            total_votes: pollData.cewWords.reduce((sum, word) => sum + word.value, 0)
+          };
+        }
+      });
+
       // Combine results for each group
       const combinedResults: PollResult[] = [];
       
@@ -242,11 +380,17 @@ export default function PollResultsClient() {
         let pollResults: any[] = [];
         let surveyResults: any[] = [];
         let cewResults: any[] = [];
+        let wordcloudWords: Array<{ text: string; value: number }> = [];
 
         // Calculate vote counts based on poll type
         if (group.isRanking) {
           // For ranking polls, use total_votes field which represents unique participants
           // Each user ranks ALL options, so total_votes = number of participants
+          surveyVotes = surveyPoll ? (surveyPoll.total_votes || 0) : 0;
+          cewVotes = cewPoll ? (cewPoll.total_votes || 0) : 0;
+        } else if (group.isWordcloud) {
+          // For wordcloud polls, use total_votes field which represents unique participants
+          // Each user submits words, so total_votes = number of participants
           surveyVotes = surveyPoll ? (surveyPoll.total_votes || 0) : 0;
           cewVotes = cewPoll ? (cewPoll.total_votes || 0) : 0;
         } else {
@@ -328,6 +472,49 @@ export default function PollResultsClient() {
             pollResults = [];
           }
 
+        } else if (group.isWordcloud) {
+          // For wordcloud polls, process word frequency data
+          
+          if (surveyPoll && cewPoll) {
+            // Combine word frequency data from both sources
+            const wordMap = new Map<string, number>();
+            
+            // Process survey words
+            if (surveyPoll.words) {
+              surveyPoll.words.forEach((word: any) => {
+                const key = word.text;
+                const value = word.value || 0;
+                if (key) {
+                  wordMap.set(key, (wordMap.get(key) || 0) + value);
+                }
+              });
+            }
+            
+            // Process CEW words
+            if (cewPoll.words) {
+              cewPoll.words.forEach((word: any) => {
+                const key = word.text;
+                const value = word.value || 0;
+                if (key) {
+                  wordMap.set(key, (wordMap.get(key) || 0) + value);
+                }
+              });
+            }
+            
+            // Convert to array and sort by frequency
+            wordcloudWords = Array.from(wordMap.entries())
+              .map(([text, value]) => ({ text, value }))
+              .sort((a, b) => b.value - a.value);
+          } else if (surveyPoll) {
+            // Only survey data
+            wordcloudWords = surveyPoll.words || [];
+          } else if (cewPoll) {
+            // Only CEW data
+            wordcloudWords = cewPoll.words || [];
+          }
+          
+          // For wordcloud polls, we don't have traditional results
+          pollResults = [];
         } else {
           // Create separate results for survey and CEW polls
           if (surveyPoll && cewPoll) {
@@ -392,6 +579,8 @@ export default function PollResultsClient() {
           combined_survey_votes: surveyVotes, // Use calculated survey votes
           combined_cew_votes: cewVotes, // Use calculated CEW votes
           is_ranking: group.isRanking,
+          is_wordcloud: group.isWordcloud,
+          wordcloud_words: group.isWordcloud ? (wordcloudWords || []) : undefined,
           page_path: surveyPoll?.page_path || cewPoll?.page_path || '/survey-results/holistic-protection',
           survey_results: surveyResults,
           cew_results: cewResults
@@ -1037,7 +1226,76 @@ export default function PollResultsClient() {
                 </div>
 
                 <div className={`space-y-4 ${isExpanded ? 'space-y-2 flex-1 px-4' : ''}`}>
-                  {selectedPoll.is_ranking ? (
+                  {selectedPoll.is_wordcloud ? (
+                    // For wordcloud polls, display word cloud visualization
+                    <div className="space-y-6">
+                      {/* Word Cloud Visualization */}
+                      {selectedPoll.wordcloud_words && selectedPoll.wordcloud_words.length > 0 ? (
+                        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-inner">
+                          <div className="mb-4">
+                            <h4 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+                              Word Cloud ({selectedPoll.total_votes} response{selectedPoll.total_votes !== 1 ? 's' : ''})
+                            </h4>
+                          </div>
+                          <div style={{ height: '400px', width: '100%' }}>
+                            <ReactWordcloud
+                              words={selectedPoll.wordcloud_words}
+                              options={{
+                                colors: ['#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'],
+                                enableTooltip: true,
+                                deterministic: false,
+                                fontFamily: 'Inter, system-ui, sans-serif',
+                                fontSizes: [12, 60],
+                                fontStyle: 'normal',
+                                fontWeight: 'normal',
+                                padding: 1,
+                                rotations: 3,
+                                rotationAngles: [0, 90],
+                                scale: 'sqrt',
+                                spiral: 'archimedean',
+                                transitionDuration: 1000,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-12">
+                          <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">☁️</div>
+                          <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Words Yet</h3>
+                          <p className="text-gray-500 dark:text-gray-500">Word cloud will appear here once users start submitting words.</p>
+                        </div>
+                      )}
+                      
+                      {/* Word Frequency Table */}
+                      {selectedPoll.wordcloud_words && selectedPoll.wordcloud_words.length > 0 && (
+                        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+                          <h5 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                            Word Frequency
+                          </h5>
+                          <div className="max-h-64 overflow-y-auto">
+                            {selectedPoll.wordcloud_words.map((word, index) => (
+                              <div key={index} className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+                                <span className="font-medium text-gray-900 dark:text-white">{word.text}</span>
+                                <div className="flex items-center space-x-2">
+                                  <div className="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                                    <div 
+                                      className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                                      style={{ 
+                                        width: `${Math.min((word.value / Math.max(...(selectedPoll.wordcloud_words || []).map(w => w.value))) * 100, 100)}%` 
+                                      }}
+                                    ></div>
+                                  </div>
+                                  <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 min-w-[2rem] text-right">
+                                    {word.value}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : selectedPoll.is_ranking ? (
                     // For ranking polls, sort by average rank (lower is better)
                     [...getFilteredPollResults(selectedPoll)].sort((a, b) => (a.averageRank || 0) - (b.averageRank || 0)).map((result, index) => {
                       const isTopChoice = index === 0; // First item after sorting by rank

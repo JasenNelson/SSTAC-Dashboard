@@ -1,0 +1,102 @@
+Tiered Framework Polling Questions
+
+Poll Question 1: 
+What is the primary regulatory advantage of using a probabilistic framework (e.g., Bayesian) to integrate EqP and BLM predictions into a scientific framework for deriving site-specific sediment standards (Tier 2)? 
+A) It provides a formal structure for quantifying and communicating uncertainty in the final standard.  
+B) It allows for the systematic integration of existing literature data as priors, reducing site-specific data needs. 
+C) It produces a full risk distribution rather than a single point value, allowing for more flexible management decisions. 
+D) It improves the technical defensibility by making all assumptions (priors, model structure) explicit
+E) Other
+
+Poll Question 2: 
+In developing a probabilistic framework for deriving site-specific sediment standards (Tier 2), which data type is most critical for effectively narrowing the uncertainty of the final risk estimate?
+A) A large number of sediment chemistry samples to better characterize spatial heterogeneity.
+B) High-quality, in-situ passive sampling data to directly measure and constrain bioavailable concentrations.
+C) Site-specific toxicity testing data to develop more relevant priors for the dose-response relationship.
+D) Detailed measurements of secondary geochemical parameters (e.g., black carbon, iron oxides) that influence partitioning.
+E) Other
+
+Poll Question 3: 
+What is the biggest practical hurdle to overcome when implementing a Bayesian framework in the development of a scientific framework for deriving site-specific sediment standards (Tier 2)?
+A) Defining appropriate priors, especially when site-specific information is sparse and literature values vary widely
+B) The high level of statistical expertise required by both the practitioner and the regulatory reviewer to ensure proper application.
+C) The challenge of communicating probabilistic outputs (e.g., posterior distributions) to non-technical stakeholders and decision-makers.
+D) The lack of standardized software and guidance, leading to potential inconsistencies across different site assessments.
+E) Other
+
+Holistic Protection - Matrix Sediment Standards Polling Questions
+
+Poll Question 1:
+How would you rank the regulatory need / priority of developing Matrix Sediment Standards for the following? Please rank (1 = highest priority; 4 = lowest priority).
+Direct Toxicity (SedS-direct) - Ecological Health
+Direct Toxicity (SedS-direct) - Human Health
+Food Pathway Toxicity (SedS-food) - Ecological Health
+Food Pathway Toxicity (SedS-food) - Human Health
+
+Poll Question 2:
+How would you rank the anticipated scientific defensibility of SedS-foodHH (Matrix Sediment Standards designed to protect human health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).
+Metals known to biomagnify
+Polycyclic aromatic hydrocarbons
+Polychlorinated biphenyls
+Per- and polyfluoroalkyl substances
+
+Poll Question 3:
+How would you rank the anticipated scientific defensibility of SedS-foodECO (Matrix Sediment Standards designed to protect ecological health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).
+Metals known to biomagnify
+Polycyclic aromatic hydrocarbons
+Polychlorinated biphenyls
+Per- and polyfluoroalkyl substances
+
+Prioritization Polling Questions
+
+Ranking Question 1:
+Rank the importance of developing a framework for deriving site-specific sediment standards, based on bioavailability adjustment, to provide an enhanced numerical assessment option (Tier 2), between generic numerical (Tier 1) and risk-based (Tier 3) assessments. (1 = very important to 5 = not important)
+
+Ranking Question 2:
+Rank the feasibility of developing the framework for deriving site-specific sediment standards, based on an integrated approach using Equilibrium Partitioning and Biotic Ligand Models. (1 = easily achievable to 5 = not feasible)
+
+Ranking Question 3:
+Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = very important to 5 = not important)
+
+Ranking Question 4:
+Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = easily achievable to 5 = not feasible)
+
+Ranking Question 5:
+Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = very important to 5 = not important)
+
+Ranking Question 6:
+Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = easily achievable to 5 = not feasible)
+
+Ranking Question 7:
+Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = very important to 5 = not important)
+
+Ranking Question 8:
+Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = easily achievable to 5 = not feasible)
+
+Ranking Question 9:
+Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = very important to 5 = not important)
+
+Ranking Question 10:
+Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = easily achievable to 5 = not feasible)
+
+Ranking Question 11:
+To help focus deevelopment of matrix standards, pleas rank the four actions below for the degree to which they would improve development of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not espond to any given question.
+Developing the technical approach to define what "direct toxicity" and "food pathway toxicity" mean for the framework.
+Determining what approach ENV should take to develop human health standards, given there are other agencies working on like standards.
+developing the technical approach to address how matrix standards would be applied in a spatial context (e.g., over what spatial areas, for what depths, etc.).
+Determining if environmental sensitivity should be factored into matrix standards for ecological health.
+
+Ranking Question 11:
+Of the four option below, what focus will provide greatest value to holistic sediment management in BC? (1 = top priority; 4 = lowest priority)
+Selecting and using models and other tools to help develop Site-Specific Sediment Standards (Tier 2) for ecological health (these would include, for example, acid volatile sulphides/simultaneously extractable metals (AVS/SEM), equilibrium partitioning (EqP), target lipid model)
+Selecting and using approaches to develop Sediment Standards for contaminants with an analogue (e.g., quantitative structure-activity relationship (QSAR))
+Developing guidance and/or framework to use site-specific toxicity testing to evaluate the risks of mixtures to ecological receptors.
+Developing models and/or approaches to derive mixture-specific sediment standards for ecological receptors (e.g., for water quality, there are biotic ligand models for metals mixtures).
+
+Wordcloud Question 12:
+Overall, what is the greatest barrier to advancing holistic sediment protection in BC?
+Data availability
+Tools (models, test protocols, decision trees)
+Agreement on protection goals and spatial scale
+Resourcing (e.g., developing approach/tools, agreeing across peers)
+Other

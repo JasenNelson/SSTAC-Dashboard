@@ -4,11 +4,16 @@ import React, { useState } from 'react';
 import CEWCodeInput from '@/components/CEWCodeInput';
 import PollWithResults from '@/components/PollWithResults';
 import RankingPoll from '@/components/dashboard/RankingPoll';
+import WordCloudPoll from '@/components/dashboard/WordCloudPoll';
 
 interface PollData {
   question: string;
   options: string[];
   questionNumber?: number;
+  isRanking?: boolean;
+  isWordcloud?: boolean;
+  maxWords?: number;
+  wordLimit?: number;
 }
 
 export default function CEWPrioritizationPage() {
@@ -23,87 +28,147 @@ export default function CEWPrioritizationPage() {
     return <CEWCodeInput onCodeEntered={handleCodeEntered} />;
   }
   
-  // Define polls with proper structure for the new poll system
+  // Define polls with proper structure for the new poll system - 12 Tiered Framework Questions
   const polls = [
+    // Questions 1-3: Single-Choice Polls
     {
-      question: "Please rank these potential feasibility criteria to help inform the development of a prioritization framework (1= highest):",
+      question: "What is the primary regulatory advantage of using a probabilistic framework (e.g., Bayesian) to integrate EqP and BLM predictions into a scientific framework for deriving site-specific sediment standards (Tier 2)?",
       questionNumber: 1,
       options: [
-        "Adequacy and reliability of available data for key research topics",
-        "Need for new or specialized technologies",
-        "Level of complexity and corresponding expertise and resource requirements",
-        "Level of likelihood/uncertainty in successful completion of project or meeting research goals"
+        "It provides a formal structure for quantifying and communicating uncertainty in the final standard.",
+        "It allows for the systematic integration of existing literature data as priors, reducing site-specific data needs.",
+        "It produces a full risk distribution rather than a single point value, allowing for more flexible management decisions.",
+        "It improves the technical defensibility by making all assumptions (priors, model structure) explicit",
+        "Other"
       ]
     },
     {
-      question: "Please rank these timeframe considerations for developing a prioritization framework and strategic planning for research to support modernizing BC's sediment standards (1= highest):",
+      question: "In developing a probabilistic framework for deriving site-specific sediment standards (Tier 2), which data type is most critical for effectively narrowing the uncertainty of the final risk estimate?",
       questionNumber: 2,
       options: [
-        "Outcome-driven priority, regardless of timeframe (i.e., disregard timeframe when prioritizing research)",
-        "Focus on short-term progress (e.g., identify opportunities to quickly address regulatory gaps)",
-        "Focus on progressing the highest potential impact, following a clear long-term strategic goal, avoiding convenient short-term efforts if they will distract from the goal and divert resources away from more meaningful progress.",
-        "Consistent progress prioritized, with a balance of short- and long-term research efforts."
+        "A large number of sediment chemistry samples to better characterize spatial heterogeneity.",
+        "High-quality, in-situ passive sampling data to directly measure and constrain bioavailable concentrations.",
+        "Site-specific toxicity testing data to develop more relevant priors for the dose-response relationship.",
+        "Detailed measurements of secondary geochemical parameters (e.g., black carbon, iron oxides) that influence partitioning.",
+        "Other"
       ]
     },
     {
-      question: "Based on Today's discussion and your experience, please rank these four areas for modernization priority in BC's sediment standards (1= highest):",
+      question: "What is the biggest practical hurdle to overcome when implementing a Bayesian framework in the development of a scientific framework for deriving site-specific sediment standards (Tier 2)?",
       questionNumber: 3,
       options: [
-        "Development of a Scientific Framework for Deriving Site-Specific Sediment Standards (Bioavailability Adjustment)",
-        "Development of a Matrix Sediment Standards Framework - Focus on Ecological Protection",
-        "Development of a Matrix Sediment Standards Framework - Focus on Human Health Protection",
-        "Develop Sediment Standards for Non-scheduled Contaminants & Mixtures"
+        "Defining appropriate priors, especially when site-specific information is sparse and literature values vary widely",
+        "The high level of statistical expertise required by both the practitioner and the regulatory reviewer to ensure proper application.",
+        "The challenge of communicating probabilistic outputs (e.g., posterior distributions) to non-technical stakeholders and decision-makers.",
+        "The lack of standardized software and guidance, leading to potential inconsistencies across different site assessments.",
+        "Other"
       ]
     },
+    // Questions 4-11: Ranking Polls
     {
-      question: "Which scientific approach to bioavailability holds the most promise for practical and defensible application in BC's regulatory framework?",
+      question: "Rank the importance of developing a framework for deriving site-specific sediment standards, based on bioavailability adjustment, to provide an enhanced numerical assessment option (Tier 2), between generic numerical (Tier 1) and risk-based (Tier 3) assessments. (1 = very important to 5 = not important)",
       questionNumber: 4,
+      isRanking: true,
       options: [
-        "Equilibrium partitioning models (e.g., based on organic carbon content).",
-        "Normalization using Acid-Volatile Sulfides and Simultaneously Extracted Metals (AVS/SEM)",
-        "Application of the Biotic Ligand Model (BLM) for sediments",
-        "Direct measurement using passive sampling devices (PSDs)"
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important",
+        "Not Important"
       ]
     },
     {
-      question: "When considering contaminant mixtures, rank the following approaches from most to least scientifically defensible and practically achievable for BC's regulatory framework (1= highest):",
+      question: "Rank the feasibility of developing the framework for deriving site-specific sediment standards, based on an integrated approach using Equilibrium Partitioning and Biotic Ligand Models. (1 = easily achievable to 5 = not feasible)",
       questionNumber: 5,
+      isRanking: true,
       options: [
-        "A simple additive model (e.g., hazard index)",
-        "A weighted approach based on toxicological similarity",
-        "Site-specific toxicity testing for all complex mixtures",
-        "The development of new, mixture-specific standards"
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
       ]
     },
     {
-      question: "Within a medium-term (3-5 year) research plan, rank the following scientific objectives from most to least critical for modernizing BC's sediment standards?",
+      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = very important to 5 = not important)",
       questionNumber: 6,
+      isRanking: true,
       options: [
-        "Developing a robust framework for assessing the bioavailability of metals and metalloids.",
-        "Establishing standardized analytical methods for a priority list of contaminants of emerging concern (CECs).",
-        "Creating a predictive model for contaminant mixture toxicity based on concentration addition.",
-        "Generating sufficient toxicity data to derive new guidelines for 3-5 high-priority legacy contaminants."
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important",
+        "Not Important"
       ]
     },
     {
-      question: "To support long-term (5+ years) strategic goals, please rank the following foundational research areas in order of importance for creating a more adaptive and forward-looking regulatory framework (1= highest importance):",
+      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
       questionNumber: 7,
+      isRanking: true,
       options: [
-        "Research into the ecosystem-level impacts of chronic, low-level contaminant exposure",
-        "Development of advanced in-vitro and high-throughput screening methods for rapid hazard assessment",
-        "Investigating the toxicological impacts of climate change variables (e.g., temperature, hypoxia) on sediment contaminant toxicity",
-        "Building a comprehensive, open-access database of sediment chemistry and toxicology data for all of BC"
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
       ]
     },
     {
-      question: "For the Hazard Index / Concentration Addition approach to mixture assessment, what is the single greatest scientific research gap that must be addressed before it can be reliably implemented?",
+      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = very important to 5 = not important)",
       questionNumber: 8,
+      isRanking: true,
       options: [
-        "A lack of high-quality toxicity data for many individual components of common mixtures",
-        "Poor understanding of the modes of action for many contaminants to justify grouping them",
-        "Difficulty in validating model predictions with whole sediment toxicity testing results",
-        "The inability of current models to account for significant synergistic or antagonistic interactions"
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important",
+        "Not Important"
       ]
+    },
+    {
+      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
+      questionNumber: 9,
+      isRanking: true,
+      options: [
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
+      ]
+    },
+    {
+      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = very important to 5 = not important)",
+      questionNumber: 10,
+      isRanking: true,
+      options: [
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important",
+        "Not Important"
+      ]
+    },
+    {
+      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = easily achievable to 5 = not feasible)",
+      questionNumber: 11,
+      isRanking: true,
+      options: [
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
+      ]
+    },
+    // Question 12: Wordcloud Poll
+    {
+      question: "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?",
+      questionNumber: 12,
+      isWordcloud: true,
+      maxWords: 3,
+      wordLimit: 20,
+      options: [] // Wordcloud doesn't use options array
     }
   ];
 
@@ -144,10 +209,26 @@ export default function CEWPrioritizationPage() {
         {/* Polls */}
         <div className="space-y-8">
           {polls.map((poll, pollIndex) => {
-            // Check if this is a ranking question
-            const isRankingQuestion = poll.question.toLowerCase().includes('rank');
-            
-            if (isRankingQuestion) {
+            // Handle different poll types
+            if (poll.isWordcloud) {
+              return (
+                <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                  <WordCloudPoll
+                    key={pollIndex}
+                    pollIndex={pollIndex}
+                    question={poll.question}
+                    maxWords={poll.maxWords || 3}
+                    wordLimit={poll.wordLimit || 20}
+                    pagePath="/cew-polls/prioritization"
+                    questionNumber={poll.questionNumber}
+                    authCode={authCode}
+                    onVote={(pollIndex, words) => {
+                      console.log(`Words submitted for poll ${pollIndex}:`, words);
+                    }}
+                  />
+                </div>
+              );
+            } else if (poll.isRanking) {
               return (
                 <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
                   <RankingPoll
