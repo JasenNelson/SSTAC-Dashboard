@@ -34,6 +34,18 @@
 - **Immediate Display**: Submitted words appear instantly in wordcloud and frequency table
 - **Error Handling**: Division by zero protection and comprehensive error boundaries
 
+#### **4. Prioritization Matrix Graph System** ✅ **COMPLETED (January 2025)**
+- **API Endpoint**: `/api/graphs/prioritization-matrix`
+- **Component**: `PrioritizationMatrixGraph.tsx`
+- **Data Source**: Non-aggregated vote data from `poll_votes` table
+- **Question Pairs**: 5 matrix graphs for question pairs 1-2, 3-4, 5-6, 7-8, 9-10
+- **Scale Inversion**: Correctly inverts 1-5 scale (1=high, 5=low) for proper graph mapping
+- **User Pairing**: Groups votes by user, only includes users who voted on both questions in pair
+- **Visualization**: Custom SVG implementation with landscape orientation (16:9)
+- **Color Coding**: Green for HIGH PRIORITY, red for NO GO, black for other quadrants
+- **Dark Mode**: Dynamic theming with light text on dark backgrounds
+- **Response Tracking**: Displays number of paired responses used for calculations
+
 ### **Current Database State (Post-Cleanup)**
 
 #### **Polls Table (8 polls) - Single-Choice Questions Only**
@@ -126,10 +138,12 @@ The admin panel matches questions between survey and CEW versions using:
    - `/survey-results/tiered-framework`, poll_index 1
    - `/cew-polls/tiered-framework`, poll_index 1
 
-### **Prioritization (8 Questions)**
-- **Questions 0,1,2,4,5,6**: Ranking questions
-- **Questions 3,7**: Single-choice questions
+### **Prioritization (13 Questions)**
+- **Questions 0-9**: Single-choice questions (importance/feasibility pairs)
+- **Questions 10-11**: Ranking questions
+- **Question 12**: Wordcloud question with predefined options
 - Each question exists in both `/survey-results/prioritization` and `/cew-polls/prioritization`
+- **Matrix Graphs**: Questions 1-2, 3-4, 5-6, 7-8, 9-10 pairs have prioritization matrix graphs
 
 ## 🔧 **Database Schema Details**
 

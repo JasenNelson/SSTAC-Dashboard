@@ -5,6 +5,59 @@ This guide documents critical debugging issues encountered with the admin poll r
 
 ## 🚨 CRITICAL: Recurring Security & Indexing Issues (2025-01-20)
 
+## 🚨 CRITICAL: Prioritization Matrix Graph System Issues (2025-01-20)
+
+### **Graph Integration TypeScript Errors (NEW ISSUE)**
+**Problem**: TypeScript compilation errors in graph integration components
+**Error**: `Variable 'wordsToShow' implicitly has type 'any[]' in some locations where its type cannot be determined`
+**Impact**: Production build fails with TypeScript errors
+**Root Cause**: Missing explicit type annotations in WordCloudPoll component
+
+**Solution Applied**:
+```typescript
+// Explicit type annotation for wordsToShow variable
+let wordsToShow: { text: string; value: number }[] = [];
+
+// Proper undefined check for userWords
+if (userWords && userWords.length > 0) {
+  // ... processing logic
+}
+```
+
+**Prevention Protocol**:
+- ✅ **ALWAYS provide explicit type annotations** for complex variables
+- ✅ **Use proper undefined checks** before accessing array properties
+- ✅ **Test TypeScript builds frequently** during development
+- ✅ **Avoid implicit 'any' types** in production code
+
+### **Graph Data API Query Errors (RESOLVED)**
+**Problem**: Initial graph API used incorrect database schema assumptions
+**Error**: `Property 'selected_option' does not exist on type 'poll_votes'`
+**Impact**: Graph data API returns 500 errors
+**Root Cause**: Assumed non-existent column instead of actual `option_index`
+
+**Solution Applied**:
+```typescript
+// Correct API query using actual database schema
+const { data: votes } = await supabase
+  .from('poll_votes')
+  .select(`
+    user_id,
+    option_index,  // Correct column name
+    polls!inner(poll_index)
+  `)
+  .in('polls.page_path', [
+    '/survey-results/prioritization',
+    '/cew-polls/prioritization'
+  ]);
+```
+
+**Prevention Protocol**:
+- ✅ **ALWAYS verify database schema** before writing queries
+- ✅ **Use actual column names** from database tables
+- ✅ **Test API endpoints** with real data before integration
+- ✅ **Query both survey and CEW paths** for complete data
+
 ## 🚨 CRITICAL: Wordcloud Division by Zero Error (2025-01-20)
 
 ### **Wordcloud Results View Division by Zero (NEW ISSUE)**

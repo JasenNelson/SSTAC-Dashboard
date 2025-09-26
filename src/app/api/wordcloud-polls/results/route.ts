@@ -1,5 +1,6 @@
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/client';
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,18 +25,49 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = createClient();
+    // Determine if this is a CEW page
+    const isCEWPage = pagePath.startsWith('/cew-polls/');
+    let supabase, userId: string | null = null;
 
-    // Determine user_id for checking user's previous submission
-    let userId: string | null = null;
-    
-    if (authCode) {
-      // CEW conference mode - use authCode as user_id
-      userId = authCode;
+    if (isCEWPage || authCode) {
+      // CEW pages: Use anonymous connection
+      const cookieStore = await cookies();
+      supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get() { return null; },
+            set() {},
+            remove() {},
+          },
+        }
+      );
+      
+      userId = authCode || 'CEW2025';
     } else {
-      // Authenticated user mode
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (!authError && user) {
+      // Authenticated pages: Use authenticated connection
+      const cookieStore = await cookies();
+      supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value;
+            },
+            set(name: string, value: string, options: CookieOptions) {
+              try { cookieStore.set({ name, value, ...options }); } catch (error) {}
+            },
+            remove(name: string, options: CookieOptions) {
+              try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
+            },
+          },
+        }
+      );
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
         userId = user.id;
       }
     }

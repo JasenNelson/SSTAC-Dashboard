@@ -1,11 +1,12 @@
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/client';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { pagePath, pollIndex, question, maxWords, wordLimit, words, authCode } = body;
-    
+    console.log(`[Wordcloud Submit] Received words for poll ${pollIndex} on page ${pagePath}, words: ${words}${authCode ? `, authCode: "${authCode}"` : ''}`);
 
     // Validate required fields
     if (!pagePath || pollIndex === undefined || !question || !words || !Array.isArray(words)) {
@@ -49,24 +50,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createClient();
+    // Determine if this is a CEW page
+    const isCEWPage = pagePath.startsWith('/cew-polls/');
+    console.log(`[Wordcloud Submit] isCEWPage: ${isCEWPage}, authCode: "${authCode}"`);
+    let supabase, finalUserId;
 
-    // Determine user_id based on authentication
-    let userId: string;
-    
-    if (authCode) {
-      // CEW conference mode - use authCode as user_id
-      userId = authCode;
+    if (isCEWPage || authCode) {
+      // CEW pages: Use anonymous connection with authCode as userId
+      const cookieStore = await cookies();
+      supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get() { return null; },
+            set() {},
+            remove() {},
+          },
+        }
+      );
+      
+      finalUserId = authCode || 'CEW2025';
+      console.log(`[Wordcloud Submit] CEW page, using authCode: ${finalUserId}`);
     } else {
-      // Authenticated user mode
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        return NextResponse.json(
-          { error: 'Authentication required' },
-          { status: 401 }
-        );
+      // Authenticated pages: Use authenticated connection
+      const cookieStore = await cookies();
+      supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value;
+            },
+            set(name: string, value: string, options: CookieOptions) {
+              try { cookieStore.set({ name, value, ...options }); } catch (error) {}
+            },
+            remove(name: string, options: CookieOptions) {
+              try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
+            },
+          },
+        }
+      );
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
-      userId = user.id;
+      finalUserId = user.id;
+      console.log(`[Wordcloud Submit] Authenticated user: ${finalUserId}`);
     }
 
     // Get or create the wordcloud poll
@@ -94,7 +126,7 @@ export async function POST(request: NextRequest) {
       .from('wordcloud_votes')
       .select('id')
       .eq('poll_id', pollId)
-      .eq('user_id', userId)
+      .eq('user_id', finalUserId)
       .single();
 
     if (checkError && checkError.code !== 'PGRST116') {
@@ -110,7 +142,7 @@ export async function POST(request: NextRequest) {
       .from('wordcloud_votes')
       .delete()
       .eq('poll_id', pollId)
-      .eq('user_id', userId);
+      .eq('user_id', finalUserId);
 
     if (deleteError) {
       console.error('Error deleting existing votes:', deleteError);
@@ -123,7 +155,7 @@ export async function POST(request: NextRequest) {
     // Insert new votes (one record per word)
     const voteRecords = words.map((word: string) => ({
       poll_id: pollId,
-      user_id: userId,
+      user_id: finalUserId,
       word: word.toLowerCase().trim()
     }));
 

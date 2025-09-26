@@ -48,6 +48,15 @@
 --    - Aquatic blue/green color scheme
 --    - 1-3 words per submission, 20 character limit
 
+-- 8. PRIORITIZATION MATRIX GRAPH SYSTEM (2025-01-20):
+--    - Custom SVG implementation for prioritization matrix graphs
+--    - Landscape orientation (16:9) optimized for admin panel
+--    - User-by-user vote pairing for question pairs 1-2, 3-4, 5-6, 7-8, 9-10
+--    - Scale inversion (1=high, 5=low) for proper graph mapping
+--    - Color-coded quadrants: green (HIGH PRIORITY), red (NO GO), black (other)
+--    - Dark mode support with dynamic theming
+--    - Response tracking for paired vote calculations
+
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
