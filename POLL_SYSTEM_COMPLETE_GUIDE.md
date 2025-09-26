@@ -29,6 +29,11 @@
 - **Vote Storage**: Multiple words per user per poll (1-3 words, 20 char limit)
 - **Vote Counting**: Count of unique participants and word frequency aggregation
 - **Features**: Custom Canvas-based wordcloud rendering, aquatic blue/green color scheme
+- **High-DPI Canvas Rendering**: Crisp, non-pixelated text with proper device pixel ratio scaling
+- **Grid-Based Layout**: Eliminated overlapping words with collision detection and organized positioning
+- **Dark Mode Support**: Dynamic theme detection with appropriate color palettes for both themes
+- **Enhanced Readability**: Minimal text rotation and proper spacing between words
+- **Better Color Contrast**: Inverted color selection so larger words get darker, more readable colors
 - **Predefined Options**: Display descriptive options but submit simplified keywords
 - **Either/Or Selection**: Users can select predefined options OR enter custom words, not both
 - **Immediate Display**: Submitted words appear instantly in wordcloud and frequency table

@@ -551,6 +551,95 @@ SELECT rp.id AS ranking_poll_id,
 - Add performance metrics
 - Implement user analytics
 
+## 🚨 CRITICAL: Wordcloud UX Issues (2025-01-26)
+
+### **Wordcloud Layout and Readability Problems (NEW ISSUE)**
+**Problem**: Wordcloud had poor user experience with overlapping words, pixelated text, and poor contrast
+**Issues**: 
+- Words overlapping and unreadable
+- Pixelated text on high-DPI displays
+- Larger words appearing lighter (bad contrast)
+- Words forming spiral shape instead of organized layout
+- Poor readability in both light and dark modes
+
+**Root Cause**: 
+- Spiral positioning algorithm caused overlaps
+- Canvas not scaled for high-DPI displays
+- Color selection logic inverted (larger words got lighter colors)
+- No dark mode support for wordcloud colors
+
+**Solution Applied**:
+```typescript
+// High-DPI Canvas Setup
+const devicePixelRatio = window.devicePixelRatio || 1;
+const actualWidth = width * devicePixelRatio;
+const actualHeight = height * devicePixelRatio;
+
+canvas.width = actualWidth;
+canvas.height = actualHeight;
+canvas.style.width = `${width}px`;
+canvas.style.height = `${height}px`;
+
+ctx.scale(devicePixelRatio, devicePixelRatio);
+
+// Grid-based Layout with Collision Detection
+const hasCollision = (word, placedWords, padding = 25) => {
+  return placedWords.some(placed => {
+    const distance = Math.sqrt(
+      Math.pow(word.x - placed.x, 2) + Math.pow(word.y - placed.y, 2)
+    );
+    return distance < (word.width + placed.width) / 2 + padding;
+  });
+};
+
+// Inverted Color Selection for Better Contrast
+const colorIndex = Math.floor((1 - normalizedValue) * (colors.length - 1));
+
+// Dark Mode Support
+const colors = isDarkMode ? darkColors : lightColors;
+```
+
+**Prevention Protocol**:
+- ✅ **ALWAYS implement collision detection** for word positioning
+- ✅ **Use high-DPI canvas scaling** for crisp text rendering
+- ✅ **Test color contrast** in both light and dark modes
+- ✅ **Implement organized layouts** instead of random positioning
+- ✅ **Provide theme-specific color palettes** for better readability
+
+### **TypeScript Build Errors in Tiered Framework (RESOLVED)**
+**Problem**: TypeScript compilation errors in Tiered Framework components
+**Error**: `Property 'isWordcloud' does not exist on type '{ question: string; questionNumber: number; options: string[]; }'`
+**Impact**: Production build fails with TypeScript errors
+**Root Cause**: Tiered Framework components checking for properties that don't exist on single-choice polls
+
+**Solution Applied**:
+```typescript
+// Removed unused wordcloud and ranking checks from Tiered Framework
+// Simplified to only handle single-choice polls
+{polls.map((poll, pollIndex) => {
+  // All Tiered Framework polls are single-choice polls
+  return (
+    <PollWithResults
+      key={pollIndex}
+      pollIndex={pollIndex}
+      question={poll.question}
+      options={poll.options}
+      pagePath="/survey-results/tiered-framework"
+      questionNumber={poll.questionNumber}
+      onVote={(pollIndex, optionIndex) => {
+        console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
+      }}
+    />
+  );
+})}
+```
+
+**Prevention Protocol**:
+- ✅ **Only check for poll types that actually exist** in each component
+- ✅ **Remove unused imports** and interface properties
+- ✅ **Test TypeScript builds** after component changes
+- ✅ **Simplify component logic** when only one poll type is used
+
 ---
 
 **Remember**: The poll system is complex and requires careful debugging. Always verify data sources, test thoroughly, and document solutions for future reference.

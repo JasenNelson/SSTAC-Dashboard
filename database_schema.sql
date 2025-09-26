@@ -48,7 +48,14 @@
 --    - Aquatic blue/green color scheme
 --    - 1-3 words per submission, 20 character limit
 
--- 8. PRIORITIZATION MATRIX GRAPH SYSTEM (2025-01-20):
+-- 8. WORDCLOUD UX IMPROVEMENTS (2025-01-26):
+--    - High-DPI canvas rendering for crisp text on all displays
+--    - Grid-based layout with collision detection to eliminate overlapping words
+--    - Dark mode support with theme-specific color palettes
+--    - Enhanced readability with minimal text rotation and proper spacing
+--    - Better color contrast with inverted color selection for larger words
+
+-- 9. PRIORITIZATION MATRIX GRAPH SYSTEM (2025-01-20):
 --    - Custom SVG implementation for prioritization matrix graphs
 --    - Landscape orientation (16:9) optimized for admin panel
 --    - User-by-user vote pairing for question pairs 1-2, 3-4, 5-6, 7-8, 9-10

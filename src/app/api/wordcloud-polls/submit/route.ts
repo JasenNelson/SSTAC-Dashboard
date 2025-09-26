@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     let supabase, finalUserId;
 
     if (isCEWPage) {
-      // CEW pages: Use anonymous connection with authCode as userId
+      // CEW pages: Use anonymous connection with unique userId for each submission
       const cookieStore = await cookies();
       supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -70,8 +70,12 @@ export async function POST(request: NextRequest) {
         }
       );
       
-      finalUserId = authCode || 'CEW2025';
-      console.log(`[Wordcloud Submit] CEW page, using authCode: ${finalUserId}`);
+      // Generate unique user ID for each CEW submission to allow multiple responses
+      // Format: {authCode}_{timestamp}_{random} to ensure uniqueness
+      const timestamp = Date.now();
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      finalUserId = `${authCode || 'CEW2025'}_${timestamp}_${random}`;
+      console.log(`[Wordcloud Submit] CEW page, using unique userId: ${finalUserId}`);
     } else {
       // Survey-results pages: Use authenticated connection (require login)
       const cookieStore = await cookies();
