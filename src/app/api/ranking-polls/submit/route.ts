@@ -30,8 +30,12 @@ export async function POST(request: NextRequest) {
       const { data: { user } } = await supabaseClient.auth.getUser();
       console.log(`[Ranking Poll Submit] Anonymous client user check:`, user);
       
-      finalUserId = authCode || 'CEW2025';
-      console.log(`[Ranking Poll Submit] CEW page, using authCode: ${finalUserId}`);
+      // Generate unique user_id for each CEW submission to count unique participants
+      // This allows multiple people to submit and be counted as separate responses
+      const timestamp = Date.now();
+      const randomSuffix = Math.random().toString(36).substring(2, 8);
+      finalUserId = `${authCode || 'CEW2025'}_${timestamp}_${randomSuffix}`;
+      console.log(`[Ranking Poll Submit] CEW page, using unique userId: ${finalUserId}`);
       console.log(`[Ranking Poll Submit] Supabase client created for CEW page`);
     } else {
       // Authenticated pages: Use authenticated connection

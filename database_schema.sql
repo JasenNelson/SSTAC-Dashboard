@@ -48,6 +48,14 @@
 --    - Aquatic blue/green color scheme
 --    - 1-3 words per submission, 20 character limit
 
+-- 8. CEW POLL MULTIPLE SUBMISSIONS (2025-01-25):
+--    - CEW polls allow multiple submissions from same conference code (CEW2025)
+--    - Each submission gets unique user_id: ${authCode}_${timestamp}_${randomSuffix}
+--    - NO deletions for CEW submissions - all responses are preserved
+--    - Enables multiple conference attendees to submit using same CEW2025 code
+--    - Applies to all poll types: single-choice, ranking, and wordcloud
+--    - Authenticated users still get vote replacement (delete + insert)
+
 -- 8. WORDCLOUD UX IMPROVEMENTS (2025-01-26):
 --    - High-DPI canvas rendering for crisp text on all displays
 --    - Grid-based layout with collision detection to eliminate overlapping words

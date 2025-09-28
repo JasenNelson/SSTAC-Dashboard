@@ -75,6 +75,9 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **PRIVACY FIRST**: For CEW polls, avoid client-side persistence to ensure true privacy in incognito mode
 - **SIMPLIFY CONSTRAINTS**: Complex unique constraints can cause submission failures - prefer application-level uniqueness
 - **ANONYMOUS CLIENTS**: Use null cookie handlers for Supabase clients in CEW poll API routes
+- **CEW MULTIPLE SUBMISSIONS**: CEW polls allow multiple submissions from same conference code (CEW2025) - each submission gets unique user_id: `${authCode}_${timestamp}_${randomSuffix}`
+- **CEW NO DELETIONS**: CEW submissions are never deleted - all responses preserved for conference attendees
+- **CEW VS AUTHENTICATED**: Authenticated users get vote replacement (delete + insert), CEW users get additive submissions
 - **UI CONTRAST**: Ensure ranking buttons have proper contrast in both light and dark modes
 - **ALWAYS test poll functionality** after any database changes
 - **UNDERSTAND poll types**: Single-choice polls vs ranking polls have different data structures
@@ -138,9 +141,11 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 
 ### **Authentication Modes**
 - **Authenticated Users**: Use UUID from `auth.users` table
-- **CEW Conference**: Use CEW code (e.g., "CEW2025") as TEXT user_id
+- **CEW Conference**: Use unique user_id generation `${authCode}_${timestamp}_${randomSuffix}` for each submission
 - **Vote Tracking**: `localStorage` for CEW polls, database for authenticated users
 - **Session Persistence**: Votes remembered across sessions for both modes
+- **CEW Multiple Submissions**: Each submission gets unique user_id, enabling multiple attendees to use same CEW2025 code
+- **CEW No Deletions**: CEW submissions are never deleted - all responses preserved
 
 ### **Mobile Optimization Requirements**
 - **Clean Charts**: NO excessive hover tooltips for mobile readability
@@ -153,6 +158,8 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **Ranking**: Multiple votes per user per poll (one per option)
 - **Change Votes**: Allowed for authenticated users, NOT for CEW polls
 - **Device Tracking**: Prevents duplicate votes per device for CEW polls
+- **CEW Multiple Submissions**: Each submission gets unique user_id, allowing multiple responses from same CEW2025 code
+- **CEW No Deletions**: CEW submissions are never deleted - all responses preserved
 
 ### **API Development Guidelines**
 - **Use Helper Functions**: Always use `get_or_create_poll()` and `get_or_create_ranking_poll()`

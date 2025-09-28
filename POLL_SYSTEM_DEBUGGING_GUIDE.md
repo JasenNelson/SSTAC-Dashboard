@@ -3,6 +3,30 @@
 ## Overview
 This guide documents critical debugging issues encountered with the admin poll results system and provides solutions to prevent future problems.
 
+## 🚨 CRITICAL: CEW Poll Multiple Submissions (2025-01-25)
+
+### **CEW Poll Behavior Requirements (CRITICAL)**
+**Problem**: CEW polls must allow multiple submissions from same conference code (CEW2025)
+**Requirement**: Multiple conference attendees should be able to submit responses using the same CEW2025 code
+**Behavior**: NO deletions for CEW submissions - all responses must be preserved
+
+**Implementation**:
+- **Unique User ID Generation**: Each CEW submission gets unique user_id: `${authCode}_${timestamp}_${randomSuffix}`
+- **No Deletions**: CEW submissions are never deleted - all responses preserved
+- **Applies to All Poll Types**: Single-choice, ranking, and wordcloud polls
+- **Authenticated Users**: Still get vote replacement (delete + insert) for authenticated sessions
+
+**Example User IDs**:
+- CEW2025_1758936214034_276
+- CEW2025_1758936214044_896
+- CEW2025_1758936214060_708
+
+**Prevention Protocol**:
+- ✅ **NEVER delete CEW submissions** - always preserve all responses
+- ✅ **Generate unique user_id** for each CEW submission
+- ✅ **Test multiple submissions** from same CEW code
+- ✅ **Verify admin panel counts** increase with each submission
+
 ## 🚨 CRITICAL: Recurring Security & Indexing Issues (2025-01-20)
 
 ## 🚨 CRITICAL: Prioritization Matrix Graph System Issues (2025-01-20)

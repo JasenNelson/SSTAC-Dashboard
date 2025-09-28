@@ -29,10 +29,10 @@ export default function CEWPrioritizationPage() {
     return <CEWCodeInput onCodeEntered={handleCodeEntered} />;
   }
   
-  // Define polls with proper structure for the new poll system - 13 Prioritization Questions
-  // Based on CEW_Poll_Questions.txt lines 50+ (Prioritization Polling Questions)
+  // Define polls with proper structure for the new poll system
+  // Updated structure: Q1-Q2 single-choice, Q3-Q4 ranking, Q5 wordcloud
   const polls = [
-    // Questions 1-10: Single-Choice Polls (not ranking - despite "rank" in question text)
+    // Questions 1-2: Single-Choice Polls (kept from original Q1-Q2)
     {
       question: "Rank the importance of developing a framework for deriving site-specific sediment standards, based on bioavailability adjustment, to provide an enhanced numerical assessment option (Tier 2), between generic numerical (Tier 1) and risk-based (Tier 3) assessments. (1 = very important to 5 = not important)",
       questionNumber: 1,
@@ -55,98 +55,10 @@ export default function CEWPrioritizationPage() {
         "Not Feasible"
       ]
     },
-    {
-      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = very important to 5 = not important)",
-      questionNumber: 3,
-      options: [
-        "Very Important",
-        "Important",
-        "Moderately Important",
-        "Less Important", 
-        "Not Important"
-      ]
-    },
-    {
-      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
-      questionNumber: 4,
-      options: [
-        "Easily Achievable",
-        "Achievable",
-        "Moderately Achievable",
-        "Difficult",
-        "Not Feasible"
-      ]
-    },
-    {
-      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = very important to 5 = not important)",
-      questionNumber: 5,
-      options: [
-        "Very Important",
-        "Important",
-        "Moderately Important",
-        "Less Important",
-        "Not Important"
-      ]
-    },
-    {
-      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
-      questionNumber: 6,
-      options: [
-        "Easily Achievable",
-        "Achievable",
-        "Moderately Achievable",
-        "Difficult",
-        "Not Feasible"
-      ]
-    },
-    {
-      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = very important to 5 = not important)",
-      questionNumber: 7,
-      options: [
-        "Very Important",
-        "Important",
-        "Moderately Important",
-        "Less Important",
-        "Not Important"
-      ]
-    },
-    {
-      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = easily achievable to 5 = not feasible)",
-      questionNumber: 8,
-      options: [
-        "Easily Achievable",
-        "Achievable",
-        "Moderately Achievable",
-        "Difficult",
-        "Not Feasible"
-      ]
-    },
-    {
-      question: "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = very important to 5 = not important)",
-      questionNumber: 9,
-      options: [
-        "Very Important",
-        "Important",
-        "Moderately Important",
-        "Less Important",
-        "Not Important"
-      ]
-    },
-    {
-      question: "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = easily achievable to 5 = not feasible)",
-      questionNumber: 10,
-      options: [
-        "Easily Achievable",
-        "Achievable",
-        "Moderately Achievable",
-        "Difficult",
-        "Not Feasible"
-      ]
-    },
-    // Questions 11-12: Ranking Polls (actual ranking with multiple options)
+    // Questions 3-4: Ranking Polls (moved from original Q11-Q12)
     {
       question: "To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve development of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.",
-      questionNumber: 11,
+      questionNumber: 3,
       isRanking: true,
       options: [
         "Developing the technical approach to define what \"direct toxicity\" and \"food pathway toxicity\" mean for the framework.",
@@ -157,7 +69,7 @@ export default function CEWPrioritizationPage() {
     },
     {
       question: "Of the four options below, what focus will provide greatest value to holistic sediment management in BC? (1 = top priority; 4 = lowest priority)",
-      questionNumber: 12,
+      questionNumber: 4,
       isRanking: true,
       options: [
         "Selecting and using models and other tools to help develop Site-Specific Sediment Standards (Tier 2) for ecological health (these would include, for example, acid volatile sulphides/simultaneously extractable metals (AVS/SEM), equilibrium partitioning (EqP), target lipid model)",
@@ -166,10 +78,10 @@ export default function CEWPrioritizationPage() {
         "Developing models and/or approaches to derive mixture-specific sediment standards for ecological receptors (e.g., for water quality, there are biotic ligand models for metals mixtures)."
       ]
     },
-    // Question 13: Wordcloud Poll
+    // Question 5: Wordcloud Poll (moved from original Q13)
     {
       question: "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?",
-      questionNumber: 13,
+      questionNumber: 5,
       isWordcloud: true,
       maxWords: 1,
       wordLimit: 20,

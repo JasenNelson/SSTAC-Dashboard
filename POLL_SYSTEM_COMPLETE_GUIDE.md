@@ -14,6 +14,7 @@
 - **Results View**: `poll_results`
 - **Vote Storage**: One vote per user per poll (upsert on change)
 - **Vote Counting**: Sum of all individual votes
+- **CEW Behavior**: Multiple submissions allowed with unique user_id generation
 
 #### **2. Ranking Polls System**
 - **Table**: `ranking_polls`
@@ -21,6 +22,7 @@
 - **Results View**: `ranking_results`
 - **Vote Storage**: Multiple votes per user per poll (one per option with rank)
 - **Vote Counting**: Count of unique participants (not sum of individual votes)
+- **CEW Behavior**: Multiple submissions allowed with unique user_id generation
 
 #### **3. Wordcloud Polls System** ✅ **COMPLETED (January 2025)**
 - **Table**: `wordcloud_polls`
@@ -349,6 +351,7 @@ Without this protection, empty wordcloud polls cause division by zero errors and
 - **Question 13 Specific**: Single-choice wordcloud with predefined options + custom input
 - **CEW Submission Behavior**: Multiple submissions allowed with unique user_id generation
 - **Unique Constraint**: Prevents duplicate words from same user while allowing multiple submissions
+- **CEW No Deletions**: CEW submissions are never deleted - all responses preserved
 
 ## 📝 **Key Takeaways**
 
@@ -359,7 +362,10 @@ Without this protection, empty wordcloud polls cause division by zero errors and
 5. **Wordcloud division by zero**: Always protect against empty polls in percentage calculations
 6. **CEW vs Survey**: Same questions, different user_id values
 7. **Views are critical**: Use `poll_results`, `ranking_results`, and `wordcloud_results` for aggregated data
-8. **Wordcloud CEW behavior**: Multiple submissions allowed with unique user_id generation for conference attendees
-9. **Question 13 configuration**: Single-choice wordcloud (max_words=1) with predefined options
+8. **CEW Multiple Submissions**: All poll types (single-choice, ranking, wordcloud) allow multiple submissions from same CEW2025 code
+9. **CEW User ID Generation**: Each submission gets unique user_id: `${authCode}_${timestamp}_${randomSuffix}`
+10. **CEW No Deletions**: CEW submissions are never deleted - all responses preserved for conference attendees
+11. **Authenticated vs CEW**: Authenticated users get vote replacement (delete + insert), CEW users get additive submissions
+12. **Question 13 configuration**: Single-choice wordcloud (max_words=1) with predefined options
 
 This guide should prevent future misunderstandings about the poll system structure and functionality.

@@ -99,7 +99,7 @@ export default function PollResultsClient() {
   useEffect(() => {
     const fetchMatrixData = async () => {
       try {
-        const response = await fetch('/api/graphs/prioritization-matrix');
+        const response = await fetch(`/api/graphs/prioritization-matrix?filter=${filterMode}`);
         if (response.ok) {
           const data = await response.json();
           setMatrixData(data);
@@ -110,7 +110,7 @@ export default function PollResultsClient() {
     };
 
     fetchMatrixData();
-  }, [pollResults]); // Re-run when poll data changes
+  }, [pollResults, filterMode]); // Re-run when poll data or filter changes
 
   const fetchPollResults = async () => {
     try {
@@ -158,27 +158,24 @@ export default function PollResultsClient() {
       // Define current active polls to filter out old/test data
       // Use more specific matching patterns to avoid false positives
       const currentPollQuestions = [
-        // Holistic Protection Questions (3 ranking questions)
-        "How would you rank the regulatory need / priority of developing Matrix Sediment Standards for the following? Please rank (1 = highest priority; 4 = lowest priority).",
-        "How would you rank the anticipated scientific defensibility of SedS-foodHH (Matrix Sediment Standards designed to protect human health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).",
-        "How would you rank the anticipated scientific defensibility of SedS-foodECO (Matrix Sediment Standards designed to protect ecological health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).",
+        // Holistic Protection Questions (8 single-choice questions - matching corrected database)
+        "Rank the importance of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs). (1 = very important to 5 = not important)",
+        "Rank the feasibility of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs). (1 = easily achievable to 5 = not feasible)",
+        "Rank the importance of developing CSR sediment standards for direct toxicity to human receptors (matrix standards). (1 = very important to 5 = not important)",
+        "Rank the feasibility of developing CSR sediment standards for direct toxicity to human receptors (matrix standards). (1 = easily achievable to 5 = not feasible)",
+        "Rank the importance of developing new CSR sediment standards for food-related toxicity to ecological receptors. (1 = very important to 5 = not important)",
+        "Rank the feasibility of developing new CSR sediment standards for food-related toxicity to ecological receptors. (1 = easily achievable to 5 = not feasible)",
+        "Rank the importance of developing CSR sediment standards for food-related toxicity to human receptors. (1 = very important to 5 = not important)",
+        "Rank the feasibility of developing CSR sediment standards for food-related toxicity to human receptors. (1 = easily achievable to 5 = not feasible)",
         
         // Tiered Framework Questions (3 single-choice questions)
         "What is the primary regulatory advantage of using a probabilistic framework (e.g., Bayesian) to integrate EqP and BLM predictions into a scientific framework for deriving site-specific sediment standards (Tier 2)?",
         "In developing a probabilistic framework for deriving site-specific sediment standards (Tier 2), which data type is most critical for effectively narrowing the uncertainty of the final risk estimate?",
         "What is the biggest practical hurdle to overcome when implementing a Bayesian framework in the development of a scientific framework for deriving site-specific sediment standards (Tier 2)?",
         
-        // Prioritization Questions (13 questions: 10 single-choice + 2 ranking + 1 wordcloud)
+        // Prioritization Questions (5 questions: 2 single-choice + 2 ranking + 1 wordcloud)
         "Rank the importance of developing a framework for deriving site-specific sediment standards, based on bioavailability adjustment, to provide an enhanced numerical assessment option (Tier 2), between generic numerical (Tier 1) and risk-based (Tier 3) assessments. (1 = very important to 5 = not important)",
         "Rank the feasibility of developing the framework for deriving site-specific sediment standards, based on an integrated approach using Equilibrium Partitioning and Biotic Ligand Models. (1 = easily achievable to 5 = not feasible)",
-        "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = very important to 5 = not important)",
-        "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
-        "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = very important to 5 = not important)",
-        "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = easily achievable to 5 = not feasible)",
-        "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = very important to 5 = not important)",
-        "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = easily achievable to 5 = not feasible)",
-        "Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = very important to 5 = not important)",
-        "Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = easily achievable to 5 = not feasible)",
         "To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve development of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.",
         "Of the four options below, what focus will provide greatest value to holistic sediment management in BC? (1 = top priority; 4 = lowest priority)",
         "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?"
@@ -198,12 +195,39 @@ export default function PollResultsClient() {
       // Process single-choice polls
       singleChoiceData.forEach(poll => {
         // Only process polls that match current active questions
-        const matchesCurrentQuestion = currentPollQuestions.some(question => 
-          poll.question.includes(question.substring(0, 50)) || 
-          question.includes(poll.question.substring(0, 50))
-        );
+        // Use more flexible matching to handle minor text differences
+        const matchesCurrentQuestion = currentPollQuestions.some(question => {
+          const pollStart = poll.question.substring(0, 100).toLowerCase();
+          const questionStart = question.substring(0, 100).toLowerCase();
+          return pollStart.includes(questionStart.substring(0, 50)) || 
+                 questionStart.includes(pollStart.substring(0, 50)) ||
+                 pollStart.includes('matrix sediment standards') && questionStart.includes('matrix sediment standards');
+        });
         if (!matchesCurrentQuestion) {
+          console.log('🔍 Single-choice poll not matching current questions:', {
+            page_path: poll.page_path,
+            poll_index: poll.poll_index,
+            question_preview: poll.question.substring(0, 100)
+          });
           return;
+        }
+        
+        console.log('✅ Single-choice poll matched:', {
+          page_path: poll.page_path,
+          poll_index: poll.poll_index,
+          total_votes: poll.total_votes,
+          question_preview: poll.question.substring(0, 100)
+        });
+        
+        // Debug: Check if this is holistic protection question 1
+        if (poll.page_path.includes('holistic-protection') && poll.poll_index === 0) {
+          console.log('🔍 HOLISTIC Q1 DEBUG:', {
+            poll_question: poll.question,
+            expected_question: currentPollQuestions[0],
+            match_found: currentPollQuestions.some(q => q.includes('ecosystem health from direct toxicity')),
+            poll_start: poll.question.substring(0, 100).toLowerCase(),
+            expected_start: currentPollQuestions[0].substring(0, 100).toLowerCase()
+          });
         }
         
         
@@ -236,8 +260,20 @@ export default function PollResultsClient() {
         const group = pollGroups.get(key)!;
         if (poll.page_path.startsWith('/survey-results') || poll.page_path === '/wiks') {
           group.surveyPoll = poll;
+          console.log('📊 Added survey poll to group:', {
+            key,
+            page_path: poll.page_path,
+            poll_index: poll.poll_index,
+            total_votes: poll.total_votes
+          });
         } else if (poll.page_path.startsWith('/cew-polls')) {
           group.cewPoll = poll;
+          console.log('📊 Added CEW poll to group:', {
+            key,
+            page_path: poll.page_path,
+            poll_index: poll.poll_index,
+            total_votes: poll.total_votes
+          });
           // For Holistic Protection, prefer the CEW question text
           if (poll.page_path.includes('holistic-protection')) {
             group.question = poll.question;
@@ -248,14 +284,38 @@ export default function PollResultsClient() {
 
       // Process ranking polls
       rankingData.forEach(poll => {
+        // Debug: Log all ranking polls to see what we're working with
+        console.log('🔍 Processing ranking poll:', {
+          page_path: poll.page_path,
+          poll_index: poll.poll_index,
+          question_preview: poll.question.substring(0, 100),
+          total_votes: poll.total_votes
+        });
+        
         // Only process polls that match current active questions
-        const matchesCurrentQuestion = currentPollQuestions.some(question => 
-          poll.question.includes(question.substring(0, 50)) || 
-          question.includes(poll.question.substring(0, 50))
-        );
+        // Use more flexible matching to handle minor text differences
+        const matchesCurrentQuestion = currentPollQuestions.some(question => {
+          const pollStart = poll.question.substring(0, 100).toLowerCase();
+          const questionStart = question.substring(0, 100).toLowerCase();
+          return pollStart.includes(questionStart.substring(0, 50)) || 
+                 questionStart.includes(pollStart.substring(0, 50)) ||
+                 pollStart.includes('matrix standards') && questionStart.includes('matrix standards');
+        });
+        
         if (!matchesCurrentQuestion) {
+          console.log('❌ Ranking poll filtered out - no matching question:', {
+            page_path: poll.page_path,
+            poll_index: poll.poll_index,
+            question_preview: poll.question.substring(0, 100)
+          });
           return;
         }
+        
+        console.log('✅ Ranking poll matched:', {
+          page_path: poll.page_path,
+          poll_index: poll.poll_index,
+          total_votes: poll.total_votes
+        });
         
         
         // Create a key that groups polls by topic and poll_index, regardless of page_path
@@ -316,11 +376,20 @@ export default function PollResultsClient() {
 
       wordcloudData.forEach(poll => {
         // Only process polls that match current active questions
-        const matchesCurrentQuestion = currentPollQuestions.some(question => 
-          poll.question.includes(question.substring(0, 50)) || 
-          question.includes(poll.question.substring(0, 50))
-        );
+        // Use more flexible matching to handle minor text differences
+        const matchesCurrentQuestion = currentPollQuestions.some(question => {
+          const pollStart = poll.question.substring(0, 100).toLowerCase();
+          const questionStart = question.substring(0, 100).toLowerCase();
+          return pollStart.includes(questionStart.substring(0, 50)) || 
+                 questionStart.includes(pollStart.substring(0, 50)) ||
+                 pollStart.includes('barrier') && questionStart.includes('barrier');
+        });
         if (!matchesCurrentQuestion) {
+          console.log('🔍 Wordcloud poll not matching current questions:', {
+            page_path: poll.page_path,
+            poll_index: poll.poll_index,
+            question_preview: poll.question.substring(0, 100)
+          });
           return;
         }
 
@@ -1574,6 +1643,30 @@ export default function PollResultsClient() {
                   
                   return (
                     <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                      <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">
+                        Prioritization Matrix Results
+                      </h3>
+                      <div className="flex justify-center">
+                        <div className="w-full max-w-4xl">
+                          <PrioritizationMatrixGraph key={specificGraph.title} {...specificGraph} />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Holistic Protection Matrix Graphs - Show on feasibility questions (1, 3, 5, 7) */}
+                {selectedPoll.page_path.includes('holistic-protection') && 
+                 [1, 3, 5, 7].includes(selectedPoll.poll_index) && 
+                 matrixData.length > 0 && (() => {
+                  // Find the specific graph for this question pair (offset by 1 since holistic starts at index 1 in matrixData)
+                  const questionPairIndex = [1, 3, 5, 7].indexOf(selectedPoll.poll_index);
+                  const specificGraph = matrixData[questionPairIndex + 1]; // +1 because index 0 is prioritization
+                  
+                  if (!specificGraph) return null;
+                  
+                  return (
+                    <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800">
                       <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">
                         Prioritization Matrix Results
                       </h3>

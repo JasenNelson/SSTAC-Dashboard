@@ -23,36 +23,95 @@ export default function CEWHolisticProtectionPage() {
     return <CEWCodeInput onCodeEntered={handleCodeEntered} />;
   }
   
-  // Define polls with proper structure for the new poll system
+  // Define polls with proper structure matching CEW_Poll_Questions.txt
+  // Webpage Question 1 = Database poll_index 0, etc.
   const polls = [
     {
-      question: "How would you rank the regulatory need / priority of developing Matrix Sediment Standards for the following? Please rank (1 = highest priority; 4 = lowest priority).",
-      questionNumber: 1,
+      question: "Rank the importance of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs). (1 = very important to 5 = not important)",
+      questionNumber: 1, // poll_index 0
       options: [
-        "Direct Toxicity (SedS-direct) - Ecological Health",
-        "Direct Toxicity (SedS-direct) - Human Health",
-        "Food Pathway Toxicity (SedS-food) - Ecological Health",
-        "Food Pathway Toxicity (SedS-food) - Human Health"
+        "Very Important",
+        "Important",
+        "Moderately Important", 
+        "Less Important",
+        "Not Important"
       ]
     },
     {
-      question: "How would you rank the anticipated scientific defensibility of SedS-foodHH (Matrix Sediment Standards designed to protect human health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).",
-      questionNumber: 2,
+      question: "Rank the feasibility of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs). (1 = easily achievable to 5 = not feasible)",
+      questionNumber: 2, // poll_index 1
       options: [
-        "Metals known to biomagnify",
-        "Polycyclic aromatic hydrocarbons",
-        "Polychlorinated biphenyls",
-        "Per- and polyfluoroalkyl substances"
+        "Easily Achievable",
+        "Achievable", 
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
       ]
     },
     {
-      question: "How would you rank the anticipated scientific defensibility of SedS-foodECO (Matrix Sediment Standards designed to protect ecological health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).",
-      questionNumber: 3,
+      question: "Rank the importance of developing CSR sediment standards for direct toxicity to human receptors (matrix standards). (1 = very important to 5 = not important)",
+      questionNumber: 3, // poll_index 2
       options: [
-        "Metals known to biomagnify",
-        "Polycyclic aromatic hydrocarbons",
-        "Polychlorinated biphenyls",
-        "Per- and polyfluoroalkyl substances"
+        "Very Important",
+        "Important",
+        "Moderately Important", 
+        "Less Important",
+        "Not Important"
+      ]
+    },
+    {
+      question: "Rank the feasibility of developing CSR sediment standards for direct toxicity to human receptors (matrix standards). (1 = easily achievable to 5 = not feasible)",
+      questionNumber: 4, // poll_index 3
+      options: [
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult", 
+        "Not Feasible"
+      ]
+    },
+    {
+      question: "Rank the importance of developing new CSR sediment standards for food-related toxicity to ecological receptors. (1 = very important to 5 = not important)",
+      questionNumber: 5, // poll_index 4
+      options: [
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important",
+        "Not Important"
+      ]
+    },
+    {
+      question: "Rank the feasibility of developing new CSR sediment standards for food-related toxicity to ecological receptors. (1 = easily achievable to 5 = not feasible)",
+      questionNumber: 6, // poll_index 5
+      options: [
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable", 
+        "Difficult",
+        "Not Feasible"
+      ]
+    },
+    {
+      question: "Rank the importance of developing CSR sediment standards for food-related toxicity to human receptors. (1 = very important to 5 = not important)",
+      questionNumber: 7, // poll_index 6
+      options: [
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important", 
+        "Not Important"
+      ]
+    },
+    {
+      question: "Rank the feasibility of developing CSR sediment standards for food-related toxicity to human receptors. (1 = easily achievable to 5 = not feasible)",
+      questionNumber: 8, // poll_index 7
+      options: [
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
       ]
     }
   ];
@@ -91,44 +150,23 @@ export default function CEWHolisticProtectionPage() {
         {/* Polls */}
         <div className="space-y-8">
           {polls.map((poll, pollIndex) => {
-            // Check if this is a ranking question
-            const isRankingQuestion = poll.question.toLowerCase().includes('rank');
-            
-            if (isRankingQuestion) {
-              return (
-                <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                  <RankingPoll
-                    key={pollIndex}
-                    pollIndex={pollIndex}
-                    question={poll.question}
-                    options={poll.options}
-                    pagePath="/cew-polls/holistic-protection"
-                    questionNumber={poll.questionNumber}
-                    authCode={authCode}
-                    onVote={(pollIndex, rankings) => {
-                      console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
-                    }}
-                  />
-                </div>
-              );
-            } else {
-              return (
-                <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                  <PollWithResults
-                    key={pollIndex}
-                    pollIndex={pollIndex}
-                    question={poll.question}
-                    options={poll.options}
-                    pagePath="/cew-polls/holistic-protection"
-                    questionNumber={poll.questionNumber}
-                    authCode={authCode}
-                    onVote={(pollIndex, optionIndex, otherText) => {
-                      console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}`);
-                    }}
-                  />
-                </div>
-              );
-            }
+            // All questions are now single-choice polls
+            return (
+              <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                <PollWithResults
+                  key={pollIndex}
+                  pollIndex={pollIndex}
+                  question={poll.question}
+                  options={poll.options}
+                  pagePath="/cew-polls/holistic-protection"
+                  questionNumber={poll.questionNumber}
+                  authCode={authCode}
+                  onVote={(pollIndex, optionIndex, otherText) => {
+                    console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}`);
+                  }}
+                />
+              </div>
+            );
           })}
         </div>
 

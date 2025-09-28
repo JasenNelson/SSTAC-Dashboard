@@ -14,33 +14,91 @@ export default function HolisticProtectionClient() {
   const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
   const [polls, setPolls] = useState<PollData[]>([
     {
-      question: "How would you rank the regulatory need / priority of developing Matrix Sediment Standards for the following? Please rank (1 = highest priority; 4 = lowest priority).",
+      question: "Rank the importance of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs). (1 = very important to 5 = not important)",
       questionNumber: 1,
       options: [
-        "Direct Toxicity (SedS-direct) - Ecological Health",
-        "Direct Toxicity (SedS-direct) - Human Health",
-        "Food Pathway Toxicity (SedS-food) - Ecological Health",
-        "Food Pathway Toxicity (SedS-food) - Human Health"
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important", 
+        "Not Important"
       ]
     },
     {
-      question: "How would you rank the anticipated scientific defensibility of SedS-foodHH (Matrix Sediment Standards designed to protect human health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).",
+      question: "Rank the feasibility of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs). (1 = easily achievable to 5 = not feasible)",
       questionNumber: 2,
       options: [
-        "Metals known to biomagnify",
-        "Polycyclic aromatic hydrocarbons",
-        "Polychlorinated biphenyls",
-        "Per- and polyfluoroalkyl substances"
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
       ]
     },
     {
-      question: "How would you rank the anticipated scientific defensibility of SedS-foodECO (Matrix Sediment Standards designed to protect ecological health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).",
+      question: "Rank the importance of developing CSR sediment standards for direct toxicity to human receptors (matrix standards). (1 = very important to 5 = not important)",
       questionNumber: 3,
       options: [
-        "Metals known to biomagnify",
-        "Polycyclic aromatic hydrocarbons",
-        "Polychlorinated biphenyls",
-        "Per- and polyfluoroalkyl substances"
+        "Very Important",
+        "Important",
+        "Moderately Important", 
+        "Less Important",
+        "Not Important"
+      ]
+    },
+    {
+      question: "Rank the feasibility of developing CSR sediment standards for direct toxicity to human receptors (matrix standards). (1 = easily achievable to 5 = not feasible)",
+      questionNumber: 4,
+      options: [
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
+      ]
+    },
+    {
+      question: "Rank the importance of developing new CSR sediment standards for food-related toxicity to ecological receptors. (1 = very important to 5 = not important)",
+      questionNumber: 5,
+      options: [
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important",
+        "Not Important"
+      ]
+    },
+    {
+      question: "Rank the feasibility of developing new CSR sediment standards for food-related toxicity to ecological receptors. (1 = easily achievable to 5 = not feasible)",
+      questionNumber: 6,
+      options: [
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
+      ]
+    },
+    {
+      question: "Rank the importance of developing CSR sediment standards for food-related toxicity to human receptors. (1 = very important to 5 = not important)",
+      questionNumber: 7,
+      options: [
+        "Very Important",
+        "Important",
+        "Moderately Important",
+        "Less Important",
+        "Not Important"
+      ]
+    },
+    {
+      question: "Rank the feasibility of developing CSR sediment standards for food-related toxicity to human receptors. (1 = easily achievable to 5 = not feasible)",
+      questionNumber: 8,
+      options: [
+        "Easily Achievable",
+        "Achievable",
+        "Moderately Achievable",
+        "Difficult",
+        "Not Feasible"
       ]
     }
   ]);
@@ -513,23 +571,7 @@ export default function HolisticProtectionClient() {
           
           <div className="space-y-16">
             {polls.map((poll, pollIndex) => {
-              // Use RankingPoll if question contains "rank"
-              if (poll.question.toLowerCase().includes('rank')) {
-                return (
-                  <RankingPoll
-                    key={pollIndex}
-                    pollIndex={pollIndex}
-                    question={poll.question}
-                    options={poll.options}
-                    pagePath="/survey-results/holistic-protection"
-                    onVote={(pollIndex, rankings) => {
-                      console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
-                    }}
-                  />
-                );
-              }
-              
-              // Use regular PollWithResults for single-choice questions
+              // All questions are now single-choice polls
               return (
                 <PollWithResults
                   key={pollIndex}

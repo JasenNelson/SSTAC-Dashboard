@@ -27,25 +27,29 @@ E) Other
 Holistic Protection - Matrix Sediment Standards Polling Questions
 
 Poll Question 1:
-How would you rank the regulatory need / priority of developing Matrix Sediment Standards for the following? Please rank (1 = highest priority; 4 = lowest priority).
-Direct Toxicity (SedS-direct) - Ecological Health
-Direct Toxicity (SedS-direct) - Human Health
-Food Pathway Toxicity (SedS-food) - Ecological Health
-Food Pathway Toxicity (SedS-food) - Human Health
+Rank the importance of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs). (1 = very important to 5 = not important)
 
 Poll Question 2:
-How would you rank the anticipated scientific defensibility of SedS-foodHH (Matrix Sediment Standards designed to protect human health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).
-Metals known to biomagnify
-Polycyclic aromatic hydrocarbons
-Polychlorinated biphenyls
-Per- and polyfluoroalkyl substances
+Rank the feasibility of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs). (1 = easily achievable to 5 = not feasible)
 
 Poll Question 3:
-How would you rank the anticipated scientific defensibility of SedS-foodECO (Matrix Sediment Standards designed to protect ecological health from food-related toxicity), if they were developed for the following contaminant classes, using currently-available science and methods? Please rank (1 = most defensible; 4 = least defensible).
-Metals known to biomagnify
-Polycyclic aromatic hydrocarbons
-Polychlorinated biphenyls
-Per- and polyfluoroalkyl substances
+Rank the importance of developing CSR sediment standards for direct toxicity to human receptors (matrix standards). (1 = very important to 5 = not important)
+
+Poll Question 4:
+Rank the feasibility of developing CSR sediment standards for direct toxicity to human receptors (matrix standards). (1 = easily achievable to 5 = not feasible)
+
+Poll Question 5:
+Rank the importance of developing new CSR sediment standards for food-related toxicity to ecological receptors. (1 = very important to 5 = not important)
+
+Poll Question 6:
+Rank the feasibility of developing new CSR sediment standards for food-related toxicity to ecological receptors. (1 = easily achievable to 5 = not feasible)
+
+Poll Question 7:
+Rank the importance of developing CSR sediment standards for food-related toxicity to human receptors. (1 = very important to 5 = not important)
+
+Poll Question 8:
+Rank the feasibility of developing CSR sediment standards for food-related toxicity to human receptors. (1 = easily achievable to 5 = not feasible)
+
 
 Prioritization Polling Questions
 
@@ -55,45 +59,23 @@ Rank the importance of developing a framework for deriving site-specific sedimen
 Poll Question 2:
 Rank the feasibility of developing the framework for deriving site-specific sediment standards, based on an integrated approach using Equilibrium Partitioning and Biotic Ligand Models. (1 = easily achievable to 5 = not feasible)
 
-Poll Question 3:
-Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = very important to 5 = not important)
+(Combined graph showing importance vs. feasibility based on responses from Questions 1 and 2 above)
 
-Poll Question 4:
-Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health from direct toxicity. (1 = easily achievable to 5 = not feasible)
-
-Poll Question 5:
-Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = very important to 5 = not important)
-
-Poll Question 6:
-Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from direct toxicity. (1 = easily achievable to 5 = not feasible)
-
-Poll Question 7:
-Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = very important to 5 = not important)
-
-Poll Question 8:
-Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect ecosystem health food-related toxicity. (1 = easily achievable to 5 = not feasible)
-
-Poll Question 9:
-Rank the importance of developing a framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = very important to 5 = not important)
-
-Poll Question 10:
-Rank the feasibility of developing the framework for deriving matrix sediment standards that holistically protect human health from food-related toxicity. (1 = easily achievable to 5 = not feasible)
-
-Ranking Question 11:
+Ranking Question 3:
 To help focus deevelopment of matrix standards, pleas rank the four actions below for the degree to which they would improve development of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not espond to any given question.
 Developing the technical approach to define what "direct toxicity" and "food pathway toxicity" mean for the framework.
 Determining what approach ENV should take to develop human health standards, given there are other agencies working on like standards.
 developing the technical approach to address how matrix standards would be applied in a spatial context (e.g., over what spatial areas, for what depths, etc.).
 Determining if environmental sensitivity should be factored into matrix standards for ecological health.
 
-Ranking Question 12:
+Ranking Question 4:
 Of the four option below, what focus will provide greatest value to holistic sediment management in BC? (1 = top priority; 4 = lowest priority)
 Selecting and using models and other tools to help develop Site-Specific Sediment Standards (Tier 2) for ecological health (these would include, for example, acid volatile sulphides/simultaneously extractable metals (AVS/SEM), equilibrium partitioning (EqP), target lipid model)
 Selecting and using approaches to develop Sediment Standards for contaminants with an analogue (e.g., quantitative structure-activity relationship (QSAR))
 Developing guidance and/or framework to use site-specific toxicity testing to evaluate the risks of mixtures to ecological receptors.
 Developing models and/or approaches to derive mixture-specific sediment standards for ecological receptors (e.g., for water quality, there are biotic ligand models for metals mixtures).
 
-Wordcloud Question 13:
+Wordcloud Question 5:
 Overall, what is the greatest barrier to advancing holistic sediment protection in BC?
 Data availability
 Tools (models, test protocols, decision trees)
