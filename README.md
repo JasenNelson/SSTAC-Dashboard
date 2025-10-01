@@ -2,6 +2,30 @@
 
 A comprehensive dashboard platform for the **Sediment Standards Technical Advisory Committee (SSTAC)** and **Technical Working Group (TWG)**. This platform manages sediment standards development through stakeholder engagement, document management, and administrative tools.
 
+## 🔗 **Quick Links**
+
+### **📚 Documentation**
+- **[Core Development Guidelines](docs/AGENTS.md)** - Essential rules and principles for development
+- **[Project Status](docs/PROJECT_STATUS.md)** - Current features and completed work
+- **[Poll System Guide](docs/POLL_SYSTEM_COMPLETE_GUIDE.md)** - Complete poll system architecture
+- **[Debugging Guide](docs/POLL_SYSTEM_DEBUGGING_GUIDE.md)** - Troubleshooting and solutions
+- **[Lessons Learned](docs/DEBUGGING_LESSONS_LEARNED.md)** - Historical issues and prevention
+- **[Safe Update Protocol](docs/SAFE_POLL_UPDATE_PROTOCOL.md)** - How to safely update polls
+- **[Matrix Graph Visualization](docs/MATRIX_GRAPH_VISUALIZATION.md)** - Advanced visualization guide
+- **[Test Coverage Analysis](docs/K6_TEST_COVERAGE_ANALYSIS.md)** - Testing documentation
+
+### **🧪 Testing**
+- **[Run Comprehensive Tests](tests/)** - Full k6 test suite
+- **[Test Database Schema](database_schema.sql)** - Complete schema with debugging notes
+
+### **🛠️ Utilities**
+- **[SQL Debugging Scripts](scripts/debug/)** - Database diagnostic queries
+- **[Data Cleanup Scripts](scripts/cleanup/)** - Maintenance and cleanup tools
+- **[Test Execution Scripts](scripts/)** - Automated test runners
+
+### **📖 Reference Materials**
+- **[Sediment Standards Research](reference%20materials/)** - Background documentation
+
 ## 🚀 **Recent Major Updates**
 
 ### **TWG Review & Auth Reliability** ✅ NEW (2025-09-18)
@@ -98,6 +122,29 @@ src/
 ├── lib/                   # Utility functions and configurations
 │   └── supabase/         # Supabase client and middleware
 └── middleware.ts          # Route protection middleware
+
+docs/                      # 📚 Project documentation
+├── AGENTS.md              # Core development guidelines and rules
+├── PROJECT_STATUS.md      # Current project status and features
+├── POLL_SYSTEM_COMPLETE_GUIDE.md  # Poll system architecture
+├── POLL_SYSTEM_DEBUGGING_GUIDE.md # Debugging procedures
+├── DEBUGGING_LESSONS_LEARNED.md   # Historical debugging issues
+├── K6_TEST_COVERAGE_ANALYSIS.md   # Testing documentation
+├── MATRIX_GRAPH_VISUALIZATION.md  # Matrix graph guide
+└── SAFE_POLL_UPDATE_PROTOCOL.md   # Update procedures
+
+scripts/                   # 🛠️ Utility scripts
+├── debug/                 # SQL debugging queries
+├── cleanup/               # Data cleanup scripts
+└── run-cew-100-test.*     # Test execution scripts
+
+tests/                     # 🧪 Test files
+├── k6-comprehensive-test-enhanced.js  # Main test suite
+├── k6-matrix-graph-test-enhanced.js   # Matrix graph tests
+├── k6-ranking-test.js                 # Ranking poll tests
+├── k6-survey-results-authenticated.js # Authenticated tests
+├── k6-test.js                         # Basic test suite
+└── k6-wordcloud-test.js               # Wordcloud tests
 ```
 
 ### **Core Components**
@@ -386,15 +433,20 @@ npm run test:performance
 ## 📚 **Documentation**
 
 ### **Core Documentation**
+All documentation has been organized in the `docs/` folder for better accessibility:
+
 - **`README.md`**: Project overview and quick start (this file)
-- **`AGENTS.md`**: AI assistant guidelines and project rules
-- **`PROJECT_MEMORY.md`**: Lessons learned and project history
-- **`PROJECT_STATUS.md`**: Current project status and completed features
+- **`docs/AGENTS.md`**: AI assistant guidelines and core development rules
+- **`docs/PROJECT_STATUS.md`**: Current project status and completed features
+- **`docs/DEBUGGING_LESSONS_LEARNED.md`**: Historical debugging issues and solutions
 
 ### **Technical Documentation**
-- **`DATABASE_GUIDE.md`**: Complete database schema, safety protocols, and poll system
-- **`POLL_SYSTEM_DEBUGGING_GUIDE.md`**: Critical debugging guide for poll system issues
-- **`SETUP_GUIDE.md`**: Step-by-step setup and implementation instructions
+- **`database_schema.sql`**: Complete database schema with debugging notes
+- **`docs/POLL_SYSTEM_COMPLETE_GUIDE.md`**: Comprehensive poll system architecture
+- **`docs/POLL_SYSTEM_DEBUGGING_GUIDE.md`**: Critical debugging guide for poll system
+- **`docs/SAFE_POLL_UPDATE_PROTOCOL.md`**: Safe update procedures for polls
+- **`docs/K6_TEST_COVERAGE_ANALYSIS.md`**: Testing coverage and recommendations
+- **`docs/MATRIX_GRAPH_VISUALIZATION.md`**: Matrix graph visualization guide
 
 ### **API Documentation**
 - **Authentication**: User login and role management

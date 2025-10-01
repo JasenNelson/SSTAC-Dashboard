@@ -54,31 +54,30 @@ Rank the feasibility of developing CSR sediment standards for food-related toxic
 Prioritization Polling Questions
 
 Poll Question 1:
-Rank the importance of developing a framework for deriving site-specific sediment standards, based on bioavailability adjustment, to provide an enhanced numerical assessment option (Tier 2), between generic numerical (Tier 1) and risk-based (Tier 3) assessments. (1 = very important to 5 = not important)
+Rank the importance of incorporating bioavailability adjustments into sediment standards. (1 = very important to 5 = not important)
 
 Poll Question 2:
-Rank the feasibility of developing the framework for deriving site-specific sediment standards, based on an integrated approach using Equilibrium Partitioning and Biotic Ligand Models. (1 = easily achievable to 5 = not feasible)
-
-(Combined graph showing importance vs. feasibility based on responses from Questions 1 and 2 above)
+Rank the feasibility of incorporating bioavailability adjustments into sediment standards. (1 = easily achievable to 5 = not feasible)
 
 Ranking Question 3:
-To help focus deevelopment of matrix standards, pleas rank the four actions below for the degree to which they would improve development of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not espond to any given question.
-Developing the technical approach to define what "direct toxicity" and "food pathway toxicity" mean for the framework.
-Determining what approach ENV should take to develop human health standards, given there are other agencies working on like standards.
-developing the technical approach to address how matrix standards would be applied in a spatial context (e.g., over what spatial areas, for what depths, etc.).
-Determining if environmental sensitivity should be factored into matrix standards for ecological health.
+To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve utility of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.
+Distinguish "direct toxicity" and "food pathway toxicity" pathways explicitly.
+Clarify approach for incorporating human health endpoints in matrix standards.
+Clarify how spatial scale (areal spatial extent, vertical depth profile) is incorporated in application of matrix standards.
+Clarify whether and how multiple levels of protection are applied to account for differences in ecological sensitivity.
 
 Ranking Question 4:
-Of the four option below, what focus will provide greatest value to holistic sediment management in BC? (1 = top priority; 4 = lowest priority)
-Selecting and using models and other tools to help develop Site-Specific Sediment Standards (Tier 2) for ecological health (these would include, for example, acid volatile sulphides/simultaneously extractable metals (AVS/SEM), equilibrium partitioning (EqP), target lipid model)
-Selecting and using approaches to develop Sediment Standards for contaminants with an analogue (e.g., quantitative structure-activity relationship (QSAR))
-Developing guidance and/or framework to use site-specific toxicity testing to evaluate the risks of mixtures to ecological receptors.
-Developing models and/or approaches to derive mixture-specific sediment standards for ecological receptors (e.g., for water quality, there are biotic ligand models for metals mixtures).
+Of the four options below, what focus will provide greatest value to holistic sediment management in BC? (1 = top priority; 4 = lowest priority)
+Push guidance beyond generic numerical standards: Apply models and other technical tools to help develop Site-Specific Sediment Standards (Tier 2) for ecological health (e.g., equilibrium partitioning [EqP], acid volatile sulphides/simultaneously extractable metals [AVS/SEM], other modifying factors)
+Fill gaps and use surrogates: Develop Sediment Standards for missing substances and groups, using contaminants with an analogue (e.g., quantitative structure-activity relationship [QSAR]).
+Increase guidance for effects-based tools: Develop guidance for site-specific toxicity testing and/or biological monitoring, to evaluate site-specific risks beyond screening level assessment.
+Incorporate models and/or approaches for common mixtures: Develop sediment standards based on mixture models (e.g., target lipid model for petroleum hydrocarbons, toxic equivalents) rather than individual substances.
 
 Wordcloud Question 5:
-Overall, what is the greatest barrier to advancing holistic sediment protection in BC?
-Data availability
+Overall, what is the greatest constraint to advancing holistic sediment protection in BC?
+Data availability (quantity, quality)
 Tools (models, test protocols, decision trees)
-Agreement on protection goals and spatial scale
-Resourcing (e.g., developing approach/tools, agreeing across peers)
+Agreement on application (e.g., protection goals, spatial scale, matrix approach)
+Prescription (balance between consistency and flexibility [tiering] across different sites)
+Resourcing (e.g., effort of developing approach/tools, consultation, documentation)
 Other

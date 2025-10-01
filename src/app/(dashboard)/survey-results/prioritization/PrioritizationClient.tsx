@@ -24,7 +24,7 @@ export default function PrioritizationClient() {
   const polls = [
     // Questions 1-2: Single-Choice Polls (kept from original Q1-Q2)
     {
-      question: "Rank the importance of developing a framework for deriving site-specific sediment standards, based on bioavailability adjustment, to provide an enhanced numerical assessment option (Tier 2), between generic numerical (Tier 1) and risk-based (Tier 3) assessments. (1 = very important to 5 = not important)",
+      question: "Rank the importance of incorporating bioavailability adjustments into sediment standards. (1 = very important to 5 = not important)",
       questionNumber: 1,
       options: [
         "Very Important",
@@ -35,7 +35,7 @@ export default function PrioritizationClient() {
       ]
     },
     {
-      question: "Rank the feasibility of developing the framework for deriving site-specific sediment standards, based on an integrated approach using Equilibrium Partitioning and Biotic Ligand Models. (1 = easily achievable to 5 = not feasible)",
+      question: "Rank the feasibility of incorporating bioavailability adjustments into sediment standards. (1 = easily achievable to 5 = not feasible)",
       questionNumber: 2,
       options: [
         "Easily Achievable",
@@ -47,7 +47,7 @@ export default function PrioritizationClient() {
     },
     // Questions 3-4: Ranking Polls (moved from original Q11-Q12)
     {
-      question: "To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve development of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.",
+      question: "To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve utility of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.",
       questionNumber: 3,
       isRanking: true,
       options: [
@@ -70,7 +70,7 @@ export default function PrioritizationClient() {
     },
     // Question 5: Wordcloud Poll (moved from original Q13)
     {
-      question: "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?",
+      question: "Overall, what is the greatest constraint to advancing holistic sediment protection in BC?",
       questionNumber: 5,
       isWordcloud: true,
       maxWords: 1,

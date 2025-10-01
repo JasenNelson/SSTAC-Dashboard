@@ -4,6 +4,8 @@
 
 **HISTORICAL CONTEXT**: This protocol was developed after January 2025 debugging incidents where poll system updates caused system-wide failures. Follow this exact process to ensure safe, efficient updates.
 
+**JANUARY 2025 UPDATE**: Enhanced protocol based on holistic protection question text update process, including question text synchronization, admin panel matching, matrix graph data integration, and filter system implementation.
+
 ## 📋 **Pre-Update Checklist**
 
 ### **1. Verify Current System State**
@@ -283,6 +285,37 @@ git checkout HEAD~1 -- src/app/(dashboard)/admin/poll-results/PollResultsClient.
 - **Verification Status**: [Passed/Failed]
 - **Issues Encountered**: [List any problems]
 - **Resolution**: [How issues were resolved]
+
+## 🚨 **CRITICAL: Question Text Update Protocol (ENHANCED)**
+
+### **Question Text Synchronization Requirements**
+**Problem**: Question text must be identical across ALL locations
+**Locations**: Database, CEW polls, survey-results, admin panel, k6 tests
+**Risk**: Mismatched text causes "Question not found" errors in admin panel
+**Solution**: Update ALL locations simultaneously with identical text
+
+### **Pre-Update Verification**
+1. **Check Database Text**: `SELECT question FROM polls WHERE page_path = '/cew-polls/holistic-protection'`
+2. **Check Frontend Text**: Verify hardcoded text in component files
+3. **Check Admin Panel**: Verify `currentPollQuestions` array matches database
+4. **Check k6 Tests**: Verify test scripts use correct question text
+5. **Check Matrix Graphs**: Ensure importance/feasibility pairing is maintained
+
+### **Update Process**
+1. **Update Database First**: Change question text in polls table
+2. **Update CEW Polls**: Update hardcoded text in frontend components
+3. **Update Survey Results**: Update hardcoded text in survey-results components
+4. **Update Admin Panel**: Update `currentPollQuestions` array
+5. **Update k6 Tests**: Update test scripts with new question text
+6. **Test All Systems**: Verify all locations display identical text
+
+### **Post-Update Verification**
+1. **Test CEW Polls**: Verify questions display correctly
+2. **Test Survey Results**: Verify questions display correctly
+3. **Test Admin Panel**: Verify question matching works
+4. **Test Matrix Graphs**: Verify data aggregation works
+5. **Test k6 Scripts**: Verify load testing works
+6. **Run Build Test**: Verify production build succeeds
 
 ## 🎯 **Key Success Metrics**
 

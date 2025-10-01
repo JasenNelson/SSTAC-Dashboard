@@ -67,11 +67,19 @@ interface PollResult {
   }>;
 }
 
+interface IndividualVotePair {
+  userId: string;
+  importance: number;
+  feasibility: number;
+  userType: 'authenticated' | 'cew';
+}
+
 interface MatrixData {
   title: string;
   avgImportance: number;
   avgFeasibility: number;
   responses: number;
+  individualPairs: IndividualVotePair[];
 }
 
 export default function PollResultsClient() {
@@ -99,13 +107,19 @@ export default function PollResultsClient() {
   useEffect(() => {
     const fetchMatrixData = async () => {
       try {
+        console.log(`🔍 MATRIX API CALL: Fetching matrix data with filter=${filterMode}`);
         const response = await fetch(`/api/graphs/prioritization-matrix?filter=${filterMode}`);
+        console.log(`🔍 MATRIX API RESPONSE: Status ${response.status}`);
         if (response.ok) {
-          const data = await response.json();
-          setMatrixData(data);
+        const data = await response.json();
+        console.log(`🔍 MATRIX API DATA:`, data);
+        console.log(`🔍 MATRIX API DATA DETAILED:`, JSON.stringify(data, null, 2));
+        setMatrixData(data);
+        } else {
+          console.error(`❌ MATRIX API ERROR: ${response.status} ${response.statusText}`);
         }
       } catch (error) {
-        console.error("Failed to fetch matrix graph data:", error);
+        console.error("❌ MATRIX API FAILED:", error);
       }
     };
 
@@ -174,11 +188,11 @@ export default function PollResultsClient() {
         "What is the biggest practical hurdle to overcome when implementing a Bayesian framework in the development of a scientific framework for deriving site-specific sediment standards (Tier 2)?",
         
         // Prioritization Questions (5 questions: 2 single-choice + 2 ranking + 1 wordcloud)
-        "Rank the importance of developing a framework for deriving site-specific sediment standards, based on bioavailability adjustment, to provide an enhanced numerical assessment option (Tier 2), between generic numerical (Tier 1) and risk-based (Tier 3) assessments. (1 = very important to 5 = not important)",
-        "Rank the feasibility of developing the framework for deriving site-specific sediment standards, based on an integrated approach using Equilibrium Partitioning and Biotic Ligand Models. (1 = easily achievable to 5 = not feasible)",
-        "To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve development of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.",
+        "Rank the importance of incorporating bioavailability adjustments into sediment standards. (1 = very important to 5 = not important)",
+        "Rank the feasibility of incorporating bioavailability adjustments into sediment standards. (1 = easily achievable to 5 = not feasible)",
+        "To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve utility of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.",
         "Of the four options below, what focus will provide greatest value to holistic sediment management in BC? (1 = top priority; 4 = lowest priority)",
-        "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?"
+        "Overall, what is the greatest constraint to advancing holistic sediment protection in BC?"
       ];
 
       // Group polls by question to combine survey-results and cew-polls data
@@ -529,13 +543,15 @@ export default function PollResultsClient() {
         if (group.isRanking) {
           // For ranking polls, use total_votes field which represents unique participants
           // Each user ranks ALL options, so total_votes = number of participants
-          surveyVotes = surveyPoll ? (surveyPoll.total_votes || 0) : 0;
-          cewVotes = cewPoll ? (cewPoll.total_votes || 0) : 0;
+          // But we need to check the page_path to ensure proper separation
+          surveyVotes = surveyPoll && surveyPoll.page_path?.includes('/survey-results') ? (surveyPoll.total_votes || 0) : 0;
+          cewVotes = cewPoll && cewPoll.page_path?.includes('/cew-polls') ? (cewPoll.total_votes || 0) : 0;
         } else if (group.isWordcloud) {
           // For wordcloud polls, use total_responses from database which represents unique participants
           // This is the correct way to count responses for wordcloud polls
-          surveyVotes = surveyPoll ? (surveyPoll.total_votes || 0) : 0;
-          cewVotes = cewPoll ? (cewPoll.total_votes || 0) : 0;
+          // But we need to check the page_path to ensure proper separation
+          surveyVotes = surveyPoll && surveyPoll.page_path?.includes('/survey-results') ? (surveyPoll.total_votes || 0) : 0;
+          cewVotes = cewPoll && cewPoll.page_path?.includes('/cew-polls') ? (cewPoll.total_votes || 0) : 0;
           
           // Debug: Log wordcloud vote calculation
           if (key.includes('prioritization')) {
@@ -559,10 +575,25 @@ export default function PollResultsClient() {
         } else {
           // For single-choice polls, sum up all votes in the results
           // Each user selects ONE option, so sum of votes = total responses
-          surveyVotes = surveyPoll ? (surveyPoll.results || []).reduce((sum: number, result: any) => sum + (result.votes || 0), 0) : 0;
-          cewVotes = cewPoll ? (cewPoll.results || []).reduce((sum: number, result: any) => sum + (result.votes || 0), 0) : 0;
+          // But we need to check the page_path to ensure proper separation
+          surveyVotes = surveyPoll && surveyPoll.page_path?.includes('/survey-results') ? (surveyPoll.results || []).reduce((sum: number, result: any) => sum + (result.votes || 0), 0) : 0;
+          cewVotes = cewPoll && cewPoll.page_path?.includes('/cew-polls') ? (cewPoll.results || []).reduce((sum: number, result: any) => sum + (result.votes || 0), 0) : 0;
         }
         totalVotes = surveyVotes + cewVotes;
+
+        // Debug: Log vote calculation for prioritization questions
+        if (key.includes('prioritization')) {
+          console.log('🔍 Prioritization vote calculation:', {
+            key,
+            isRanking: group.isRanking,
+            isWordcloud: group.isWordcloud,
+            surveyVotes,
+            cewVotes,
+            totalVotes,
+            surveyPoll: surveyPoll ? { total_votes: surveyPoll.total_votes, page_path: surveyPoll.page_path } : null,
+            cewPoll: cewPoll ? { total_votes: cewPoll.total_votes, page_path: cewPoll.page_path } : null
+          });
+        }
 
         if (group.isRanking) {
           // For ranking polls, we need to handle this differently
@@ -839,11 +870,22 @@ export default function PollResultsClient() {
 
   // Get filtered results for a specific poll based on filter mode
   const getFilteredPollResults = (poll: PollResult) => {
-    if (filterMode === 'all') {
-      return poll.results;
-    }
-    
-    if (poll.is_ranking) {
+    if (poll.is_wordcloud) {
+      // For wordcloud polls, create mock results based on vote counts
+      const surveyVotes = poll.combined_survey_votes || 0;
+      const cewVotes = poll.combined_cew_votes || 0;
+      
+      if (filterMode === 'twg') {
+        return surveyVotes > 0 ? [{ option_index: 0, option_text: 'Survey Responses', votes: surveyVotes }] : [];
+      } else if (filterMode === 'cew') {
+        return cewVotes > 0 ? [{ option_index: 0, option_text: 'CEW Responses', votes: cewVotes }] : [];
+      } else if (filterMode === 'all') {
+        // For "all" filter, show combined total
+        const totalVotes = surveyVotes + cewVotes;
+        return totalVotes > 0 ? [{ option_index: 0, option_text: 'All Responses', votes: totalVotes }] : [];
+      }
+      return [];
+    } else if (poll.is_ranking) {
       // For ranking polls, use the original survey or CEW results
       if (filterMode === 'twg' && poll.survey_results) {
         return poll.survey_results;
@@ -859,9 +901,9 @@ export default function PollResultsClient() {
       } else if (filterMode === 'cew' && poll.cew_results) {
         return poll.cew_results;
       }
+      // For "all" filter, return combined results
+      return poll.results;
     }
-    
-    return poll.results;
   };
 
   const navigateToNextQuestion = (currentPoll: PollResult) => {
@@ -1104,10 +1146,8 @@ export default function PollResultsClient() {
                       <div className="ml-4 space-y-1">
                         {theme.polls.map((poll) => {
                           const pollKey = poll.poll_id || poll.ranking_poll_id || `poll-${poll.page_path}-${poll.poll_index}`;
-                          // For ranking and wordcloud polls, show participant count (responses). For single-choice, show total votes.
-                          const totalVotes = (poll.is_ranking || poll.is_wordcloud) ? 
-                            (poll.combined_survey_votes || 0) + (poll.combined_cew_votes || 0) :
-                            getFilteredPollResults(poll).reduce((sum, r) => sum + r.votes, 0);
+                          // For all poll types, use filtered results to respect the current filter mode
+                          const totalVotes = getFilteredPollResults(poll).reduce((sum, r) => sum + r.votes, 0);
                           
                           return (
                             <button
@@ -1401,7 +1441,7 @@ export default function PollResultsClient() {
                 </div>
 
 
-                <div className={`space-y-4 ${isExpanded ? 'space-y-2 flex-1 px-4' : ''}`}>
+                <div className={`space-y-2 ${isExpanded ? 'space-y-2 flex-1 px-4' : ''}`}>
                   {selectedPoll.is_wordcloud ? (
                     // For wordcloud polls, display word cloud visualization
                     <div className="space-y-6">
@@ -1470,7 +1510,7 @@ export default function PollResultsClient() {
                               <div key={index} className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
                                 <span className="font-medium text-gray-900 dark:text-white">{word.text}</span>
                                 <div className="flex items-center space-x-2">
-                                  <div className="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                                  <div className="w-24 bg-gray-200 dark:bg-gray-300 rounded-full h-2">
                                     <div 
                                       className="bg-blue-500 h-2 rounded-full transition-all duration-500"
                                       style={{ 
@@ -1490,7 +1530,33 @@ export default function PollResultsClient() {
                     </div>
                   ) : selectedPoll.is_ranking ? (
                     // For ranking polls, sort by average rank (lower is better)
-                    [...getFilteredPollResults(selectedPoll)].sort((a, b) => (a.averageRank || 0) - (b.averageRank || 0)).map((result, index) => {
+                    (() => {
+                      const filteredResults = getFilteredPollResults(selectedPoll);
+                      let sortedResults = [...filteredResults].sort((a, b) => (a.averageRank || 0) - (b.averageRank || 0));
+                      
+                      // For prioritization questions, ensure all 5 options are shown in order
+                      if (selectedPoll.page_path.includes('prioritization')) {
+                        // Create a complete set of all 5 options (0-4) with default values for missing ones
+                        const completeResults = [];
+                        const resultsMap = new Map(filteredResults.map(r => [r.option_index, r]));
+                        
+                        for (let i = 0; i < 5; i++) {
+                          if (resultsMap.has(i)) {
+                            completeResults.push(resultsMap.get(i)!);
+                          } else {
+                            // Create a placeholder result for missing options
+                            completeResults.push({
+                              option_index: i,
+                              option_text: selectedPoll.options?.[i] || `Option ${i + 1}`,
+                              votes: 0,
+                              averageRank: 0
+                            });
+                          }
+                        }
+                        sortedResults = completeResults.sort((a, b) => (a.averageRank || 0) - (b.averageRank || 0));
+                      }
+                      
+                      return sortedResults.map((result, index) => {
                       const isTopChoice = index === 0; // First item after sorting by rank
                       
                     return (
@@ -1529,7 +1595,7 @@ export default function PollResultsClient() {
                               </div>
                             </div>
                           </div>
-                          <div className={`w-full max-w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden ${
+                          <div className={`w-full max-w-full bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden ${
                             isExpanded ? 'h-8' : 'h-5'
                           }`}>
                             <div
@@ -1563,88 +1629,106 @@ export default function PollResultsClient() {
                           </div>
                         </div>
                       );
-                    })
+                    });
+                    })()
                   ) : (
-                    // For single-choice polls, use the original logic
+                    // For single-choice polls, use compact horizontal layout
                     (() => {
                       const filteredResults = getFilteredPollResults(selectedPoll);
+                      const filteredTotal = filteredResults.reduce((sum, r) => sum + r.votes, 0);
                       const maxVotes = Math.max(...filteredResults.map(r => r.votes));
-                      return filteredResults.map((result, index) => {
-                        const filteredTotal = filteredResults.reduce((sum, r) => sum + r.votes, 0);
-                        const percentage = getPercentage(result.votes, filteredTotal);
-                        const isTopChoice = result.votes === maxVotes;
-                    
-                        return (
-                          <div key={result.option_index} className={`rounded-lg border-2 transition-all duration-300 ${
-                            isExpanded ? 'p-3' : 'p-4'
-                          } ${
-                            isTopChoice 
-                              ? 'border-blue-500 bg-white dark:bg-gray-800 dark:border-blue-400' 
-                              : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
-                          }`}>
-                            <div className={`flex items-center justify-between ${isExpanded ? 'mb-2' : 'mb-3'}`}>
-                              <div className="flex items-center space-x-3">
-                                {isTopChoice && (
-                                  <div className={`bg-blue-500 text-white rounded-full flex items-center justify-center font-bold ${
-                                    isExpanded ? 'w-8 h-8 text-sm' : 'w-8 h-8 text-sm'
-                                  }`}>
-                                    🏆
+                      
+                      // For prioritization questions, ensure all 5 options are shown in order
+                      let sortedResults = [...filteredResults].sort((a, b) => a.option_index - b.option_index);
+                      
+                      if (selectedPoll.page_path.includes('prioritization')) {
+                        // Create a complete set of all 5 options (0-4) with 0 votes for missing ones
+                        const completeResults = [];
+                        const resultsMap = new Map(filteredResults.map(r => [r.option_index, r]));
+                        
+                        for (let i = 0; i < 5; i++) {
+                          if (resultsMap.has(i)) {
+                            completeResults.push(resultsMap.get(i)!);
+                          } else {
+                            // Create a placeholder result for missing options
+                            completeResults.push({
+                              option_index: i,
+                              option_text: selectedPoll.options?.[i] || `Option ${i + 1}`,
+                              votes: 0
+                            });
+                          }
+                        }
+                        sortedResults = completeResults;
+                      }
+                      
+                      // Calculate the width needed for the longest option text
+                      const maxTextLength = Math.max(...sortedResults.map(r => r.option_text.length));
+                      const textWidth = Math.min(Math.max(maxTextLength * 8, 80), 150); // 8px per character, min 80px, max 150px
+                      
+                      // Define gradient colors from light to dark (lowest to highest votes)
+                      const getGradientColor = (votes: number, maxVotes: number) => {
+                        const ratio = maxVotes > 0 ? votes / maxVotes : 0;
+                        if (ratio >= 0.8) return 'bg-gradient-to-r from-indigo-600 to-indigo-700'; // Highest votes - dark indigo
+                        if (ratio >= 0.6) return 'bg-gradient-to-r from-indigo-500 to-indigo-600'; // High votes - indigo
+                        if (ratio >= 0.4) return 'bg-gradient-to-r from-blue-600 to-indigo-500'; // Medium votes - blue to indigo
+                        if (ratio >= 0.2) return 'bg-gradient-to-r from-blue-500 to-blue-600'; // Low votes - blue
+                        return 'bg-gradient-to-r from-blue-400 to-blue-500'; // Lowest votes - light blue
+                      };
+                      
+                      return (
+                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+                          <div className="space-y-2">
+                            {sortedResults.map((result, index) => {
+                              const percentage = getPercentage(result.votes, filteredTotal);
+                              const isTopChoice = result.votes === maxVotes;
+                              
+                              return (
+                                <div key={result.option_index} className="flex items-center space-x-3">
+                                  <div 
+                                    className="flex-shrink-0 text-xs font-medium text-gray-600 dark:text-gray-400 text-left"
+                                    style={{ width: `${textWidth}px` }}
+                                  >
+                                    {result.option_text}
                                   </div>
-                                )}
-                              <span className={`font-medium ${
-                                isExpanded ? 'text-lg' : 'text-base'
-                              } text-gray-900 dark:text-gray-100`}>
-                                {result.option_text}
-                              </span>
-                              </div>
-                              <div className="text-right">
-                                <div className={`font-bold text-gray-900 dark:text-gray-100 ${
-                                  isExpanded ? 'text-3xl' : 'text-2xl'
-                                }`}>
-                                  {result.votes}
+                                  <div className="flex-1 relative min-w-[80px]">
+                                    <div className="w-full bg-gray-200 dark:bg-gray-300 rounded-full h-4 overflow-hidden">
+                                      <div
+                                        className={`h-4 rounded-full transition-all duration-500 ${getGradientColor(result.votes, maxVotes)}`}
+                                        style={{ 
+                                          width: `${Math.max(2, percentage)}%` 
+                                        }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                  <div className="w-12 flex-shrink-0 text-xs font-semibold text-gray-700 dark:text-gray-300 text-right">
+                                    {result.votes}
+                                  </div>
                                 </div>
-                                <div className={`text-gray-600 dark:text-gray-400 ${
-                                  isExpanded ? 'text-base' : 'text-sm'
-                                }`}>
-                                  {percentage}%
-                                </div>
-                              </div>
-                            </div>
-                            <div className={`w-full max-w-full bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden ${
-                              isExpanded ? 'h-8' : 'h-5'
-                            }`}>
-                              <div
-                                className={`rounded-full transition-all duration-700 max-w-full ${
-                                  isExpanded ? 'h-8' : 'h-5'
-                                } ${
-                                  isTopChoice 
-                                    ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
-                                    : 'bg-gradient-to-r from-blue-400 to-blue-500'
-                                }`}
-                                style={{ width: `${Math.min(percentage, 100)}%` }}
-                              ></div>
-                            </div>
+                              );
+                            })}
                           </div>
-                        );
-                      });
+                          <div className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
+                            Total: {filteredTotal} response{filteredTotal !== 1 ? 's' : ''}
+                          </div>
+                        </div>
+                      );
                     })()
                   )}
                 </div>
 
-                {/* Prioritization Matrix Graphs - Show on second question of each pair (2, 4, 6, 8, 10) */}
+                {/* Prioritization Matrix Graphs - Show only after Question 2 (poll_index 1) */}
                 {selectedPoll.page_path.includes('prioritization') && 
-                 [1, 3, 5, 7, 9].includes(selectedPoll.poll_index) && 
+                 selectedPoll.poll_index === 1 && 
                  matrixData.length > 0 && (() => {
-                  // Find the specific graph for this question pair
-                  const questionPairIndex = [1, 3, 5, 7, 9].indexOf(selectedPoll.poll_index);
-                  const specificGraph = matrixData[questionPairIndex];
+                  // For prioritization, use the first graph (index 0)
+                  const specificGraph = matrixData[0];
                   
                   if (!specificGraph) return null;
                   
                   return (
                     <div className="mt-8 p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
                       <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">
-                        Prioritization Matrix Results
+                        Prioritization
                       </h3>
                       <div className="flex justify-center">
                         <div className="w-full max-w-4xl">
@@ -1668,7 +1752,7 @@ export default function PollResultsClient() {
                   return (
                     <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800">
                       <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">
-                        Prioritization Matrix Results
+                        Prioritization
                       </h3>
                       <div className="flex justify-center">
                         <div className="w-full max-w-4xl">

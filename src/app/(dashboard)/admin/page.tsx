@@ -11,7 +11,8 @@ import {
   FileText, 
   MessageSquare,
   BarChart3,
-  Settings
+  Settings,
+  Eye
 } from 'lucide-react';
 import AdminDashboardClient from './AdminDashboardClient';
 

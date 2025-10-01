@@ -43,6 +43,21 @@ export default function PollWithResults({
   const [showChangeOption, setShowChangeOption] = useState(false);
   const [otherText, setOtherText] = useState<string>('');
   const [userOtherText, setUserOtherText] = useState<string>('');
+  const [sessionId] = useState<string>(() => {
+    // Generate a unique session ID for this user session
+    // This ensures all votes from the same session use the same user_id
+    if (typeof window !== 'undefined') {
+      let sessionId = sessionStorage.getItem('cew-session-id');
+      if (!sessionId) {
+        sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        sessionStorage.setItem('cew-session-id', sessionId);
+      }
+      console.log(`[PollWithResults] Session ID generated/retrieved: ${sessionId}`);
+      return sessionId;
+    }
+    console.log(`[PollWithResults] Using default session ID (server-side)`);
+    return 'default';
+  });
 
   // Fetch results when component mounts
   useEffect(() => {
@@ -70,7 +85,11 @@ export default function PollWithResults({
   };
 
   const handleSubmitVote = async () => {
+    console.log(`[PollWithResults] handleSubmitVote called for poll ${pollIndex}`);
+    console.log(`[PollWithResults] selectedOption: ${selectedOption}, isLoading: ${isLoading}`);
+    
     if (selectedOption === null || isLoading) {
+      console.log(`[PollWithResults] Early return - selectedOption: ${selectedOption}, isLoading: ${isLoading}`);
       return;
     }
     
@@ -79,6 +98,17 @@ export default function PollWithResults({
       alert('Please provide details for your "Other" selection.');
       return;
     }
+
+    // Debug: Log session ID and vote details with timestamp
+    const voteTimestamp = new Date().toISOString();
+    console.log(`[PollWithResults] 🗳️ SUBMITTING VOTE - Poll ${pollIndex} at ${voteTimestamp}:`, {
+      sessionId,
+      authCode,
+      selectedOption,
+      pagePath,
+      timestamp: voteTimestamp,
+      userAgent: navigator.userAgent.substring(0, 50) + '...'
+    });
 
     // No device tracking for CEW pages - allow multiple votes
     setIsLoading(true);
@@ -91,6 +121,7 @@ export default function PollWithResults({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-session-id': sessionId,
         },
         body: JSON.stringify({
           pagePath,

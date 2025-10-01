@@ -3,6 +3,73 @@
 ## Overview
 This guide documents critical debugging issues encountered with the admin poll results system and provides solutions to prevent future problems.
 
+**JANUARY 2025 UPDATES**: Added matrix graph investigation findings, K6 test user ID mismatch resolution, overlapping data points visualization system, and admin panel improvements.
+
+## 🚨 CRITICAL: Holistic Protection Question Text Updates (2025-01-26)
+
+### **Question Text Synchronization Issues (NEW ISSUE)**
+**Problem**: Holistic protection questions showed different text in CEW polls vs admin panel vs database
+**Root Cause**: Hardcoded question text in frontend components didn't match database content
+**Bad Assumption**: "Frontend components fetch question text from database" - WRONG, they were hardcoded
+**Solution**: Update ALL locations simultaneously - database, CEW polls, survey-results, admin panel, k6 tests
+**Prevention**: Always verify data flow from database → API → frontend components
+
+### **Admin Panel Question Matching Failures (NEW ISSUE)**
+**Problem**: Admin panel showed "Question not found" for submitted responses
+**Root Cause**: `currentPollQuestions` array in admin panel didn't match actual database question text
+**Bad Assumption**: "Admin panel automatically matches questions" - WRONG, requires exact text matching
+**Solution**: Update `currentPollQuestions` array to match database question text exactly
+**Prevention**: Implement question matching validation in admin panel
+
+### **Matrix Graph Data Integration Complexity (NEW ISSUE)**
+**Problem**: Matrix graphs showed incorrect response counts (3 instead of 4)
+**Root Cause**: API was not properly combining data from both `/survey-results` and `/cew-polls` paths
+**Bad Assumption**: "Matrix graphs automatically aggregate all data" - WRONG, requires explicit data combination
+**Solution**: Implement `combineResults` helper function to merge data from both paths
+**Prevention**: Always test data aggregation with known data sets
+
+### **Filter System Implementation Gaps (NEW ISSUE)**
+**Problem**: Matrix graphs always showed combined data regardless of filter selection
+**Root Cause**: Filter parameter wasn't being passed from frontend to API
+**Bad Assumption**: "Filter system works automatically" - WRONG, requires explicit implementation
+**Solution**: Pass `filterMode` from frontend to API and implement filtering logic
+**Prevention**: Test all filter combinations with known data sets
+
+### **Option Text Display Issues (NEW ISSUE)**
+**Problem**: Admin panel showed "Option A", "Option B" instead of actual option text
+**Root Cause**: Database `options` JSONB column contained placeholder values
+**Bad Assumption**: "Option text is automatically generated" - WRONG, it's stored in database
+**Solution**: Update `options` JSONB column with correct option strings
+**Prevention**: Verify option text in database matches frontend expectations
+
+### **Poll Index vs Question Number Confusion (NEW ISSUE)**
+**Problem**: Database `poll_index 0` corresponds to webpage "Question 1"
+**Root Cause**: Zero-based indexing in database vs one-based indexing in UI
+**Bad Assumption**: "poll_index matches question number" - WRONG, poll_index is zero-based
+**Solution**: Always account for zero-based indexing when mapping database to UI
+**Prevention**: Document indexing conventions clearly
+
+### **Duplicate Question Cleanup Issues (NEW ISSUE)**
+**Problem**: Prioritization group showed Q1-5, 11-13 instead of Q1-5
+**Root Cause**: Old duplicate questions (poll_index 10-12) still existed in database
+**Bad Assumption**: "Database cleanup was complete" - WRONG, duplicates remained
+**Solution**: Delete old duplicate questions from all poll tables
+**Prevention**: Implement comprehensive cleanup verification
+
+### **k6 Test Command Execution Errors (NEW ISSUE)**
+**Problem**: `node k6-test.js` failed with module not found error
+**Root Cause**: k6 scripts must be run with `k6 run` command, not `node`
+**Bad Assumption**: "k6 scripts run like regular Node.js scripts" - WRONG, they're k6-specific
+**Solution**: Use `k6 run k6-test.js` command
+**Prevention**: Document proper execution commands for all test scripts
+
+### **TypeScript Build Safety Issues (NEW ISSUE)**
+**Problem**: Production build failed due to TypeScript errors
+**Root Cause**: Missing type annotations and unescaped quotes in JSX
+**Bad Assumption**: "Code compiles locally so it will build in production" - WRONG, stricter production settings
+**Solution**: Fix all TypeScript errors and JSX compliance issues
+**Prevention**: Run `npm run build` frequently during development
+
 ## 🚨 CRITICAL: CEW Poll Multiple Submissions (2025-01-25)
 
 ### **CEW Poll Behavior Requirements (CRITICAL)**
@@ -664,6 +731,48 @@ const colors = isDarkMode ? darkColors : lightColors;
 - ✅ **Test TypeScript builds** after component changes
 - ✅ **Simplify component logic** when only one poll type is used
 
+### **Admin Panel Filtering Logic Inconsistency (January 2025)**
+**Problem**: Left panel vote counts for ranking and wordcloud polls show combined totals regardless of filter selection
+**Symptoms**: 
+- Left panel shows 948, 947, 945 responses even when "SSTAC & TWG" filter is selected
+- Main page correctly shows filtered counts (e.g., 2 responses)
+- Issue affects ranking polls (Q3, Q4) and wordcloud polls (Q5) in Prioritization group
+**Root Cause**: 
+- Left panel used `(poll.combined_survey_votes || 0) + (poll.combined_cew_votes || 0)` for ranking/wordcloud polls
+- `getFilteredPollResults` function didn't handle wordcloud polls properly
+- Wordcloud polls have empty `results` array and use `combined_survey_votes`/`combined_cew_votes` fields
+**Debugging Steps**:
+1. Check left panel vote count calculation logic
+2. Verify `getFilteredPollResults` function handles all poll types
+3. Test filtering with different poll types (single-choice, ranking, wordcloud)
+4. Ensure consistent data flow between main page and left panel
+**Solution Applied**:
+```typescript
+// Updated left panel to use filtered results for all poll types
+const totalVotes = getFilteredPollResults(poll).reduce((sum, r) => sum + r.votes, 0);
+
+// Added wordcloud-specific logic to getFilteredPollResults
+if (poll.is_wordcloud) {
+  const surveyVotes = poll.combined_survey_votes || 0;
+  const cewVotes = poll.combined_cew_votes || 0;
+  
+  if (filterMode === 'twg') {
+    return surveyVotes > 0 ? [{ option_index: 0, option_text: 'Survey Responses', votes: surveyVotes }] : [];
+  } else if (filterMode === 'cew') {
+    return cewVotes > 0 ? [{ option_index: 0, option_text: 'CEW Responses', votes: cewVotes }] : [];
+  } else if (filterMode === 'all') {
+    const totalVotes = surveyVotes + cewVotes;
+    return totalVotes > 0 ? [{ option_index: 0, option_text: 'All Responses', votes: totalVotes }] : [];
+  }
+  return [];
+}
+```
+**Prevention Protocol**:
+- ✅ **Test filtering functionality across all poll types** (single-choice, ranking, wordcloud)
+- ✅ **Ensure consistent data flow** between main page and left panel
+- ✅ **Use filtered results** for all vote count calculations
+- ✅ **Handle special cases** like wordcloud polls with empty results arrays
+
 ### **Question 13 Wordcloud Configuration Fix (RESOLVED)**
 **Problem**: Question 13 wordcloud was allowing 3 words instead of single-choice behavior
 **Error**: Users could submit multiple words when only one option should be allowed
@@ -693,6 +802,79 @@ const colors = isDarkMode ? darkColors : lightColors;
 - ✅ **Update both CEW and survey-results pages** simultaneously
 - ✅ **Test wordcloud behavior** after configuration changes
 - ✅ **Document question-specific configurations** in markdown files
+
+---
+
+## 🚨 **NEW DEBUGGING SCENARIOS (January 2025)**
+
+### **Scenario 11: K6 Test User ID Mismatch Issue**
+**Problem**: K6 test submitted 12,018 votes but all used same user_id (`CEW2025_default`), making vote pairing impossible for matrix graphs
+**Symptoms**:
+- K6 test reported 66.89% success rate (12,018 successful votes)
+- Matrix graphs showed only 5-8 manual test data points instead of expected 100+
+- All k6 votes appeared with same user_id in database
+**Root Cause**: API ignored k6's `user_id` in JSON payload and generated its own from `x-session-id` header. K6 test didn't send `x-session-id` header, resulting in default `sessionId = 'default'`
+**Debugging Steps**:
+1. Check database vote distribution: `SELECT user_id, COUNT(*) FROM poll_votes GROUP BY user_id`
+2. Verify API user_id generation logic in `/api/polls/submit/route.ts`
+3. Check k6 test headers: Look for `x-session-id` header in vote submissions
+4. Test API behavior: Send vote with/without `x-session-id` header
+**Solution**: Added `x-session-id` header to K6 test: `headers: { 'x-session-id': sessionId }`
+**Prevention**: Always send `x-session-id` header for CEW poll API calls to ensure consistent user_id generation
+
+### **Scenario 12: Matrix Graph Logic Confirmation**
+**Problem**: User reported "15 paired responses" but only "8 individual data points" displayed, suspecting algorithm bug
+**Symptoms**:
+- Left panel showed 15 total votes per question
+- Matrix graph showed only 8 individual data points
+- User expected all 15 votes to appear as dots
+**Root Cause**: Matrix graph logic was working correctly - shows unique users with paired votes, not total votes per question
+**Debugging Steps**:
+1. Verify matrix graph pairing logic in API
+2. Check database for users who voted on both questions in pair
+3. Confirm vote pairing algorithm behavior
+4. Test with known data sets
+**Solution**: Confirmed correct behavior: Left panel shows total votes (15), matrix graph shows unique users with paired votes (8)
+**Prevention**: Understand that matrix graphs require same user_id for both importance AND feasibility questions for pairing
+
+### **Scenario 13: Matrix Graph Overlapping Data Points**
+**Problem**: Multiple users submitting identical (x,y) coordinates appeared as single dots, obscuring data density
+**Symptoms**:
+- 15 users rated something as "Very Important" (1) and "Very Feasible" (1)
+- All 15 points appeared as single blue dot
+- Users couldn't tell if there was 1 response or 15 responses at that location
+**Root Cause**: No visualization system for handling overlapping data points in matrix graphs
+**Debugging Steps**:
+1. Identify overlapping coordinates in matrix graph data
+2. Test with high-density voting scenarios
+3. Analyze user feedback about data visibility
+4. Research data visualization best practices
+**Solution**: Implemented 4-mode visualization system:
+- **Jittered Mode**: Spreads overlapping points in small circular radius
+- **Size-Scaled Mode**: Larger dots represent more overlapping points (6px → 12px radius)
+- **Heatmap Mode**: Color intensity indicates number of overlapping points
+- **Concentric Mode**: Multiple rings around center point for clustering indication
+**Prevention**: Always consider data density visualization when multiple users can have identical coordinates
+
+### **Scenario 14: Admin Panel Vote Bar Color Issues**
+**Problem**: Dark grey vote bars were harsh and hard to read in admin panel
+**Symptoms**:
+- Vote bars appeared too dark and had poor contrast
+- Hard to distinguish between different vote counts
+- Poor readability in both light and dark modes
+**Root Cause**: Vote bars used dark grey background (`dark:bg-gray-700`) which was too harsh
+**Solution**: Updated all vote bars to use light grey (`dark:bg-gray-300`) for better contrast
+**Prevention**: Test color contrast in both light and dark modes for accessibility
+
+### **Scenario 15: Prioritization Questions Options Display**
+**Problem**: Prioritization questions (1-2) only showed options with votes, unlike holistic questions (1-8) which showed all 5 options
+**Symptoms**:
+- Holistic Protection questions displayed all 5 options consistently
+- Prioritization questions only showed options that received votes
+- Inconsistent display behavior between poll groups
+**Root Cause**: Missing logic to ensure all 5 options always display in order for prioritization questions
+**Solution**: Added logic to detect prioritization questions via `page_path.includes('prioritization')` and create complete option set (0-4) with 0 votes for missing options
+**Prevention**: Ensure consistent option display logic across all poll types
 
 ---
 

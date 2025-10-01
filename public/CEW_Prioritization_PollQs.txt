@@ -1,0 +1,30 @@
+Prioritization Polling Questions
+
+Poll Question 1:
+Rank the importance of incorporating bioavailability adjustments into sediment standards. (1 = very important to 5 = not important)
+
+Poll Question 2:
+Rank the feasibility of incorporating bioavailability adjustments into sediment standards. (1 = easily achievable to 5 = not feasible)
+
+Ranking Question 3:
+To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve utility of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.
+Distinguish "direct toxicity" and "food pathway toxicity" pathways explicitly.
+Clarify approach for incorporating human health endpoints in matrix standards.
+Clarify how spatial scale (areal spatial extent, vertical depth profile) is incorporated in application of matrix standards.
+Clarify whether and how multiple levels of protection are applied to account for differences in ecological sensitivity.
+
+Ranking Question 4:
+Of the four options below, what focus will provide greatest value to holistic sediment management in BC? (1 = top priority; 4 = lowest priority)
+Push guidance beyond generic numerical standards: Apply models and other technical tools to help develop Site-Specific Sediment Standards (Tier 2) for ecological health (e.g., equilibrium partitioning [EqP], acid volatile sulphides/simultaneously extractable metals [AVS/SEM], other modifying factors)
+Fill gaps and use surrogates: Develop Sediment Standards for missing substances and groups, using contaminants with an analogue (e.g., quantitative structure-activity relationship [QSAR]).
+Increase guidance for effects-based tools: Develop guidance for site-specific toxicity testing and/or biological monitoring, to evaluate site-specific risks beyond screening level assessment.
+Incorporate models and/or approaches for common mixtures: Develop sediment standards based on mixture models (e.g., target lipid model for petroleum hydrocarbons, toxic equivalents) rather than individual substances.
+
+Wordcloud Question 5:
+Overall, what is the greatest constraint to advancing holistic sediment protection in BC?
+Data availability (quantity, quality)
+Tools (models, test protocols, decision trees)
+Agreement on application (e.g., protection goals, spatial scale, matrix approach)
+Prescription (balance between consistency and flexibility [tiering] across different sites)
+Resourcing (e.g., effort of developing approach/tools, consultation, documentation)
+Other

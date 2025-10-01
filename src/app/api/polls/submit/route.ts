@@ -5,15 +5,12 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const { pagePath, pollIndex, question, options, optionIndex, otherText, authCode } = await request.json();
-    console.log(`[Poll Submit] Received vote for poll ${pollIndex} on page ${pagePath}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}${authCode ? `, authCode: "${authCode}"` : ''}`);
-
     // Determine if this is a CEW page
     const isCEWPage = pagePath.startsWith('/cew-polls/');
-    console.log(`[Poll Submit] isCEWPage: ${isCEWPage}, authCode: "${authCode}"`);
     let supabase, finalUserId;
 
     if (isCEWPage) {
-      // CEW pages: Use anonymous connection with authCode as userId
+      // CEW pages: Use anonymous connection with unique userId for each submission
       const cookieStore = await cookies();
       supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,13 +24,11 @@ export async function POST(request: NextRequest) {
         }
       );
       
-      // Test if the anonymous client is truly anonymous
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log(`[Poll Submit] Anonymous client user check:`, user);
-      
-      finalUserId = authCode || 'CEW2025';
-      console.log(`[Poll Submit] CEW page, using authCode: ${finalUserId}`);
-      console.log(`[Poll Submit] Supabase client created for CEW page`);
+      // Generate session-based user_id for CEW submissions to enable vote pairing
+      // This allows votes from the same session to be paired together for matrix graphs
+      // Use authCode + a session identifier that persists across multiple votes
+      const sessionId = request.headers.get('x-session-id') || 'default';
+      finalUserId = `${authCode || 'CEW2025'}_${sessionId}`;
     } else {
       // Authenticated pages: Use authenticated connection
       const cookieStore = await cookies();
@@ -60,7 +55,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
       finalUserId = user.id;
-      console.log(`[Poll Submit] Authenticated user: ${finalUserId}`);
     }
 
     // Get or create poll
@@ -73,15 +67,13 @@ export async function POST(request: NextRequest) {
       });
 
     if (pollError) {
-      console.error(`[Poll Submit] Error creating/getting poll for pollIndex ${pollIndex}:`, pollError);
+      console.error(`Error creating/getting poll for pollIndex ${pollIndex}:`, pollError);
       return NextResponse.json({ error: 'Failed to create/get poll' }, { status: 500 });
     }
 
-    console.log(`[Poll Submit] Poll created/found for pollIndex ${pollIndex}:`, pollData);
 
     // For CEW pages, allow multiple votes by inserting new records
     // For authenticated users, use upsert to allow vote changes
-    console.log(`[Poll Submit] Submitting vote for poll_id=${pollData}, user_id=${finalUserId}`);
     
     let voteData, voteError;
     
@@ -117,15 +109,13 @@ export async function POST(request: NextRequest) {
       voteError = error;
     }
     
-    console.log(`[Poll Submit] Submit result:`, { data: voteData, error: voteError });
 
     if (voteError) {
-      console.error(`[Poll Submit] Error submitting vote for pollIndex ${pollIndex}:`, voteError);
-      console.error(`[Poll Submit] Vote error details:`, JSON.stringify(voteError, null, 2));
-      return NextResponse.json({ error: 'Failed to submit vote', details: voteError.message }, { status: 500 });
+      console.error(`Error submitting vote for pollIndex ${pollIndex}:`, voteError);
+      return NextResponse.json({ error: 'Failed to submit vote' }, { status: 500 });
     }
 
-    console.log(`[Poll Submit] Vote submitted successfully for pollIndex ${pollIndex}:`, voteData);
+    // Success - vote submitted
     return NextResponse.json({ success: true, pollId: pollData });
   } catch (error) {
     console.error('Error in poll submit API:', error);

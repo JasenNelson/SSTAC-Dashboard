@@ -11,7 +11,8 @@ import {
   MessageSquare,
   BarChart3,
   Vote,
-  FileSearch
+  FileSearch,
+  Eye
 } from 'lucide-react';
 
 
@@ -214,6 +215,21 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                 </h3>
                 <p className="text-gray-600 text-sm">
                   View and analyze poll responses
+                </p>
+              </div>
+            </Link>
+
+            {/* Matrix Graph Demo */}
+            <Link href="/demo-matrix-graph" className="group">
+              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-blue-300">
+                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
+                  <Eye className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-2">
+                  Matrix Graph Demo
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  See overlapping data points visualization
                 </p>
               </div>
             </Link>

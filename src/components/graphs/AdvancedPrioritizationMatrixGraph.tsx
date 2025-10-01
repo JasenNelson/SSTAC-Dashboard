@@ -1,8 +1,7 @@
-// src/components/graphs/PrioritizationMatrixGraph.tsx
+// src/components/graphs/AdvancedPrioritizationMatrixGraph.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ScatterChart, Circle, Zap, Layers } from 'lucide-react';
 
 interface IndividualVotePair {
   userId: string;
@@ -13,21 +12,26 @@ interface IndividualVotePair {
 
 interface GraphProps {
   title: string;
-  avgImportance: number; // Correctly inverted scale 1-5
-  avgFeasibility: number; // Correctly inverted scale 1-5
+  avgImportance: number;
+  avgFeasibility: number;
   responses: number;
   individualPairs: IndividualVotePair[];
 }
 
 type VisualizationMode = 'jittered' | 'size-scaled' | 'heatmap' | 'concentric';
 
-export default function PrioritizationMatrixGraph({ title, avgImportance, avgFeasibility, responses, individualPairs }: GraphProps) {
+export default function AdvancedPrioritizationMatrixGraph({ 
+  title, 
+  avgImportance, 
+  avgFeasibility, 
+  responses, 
+  individualPairs 
+}: GraphProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [visualizationMode, setVisualizationMode] = useState<VisualizationMode>('jittered');
 
   // Debug: Log individual pairs received
-  console.log(`🎯 Matrix Graph "${title}" received ${individualPairs.length} individual pairs:`, individualPairs);
-
+  console.log(`🎯 Advanced Matrix Graph "${title}" received ${individualPairs.length} individual pairs:`, individualPairs);
 
   useEffect(() => {
     // Check for dark mode
@@ -45,23 +49,15 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
   }, []);
 
   // Helper function to convert scores (1-5) to coordinates within the safe plotting area
-  // Note: API sends 1=Very Important, 5=Not Important (inverted scale)
-  // We need to invert this so 1 becomes high on the graph (top-right)
   const calculateCoordinates = (importance: number, feasibility: number) => {
-    // Safe area: 120-680 pixels (560px range) to avoid edges and axis overlap
-    // Invert feasibility scale: 1 becomes 5, 5 becomes 1 for proper positioning
-    const invertedFeasibility = 6 - feasibility; // 1->5, 2->4, 3->3, 4->2, 5->1
-    // For importance: 1 (Very Important) should be at top (y=120), 5 (Not Important) at bottom (y=400)
-    // So we use importance directly, not inverted
-    const x = 120 + ((invertedFeasibility - 1) / 4) * 560; // 120 to 680
-    const y = 120 + ((importance - 1) / 4) * 280;   // 120 to 400 (1->120, 5->400)
-    
-    
+    const invertedFeasibility = 6 - feasibility;
+    const x = 120 + ((invertedFeasibility - 1) / 4) * 560;
+    const y = 120 + ((importance - 1) / 4) * 280;
     return { x, y };
   };
 
-  // Helper function to create clusters for overlapping data points
-  const createDataPointClusters = (pairs: IndividualVotePair[]) => {
+  // Create clusters for different visualization modes
+  const createClusters = (pairs: IndividualVotePair[]) => {
     const clusters = new Map<string, IndividualVotePair[]>();
     
     // Group pairs by their exact coordinates
@@ -133,7 +129,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
         x,
         y,
         clusterSize,
-        radius: Math.min(12, 4 + clusterSize * 1.5)
+        radius: Math.min(12, 4 + clusterSize * 1.5) // Scale radius with cluster size
       };
     });
   };
@@ -181,93 +177,40 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
     axis: isDarkMode ? '#ffffff' : '#000000',
     text: isDarkMode ? '#ffffff' : '#374151',
     textSecondary: isDarkMode ? '#d1d5db' : '#6b7280',
-    highPriority: '#059669', // Green stays the same
-    noGo: '#dc2626', // Red stays the same
-    averageStar: '#FFD700', // Golden star
-    averageStarStroke: '#FFA500', // Darker gold stroke
-    individualDot: '#2563eb' // Blue individual dots for better contrast
+    highPriority: '#059669',
+    noGo: '#dc2626',
+    averageStar: '#FFD700',
+    averageStarStroke: '#FFA500',
+    individualDot: '#2563eb'
   };
 
-  // Cluster size-based color scheme (light to dark blue progression)
-  const getClusterColor = (clusterSize: number) => {
-    if (clusterSize === 1) {
-      return '#3b82f6'; // Standard blue - single points (more visible than light blue)
-    } else if (clusterSize === 2) {
-      return '#2563eb'; // Medium dark blue - 2 points
-    } else if (clusterSize === 3) {
-      return '#1d4ed8'; // Dark blue - 3 points
-    } else if (clusterSize === 4) {
-      return '#1e40af'; // Darker blue - 4 points
-    } else if (clusterSize === 5) {
-      return '#1e3a8a'; // Very dark blue - 5 points
-    } else if (clusterSize === 6) {
-      return '#312e81'; // Indigo - 6 points
-    } else if (clusterSize <= 10) {
-      return '#4338ca'; // Dark indigo - 7-10 points
-    } else if (clusterSize <= 20) {
-      return '#3730a3'; // Deeper indigo - 11-20 points
-    } else {
-      return '#1e1b4b'; // Darkest indigo - 20+ points
-    }
-  };
+  // Get clusters and render based on visualization mode
+  const clusters = createClusters(individualPairs);
 
   return (
     <div className="p-3 border rounded-lg shadow-md bg-white dark:bg-gray-800">
-      <div className="flex justify-between items-center mb-2 h-10">
-        {/* Visualization Mode Selector - Top Left */}
-        <div className="flex gap-1">
-          <button
-            onClick={() => setVisualizationMode('jittered')}
-            className={`p-2 rounded-md transition-all ${
-              visualizationMode === 'jittered'
-                ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-            title="Jittered clustering - spread overlapping points"
-          >
-            <ScatterChart className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setVisualizationMode('size-scaled')}
-            className={`p-2 rounded-md transition-all ${
-              visualizationMode === 'size-scaled'
-                ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-            title="Size-scaled - larger dots for more overlapping points"
-          >
-            <Circle className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setVisualizationMode('heatmap')}
-            className={`p-2 rounded-md transition-all ${
-              visualizationMode === 'heatmap'
-                ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-            title="Heatmap - color intensity shows density"
-          >
-            <Zap className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setVisualizationMode('concentric')}
-            className={`p-2 rounded-md transition-all ${
-              visualizationMode === 'concentric'
-                ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-            title="Concentric circles - rings show overlapping points"
-          >
-            <Layers className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Title - Centered */}
+      <div className="flex justify-between items-center mb-2">
         <h3 className="text-base font-semibold text-center text-gray-900 dark:text-white flex-1">{title}</h3>
         
-        {/* Empty div for spacing */}
-        <div className="w-20"></div>
+        {/* Visualization Mode Selector */}
+        <div className="flex gap-1 ml-2">
+          {(['jittered', 'size-scaled', 'heatmap', 'concentric'] as VisualizationMode[]).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setVisualizationMode(mode)}
+              className={`px-2 py-1 text-xs rounded ${
+                visualizationMode === mode
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+              }`}
+              title={`Switch to ${mode.replace('-', ' ')} visualization`}
+            >
+              {mode.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+            </button>
+          ))}
+        </div>
       </div>
+
       <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
         <svg
           className="w-full h-full rounded-md"
@@ -277,7 +220,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
           {/* Background */}
           <rect width="800" height="450" fill={colors.background} />
           
-          {/* Solid axis lines - positioned to avoid text overlap */}
+          {/* Solid axis lines */}
           <line x1="100" y1="50" x2="100" y2="400" stroke={colors.axis} strokeWidth="4" />
           <line x1="100" y1="400" x2="700" y2="400" stroke={colors.axis} strokeWidth="4" />
           
@@ -285,7 +228,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
           <line x1="400" y1="50" x2="400" y2="400" stroke={isDarkMode ? '#4b5563' : '#e5e7eb'} strokeWidth="2" strokeDasharray="5,5" />
           <line x1="100" y1="225" x2="700" y2="225" stroke={isDarkMode ? '#4b5563' : '#e5e7eb'} strokeWidth="2" strokeDasharray="5,5" />
           
-          {/* Y-axis label (Importance) */}
+          {/* Y-axis label */}
           <text
             x="50"
             y="225"
@@ -300,7 +243,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
           </text>
           <polygon points="40,60 60,60 50,40" fill={colors.axis} />
           
-          {/* X-axis label (Feasible) */}
+          {/* X-axis label */}
           <text 
             x="400" 
             y="430" 
@@ -314,8 +257,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
           </text>
           <polygon points="680,420 680,440 700,430" fill={colors.axis} />
           
-          {/* Quadrant labels - positioned to avoid axis overlap with text wrapping */}
-          {/* Top-Left: LONGER-TERM */}
+          {/* Quadrant labels */}
           <text x="250" y="100" textAnchor="middle" dominantBaseline="middle" fill={colors.text} fontSize="18" fontWeight="bold">
             LONGER-TERM
           </text>
@@ -326,7 +268,6 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
             currently feasible
           </text>
           
-          {/* Top-Right: HIGH PRIORITY NEAR-TERM */}
           <text x="550" y="95" textAnchor="middle" dominantBaseline="middle" fill={colors.highPriority} fontSize="18" fontWeight="bold">
             HIGH PRIORITY
           </text>
@@ -340,7 +281,6 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
             feasible now
           </text>
           
-          {/* Bottom-Left: NO GO */}
           <text x="250" y="300" textAnchor="middle" dominantBaseline="middle" fill={colors.noGo} fontSize="18" fontWeight="bold">
             NO GO
           </text>
@@ -351,7 +291,6 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
             or feasible
           </text>
           
-          {/* Bottom-Right: POSSIBLY LATER? */}
           <text x="550" y="300" textAnchor="middle" dominantBaseline="middle" fill={colors.text} fontSize="18" fontWeight="bold">
             POSSIBLY LATER?
           </text>
@@ -362,37 +301,30 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
             currently important
           </text>
           
-          {/* Individual data points with different visualization modes */}
+          {/* Render data points based on visualization mode */}
           {(() => {
-            const clusters = createDataPointClusters(individualPairs);
-            
             switch (visualizationMode) {
               case 'jittered':
                 const jitteredPoints = createJitteredPoints(clusters);
-                return jitteredPoints.map((point, index) => {
-                  const { pair, x, y, clusterSize } = point;
-                  const dotColor = getClusterColor(clusterSize);
-                  
-                  return (
-                    <circle
-                      key={`jittered-${index}`}
-                      cx={x}
-                      cy={y}
-                      r={clusterSize > 1 ? 4 : 6}
-                      fill={dotColor}
-                      opacity={clusterSize > 1 ? 0.7 : 0.8}
-                      stroke={colors.background}
-                      strokeWidth="1"
-                    >
-                      <title>
-                        {clusterSize > 1 
-                          ? `${clusterSize} users at this location | User: ${pair.userId.substring(0, 8)}... | Importance: ${pair.importance}, Feasibility: ${pair.feasibility}`
-                          : `User: ${pair.userId.substring(0, 8)}... | Importance: ${pair.importance}, Feasibility: ${pair.feasibility}`
-                        }
-                      </title>
-                    </circle>
-                  );
-                });
+                return jitteredPoints.map((point, index) => (
+                  <circle
+                    key={`jittered-${index}`}
+                    cx={point.x}
+                    cy={point.y}
+                    r={point.clusterSize > 1 ? 4 : 6}
+                    fill={colors.individualDot}
+                    opacity={point.clusterSize > 1 ? 0.7 : 0.8}
+                    stroke={colors.background}
+                    strokeWidth="1"
+                  >
+                    <title>
+                      {point.clusterSize > 1 
+                        ? `${point.clusterSize} users at this location | User: ${point.pair.userId.substring(0, 8)}... | Importance: ${point.pair.importance}, Feasibility: ${point.pair.feasibility}`
+                        : `User: ${point.pair.userId.substring(0, 8)}... | Importance: ${point.pair.importance}, Feasibility: ${point.pair.feasibility}`
+                      }
+                    </title>
+                  </circle>
+                ));
 
               case 'size-scaled':
                 const sizeScaledPoints = createSizeScaledPoints(clusters);
@@ -402,7 +334,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
                     cx={point.x}
                     cy={point.y}
                     r={point.radius}
-                    fill={getClusterColor(point.clusterSize)}
+                    fill={colors.individualDot}
                     opacity="0.8"
                     stroke={colors.background}
                     strokeWidth="2"
@@ -421,7 +353,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
                     cx={point.x}
                     cy={point.y}
                     r="8"
-                    fill={getClusterColor(point.clusterSize)}
+                    fill={colors.individualDot}
                     opacity={0.3 + point.intensity * 0.7}
                     stroke={colors.background}
                     strokeWidth="1"
@@ -443,7 +375,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
                         cy={point.y}
                         r={6 + ringIndex * 4}
                         fill="none"
-                        stroke={getClusterColor(point.clusterSize)}
+                        stroke={colors.individualDot}
                         strokeWidth="2"
                         opacity={0.8 - ringIndex * 0.2}
                       >
@@ -457,7 +389,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
                       cx={point.x}
                       cy={point.y}
                       r="4"
-                      fill={getClusterColor(point.clusterSize)}
+                      fill={colors.individualDot}
                       opacity="0.9"
                     />
                   </g>
@@ -483,57 +415,21 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
           )}
         </svg>
       </div>
+
+      {/* Description with visualization mode info */}
       <div className="text-center mt-2">
         <p className="text-base text-gray-600 dark:text-gray-300">
           Based on {responses} paired response(s). Showing {individualPairs.length} individual data points.
+        </p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+          Mode: {visualizationMode.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} | 
           {(() => {
-            const clusters = createDataPointClusters(individualPairs);
             const overlappingClusters = Array.from(clusters.values()).filter(c => c.length > 1);
-            const totalOverlappingPoints = overlappingClusters.reduce((sum, cluster) => sum + cluster.length, 0);
-            
-            if (overlappingClusters.length > 0) {
-              return (
-                <span className="block text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {overlappingClusters.length} location{overlappingClusters.length > 1 ? 's' : ''} with multiple responses (total: {totalOverlappingPoints} points)
-                </span>
-              );
-            }
-            return null;
+            return overlappingClusters.length > 0 
+              ? ` ${overlappingClusters.length} location${overlappingClusters.length > 1 ? 's' : ''} with multiple responses`
+              : ' No overlapping data points';
           })()}
         </p>
-        
-        {/* Mode indicator */}
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Mode: {visualizationMode.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-        </p>
-        
-        {/* Color Legend */}
-        {(() => {
-          const clusters = createDataPointClusters(individualPairs);
-          const clusterSizes = new Set(Array.from(clusters.values()).map(c => c.length));
-          const hasMultipleSizes = clusterSizes.size > 1;
-          
-          if (hasMultipleSizes) {
-            const sortedSizes = Array.from(clusterSizes).sort((a, b) => a - b);
-            return (
-              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                <span className="font-medium">Color indicates cluster size:</span>
-                <div className="flex justify-center items-center gap-2 mt-1 flex-wrap">
-                  {sortedSizes.map(size => (
-                    <div key={size} className="flex items-center gap-1">
-                      <div 
-                        className="w-3 h-3 rounded-full border border-gray-300 dark:border-gray-600"
-                        style={{ backgroundColor: getClusterColor(size) }}
-                      />
-                      <span>{size} point{size > 1 ? 's' : ''}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          }
-          return null;
-        })()}
       </div>
     </div>
   );

@@ -166,7 +166,7 @@ function testWordcloudQuestion5(authCode) {
   const response = http.post(`${BASE_URL}/api/wordcloud-polls/submit`, JSON.stringify({
     pagePath: basePath,
     pollIndex: pollIndex,
-    question: "Overall, what is the greatest barrier to advancing holistic sediment protection in BC?",
+    question: "Overall, what is the greatest constraint to advancing holistic sediment protection in BC?",
     words: [wordToSubmit],
     authCode: uniqueUserId, // Use unique ID to allow multiple submissions
     maxWords: 1,
@@ -254,12 +254,12 @@ function testPrioritization(authCode) {
   const singleChoiceQuestions = [
     {
       pollIndex: 0,
-      question: "Rank the importance of developing a framework for deriving site-specific sediment standards, based on bioavailability adjustment, to provide an enhanced numerical assessment option (Tier 2), between generic numerical (Tier 1) and risk-based (Tier 3) assessments. (1 = very important to 5 = not important)",
+      question: "Rank the importance of incorporating bioavailability adjustments into sediment standards. (1 = very important to 5 = not important)",
       options: ["Very Important", "Important", "Moderately Important", "Less Important", "Not Important"]
     },
     {
       pollIndex: 1,
-      question: "Rank the feasibility of developing the framework for deriving site-specific sediment standards, based on an integrated approach using Equilibrium Partitioning and Biotic Ligand Models. (1 = easily achievable to 5 = not feasible)",
+      question: "Rank the feasibility of incorporating bioavailability adjustments into sediment standards. (1 = easily achievable to 5 = not feasible)",
       options: ["Easily Achievable", "Achievable", "Moderately Achievable", "Difficult", "Not Feasible"]
     }
   ];
@@ -285,7 +285,7 @@ function testPrioritization(authCode) {
   const rankingQuestions = [
     {
       pollIndex: 2,
-      question: "To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve development of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.",
+      question: "To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve utility of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.",
       options: [
         "Developing the technical approach to define what \"direct toxicity\" and \"food pathway toxicity\" mean for the framework.",
         "Determining what approach ENV should take to develop human health standards, given there are other agencies working on like standards.",

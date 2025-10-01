@@ -48,6 +48,118 @@
 --    - Aquatic blue/green color scheme
 --    - 1-3 words per submission, 20 character limit
 
+-- 8. HOLISTIC PROTECTION QUESTION TEXT UPDATES (2025-01-26):
+--    - Question text synchronization across ALL locations is CRITICAL
+--    - Database, CEW polls, survey-results, admin panel, k6 tests must match exactly
+--    - Mismatched text causes "Question not found" errors in admin panel
+--    - Always update ALL locations simultaneously with identical text
+--    - Verify data flow: Database → API → Frontend components
+
+-- 9. ADMIN PANEL QUESTION MATCHING (2025-01-26):
+--    - currentPollQuestions array must match database question text exactly
+--    - Case-sensitive matching required
+--    - Extra spaces or special characters cause matching failures
+--    - Implement question matching validation in admin panel
+
+-- 10. MATRIX GRAPH DATA INTEGRATION (2025-01-26):
+--    - API must combine data from both /survey-results and /cew-polls paths
+--    - Use combineResults helper function to merge data properly
+--    - Test data aggregation with known data sets
+--    - Verify response counts match expected values
+
+-- 11. FILTER SYSTEM IMPLEMENTATION (2025-01-26):
+--    - Filter parameter must be passed from frontend to API
+--    - Implement filtering logic in API endpoint
+--    - Test all filter combinations with known data
+--    - Verify graphs change based on filter selection
+
+-- 12. POLL INDEX vs QUESTION NUMBER (2025-01-26):
+--    - Database poll_index is ZERO-BASED (0, 1, 2, 3...)
+--    - UI question numbers are ONE-BASED (1, 2, 3, 4...)
+--    - poll_index 0 = Question 1, poll_index 1 = Question 2, etc.
+--    - Always account for zero-based indexing when mapping database to UI
+
+-- 13. OPTION TEXT DISPLAY (2025-01-26):
+--    - Database options JSONB column contains actual option text
+--    - Not automatically generated - stored in database
+--    - Verify option text matches frontend expectations
+--    - Update options column with correct option strings
+
+-- 14. DUPLICATE QUESTION CLEANUP (2025-01-26):
+--    - Check for duplicate poll_index values in all poll tables
+--    - Delete old duplicate questions before adding new ones
+--    - Implement comprehensive cleanup verification
+--    - Test admin panel display after cleanup
+
+-- 15. k6 TEST EXECUTION (2025-01-26):
+--    - k6 scripts must be run with 'k6 run' command, NOT 'node'
+--    - 'node k6-test.js' fails with module not found error
+--    - Document proper execution commands for all test scripts
+--    - Test script execution before deployment
+
+-- 16. TYPESCRIPT BUILD SAFETY (2025-01-26):
+--    - Run 'npm run build' frequently during development
+--    - Fix all TypeScript errors and JSX compliance issues
+--    - Production build has stricter settings than local development
+--    - No implicit 'any' types allowed in production
+
+-- 17. MATRIX GRAPH VISUALIZATION SYSTEM (January 2025):
+--    - 4-mode visualization for overlapping data points: Jittered, Size-Scaled, Heatmap, Concentric
+--    - Improved color spectrum from light blue to standard blue progression
+--    - Icon-based mode switching with ScatterChart, Circle, Zap, Layers icons
+--    - Enhanced tooltips showing cluster size and individual user information
+--    - Clustering algorithms with adaptive jittering radius for overlapping points
+--    - Professional UI with government-appropriate styling and accessibility
+
+-- 18. K6 TEST USER ID MISMATCH ISSUE (January 2025):
+--    - CRITICAL: API ignores k6's user_id in JSON payload
+--    - API generates user_id from x-session-id header, not JSON payload
+--    - K6 test must send x-session-id header for proper user_id generation
+--    - Without x-session-id header, all votes get same user_id (CEW2025_default)
+--    - This prevents vote pairing for matrix graphs
+--    - Solution: Add headers: { 'x-session-id': sessionId } to K6 test submissions
+
+-- 19. MATRIX GRAPH LOGIC CONFIRMATION (January 2025):
+--    - Matrix graphs show unique users with paired votes, NOT total votes per question
+--    - Left panel shows total votes (e.g., 15 for Q1, 15 for Q2)
+--    - Matrix graph shows unique users who voted on BOTH questions (e.g., 8 users)
+--    - This is CORRECT behavior - not a bug
+--    - Matrix graphs require same user_id for both importance AND feasibility questions
+
+-- 20. ADMIN PANEL UI/UX IMPROVEMENTS (January 2025):
+--    - Vote bars updated from dark grey to light grey (dark:bg-gray-300) for better contrast
+--    - Prioritization questions now display all 5 options consistently
+--    - Logic added to detect prioritization questions via page_path.includes('prioritization')
+--    - Complete option set (0-4) created with 0 votes for missing options
+--    - Consistent display behavior across all poll types
+
+-- 21. DATABASE vs FRONTEND DISCREPANCIES (2025-01-26):
+--    - Frontend components may be hardcoded, not fetching from database
+--    - Always verify data flow from database to frontend
+--    - Update database to match frontend expectations first
+--    - Then update frontend to fetch from database
+
+-- 22. COMMON DEBUGGING MISTAKES TO AVOID:
+--    - Assuming hardcoded data matches database
+--    - Not testing filter combinations
+--    - Ignoring zero-based vs one-based indexing
+--    - Not running production builds during development
+--    - Using wrong command for k6 tests
+--    - Not verifying data aggregation logic
+--    - Assuming automatic question matching
+--    - Not checking option text in database
+--    - Ignoring duplicate data cleanup
+--    - Not testing with known data sets
+
+-- 19. ADMIN PANEL FILTERING LOGIC INCONSISTENCY (January 2025):
+--    - Left panel vote counts for ranking and wordcloud polls showed combined totals regardless of filter selection
+--    - Root cause: Used (poll.combined_survey_votes || 0) + (poll.combined_cew_votes || 0) instead of filtered results
+--    - getFilteredPollResults function didn't handle wordcloud polls properly
+--    - Wordcloud polls have empty results array and use combined_survey_votes/combined_cew_votes fields
+--    - Solution: Updated getFilteredPollResults to handle all poll types consistently
+--    - Added wordcloud-specific logic that creates mock results based on vote count fields
+--    - Always test filtering functionality across all poll types and ensure consistent data flow
+
 -- 8. CEW POLL MULTIPLE SUBMISSIONS (2025-01-25):
 --    - CEW polls allow multiple submissions from same conference code (CEW2025)
 --    - Each submission gets unique user_id: ${authCode}_${timestamp}_${randomSuffix}

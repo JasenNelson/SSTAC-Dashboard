@@ -85,6 +85,8 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 cover/
+tests/test-results/
+tests/*.log
 
 # Other Python-specific ignores
 local_settings.py
