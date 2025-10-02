@@ -48,6 +48,15 @@
 --    - Aquatic blue/green color scheme
 --    - 1-3 words per submission, 20 character limit
 
+-- 8. MATRIX GRAPH SYSTEM (2025-01-01):
+--    - Prioritization matrix graphs for question pairs (1-2, 3-4, 5-6, 7-8, 9-10)
+--    - CEW users: Multiple votes create multiple data points (Phase 2 fix)
+--    - Authenticated users: Only last vote per question per user
+--    - Vote tracking: importanceVotes/feasibilityVotes arrays for CEW users
+--    - Data point creation: Multiple pairs for CEW, single pair for authenticated
+--    - User ID consistency: x-session-id header for proper vote pairing
+--    - Overlapping visualization: 4-mode system (Jittered, Size-Scaled, Heatmap, Concentric)
+
 -- 8. HOLISTIC PROTECTION QUESTION TEXT UPDATES (2025-01-26):
 --    - Question text synchronization across ALL locations is CRITICAL
 --    - Database, CEW polls, survey-results, admin panel, k6 tests must match exactly
@@ -109,9 +118,15 @@
 --    - Icon-based mode switching with ScatterChart, Circle, Zap, Layers icons
 --    - Enhanced tooltips showing cluster size and individual user information
 --    - Clustering algorithms with adaptive jittering radius for overlapping points
---    - Professional UI with government-appropriate styling and accessibility
 
--- 18. K6 TEST USER ID MISMATCH ISSUE (January 2025):
+-- 18. MATRIX GRAPH UI CLEANUP (January 2025):
+--    - Simplified text display: "n = X" format instead of verbose response counts
+--    - Color spectrum bar: Gradient bar (max 6 segments) instead of individual dots
+--    - Fallback messaging: "All points at same location (X points)" for single-cluster data
+--    - Cleaner legend: "Light = less, Dark = more" simplified explanation
+--    - Professional appearance: Scientific/statistical visualization style
+
+-- 19. K6 TEST USER ID MISMATCH ISSUE (January 2025):
 --    - CRITICAL: API ignores k6's user_id in JSON payload
 --    - API generates user_id from x-session-id header, not JSON payload
 --    - K6 test must send x-session-id header for proper user_id generation
@@ -162,7 +177,7 @@
 
 -- 8. CEW POLL MULTIPLE SUBMISSIONS (2025-01-25):
 --    - CEW polls allow multiple submissions from same conference code (CEW2025)
---    - Each submission gets unique user_id: ${authCode}_${timestamp}_${randomSuffix}
+--    - Each submission gets unique user_id: ${authCode}_${sessionId} where sessionId is from x-session-id header
 --    - NO deletions for CEW submissions - all responses are preserved
 --    - Enables multiple conference attendees to submit using same CEW2025 code
 --    - Applies to all poll types: single-choice, ranking, and wordcloud
@@ -901,11 +916,12 @@ CREATE TABLE IF NOT EXISTS polls (
 CREATE TABLE IF NOT EXISTS poll_votes (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     poll_id UUID REFERENCES polls(id) ON DELETE CASCADE,
-    user_id TEXT NOT NULL, -- Can be UUID (authenticated) or CEW code (e.g., "CEW2025")
+    user_id TEXT NOT NULL, -- Can be UUID (authenticated) or CEW code (e.g., "CEW2025_session_123")
     option_index INTEGER NOT NULL, -- 0-based index of selected option
     other_text TEXT, -- For "Other" option responses
     voted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-    -- NOTE: Unique constraints removed for CEW polls - handled in application logic
+    -- NOTE: Unique constraints removed for CEW polls - allows multiple votes per user
+    -- CEW pairing logic: Chronological pairing (1st importance + 1st feasibility, etc.)
 );
 
 -- Ranking polls table to store ranking poll definitions

@@ -24,10 +24,9 @@ export async function POST(request: NextRequest) {
         }
       );
       
-      // Generate session-based user_id for CEW submissions to enable vote pairing
-      // This allows votes from the same session to be paired together for matrix graphs
-      // Use authCode + a session identifier that persists across multiple votes
-      const sessionId = request.headers.get('x-session-id') || 'default';
+      // Generate session-based user_id for CEW polls
+      // This approach was working correctly and should be maintained
+      const sessionId = request.headers.get('x-session-id') || `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
       finalUserId = `${authCode || 'CEW2025'}_${sessionId}`;
     } else {
       // Authenticated pages: Use authenticated connection

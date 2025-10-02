@@ -4,7 +4,7 @@
 
 **HISTORICAL CONTEXT**: This guide was created after January 2025 debugging incidents where multiple incorrect assumptions were made despite reviewing existing markdowns and running queries. Only after analyzing actual CSV exports of database tables was the true system structure understood.
 
-**JANUARY 2025 UPDATE**: Added comprehensive debugging lessons from holistic protection question text update process, including question text synchronization issues, admin panel matching failures, matrix graph data integration complexity, and filter system implementation gaps. **MATRIX GRAPH VISUALIZATION ENHANCEMENT**: Added 4-mode overlapping data points visualization system (Jittered, Size-Scaled, Heatmap, Concentric), improved color spectrum, and comprehensive K6 testing with proper user ID generation.
+**JANUARY 2025 UPDATE**: Added comprehensive debugging lessons from holistic protection question text update process, including question text synchronization issues, admin panel matching failures, matrix graph data integration complexity, and filter system implementation gaps. **MATRIX GRAPH VISUALIZATION ENHANCEMENT**: Added 4-mode overlapping data points visualization system (Jittered, Size-Scaled, Heatmap, Concentric), improved color spectrum, and comprehensive K6 testing with proper user ID generation. **UI CLEANUP**: Simplified matrix graph text display with "n = X" format, replaced individual color dots with gradient spectrum bar (max 6 segments), and added fallback messaging for single-cluster data.
 
 ## 📊 **ACTUAL Database Structure (Based on CSV Analysis)**
 
@@ -45,13 +45,32 @@
 - **CEW Multiple Submissions**: Unique user_id generation allows multiple submissions from same conference code
 - **Unique Constraint**: `UNIQUE(poll_id, user_id, word)` prevents duplicate words from same user
 
-#### **4. Prioritization Matrix Graph System** ✅ **COMPLETED (January 2025)**
+#### **4. Prioritization Matrix Graph System** ✅ **COMPLETED & VERIFIED (January 2025)**
 - **API Endpoint**: `/api/graphs/prioritization-matrix`
 - **Component**: `PrioritizationMatrixGraph.tsx`
+- **UI Enhancements**: Clean text display with "n = X" format, color spectrum bar (max 6 dots), simplified legend
 - **Data Source**: Non-aggregated vote data from `poll_votes` table
 - **Question Pairs**: 5 matrix graphs for question pairs 1-2, 3-4, 5-6, 7-8, 9-10
 - **Scale Inversion**: Correctly inverts 1-5 scale (1=high, 5=low) for proper graph mapping
 - **User Pairing**: Groups votes by user, only includes users who voted on both questions in pair
+- **CEW Multiple Votes**: ✅ **FIXED & VERIFIED** - CEW users can submit multiple votes, each creating separate data points
+- **Authenticated Users**: Only last vote per question per user (existing behavior maintained)
+- **Vote Tracking**: 
+  - **CEW Users**: Tracks ALL votes in `importanceVotes` and `feasibilityVotes` arrays
+  - **Authenticated Users**: Uses single `importance` and `feasibility` values (last vote only)
+- **Data Point Creation**: 
+  - **CEW Users**: Creates pairs based on **chronological voting sessions** (1st importance vote pairs with 1st feasibility vote, 2nd with 2nd, etc.)
+  - **Authenticated Users**: Creates single pair per user (one data point per user)
+- **CEW Pairing Logic**: 
+  - Votes are sorted by timestamp to maintain chronological order
+  - Each voting session creates one data point: `(importance_vote_i, feasibility_vote_i)`
+  - Total CEW data points = `min(importance_votes_count, feasibility_votes_count)`
+  - Example: 1 CEW user with 2 importance votes + 2 feasibility votes = 2 data points
+- **Filter System**: ✅ **FULLY OPERATIONAL**
+  - **"All Responses"**: Shows combined CEW + authenticated data points
+  - **"CEW Only"**: Shows CEW data points only
+  - **"SSTAC/TWG"**: Shows authenticated data points only
+- **API Query Fix**: ✅ **RESOLVED** - Now queries both CEW and survey-results polls for complete data
 - **Visualization**: Custom SVG implementation with landscape orientation (16:9)
 - **Color Coding**: Green for HIGH PRIORITY, red for NO GO, black for other quadrants
 - **Dark Mode**: Dynamic theming with light text on dark backgrounds
@@ -65,6 +84,7 @@
 - **Mode Switching**: Icon-based UI controls (ScatterChart, Circle, Zap, Layers icons)
 - **Enhanced Tooltips**: Show cluster size and individual user information
 - **K6 Testing**: Enhanced test with proper user ID generation via `x-session-id` header
+- **Phase 2 Fix**: Resolved issue where matrix graphs only showed 1 data point per user instead of multiple data points from multiple votes
 
 ### **Current Database State (Post-Cleanup)**
 
@@ -374,7 +394,7 @@ Without this protection, empty wordcloud polls cause division by zero errors and
 6. **CEW vs Survey**: Same questions, different user_id values
 7. **Views are critical**: Use `poll_results`, `ranking_results`, and `wordcloud_results` for aggregated data
 8. **CEW Multiple Submissions**: All poll types (single-choice, ranking, wordcloud) allow multiple submissions from same CEW2025 code
-9. **CEW User ID Generation**: Each submission gets unique user_id: `${authCode}_${timestamp}_${randomSuffix}`
+9. **CEW User ID Generation**: Each submission gets unique user_id: `${authCode}_${sessionId}` where sessionId is generated from x-session-id header or session_${timestamp}_${randomSuffix}
 10. **CEW No Deletions**: CEW submissions are never deleted - all responses preserved for conference attendees
 11. **Authenticated vs CEW**: Authenticated users get vote replacement (delete + insert), CEW users get additive submissions
 12. **Question 13 configuration**: Single-choice wordcloud (max_words=1) with predefined options

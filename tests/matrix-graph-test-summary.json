@@ -1,0 +1,17 @@
+{
+  "timestamp": "2025-10-02T03:43:01.093Z",
+  "test_duration": 14414.3574,
+  "total_requests": 6,
+  "error_rate": 0,
+  "avg_response_time": 2050.6355500000004,
+  "p95_response_time": 3134.771025,
+  "matrix_graph_avg": 3061,
+  "vote_pairing_success": 4,
+  "vote_pairing_failure": 0,
+  "total_data_points": 66,
+  "thresholds": {
+    "response_time_p95": "N/A",
+    "error_rate": "N/A",
+    "matrix_graph_p95": "N/A"
+  }
+}

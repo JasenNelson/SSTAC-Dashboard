@@ -287,17 +287,18 @@ function generateVariedVotes(pattern, vuId, pairIndex) {
 // Submit single choice vote
 function submitSingleChoiceVote(userId, pagePath, pollIndex, optionIndex, question, options) {
   const payload = {
-    userId: userId,
     pagePath: pagePath,
     pollIndex: pollIndex,
     optionIndex: optionIndex,
     question: question,
-    options: options
+    options: options,
+    authCode: CEW_AUTH_CODE
   };
   
   const response = http.post(`${BASE_URL}/api/polls/submit`, JSON.stringify(payload), {
     headers: {
       'Content-Type': 'application/json',
+      'x-session-id': userId  // CRITICAL: API uses this for user_id generation
     },
   });
   

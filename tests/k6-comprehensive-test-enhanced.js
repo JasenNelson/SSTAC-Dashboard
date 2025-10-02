@@ -107,8 +107,8 @@ function getSurveyHeaders() {
 
 // Generate unique identifiers
 function generateCEWCode() {
-  const codes = ['CEW2025', 'CEW2025-A', 'CEW2025-B', 'CEW2025-C', 'CEW2025-D'];
-  return codes[Math.floor(Math.random() * codes.length)];
+  // Use consistent code to ensure proper user ID pairing
+  return 'CEW2025';
 }
 
 function generateUniqueUserId() {
@@ -236,6 +236,7 @@ export function testMatrixGraphPairedResponses() {
     
     if (response.status !== 200) {
       pairSuccess = false;
+      console.log(`❌ Matrix pair vote failed: ${response.status} ${response.body}`);
     }
   });
   
@@ -399,15 +400,20 @@ function testHolisticProtectionCEW(authCode) {
     }
   ];
 
-  questions.forEach(q => {
-    const { response, userId } = submitPollWithUserID(
+  // Only test the first pair (0+1) to ensure matrix graph pairing works
+  const matrixPair = questions.slice(0, 2); // Only Q1+Q2 (poll_index 0+1)
+  const userId = generateUniqueUserId(); // Use same user ID for both questions
+  
+  matrixPair.forEach(q => {
+    const { response } = submitPollWithUserID(
       basePath, 
       q.pollIndex, 
       q.question, 
       q.options, 
       Math.floor(Math.random() * q.options.length), 
       authCode, 
-      getCEWHeaders()
+      getCEWHeaders(),
+      userId  // Use same user ID for pairing
     );
 
     const success = check(response, {

@@ -484,55 +484,60 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
         </svg>
       </div>
       <div className="text-center mt-2">
-        <p className="text-base text-gray-600 dark:text-gray-300">
-          Based on {responses} paired response(s). Showing {individualPairs.length} individual data points.
-          {(() => {
-            const clusters = createDataPointClusters(individualPairs);
-            const overlappingClusters = Array.from(clusters.values()).filter(c => c.length > 1);
-            const totalOverlappingPoints = overlappingClusters.reduce((sum, cluster) => sum + cluster.length, 0);
-            
-            if (overlappingClusters.length > 0) {
-              return (
-                <span className="block text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {overlappingClusters.length} location{overlappingClusters.length > 1 ? 's' : ''} with multiple responses (total: {totalOverlappingPoints} points)
-                </span>
-              );
-            }
-            return null;
-          })()}
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          n = {individualPairs.length}
         </p>
         
-        {/* Mode indicator */}
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Mode: {visualizationMode.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-        </p>
-        
-        {/* Color Legend */}
+        {/* Color Legend - Spectrum bar */}
         {(() => {
           const clusters = createDataPointClusters(individualPairs);
           const clusterSizes = new Set(Array.from(clusters.values()).map(c => c.length));
           const hasMultipleSizes = clusterSizes.size > 1;
           
+          // Debug: Log cluster information
+          console.log(`🎨 Color Legend Debug for "${title}":`, {
+            totalClusters: clusters.size,
+            clusterSizes: Array.from(clusterSizes),
+            hasMultipleSizes,
+            individualPairs: individualPairs.length
+          });
+          
           if (hasMultipleSizes) {
             const sortedSizes = Array.from(clusterSizes).sort((a, b) => a - b);
+            const minSize = Math.min(...sortedSizes);
+            const maxSize = Math.max(...sortedSizes);
+            
             return (
               <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                <span className="font-medium">Color indicates cluster size:</span>
-                <div className="flex justify-center items-center gap-2 mt-1 flex-wrap">
-                  {sortedSizes.map(size => (
-                    <div key={size} className="flex items-center gap-1">
-                      <div 
-                        className="w-3 h-3 rounded-full border border-gray-300 dark:border-gray-600"
-                        style={{ backgroundColor: getClusterColor(size) }}
-                      />
-                      <span>{size} point{size > 1 ? 's' : ''}</span>
-                    </div>
-                  ))}
+                <span className="font-medium">Light = less, Dark = more</span>
+                <div className="flex justify-center items-center gap-2 mt-1">
+                  <span className="text-xs">{minSize}</span>
+                  <div className="flex h-4 w-32 rounded border border-gray-300 dark:border-gray-600 overflow-hidden">
+                    {Array.from({ length: 20 }, (_, i) => {
+                      const normalizedValue = i / 19;
+                      const interpolatedSize = minSize + (maxSize - minSize) * normalizedValue;
+                      return (
+                        <div
+                          key={i}
+                          className="flex-1 h-full"
+                          style={{ backgroundColor: getClusterColor(Math.round(interpolatedSize)) }}
+                        />
+                      );
+                    })}
+                  </div>
+                  <span className="text-xs">{maxSize}</span>
                 </div>
               </div>
             );
+          } else {
+            // Show a simple indicator when all points are the same size
+            const singleSize = Array.from(clusterSizes)[0] || 0;
+            return (
+              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                <span className="font-medium">All points at same location ({singleSize} point{singleSize > 1 ? 's' : ''})</span>
+              </div>
+            );
           }
-          return null;
         })()}
       </div>
     </div>

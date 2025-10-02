@@ -75,6 +75,13 @@ export async function GET(request: Request) {
 
     // 2. Filter poll results based on filter parameter
     let filteredPollResults = pollResults;
+    console.log('🔍 Initial poll results:', {
+      filter,
+      totalPolls: pollResults.length,
+      pollPaths: pollResults.map(p => p.page_path),
+      pollIndices: pollResults.map(p => `${p.page_path}:${p.poll_index}`)
+    });
+    
     if (filter === 'twg') {
       // Only survey-results data
       filteredPollResults = pollResults.filter(poll => poll.page_path.startsWith('/survey-results'));
@@ -83,6 +90,13 @@ export async function GET(request: Request) {
       filteredPollResults = pollResults.filter(poll => poll.page_path.startsWith('/cew-polls'));
     }
     // 'all' filter keeps all data
+    
+    console.log('🔍 Filtered poll results:', {
+      filter,
+      totalPolls: filteredPollResults.length,
+      pollPaths: filteredPollResults.map(p => p.page_path),
+      pollIndices: filteredPollResults.map(p => `${p.page_path}:${p.poll_index}`)
+    });
 
     // 3. Group poll results by page path and poll index, combining CEW and survey data
     const pollsByPathAndIndex = new Map<string, Map<number, any>>();
@@ -110,6 +124,12 @@ export async function GET(request: Request) {
     // 4. Fetch individual vote pairs for each question pair
     const individualVotesData = new Map<string, IndividualVotePair[]>();
     
+    // Debug: Log what's in the pollsByPathAndIndex map
+    console.log('🔍 Polls by path and index:', {
+      prioritization: Array.from(pollsByPathAndIndex.get('prioritization')?.entries() || []),
+      holisticProtection: Array.from(pollsByPathAndIndex.get('holistic-protection')?.entries() || [])
+    });
+    
     for (const pair of QUESTION_PAIRS) {
       try {
         // Get poll IDs for importance and feasibility questions
@@ -136,38 +156,54 @@ export async function GET(request: Request) {
           continue;
         }
 
-        // CRITICAL FIX: For individual vote lookup, we need to use poll IDs that actually contain votes
-        // The combined data might give us survey-results poll IDs which have no individual votes.
-        // For now, prioritize CEW polls since they contain the actual votes.
+        // Get both CEW and survey-results poll IDs for comprehensive vote lookup
         let actualImportancePollId = importancePollId;
         let actualFeasibilityPollId = feasibilityPollId;
+        let importancePollIds: string[] = [];
+        let feasibilityPollIds: string[] = [];
         
-        // For holistic-protection questions, check if we should use CEW poll IDs for individual vote lookup
-        if (pair.pagePath === 'holistic-protection') {
-          // Get CEW poll IDs directly from database
+        // For holistic-protection and prioritization questions, get both CEW and survey-results poll IDs
+        if (pair.pagePath === 'holistic-protection' || pair.pagePath === 'prioritization') {
+          // Get CEW poll IDs
           const { data: cewImportancePoll } = await supabase
             .from('polls')
             .select('id')
-            .eq('page_path', '/cew-polls/holistic-protection')
+            .eq('page_path', `/cew-polls/${pair.pagePath}`)
             .eq('poll_index', pair.importanceIndex)
             .single();
             
           const { data: cewFeasibilityPoll } = await supabase
             .from('polls')
             .select('id')
-            .eq('page_path', '/cew-polls/holistic-protection')
+            .eq('page_path', `/cew-polls/${pair.pagePath}`)
             .eq('poll_index', pair.feasibilityIndex)
             .single();
             
-          if (cewImportancePoll?.id) {
-            actualImportancePollId = cewImportancePoll.id;
-            console.log(`🔄 Using CEW importance poll ID: ${actualImportancePollId} instead of ${importancePollId}`);
-          }
+          // Get survey-results poll IDs
+          const { data: surveyImportancePoll } = await supabase
+            .from('polls')
+            .select('id')
+            .eq('page_path', `/survey-results/${pair.pagePath}`)
+            .eq('poll_index', pair.importanceIndex)
+            .single();
+            
+          const { data: surveyFeasibilityPoll } = await supabase
+            .from('polls')
+            .select('id')
+            .eq('page_path', `/survey-results/${pair.pagePath}`)
+            .eq('poll_index', pair.feasibilityIndex)
+            .single();
+            
+          // Use both poll IDs for comprehensive vote lookup
+          importancePollIds = [cewImportancePoll?.id, surveyImportancePoll?.id].filter(Boolean) as string[];
+          feasibilityPollIds = [cewFeasibilityPoll?.id, surveyFeasibilityPoll?.id].filter(Boolean) as string[];
           
-          if (cewFeasibilityPoll?.id) {
-            actualFeasibilityPollId = cewFeasibilityPoll.id;
-            console.log(`🔄 Using CEW feasibility poll ID: ${actualFeasibilityPollId} instead of ${feasibilityPollId}`);
-          }
+          console.log(`🔄 Using comprehensive poll IDs for ${pair.title}:`, {
+            importancePollIds,
+            feasibilityPollIds,
+            originalImportancePollId: importancePollId,
+            originalFeasibilityPollId: feasibilityPollId
+          });
         }
 
         // Debug: Log what polls we're querying
@@ -183,10 +219,17 @@ export async function GET(request: Request) {
         });
 
         // STEP 1: Get votes with simple query (no JOIN to test if basic data works)
+        let pollIdsToQuery = [actualImportancePollId, actualFeasibilityPollId];
+        
+        // For holistic-protection and prioritization, use both CEW and survey-results poll IDs
+        if (pair.pagePath === 'holistic-protection' || pair.pagePath === 'prioritization') {
+          pollIdsToQuery = [...importancePollIds, ...feasibilityPollIds];
+        }
+        
         const { data: individualVotes, error: votesError } = await supabase
           .from('poll_votes')
           .select('user_id, option_index, voted_at, poll_id')
-          .in('poll_id', [actualImportancePollId, actualFeasibilityPollId]);
+          .in('poll_id', pollIdsToQuery);
 
         if (votesError) {
           console.error(`Error fetching individual votes for ${pair.title}:`, votesError);
@@ -197,7 +240,7 @@ export async function GET(request: Request) {
         const { data: polls, error: pollsError } = await supabase
           .from('polls')
           .select('id, poll_index, page_path')
-          .in('id', [actualImportancePollId, actualFeasibilityPollId]);
+          .in('id', pollIdsToQuery);
 
         if (pollsError) {
           console.error(`Error fetching poll metadata for ${pair.title}:`, pollsError);
@@ -217,11 +260,14 @@ export async function GET(request: Request) {
 
 
 
-        // Group votes by user_id - use last vote per user per question
+        // Group votes by user_id - for CEW polls, allow multiple votes per user
+        // For authenticated users, use last vote per user per question
         const userVotes = new Map<string, { 
           userType: string; 
           importance?: number; 
           feasibility?: number;
+          importanceVotes: Array<{score: number, voted_at: string}>; // Track all votes for CEW
+          feasibilityVotes: Array<{score: number, voted_at: string}>; // Track all votes for CEW
         }>();
         
         enrichedVotes?.forEach((vote: any) => {
@@ -231,14 +277,30 @@ export async function GET(request: Request) {
           const userType = vote.user_id.startsWith('CEW2025') ? 'cew' : 'authenticated';
           
           if (!userVotes.has(userId)) {
-            userVotes.set(userId, { userType });
+            userVotes.set(userId, { 
+              userType,
+              importanceVotes: [],
+              feasibilityVotes: []
+            });
           }
           
           const userData = userVotes.get(userId)!;
           if (pollIndex === pair.importanceIndex) {
-            userData.importance = score; // This will be the last vote for this question
+            if (userType === 'cew') {
+              // For CEW users, track all votes
+              userData.importanceVotes.push({ score, voted_at: vote.voted_at });
+            } else {
+              // For authenticated users, use last vote only
+              userData.importance = score;
+            }
           } else if (pollIndex === pair.feasibilityIndex) {
-            userData.feasibility = score; // This will be the last vote for this question
+            if (userType === 'cew') {
+              // For CEW users, track all votes
+              userData.feasibilityVotes.push({ score, voted_at: vote.voted_at });
+            } else {
+              // For authenticated users, use last vote only
+              userData.feasibility = score;
+            }
           }
         });
 
@@ -266,13 +328,42 @@ export async function GET(request: Request) {
         // Create individual pairs for users who voted on both questions
         const individualPairs: IndividualVotePair[] = [];
         userVotes.forEach((data, userId) => {
-          if (data.importance !== undefined && data.feasibility !== undefined) {
-            individualPairs.push({
-              userId,
-              importance: data.importance,
-              feasibility: data.feasibility,
-              userType: data.userType as 'authenticated' | 'cew'
-            });
+          if (data.userType === 'cew') {
+            // For CEW users, create pairs based on chronological vote submissions
+            // Sort votes by timestamp to maintain chronological order
+            const sortedImportanceVotes = data.importanceVotes.sort((a, b) => 
+              new Date(a.voted_at).getTime() - new Date(b.voted_at).getTime()
+            );
+            const sortedFeasibilityVotes = data.feasibilityVotes.sort((a, b) => 
+              new Date(a.voted_at).getTime() - new Date(b.voted_at).getTime()
+            );
+            
+            // Create pairs based on chronological voting sessions
+            // Each data point represents one voting session (one importance + one feasibility vote)
+            const maxResponses = Math.max(sortedImportanceVotes.length, sortedFeasibilityVotes.length);
+            for (let i = 0; i < maxResponses; i++) {
+              const impVote = sortedImportanceVotes[i];
+              const feasVote = sortedFeasibilityVotes[i];
+              
+              if (impVote && feasVote) {
+                individualPairs.push({
+                  userId: `${userId}_session_${i}`, // Unique ID for each voting session
+                  importance: impVote.score,
+                  feasibility: feasVote.score,
+                  userType: data.userType as 'authenticated' | 'cew'
+                });
+              }
+            }
+          } else {
+            // For authenticated users, use the traditional single pair approach
+            if (data.importance !== undefined && data.feasibility !== undefined) {
+              individualPairs.push({
+                userId,
+                importance: data.importance,
+                feasibility: data.feasibility,
+                userType: data.userType as 'authenticated' | 'cew'
+              });
+            }
           }
         });
 
@@ -298,11 +389,25 @@ export async function GET(request: Request) {
 
         // Apply filter to individual pairs
         let filteredPairs = individualPairs;
+        console.log(`🔍 Filtering individual pairs for ${pair.title}:`, {
+          filter,
+          totalPairs: individualPairs.length,
+          userTypes: individualPairs.map(p => p.userType),
+          samplePairs: individualPairs.slice(0, 2)
+        });
+        
         if (filter === 'twg') {
           filteredPairs = individualPairs.filter(pair => pair.userType === 'authenticated');
         } else if (filter === 'cew') {
           filteredPairs = individualPairs.filter(pair => pair.userType === 'cew');
         }
+        // For 'all' filter, keep all pairs (no filtering needed)
+        
+        console.log(`🔍 Filtered pairs result:`, {
+          filter,
+          filteredCount: filteredPairs.length,
+          sampleFiltered: filteredPairs.slice(0, 2)
+        });
 
         individualVotesData.set(pair.title, filteredPairs);
 
