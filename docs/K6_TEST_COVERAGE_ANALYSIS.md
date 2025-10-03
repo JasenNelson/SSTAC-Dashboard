@@ -11,7 +11,7 @@ Your current k6 test suite provides **good basic coverage** but has **significan
 ### **STRENGTHS - What's Working Well**
 
 #### **1. Question Types Coverage (75% Complete)**
-- ✅ **Single-Choice Polls**: 13 questions tested (8 holistic + 3 tiered + 2 prioritization)
+- ✅ **Single-Choice Polls**: 10 questions tested (8 holistic + 2 prioritization)
 - ✅ **Ranking Polls**: 2 questions tested (prioritization Q3-Q4)
 - ✅ **Wordcloud Polls**: 1 question tested (prioritization Q5)
 
@@ -106,7 +106,7 @@ I've created `k6-comprehensive-test-enhanced.js` that addresses all identified g
 - ✅ **WIKS**: Ready for when content is added
 
 #### **Complete Question Type Coverage**
-- ✅ **Single-Choice**: 16 questions (8 holistic + 3 tiered + 2 prioritization + 3 survey-results)
+- ✅ **Single-Choice**: 13 questions (8 holistic + 3 tiered + 2 prioritization)
 - ✅ **Ranking**: 4 questions (2 prioritization + 2 survey-results)
 - ✅ **Wordcloud**: 2 questions (1 prioritization + 1 survey-results)
 

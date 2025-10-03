@@ -206,12 +206,29 @@ const createClusters = (pairs: IndividualVotePair[]) => {
 
 ## 🚀 Integration Guide
 
-### **Basic Implementation (Current)**
+### **Admin Panel Implementation (Current)**
 The updated `PrioritizationMatrixGraph.tsx` includes jittered clustering by default:
 
 ```typescript
 // Automatically handles overlapping points
 const jitteredPoints = createDataPointClusters(individualPairs);
+```
+
+### **Survey-Results Pages Implementation** ✅ **NEW (January 2025)**
+The new `SurveyMatrixGraph.tsx` provides expandable matrix graphs for survey-results pages:
+
+```typescript
+// Expandable matrix graph for survey-results pages
+<SurveyMatrixGraph
+  questionPair={{
+    importanceQuestion: "Question 1 text",
+    feasibilityQuestion: "Question 2 text", 
+    title: "Matrix Standards (Title)"
+  }}
+  pagePath="holistic-protection" // or "prioritization"
+  importanceIndex={0}
+  feasibilityIndex={1}
+/>
 ```
 
 ### **Advanced Implementation (Optional)**
@@ -229,12 +246,18 @@ The new `AdvancedPrioritizationMatrixGraph.tsx` provides multiple modes:
 ```
 
 ### **API Integration**
-Both components work with the existing API endpoint:
+All components work with the existing API endpoint:
 ```
 GET /api/graphs/prioritization-matrix?filter=all
 ```
 
 The API already provides `individualPairs` array with all necessary data.
+
+### **Survey-Results Page Coverage**
+- **Holistic Protection**: 4 matrix graphs for Q1-Q2, Q3-Q4, Q5-Q6, Q7-Q8 pairs
+- **Prioritization**: 1 matrix graph for Q1-Q2 pair
+- **Data Source**: Combined CEW + authenticated user data (no filtering)
+- **Interface**: Expandable buttons that don't clutter page layout
 
 ---
 

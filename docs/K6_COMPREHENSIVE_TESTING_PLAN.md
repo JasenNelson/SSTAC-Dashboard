@@ -34,7 +34,7 @@ Create a comprehensive K6 test suite to validate all aspects of the polling syst
 
 #### **Test 1.1: CEW Single-Choice Polls**
 - **Pages**: `/cew-polls/holistic-protection`, `/cew-polls/prioritization`, `/cew-polls/tiered-framework`
-- **Questions**: All single-choice questions (Q1, Q3, Q5, Q7 in holistic; Q1-Q10 in prioritization; Q1 in tiered)
+- **Questions**: All single-choice questions (Q1, Q3, Q5, Q7 in holistic; Q1-Q2 in prioritization; Q1-Q3 in tiered)
 - **Test Scenarios**:
   - Single vote submission per question
   - Multiple vote submissions (page refresh simulation)
@@ -44,7 +44,7 @@ Create a comprehensive K6 test suite to validate all aspects of the polling syst
 
 #### **Test 1.2: CEW Ranking Polls**
 - **Pages**: Same as above
-- **Questions**: All ranking questions (Q2, Q4, Q6, Q8 in holistic; Q11-Q12 in prioritization; Q2 in tiered)
+- **Questions**: All ranking questions (Q2, Q4, Q6, Q8 in holistic; Q3-Q4 in prioritization; none in tiered)
 - **Test Scenarios**:
   - Complete ranking submission (all options ranked)
   - Partial ranking submission
@@ -52,10 +52,10 @@ Create a comprehensive K6 test suite to validate all aspects of the polling syst
   - Ranking validation and error handling
 
 #### **Test 1.3: CEW Wordcloud Polls**
-- **Pages**: `/cew-polls/prioritization` (Question 13)
+- **Pages**: `/cew-polls/prioritization` (Question 5)
 - **Questions**: Wordcloud questions with predefined options
 - **Test Scenarios**:
-  - Single word submission (Question 13)
+  - Single word submission (Question 5)
   - Multiple word submissions (other wordcloud polls)
   - Predefined option selection
   - Custom word input
@@ -81,7 +81,7 @@ Create a comprehensive K6 test suite to validate all aspects of the polling syst
   - Authentication validation
 
 #### **Test 2.3: Survey Results Wordcloud Polls**
-- **Pages**: `/survey-results/prioritization` (Question 13)
+- **Pages**: `/survey-results/prioritization` (Question 5)
 - **Test Scenarios**:
   - Word submission with authentication
   - Word change functionality

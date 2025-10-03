@@ -47,10 +47,20 @@
 
 #### **4. Prioritization Matrix Graph System** ✅ **COMPLETED & VERIFIED (January 2025)**
 - **API Endpoint**: `/api/graphs/prioritization-matrix`
-- **Component**: `PrioritizationMatrixGraph.tsx`
+- **Components**: `PrioritizationMatrixGraph.tsx` (admin panel), `SurveyMatrixGraph.tsx` (survey-results pages)
 - **UI Enhancements**: Clean text display with "n = X" format, color spectrum bar (max 6 dots), simplified legend
 - **Data Source**: Non-aggregated vote data from `poll_votes` table
-- **Question Pairs**: 5 matrix graphs for question pairs 1-2, 3-4, 5-6, 7-8, 9-10
+- **Question Pairs**: 
+  - **Admin Panel**: 5 matrix graphs (1 prioritization + 4 holistic-protection pairs)
+  - **Survey-Results Pages**: 
+    - Holistic-protection: 4 matrix graphs for Q1-Q2, Q3-Q4, Q5-Q6, Q7-Q8 pairs
+    - Prioritization: 1 matrix graph for Q1-Q2 pair
+- **Survey-Results Integration**: ✅ **COMPLETED (January 2025)**
+  - **Expandable Interface**: Clean, collapsible buttons that don't clutter page layout
+  - **Data Integration**: Shows combined CEW + authenticated user data (no filtering)
+  - **Consistent Experience**: Same visualization modes and functionality as admin panel
+  - **Performance Optimized**: Only fetches data when matrix graph is expanded
+  - **Safe Implementation**: Reuses existing, tested components and API endpoints
 - **Scale Inversion**: Correctly inverts 1-5 scale (1=high, 5=low) for proper graph mapping
 - **User Pairing**: Groups votes by user, only includes users who voted on both questions in pair
 - **CEW Multiple Votes**: ✅ **FIXED & VERIFIED** - CEW users can submit multiple votes, each creating separate data points
@@ -92,22 +102,20 @@
 ```
 /cew-polls/holistic-protection, poll_index 0
 /survey-results/holistic-protection, poll_index 0
-/cew-polls/prioritization, poll_index 3
-/cew-polls/prioritization, poll_index 7
+/cew-polls/prioritization, poll_index 0, 1
+/survey-results/prioritization, poll_index 0, 1
 /cew-polls/tiered-framework, poll_index 0
-/survey-results/prioritization, poll_index 3
-/survey-results/prioritization, poll_index 7
 /survey-results/tiered-framework, poll_index 0
 ```
 
-#### **Ranking Polls Table (16 polls) - Ranking Questions Only**
+#### **Ranking Polls Table (8 polls) - Ranking Questions Only**
 ```
 /cew-polls/holistic-protection, poll_index 1
 /survey-results/holistic-protection, poll_index 1
 /cew-polls/tiered-framework, poll_index 1
 /survey-results/tiered-framework, poll_index 1
-/cew-polls/prioritization, poll_index 0,1,2,4,5,6 (6 polls)
-/survey-results/prioritization, poll_index 0,1,2,4,5,6 (6 polls)
+/cew-polls/prioritization, poll_index 2, 3
+/survey-results/prioritization, poll_index 2, 3
 ```
 
 #### **Vote Tables**
@@ -178,12 +186,12 @@ The admin panel matches questions between survey and CEW versions using:
    - `/survey-results/tiered-framework`, poll_index 1
    - `/cew-polls/tiered-framework`, poll_index 1
 
-### **Prioritization (13 Questions)**
-- **Questions 0-9**: Single-choice questions (importance/feasibility pairs)
-- **Questions 10-11**: Ranking questions
-- **Question 12**: Wordcloud question with predefined options
+### **Prioritization (5 Questions)**
+- **Questions 1-2**: Single-choice questions (importance/feasibility pairs)
+- **Questions 3-4**: Ranking questions
+- **Question 5**: Wordcloud question with predefined options
 - Each question exists in both `/survey-results/prioritization` and `/cew-polls/prioritization`
-- **Matrix Graphs**: Questions 1-2, 3-4, 5-6, 7-8, 9-10 pairs have prioritization matrix graphs
+- **Matrix Graphs**: Questions 1-2 pair has prioritization matrix graph
 
 ## 🔧 **Database Schema Details**
 

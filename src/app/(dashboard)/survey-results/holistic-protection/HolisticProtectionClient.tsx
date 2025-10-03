@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import PollWithResults from '@/components/PollWithResults';
 import RankingPoll from '@/components/dashboard/RankingPoll';
+import SurveyMatrixGraph from '@/components/graphs/SurveyMatrixGraph';
 
 interface PollData {
   question: string;
@@ -105,6 +106,17 @@ export default function HolisticProtectionClient() {
 
   const toggleAccordion = (id: string) => {
     setActiveAccordion(activeAccordion === id ? null : id);
+  };
+
+  // Helper function to generate matrix titles based on question index
+  const getMatrixTitle = (pollIndex: number) => {
+    switch (pollIndex) {
+      case 1: return 'Ecosystem Health - Direct Toxicity';
+      case 3: return 'Human Health - Direct Toxicity';
+      case 5: return 'Ecosystem Health - Food-Related';
+      case 7: return 'Human Health - Food-Related';
+      default: return 'Matrix Standards';
+    }
   };
 
   return (
@@ -573,17 +585,32 @@ export default function HolisticProtectionClient() {
             {polls.map((poll, pollIndex) => {
               // All questions are now single-choice polls
               return (
-                <PollWithResults
-                  key={pollIndex}
-                  pollIndex={pollIndex}
-                  question={poll.question}
-                  options={poll.options}
-                  pagePath="/survey-results/holistic-protection"
-                  questionNumber={poll.questionNumber}
-                  onVote={(pollIndex, optionIndex) => {
-                    console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
-                  }}
-                />
+                <div key={pollIndex}>
+                  <PollWithResults
+                    pollIndex={pollIndex}
+                    question={poll.question}
+                    options={poll.options}
+                    pagePath="/survey-results/holistic-protection"
+                    questionNumber={poll.questionNumber}
+                    onVote={(pollIndex, optionIndex) => {
+                      console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
+                    }}
+                  />
+                  
+                  {/* Add matrix graph after each feasibility question (even indices: 1, 3, 5, 7) */}
+                  {pollIndex % 2 === 1 && (
+                    <SurveyMatrixGraph
+                      questionPair={{
+                        importanceQuestion: polls[pollIndex - 1].question,
+                        feasibilityQuestion: polls[pollIndex].question,
+                        title: `Matrix Standards (${getMatrixTitle(pollIndex)})`
+                      }}
+                      pagePath="holistic-protection"
+                      importanceIndex={pollIndex - 1}
+                      feasibilityIndex={pollIndex}
+                    />
+                  )}
+                </div>
               );
             })}
           </div>

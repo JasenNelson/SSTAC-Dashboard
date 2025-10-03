@@ -485,7 +485,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
       </div>
       <div className="text-center mt-2">
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          n = {individualPairs.length}
+          {individualPairs.length} votes
         </p>
         
         {/* Color Legend - Spectrum bar */}
@@ -530,13 +530,8 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
               </div>
             );
           } else {
-            // Show a simple indicator when all points are the same size
-            const singleSize = Array.from(clusterSizes)[0] || 0;
-            return (
-              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                <span className="font-medium">All points at same location ({singleSize} point{singleSize > 1 ? 's' : ''})</span>
-              </div>
-            );
+            // Don't show anything when all points are the same size
+            return null;
           }
         })()}
       </div>

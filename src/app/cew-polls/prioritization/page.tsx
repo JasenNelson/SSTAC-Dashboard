@@ -61,10 +61,10 @@ export default function CEWPrioritizationPage() {
       questionNumber: 3,
       isRanking: true,
       options: [
-        "Developing the technical approach to define what \"direct toxicity\" and \"food pathway toxicity\" mean for the framework.",
-        "Determining what approach ENV should take to develop human health standards, given there are other agencies working on like standards.",
-        "Developing the technical approach to address how matrix standards would be applied in a spatial context (e.g., over what spatial areas, for what depths, etc.).",
-        "Determining if environmental sensitivity should be factored into matrix standards for ecological health."
+        "Distinguish \"direct toxicity\" and \"food pathway toxicity\" pathways explicitly.",
+        "Clarify approach for incorporating human health endpoints in matrix standards.",
+        "Clarify how spatial scale (areal spatial extent, vertical depth profile) is incorporated in application of matrix standards.",
+        "Clarify whether and how multiple levels of protection are applied to account for differences in ecological sensitivity."
       ]
     },
     {
@@ -72,10 +72,10 @@ export default function CEWPrioritizationPage() {
       questionNumber: 4,
       isRanking: true,
       options: [
-        "Selecting and using models and other tools to help develop Site-Specific Sediment Standards (Tier 2) for ecological health (these would include, for example, acid volatile sulphides/simultaneously extractable metals (AVS/SEM), equilibrium partitioning (EqP), target lipid model)",
-        "Selecting and using approaches to develop Sediment Standards for contaminants with an analogue (e.g., quantitative structure-activity relationship (QSAR))",
-        "Developing guidance and/or framework to use site-specific toxicity testing to evaluate the risks of mixtures to ecological receptors.",
-        "Developing models and/or approaches to derive mixture-specific sediment standards for ecological receptors (e.g., for water quality, there are biotic ligand models for metals mixtures)."
+        "Push guidance beyond generic numerical standards: Apply models and other technical tools to help develop Site-Specific Sediment Standards (Tier 2) for ecological health (e.g., equilibrium partitioning [EqP], acid volatile sulphides/simultaneously extractable metals [AVS/SEM], other modifying factors)",
+        "Fill gaps and use surrogates: Develop Sediment Standards for missing substances and groups, using contaminants with an analogue (e.g., quantitative structure-activity relationship [QSAR]).",
+        "Increase guidance for effects-based tools: Develop guidance for site-specific toxicity testing and/or biological monitoring, to evaluate site-specific risks beyond screening level assessment.",
+        "Incorporate models and/or approaches for common mixtures: Develop sediment standards based on mixture models (e.g., target lipid model for petroleum hydrocarbons, toxic equivalents) rather than individual substances."
       ]
     },
     // Question 5: Wordcloud Poll (moved from original Q13)
@@ -86,10 +86,11 @@ export default function CEWPrioritizationPage() {
       maxWords: 1,
       wordLimit: 20,
       predefinedOptions: [
-        { display: "Data availability", keyword: "Data" },
+        { display: "Data availability (quantity, quality)", keyword: "Data" },
         { display: "Tools (models, test protocols, decision trees)", keyword: "Tools" },
-        { display: "Agreement on protection goals and spatial scale", keyword: "Policy" },
-        { display: "Resourcing (e.g., developing approach/tools, agreeing across peers)", keyword: "Resourcing" }
+        { display: "Agreement on application (e.g., protection goals, spatial scale, matrix approach)", keyword: "Agreement" },
+        { display: "Prescription (balance between consistency and flexibility [tiering] across different sites)", keyword: "Prescription" },
+        { display: "Resourcing (e.g., effort of developing approach/tools, consultation, documentation)", keyword: "Resourcing" }
       ]
     }
   ];

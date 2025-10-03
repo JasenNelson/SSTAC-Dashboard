@@ -4,7 +4,7 @@
 
 The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** with comprehensive features for sediment standards development through stakeholder engagement and administrative tools.
 
-**LATEST UPDATE (January 2025)**: Matrix Graph Pairing System FIXED & VERIFIED - All filter modes now working correctly with proper CEW and authenticated user vote pairing. API query logic resolved to query both CEW and survey-results polls. Matrix Graph Visualization System completed with 4-mode overlapping data points visualization (Jittered, Size-Scaled, Heatmap, Concentric), improved color spectrum, and comprehensive K6 testing with proper user ID generation. **UI CLEANUP**: Simplified matrix graph text display with "n = X" format, replaced individual color dots with gradient spectrum bar (max 6 segments), and added fallback messaging for single-cluster data. Admin panel vote bars updated to light grey for better contrast. Prioritization questions now display all 5 options consistently. K6 test user_id mismatch issue resolved with x-session-id header implementation.
+**LATEST UPDATE (January 2025)**: Matrix Graph Survey-Results Integration COMPLETED - Matrix graphs now available on both survey-results pages with expandable interface. Holistic-protection page shows 4 matrix graphs for question pairs Q1-Q2, Q3-Q4, Q5-Q6, Q7-Q8. Prioritization page shows 1 matrix graph for Q1-Q2 pair. All graphs display combined data (CEW + authenticated users) with same visualization modes as admin panel. Matrix Graph Pairing System FIXED & VERIFIED - All filter modes now working correctly with proper CEW and authenticated user vote pairing. API query logic resolved to query both CEW and survey-results polls. Matrix Graph Visualization System completed with 4-mode overlapping data points visualization (Jittered, Size-Scaled, Heatmap, Concentric), improved color spectrum, and comprehensive K6 testing with proper user ID generation. **UI CLEANUP**: Simplified matrix graph text display with "n = X" format, replaced individual color dots with gradient spectrum bar (max 6 segments), and added fallback messaging for single-cluster data. Admin panel vote bars updated to light grey for better contrast. Prioritization questions now display all 5 options consistently. K6 test user_id mismatch issue resolved with x-session-id header implementation.
 
 ## 🚀 **Recent Major Updates**
 
@@ -25,6 +25,17 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **Professional UI**: Clean, government-appropriate interface with tooltips and responsive design
 - **Backward Compatibility**: All existing functionality maintained while adding new visualization modes
 - **Debug Logging**: Comprehensive logging for vote pairing and final results verification
+
+### **Matrix Graph Survey-Results Integration** ✅ COMPLETED (January 2025)
+- **Survey-Results Pages**: Matrix graphs now available on both holistic-protection and prioritization survey-results pages
+- **Expandable Interface**: Clean, collapsible buttons that don't clutter the page layout
+- **Question Pair Coverage**: 
+  - Holistic-protection: 4 matrix graphs for Q1-Q2, Q3-Q4, Q5-Q6, Q7-Q8 pairs
+  - Prioritization: 1 matrix graph for Q1-Q2 pair
+- **Data Integration**: Shows combined CEW + authenticated user data (no filtering)
+- **Consistent Experience**: Same visualization modes and functionality as admin panel
+- **Safe Implementation**: Reuses existing, tested components and API endpoints
+- **Performance Optimized**: Only fetches data when matrix graph is expanded
 
 ### **Matrix Graph UI Cleanup** ✅ COMPLETED (January 2025)
 - **Simplified Text Display**: Changed from verbose "X responses, Y data points" to clean "n = X" format
@@ -69,7 +80,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **Better Color Contrast**: Inverted color selection so larger words get darker, more readable colors
 - **Division by Zero Protection**: Robust error handling for empty polls in admin panel
 - **Three-Way Synchronization**: Database, UI pages, and admin panel fully synchronized
-- **13 Prioritization Questions**: 10 single-choice, 2 ranking, 1 wordcloud question
+- **5 Prioritization Questions**: 2 single-choice, 2 ranking, 1 wordcloud question
 - **Character Limits**: 1 word for Question 13 (single choice), 1-3 words for other wordcloud polls, 20 characters per word
 - **Real-Time Aggregation**: Word frequency calculation with percentage display
 - **Error Boundary Protection**: Comprehensive error handling for wordcloud rendering
@@ -101,7 +112,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **Question 13 Configuration Fix**: Updated wordcloud to allow only 1 word (single choice) instead of 3 words
 
 ### **Prioritization Matrix Graph Integration** ✅ COMPLETED (2025-01-20)
-- **Five Matrix Graphs**: Visual prioritization analysis for question pairs 1-2, 3-4, 5-6, 7-8, 9-10
+- **One Matrix Graph**: Visual prioritization analysis for question pair 1-2
 - **Custom SVG Implementation**: No external image dependencies, fully responsive design
 - **Landscape Orientation**: 16:9 aspect ratio optimized for admin panel display
 - **Dynamic Data Points**: Blue circles positioned based on importance/feasibility scores
