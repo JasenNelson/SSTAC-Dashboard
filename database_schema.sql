@@ -117,9 +117,17 @@
 --    - Improved color spectrum from light blue to standard blue progression
 --    - Icon-based mode switching with ScatterChart, Circle, Zap, Layers icons
 --    - Enhanced tooltips showing cluster size and individual user information
---    - Clustering algorithms with adaptive jittering radius for overlapping points
 
--- 18. MATRIX GRAPH UI CLEANUP (January 2025):
+-- 18. CHANGE VOTE FUNCTIONALITY FIXES (January 2025):
+--    - Fixed duplicate vote issue for authenticated users in survey-results pages
+--    - Added partial unique index on poll_votes (poll_id, user_id) for authenticated users only
+--    - CEW users excluded from unique constraint to preserve insert-only behavior
+--    - Modified API endpoints to use delete-then-insert approach for vote changes
+--    - Fixed ranking poll change vote button disabled state issue
+--    - Fixed wordcloud image persistence after browser refresh for survey-results pages
+--    - All change vote functionality now works correctly without creating duplicates
+
+-- 19. MATRIX GRAPH UI CLEANUP (January 2025):
 --    - Simplified text display: "n = X" format instead of verbose response counts
 --    - Color spectrum bar: Gradient bar (max 6 segments) instead of individual dots
 --    - Fallback messaging: "All points at same location (X points)" for single-cluster data
@@ -923,6 +931,12 @@ CREATE TABLE IF NOT EXISTS poll_votes (
     -- NOTE: Unique constraints removed for CEW polls - allows multiple votes per user
     -- CEW pairing logic: Chronological pairing (1st importance + 1st feasibility, etc.)
 );
+
+-- Partial unique index for authenticated users only (enables vote changes)
+-- CEW users are excluded to preserve insert-only behavior
+CREATE UNIQUE INDEX IF NOT EXISTS unique_authenticated_poll_vote 
+ON poll_votes (poll_id, user_id) 
+WHERE user_id NOT LIKE '%session_%' AND user_id NOT LIKE '%CEW%';
 
 -- Ranking polls table to store ranking poll definitions
 CREATE TABLE IF NOT EXISTS ranking_polls (

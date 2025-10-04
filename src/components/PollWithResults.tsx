@@ -199,10 +199,18 @@ export default function PollWithResults({
         // Check if user has already voted (for both authenticated and CEW pages)
         if (data.userVote !== null && data.userVote !== undefined) {
           console.log(`[PollWithResults ${pollIndex}] User has vote:`, data.userVote);
+          console.log(`[PollWithResults ${pollIndex}] showChangeOption state:`, showChangeOption);
           setUserVote(data.userVote);
           setUserOtherText(data.userOtherText || '');
-          setHasVoted(true);
-          setShowResults(true);
+          
+          // Only set hasVoted to true if user is not in change vote mode
+          if (!showChangeOption) {
+            console.log(`[PollWithResults ${pollIndex}] Setting hasVoted to true (not in change mode)`);
+            setHasVoted(true);
+            setShowResults(true);
+          } else {
+            console.log(`[PollWithResults ${pollIndex}] Skipping hasVoted=true because in change mode`);
+          }
         } else {
           console.log(`[PollWithResults ${pollIndex}] No user vote found`);
         }
@@ -221,13 +229,16 @@ export default function PollWithResults({
       return;
     }
     
+    console.log(`[PollWithResults ${pollIndex}] handleChangeVote called - setting showChangeOption to true`);
     setShowChangeOption(true);
     setHasVoted(false);
-    setSelectedOption(null);
+    // Don't reset selectedOption immediately - let user see their previous choice and change it
+    // setSelectedOption(null);
     setOtherText('');
     
-    // Refresh results to show updated vote counts
-    fetchResults();
+    // Don't call fetchResults immediately - it causes race condition with state updates
+    // The results are already loaded, we just need to show the change interface
+    console.log(`[PollWithResults ${pollIndex}] Skipping fetchResults to avoid race condition`);
   };
 
   const handleCancelChange = () => {
@@ -416,14 +427,22 @@ export default function PollWithResults({
       )}
 
 
-      {/* Submit Button - always show when not voted, disabled until option selected */}
-      {!hasVoted && (
+      {/* Submit Button - show when not voted OR when in change vote mode */}
+      {(() => {
+        const shouldShowButton = !hasVoted || showChangeOption;
+        console.log(`[PollWithResults ${pollIndex}] Button state:`, { hasVoted, showChangeOption, selectedOption, shouldShowButton });
+        return shouldShowButton;
+      })() && (
         <div className="mt-6 flex justify-center">
           <button
             onClick={() => {
               handleSubmitVote();
             }}
-            disabled={selectedOption === null || isLoading || (isSelectedOther() && !otherText.trim())}
+            disabled={(() => {
+              const isDisabled = selectedOption === null || isLoading || (isSelectedOther() && !otherText.trim());
+              console.log(`[PollWithResults ${pollIndex}] Button disabled check:`, { selectedOption, isLoading, isSelectedOther: isSelectedOther(), otherText: otherText.trim(), isDisabled });
+              return isDisabled;
+            })()}
             className={`px-8 py-3 font-semibold rounded-xl transition-colors duration-300 flex items-center space-x-2 ${
               selectedOption === null || isLoading || (isSelectedOther() && !otherText.trim())
                 ? 'bg-gray-400 text-gray-200 cursor-not-allowed'

@@ -92,10 +92,23 @@ export async function POST(request: NextRequest) {
       voteData = data;
       voteError = error;
     } else {
-      // Authenticated users: Use upsert to allow vote changes
+      // Authenticated users: Delete existing votes first, then insert new one
+      // This ensures we don't have duplicates and allows vote changes
+      const { error: deleteError } = await supabase
+        .from('poll_votes')
+        .delete()
+        .eq('poll_id', pollData)
+        .eq('user_id', finalUserId);
+
+      if (deleteError) {
+        console.error(`Error deleting existing vote for pollIndex ${pollIndex}:`, deleteError);
+        // Continue with insert even if delete fails
+      }
+
+      // Insert new vote
       const { data, error } = await supabase
         .from('poll_votes')
-        .upsert({
+        .insert({
           poll_id: pollData,
           user_id: finalUserId,
           option_index: optionIndex,

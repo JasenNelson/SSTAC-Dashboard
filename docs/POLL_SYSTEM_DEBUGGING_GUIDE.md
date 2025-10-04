@@ -3,7 +3,44 @@
 ## Overview
 This guide documents critical debugging issues encountered with the admin poll results system and provides solutions to prevent future problems.
 
-**JANUARY 2025 UPDATES**: Added matrix graph investigation findings, K6 test user ID mismatch resolution, overlapping data points visualization system, and admin panel improvements.
+**JANUARY 2025 UPDATES**: Added change vote functionality fixes, duplicate vote prevention, database schema improvements, and comprehensive polling system debugging. Added matrix graph investigation findings, K6 test user ID mismatch resolution, overlapping data points visualization system, and admin panel improvements.
+
+## 🚨 CRITICAL: Change Vote Functionality Issues (2025-01-27)
+
+### **Duplicate Vote Creation Issue (RESOLVED)**
+**Problem**: Authenticated users changing votes created duplicate entries instead of updating existing votes
+**Root Cause**: Missing unique constraint on poll_votes table prevented upsert operations from working
+**Bad Assumption**: "upsert works without unique constraints" - WRONG, upsert needs unique constraint to identify existing records
+**Solution**: Added partial unique index on (poll_id, user_id) for authenticated users only
+**Prevention**: Always verify database constraints support intended operations
+
+### **CEW vs Authenticated User Behavior Confusion (RESOLVED)**
+**Problem**: CEW users were affected by unique constraints, breaking insert-only behavior
+**Root Cause**: Unique constraint applied to all users instead of just authenticated users
+**Bad Assumption**: "One constraint fits all user types" - WRONG, CEW and authenticated users have different requirements
+**Solution**: Used partial unique index with WHERE clause to exclude CEW users
+**Prevention**: Always consider different user types when designing database constraints
+
+### **API Upsert vs Delete-Insert Approach (RESOLVED)**
+**Problem**: upsert operations failed due to missing unique constraints
+**Root Cause**: Database schema didn't support upsert operations properly
+**Bad Assumption**: "upsert is always better than delete-insert" - WRONG, depends on database constraints
+**Solution**: Switched to delete-then-insert approach for vote changes
+**Prevention**: Test database operations with actual constraints before implementing
+
+### **UI State Management Issues (RESOLVED)**
+**Problem**: Change vote buttons were disabled or submit buttons disappeared after clicking "Change Vote"
+**Root Cause**: State management conflicts between fetchResults and change vote functions
+**Bad Assumption**: "State updates happen synchronously" - WRONG, React state updates are asynchronous
+**Solution**: Fixed state management order and prevented race conditions
+**Prevention**: Always consider state update timing and dependencies
+
+### **Wordcloud Image Persistence Issue (RESOLVED)**
+**Problem**: Wordcloud images disappeared after browser refresh
+**Root Cause**: fetchResults function was disabled, preventing data loading on component mount
+**Bad Assumption**: "Disabled API calls don't affect functionality" - WRONG, they prevent data persistence
+**Solution**: Re-enabled API calls for survey-results pages while preserving CEW privacy
+**Prevention**: Test all user flows including browser refresh scenarios
 
 ## 🚨 CRITICAL: Holistic Protection Question Text Updates (2025-01-26)
 

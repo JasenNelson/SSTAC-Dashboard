@@ -81,7 +81,10 @@ export default function RankingPoll({
             console.log(`[RankingPoll ${pollIndex}] Updated ranking options for display:`, updatedOptions);
           } else {
             // For authenticated pages, disable submit button as usual
-            setHasVoted(true);
+            // Only set hasVoted to true if user is not in change vote mode
+            if (!showChangeOption) {
+              setHasVoted(true);
+            }
             setShowResults(true);
             const updatedOptions = options.map((option, index) => ({
               id: `option-${index}`,
@@ -235,8 +238,8 @@ export default function RankingPoll({
   const handleChangeRanking = () => {
     setShowChangeOption(true);
     setHasVoted(false);
-    // Reset rankings to allow new selection
-    setRankingOptions(prev => prev.map(opt => ({ ...opt, rank: null })));
+    // Don't reset rankings immediately - let user see their previous rankings and change them
+    // setRankingOptions(prev => prev.map(opt => ({ ...opt, rank: null })));
     
     // No device tracking for CEW pages - allow re-voting
   };

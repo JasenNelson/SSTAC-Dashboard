@@ -195,14 +195,48 @@ export default function WordCloudPoll({
     
     setIsFetching(true);
     try {
-      // Temporarily disable API call to prevent 500 errors and infinite loop
+      // Only fetch results for survey-results pages (authenticated users)
+      // CEW pages should remain insert-only without fetching results
+      if (pagePath.startsWith('/cew-polls/')) {
+        console.log(`[WordCloudPoll ${pollIndex}] CEW page - skipping results fetch for privacy`);
+        setResults({ total_votes: 0, words: [], user_words: [] });
+        return;
+      }
       
-      // Set empty results to prevent errors
-      const resultsData = { total_votes: 0, words: [], user_words: [] };
-      setResults(resultsData);
+      console.log(`[WordCloudPoll ${pollIndex}] Fetching results for poll ${pollIndex} on page ${pagePath}`);
       
+      // Use unified API endpoint for survey-results pages only
+      const apiEndpoint = '/api/wordcloud-polls/results';
+      
+      let url = `${apiEndpoint}?pagePath=${encodeURIComponent(pagePath)}&pollIndex=${pollIndex}`;
+      if (authCode) {
+        url += `&authCode=${encodeURIComponent(authCode)}`;
+      }
+      
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`[WordCloudPoll ${pollIndex}] API Response:`, data);
+        setResults(data.results || { total_votes: 0, words: [], user_words: [] });
+        
+        // Check if user has already submitted words
+        if (data.userWords && data.userWords.length > 0) {
+          console.log(`[WordCloudPoll ${pollIndex}] User has words:`, data.userWords);
+          setUserWords(data.userWords);
+          setHasVoted(true);
+          setShowResults(true);
+        } else {
+          console.log(`[WordCloudPoll ${pollIndex}] No user words found`);
+        }
+      } else {
+        console.log(`[WordCloudPoll ${pollIndex}] Failed to fetch results:`, response.status);
+        // Set empty results on error
+        setResults({ total_votes: 0, words: [], user_words: [] });
+      }
     } catch (error) {
       console.error(`[WordCloudPoll ${pollIndex}] Error fetching results:`, error);
+      // Set empty results on error
+      setResults({ total_votes: 0, words: [], user_words: [] });
     } finally {
       setIsFetching(false);
     }
