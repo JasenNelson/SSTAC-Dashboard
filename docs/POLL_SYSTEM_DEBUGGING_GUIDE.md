@@ -5,7 +5,7 @@ This guide documents critical debugging issues encountered with the admin poll r
 
 **JANUARY 2025 UPDATES**: Added change vote functionality fixes, duplicate vote prevention, database schema improvements, and comprehensive polling system debugging. Added matrix graph investigation findings, K6 test user ID mismatch resolution, overlapping data points visualization system, and admin panel improvements.
 
-## 🚨 CRITICAL: Change Vote Functionality Issues (2025-01-27)
+## 🚨 CRITICAL: Change Vote Functionality Issues (2025-01-27) ✅ COMPLETELY RESOLVED
 
 ### **Duplicate Vote Creation Issue (RESOLVED)**
 **Problem**: Authenticated users changing votes created duplicate entries instead of updating existing votes
@@ -41,6 +41,20 @@ This guide documents critical debugging issues encountered with the admin poll r
 **Bad Assumption**: "Disabled API calls don't affect functionality" - WRONG, they prevent data persistence
 **Solution**: Re-enabled API calls for survey-results pages while preserving CEW privacy
 **Prevention**: Test all user flows including browser refresh scenarios
+
+### **Missing RLS DELETE Policy Issue (RESOLVED)**
+**Problem**: Delete operations failed silently, causing continued duplicate vote creation
+**Root Cause**: poll_votes table had RLS enabled but was missing DELETE policy for authenticated users
+**Bad Assumption**: "RLS policies are automatically complete" - WRONG, each operation needs explicit policy
+**Solution**: Added DELETE RLS policy for authenticated users while explicitly excluding CEW users
+**Prevention**: Always verify RLS policies cover all required operations for each user type
+
+### **API User Type Detection Logic (RESOLVED)**
+**Problem**: API incorrectly used authCode to determine user type, causing wrong logic path
+**Root Cause**: authCode is undefined for survey-results pages, causing CEW logic to be used
+**Bad Assumption**: "authCode presence indicates CEW user" - WRONG, pagePath is more reliable
+**Solution**: Changed from authCode check to isCEWPage check based on pagePath
+**Prevention**: Use pagePath patterns for user type detection, not parameter presence
 
 ## 🚨 CRITICAL: Holistic Protection Question Text Updates (2025-01-26)
 

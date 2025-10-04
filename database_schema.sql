@@ -999,18 +999,45 @@ CREATE POLICY "Anyone can view polls" ON polls FOR SELECT USING (true);
 CREATE POLICY "Anyone can create polls" ON polls FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can vote in polls" ON poll_votes FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can view poll votes" ON poll_votes FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can delete their own votes" ON poll_votes 
+    FOR DELETE 
+    USING (
+        -- ONLY allow deletion if user is authenticated and matches the user_id
+        -- EXPLICITLY EXCLUDE CEW users (session-based user_ids)
+        auth.uid()::text = user_id
+        AND user_id NOT LIKE '%session_%' 
+        AND user_id NOT LIKE '%CEW%'
+    );
 
 -- RLS policies for ranking polls (allow anonymous access for CEW polls)
 CREATE POLICY "Anyone can view ranking polls" ON ranking_polls FOR SELECT USING (true);
 CREATE POLICY "Anyone can create ranking polls" ON ranking_polls FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can vote in ranking polls" ON ranking_votes FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can view ranking votes" ON ranking_votes FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can delete their own ranking votes" ON ranking_votes 
+    FOR DELETE 
+    USING (
+        -- ONLY allow deletion if user is authenticated and matches the user_id
+        -- EXPLICITLY EXCLUDE CEW users (session-based user_ids)
+        auth.uid()::text = user_id
+        AND user_id NOT LIKE '%session_%' 
+        AND user_id NOT LIKE '%CEW%'
+    );
 
 -- RLS policies for wordcloud polls (allow anonymous access for CEW polls)
 CREATE POLICY "Anyone can view wordcloud polls" ON wordcloud_polls FOR SELECT USING (true);
 CREATE POLICY "Anyone can create wordcloud polls" ON wordcloud_polls FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can vote in wordcloud polls" ON wordcloud_votes FOR INSERT WITH CHECK (true);
 CREATE POLICY "Anyone can view wordcloud votes" ON wordcloud_votes FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can delete their own wordcloud votes" ON wordcloud_votes 
+    FOR DELETE 
+    USING (
+        -- ONLY allow deletion if user is authenticated and matches the user_id
+        -- EXPLICITLY EXCLUDE CEW users (session-based user_ids)
+        auth.uid()::text = user_id
+        AND user_id NOT LIKE '%session_%' 
+        AND user_id NOT LIKE '%CEW%'
+    );
 
 -- Poll results view for aggregated single-choice poll data
 CREATE OR REPLACE VIEW poll_results WITH (security_invoker = on) AS
