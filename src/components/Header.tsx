@@ -139,16 +139,43 @@ export default function Header() {
   useEffect(() => {
     const getSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // Check if we're on a protected route
+        const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025'];
+        const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
         
-        if (error) {
-          console.error('Session error:', error);
+        // Use getUser() instead of getSession() to properly validate and refresh tokens
+        // getSession() can return stale sessions that fail on refresh
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error('[Header] Auth error:', userError);
+          
+          // Check if it's a refresh token error
+          const isRefreshTokenError = userError.message?.includes('Refresh Token') || 
+                                      userError.message?.includes('Invalid refresh token') ||
+                                      userError.message?.includes('JWT') ||
+                                      userError.status === 401;
+          
           setSession(null);
           setIsAdmin(false);
+          
+          // If we're on a protected route and there's an auth error, redirect to login
+          if (isProtectedRoute && isRefreshTokenError) {
+            console.warn('[Header] Invalid session on protected route, redirecting to login');
+            // Clear any stale auth data
+            await supabase.auth.signOut();
+            // Redirect to login with current path as redirect param
+            const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
+            router.push(loginUrl);
+            return;
+          }
+          
           setIsLoading(false);
           return;
         }
         
+        // If getUser() succeeded, get the full session
+        const { data: { session } } = await supabase.auth.getSession();
         setSession(session);
         
         if (session?.user) {
@@ -162,11 +189,28 @@ export default function Header() {
           setIsAdmin(isUserAdmin);
         } else {
           setIsAdmin(false);
+          // If no session and we're on a protected route, redirect to login
+          if (isProtectedRoute) {
+            console.warn('[Header] No session on protected route, redirecting to login');
+            const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
+            router.push(loginUrl);
+            return;
+          }
         }
       } catch (error) {
-        console.error('Session error:', error);
+        console.error('[Header] Session error exception:', error);
         setSession(null);
         setIsAdmin(false);
+        
+        // If we're on a protected route and there's an error, redirect to login
+        const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025'];
+        const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+        if (isProtectedRoute) {
+          console.warn('[Header] Auth error on protected route, redirecting to login');
+          const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
+          router.push(loginUrl);
+          return;
+        }
       } finally {
         setIsLoading(false);
       }
@@ -181,6 +225,27 @@ export default function Header() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔄 Auth state change event:', event, 'Session:', session?.user?.email);
+      
+      // Check if we're on a protected route
+      const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025'];
+      const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+      
+      // Handle sign out or token refresh errors
+      if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
+        setSession(null);
+        setIsAdmin(false);
+        setIsLoading(false);
+        
+        // If we're on a protected route, redirect to login
+        if (isProtectedRoute && event === 'SIGNED_OUT') {
+          console.warn('[Header] Signed out on protected route, redirecting to login');
+          const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
+          router.push(loginUrl);
+          return;
+        }
+        return;
+      }
+      
       setSession(session);
       setIsLoading(false);
       
@@ -197,6 +262,12 @@ export default function Header() {
         });
       } else {
         setIsAdmin(false);
+        // If no session and we're on a protected route, redirect to login
+        if (isProtectedRoute) {
+          console.warn('[Header] No session after auth state change on protected route, redirecting to login');
+          const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
+          router.push(loginUrl);
+        }
       }
     });
 
@@ -220,7 +291,7 @@ export default function Header() {
       clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
-  }, [router, supabase, checkAdminRole]);
+  }, [router, supabase, checkAdminRole, pathname, restoreAdminStatusFromStorage]);
 
   // Listen for route changes to refresh admin status
   useEffect(() => {

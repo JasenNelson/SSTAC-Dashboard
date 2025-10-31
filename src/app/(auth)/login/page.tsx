@@ -1,19 +1,23 @@
 ﻿// src/app/(auth)/login/page.tsx
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { NextPage } from 'next';
 import Link from 'next/link';
 
-const LoginPage: NextPage = () => {
+const LoginForm: React.FC = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+
+  // Get redirect URL from query params
+  const redirectUrl = searchParams.get('redirect') || '/dashboard';
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,7 +34,8 @@ const LoginPage: NextPage = () => {
       setLoading(false);
     } else {
       router.refresh();
-      router.push('/dashboard');
+      // Redirect to the requested page or dashboard
+      router.push(redirectUrl);
     }
   };
 
@@ -114,6 +119,25 @@ const LoginPage: NextPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const LoginPage: NextPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center px-4">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full mb-4 animate-spin">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 };
 

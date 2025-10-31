@@ -28,11 +28,45 @@ export async function middleware(request: NextRequest) {
   )
 
   // Refresh and validate the session for protected routes
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error } = await supabase.auth.getUser()
+
+  // Handle authentication errors (like invalid refresh token)
+  if (error) {
+    console.error('[Middleware] Auth error:', {
+      message: error.message,
+      status: error.status,
+      path: request.nextUrl.pathname
+    })
+
+    // If it's a refresh token error or any auth error, sign out and redirect to login
+    // This ensures clean state and forces user to re-authenticate
+    if (error.message?.includes('Refresh Token') || 
+        error.message?.includes('Invalid refresh token') ||
+        error.message?.includes('JWT') ||
+        error.status === 401) {
+      
+      // Clear session by calling signOut (this handles all cookie cleanup)
+      try {
+        await supabase.auth.signOut()
+      } catch (signOutError) {
+        // Ignore signOut errors - we're redirecting anyway
+        console.warn('[Middleware] Error during signOut (can be ignored):', signOutError)
+      }
+
+      console.log('[Middleware] Auth error detected, redirecting to login')
+      const loginUrl = new URL('/login', request.url)
+      // Preserve the original path as a query param so user can be redirected back after login
+      loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+  }
 
   // If the user is not signed in on a protected route, redirect to login
   if (!user) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const loginUrl = new URL('/login', request.url)
+    // Preserve the original path as a query param
+    loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
   return response
