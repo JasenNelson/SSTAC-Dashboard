@@ -53,6 +53,14 @@ npm run test:e2e:ui
 
 ## 🚀 **Recent Major Updates**
 
+### **Survey-Results Pages Content Update** ✅ NEW (2025-01-31)
+- **Revised Content Integration**: All three survey-results pages (Holistic Protection, Prioritization, Tiered Framework) updated to align with revised presentation materials
+- **Content Restructuring**: Removed outdated information and fabricated statistics; implemented accurate framework structures based on latest presentations
+- **UI/UX Improvements**: Fixed light/dark mode text color issues, applied consistent color schemes across all sections
+- **Section Reordering**: Optimized section flow with "What We Heard" sections repositioned for better user experience
+- **Menu Structure Update**: WIKS menu item relocated under "Prioritization Framework" and renamed to "Weaving Indigenous Knowledges & Science"
+- **Reference Materials**: Added revised content files and matrix graph image for prioritization page
+
 ### **TWG Review Access & Authentication Improvements** ✅ NEW (2025-01-31)
 - **Simplified Access Control**: TWG Review page now requires only authentication (no role checks) - matches all other dashboard pages
 - **Instant Access**: Removed unnecessary role checking delays - authenticated users can access immediately
@@ -254,6 +262,9 @@ tests/                     # 🧪 Test files
 - **Data Analysis**: Comprehensive survey result analysis
 - **Export Capabilities**: Download results in various formats
 - **Historical Tracking**: Monitor changes over time
+- **Revised Content**: Pages aligned with latest presentation materials (January 2025)
+- **Enhanced UI/UX**: Consistent light/dark mode support with improved readability
+- **Content Accuracy**: Removed outdated information, implemented accurate framework structures
 
 ### **Admin Dashboard**
 - **User Management**: Complete user visibility and control

@@ -4,7 +4,7 @@
 
 The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** with comprehensive features for sediment standards development through stakeholder engagement and administrative tools.
 
-**LATEST UPDATE (January 2025)**: Wordcloud Results Button Enhancement COMPLETED - Added "View All Responses" button to wordcloud polls on `/survey-results/*` pages. Results now hidden by default, displayed on button click after user submission. Button shows aggregated results combining both survey-results and cew-polls data sources. Enhanced API endpoint to match admin panel "all responses" filter logic. CEW pages remain unchanged for privacy. All test cases passed, matches admin panel data exactly. Change Vote Functionality COMPLETELY FIXED & VERIFIED - All polling systems now support proper vote changes for authenticated users without creating duplicates. Fixed single-choice polls, ranking polls, and wordcloud polls change vote functionality. Added partial unique database index for authenticated users only while preserving CEW insert-only behavior. Fixed missing RLS DELETE policy that was causing silent delete failures. Fixed API user type detection logic to use pagePath instead of authCode. All change vote functionality now works correctly with stable vote counts. Matrix Graph Survey-Results Integration COMPLETED - Matrix graphs now available on both survey-results pages with expandable interface.
+**LATEST UPDATE (January 2025)**: Survey-Results Pages Content Update COMPLETED - All three survey-results pages (holistic-protection, prioritization, tiered-framework) updated with revised presentation content. Removed outdated information and fabricated statistics. Implemented accurate framework structures matching latest presentations. Fixed UI/UX issues for light/dark mode consistency (text color, container colors). Applied consistent color schemes across all sections. Section reordering: "What We Heard" sections repositioned for better user experience. Menu structure updated: WIKS relocated under "Prioritization Framework" and renamed to "Weaving Indigenous Knowledges & Science". Reference materials added (revised content files and matrix-graph.jpg). Wordcloud Results Button Enhancement COMPLETED - Added "View All Responses" button to wordcloud polls on `/survey-results/*` pages. Results now hidden by default, displayed on button click after user submission. Button shows aggregated results combining both survey-results and cew-polls data sources. Enhanced API endpoint to match admin panel "all responses" filter logic. CEW pages remain unchanged for privacy. All test cases passed, matches admin panel data exactly. Change Vote Functionality COMPLETELY FIXED & VERIFIED - All polling systems now support proper vote changes for authenticated users without creating duplicates. Fixed single-choice polls, ranking polls, and wordcloud polls change vote functionality. Added partial unique database index for authenticated users only while preserving CEW insert-only behavior. Fixed missing RLS DELETE policy that was causing silent delete failures. Fixed API user type detection logic to use pagePath instead of authCode. All change vote functionality now works correctly with stable vote counts. Matrix Graph Survey-Results Integration COMPLETED - Matrix graphs now available on both survey-results pages with expandable interface.
 
 ## 🚀 **Recent Major Updates**
 
@@ -19,6 +19,15 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 **For Details:** See `docs/review-analysis/MASTER_COMPLETION_SUMMARY.md` and `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md`
 
 ---
+
+### **Survey-Results Pages Content Update** ✅ COMPLETED (January 2025)
+- **Holistic Protection Page**: Updated with revised presentation content, reordered sections (moved "What We Heard" above framework sections), fixed UI/UX for light/dark modes
+- **Prioritization Page**: Completely restructured based on revised presentation, added matrix graph image, implemented consistent color schemes, fixed text visibility issues
+- **Tiered Framework Page**: Removed outdated content and fabricated statistics, implemented new 3-tier framework structure matching revised presentation
+- **UI/UX Improvements**: Fixed text color issues in light mode (white text on colored backgrounds, dark text on light backgrounds), applied consistent container coloring
+- **Menu Structure**: WIKS menu item moved under "Prioritization Framework" in Core Themes, renamed from "Indigenous Knowledge & Science" to "Weaving Indigenous Knowledges & Science"
+- **Reference Materials**: Added revised content text files and matrix-graph.jpg image
+- **Content Accuracy**: All pages now reflect accurate, current presentation materials
 
 ### **Change Vote Functionality Fix** ✅ COMPLETED & VERIFIED (January 2025)
 - **Critical Issue Resolved**: Fixed duplicate vote creation when authenticated users change their votes
@@ -422,6 +431,7 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 
 ### **Interactive Poll System** ✅ COMPLETED
 - **Survey Pages**: 4 pages with interactive polls (Holistic Protection, Prioritization, Tiered Framework, WIKS)
+- **Content Updates**: Survey-results pages updated with revised presentation content (January 2025) - pages now reflect accurate framework structures and current presentation materials
 - **Poll Types**: Single-choice polls, ranking polls, and wordcloud polls with automatic detection
 - **Vote Persistence**: All votes saved and remembered across sessions
 - **User Experience**: Select-then-submit pattern with clear submit buttons
@@ -430,6 +440,7 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 - **Admin Dashboard**: Complete poll results viewing and management
 - **Database Security**: Row Level Security ensures data protection
 - **Wordcloud Features**: Predefined options, custom words, immediate display, aquatic colors
+- **UI/UX Consistency**: Improved light/dark mode support with consistent color schemes and improved readability
 
 #### **Poll System Technical Implementation**
 - **Database Tables**: `polls`, `poll_votes`, `ranking_polls`, `ranking_votes`, `wordcloud_polls`, `wordcloud_votes`
