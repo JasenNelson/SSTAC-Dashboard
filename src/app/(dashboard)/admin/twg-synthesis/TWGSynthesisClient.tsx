@@ -155,27 +155,138 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
     })
   }
 
-  // Export data to CSV
+  // Export data to CSV - Comprehensive export of ALL form fields
   const exportToCSV = () => {
-    const csvData = submissions.map(sub => ({
-      'Email': sub.email,
-      'Name': sub.form_data?.part1?.name || '',
-      'Status': sub.status,
-      'Expertise': sub.form_data?.part1?.expertise?.join(', ') || '',
-      'Submitted At': sub.updated_at,
-      'File Count': sub.file_count
-    }))
+    const csvData = submissions.map(sub => {
+      const p1 = sub.form_data?.part1 || {}
+      const p2 = sub.form_data?.part2 || {}
+      const p3 = sub.form_data?.part3 || {}
+      const p4 = sub.form_data?.part4 || {}
+      const p5 = sub.form_data?.part5 || {}
+      const p6 = sub.form_data?.part6 || {}
+      const p7 = sub.form_data?.part7 || {}
+      const p8 = sub.form_data?.part8 || {}
 
+      // Format rankings as readable strings
+      const formatRanking = (ranking: any, options: string[]) => {
+        if (!ranking) return ''
+        const entries = Object.entries(ranking)
+          .filter(([_, rank]) => rank)
+          .sort(([_, a]: any, [__, b]: any) => a - b)
+          .map(([key, rank]) => `${rank}. ${key}`)
+        return entries.join('; ')
+      }
+
+      return {
+        // Basic Information
+        'Email': sub.email,
+        'Name': p1.name || '',
+        'Status': sub.status,
+        'Expertise': p1.expertise?.join(', ') || '',
+        'Other Expertise': p1.otherExpertise || '',
+        'Created At': formatDate(sub.created_at),
+        'Submitted At': formatDate(sub.updated_at),
+        'File Count': sub.file_count,
+        
+        // Part 2: High-Level Report Assessment
+        'Part 2 - Clarity Rating': p2.clarity || '',
+        'Part 2 - Completeness Rating': p2.completeness || '',
+        'Part 2 - Defensibility Rating': p2.defensibility || '',
+        'Part 2 - Comments': (p2.comments || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        
+        // Part 3: Line-by-Line Comments
+        'Part 3 - Section I (Introduction)': (p3.sectionI || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 3 - Section II (Preliminary Findings)': (p3.sectionII || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 3 - Section III (Jurisdictional Scan)': (p3.sectionIII || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 3 - Section IV (Stakeholder Engagement)': (p3.sectionIV || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 3 - Section V (Proposed Framework)': (p3.sectionV || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 3 - Appendices C & D': (p3.appendicesCD || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        
+        // Part 4: Matrix Framework
+        'Part 4 - Contaminant Rankings': formatRanking(p4.ranking, [
+          'Mercury and its compounds',
+          'Polychlorinated Biphenyls (PCBs)',
+          'Per- and Polyfluoroalkyl Substances (PFAS)',
+          'Dioxins and Furans',
+          'Legacy Organochlorine Pesticides',
+          'Other'
+        ]),
+        'Part 4 - Other Contaminant': p4.otherContaminant || '',
+        'Part 4 - Challenges': (p4.challenges || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 4 - Additional Comments': (p4.additionalComments || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        
+        // Part 5: Tiered Approach
+        'Part 5 - Bioavailability Method': p5.bioavailability || '',
+        'Part 5 - Other Bioavailability': p5.otherBioavailability || '',
+        'Part 5 - Evidence Rankings': formatRanking(p5.evidence, [
+          'Site-specific bioavailability data',
+          'Bioaccumulation data in tissues',
+          'Benthic community structure analysis',
+          'Other'
+        ]),
+        'Part 5 - Evidence Other Text': p5.evidenceOtherText || '',
+        'Part 5 - Technical Guidance': (p5.guidance || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 5 - Additional Comments': (p5.additionalComments || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        
+        // Part 6: Indigenous Knowledge
+        'Part 6 - Tier 0 Approaches': p6.tier0Approaches?.join('; ') || '',
+        'Part 6 - Tier 0 Other': p6.tier0OtherText || '',
+        'Part 6 - Framework Elements': p6.frameworkElements?.join('; ') || '',
+        'Part 6 - Framework Other': p6.frameworkOtherText || '',
+        'Part 6 - Study Components': p6.studyComponents?.join('; ') || '',
+        'Part 6 - Study Other': p6.studyOtherText || '',
+        'Part 6 - Challenges': (p6.challenges || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 6 - Additional Comments': (p6.additionalComments || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        
+        // Part 7: Prioritization
+        'Part 7 - Modernization Rankings': formatRanking(p7.modernization, [
+          'Development of Scientific Framework for Bioavailability',
+          'Matrix Framework - Ecological Protection',
+          'Matrix Framework - Human Health Protection',
+          'Standards for Non-scheduled Contaminants & Mixtures'
+        ]),
+        'Part 7 - Research Rankings': formatRanking(p7.research, [
+          'Ecosystem-level impacts research',
+          'In-vitro screening methods',
+          'Climate change toxicology impacts',
+          'Comprehensive BC database'
+        ]),
+        'Part 7 - Strategic Planning': (p7.strategicPlanning || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 7 - Additional Comments': (p7.additionalComments || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        
+        // Part 8: Final Recommendations
+        'Part 8 - Critical Gaps': (p8.gaps || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 8 - Suggestions': (p8.suggestions || '').replace(/"/g, '""').replace(/\n/g, ' ')
+      }
+    })
+
+    // Create CSV content with proper escaping
+    const escapeCSV = (val: any): string => {
+      if (val === null || val === undefined) return '""'
+      const str = String(val)
+      // Escape quotes and wrap in quotes if contains comma, quote, or newline
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        return `"${str.replace(/"/g, '""')}"`
+      }
+      return str || '""'
+    }
+
+    if (csvData.length === 0) {
+      alert('No data to export')
+      return
+    }
+
+    const headers = Object.keys(csvData[0])
     const csvContent = [
-      Object.keys(csvData[0]).join(','),
-      ...csvData.map(row => Object.values(row).map(val => `"${val}"`).join(','))
+      headers.map(h => escapeCSV(h)).join(','),
+      ...csvData.map(row => headers.map(h => escapeCSV(row[h as keyof typeof row])).join(','))
     ].join('\n')
 
-    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'twg-review-submissions.csv'
+    a.download = `twg-review-submissions-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     window.URL.revokeObjectURL(url)
   }
@@ -294,13 +405,13 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
             </div>
           </div>
 
-          {/* Part 3 Rankings */}
+          {/* Part 4 Rankings - Matrix Framework */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
               Matrix Framework - Contaminant Priority Rankings
             </h3>
             <InteractiveBarChart
-              data={processRankingData('part3', 'ranking', [
+              data={processRankingData('part4', 'ranking', [
                 'Mercury and its compounds',
                 'Polychlorinated Biphenyls (PCBs)',
                 'Per- and Polyfluoroalkyl Substances (PFAS)',
@@ -311,23 +422,23 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
             />
           </div>
 
-          {/* Part 4 Bioavailability */}
+          {/* Part 5 Bioavailability */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
               Tiered Approach - Bioavailability Methods
             </h3>
             <InteractivePieChart
               data={[
-                'Equilibrium partitioning models',
-                'AVS/SEM normalization',
-                'Passive sampling devices',
+                'Equilibrium partitioning models (e.g., based on organic carbon content)',
+                'Normalization using Acid-Volatile Sulfides/Simultaneously Extracted Metals (AVS/SEM)',
+                'Direct measurement using passive sampling devices (PSDs)',
                 'Other'
               ].map((method, index) => {
                 const colors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444']
                 return {
-                  label: method,
+                  label: method.length > 50 ? method.substring(0, 47) + '...' : method,
                   value: submissions.filter(sub => 
-                    sub.form_data?.part4?.bioavailability === method
+                    sub.form_data?.part5?.bioavailability === method
                   ).length,
                   color: colors[index % colors.length]
                 }
@@ -341,51 +452,292 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
         <div className="space-y-8">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Qualitative Analysis</h2>
           
-          {/* Comments Viewer */}
+          {/* Comprehensive Comments Viewer */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              Consolidated Comments
+              Complete Review Responses by Reviewer
             </h3>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {filteredSubmissions.map(submission => (
-                <div key={submission.id} className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-medium text-gray-900 dark:text-white">
-                      {submission.form_data?.part1?.name || submission.email}
-                    </h4>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {formatDate(submission.updated_at)}
-                    </span>
+            <div className="space-y-6 max-h-[800px] overflow-y-auto">
+              {filteredSubmissions.map(submission => {
+                const p1 = submission.form_data?.part1 || {}
+                const p2 = submission.form_data?.part2 || {}
+                const p3 = submission.form_data?.part3 || {}
+                const p4 = submission.form_data?.part4 || {}
+                const p5 = submission.form_data?.part5 || {}
+                const p6 = submission.form_data?.part6 || {}
+                const p7 = submission.form_data?.part7 || {}
+                const p8 = submission.form_data?.part8 || {}
+                
+                const hasContent = p2.comments || p3.sectionI || p3.sectionII || p3.sectionIII || 
+                                  p3.sectionIV || p3.sectionV || p3.appendicesCD || p4.challenges || 
+                                  p4.additionalComments || p5.guidance || p5.additionalComments ||
+                                  p6.challenges || p6.additionalComments || p7.strategicPlanning ||
+                                  p7.additionalComments || p8.gaps || p8.suggestions
+
+                if (!hasContent) return null
+
+                return (
+                  <div key={submission.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
+                    <div className="flex justify-between items-start mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+                      <div>
+                        <h4 className="font-semibold text-gray-900 dark:text-white">
+                          {p1.name || 'Anonymous Reviewer'}
+                        </h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{submission.email}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          submission.status === 'SUBMITTED' 
+                            ? 'bg-green-100 text-black dark:bg-green-900 dark:text-green-200'
+                            : 'bg-yellow-100 text-black dark:bg-yellow-900 dark:text-yellow-200'
+                        }`}>
+                          {submission.status}
+                        </span>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {formatDate(submission.updated_at)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Part 2: High-Level Assessment */}
+                      {(p2.clarity || p2.completeness || p2.defensibility || p2.comments) && (
+                        <div className="bg-white dark:bg-gray-800 rounded p-3">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 2: High-Level Report Assessment</h5>
+                          {(p2.clarity || p2.completeness || p2.defensibility) && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Ratings: Clarity: {p2.clarity || 'N/A'}, Completeness: {p2.completeness || 'N/A'}, Defensibility: {p2.defensibility || 'N/A'}
+                            </div>
+                          )}
+                          {p2.comments && (
+                            <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{p2.comments}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Part 3: Line-by-Line Comments */}
+                      {(p3.sectionI || p3.sectionII || p3.sectionIII || p3.sectionIV || p3.sectionV || p3.appendicesCD) && (
+                        <div className="bg-white dark:bg-gray-800 rounded p-3">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 3: Line-by-Line Comments</h5>
+                          {p3.sectionI && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Section I - Introduction:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p3.sectionI}</p>
+                            </div>
+                          )}
+                          {p3.sectionII && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Section II - Preliminary Findings:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p3.sectionII}</p>
+                            </div>
+                          )}
+                          {p3.sectionIII && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Section III - Jurisdictional Scan:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p3.sectionIII}</p>
+                            </div>
+                          )}
+                          {p3.sectionIV && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Section IV - Stakeholder Engagement:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p3.sectionIV}</p>
+                            </div>
+                          )}
+                          {p3.sectionV && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Section V - Proposed Framework:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p3.sectionV}</p>
+                            </div>
+                          )}
+                          {p3.appendicesCD && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Appendices C & D:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p3.appendicesCD}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Part 4: Matrix Framework */}
+                      {(p4.ranking || p4.challenges || p4.additionalComments || p4.otherContaminant) && (
+                        <div className="bg-white dark:bg-gray-800 rounded p-3">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 4: Matrix Sediment Standards Framework</h5>
+                          {p4.ranking && Object.keys(p4.ranking).length > 0 && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Contaminant Rankings: {Object.entries(p4.ranking)
+                                .filter(([_, rank]) => rank)
+                                .sort(([_, a]: any, [__, b]: any) => a - b)
+                                .map(([key, rank]) => `${rank}. ${key}`)
+                                .join(', ')}
+                            </div>
+                          )}
+                          {p4.otherContaminant && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Other Contaminant: {p4.otherContaminant}</div>
+                          )}
+                          {p4.challenges && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Challenges:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p4.challenges}</p>
+                            </div>
+                          )}
+                          {p4.additionalComments && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p4.additionalComments}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Part 5: Tiered Approach */}
+                      {(p5.bioavailability || p5.guidance || p5.additionalComments || p5.evidence || p5.otherBioavailability) && (
+                        <div className="bg-white dark:bg-gray-800 rounded p-3">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 5: Tiered Assessment Approach</h5>
+                          {p5.bioavailability && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Bioavailability Method: {p5.bioavailability}</div>
+                          )}
+                          {p5.otherBioavailability && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Other: {p5.otherBioavailability}</div>
+                          )}
+                          {p5.evidence && Object.keys(p5.evidence).length > 0 && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Evidence Rankings: {Object.entries(p5.evidence)
+                                .filter(([_, rank]) => rank)
+                                .sort(([_, a]: any, [__, b]: any) => a - b)
+                                .map(([key, rank]) => `${rank}. ${key}`)
+                                .join(', ')}
+                            </div>
+                          )}
+                          {p5.evidenceOtherText && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Evidence Other: {p5.evidenceOtherText}</div>
+                          )}
+                          {p5.guidance && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Technical Guidance:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p5.guidance}</p>
+                            </div>
+                          )}
+                          {p5.additionalComments && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p5.additionalComments}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Part 6: Indigenous Knowledge */}
+                      {(p6.tier0Approaches || p6.frameworkElements || p6.studyComponents || p6.challenges || 
+                        p6.additionalComments || p6.tier0OtherText || p6.frameworkOtherText || p6.studyOtherText) && (
+                        <div className="bg-white dark:bg-gray-800 rounded p-3">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 6: WQCIU Approaches for Indigenous Uses</h5>
+                          {p6.tier0Approaches && p6.tier0Approaches.length > 0 && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Tier 0 Approaches: {p6.tier0Approaches.join(', ')}</div>
+                          )}
+                          {p6.tier0OtherText && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Tier 0 Other: {p6.tier0OtherText}</div>
+                          )}
+                          {p6.frameworkElements && p6.frameworkElements.length > 0 && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Framework Elements: {p6.frameworkElements.join(', ')}</div>
+                          )}
+                          {p6.frameworkOtherText && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Framework Other: {p6.frameworkOtherText}</div>
+                          )}
+                          {p6.studyComponents && p6.studyComponents.length > 0 && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Study Components: {p6.studyComponents.join(', ')}</div>
+                          )}
+                          {p6.studyOtherText && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Study Other: {p6.studyOtherText}</div>
+                          )}
+                          {p6.challenges && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Challenges:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p6.challenges}</p>
+                            </div>
+                          )}
+                          {p6.additionalComments && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p6.additionalComments}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Part 7: Prioritization */}
+                      {(p7.modernization || p7.research || p7.strategicPlanning || p7.additionalComments) && (
+                        <div className="bg-white dark:bg-gray-800 rounded p-3">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 7: Prioritization and Strategic Direction</h5>
+                          {p7.modernization && Object.keys(p7.modernization).length > 0 && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Modernization Rankings: {Object.entries(p7.modernization)
+                                .filter(([_, rank]) => rank)
+                                .sort(([_, a]: any, [__, b]: any) => a - b)
+                                .map(([key, rank]) => `${rank}. ${key.substring(0, 60)}${key.length > 60 ? '...' : ''}`)
+                                .join(', ')}
+                            </div>
+                          )}
+                          {p7.research && Object.keys(p7.research).length > 0 && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Research Rankings: {Object.entries(p7.research)
+                                .filter(([_, rank]) => rank)
+                                .sort(([_, a]: any, [__, b]: any) => a - b)
+                                .map(([key, rank]) => `${rank}. ${key.substring(0, 60)}${key.length > 60 ? '...' : ''}`)
+                                .join(', ')}
+                            </div>
+                          )}
+                          {p7.strategicPlanning && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Strategic Planning:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p7.strategicPlanning}</p>
+                            </div>
+                          )}
+                          {p7.additionalComments && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p7.additionalComments}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Part 8: Final Recommendations */}
+                      {(p8.gaps || p8.suggestions) && (
+                        <div className="bg-white dark:bg-gray-800 rounded p-3">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 8: Final Recommendations</h5>
+                          {p8.gaps && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Critical Gaps:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p8.gaps}</p>
+                            </div>
+                          )}
+                          {p8.suggestions && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Suggestions:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p8.suggestions}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  
-                  {submission.form_data?.part2?.comments && (
-                    <div className="mb-2">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Part 2 Comments:</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {submission.form_data.part2.comments}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {submission.form_data?.part3?.challenges && (
-                    <div className="mb-2">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Part 3 Challenges:</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {submission.form_data.part3.challenges}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {submission.form_data?.part8?.gaps && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Critical Gaps:</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {submission.form_data.part8.gaps}
-                      </p>
-                    </div>
-                  )}
+                )
+              })}
+              {filteredSubmissions.filter(sub => {
+                const hasContent = sub.form_data?.part2?.comments || sub.form_data?.part3?.sectionI || 
+                                  sub.form_data?.part3?.sectionII || sub.form_data?.part3?.sectionIII || 
+                                  sub.form_data?.part3?.sectionIV || sub.form_data?.part3?.sectionV || 
+                                  sub.form_data?.part3?.appendicesCD || sub.form_data?.part4?.challenges || 
+                                  sub.form_data?.part4?.additionalComments || sub.form_data?.part5?.guidance || 
+                                  sub.form_data?.part5?.additionalComments || sub.form_data?.part6?.challenges || 
+                                  sub.form_data?.part6?.additionalComments || sub.form_data?.part7?.strategicPlanning ||
+                                  sub.form_data?.part7?.additionalComments || sub.form_data?.part8?.gaps || 
+                                  sub.form_data?.part8?.suggestions
+                return !hasContent
+              }).length > 0 && (
+                <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                  {filteredSubmissions.filter(sub => {
+                    const hasContent = sub.form_data?.part2?.comments || sub.form_data?.part3?.sectionI || 
+                                      sub.form_data?.part3?.sectionII || sub.form_data?.part3?.sectionIII || 
+                                      sub.form_data?.part3?.sectionIV || sub.form_data?.part3?.sectionV || 
+                                      sub.form_data?.part3?.appendicesCD || sub.form_data?.part4?.challenges || 
+                                      sub.form_data?.part4?.additionalComments || sub.form_data?.part5?.guidance || 
+                                      sub.form_data?.part5?.additionalComments || sub.form_data?.part6?.challenges || 
+                                      sub.form_data?.part6?.additionalComments || sub.form_data?.part7?.strategicPlanning ||
+                                      sub.form_data?.part7?.additionalComments || sub.form_data?.part8?.gaps || 
+                                      sub.form_data?.part8?.suggestions
+                    return !hasContent
+                  }).length} submission(s) with no qualitative responses yet
                 </div>
-              ))}
+              )}
             </div>
           </div>
 

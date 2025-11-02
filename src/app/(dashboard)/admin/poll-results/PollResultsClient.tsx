@@ -5,6 +5,18 @@ import { createClient } from '@/lib/supabase/client';
 import QRCodeDisplay from '@/components/dashboard/QRCodeDisplay';
 import CustomWordCloud from '@/components/dashboard/CustomWordCloud';
 import PrioritizationMatrixGraph from '@/components/graphs/PrioritizationMatrixGraph';
+import {
+  exportSingleChoicePollToCSV,
+  exportRankingPollToCSV,
+  exportWordcloudPollToCSV,
+  exportMatrixGraphToCSV,
+  generateExportMetadata,
+  downloadCSV,
+  generatePollExportFilename,
+  generateBulkExportFilename,
+  getFilterModeDisplayName,
+  type ExportMetadata as ExportMetadataType
+} from '@/lib/poll-export-utils';
 
 // Simple Error Boundary Component
 class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallback: React.ReactNode }, { hasError: boolean }> {
@@ -854,6 +866,311 @@ export default function PollResultsClient() {
     return Math.round((votes / totalVotes) * 100);
   };
 
+  // Export functions for each poll type
+  const exportSingleChoicePoll = (poll: PollResult) => {
+    const filteredResults = getFilteredPollResults(poll);
+    const totalVotes = filteredResults.reduce((sum, r) => sum + r.votes, 0);
+    
+    // Get full option text from options array
+    const getFullOptionText = (index: number): string => {
+      if (!poll.options || !Array.isArray(poll.options)) return `Option ${index + 1}`;
+      return poll.options[index] || `Option ${index + 1}`;
+    };
+
+    const exportData = {
+      question: poll.question,
+      pollType: 'Single-Choice',
+      pagePath: poll.page_path,
+      pollIndex: poll.poll_index,
+      filterMode: filterMode,
+      totalResponses: totalVotes,
+      twgResponses: filterMode === 'all' ? poll.combined_survey_votes : undefined,
+      cewResponses: filterMode === 'all' ? poll.combined_cew_votes : undefined,
+      options: filteredResults.map(result => {
+        const fullText = getFullOptionText(result.option_index);
+        const percentage = totalVotes > 0 ? (result.votes / totalVotes) * 100 : 0;
+        
+        // For "all" filter, try to get breakdown from survey/cew results
+        let twgVotes: number | undefined;
+        let cewVotes: number | undefined;
+        
+        if (filterMode === 'all') {
+          const surveyResult = poll.survey_results?.find(r => r.option_index === result.option_index);
+          const cewResult = poll.cew_results?.find(r => r.option_index === result.option_index);
+          twgVotes = surveyResult?.votes || 0;
+          cewVotes = cewResult?.votes || 0;
+        }
+        
+        return {
+          optionIndex: result.option_index,
+          optionText: fullText, // Full text, no truncation
+          votes: result.votes,
+          percentage: percentage,
+          twgVotes: filterMode === 'all' ? twgVotes : undefined,
+          cewVotes: filterMode === 'all' ? cewVotes : undefined
+        };
+      })
+    };
+
+    const csvContent = exportSingleChoicePollToCSV(exportData);
+    const filename = generatePollExportFilename('single-choice', poll.page_path, poll.poll_index, filterMode);
+    downloadCSV(csvContent, filename);
+  };
+
+  const exportRankingPoll = (poll: PollResult) => {
+    const filteredResults = getFilteredPollResults(poll);
+    const totalVotes = filteredResults.length > 0 ? filteredResults[0].votes : poll.total_votes;
+    
+    // Get full option text from options array
+    const getFullOptionText = (index: number): string => {
+      if (!poll.options || !Array.isArray(poll.options)) return `Option ${index + 1}`;
+      return poll.options[index] || `Option ${index + 1}`;
+    };
+
+    const exportData = {
+      question: poll.question,
+      pollType: 'Ranking',
+      pagePath: poll.page_path,
+      pollIndex: poll.poll_index,
+      filterMode: filterMode,
+      totalResponses: totalVotes,
+      twgResponses: filterMode === 'all' ? poll.combined_survey_votes : undefined,
+      cewResponses: filterMode === 'all' ? poll.combined_cew_votes : undefined,
+      options: filteredResults.map(result => ({
+        optionIndex: result.option_index,
+        optionText: getFullOptionText(result.option_index), // Full text, no truncation
+        averageRank: result.averageRank || 0,
+        votes: result.votes
+      }))
+    };
+
+    const csvContent = exportRankingPollToCSV(exportData);
+    const filename = generatePollExportFilename('ranking', poll.page_path, poll.poll_index, filterMode);
+    downloadCSV(csvContent, filename);
+  };
+
+  const exportWordcloudPoll = (poll: PollResult) => {
+    if (!poll.wordcloud_words || poll.wordcloud_words.length === 0) {
+      alert('No wordcloud data available to export');
+      return;
+    }
+
+    const totalVotes = poll.wordcloud_words.reduce((sum, word) => sum + (word.value || 0), 0);
+    const totalResponses = poll.total_votes || totalVotes;
+
+    // Calculate percentages
+    const wordsWithPercentages = poll.wordcloud_words.map(word => ({
+      word: word.text,
+      frequency: word.value,
+      percentage: totalVotes > 0 ? (word.value / totalVotes) * 100 : 0
+    }));
+
+    const exportData = {
+      question: poll.question,
+      pollType: 'Wordcloud',
+      pagePath: poll.page_path,
+      pollIndex: poll.poll_index,
+      filterMode: filterMode,
+      totalResponses: totalResponses,
+      twgResponses: filterMode === 'all' ? poll.combined_survey_votes : undefined,
+      cewResponses: filterMode === 'all' ? poll.combined_cew_votes : undefined,
+      words: wordsWithPercentages
+    };
+
+    const csvContent = exportWordcloudPollToCSV(exportData);
+    const filename = generatePollExportFilename('wordcloud', poll.page_path, poll.poll_index, filterMode);
+    downloadCSV(csvContent, filename);
+  };
+
+  const exportMatrixGraph = (graph: MatrixData, question1Text: string, question2Text: string, questionPair: string) => {
+    // Classify data points into quadrants
+    const classifyQuadrant = (importance: number, feasibility: number): string => {
+      // Scale: 1 = high, 5 = low
+      // High Priority: High importance (1-2), High feasibility (1-2)
+      // No Go: High importance (1-2), Low feasibility (4-5)
+      // Longer-term: Low importance (4-5), High feasibility (1-2)
+      // Possibly Later?: Everything else
+      
+      if (importance <= 2 && feasibility <= 2) return 'HIGH PRIORITY';
+      if (importance <= 2 && feasibility >= 4) return 'NO GO';
+      if (importance >= 4 && feasibility <= 2) return 'LONGER-TERM';
+      return 'POSSIBLY LATER?';
+    };
+
+    const quadrantCounts = {
+      highPriority: 0,
+      noGo: 0,
+      longerTerm: 0,
+      possiblyLater: 0
+    };
+
+    const classifiedPoints = graph.individualPairs.map(point => {
+      const quadrant = classifyQuadrant(point.importance, point.feasibility);
+      if (quadrant === 'HIGH PRIORITY') quadrantCounts.highPriority++;
+      else if (quadrant === 'NO GO') quadrantCounts.noGo++;
+      else if (quadrant === 'LONGER-TERM') quadrantCounts.longerTerm++;
+      else quadrantCounts.possiblyLater++;
+      
+      return {
+        userId: point.userId,
+        userType: point.userType,
+        importance: point.importance,
+        feasibility: point.feasibility,
+        quadrant: quadrant
+      };
+    });
+
+    const exportData = {
+      questionPair: questionPair,
+      question1Text: question1Text,
+      question2Text: question2Text,
+      filterMode: filterMode,
+      totalResponses: graph.responses,
+      avgImportance: graph.avgImportance,
+      avgFeasibility: graph.avgFeasibility,
+      quadrantCounts: quadrantCounts,
+      dataPoints: classifiedPoints
+    };
+
+    const csvContent = exportMatrixGraphToCSV(exportData);
+    const filename = `matrix-graph-${questionPair.toLowerCase().replace(/\s+/g, '-')}-${filterMode}-${new Date().toISOString().slice(0, 10)}.csv`;
+    downloadCSV(csvContent, filename);
+  };
+
+  const exportAllQuestions = () => {
+    if (filteredPolls.length === 0) {
+      alert('No polls available to export');
+      return;
+    }
+
+    const exportDate = new Date();
+    const voteCounts = getFilteredVoteCounts();
+
+    // Generate metadata
+    const metadata: ExportMetadataType = {
+      exportDate: exportDate.toISOString(),
+      filterMode: filterMode,
+      totalQuestions: filteredPolls.length,
+      totalResponses: voteCounts.total,
+      twgResponses: voteCounts.twg,
+      cewResponses: voteCounts.cew,
+      exportVersion: '1.0'
+    };
+
+    const csvLines: string[] = [];
+    csvLines.push(generateExportMetadata(metadata));
+    csvLines.push('');
+
+    // Export each poll
+    filteredPolls.forEach((poll, index) => {
+      csvLines.push(`=== QUESTION ${index + 1} ===`);
+      csvLines.push('');
+
+      if (poll.is_wordcloud) {
+        const filteredResults = getFilteredPollResults(poll);
+        if (poll.wordcloud_words && poll.wordcloud_words.length > 0) {
+          const totalVotes = poll.wordcloud_words.reduce((sum, word) => sum + (word.value || 0), 0);
+          const wordsWithPercentages = poll.wordcloud_words.map(word => ({
+            word: word.text,
+            frequency: word.value,
+            percentage: totalVotes > 0 ? (word.value / totalVotes) * 100 : 0
+          }));
+
+          const exportData = {
+            question: poll.question,
+            pollType: 'Wordcloud',
+            pagePath: poll.page_path,
+            pollIndex: poll.poll_index,
+            filterMode: filterMode,
+            totalResponses: poll.total_votes || totalVotes,
+            twgResponses: filterMode === 'all' ? poll.combined_survey_votes : undefined,
+            cewResponses: filterMode === 'all' ? poll.combined_cew_votes : undefined,
+            words: wordsWithPercentages
+          };
+          csvLines.push(exportWordcloudPollToCSV(exportData));
+        }
+      } else if (poll.is_ranking) {
+        const filteredResults = getFilteredPollResults(poll);
+        const totalVotes = filteredResults.length > 0 ? filteredResults[0].votes : poll.total_votes;
+        
+        const getFullOptionText = (index: number): string => {
+          if (!poll.options || !Array.isArray(poll.options)) return `Option ${index + 1}`;
+          return poll.options[index] || `Option ${index + 1}`;
+        };
+
+        const exportData = {
+          question: poll.question,
+          pollType: 'Ranking',
+          pagePath: poll.page_path,
+          pollIndex: poll.poll_index,
+          filterMode: filterMode,
+          totalResponses: totalVotes,
+          twgResponses: filterMode === 'all' ? poll.combined_survey_votes : undefined,
+          cewResponses: filterMode === 'all' ? poll.combined_cew_votes : undefined,
+          options: filteredResults.map(result => ({
+            optionIndex: result.option_index,
+            optionText: getFullOptionText(result.option_index),
+            averageRank: result.averageRank || 0,
+            votes: result.votes
+          }))
+        };
+        csvLines.push(exportRankingPollToCSV(exportData));
+      } else {
+        // Single-choice poll
+        const filteredResults = getFilteredPollResults(poll);
+        const totalVotes = filteredResults.reduce((sum, r) => sum + r.votes, 0);
+        
+        const getFullOptionText = (index: number): string => {
+          if (!poll.options || !Array.isArray(poll.options)) return `Option ${index + 1}`;
+          return poll.options[index] || `Option ${index + 1}`;
+        };
+
+        const exportData = {
+          question: poll.question,
+          pollType: 'Single-Choice',
+          pagePath: poll.page_path,
+          pollIndex: poll.poll_index,
+          filterMode: filterMode,
+          totalResponses: totalVotes,
+          twgResponses: filterMode === 'all' ? poll.combined_survey_votes : undefined,
+          cewResponses: filterMode === 'all' ? poll.combined_cew_votes : undefined,
+          options: filteredResults.map(result => {
+            const fullText = getFullOptionText(result.option_index);
+            const percentage = totalVotes > 0 ? (result.votes / totalVotes) * 100 : 0;
+            
+            let twgVotes: number | undefined;
+            let cewVotes: number | undefined;
+            
+            if (filterMode === 'all') {
+              const surveyResult = poll.survey_results?.find(r => r.option_index === result.option_index);
+              const cewResult = poll.cew_results?.find(r => r.option_index === result.option_index);
+              twgVotes = surveyResult?.votes || 0;
+              cewVotes = cewResult?.votes || 0;
+            }
+            
+            return {
+              optionIndex: result.option_index,
+              optionText: fullText,
+              votes: result.votes,
+              percentage: percentage,
+              twgVotes: filterMode === 'all' ? twgVotes : undefined,
+              cewVotes: filterMode === 'all' ? cewVotes : undefined
+            };
+          })
+        };
+        csvLines.push(exportSingleChoicePollToCSV(exportData));
+      }
+
+      csvLines.push('');
+      csvLines.push('');
+    });
+
+    const csvContent = csvLines.join('\n');
+    const filename = generateBulkExportFilename(filterMode);
+    downloadCSV(csvContent, filename);
+  };
+
+
   const filteredPolls = useMemo(() => {
     if (filterMode === 'all') {
       return pollResults;
@@ -1181,8 +1498,23 @@ export default function PollResultsClient() {
             </div>
           </div>
           
+          {/* Export All Button */}
+          <div className="mt-4">
+            <button
+              onClick={exportAllQuestions}
+              disabled={loading || filteredPolls.length === 0}
+              className="w-full px-4 py-3 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              title="Export all questions to a single CSV file"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Export All ({filteredPolls.length} questions)
+            </button>
+          </div>
+
           {/* Refresh Button */}
-          <div className="mt-6">
+          <div className="mt-4">
             <button
               onClick={() => {
                 fetchPollResults();
@@ -1349,6 +1681,28 @@ export default function PollResultsClient() {
                         <p className={`text-gray-700 dark:text-gray-300 leading-relaxed ${isExpanded ? 'text-xl mb-3' : 'text-lg'}`}>{selectedPoll.question}</p>
                       </div>
                       
+                      {/* Export Buttons */}
+                      <div className="flex items-start gap-2">
+                        <button
+                          onClick={() => {
+                            if (selectedPoll.is_wordcloud) {
+                              exportWordcloudPoll(selectedPoll);
+                            } else if (selectedPoll.is_ranking) {
+                              exportRankingPoll(selectedPoll);
+                            } else {
+                              exportSingleChoicePoll(selectedPoll);
+                            }
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200"
+                          title="Export this question to CSV"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Export CSV
+                        </button>
+                      </div>
+                      
                       {/* QR Code and Join at containers - positioned on the right */}
                       <div className={`flex items-start flex-shrink-0 ${isExpanded ? 'space-x-3 -ml-8 mt-2' : 'space-x-3'}`}>
                         {(() => {
@@ -1456,8 +1810,10 @@ export default function PollResultsClient() {
                     <div className="space-y-6">
                       {/* Word Cloud Visualization */}
                       {selectedPoll.wordcloud_words && selectedPoll.wordcloud_words.length > 0 ? (
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-inner">
-                          <div className="mb-4">
+                        <div 
+                          className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-inner"
+                        >
+                          <div className="mb-4 flex justify-between items-center">
                             <h4 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
                               Word Cloud ({selectedPoll.total_votes} response{selectedPoll.total_votes !== 1 ? 's' : ''})
                             </h4>
@@ -1540,6 +1896,8 @@ export default function PollResultsClient() {
                   ) : selectedPoll.is_ranking ? (
                     // For ranking polls, sort by average rank (lower is better)
                     (() => {
+                      // Define pollKey once for the ranking poll chart
+                      const pollKey = selectedPoll.poll_id || selectedPoll.ranking_poll_id || `poll-${selectedPoll.page_path}-${selectedPoll.poll_index}`;
                       const filteredResults = getFilteredPollResults(selectedPoll);
                       let sortedResults = [...filteredResults].sort((a, b) => (a.averageRank || 0) - (b.averageRank || 0));
                       
@@ -1602,90 +1960,97 @@ export default function PollResultsClient() {
                         (selectedPoll.page_path.includes('prioritization') && selectedPoll.poll_index >= 0 && selectedPoll.poll_index <= 1)
                       );
                       
-                      return sortedResults.map((result, index) => {
-                      const isTopChoice = index === 0; // First item after sorting by rank
-                      
-                    return (
-                        <div key={result.option_index} className={`rounded-lg border-2 transition-all duration-300 ${
-                          isExpanded ? 'p-3' : 'p-4'
-                        } ${
-                          isTopChoice 
-                            ? 'border-blue-500 bg-white dark:bg-gray-800 dark:border-blue-400' 
-                            : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
-                        }`}>
-                          <div className={`flex items-center justify-between ${isExpanded ? 'mb-2' : 'mb-3'}`}>
-                            <div className="flex items-center space-x-3">
-                              {isTopChoice && (
-                                <div className={`bg-blue-500 text-white rounded-full flex items-center justify-center font-bold ${
-                                  isExpanded ? 'w-8 h-8 text-sm' : 'w-8 h-8 text-sm'
-                                }`}>
-                                  🏆
-                                </div>
-                              )}
-                              <span className={`font-medium ${
-                                needsLargerText 
-                                  ? (isExpanded ? 'text-xl' : 'text-lg')
-                                  : (isExpanded ? 'text-lg' : 'text-base')
-                              } text-gray-900 dark:text-gray-100`}>
-                                {result.option_text}
-                              </span>
-                            </div>
-                            <div className="text-right">
-                              <div className={`font-bold text-blue-600 dark:text-blue-400 ${
-                                isExpanded ? 'text-3xl' : 'text-2xl'
-                              }`}>
-                                {result.averageRank?.toFixed(1) || 'N/A'}
-                              </div>
-                              <div className={`text-gray-600 dark:text-gray-400 ${
-                                isExpanded ? 'text-base' : 'text-sm'
-                              }`}>
-                                Avg Rank
-                              </div>
-                            </div>
-                          </div>
-                          <div className={`w-full max-w-full bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden ${
-                            needsLargerText 
-                              ? (isExpanded ? 'h-10' : 'h-7')
-                              : (isExpanded ? 'h-8' : 'h-5')
-                          }`}>
-                            <div
-                              className={`rounded-full transition-all duration-700 max-w-full ${
-                                needsLargerText 
-                                  ? (isExpanded ? 'h-10' : 'h-7')
-                                  : (isExpanded ? 'h-8' : 'h-5')
+                      return (
+                        <div 
+                          className="space-y-4"
+                        >
+                            {sortedResults.map((result, index) => {
+                            const isTopChoice = index === 0; // First item after sorting by rank
+                            
+                            return (
+                              <div key={result.option_index} className={`rounded-lg border-2 transition-all duration-300 ${
+                                isExpanded ? 'p-3' : 'p-4'
                               } ${
                                 isTopChoice 
-                                  ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
-                                  : 'bg-gradient-to-r from-blue-400 to-blue-500'
-                              }`}
-                              style={{ 
-                                width: `${(() => {
-                                  // Use the same logic as PollResultsChart for ranking polls
-                                  const validResults = selectedPoll.results.filter(r => 
-                                    r.averageRank !== null && r.averageRank !== undefined
-                                  );
-                                  const maxRank = Math.max(...validResults.map(r => r.averageRank || 0));
-                                  const minRank = Math.min(...validResults.map(r => r.averageRank || 0));
-                                  const rankRange = maxRank - minRank;
-                                  
-                                  if (rankRange === 0) return '100%';
-                                  
-                                  // Calculate inverse value for bar length (lower rank = higher value for display)
-                                  const inverseValue = maxRank - (result.averageRank || 0) + 1;
-                                  const maxInverseValue = rankRange + 1;
-                                  
-                                  return `${Math.max(10, (inverseValue / maxInverseValue) * 100)}%`;
-                                })()}` 
-                              }}
-                            ></div>
-                          </div>
+                                  ? 'border-blue-500 bg-white dark:bg-gray-800 dark:border-blue-400' 
+                                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
+                              }`}>
+                                <div className={`flex items-center justify-between ${isExpanded ? 'mb-2' : 'mb-3'}`}>
+                                  <div className="flex items-center space-x-3">
+                                    {isTopChoice && (
+                                      <div className={`bg-blue-500 text-white rounded-full flex items-center justify-center font-bold ${
+                                        isExpanded ? 'w-8 h-8 text-sm' : 'w-8 h-8 text-sm'
+                                      }`}>
+                                        🏆
+                                      </div>
+                                    )}
+                                    <span className={`font-medium ${
+                                      needsLargerText 
+                                        ? (isExpanded ? 'text-xl' : 'text-lg')
+                                        : (isExpanded ? 'text-lg' : 'text-base')
+                                    } text-gray-900 dark:text-gray-100`}>
+                                      {result.option_text}
+                                    </span>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className={`font-bold text-blue-600 dark:text-blue-400 ${
+                                      isExpanded ? 'text-3xl' : 'text-2xl'
+                                    }`}>
+                                      {result.averageRank?.toFixed(1) || 'N/A'}
+                                    </div>
+                                    <div className={`text-gray-600 dark:text-gray-400 ${
+                                      isExpanded ? 'text-base' : 'text-sm'
+                                    }`}>
+                                      Avg Rank
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className={`w-full max-w-full bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden ${
+                                  needsLargerText 
+                                    ? (isExpanded ? 'h-10' : 'h-7')
+                                    : (isExpanded ? 'h-8' : 'h-5')
+                                }`}>
+                                  <div
+                                    className={`rounded-full transition-all duration-700 max-w-full ${
+                                      needsLargerText 
+                                        ? (isExpanded ? 'h-10' : 'h-7')
+                                        : (isExpanded ? 'h-8' : 'h-5')
+                                    } ${
+                                      isTopChoice 
+                                        ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
+                                        : 'bg-gradient-to-r from-blue-400 to-blue-500'
+                                    }`}
+                                    style={{ 
+                                      width: `${(() => {
+                                        const validResults = sortedResults.filter(r => 
+                                          r.averageRank !== null && r.averageRank !== undefined
+                                        );
+                                        if (validResults.length === 0) return '100%';
+                                        const maxRank = Math.max(...validResults.map(r => r.averageRank || 0));
+                                        const minRank = Math.min(...validResults.map(r => r.averageRank || 0));
+                                        const rankRange = maxRank - minRank;
+                                        
+                                        if (rankRange === 0) return '100%';
+                                        
+                                        const inverseValue = maxRank - (result.averageRank || 0) + 1;
+                                        const maxInverseValue = rankRange + 1;
+                                        
+                                        return `${Math.max(10, (inverseValue / maxInverseValue) * 100)}%`;
+                                      })()}` 
+                                    }}
+                                  ></div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       );
-                    });
                     })()
                   ) : (
                     // For single-choice polls, use expanded format for tiered-framework, compact for others
                     (() => {
+                      // Define pollKey once for both expanded and compact formats
+                      const pollKey = selectedPoll.poll_id || `poll-${selectedPoll.page_path}-${selectedPoll.poll_index}`;
                       const filteredResults = getFilteredPollResults(selectedPoll);
                       const filteredTotal = filteredResults.reduce((sum, r) => sum + r.votes, 0);
                       const maxVotes = Math.max(...filteredResults.map(r => r.votes));
@@ -1739,7 +2104,11 @@ export default function PollResultsClient() {
                           (selectedPoll.page_path.includes('prioritization') && selectedPoll.poll_index >= 0 && selectedPoll.poll_index <= 1)
                         );
                         
-                        return sortedResults.map((result, index) => {
+                      return (
+                        <div 
+                          className="space-y-4"
+                        >
+                            {sortedResults.map((result, index) => {
                           const percentage = getPercentage(result.votes, filteredTotal);
                           const isTopChoice = result.votes === maxVotes;
                           
@@ -1803,7 +2172,9 @@ export default function PollResultsClient() {
                               </div>
                             </div>
                           );
-                        });
+                          })}
+                        </div>
+                      );
                       }
                       
                       // Use compact format for other single-choice polls
@@ -1828,7 +2199,9 @@ export default function PollResultsClient() {
                       );
                       
                       return (
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+                        <div 
+                          className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow"
+                        >
                           <div className="space-y-2">
                             {sortedResults.map((result, index) => {
                               const percentage = getPercentage(result.votes, filteredTotal);
@@ -1889,8 +2262,8 @@ export default function PollResultsClient() {
                   
                   return (
                     <div className="mt-6">
-                      {/* Toggle Button */}
-                      <div className="flex justify-center mb-4">
+                      {/* Toggle and Export Buttons */}
+                      <div className="flex justify-center gap-3 mb-4">
                         <button
                           onClick={() => toggleMatrixGraph(questionPairKey)}
                           className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
@@ -1911,11 +2284,29 @@ export default function PollResultsClient() {
                             </>
                           )}
                         </button>
+                        <button
+                          onClick={() => {
+                            const q1Poll = filteredPolls.find(p => p.page_path.includes('prioritization') && p.poll_index === 0);
+                            const q2Poll = filteredPolls.find(p => p.page_path.includes('prioritization') && p.poll_index === 1);
+                            const q1Text = q1Poll?.question || 'Question 1';
+                            const q2Text = q2Poll?.question || 'Question 2';
+                            exportMatrixGraph(specificGraph, q1Text, q2Text, 'Prioritization Q1-Q2');
+                          }}
+                          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+                          title="Export matrix graph data to CSV"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Export CSV
+                        </button>
                       </div>
                       
                       {/* Matrix Graph - Conditionally Rendered */}
                       {isVisible && (
-                        <div className="p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                        <div 
+                          className="p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
+                        >
                           <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">
                             Prioritization
                           </h3>
@@ -1946,8 +2337,8 @@ export default function PollResultsClient() {
                   
                   return (
                     <div className="mt-6">
-                      {/* Toggle Button */}
-                      <div className="flex justify-center mb-4">
+                      {/* Toggle and Export Buttons */}
+                      <div className="flex justify-center gap-3 mb-4">
                         <button
                           onClick={() => toggleMatrixGraph(questionPairKey)}
                           className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
@@ -1968,11 +2359,29 @@ export default function PollResultsClient() {
                             </>
                           )}
                         </button>
+                        <button
+                          onClick={() => {
+                            const importancePoll = filteredPolls.find(p => p.page_path.includes('holistic-protection') && p.poll_index === selectedPoll.poll_index - 1);
+                            const feasibilityPoll = filteredPolls.find(p => p.page_path.includes('holistic-protection') && p.poll_index === selectedPoll.poll_index);
+                            const q1Text = importancePoll?.question || `Question ${selectedPoll.poll_index}`;
+                            const q2Text = feasibilityPoll?.question || `Question ${selectedPoll.poll_index + 1}`;
+                            exportMatrixGraph(specificGraph, q1Text, q2Text, `Holistic Protection Q${selectedPoll.poll_index}-Q${selectedPoll.poll_index + 1}`);
+                          }}
+                          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+                          title="Export matrix graph data to CSV"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Export CSV
+                        </button>
                       </div>
                       
                       {/* Matrix Graph - Conditionally Rendered */}
                       {isVisible && (
-                        <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                        <div 
+                          className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800"
+                        >
                           <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">
                             Prioritization
                           </h3>

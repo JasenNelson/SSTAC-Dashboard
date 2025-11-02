@@ -248,21 +248,6 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                 </p>
               </div>
             </Link>
-
-            {/* Test DB - Database Diagnostics */}
-            <Link href="/test-db" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-red-300">
-                <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-red-200 transition-colors">
-                  <BarChart3 className="w-8 h-8 text-red-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-red-600 transition-colors mb-2">
-                  Test DB
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  Database diagnostics and connection testing
-                </p>
-              </div>
-            </Link>
           </div>
         </div>
 

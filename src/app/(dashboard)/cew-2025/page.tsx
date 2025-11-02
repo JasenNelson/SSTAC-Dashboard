@@ -359,12 +359,6 @@ export default async function Cew2025Page() {
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <a 
-            href="/wiks"
-            className="inline-flex items-center justify-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
-          >
-            Indigenous Knowledge & Science
-          </a>
-          <a 
             href="/survey-results/holistic-protection"
             className="inline-flex items-center justify-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
           >
@@ -382,67 +376,15 @@ export default async function Cew2025Page() {
           >
             Prioritization Framework
           </a>
+          <a 
+            href="/wiks"
+            className="inline-flex items-center justify-center px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors"
+          >
+            Weaving Indigenous Knowledges & Science
+          </a>
         </div>
       </div>
 
-      {/* CEW Conference Polls - Session Only */}
-      <div className="bg-gradient-to-br from-indigo-600 to-purple-700 dark:from-indigo-700 dark:to-purple-800 rounded-xl shadow-lg p-8 mt-8 text-center text-white">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold mb-4 flex items-center justify-center">
-            <span className="text-4xl mr-3">📊</span>
-            CEW Conference Polls
-          </h2>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 mb-6 border border-white/30">
-            <p className="text-lg font-semibold mb-2 text-indigo-100">
-              ⚠️ Important Notice
-            </p>
-            <p className="text-indigo-100 leading-relaxed">
-              These poll links are <strong>ONLY for use during the CEW session on October 7, 2025</strong>. 
-              SSTAC & TWG members should use the pages under &ldquo;Core Themes&rdquo; above to participate in the CEW poll questions.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <a 
-              href="/cew-polls/holistic-protection"
-              className="inline-flex items-center justify-center px-6 py-4 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105 shadow-lg"
-            >
-              <span className="text-lg mr-2">🌊</span>
-              Holistic Protection
-            </a>
-            <a 
-              href="/cew-polls/tiered-framework"
-              className="inline-flex items-center justify-center px-6 py-4 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105 shadow-lg"
-            >
-              <span className="text-lg mr-2">📊</span>
-              Tiered Framework
-            </a>
-            <a 
-              href="/cew-polls/prioritization"
-              className="inline-flex items-center justify-center px-6 py-4 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105 shadow-lg"
-            >
-              <span className="text-lg mr-2">🎯</span>
-              Prioritization
-            </a>
-            <a 
-              href="/cew-polls/wiks"
-              className="inline-flex items-center justify-center px-6 py-4 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-all duration-300 transform hover:scale-105 shadow-lg"
-            >
-              <span className="text-lg mr-2">🌱</span>
-              Indigenous Knowledge & Science
-            </a>
-          </div>
-          
-          <div className="mt-6 text-indigo-100 text-sm">
-            <p className="font-medium">
-              📅 Available: October 7, 2025 | 8:30 AM - 12:00 PM
-            </p>
-            <p className="text-indigo-200 mt-1">
-              These polls use a shared access code for conference participants
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

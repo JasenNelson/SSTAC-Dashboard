@@ -1,55 +1,21 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClientForPagePath, getAuthenticatedUser, generateCEWUserId } from '@/lib/supabase-auth';
 
 export async function POST(request: NextRequest) {
   try {
     const { pagePath, pollIndex, question, options, optionIndex, otherText, authCode } = await request.json();
-    // Determine if this is a CEW page
-    const isCEWPage = pagePath.startsWith('/cew-polls/');
-    let supabase, finalUserId;
+    
+    // Create appropriate client based on page path (CEW vs authenticated)
+    const { supabase, isCEWPage } = await createClientForPagePath(pagePath);
+    let finalUserId;
 
     if (isCEWPage) {
-      // CEW pages: Use anonymous connection with unique userId for each submission
-      const cookieStore = await cookies();
-      supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            get() { return null; },
-            set() {},
-            remove() {},
-          },
-        }
-      );
-      
-      // Generate session-based user_id for CEW polls
-      // This approach was working correctly and should be maintained
-      const sessionId = request.headers.get('x-session-id') || `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-      finalUserId = `${authCode || 'CEW2025'}_${sessionId}`;
+      // CEW pages: Generate unique user ID for anonymous submissions
+      const sessionId = request.headers.get('x-session-id');
+      finalUserId = generateCEWUserId(authCode || 'CEW2025', sessionId);
     } else {
-      // Authenticated pages: Use authenticated connection
-      const cookieStore = await cookies();
-      supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            get(name: string) {
-              return cookieStore.get(name)?.value;
-            },
-            set(name: string, value: string, options: CookieOptions) {
-              try { cookieStore.set({ name, value, ...options }); } catch (error) {}
-            },
-            remove(name: string, options: CookieOptions) {
-              try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
-            },
-          },
-        }
-      );
-
-      const { data: { user } } = await supabase.auth.getUser();
+      // Authenticated pages: Get user ID from authenticated user
+      const user = await getAuthenticatedUser(supabase);
       if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
@@ -76,12 +42,16 @@ export async function POST(request: NextRequest) {
     
     let voteData, voteError;
     
-    console.log(`[API Submit] Page type check: isCEWPage=${isCEWPage}, pagePath=${pagePath}, authCode=${authCode}`);
-    console.log(`[API Submit] User type: finalUserId=${finalUserId}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[API Submit] Page type check: isCEWPage=${isCEWPage}, pagePath=${pagePath}, authCode=${authCode}`);
+      console.log(`[API Submit] User type: finalUserId=${finalUserId}`);
+    }
     
     if (isCEWPage) {
       // CEW pages: Always insert new vote (allow multiple votes per CEW code)
-      console.log(`[API Submit] Using CEW logic - INSERT ONLY`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[API Submit] Using CEW logic - INSERT ONLY`);
+      }
       const { data, error } = await supabase
         .from('poll_votes')
         .insert({
@@ -98,7 +68,9 @@ export async function POST(request: NextRequest) {
     } else {
       // Authenticated users: Delete existing votes first, then insert new one
       // This ensures we don't have duplicates and allows vote changes
-      console.log(`[API Submit] Using Authenticated logic - DELETE THEN INSERT`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[API Submit] Using Authenticated logic - DELETE THEN INSERT`);
+      }
       
       // First, check how many existing votes there are
       const { data: existingVotes, error: checkError } = await supabase
@@ -107,7 +79,9 @@ export async function POST(request: NextRequest) {
         .eq('poll_id', pollData)
         .eq('user_id', finalUserId);
       
-      console.log(`[API Submit] Existing votes before delete:`, existingVotes?.length || 0, existingVotes);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[API Submit] Existing votes before delete:`, existingVotes?.length || 0, existingVotes);
+      }
       
       const { data: deleteData, error: deleteError } = await supabase
         .from('poll_votes')
@@ -120,7 +94,9 @@ export async function POST(request: NextRequest) {
         console.error(`[API Submit] Error deleting existing vote for pollIndex ${pollIndex}:`, deleteError);
         // Continue with insert even if delete fails
       } else {
-        console.log(`[API Submit] Successfully deleted existing votes:`, deleteData?.length || 0, 'votes deleted');
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[API Submit] Successfully deleted existing votes:`, deleteData?.length || 0, 'votes deleted');
+        }
       }
 
       // Insert new vote
@@ -135,7 +111,9 @@ export async function POST(request: NextRequest) {
         })
         .select();
       
-      console.log(`[API Submit] Insert result:`, { data, error });
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[API Submit] Insert result:`, { data, error });
+      }
       voteData = data;
       voteError = error;
     }

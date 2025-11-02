@@ -1,7 +1,7 @@
 // src/app/api/graphs/prioritization-matrix/route.ts
 
-import { createClient } from '@/lib/supabase/client';
 import { NextResponse } from 'next/server';
+import { createAnonymousClient } from '@/lib/supabase-auth';
 
 // Helper function to combine results from CEW and survey-results paths
 function combineResults(existingResults: any[], newResults: any[]): any[] {
@@ -52,7 +52,7 @@ const QUESTION_PAIRS = [
 
 export async function GET(request: Request) {
   console.log('🚀 MATRIX API CALLED - Starting prioritization matrix API');
-  const supabase = createClient();
+  const supabase = await createAnonymousClient();
   
   // Get filter parameter from URL
   const { searchParams } = new URL(request.url);
@@ -157,8 +157,8 @@ export async function GET(request: Request) {
         }
 
         // Get both CEW and survey-results poll IDs for comprehensive vote lookup
-        let actualImportancePollId = importancePollId;
-        let actualFeasibilityPollId = feasibilityPollId;
+        const actualImportancePollId = importancePollId;
+        const actualFeasibilityPollId = feasibilityPollId;
         let importancePollIds: string[] = [];
         let feasibilityPollIds: string[] = [];
         

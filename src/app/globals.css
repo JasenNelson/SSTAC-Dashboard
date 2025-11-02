@@ -359,14 +359,27 @@ html.dark .bg-gradient-to-br.from-green-50.via-blue-50.to-emerald-50 {
 /* Force white text for colored container headings in tiered framework page */
 .bg-gradient-to-br.from-red-500.to-red-600 h3,
 .bg-gradient-to-br.from-orange-500.to-orange-600 h3,
-.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3 {
+.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3,
+.bg-gradient-to-br.from-blue-500.to-blue-600 h3,
+.bg-gradient-to-br.from-green-500.to-green-600 h3 {
   color: #ffffff !important;
 }
 
 /* Force white text for colored container paragraphs in tiered framework page */
 .bg-gradient-to-br.from-red-500.to-red-600 p,
 .bg-gradient-to-br.from-orange-500.to-orange-600 p,
-.bg-gradient-to-br.from-yellow-500.to-yellow-600 p {
+.bg-gradient-to-br.from-yellow-500.to-yellow-600 p,
+.bg-gradient-to-br.from-blue-500.to-blue-600 p,
+.bg-gradient-to-br.from-green-500.to-green-600 p {
+  color: #ffffff !important;
+}
+
+/* Force white text for all text elements in gradient containers */
+.bg-gradient-to-br.from-red-500.to-red-600 *,
+.bg-gradient-to-br.from-orange-500.to-orange-600 *,
+.bg-gradient-to-br.from-yellow-500.to-yellow-600 *,
+.bg-gradient-to-br.from-blue-500.to-blue-600 *,
+.bg-gradient-to-br.from-green-500.to-green-600 * {
   color: #ffffff !important;
 }
 
@@ -374,18 +387,40 @@ html.dark .bg-gradient-to-br.from-green-50.via-blue-50.to-emerald-50 {
 html.light div.bg-gradient-to-br.from-red-500.to-red-600 h3,
 html.light div.bg-gradient-to-br.from-orange-500.to-orange-600 h3,
 html.light div.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3,
+html.light div.bg-gradient-to-br.from-blue-500.to-blue-600 h3,
+html.light div.bg-gradient-to-br.from-green-500.to-green-600 h3,
 html.dark div.bg-gradient-to-br.from-red-500.to-red-600 h3,
 html.dark div.bg-gradient-to-br.from-orange-500.to-orange-600 h3,
-html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3 {
+html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3,
+html.dark div.bg-gradient-to-br.from-blue-500.to-blue-600 h3,
+html.dark div.bg-gradient-to-br.from-green-500.to-green-600 h3 {
   color: #ffffff !important;
 }
 
 html.light div.bg-gradient-to-br.from-red-500.to-red-600 p,
 html.light div.bg-gradient-to-br.from-orange-500.to-orange-600 p,
 html.light div.bg-gradient-to-br.from-yellow-500.to-yellow-600 p,
+html.light div.bg-gradient-to-br.from-blue-500.to-blue-600 p,
+html.light div.bg-gradient-to-br.from-green-500.to-green-600 p,
 html.dark div.bg-gradient-to-br.from-red-500.to-red-600 p,
 html.dark div.bg-gradient-to-br.from-orange-500.to-orange-600 p,
-html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 p {
+html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 p,
+html.dark div.bg-gradient-to-br.from-blue-500.to-blue-600 p,
+html.dark div.bg-gradient-to-br.from-green-500.to-green-600 p {
+  color: #ffffff !important;
+}
+
+/* Ultra-specific rules for all text in gradient containers - holistic protection page */
+html.light div.bg-gradient-to-br.from-red-500.to-red-600 *,
+html.light div.bg-gradient-to-br.from-orange-500.to-orange-600 *,
+html.light div.bg-gradient-to-br.from-yellow-500.to-yellow-600 *,
+html.light div.bg-gradient-to-br.from-blue-500.to-blue-600 *,
+html.light div.bg-gradient-to-br.from-green-500.to-green-600 *,
+html.dark div.bg-gradient-to-br.from-red-500.to-red-600 *,
+html.dark div.bg-gradient-to-br.from-orange-500.to-orange-600 *,
+html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 *,
+html.dark div.bg-gradient-to-br.from-blue-500.to-blue-600 *,
+html.dark div.bg-gradient-to-br.from-green-500.to-green-600 * {
   color: #ffffff !important;
 }
 
@@ -1534,6 +1569,40 @@ html.light .phase-1-text,
 html.dark .inline-flex.items-center.px-6.py-3.bg-gray-200\/90.dark\:bg-gray-300\/90 span.phase-1-text,
 html.light .inline-flex.items-center.px-6.py-3.bg-gray-200\/90.dark\:bg-gray-300\/90 span.phase-1-text {
   color: #1e40af !important;
+}
+
+/* Fix Panel Questions heading in WIKS page - maximum specificity */
+html.light section.bg-gradient-to-br.from-green-50.to-blue-50 h2.text-blue-900,
+html.light .bg-gradient-to-br.from-green-50.to-blue-50 h2.text-blue-900,
+html.light .bg-gradient-to-br.from-green-50.to-blue-50 h2.font-bold.text-center.mb-16,
+html.light section.py-12.px-6.bg-gradient-to-br.from-green-50.to-blue-50 h2,
+html.light section.py-12.px-6.bg-gradient-to-br.from-green-50.to-blue-50 .max-w-6xl h2,
+html.light .max-w-6xl.mx-auto h2.text-blue-900,
+html.light section.bg-gradient-to-br.from-green-50.to-blue-50 .max-w-6xl.mx-auto h2 {
+  color: #1e3a8a !important; /* Dark blue for Panel Questions */
+}
+
+/* Override any white text rules for this specific heading */
+html.light section.bg-gradient-to-br.from-green-50.to-blue-50 h2,
+html.light section.py-12.px-6.bg-gradient-to-br.from-green-50.to-blue-50 .max-w-6xl h2,
+html.light section.py-12.px-6.bg-gradient-to-br.from-green-50.to-blue-50 .max-w-6xl.mx-auto h2 {
+  color: #1e3a8a !important; /* Force dark blue */
+}
+
+/* Nuclear option - target Panel Questions specifically by class */
+html.light .panel-questions-heading,
+html.light h2.panel-questions-heading {
+  color: #1e3a8a !important;
+}
+
+html.dark .panel-questions-heading,
+html.dark h2.panel-questions-heading {
+  color: #f3f4f6 !important;
+}
+
+html.dark section.bg-gradient-to-br.from-green-50.to-blue-50 h2,
+html.dark .bg-gradient-to-br.from-green-50.to-blue-50 h2 {
+  color: #f3f4f6 !important; /* White text for dark mode */
 }
 
 /* Nuclear option - target everything */

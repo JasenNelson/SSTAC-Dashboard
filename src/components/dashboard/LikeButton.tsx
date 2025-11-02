@@ -51,16 +51,24 @@ export default function LikeButton({
   useEffect(() => {
     const fetchLikeStatus = async () => {
       try {
-        console.log('🔍 LikeButton: Fetching like status for:', { actualDiscussionId, actualReplyId });
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔍 LikeButton: Fetching like status for:', { actualDiscussionId, actualReplyId });
+        }
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-          console.log('🔍 LikeButton: No user found');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 LikeButton: No user found');
+          }
           return;
         }
-        console.log('🔍 LikeButton: User found:', user.id);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔍 LikeButton: User found:', user.id);
+        }
 
         // Check if current user has liked this
-        console.log('🔍 LikeButton: Checking if user liked this item');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔍 LikeButton: Checking if user liked this item');
+        }
         const { data: userLike, error: userLikeError } = await supabase
           .from('likes')
           .select('*')
@@ -69,15 +77,21 @@ export default function LikeButton({
           .single();
 
         if (userLikeError) {
-          console.log('🔍 LikeButton: User like check error (this is normal if no like exists):', userLikeError);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 LikeButton: User like check error (this is normal if no like exists):', userLikeError);
+          }
         } else {
-          console.log('🔍 LikeButton: User like found:', userLike);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 LikeButton: User like found:', userLike);
+          }
         }
 
         setLiked(!!userLike);
 
         // Fetch all likes for this discussion/reply
-        console.log('🔍 LikeButton: Fetching all likes for this item');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔍 LikeButton: Fetching all likes for this item');
+        }
         const { data: allLikes, error: allLikesError } = await supabase
           .from('likes')
           .select(`
@@ -91,7 +105,9 @@ export default function LikeButton({
         if (allLikesError) {
           console.error('🔍 LikeButton: Error fetching all likes:', allLikesError);
         } else {
-          console.log('🔍 LikeButton: All likes found:', allLikes?.length || 0);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 LikeButton: All likes found:', allLikes?.length || 0);
+          }
         }
 
         if (allLikes) {
@@ -99,11 +115,13 @@ export default function LikeButton({
           
           // Fetch user emails for all likes
           const userIds = allLikes.map(like => like.user_id);
-          console.log('🔍 LikeButton: Fetching user emails for user IDs:', userIds);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 LikeButton: Fetching user emails for user IDs:', userIds);
+          }
           
           // Since we can't access auth.users directly, we'll use a simple approach
           // For now, just show "User" for all likes, or use current user's email if it matches
-          let userEmailMap = new Map();
+          const userEmailMap = new Map();
           
           // Get current user to see if we can identify them
           const { data: { user: currentUser } } = await supabase.auth.getUser();

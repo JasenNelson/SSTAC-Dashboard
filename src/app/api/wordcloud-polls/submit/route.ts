@@ -1,12 +1,13 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClientForPagePath, getAuthenticatedUser } from '@/lib/supabase-auth';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { pagePath, pollIndex, question, maxWords, wordLimit, words, authCode } = body;
-    console.log(`[Wordcloud Submit] Received words for poll ${pollIndex} on page ${pagePath}, words: ${words}${authCode ? `, authCode: "${authCode}"` : ''}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Wordcloud Submit] Received words for poll ${pollIndex} on page ${pagePath}, words: ${words}${authCode ? `, authCode: "${authCode}"` : ''}`);
+    }
 
     // Validate required fields
     if (!pagePath || pollIndex === undefined || !question || !words || !Array.isArray(words)) {
@@ -50,59 +51,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine if this is a CEW page
-    const isCEWPage = pagePath.startsWith('/cew-polls/');
-    console.log(`[Wordcloud Submit] isCEWPage: ${isCEWPage}, authCode: "${authCode}"`);
-    let supabase, finalUserId;
+    // Create appropriate client based on page path (CEW vs authenticated)
+    const { supabase, isCEWPage } = await createClientForPagePath(pagePath);
+    let finalUserId;
 
     if (isCEWPage) {
-      // CEW pages: Use anonymous connection with unique userId for each submission
-      const cookieStore = await cookies();
-      supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            get() { return null; },
-            set() {},
-            remove() {},
-          },
-        }
-      );
-      
-      // Generate unique user_id for each CEW submission to count unique participants
+      // CEW pages: Generate unique user_id for each CEW submission to count unique participants
       // This allows multiple people to submit and be counted as separate responses
+      // Note: Using inline generation to maintain exact backward compatibility with existing format
       const timestamp = Date.now();
       const randomSuffix = Math.random().toString(36).substring(2, 8);
       finalUserId = `${authCode || 'CEW2025'}_${timestamp}_${randomSuffix}`;
-      console.log(`[Wordcloud Submit] CEW page, using unique userId: ${finalUserId}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Wordcloud Submit] CEW page, using unique userId: ${finalUserId}`);
+      }
     } else {
-      // Survey-results pages: Use authenticated connection (require login)
-      const cookieStore = await cookies();
-      supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            get(name: string) {
-              return cookieStore.get(name)?.value;
-            },
-            set(name: string, value: string, options: CookieOptions) {
-              try { cookieStore.set({ name, value, ...options }); } catch (error) {}
-            },
-            remove(name: string, options: CookieOptions) {
-              try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
-            },
-          },
-        }
-      );
-
-      const { data: { user } } = await supabase.auth.getUser();
+      // Authenticated pages: Get user ID from authenticated user
+      const user = await getAuthenticatedUser(supabase);
       if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
       finalUserId = user.id;
-      console.log(`[Wordcloud Submit] Authenticated user: ${finalUserId}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Wordcloud Submit] Authenticated user: ${finalUserId}`);
+      }
     }
 
     // Get or create the wordcloud poll
@@ -129,10 +101,14 @@ export async function POST(request: NextRequest) {
     // For authenticated users, delete existing and insert new ones
     if (isCEWPage) {
       // CEW pages: Always insert new votes (allow multiple votes per CEW code)
-      console.log(`[Wordcloud Submit] CEW page - inserting new wordcloud votes`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Wordcloud Submit] CEW page - inserting new wordcloud votes`);
+      }
     } else {
       // Authenticated users: Delete existing votes first
-      console.log(`[Wordcloud Submit] Authenticated user - deleting existing votes first`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Wordcloud Submit] Authenticated user - deleting existing votes first`);
+      }
       const { error: deleteError } = await supabase
         .from('wordcloud_votes')
         .delete()
@@ -141,7 +117,9 @@ export async function POST(request: NextRequest) {
 
       if (deleteError) {
         console.error('Error deleting existing wordcloud votes:', deleteError);
-        console.log('Continuing with vote submission despite delete error');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Continuing with vote submission despite delete error');
+        }
       }
     }
 

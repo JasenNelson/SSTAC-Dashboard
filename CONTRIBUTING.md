@@ -299,22 +299,37 @@ const { data } = await supabase
    # Must complete with no errors
    ```
 
-2. **Basic Functionality Test** (Required)
+2. **Unit Tests** (Required)
+   ```bash
+   npm run test:unit
+   # All 122+ unit tests must pass
+   ```
+
+3. **E2E Tests** (Required)
+   ```bash
+   npm run test:e2e
+   # Critical workflow tests must pass
+   ```
+
+4. **Load Tests** (Recommended for API changes)
    ```bash
    k6 run tests/k6-test.js
    # Must pass with >95% success rate
    ```
 
-3. **Affected Feature Test** (Required if applicable)
+5. **Affected Feature Tests** (Required if applicable)
    ```bash
-   # If you modified polls
+   # Unit tests for specific areas
+   npm run test:unit -- [path-to-test]
+   
+   # If you modified polls (k6 load tests)
    k6 run tests/k6-comprehensive-test-enhanced.js
    
    # If you modified matrix graphs
    k6 run tests/k6-matrix-graph-test-enhanced.js
    ```
 
-4. **Manual Testing** (Required)
+6. **Manual Testing** (Required)
    - Test in both light and dark modes
    - Test on desktop and mobile
    - Test with different user types (admin, member, CEW)

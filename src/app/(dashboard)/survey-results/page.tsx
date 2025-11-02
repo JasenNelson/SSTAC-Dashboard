@@ -517,19 +517,11 @@ export default async function SurveyResultsPage() {
                   </div>
                   <div className="flex items-start">
                     <span className="text-green-300 mr-2 mt-1">→</span>
-                    <span><strong>Effectiveness:</strong> Cutting-edge assessment methodologies</span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="text-green-300 mr-2 mt-1">→</span>
                     <span><strong>Prioritization Framework:</strong> Strategic research planning and feasibility assessment</span>
                   </div>
                   <div className="flex items-start">
                     <span className="text-green-300 mr-2 mt-1">→</span>
                     <span><strong>Weaving Indigenous Knowledges & Science:</strong> In the Sediment Standards Framework</span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="text-green-300 mr-2 mt-1">→</span>
-                    <span><strong>Prioritization Framework:</strong> Collaborative Development</span>
                   </div>
                 </div>
               </div>

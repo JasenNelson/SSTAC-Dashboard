@@ -1,29 +1,10 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            try { cookieStore.set({ name, value, ...options }); } catch (error) {}
-          },
-          remove(name: string, options: CookieOptions) {
-            try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
-          },
-        },
-      }
-    );
-
-    const { data: { user } } = await supabase.auth.getUser();
+    const supabase = await createAuthenticatedClient();
+    const user = await getAuthenticatedUser(supabase);
     
     // For anonymous users, we'll still return results but no user vote
     const isAuthenticated = !!user;
@@ -55,7 +36,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (pollData) {
-      console.log(`Poll exists for pollIndex ${pollIndex}:`, pollData);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Poll exists for pollIndex ${pollIndex}:`, pollData);
+      }
       
       // Poll exists, get results from view
       const { data: resultsData, error: resultsError } = await supabase
@@ -67,9 +50,13 @@ export async function GET(request: NextRequest) {
 
       if (!resultsError) {
         results = resultsData;
-        console.log(`Results found for poll ${pollIndex}:`, results);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Results found for poll ${pollIndex}:`, results);
+        }
       } else {
-        console.log(`No results found for poll ${pollIndex}:`, resultsError);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`No results found for poll ${pollIndex}:`, resultsError);
+        }
       }
 
       // Get user's vote (for both authenticated users and CEW pages)
@@ -79,10 +66,14 @@ export async function GET(request: NextRequest) {
       const authCode = request.nextUrl.searchParams.get('authCode');
       if (authCode) {
         // For CEW pages, don't return user votes for privacy
-        console.log(`CEW poll - not returning user vote for privacy (pollIndex: ${pollIndex})`);
-      } else if (isAuthenticated) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`CEW poll - not returning user vote for privacy (pollIndex: ${pollIndex})`);
+        }
+      } else if (isAuthenticated && user) {
         userId = user.id;
-        console.log(`Looking for authenticated user vote for poll ${pollData.id} (pollIndex: ${pollIndex})`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Looking for authenticated user vote for poll ${pollData.id} (pollIndex: ${pollIndex})`);
+        }
       }
 
       if (userId) {
@@ -93,19 +84,29 @@ export async function GET(request: NextRequest) {
           .eq('user_id', userId)
           .single();
 
-        console.log(`User vote data for poll ${pollIndex}:`, { userVoteData, voteError });
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`User vote data for poll ${pollIndex}:`, { userVoteData, voteError });
+        }
         if (!voteError && userVoteData) {
           userVote = userVoteData.option_index;
           userOtherText = userVoteData.other_text;
-          console.log(`User vote found for poll ${pollIndex}:`, userVote, userOtherText ? `with other text: "${userOtherText}"` : '');
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`User vote found for poll ${pollIndex}:`, userVote, userOtherText ? `with other text: "${userOtherText}"` : '');
+          }
         } else {
-          console.log(`No user vote found for poll ${pollIndex}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`No user vote found for poll ${pollIndex}`);
+          }
         }
       } else {
-        console.log(`No user identifier available - no user vote lookup for poll ${pollIndex}`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`No user identifier available - no user vote lookup for poll ${pollIndex}`);
+        }
       }
     } else {
-      console.log(`Poll does not exist yet for pollIndex ${pollIndex}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Poll does not exist yet for pollIndex ${pollIndex}`);
+      }
     }
 
     return NextResponse.json({ results, userVote, userOtherText });

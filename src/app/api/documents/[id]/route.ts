@@ -1,6 +1,5 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth';
 
 // Test GET method to verify route is working
 export async function GET(
@@ -21,27 +20,10 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: CookieOptions) {
-            cookieStore.delete({ name, ...options });
-          },
-        },
-      }
-    );
-
+    const supabase = await createAuthenticatedClient();
+    
     // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -134,27 +116,10 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            cookieStore.set({ name, value, ...options });
-          },
-          remove(name: string, options: CookieOptions) {
-            cookieStore.delete({ name, ...options });
-          },
-        },
-      }
-    );
-
+    const supabase = await createAuthenticatedClient();
+    
     // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await getAuthenticatedUser(supabase);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

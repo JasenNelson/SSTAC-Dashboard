@@ -7,16 +7,41 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 ### **📚 Documentation**
 - **[Core Development Guidelines](docs/AGENTS.md)** - Essential rules and principles for development
 - **[Project Status](docs/PROJECT_STATUS.md)** - Current features and completed work
-- **[Poll System Guide](docs/POLL_SYSTEM_COMPLETE_GUIDE.md)** - Complete poll system architecture
-- **[Debugging Guide](docs/POLL_SYSTEM_DEBUGGING_GUIDE.md)** - Troubleshooting and solutions
-- **[Lessons Learned](docs/DEBUGGING_LESSONS_LEARNED.md)** - Historical issues and prevention
-- **[Safe Update Protocol](docs/SAFE_POLL_UPDATE_PROTOCOL.md)** - How to safely update polls
-- **[Matrix Graph Visualization](docs/MATRIX_GRAPH_VISUALIZATION.md)** - Advanced visualization guide
-- **[Test Coverage Analysis](docs/K6_TEST_COVERAGE_ANALYSIS.md)** - Testing documentation
+- **[Review & Analysis](docs/review-analysis/README.md)** - Code quality assessment and improvement plans
+- **[Poll System Guide](docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md)** - Complete poll system architecture
+- **[Testing Documentation](docs/testing/README.md)** - Testing infrastructure (k6, Vitest, Playwright)
+- **[Documentation Index](docs/README.md)** - Complete documentation organization
 
 ### **🧪 Testing**
 - **[Run Comprehensive Tests](tests/)** - Full k6 test suite
 - **[Test Database Schema](database_schema.sql)** - Complete schema with debugging notes
+
+#### **Testing Commands**
+```bash
+# Run unit tests
+npm run test:unit
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with UI
+npm run test:ui
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run E2E tests
+npm run test:e2e
+
+# Run E2E tests with UI
+npm run test:e2e:ui
+```
+
+**Test Coverage**: 
+- **Unit Tests**: 122 tests using Vitest + React Testing Library
+- **E2E Tests**: Playwright tests for critical workflows
+- **Load Tests**: 23 k6 tests for API endpoints
+- **CI/CD**: Automated testing on every PR (GitHub Actions)
 
 ### **🛠️ Utilities**
 - **[SQL Debugging Scripts](scripts/debug/)** - Database diagnostic queries
@@ -28,9 +53,16 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 
 ## 🚀 **Recent Major Updates**
 
-### **TWG Review & Auth Reliability** ✅ NEW (2025-09-18)
+### **TWG Review Access & Authentication Improvements** ✅ NEW (2025-01-31)
+- **Simplified Access Control**: TWG Review page now requires only authentication (no role checks) - matches all other dashboard pages
+- **Instant Access**: Removed unnecessary role checking delays - authenticated users can access immediately
+- **Enhanced Auth Error Handling**: Improved middleware and Header component to properly detect and handle invalid refresh tokens
+- **Login Redirect Flow**: Added Suspense boundary to login page and redirect query parameter support for seamless navigation
+- **Consistent Access Pattern**: All non-admin dashboard pages (Dashboard, WIKS, Survey Results, TWG Review) now use same authentication-only pattern
+
+### **TWG Review & Auth Reliability** ✅ COMPLETED (2025-09-18)
 - **TWG Review Reordering**: Moved Line-by-Line Comments to Part 3; added six 5,000-character fields (Sections I–V and Appendices C & D)
-- **Auth Robustness**: Server-side fallback now auto-assigns `member` on first `/twg/review` visit if trigger lag occurs
+- **Auth Robustness**: Server-side fallback now auto-assigns `member` on first `/twg/review` visit if trigger lag occurs (replaced with simplified auth-only access)
 - **Admin Role Checks**: Switched server/client checks from `.single()` to `.maybeSingle()` to avoid 406 errors for non-admins
 - **Schema Alignment**: `review_files` columns renamed (`file_name`, `mime_type`, `created_at`); `admin_review_submissions` exposes `submission_created_at`, `submission_updated_at`
 
@@ -42,14 +74,15 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **Improved Navigation**: Question buttons display vote counts and provide direct access
 - **Mobile Optimized**: Better responsive design for poll results viewing
 
-### **Code Quality Improvements** ✅ COMPLETED (2025-01-14)
-- **Production-Ready Build**: Successful compilation with no errors
-- **TypeScript Type Safety**: Replaced critical `any` types with proper definitions
-- **JSX Quote Escaping**: Fixed all unescaped quotes across the application
-- **Import Cleanup**: Removed unused imports and variables
-- **Linting Improvements**: Significantly reduced errors from 89+ to mostly warnings
-- **Build Verification**: Confirmed successful production build
-- **Menu Updates**: Changed "CEW 2025" to "SABCS Session" in header navigation
+### **Testing & Code Quality Infrastructure** ✅ COMPLETED (Weeks 1-16)
+- **Testing Infrastructure**: Vitest unit tests (122 tests), Playwright E2E tests, CI/CD integration
+- **Code Quality Improvements**: Supabase utility centralization (16 routes migrated), 200+ lines of duplicate code eliminated
+- **Code Cleanup**: Conditional logging, debug code removal, import cleanup
+- **Type Safety**: Replaced critical `any` types with proper definitions
+- **Build Quality**: Production-ready builds, linting improvements
+- **Grade Improvement**: C (66%) → B- (77%) through safe, incremental improvements
+
+**For Details:** See `docs/review-analysis/MASTER_COMPLETION_SUMMARY.md` for comprehensive overview.
 
 ### **Comprehensive Poll System** ✅ NEW
 - **Interactive Polls**: Single-choice and ranking polls across 4 survey pages
@@ -239,8 +272,10 @@ tests/                     # 🧪 Test files
 
 ### **Authentication & Authorization**
 - **Supabase Auth**: Secure user authentication system
-- **Role-Based Access**: Different capabilities for admins vs members
-- **Session Management**: Secure session handling and validation
+- **Role-Based Access**: Different capabilities for admins vs members (admin pages require role checks)
+- **Simple Access Control**: Non-admin dashboard pages require authentication only (no role checks needed)
+- **Session Management**: Secure session handling with proper token refresh and error handling
+- **Redirect Flow**: Seamless login redirect with return-to-page functionality
 - **API Security**: Protected endpoints with proper authentication
 
 ## 📁 **Project Structure**

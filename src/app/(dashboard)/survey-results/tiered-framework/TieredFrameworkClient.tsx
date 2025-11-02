@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import PollWithResults from '@/components/PollWithResults';
 
 interface PollData {
@@ -10,8 +10,6 @@ interface PollData {
 }
 
 export default function TieredFrameworkClient() {
-  const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
-  
   // Define polls with proper structure for the Tiered Framework - 3 questions total
   const polls = [
     // Question 1: Single-choice poll
@@ -52,10 +50,6 @@ export default function TieredFrameworkClient() {
     }
   ];
 
-  const toggleAccordion = (id: string) => {
-    setActiveAccordion(activeAccordion === id ? null : id);
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Hero/Header Section */}
@@ -92,328 +86,159 @@ export default function TieredFrameworkClient() {
         {/* Content Overlay */}
         <div className="relative z-20 text-center text-white px-6 max-w-6xl mx-auto">
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 font-['Merriweather']">
-            Tiered Assessment Framework
+            Tiered Framework with Site-Specific Sediment Standards
           </h1>
           <p className="text-xl md:text-2xl lg:text-3xl mb-8 font-['Lato'] font-light">
-            Site-Specific Sediment Standards
+            A structured approach that allows for site-specific modifications while maintaining scientific rigor
           </p>
           
           {/* Framework Description */}
           <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 max-w-4xl mx-auto">
             <p className="text-lg md:text-xl italic leading-relaxed">
-              "A structured approach to sediment quality assessment that allows for site-specific 
-              modifications while maintaining consistency and scientific rigor, recognizing that 
-              one-size-fits-all standards cannot adequately address diverse environmental conditions."
+              "Expanding the tiered framework to incorporate site-specific sediment standards that reduce uncertainty 
+              and streamline remediation while improving decision-making and environmental outcomes."
             </p>
           </div>
         </div>
       </section>
 
-      {/* Framework Overview Section */}
-      <section className="py-20 px-6 bg-white dark:bg-gray-800">
+      {/* What We Heard: Survey Insights Section */}
+      <section className="py-12 px-6 bg-white dark:bg-gray-800">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
+            What We Heard: Survey Insights
+          </h2>
+          
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Tiered Framework Beneficial</h3>
+                <div className="text-center mb-4">
+                  <div className="text-5xl font-bold text-green-800 dark:text-green-400 mb-2">86.4%</div>
+                  <p className="text-gray-700 dark:text-gray-300 text-lg">
+                    of respondents found a tiered framework would be beneficial for the future sediment standards framework
+                  </p>
+                </div>
+              </div>
+              
+              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Bioavailability Adjustments Important</h3>
+                <div className="text-center mb-4">
+                  <div className="text-5xl font-bold text-blue-900 dark:text-blue-400 mb-2">88.1%</div>
+                  <p className="text-gray-700 dark:text-gray-300 text-lg">
+                    felt that incorporating bioavailability adjustments is important or essential for the future sediment standards framework
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Expand the Tiered Framework? Section */}
+      <section className="py-12 px-6 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
-            From Single-Threshold to Tiered Assessment
+            Why Expand the Tiered Framework with Site-Specific Sediment Standards?
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8">
-            {/* Card 1: The Challenge */}
-            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
-              <div className="bg-gradient-to-br from-red-500 to-red-600 text-white p-8 rounded-2xl shadow-2xl h-full">
-                <div className="text-4xl mb-4">⚠️</div>
-                <h3 className="text-2xl font-bold mb-4 text-white">The Challenge</h3>
-                <p className="text-white leading-relaxed">
-                  Current "bright-line" standards are often overly conservative, leading to unnecessary 
-                  investigations and remediation costs, while the "sensitive sediment" designation 
-                  is applied too broadly, negating the purpose of a two-tiered system.
-                </p>
-              </div>
+            {/* Current Limitations */}
+            <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-6">
+              <div className="text-4xl mb-4 text-center">⚠️</div>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">Current Limitations of Generic Sediment Standards</h3>
+              <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-lg">
+                <li className="flex items-start">
+                  <span className="text-red-600 dark:text-red-400 mr-3 mt-1">•</span>
+                  <span>High uncertainty</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-red-600 dark:text-red-400 mr-3 mt-1">•</span>
+                  <span>Conservative or underprotective</span>
+                </li>
+              </ul>
             </div>
 
-            {/* Card 2: Survey Findings - Site-Specific Bioavailability */}
-            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-8 rounded-2xl shadow-2xl h-full">
-                <div className="text-4xl mb-4">📊</div>
-                <h3 className="text-2xl font-bold mb-4 text-white">Site-Specific Bioavailability</h3>
-                <p className="text-white leading-relaxed">
-                  <strong>89%</strong> of respondents support site-specific bioavailability adjustments. 
-                  <strong>76%</strong> emphasize the need for environmental condition data (pH, organic carbon, 
-                  particle size) to refine sediment standards for local conditions.
-                </p>
-              </div>
+            {/* Proposed Benefits */}
+            <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6">
+              <div className="text-4xl mb-4 text-center">✅</div>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">Proposed Site-Specific Sediment Standards</h3>
+              <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-lg">
+                <li className="flex items-start">
+                  <span className="text-green-600 dark:text-green-400 mr-3 mt-1">•</span>
+                  <span>Reduced uncertainty</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-600 dark:text-green-400 mr-3 mt-1">•</span>
+                  <span>Streamlined remediation</span>
+                </li>
+              </ul>
             </div>
 
-            {/* Card 3: Survey Findings - Tiered Options */}
-            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
-              <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-8 rounded-2xl shadow-2xl h-full">
-                <div className="text-4xl mb-4">🎯</div>
-                <h3 className="text-2xl font-bold mb-4 text-white">Tiered Assessment Options</h3>
-                <p className="text-white leading-relaxed">
-                  <strong>82%</strong> support clear decision trees for tier selection. 
-                  <strong>71%</strong> want flexibility to move between tiers based on site complexity 
-                  and data availability, with <strong>68%</strong> prioritizing cost-effectiveness.
-                </p>
-              </div>
+            {/* Enhanced Protection */}
+            <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
+              <div className="text-4xl mb-4 text-center">🛡️</div>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">Enhanced Protection</h3>
+              <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-lg">
+                <li className="flex items-start">
+                  <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">•</span>
+                  <span>Improved decision-making and environmental outcomes</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">•</span>
+                  <span>Effective resource allocation</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Tiered Framework Components Section */}
-      <section className="py-20 px-6 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-900">
-        <div className="max-w-6xl mx-auto">
+      {/* Three-Tier Framework Section */}
+      <section className="py-12 px-6 bg-white dark:bg-gray-800">
+        <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
-            The Three-Tier Assessment Framework
+            Three-Tier Framework
           </h2>
           
-          <div className="space-y-6">
-            {/* Accordion 1: Tier 1 */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-              <button
-                onClick={() => toggleAccordion('tier-1')}
-                className="w-full text-left p-8 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-300"
-              >
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Tier 1: Screening Level Numerical Assessment</h3>
-                  <span className={`text-3xl transition-transform duration-300 ${
-                    activeAccordion === 'tier-1' ? 'rotate-180' : ''
-                  }`}>
-                    ▼
-                  </span>
-                </div>
-              </button>
-              
-              {activeAccordion === 'tier-1' && (
-                <div className="px-8 pb-8 border-t border-gray-200 dark:border-gray-600">
-                  <div className="pt-6 space-y-6">
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Purpose:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Uses conservative, generic standards for initial site screening to quickly identify sites 
-                        needing more assessment.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Approach:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Matrix sediment standards with generic (non-site-specific) assumptions, 
-                        applicable at any sites in BC.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">When to Use:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        First step in sediment quality assessment for all sites, providing a conservative 
-                        screening approach to identify potential concerns.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Tier 1 */}
+              <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6">
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Tier 1: Matrix Sediment Standards</h3>
+                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  Assumes generic site conditions
+                </p>
+              </div>
 
-            {/* Accordion 2: Tier 2a */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-              <button
-                onClick={() => toggleAccordion('tier-2a')}
-                className="w-full text-left p-8 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-300"
-              >
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Tier 2a: Refined Numerical Assessment</h3>
-                  <span className={`text-3xl transition-transform duration-300 ${
-                    activeAccordion === 'tier-2a' ? 'rotate-180' : ''
-                  }`}>
-                    ▼
-                  </span>
-                </div>
-              </button>
-              
-              {activeAccordion === 'tier-2a' && (
-                <div className="px-8 pb-8 border-t border-gray-200 dark:border-gray-600">
-                  <div className="pt-6 space-y-6">
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Purpose:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Uses models and procedures (e.g., Cause-Effect) to derive site-specific standards, 
-                        primarily for bioavailability adjustments.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Approach:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Systematically incorporates bioavailability adjustments using standard OC normalization 
-                        and AVS/SEM assessments, with provisions for advanced tools like passive sampling devices.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">When to Use:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        When Tier 1 screening identifies exceedances and site-specific conditions differ 
-                        from generic assumptions, particularly for bioavailability considerations.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+              {/* Tier 2 */}
+              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Tier 2: Site-Specific Sediment Standards</h3>
+                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  Bioavailability-adjusted using Equilibrium Partitioning (EqP) and/or Biotic Ligand Model (BLM)
+                </p>
+              </div>
 
-            {/* Accordion 3: Tier 2b */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-              <button
-                onClick={() => toggleAccordion('tier-2b')}
-                className="w-full text-left p-8 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-300"
-              >
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Tier 2b: Screening-Level Risk-Based Assessment</h3>
-                  <span className={`text-3xl transition-transform duration-300 ${
-                    activeAccordion === 'tier-2b' ? 'rotate-180' : ''
-                  }`}>
-                    ▼
-                  </span>
-                </div>
-              </button>
-              
-              {activeAccordion === 'tier-2b' && (
-                <div className="px-8 pb-8 border-t border-gray-200 dark:border-gray-600">
-                  <div className="pt-6 space-y-6">
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Purpose:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Similar to Tier 2a but adds prescribed lines of evidence, such as community analysis, 
-                        within an enhanced screening-level risk assessment process.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Approach:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Prescribed process with precluding conditions to determine if receptor-pathway-contaminant 
-                        is complete and fails screening-level, or incomplete and may pass screening-level.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">When to Use:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        When additional lines of evidence are needed beyond numerical standards, including 
-                        benthic community analysis and habitat assessment requirements.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Accordion 4: Tier 3 */}
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-              <button
-                onClick={() => toggleAccordion('tier-3')}
-                className="w-full text-left p-8 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-300"
-              >
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold text-gray-800 dark:text-white">Tier 3: Detailed Risk-Based Assessment</h3>
-                  <span className={`text-3xl transition-transform duration-300 ${
-                    activeAccordion === 'tier-3' ? 'rotate-180' : ''
-                  }`}>
-                    ▼
-                  </span>
-                </div>
-              </button>
-              
-              {activeAccordion === 'tier-3' && (
-                <div className="px-8 pb-8 border-t border-gray-200 dark:border-gray-600">
-                  <div className="pt-6 space-y-6">
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Purpose:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        A full risk assessment using multiple lines of evidence and site-specific factors 
-                        for complex scenarios.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Approach:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Detailed risk assessment in accordance with Protocol 1, integrating chemistry, 
-                        toxicity testing, biological community analysis, and bioaccumulation information 
-                        using cause-effect models like Bayesian Network - Relative Risk Model framework.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">When to Use:</h4>
-                      <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        For complex sites where Tier 2 assessments are insufficient or when multiple 
-                        stressors and pathways need comprehensive evaluation.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Survey Findings Section */}
-      <section className="py-20 px-6 bg-white dark:bg-gray-800">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
-            What We Heard: Stakeholder Perspectives
-          </h2>
-          
-          <div className="grid md:grid-cols-2 gap-8 mb-12">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Key Survey Findings</h3>
-              <ul className="space-y-4 text-gray-700 dark:text-gray-300">
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-3 mt-1">✓</span>
-                  <span>86.4% of respondents found a tiered framework would be beneficial</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-3 mt-1">✓</span>
-                  <span>88.1% felt that incorporating bioavailability adjustments is important or essential</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-3 mt-1">✓</span>
-                  <span>Strong support for site-specific modifications and flexibility</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-green-600 mr-3 mt-1">✓</span>
-                  <span>Recognition that current standards are often overly conservative</span>
-                </li>
-              </ul>
-            </div>
-            
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Stakeholder Concerns</h3>
-              <ul className="space-y-4 text-gray-700 dark:text-gray-300">
-                <li className="flex items-start">
-                  <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">⚠️</span>
-                  <span><strong>73%</strong> express concerns about complexity of tier selection criteria</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">⚠️</span>
-                  <span><strong>67%</strong> highlight need for clear bioavailability adjustment protocols</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">⚠️</span>
-                  <span><strong>81%</strong> request guidance for site-specific modification applications</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">⚠️</span>
-                  <span><strong>69%</strong> emphasize importance of training and support for practitioners</span>
-                </li>
-              </ul>
+              {/* Tier 3 */}
+              <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-6">
+                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Tier 3: Risk-Based Standards</h3>
+                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  Site-specific risk assessment
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Interactive Polls Section */}
-      <section className="py-20 px-6 bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-800 dark:to-gray-900">
+      <section className="py-12 px-6 bg-white dark:bg-gray-800">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-8 text-gray-800 dark:text-white font-['Merriweather']">
             Your Input on Tiered Assessment
           </h2>
           <p className="text-xl text-center text-gray-600 dark:text-gray-300 mb-16 max-w-4xl mx-auto">
-            Help inform the tiered framework development by sharing your perspectives on these key questions.
+            This leads us to the core questions for our discussion today. Your insights will help inform this collaborative process.
           </p>
           
           <div className="space-y-16">
@@ -438,7 +263,7 @@ export default function TieredFrameworkClient() {
       </section>
 
       {/* Next Steps Section */}
-      <section className="py-20 px-6 bg-gradient-to-br from-gray-800 to-gray-900 text-white">
+      <section className="py-12 px-6 bg-gradient-to-br from-gray-800 to-gray-900 text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-8 font-['Merriweather'] text-white">
             Next Steps for Implementation
@@ -446,24 +271,24 @@ export default function TieredFrameworkClient() {
           
           <div className="space-y-8 text-lg">
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-green-300 !text-green-300">Immediate Actions</h3>
-              <p className="text-gray-200 !text-gray-200 leading-relaxed">
+              <h3 className="text-2xl font-semibold mb-4 text-green-300">Immediate Actions</h3>
+              <p className="text-gray-200 leading-relaxed">
                 Develop tier escalation criteria, establish bioavailability adjustment protocols, and create 
                 guidance for site-specific modifications within the three-tier framework.
               </p>
             </div>
             
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-green-300 !text-green-300">Long-term Development</h3>
-              <p className="text-gray-200 !text-gray-200 leading-relaxed">
+              <h3 className="text-2xl font-semibold mb-4 text-green-300">Long-term Development</h3>
+              <p className="text-gray-200 leading-relaxed">
                 Comprehensive training programs, practitioner support tools, and continuous refinement 
                 of the tiered approach based on real-world application experience.
               </p>
             </div>
             
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-green-300 !text-green-300">Your Continued Input</h3>
-              <p className="text-gray-200 !text-gray-200 mb-4">
+              <h3 className="text-2xl font-semibold mb-4 text-green-300">Your Continued Input</h3>
+              <p className="text-gray-200 mb-4">
                 We welcome your ongoing perspectives as we develop this tiered framework together. 
                 Your input is essential for creating effective, practical assessment protocols.
               </p>

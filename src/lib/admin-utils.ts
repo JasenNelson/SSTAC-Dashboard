@@ -16,7 +16,9 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
     // Throttle calls to prevent excessive database queries (unless forced)
     const now = Date.now();
     if (!force && now - lastRefreshTime < REFRESH_THROTTLE_MS) {
-      console.log('⏰ Admin status refresh throttled - too soon since last call');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⏰ Admin status refresh throttled - too soon since last call');
+      }
       // Return cached admin status instead of false
       try {
         const supabase = createClient();
@@ -38,11 +40,15 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     
     if (userError || !user) {
-      console.log('⚠️ No user found during admin status refresh');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️ No user found during admin status refresh');
+      }
       return false;
     }
 
-    console.log('🔄 Refreshing admin status for user:', user.email);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔄 Refreshing admin status for user:', user.email);
+    }
 
     // Check if user has admin role
     const { data: roleData, error: roleError } = await supabase
@@ -58,7 +64,9 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
       // Check localStorage backup
       const backupAdminStatus = localStorage.getItem(`admin_status_${user.id}`);
       if (backupAdminStatus === 'true') {
-        console.log('✅ Admin status restored from localStorage backup');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ Admin status restored from localStorage backup');
+        }
         return true;
       }
       
@@ -70,11 +78,15 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
     if (isAdmin) {
       // Update localStorage backup
       localStorage.setItem(`admin_status_${user.id}`, 'true');
-      console.log('✅ Admin status confirmed and backed up');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Admin status confirmed and backed up');
+      }
     } else {
       // Remove localStorage backup if not admin
       localStorage.removeItem(`admin_status_${user.id}`);
-      console.log('ℹ️ User is not admin - backup cleared');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('ℹ️ User is not admin - backup cleared');
+      }
     }
 
     return isAdmin;
@@ -88,7 +100,9 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
       if (user) {
         const backupAdminStatus = localStorage.getItem(`admin_status_${user.id}`);
         if (backupAdminStatus === 'true') {
-          console.log('✅ Admin status restored from localStorage fallback');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('✅ Admin status restored from localStorage fallback');
+          }
           return true;
         }
       }
@@ -168,7 +182,9 @@ export async function clearAdminStatusBackup(): Promise<void> {
     
     if (user) {
       localStorage.removeItem(`admin_status_${user.id}`);
-      console.log('🧹 Admin status backup cleared for user:', user.email);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🧹 Admin status backup cleared for user:', user.email);
+      }
     }
   } catch (error) {
     console.error('❌ Error clearing admin status backup:', error);

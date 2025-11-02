@@ -97,7 +97,7 @@ export default function PollResultsChart({
       const optionText = option.option_text || 'Unknown Option';
       
       // Build description - keep it simple for "Other" options
-      let description = `${optionLabel}: ${optionText} - ${option.votes} vote${option.votes !== 1 ? 's' : ''}`;
+      const description = `${optionLabel}: ${optionText} - ${option.votes} vote${option.votes !== 1 ? 's' : ''}`;
       // Note: We don't show other_texts in the chart to keep it simple
       
       return {

@@ -1,69 +1,37 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClientForPagePath, getAuthenticatedUser } from '@/lib/supabase-auth';
 
 export async function POST(request: NextRequest) {
   try {
     const { pagePath, pollIndex, question, options, rankings, authCode } = await request.json();
-    console.log(`[Ranking Poll Submit] Received ranking for poll ${pollIndex} on page ${pagePath}${authCode ? `, authCode: "${authCode}"` : ''}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Ranking Poll Submit] Received ranking for poll ${pollIndex} on page ${pagePath}${authCode ? `, authCode: "${authCode}"` : ''}`);
+    }
     
-    // Check if this is a CEW page
-    const isCEWPage = pagePath.startsWith('/cew-polls/');
-    console.log(`[Ranking Poll Submit] isCEWPage: ${isCEWPage}, authCode: "${authCode}"`);
-    let supabaseClient, finalUserId;
+    // Create appropriate client based on page path (CEW vs authenticated)
+    const { supabase: supabaseClient, isCEWPage } = await createClientForPagePath(pagePath);
+    let finalUserId;
     
     if (isCEWPage) {
-      // CEW pages: Use anonymous connection with authCode as userId
-      supabaseClient = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            get() { return null; },
-            set() {},
-            remove() {},
-          },
-        }
-      );
-      
-      // Test if the anonymous client is truly anonymous
-      const { data: { user } } = await supabaseClient.auth.getUser();
-      console.log(`[Ranking Poll Submit] Anonymous client user check:`, user);
-      
-      // Generate unique user_id for each CEW submission to count unique participants
+      // CEW pages: Generate unique user_id for each CEW submission to count unique participants
       // This allows multiple people to submit and be counted as separate responses
+      // Note: Using inline generation to maintain exact backward compatibility with existing format
       const timestamp = Date.now();
       const randomSuffix = Math.random().toString(36).substring(2, 8);
       finalUserId = `${authCode || 'CEW2025'}_${timestamp}_${randomSuffix}`;
-      console.log(`[Ranking Poll Submit] CEW page, using unique userId: ${finalUserId}`);
-      console.log(`[Ranking Poll Submit] Supabase client created for CEW page`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Ranking Poll Submit] CEW page, using unique userId: ${finalUserId}`);
+      }
     } else {
-      // Authenticated pages: Use authenticated connection
-      const cookieStore = await cookies();
-      supabaseClient = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            get(name: string) {
-              return cookieStore.get(name)?.value;
-            },
-            set(name: string, value: string, options: CookieOptions) {
-              try { cookieStore.set({ name, value, ...options }); } catch (error) {}
-            },
-            remove(name: string, options: CookieOptions) {
-              try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
-            },
-          },
-        }
-      );
-
-      const { data: { user } } = await supabaseClient.auth.getUser();
+      // Authenticated pages: Get user ID from authenticated user
+      const user = await getAuthenticatedUser(supabaseClient);
       if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
       finalUserId = user.id;
-      console.log(`[Ranking Poll Submit] Authenticated user: ${finalUserId}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Ranking Poll Submit] Authenticated user: ${finalUserId}`);
+      }
     }
 
     // Get or create ranking poll using the existing function
@@ -80,16 +48,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create/get ranking poll' }, { status: 500 });
     }
 
-    console.log(`[Ranking Poll Submit] Poll created/found for pollIndex ${pollIndex}:`, pollId);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Ranking Poll Submit] Poll created/found for pollIndex ${pollIndex}:`, pollId);
+    }
 
     // For CEW pages, allow multiple votes by inserting new records
     // For authenticated users, delete existing and insert new ones
     if (isCEWPage && authCode) {
       // CEW pages: Always insert new votes (allow multiple votes per CEW code)
-      console.log(`[Ranking Poll Submit] CEW page - inserting new ranking votes`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Ranking Poll Submit] CEW page - inserting new ranking votes`);
+      }
     } else {
       // Authenticated users: Delete existing votes first
-      console.log(`[Ranking Poll Submit] Authenticated user - deleting existing votes first`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Ranking Poll Submit] Authenticated user - deleting existing votes first`);
+      }
       const { error: deleteError } = await supabaseClient
         .from('ranking_votes')
         .delete()
@@ -98,7 +72,9 @@ export async function POST(request: NextRequest) {
 
       if (deleteError) {
         console.error('Error deleting existing ranking votes:', deleteError);
-        console.log('Continuing with vote submission despite delete error');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Continuing with vote submission despite delete error');
+        }
       }
     }
 
@@ -122,7 +98,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to submit ranking votes', details: voteError.message }, { status: 500 });
     }
 
-    console.log(`[Ranking Poll Submit] Successfully submitted ${voteInserts.length} ranking votes for poll ${pollId}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[Ranking Poll Submit] Successfully submitted ${voteInserts.length} ranking votes for poll ${pollId}`);
+    }
     return NextResponse.json({ success: true, pollId: pollId });
   } catch (error) {
     console.error('Error in ranking poll submit API:', error);

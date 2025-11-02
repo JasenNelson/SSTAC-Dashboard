@@ -4,9 +4,21 @@
 
 The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** with comprehensive features for sediment standards development through stakeholder engagement and administrative tools.
 
-**LATEST UPDATE (January 2025)**: Change Vote Functionality COMPLETELY FIXED & VERIFIED - All polling systems now support proper vote changes for authenticated users without creating duplicates. Fixed single-choice polls, ranking polls, and wordcloud polls change vote functionality. Added partial unique database index for authenticated users only while preserving CEW insert-only behavior. Fixed missing RLS DELETE policy that was causing silent delete failures. Fixed API user type detection logic to use pagePath instead of authCode. All change vote functionality now works correctly with stable vote counts. Matrix Graph Survey-Results Integration COMPLETED - Matrix graphs now available on both survey-results pages with expandable interface. Holistic-protection page shows 4 matrix graphs for question pairs Q1-Q2, Q3-Q4, Q5-Q6, Q7-Q8. Prioritization page shows 1 matrix graph for Q1-Q2 pair. All graphs display combined data (CEW + authenticated users) with same visualization modes as admin panel. Matrix Graph Pairing System FIXED & VERIFIED - All filter modes now working correctly with proper CEW and authenticated user vote pairing. API query logic resolved to query both CEW and survey-results polls. Matrix Graph Visualization System completed with 4-mode overlapping data points visualization (Jittered, Size-Scaled, Heatmap, Concentric), improved color spectrum, and comprehensive K6 testing with proper user ID generation. **UI CLEANUP**: Simplified matrix graph text display with "n = X" format, replaced individual color dots with gradient spectrum bar (max 6 segments), and added fallback messaging for single-cluster data. Admin panel vote bars updated to light grey for better contrast. Prioritization questions now display all 5 options consistently. K6 test user_id mismatch issue resolved with x-session-id header implementation.
+**LATEST UPDATE (January 2025)**: Wordcloud Results Button Enhancement COMPLETED - Added "View All Responses" button to wordcloud polls on `/survey-results/*` pages. Results now hidden by default, displayed on button click after user submission. Button shows aggregated results combining both survey-results and cew-polls data sources. Enhanced API endpoint to match admin panel "all responses" filter logic. CEW pages remain unchanged for privacy. All test cases passed, matches admin panel data exactly. Change Vote Functionality COMPLETELY FIXED & VERIFIED - All polling systems now support proper vote changes for authenticated users without creating duplicates. Fixed single-choice polls, ranking polls, and wordcloud polls change vote functionality. Added partial unique database index for authenticated users only while preserving CEW insert-only behavior. Fixed missing RLS DELETE policy that was causing silent delete failures. Fixed API user type detection logic to use pagePath instead of authCode. All change vote functionality now works correctly with stable vote counts. Matrix Graph Survey-Results Integration COMPLETED - Matrix graphs now available on both survey-results pages with expandable interface.
 
 ## 🚀 **Recent Major Updates**
+
+### **Testing & Code Quality Infrastructure** ✅ COMPLETED (Weeks 1-16, January 2025)
+- **Testing Infrastructure**: Vitest unit tests (122 tests), Playwright E2E tests, CI/CD GitHub Actions workflow
+- **Code Quality**: Supabase auth utility centralization (16 routes migrated), 200+ lines of duplicate code eliminated
+- **Code Cleanup**: Conditional logging, debug code removal, unused import cleanup
+- **Grade Improvement**: C (66%) → B- (77%) through safe, incremental improvements
+- **Production Safety**: Zero incidents during 16 weeks of improvements
+- **Documentation**: Comprehensive completion summaries and improvement plans
+
+**For Details:** See `docs/review-analysis/MASTER_COMPLETION_SUMMARY.md` and `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md`
+
+---
 
 ### **Change Vote Functionality Fix** ✅ COMPLETED & VERIFIED (January 2025)
 - **Critical Issue Resolved**: Fixed duplicate vote creation when authenticated users change their votes
@@ -123,6 +135,19 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **K6 Test Improvements**: Enhanced test to generate proper word frequency distribution for realistic testing
 - **Question 13 Configuration Fix**: Updated wordcloud to allow only 1 word (single choice) instead of 3 words
 
+### **Wordcloud Results Button Enhancement** ✅ COMPLETED (January 2025)
+- **Hidden by Default**: Wordcloud results no longer auto-display on `/survey-results/*` pages
+- **"View All Responses" Button**: Appears after user submission to view aggregated results
+- **Aggregated Data Display**: Combines data from both `/survey-results` and `/cew-polls` paths
+- **Complete Results**: Shows all survey responses plus CEW responses matching admin panel "all responses" filter
+- **Privacy Maintained**: CEW pages remain unchanged with no results button (insert-only privacy)
+- **API Enhancement**: Updated `/api/wordcloud-polls/results` to combine survey and CEW data sources
+- **Database View**: Uses existing `wordcloud_results` view matching admin panel logic
+- **Word Frequency Aggregation**: Properly sums frequencies across both data sources
+- **Total Response Calculation**: Accurately counts distinct users from both paths
+- **Loading States**: Added loading indicator during aggregated results fetch
+- **Production Ready**: All test cases passed, matches admin panel data exactly
+
 ### **Prioritization Matrix Graph Integration** ✅ COMPLETED (2025-01-20)
 - **One Matrix Graph**: Visual prioritization analysis for question pair 1-2
 - **Custom SVG Implementation**: No external image dependencies, fully responsive design
@@ -144,9 +169,18 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **Load Test Metrics**: 1,715 successful poll submissions, 3,033 HTTP requests, 23.6 requests/second sustained
 - **Performance Thresholds**: All thresholds met (p95 < 2000ms, failure rate < 0.1%, success rate > 95%)
 
+### **TWG Review Access & Authentication Improvements** ✅ NEW (2025-01-31)
+- **Simplified Access Control**: Removed role checks from TWG Review page - now requires authentication only
+- **Consistent Access Pattern**: TWG Review matches other dashboard pages (Dashboard, WIKS, Survey Results) - authentication sufficient for access
+- **Instant Access**: Eliminated role checking delays - authenticated users access immediately without waiting for database triggers
+- **Enhanced Auth Error Handling**: Improved middleware and Header component to detect invalid refresh tokens and redirect to login
+- **Suspense Boundary**: Added React Suspense wrapper to login page for proper `useSearchParams()` handling
+- **Redirect Flow**: Login page now supports `redirect` query parameter for seamless post-login navigation
+- **Better UX**: Fixed first-click delay issue - new users can access TWG Review immediately after authentication
+
 ### **TWG Review Access & Schema Sync** ✅ COMPLETED (2025-09-18)
 - Reordered TWG Review: Line-by-Line Comments is now Part 3 with Sections I–V and Appendices C & D (5,000 chars each)
-- Server-side fallback on `/twg/review` assigns `member` if missing, eliminating manual SQL for new signups
+- Server-side fallback on `/twg/review` assigns `member` if missing (replaced with simplified auth-only access in 2025-01-31)
 - Admin role checks updated to `.maybeSingle()` across server/client
 - Schema synced: `review_files` uses `file_name`, `mime_type`, `created_at`; admin view aliases `submission_created_at`, `submission_updated_at`
 
@@ -269,7 +303,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 **Role Management**
 - **Role Assignment**: Admins can promote/demote users
 - **Role Visibility**: Clear indication of user privileges
-- **Access Control**: Role-based feature access
+- **Access Control**: Role-based feature access for admin pages; authentication-only for standard dashboard pages
 - **Security**: RLS policies enforce role restrictions
 
 #### **3. Authentication Improvements** ✅ COMPLETED
@@ -277,7 +311,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 **Admin Badge Persistence**
 - **Global Refresh Function**: `refreshGlobalAdminStatus()` accessible from any component
 - **Local Storage Backup**: Admin status cached locally for fallback recovery
-- **Timeout Protection**: 10-second timeout on role checking queries
+- **Timeout Protection**: 10-second timeout on role checking queries (admin pages only; standard dashboard pages use authentication-only access)
 - **Error Handling**: Graceful fallbacks for authentication failures
 
 **User Experience Improvements**
@@ -461,12 +495,12 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 
 #### **What Was Fixed**
 1. **Member User Logout**: Previously blocked by loading state, now works reliably
-2. **Admin Role Checking**: Added timeout protection and improved error handling
+2. **Access Control**: Admin pages require role checks; standard dashboard pages (Dashboard, WIKS, Survey Results, TWG Review) require authentication only
 3. **UI Accessibility**: Loading state no longer blocks logout functionality
 4. **Error Handling**: Clean separation between admin and member user experiences
 
 #### **Technical Improvements**
-- **Timeout Protection**: 10-second timeout on admin role checking queries
+- **Timeout Protection**: 10-second timeout on admin role checking queries (applies to admin pages only)
 - **UI State Management**: Loading state only blocks UI when no session exists
 - **Logout Reliability**: Simplified logout logic with guaranteed state clearing
 - **Console Noise Reduction**: Cleaner logging for member users
@@ -478,7 +512,7 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 - **API Architecture**: Next.js 15+ compatible and efficient
 - **Database Schema**: Complete with proper RLS and performance optimization
 - **User Authentication & Logout**: Reliable for both admin and member users
-- **Role-Based Access Control**: Clean separation between admin and member features
+- **Role-Based Access Control**: Admin pages require role checks; standard dashboard pages use authentication-only access for better UX
 - **Error Handling**: Graceful handling of authentication and role checking
 
 ### **What NOT to Change** ⚠️

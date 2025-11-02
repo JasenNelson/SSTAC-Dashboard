@@ -1,13 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 
 export default function WIKSClient() {
-  const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
-
-  const toggleAccordion = (id: string) => {
-    setActiveAccordion(activeAccordion === id ? null : id);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-amber-50">
@@ -47,13 +42,13 @@ export default function WIKSClient() {
       </section>
 
       {/* Bridging Vision to Action Section */}
-      <section className="py-20 px-6 bg-white">
+      <section className="py-12 px-6 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
             From Vision to Action: A New Approach to Stewardship
           </h2>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Card 1: The 'Why' */}
             <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl shadow-2xl h-full">
@@ -80,15 +75,57 @@ export default function WIKSClient() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Card 3: The Bridge */}
-            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
-              <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white p-8 rounded-2xl shadow-2xl h-full">
-                <div className="text-4xl mb-4">🌉</div>
-                <h3 className="text-2xl font-bold mb-4">The Bridge - Our Goal</h3>
-                <p className="text-amber-100 leading-relaxed">
-                  Our goal is to build on this momentum. We will explore how we can apply 
-                  these principles to the scientific framework for modernizing BC's sediment standards.
+      {/* Panel Questions Section */}
+      <section className="py-12 px-6 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-900">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-8 font-['Merriweather'] panel-questions-heading">
+            Panel Questions
+          </h2>
+          <p className="text-center text-gray-700 dark:text-gray-300 text-lg mb-4 max-w-4xl mx-auto">
+            Following two excellent presentations, our guest speakers shared their valuable experiences and perspectives on the following panel questions
+          </p>
+          <p className="text-center text-gray-600 dark:text-gray-400 text-base italic mb-16 max-w-4xl mx-auto">
+            Note: Responses from panel will be added soon
+          </p>
+          
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+            <div className="space-y-8">
+              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">Question 1</h3>
+                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  What&apos;s one key way sediment standards could better reflect Indigenous values, cultural uses, or community health needs?
+                </p>
+              </div>
+
+              <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">Question 2</h3>
+                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  From your experience, what&apos;s a key lesson—or challenge—you&apos;ve faced when bringing Indigenous knowledge into Western scientific processes?
+                </p>
+              </div>
+
+              <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">Question 3</h3>
+                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  Can you share an example of Two-Eyed Seeing in action and what it revealed about combining Indigenous and Western approaches?
+                </p>
+              </div>
+
+              <div className="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">Question 4</h3>
+                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  Where do you see current sediment standards falling short in protecting land, water, and communities from an Indigenous viewpoint?
+                </p>
+              </div>
+
+              <div className="bg-yellow-50 dark:bg-yellow-900/30 rounded-lg p-6">
+                <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">Question 5</h3>
+                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  How would treating land and water as kin—rather than resources—change how we define and enforce environmental standards?
                 </p>
               </div>
             </div>
@@ -96,112 +133,15 @@ export default function WIKSClient() {
         </div>
       </section>
 
-      {/* Opportunities for Braiding Knowledges Section */}
-      <section className="py-20 px-6 bg-gradient-to-br from-green-50 to-blue-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 font-['Merriweather']">
-            Opportunities for Weaving Knowledges
-          </h2>
-          
-          <div className="space-y-6">
-            {/* Accordion 1 */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              <button
-                onClick={() => toggleAccordion('accordion-1')}
-                className="w-full text-left p-8 hover:bg-gray-50 transition-colors duration-300"
-              >
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold text-gray-800">Holistic Protection Approach</h3>
-                  <span className={`text-3xl transition-transform duration-300 ${
-                    activeAccordion === 'accordion-1' ? 'rotate-180' : ''
-                  }`}>
-                    ▼
-                  </span>
-                </div>
-              </button>
-              
-              {activeAccordion === 'accordion-1' && (
-                <div className="px-8 pb-8 border-t border-gray-200">
-                  <div className="pt-6 space-y-6">
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 mb-3">What it is:</h4>
-                      <p className="text-gray-600 text-lg">
-                        Protecting the entire ecosystem, including wildlife and people that rely on it.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 mb-3">The IK&S Opportunity:</h4>
-                      <p className="text-gray-600 text-lg">
-                        Re-visioning the conceptual exposure scenarios. What does it mean to protect Indigenous Uses? 
-                        How can the scientific framework include 'health' protection goals that are inclusive of the 
-                        well-being of culturally significant species, such as medicinal plants, and the ability for 
-                        communities to maintain their relationship with the water?
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Accordion 2 */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              <button
-                onClick={() => toggleAccordion('accordion-2')}
-                className="w-full text-left p-8 hover:bg-gray-50 transition-colors duration-300"
-              >
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-bold text-gray-800">Tiered, Site-Specific Approach</h3>
-                  <span className={`text-3xl transition-transform duration-300 ${
-                    activeAccordion === 'accordion-2' ? 'rotate-180' : ''
-                  }`}>
-                    ▼
-                  </span>
-                </div>
-              </button>
-              
-              {activeAccordion === 'accordion-2' && (
-                <div className="px-8 pb-8 border-t border-gray-200">
-                  <div className="pt-6 space-y-6">
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 mb-3">What it is:</h4>
-                      <p className="text-gray-600 text-lg">
-                        Recognizing every place is unique and developing a framework for tailoring assessments to local conditions.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="text-xl font-semibold text-gray-800 mb-3">The IK&S Opportunity:</h4>
-                      <p className="text-gray-600 text-lg">
-                        Would a collaborative study, aimed at gathering area-based knowledge and scientific data, 
-                        be a good initial step? Would a cause-effect approach (probabilistic modeling) help us 
-                        understand real-world environmental conditions, including multiple stressors, cumulative 
-                        effects, complex mixtures, ecosystem characteristics, and Indigenous Uses?
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
 
       {/* Next Steps & Contact Section */}
-      <section className="py-20 px-6 bg-gradient-to-br from-gray-800 to-gray-900 text-white">
+      <section className="py-12 px-6 bg-gradient-to-br from-gray-800 to-gray-900 text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-8 font-['Merriweather']">
             Thank You & Next Steps
           </h2>
           
           <div className="space-y-8 text-lg">
-            <div>
-              <h3 className="text-2xl font-semibold mb-4 text-blue-300">Your Input Matters</h3>
-              <p className="text-gray-200 leading-relaxed">
-                Your contributions will directly inform the SSTAC's ongoing work and help us find 
-                meaningful pathways to weave these essential knowledge systems together.
-              </p>
-            </div>
-            
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-blue-300">Continuing the Dialogue</h3>
               <p className="text-gray-200 leading-relaxed">

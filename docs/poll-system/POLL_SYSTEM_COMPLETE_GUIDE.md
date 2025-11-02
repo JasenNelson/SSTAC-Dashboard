@@ -4,7 +4,7 @@
 
 **HISTORICAL CONTEXT**: This guide was created after January 2025 debugging incidents where multiple incorrect assumptions were made despite reviewing existing markdowns and running queries. Only after analyzing actual CSV exports of database tables was the true system structure understood.
 
-**JANUARY 2025 UPDATE**: Added comprehensive debugging lessons from holistic protection question text update process, including question text synchronization issues, admin panel matching failures, matrix graph data integration complexity, and filter system implementation gaps. **MATRIX GRAPH VISUALIZATION ENHANCEMENT**: Added 4-mode overlapping data points visualization system (Jittered, Size-Scaled, Heatmap, Concentric), improved color spectrum, and comprehensive K6 testing with proper user ID generation. **UI CLEANUP**: Simplified matrix graph text display with "n = X" format, replaced individual color dots with gradient spectrum bar (max 6 segments), and added fallback messaging for single-cluster data.
+**JANUARY 2025 UPDATE**: Added comprehensive debugging lessons from holistic protection question text update process, including question text synchronization issues, admin panel matching failures, matrix graph data integration complexity, and filter system implementation gaps. **MATRIX GRAPH VISUALIZATION ENHANCEMENT**: Added 4-mode overlapping data points visualization system (Jittered, Size-Scaled, Heatmap, Concentric), improved color spectrum, and comprehensive K6 testing with proper user ID generation. **UI CLEANUP**: Simplified matrix graph text display with "n = X" format, replaced individual color dots with gradient spectrum bar (max 6 segments), and added fallback messaging for single-cluster data. **WORDCLOUD RESULTS BUTTON**: Added "View All Responses" button to hide results by default and show aggregated data on click. Enhanced API to combine survey-results and cew-polls data sources matching admin panel logic.
 
 ## 📊 **ACTUAL Database Structure (Based on CSV Analysis)**
 
@@ -40,7 +40,14 @@
 - **Better Color Contrast**: Inverted color selection so larger words get darker, more readable colors
 - **Predefined Options**: Display descriptive options but submit simplified keywords
 - **Either/Or Selection**: Users can select predefined options OR enter custom words, not both
-- **Immediate Display**: Submitted words appear instantly in wordcloud and frequency table
+- **Results Button Enhancement** ✅ **COMPLETED (January 2025)**:
+  - **Hidden by Default**: Results no longer auto-display on `/survey-results/*` pages
+  - **"View All Responses" Button**: Appears after user submission to show aggregated results
+  - **Aggregated Data**: Combines both `/survey-results` and `/cew-polls` data sources
+  - **Complete Results**: Matches admin panel "all responses" filter showing all survey + CEW responses
+  - **Privacy Maintained**: CEW pages remain unchanged (no button, insert-only privacy)
+  - **API Enhancement**: `/api/wordcloud-polls/results` now combines survey and CEW paths
+  - **Loading States**: Added loading indicator during aggregated results fetch
 - **Error Handling**: Division by zero protection and comprehensive error boundaries
 - **CEW Multiple Submissions**: Unique user_id generation allows multiple submissions from same conference code
 - **Unique Constraint**: `UNIQUE(poll_id, user_id, word)` prevents duplicate words from same user

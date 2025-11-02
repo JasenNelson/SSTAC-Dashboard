@@ -44,7 +44,7 @@ export default function AdminUsersManager() {
 
   // Filtered and sorted users
   const filteredUsers = useMemo(() => {
-    let filtered = users.filter(user => {
+    const filtered = users.filter(user => {
       const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            user.id.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesRole = roleFilter === 'all' || 

@@ -1,28 +1,8 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { createClientForPagePath, getAuthenticatedUser } from '@/lib/supabase-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-          set(name: string, value: string, options: CookieOptions) {
-            try { cookieStore.set({ name, value, ...options }); } catch (error) {}
-          },
-          remove(name: string, options: CookieOptions) {
-            try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
-          },
-        },
-      }
-    );
-
     const { searchParams } = new URL(request.url);
     const pagePath = searchParams.get('pagePath');
     const pollIndex = searchParams.get('pollIndex');
@@ -32,41 +12,32 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Missing pagePath or pollIndex' }, { status: 400 });
     }
 
-    // Check if this is a CEW page
-    const isCEWPage = pagePath.startsWith('/cew-polls/');
+    // Create appropriate client based on page path (CEW vs authenticated)
+    const { supabase, isCEWPage } = await createClientForPagePath(pagePath);
     
     let userId = null;
-    let supabaseClient = supabase; // Default to authenticated connection
     
     if (isCEWPage && authCode) {
       // CEW pages: don't return user votes for privacy
       userId = null;
-      console.log(`CEW ranking poll - not returning user rankings for privacy (pollIndex: ${pollIndex})`);
-      // Create anonymous connection for CEW pages
-      supabaseClient = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            get() { return null; },
-            set() {},
-            remove() {},
-          },
-        }
-      );
-      console.log(`Looking for CEW user rankings for poll ${pollIndex} with authCode: ${authCode}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`CEW ranking poll - not returning user rankings for privacy (pollIndex: ${pollIndex})`);
+        console.log(`Looking for CEW user rankings for poll ${pollIndex} with authCode: ${authCode}`);
+      }
     } else {
       // Authenticated pages: use user session
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getAuthenticatedUser(supabase);
       if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
       userId = user.id;
-      console.log(`Looking for authenticated user rankings for poll ${pollIndex}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Looking for authenticated user rankings for poll ${pollIndex}`);
+      }
     }
 
     // First, try to get the poll from ranking_polls table
-    const { data: pollData, error: pollError } = await supabaseClient
+    const { data: pollData, error: pollError } = await supabase
       .from('ranking_polls')
       .select('*')
       .eq('page_path', pagePath)
@@ -83,10 +54,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (pollData) {
-      console.log(`Poll exists for pollIndex ${pollIndex}:`, pollData);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Poll exists for pollIndex ${pollIndex}:`, pollData);
+      }
       
       // Poll exists, get results from view
-      const { data: resultsData, error: resultsError } = await supabaseClient
+      const { data: resultsData, error: resultsError } = await supabase
         .from('ranking_results')
         .select('*')
         .eq('page_path', pagePath)
@@ -95,22 +68,30 @@ export async function GET(request: NextRequest) {
 
       if (!resultsError) {
         results = resultsData;
-        console.log(`Results found for poll ${pollIndex}:`, results);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Results found for poll ${pollIndex}:`, results);
+        }
       } else {
-        console.log(`No results found for poll ${pollIndex}:`, resultsError);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`No results found for poll ${pollIndex}:`, resultsError);
+        }
       }
 
       // Get user's rankings if we have a userId
       if (userId) {
-        console.log(`Looking for user rankings for poll ${pollData.id} (pollIndex: ${pollIndex}) with userId: ${userId}`);
-        const { data: userVoteData, error: voteError } = await supabaseClient
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`Looking for user rankings for poll ${pollData.id} (pollIndex: ${pollIndex}) with userId: ${userId}`);
+        }
+        const { data: userVoteData, error: voteError } = await supabase
           .from('ranking_votes')
           .select('option_index, rank')
           .eq('ranking_poll_id', pollData.id)
           .eq('user_id', userId)
           .order('rank');
 
-        console.log(`User vote data for poll ${pollIndex}:`, { userVoteData, voteError });
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`User vote data for poll ${pollIndex}:`, { userVoteData, voteError });
+        }
         if (!voteError && userVoteData && userVoteData.length > 0) {
           // Convert to array format where index = option_index, value = rank
           // Find the maximum option_index to determine array size
@@ -120,13 +101,19 @@ export async function GET(request: NextRequest) {
             rankings[vote.option_index] = vote.rank;
           });
           userRankings = rankings;
-          console.log(`Converted rankings for poll ${pollIndex}:`, userRankings);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`Converted rankings for poll ${pollIndex}:`, userRankings);
+          }
         } else {
-          console.log(`No user rankings found for poll ${pollIndex}`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`No user rankings found for poll ${pollIndex}`);
+          }
         }
       }
     } else {
-      console.log(`Poll does not exist yet for pollIndex ${pollIndex}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Poll does not exist yet for pollIndex ${pollIndex}`);
+      }
     }
 
     return NextResponse.json({ results, userRankings });

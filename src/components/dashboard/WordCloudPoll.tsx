@@ -131,6 +131,8 @@ export default function WordCloudPoll({
     user_words: []
   });
   const [showResults, setShowResults] = useState(false);
+  const [showAggregatedResults, setShowAggregatedResults] = useState(false);
+  const [isFetchingAggregated, setIsFetchingAggregated] = useState(false);
   const [userWords, setUserWords] = useState<string[] | null>(null);
   const [showChangeOption, setShowChangeOption] = useState(false);
   const [selectedPredefined, setSelectedPredefined] = useState<string[]>([]);
@@ -190,6 +192,41 @@ export default function WordCloudPoll({
 
   const [selectedColorScheme, setSelectedColorScheme] = useState<keyof typeof colorSchemes>('aquatic');
 
+  // Handler to fetch and show aggregated results
+  const handleViewResults = async () => {
+    if (isFetchingAggregated) return;
+    
+    setIsFetchingAggregated(true);
+    try {
+      console.log(`[WordCloudPoll ${pollIndex}] Fetching aggregated results for poll ${pollIndex}`);
+      
+      const apiEndpoint = '/api/wordcloud-polls/results';
+      let url = `${apiEndpoint}?pagePath=${encodeURIComponent(pagePath)}&pollIndex=${pollIndex}`;
+      if (authCode) {
+        url += `&authCode=${encodeURIComponent(authCode)}`;
+      }
+      
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`[WordCloudPoll ${pollIndex}] Aggregated API Response:`, data);
+        
+        // Store aggregated results from ALL users
+        setResults(data.results || { total_votes: 0, words: [], user_words: [] });
+        setShowAggregatedResults(true);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error(`[WordCloudPoll ${pollIndex}] Failed to fetch aggregated results:`, response.status, errorData);
+        alert('Failed to load aggregated results. Please try again.');
+      }
+    } catch (error) {
+      console.error(`[WordCloudPoll ${pollIndex}] Error fetching aggregated results:`, error);
+      alert('Failed to load aggregated results. Please try again.');
+    } finally {
+      setIsFetchingAggregated(false);
+    }
+  };
+
   const fetchResults = useCallback(async () => {
     if (isFetching) return; // Prevent multiple simultaneous calls
     
@@ -219,17 +256,21 @@ export default function WordCloudPoll({
         console.log(`[WordCloudPoll ${pollIndex}] API Response:`, data);
         setResults(data.results || { total_votes: 0, words: [], user_words: [] });
         
-        // Check if user has already submitted words
-        if (data.userWords && data.userWords.length > 0) {
-          console.log(`[WordCloudPoll ${pollIndex}] User has words:`, data.userWords);
-          setUserWords(data.userWords);
+        // Check if user has already submitted words (from results.user_words)
+        const userWordsFromResponse = data.results?.user_words;
+        if (userWordsFromResponse && Array.isArray(userWordsFromResponse) && userWordsFromResponse.length > 0) {
+          console.log(`[WordCloudPoll ${pollIndex}] User has words:`, userWordsFromResponse);
+          setUserWords(userWordsFromResponse);
           setHasVoted(true);
-          setShowResults(true);
+          // Don't auto-show aggregated results - user must click "View Results" button
+          setShowResults(false);
         } else {
           console.log(`[WordCloudPoll ${pollIndex}] No user words found`);
+          setUserWords(null);
         }
       } else {
-        console.log(`[WordCloudPoll ${pollIndex}] Failed to fetch results:`, response.status);
+        const errorData = await response.json().catch(() => ({}));
+        console.error(`[WordCloudPoll ${pollIndex}] Failed to fetch results:`, response.status, errorData);
         // Set empty results on error
         setResults({ total_votes: 0, words: [], user_words: [] });
       }
@@ -336,7 +377,15 @@ export default function WordCloudPoll({
 
       if (response.ok) {
         setHasVoted(true);
-        setShowResults(true);
+        // For /survey-results/* pages, don't auto-show aggregated results
+        // Only show user's confirmation. Aggregated results shown via button.
+        if (pagePath.startsWith('/cew-polls/')) {
+          // CEW pages: don't show results at all (privacy)
+          setShowResults(false);
+        } else {
+          // Survey-results pages: don't auto-show aggregated results
+          setShowResults(false);
+        }
         setUserWords(allWords);
         setShowChangeOption(false);
         
@@ -347,9 +396,6 @@ export default function WordCloudPoll({
           // For authenticated users, persist vote locally
           sessionStorage.setItem(`wordcloud_vote_${pagePath}_${pollIndex}`, JSON.stringify(allWords));
         }
-        
-        // Skip fetching results to prevent 500 errors
-        // await fetchResults();
         
         // Call parent callback if provided
         if (onVote) {
@@ -425,6 +471,30 @@ export default function WordCloudPoll({
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {/* View Results Button - Only show for /survey-results/* pages after submission */}
+      {hasVoted && !showAggregatedResults && !pagePath.startsWith('/cew-polls/') && (
+        <div className="mb-6 text-center">
+          <button
+            onClick={handleViewResults}
+            disabled={isFetchingAggregated}
+            className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
+              isFetchingAggregated
+                ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg transform hover:-translate-y-1'
+            }`}
+          >
+            {isFetchingAggregated ? (
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <span>Loading...</span>
+              </div>
+            ) : (
+              'View All Responses'
+            )}
+          </button>
         </div>
       )}
       
@@ -529,21 +599,12 @@ export default function WordCloudPoll({
         </div>
       )}
 
-      {/* Results Visualization */}
-      {showResults && (results?.words?.length > 0 || (userWords && userWords.length > 0)) && (
+      {/* Results Visualization - Only show when aggregated results are requested */}
+      {showAggregatedResults && (results?.words?.length > 0 || (userWords && userWords.length > 0)) && (
         <div className="mt-8">
           <div className="mb-4 flex items-center justify-between">
             <h4 className="text-lg font-semibold text-gray-800 dark:text-white">
-              Word Cloud Results ({(() => {
-                // Show user's response count if they've submitted words, otherwise show API results
-                if (userWords && userWords.length > 0) {
-                  return 1; // User has submitted at least one word
-                }
-                return results.total_votes || 0;
-              })()} response{(() => {
-                const count = userWords && userWords.length > 0 ? 1 : (results.total_votes || 0);
-                return count !== 1 ? 's' : '';
-              })()})
+              Word Cloud Results ({results.total_votes || 0} response{(results.total_votes || 0) !== 1 ? 's' : ''})
             </h4>
             
             {/* Color Scheme Selector */}
@@ -565,21 +626,8 @@ export default function WordCloudPoll({
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-inner">
               <div style={{ height: '400px', width: '100%' }}>
                 {(() => {
-                  // Always prioritize user's submitted words for immediate display
-                  let wordsToShow: { text: string; value: number }[] = [];
-                  
-                  // If user has submitted words, show those first
-                  if (userWords && userWords.length > 0) {
-                    wordsToShow = userWords.map(word => ({ text: word, value: 1 }));
-                  }
-                  
-                  // If we have API results, merge them with user words (avoiding duplicates)
-                  if (results.words && results.words.length > 0) {
-                    const apiWords = results.words.filter(apiWord => 
-                      !userWords?.some(userWord => userWord === apiWord.text)
-                    );
-                    wordsToShow = [...wordsToShow, ...apiWords];
-                  }
+                  // Show aggregated words from ALL users
+                  const wordsToShow = results.words || [];
                   
                   if (!wordsToShow || !Array.isArray(wordsToShow) || wordsToShow.length === 0) {
                     return (
@@ -636,23 +684,7 @@ export default function WordCloudPoll({
             </div>
           
           {/* Word Frequency Table */}
-          {(() => {
-            // Use the same logic as wordcloud display
-            let wordsToShow: { text: string; value: number }[] = [];
-            
-            if (userWords && userWords.length > 0) {
-              wordsToShow = userWords.map(word => ({ text: word, value: 1 }));
-            }
-            
-            if (results.words && results.words.length > 0) {
-              const apiWords = results.words.filter(apiWord => 
-                !userWords?.some(userWord => userWord === apiWord.text)
-              );
-              wordsToShow = [...wordsToShow, ...apiWords];
-            }
-            
-            return wordsToShow.length > 0;
-          })() && (
+          {results.words && results.words.length > 0 && (
             <div className="mt-6">
               <h5 className="text-md font-semibold text-gray-800 dark:text-white mb-3">
                 Word Frequency
@@ -660,19 +692,8 @@ export default function WordCloudPoll({
               <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow">
                 <div className="max-h-48 overflow-y-auto">
                   {(() => {
-                    // Use the same merged words logic
-                    let wordsToShow: { text: string; value: number }[] = [];
-                    
-                    if (userWords && userWords.length > 0) {
-                      wordsToShow = userWords.map(word => ({ text: word, value: 1 }));
-                    }
-                    
-                    if (results.words && results.words.length > 0) {
-                      const apiWords = results.words.filter(apiWord => 
-                        !userWords?.some(userWord => userWord === apiWord.text)
-                      );
-                      wordsToShow = [...wordsToShow, ...apiWords];
-                    }
+                    // Show aggregated words from ALL users
+                    const wordsToShow = results.words || [];
                     
                     const maxValue = Math.max(...wordsToShow.map(w => w.value));
                     

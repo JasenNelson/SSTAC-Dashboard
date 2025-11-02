@@ -39,7 +39,9 @@ export function getDeviceId(): string {
     // Generate new device ID
     deviceId = generateDeviceFingerprint();
     localStorage.setItem('cew_device_id', deviceId);
-    console.log('Generated new device ID:', deviceId);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Generated new device ID:', deviceId);
+    }
   }
   
   return deviceId;

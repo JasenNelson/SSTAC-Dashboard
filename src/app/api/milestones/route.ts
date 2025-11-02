@@ -1,22 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMilestone, updateMilestone, deleteMilestone } from '@/app/(dashboard)/admin/milestones/actions';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createAuthenticatedClient } from '@/lib/supabase-auth';
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value;
-          },
-        },
-      }
-    );
+    const supabase = await createAuthenticatedClient();
 
     const { data: milestones, error } = await supabase
       .from('milestones')

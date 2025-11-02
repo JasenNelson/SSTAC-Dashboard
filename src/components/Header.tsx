@@ -62,7 +62,9 @@ export default function Header() {
       if (userRolesError) {
         // Handle specific error cases
         if ((userRolesError as any).code === 'PGRST116') {
-          console.log('⚠️ user_roles table does not exist (PGRST116)');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('⚠️ user_roles table does not exist (PGRST116)');
+          }
         } else if ((userRolesError as any).code === '42P17') {
           console.error('❌ Infinite recursion detected in RLS policies');
           // Try localStorage backup for infinite recursion
@@ -73,7 +75,9 @@ export default function Header() {
           }
         } else if ((userRolesError as any).code === '406') {
           // 406 error means RLS policies are blocking access - user is likely not admin
-          console.log('ℹ️ User access blocked by RLS - likely not admin');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('ℹ️ User access blocked by RLS - likely not admin');
+          }
           setIsAdmin(false);
           localStorage.removeItem(`admin_status_${userId}`);
           return false;
@@ -96,12 +100,16 @@ export default function Header() {
       const hasAdminRole = (userRoles as any).some((role: unknown) => (role as any).role === 'admin');
       
       if (hasAdminRole) {
-        console.log('✅ User is admin via user_roles table');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ User is admin via user_roles table');
+        }
         setIsAdmin(true);
         localStorage.setItem(`admin_status_${userId}`, 'true');
         return true;
       } else {
-        console.log('ℹ️ User is not admin - roles found:', (userRoles as any).map((r: unknown) => (r as any).role));
+        if (process.env.NODE_ENV === 'development') {
+          console.log('ℹ️ User is not admin - roles found:', (userRoles as any).map((r: unknown) => (r as any).role));
+        }
         setIsAdmin(false);
         localStorage.removeItem(`admin_status_${userId}`);
         return false;
@@ -182,7 +190,9 @@ export default function Header() {
           // Check if user has admin role (only log for admins to reduce noise)
           const restoredFromStorage = restoreAdminStatusFromStorage(session.user.id);
           if (restoredFromStorage) {
-            console.log('✅ Admin status restored from localStorage');
+            if (process.env.NODE_ENV === 'development') {
+              console.log('✅ Admin status restored from localStorage');
+            }
           }
           
           const isUserAdmin = await refreshGlobalAdminStatus();
@@ -217,14 +227,18 @@ export default function Header() {
     };
 
     const timeoutId = setTimeout(() => {
-      console.log('⏰ Loading timeout reached - forcing loading to false');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⏰ Loading timeout reached - forcing loading to false');
+      }
       setIsLoading(false);
     }, 5000); // Increased timeout to 5 seconds
 
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state change event:', event, 'Session:', session?.user?.email);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Auth state change event:', event, 'Session:', session?.user?.email);
+      }
       
       // Check if we're on a protected route
       const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025'];
@@ -253,7 +267,9 @@ export default function Header() {
         // Check admin role (only log for admins to reduce noise)
         const restoredFromStorage = restoreAdminStatusFromStorage(session.user.id);
         if (restoredFromStorage) {
-          console.log('✅ Admin status restored from localStorage during auth change');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('✅ Admin status restored from localStorage during auth change');
+          }
         }
         
         // Use .then() instead of await in useEffect
@@ -273,12 +289,16 @@ export default function Header() {
 
     // Also check admin role on initial load if we have a session
     if (session?.user) {
-      console.log('🔄 Initial load - Checking admin role for user:', session.user.id);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Initial load - Checking admin role for user:', session.user.id);
+      }
       
       // First try to restore from localStorage
       const restoredFromStorage = restoreAdminStatusFromStorage(session.user.id);
       if (restoredFromStorage) {
-        console.log('✅ Admin status restored from localStorage during initial load');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ Admin status restored from localStorage during initial load');
+        }
       }
       
       // Use .then() instead of await in useEffect
@@ -298,11 +318,15 @@ export default function Header() {
     if (session?.user) {
       // Always refresh admin status when navigating to admin pages
       if (pathname.startsWith('/admin')) {
-        console.log('🔄 Admin page navigation detected - refreshing admin status');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔄 Admin page navigation detected - refreshing admin status');
+        }
         refreshGlobalAdminStatus(true).then((isStillAdmin) => {
           setIsAdmin(isStillAdmin);
           if (!isStillAdmin) {
-            console.log('⚠️ Admin status lost during navigation');
+            if (process.env.NODE_ENV === 'development') {
+              console.log('⚠️ Admin status lost during navigation');
+            }
           }
         });
       }
@@ -313,11 +337,15 @@ export default function Header() {
   useEffect(() => {
     const handleRouteChange = () => {
       if (session?.user && pathname.startsWith('/admin')) {
-        console.log('🔄 Navigation event detected - refreshing admin status');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔄 Navigation event detected - refreshing admin status');
+        }
         refreshGlobalAdminStatus(true).then((isStillAdmin) => {
           setIsAdmin(isStillAdmin);
           if (!isStillAdmin) {
-            console.log('⚠️ Admin status lost during navigation event');
+            if (process.env.NODE_ENV === 'development') {
+              console.log('⚠️ Admin status lost during navigation event');
+            }
           }
         });
       }
@@ -355,7 +383,9 @@ export default function Header() {
           const isStillAdmin = await refreshGlobalAdminStatus();
           setIsAdmin(isStillAdmin);
           if (!isStillAdmin) {
-            console.log('⚠️ Admin status lost during periodic check');
+            if (process.env.NODE_ENV === 'development') {
+              console.log('⚠️ Admin status lost during periodic check');
+            }
           }
         }
       }, 30000); // Check every 30 seconds (more frequent)
@@ -365,13 +395,17 @@ export default function Header() {
   }, [session?.user]);
 
   const handleLogout = async () => {
-    console.log('🔄 Logout initiated for user:', session?.user?.email);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔄 Logout initiated for user:', session?.user?.email);
+    }
     
     try {
       // Clear admin status backup using utility function
       await clearAdminStatusBackup();
       
-      console.log('🔄 Calling Supabase signOut...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Calling Supabase signOut...');
+      }
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -381,10 +415,14 @@ export default function Header() {
         setIsAdmin(false);
         router.push('/login');
       } else {
-        console.log('✅ Supabase signOut successful');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ Supabase signOut successful');
+        }
         setSession(null);
         setIsAdmin(false);
-        console.log('🔄 Redirecting to login page...');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔄 Redirecting to login page...');
+        }
         router.push('/login');
       }
     } catch (error) {
@@ -409,10 +447,10 @@ export default function Header() {
     { href: '/twg/review', label: 'TWG White Paper Review', icon: '📝', category: 'Engagement' },
     
     // Core Themes
-    { href: '/wiks', label: 'Indigenous Knowledge & Science', icon: '🌿', category: 'Core Themes' },
     { href: '/survey-results/holistic-protection', label: 'Holistic Protection', icon: '🛡️', category: 'Core Themes' },
     { href: '/survey-results/tiered-framework', label: 'Tiered Framework', icon: '📈', category: 'Core Themes' },
     { href: '/survey-results/prioritization', label: 'Prioritization Framework', icon: '🧪', category: 'Core Themes' },
+    { href: '/wiks', label: 'Weaving Indigenous Knowledges & Science', icon: '🌿', category: 'Core Themes' },
     
     // Resources
     { href: '/twg/documents', label: 'Documents', icon: '📄', category: 'Resources' },
@@ -420,10 +458,6 @@ export default function Header() {
     
     // CEW Conference (moved to bottom)
     { href: '/cew-2025', label: 'SABCS Session', icon: '📅', category: 'CEW Conference' },
-    { href: '/cew-polls/holistic-protection', label: 'CEW: Holistic Protection', icon: '🌊', category: 'CEW Conference', parent: 'SABCS Session' },
-    { href: '/cew-polls/tiered-framework', label: 'CEW: Tiered Framework', icon: '📊', category: 'CEW Conference', parent: 'SABCS Session' },
-    { href: '/cew-polls/prioritization', label: 'CEW: Prioritization', icon: '🎯', category: 'CEW Conference', parent: 'SABCS Session' },
-    { href: '/cew-polls/wiks', label: 'CEW: Indigenous Knowledge', icon: '🌱', category: 'CEW Conference', parent: 'SABCS Session' },
   ];
 
   // Admin-only navigation links - simplified to single dashboard link
@@ -531,7 +565,7 @@ export default function Header() {
                                 href={link.href}
                                 onClick={() => setIsDesktopMenuOpen(false)}
                                 className={`block px-4 py-2 text-sm transition-colors ${
-                                  link.parent 
+                                  (link as any).parent 
                                     ? 'pl-8 text-gray-600 dark:text-gray-400' 
                                     : ''
                                 } ${
@@ -627,7 +661,7 @@ export default function Header() {
                         href={link.href}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                          link.parent 
+                          (link as any).parent 
                             ? 'pl-8 text-gray-600 dark:text-gray-400' 
                             : ''
                         } ${

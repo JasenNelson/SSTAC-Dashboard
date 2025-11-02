@@ -53,7 +53,9 @@ export async function middleware(request: NextRequest) {
         console.warn('[Middleware] Error during signOut (can be ignored):', signOutError)
       }
 
-      console.log('[Middleware] Auth error detected, redirecting to login')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Middleware] Auth error detected, redirecting to login')
+      }
       const loginUrl = new URL('/login', request.url)
       // Preserve the original path as a query param so user can be redirected back after login
       loginUrl.searchParams.set('redirect', request.nextUrl.pathname)

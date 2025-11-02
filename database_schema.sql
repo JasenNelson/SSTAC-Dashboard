@@ -198,6 +198,14 @@
 --    - Enhanced readability with minimal text rotation and proper spacing
 --    - Better color contrast with inverted color selection for larger words
 
+-- 8. TWG REVIEW ACCESS CONTROL (2025-01-31):
+--    - TWG Review page now requires authentication only (no role checks)
+--    - Matches access pattern of other dashboard pages (Dashboard, WIKS, Survey Results)
+--    - Removed role checking delays - authenticated users access immediately
+--    - Role checks are only needed for admin pages (/admin/*)
+--    - The 'member' role is still assigned by database trigger for tracking purposes
+--    - Authentication is enforced by middleware and page-level checks
+
 -- 9. PRIORITIZATION MATRIX GRAPH SYSTEM (2025-01-20):
 --    - Custom SVG implementation for prioritization matrix graphs
 --    - Landscape orientation (16:9) optimized for admin panel

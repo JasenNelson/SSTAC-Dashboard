@@ -1,0 +1,44 @@
+Why Modernize BC's Sediment Standards?
+
+-Evolving Scientific Understanding: Scientific knowledge of sediment contamination and its ecological impacts continues to advance rapidly, creating opportunities for improvement.
+- Non-scheduled & Emerging Contaminants: New chemicals and complex mixtures pose challenges not addressed by current standards.
+- Site-Specific & Risk-Based Approaches: Modern frameworks offer more flexible, site-specific assessment methods that can be integrated into our standards.
+- Ecosystem Protection: We must ensure our standards remain protective, practical, and aligned with the best available science.
+
+Key Areas for Modernizing the Sediment Standards Framework
+
+- Matrix Sediment Standards: Holistic protection of ecological organisms and people, from direct and food-related toxicity.
+- Tiered, Site-Specific Sediment Standards: Moving beyond fixed standards to adaptable, risk-based assessments that account for local conditions.
+- Emerging Contaminants / Mixtures: Addressing non-scheduled substances of concern and their combined effects on ecosystems.
+- Harnessing Available Knowledge: Address prioritized data gaps such as: determining regional background levels, using results from recent field studies and research, and incorporating area-based Indigenous Knowledge & Science.
+
+Matrix Sediment Standards (SedS) Framework
+
+Direct Toxicity (SedS-direct)
+- SedS-directECO: Protect aquatic organisms from direct exposure from contaminants in sediment.
+- SedS-directHH: Protects people from direct contact risks (e.g.,incidental ingestion, dermal contact) during recreational or cultural activities.
+
+Food Pathway Toxicity (SedS-food)
+- SedS-foodECO: Protects piscivorous wildlife (e.g., otters, eagles, orcas) from the bioaccumulation and biomagnification of contaminants through the food chain.
+- SedS-foodHH: Protects human consumers of fish, shellfish, and other aquatic foods.
+
+Expanding the Tiered Framework
+
+Tier 3: Risk-Based Standards: Protective for site conditions in accordance with Protocol 1
+Tier 2: Site-Specific Sediment Standards: Bioavailability-adjusted and protective for site conditions
+Tier 1: Matrix Sediment Standards: 'Safe' for any location due to conservative assumptions
+
+Emerging Contaminants & Mixtures
+
+The chemical landscape is constantly changing, requiring proactive approaches to address potential health hazards.
+- Non-scheduled Substances: Standards for priority contaminants
+- Complex Mixtures: Combined effects often not predicted by simple tests
+- Adaptive Frameworks: Flexible tools & incorporate new science in standards framework
+- Proactive Hazard Identification: Develop the scientific and regulatory tools to proactively address new hazards as they are identified.
+
+Data Gap, Feasibility & Prioritization Framework
+- Address Information Gaps: Collaborative research to address priorities such as missing substance groups, incorporating validated models, addressing all relevant pathways, and acknowledging Indigenous Knowledge & Science.
+- Acknowledge Feasibility: Make use of existing resources where appropriate. Recognize limitations to time and expense of creating and approving new procedures .
+- Prioritization: Develop a systemic approach for introducing the most important changes and easiest improvements first
+- Goal: A framework for identifying and resolving data gaps, with short- and long-term goals for strategic research planning.
+

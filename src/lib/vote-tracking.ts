@@ -38,7 +38,9 @@ export function trackVote(pagePath: string, pollIndex: number): boolean {
   const existingTracker = localStorage.getItem(trackerKey);
   if (existingTracker) {
     const tracker: VoteTracker = JSON.parse(existingTracker);
-    console.log(`Device ${deviceId} already voted on ${pagePath} poll ${pollIndex}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Device ${deviceId} already voted on ${pagePath} poll ${pollIndex}`);
+    }
     return false; // Already voted
   }
   
@@ -52,12 +54,16 @@ export function trackVote(pagePath: string, pollIndex: number): boolean {
   };
   
   localStorage.setItem(trackerKey, JSON.stringify(tracker));
-  console.log(`Tracked vote for device ${deviceId} on ${pagePath} poll ${pollIndex}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`Tracked vote for device ${deviceId} on ${pagePath} poll ${pollIndex}`);
+  }
   return true; // New vote allowed
 }
 
 export function clearVoteTracking(pagePath: string, pollIndex: number): void {
   const trackerKey = `cew_tracker_${pagePath}_${pollIndex}`;
   localStorage.removeItem(trackerKey);
-  console.log(`Cleared vote tracking for ${pagePath} poll ${pollIndex}`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`Cleared vote tracking for ${pagePath} poll ${pollIndex}`);
+  }
 }
