@@ -3,12 +3,11 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 type EditDocumentState = { error?: string | null; success?: string | null };
 
 export async function editDocument(
-  prevState: EditDocumentState,
+  _prevState: EditDocumentState,
   formData: FormData
 ): Promise<EditDocumentState> {
   try {

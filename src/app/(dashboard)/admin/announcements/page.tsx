@@ -1,7 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import AnnouncementsManagement from '@/components/dashboard/AnnouncementsManagement';
 import AnnouncementsPageClient from './AnnouncementsPageClient';
 
 export default async function AdminAnnouncementsPage() {

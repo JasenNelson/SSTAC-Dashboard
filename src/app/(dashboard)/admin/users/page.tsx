@@ -1,8 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
-import AdminUsersManager from '@/components/dashboard/AdminUsersManager';
 import UsersPageClient from './UsersPageClient';
 
 export default async function AdminUsersPage() {

@@ -4,7 +4,7 @@ import { createTag, updateTag, deleteTag } from '@/app/(dashboard)/admin/tags/ac
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const result = await createTag(formData, {});
+    const result = await createTag(formData);
     
     if (result?.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const result = await updateTag(formData, {});
+    const result = await updateTag(formData);
     
     if (result?.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -36,7 +36,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const result = await deleteTag(formData, {});
+    const result = await deleteTag(formData);
     
     if (result?.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });

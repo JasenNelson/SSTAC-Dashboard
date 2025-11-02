@@ -1,9 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-export async function createMilestone(formData: FormData, prevState: unknown) {
+export async function createMilestone(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -94,7 +93,7 @@ export async function createMilestone(formData: FormData, prevState: unknown) {
   }
 }
 
-export async function updateMilestone(formData: FormData, prevState: unknown) {
+export async function updateMilestone(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -198,7 +197,7 @@ export async function updateMilestone(formData: FormData, prevState: unknown) {
   }
 }
 
-export async function deleteMilestone(formData: FormData, prevState: unknown) {
+export async function deleteMilestone(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

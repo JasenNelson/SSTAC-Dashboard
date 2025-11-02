@@ -1,7 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import MilestonesManagement from '@/components/dashboard/MilestonesManagement';
 import MilestonesPageClient from './MilestonesPageClient';
 
 export default async function AdminMilestonesPage() {

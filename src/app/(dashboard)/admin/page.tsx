@@ -2,18 +2,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-// import Link from 'next/link';
-import { 
-  Users, 
-  Tags, 
-  Bell, 
-  Calendar, 
-  FileText, 
-  MessageSquare,
-  BarChart3,
-  Settings,
-  Eye
-} from 'lucide-react';
 import AdminDashboardClient from './AdminDashboardClient';
 
 export default async function AdminDashboardPage() {

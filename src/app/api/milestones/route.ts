@@ -26,7 +26,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const result = await createMilestone(formData, {});
+    const result = await createMilestone(formData);
     
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const result = await updateMilestone(formData, {});
+    const result = await updateMilestone(formData);
     
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -58,7 +58,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const result = await deleteMilestone(formData, {});
+    const result = await deleteMilestone(formData);
     
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });

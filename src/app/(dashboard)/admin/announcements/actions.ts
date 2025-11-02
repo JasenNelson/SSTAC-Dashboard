@@ -1,9 +1,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-export async function createAnnouncement(formData: FormData, prevState: unknown) {
+export async function createAnnouncement(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -86,7 +85,7 @@ export async function createAnnouncement(formData: FormData, prevState: unknown)
   }
 }
 
-export async function updateAnnouncement(formData: FormData, prevState: unknown) {
+export async function updateAnnouncement(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -182,7 +181,7 @@ export async function updateAnnouncement(formData: FormData, prevState: unknown)
   }
 }
 
-export async function deleteAnnouncement(formData: FormData, prevState: unknown) {
+export async function deleteAnnouncement(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

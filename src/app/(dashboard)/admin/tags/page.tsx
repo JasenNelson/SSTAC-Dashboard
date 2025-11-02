@@ -1,7 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import TagManagement from '@/components/dashboard/TagManagement';
 import TagsPageClient from './TagsPageClient';
 
 export default async function AdminTagsPage() {

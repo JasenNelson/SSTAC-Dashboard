@@ -2,10 +2,9 @@
 
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 
-export async function createTag(formData: FormData, prevState: unknown) {
+export async function createTag(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -63,7 +62,7 @@ export async function createTag(formData: FormData, prevState: unknown) {
     }
 
     // Create the tag
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('tags')
       .insert([
         {
@@ -88,7 +87,7 @@ export async function createTag(formData: FormData, prevState: unknown) {
   }
 }
 
-export async function updateTag(formData: FormData, prevState: unknown) {
+export async function updateTag(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -181,7 +180,7 @@ export async function updateTag(formData: FormData, prevState: unknown) {
   }
 }
 
-export async function deleteTag(formData: FormData, prevState: unknown) {
+export async function deleteTag(formData: FormData) {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

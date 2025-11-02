@@ -28,7 +28,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const result = await createAnnouncement(formData, {});
+    const result = await createAnnouncement(formData);
     
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const result = await updateAnnouncement(formData, {});
+    const result = await updateAnnouncement(formData);
     
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const formData = await request.formData();
-    const result = await deleteAnnouncement(formData, {});
+    const result = await deleteAnnouncement(formData);
     
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: 400 });
