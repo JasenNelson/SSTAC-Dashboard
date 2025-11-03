@@ -197,8 +197,8 @@ export default function HolisticProtectionClient() {
               </div>
               
               <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Stakeholder Perspective</h3>
-                <p className="text-gray-700 dark:text-gray-300 text-lg italic leading-relaxed mt-4">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">Stakeholder Perspective</h3>
+                <p className="text-gray-700 dark:text-gray-300 text-lg italic leading-relaxed mt-4 text-center">
                   &quot;The BC CSR sediment standards are not appropriate or adequate to protect upper trophic level 
                   organisms, apex predators and humans at the top of foodwebs, as these sediment standards were or 
                   are designed for the protection of low tropic level species and benthic organisms.&quot;

@@ -368,6 +368,18 @@ This comprehensive review analyzed **129 files (~25,682 lines of code)**, **20 A
 - ⏸️ Dependencies updates (deferred)
 - ⏸️ Performance optimization (deferred)
 
+### ⏸️ Post-Live Polling Cleanup (DEFERRED):
+**Context:** Minor cleanup items identified during live polling that can be addressed after CEW 2025 is complete.
+
+- ⏸️ **Fix Misleading Debug Log in PollResultsClient** (DEFERRED)
+  - **Issue:** Debug log shows `match_found: false` even when polls match correctly
+  - **Location:** `src/app/(dashboard)/admin/poll-results/PollResultsClient.tsx` line ~262
+  - **Cause:** Debug check uses wrong search string ("ecosystem health from direct toxicity" instead of "direct toxicity to ecological receptors")
+  - **Impact:** No functional impact - polls work correctly; debug log is misleading
+  - **Fix:** Update debug log to use same matching logic as actual poll matching (lines 234-240)
+  - **Effort:** 15 minutes
+  - **Risk:** Zero (debug log only, no logic changes)
+
 ### 🎯 Current Status (B+ 83-84%):
 - ✅ Testing infrastructure complete
 - ✅ Code cleanup done

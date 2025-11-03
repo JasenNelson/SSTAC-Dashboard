@@ -147,116 +147,115 @@ export default function PrioritizationClient() {
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8 mb-12">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Key Survey Findings</h3>
-              <ul className="space-y-4 text-gray-700 dark:text-gray-300">
-                <li className="flex items-start">
-                  <span className="text-orange-600 mr-3 mt-1">✓</span>
-                  <span>Strong support for comprehensive contaminant coverage</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-orange-600 mr-3 mt-1">✓</span>
-                  <span>Need for systematic prioritization approach</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-orange-600 mr-3 mt-1">✓</span>
-                  <span>Importance of addressing emerging contaminants</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-orange-600 mr-3 mt-1">✓</span>
-                  <span>Recognition that resource allocation requires prioritization</span>
-                </li>
+            <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 dark:from-blue-900/30 dark:to-blue-800/30 rounded-2xl shadow-lg p-8 border-2 border-blue-300 dark:border-blue-700">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">Key Survey Findings</h3>
+              <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-center">
+                <li>Strong support for comprehensive contaminant coverage</li>
+                <li>Need for systematic prioritization approach</li>
+                <li>Importance of addressing emerging contaminants</li>
+                <li>Recognition that resource allocation requires prioritization</li>
               </ul>
             </div>
             
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Stakeholder Concerns</h3>
-              <ul className="space-y-4 text-gray-700 dark:text-gray-300">
-                <li className="flex items-start">
-                  <span className="text-yellow-600 dark:text-yellow-400 mr-3 mt-1">⚠️</span>
-                  <span><strong>79%</strong> express concerns about complexity of prioritization methodology</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-yellow-600 dark:text-yellow-400 mr-3 mt-1">⚠️</span>
-                  <span><strong>84%</strong> highlight need for clear criteria and decision frameworks</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-yellow-600 dark:text-yellow-400 mr-3 mt-1">⚠️</span>
-                  <span><strong>71%</strong> request guidance on emerging contaminant assessment</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="text-yellow-600 dark:text-yellow-400 mr-3 mt-1">⚠️</span>
-                  <span><strong>76%</strong> emphasize importance of stakeholder input in prioritization process</span>
-                </li>
+            <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 dark:from-purple-900/30 dark:to-purple-800/30 rounded-2xl shadow-lg p-8 border-2 border-purple-300 dark:border-purple-700">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">Stakeholder Concerns</h3>
+              <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-center">
+                <li><strong>79%</strong> express concerns about complexity of prioritization methodology</li>
+                <li><strong>84%</strong> highlight need for clear criteria and decision frameworks</li>
+                <li><strong>71%</strong> request guidance on emerging contaminant assessment</li>
+                <li><strong>76%</strong> emphasize importance of stakeholder input in prioritization process</li>
               </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Modernizing BC's Sediment Standards Framework Section */}
+      {/* Developing a Prioritization Framework Section */}
       <section className="py-12 px-6 bg-white/80 dark:bg-gray-800 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
-            Modernizing BC&apos;s Sediment Standards Framework
+            Developing a Prioritization Framework for Strategic Planning
           </h2>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Card 1: The Challenge */}
+            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-900 dark:to-blue-800 text-white p-8 rounded-2xl shadow-2xl h-full">
+                <h3 className="text-2xl font-bold mb-4">The Challenge</h3>
+                <p className="text-white leading-relaxed">
+                  There are many opportunities to modernize and improve sediment standards, but we have limited resources. 
+                  We need to prioritize by determining what is both feasible and important to make the most effective 
+                  use of our capacity and ensure meaningful progress.
+                </p>
+              </div>
+            </div>
 
-          {/* Why Modernize Section */}
-          <div className="mb-16">
-            <h3 className="text-3xl font-bold text-center mb-12 text-gray-800 dark:text-white">Why Modernize BC&apos;s Sediment Standards?</h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-900 dark:to-blue-800 rounded-xl p-6 shadow-lg">
-                <div className="text-3xl mb-4">🔬</div>
-                <h4 className="text-xl font-semibold text-white mb-3">Evolving Scientific Understanding</h4>
-                <p className="text-white">
-                  Scientific knowledge of sediment contamination and its ecological impacts continues to advance rapidly, creating opportunities for improvement.
+            {/* Card 2: The Solution */}
+            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
+              <div className="bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-900 dark:to-orange-800 text-white p-8 rounded-2xl shadow-2xl h-full">
+                <h3 className="text-2xl font-bold mb-4">Collaborative Framework</h3>
+                <p className="text-white leading-relaxed">
+                  A collaborative approach that brings together stakeholders to assess feasibility, evaluate importance, 
+                  and develop strategic priorities for short-, medium-, and long-term modernization goals that reflect 
+                  diverse perspectives and expertise.
                 </p>
               </div>
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-900 dark:to-purple-800 rounded-xl p-6 shadow-lg">
-                <div className="text-3xl mb-4">⚗️</div>
-                <h4 className="text-xl font-semibold text-white mb-3">Non-scheduled & Emerging Contaminants</h4>
-                <p className="text-white">
-                  New chemicals and complex mixtures pose challenges not addressed by current standards.
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-900 dark:to-green-800 rounded-xl p-6 shadow-lg">
-                <div className="text-3xl mb-4">🎯</div>
-                <h4 className="text-xl font-semibold text-white mb-3">Site-Specific & Risk-Based Approaches</h4>
-                <p className="text-white">
-                  Modern frameworks offer more flexible, site-specific assessment methods that can be integrated into our standards.
-                </p>
-              </div>
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-900 dark:to-orange-800 rounded-xl p-6 shadow-lg">
-                <div className="text-3xl mb-4">🛡️</div>
-                <h4 className="text-xl font-semibold text-white mb-3">Ecosystem Protection</h4>
-                <p className="text-white">
-                  We must ensure our standards remain protective, practical, and aligned with the best available science.
+            </div>
+
+            {/* Card 3: The Benefits */}
+            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
+              <div className="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-900 dark:to-green-800 text-white p-8 rounded-2xl shadow-2xl h-full">
+                <h3 className="text-2xl font-bold mb-4">Strategic Implementation</h3>
+                <p className="text-white leading-relaxed">
+                  By prioritizing initiatives based on both feasibility and importance, we can allocate resources 
+                  strategically to maximize impact and ensure efficient progress while maintaining scientific rigor 
+                  and practical implementation.
                 </p>
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* Key Areas for Modernizing */}
+      {/* Key Areas for Modernizing */}
+      <section className="py-12 px-6 bg-white/80 dark:bg-gray-800 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto">
           <div className="mb-16">
             <h3 className="text-3xl font-bold text-center mb-12 text-gray-800 dark:text-white">Key Areas for Modernizing the Sediment Standards Framework</h3>
             <div className="grid md:grid-cols-2 gap-8">
               <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 dark:from-blue-900/30 dark:to-blue-800/30 rounded-2xl shadow-lg p-8 border-2 border-blue-300 dark:border-blue-700">
                 <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Matrix Sediment Standards</h4>
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                <p className="text-gray-700 dark:text-gray-300 text-lg mb-4">
                   Holistic protection of ecological organisms and people, from direct and food-related toxicity.
                 </p>
+                <a 
+                  href="/survey-results/holistic-protection" 
+                  className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-semibold underline"
+                >
+                  Learn more about the Matrix Standards Framework →
+                </a>
               </div>
               <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 dark:from-green-900/30 dark:to-green-800/30 rounded-2xl shadow-lg p-8 border-2 border-green-300 dark:border-green-700">
                 <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Tiered, Site-Specific Sediment Standards</h4>
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                <p className="text-gray-700 dark:text-gray-300 text-lg mb-4">
                   Moving beyond fixed standards to adaptable, risk-based assessments that account for local conditions.
                 </p>
+                <a 
+                  href="/survey-results/tiered-framework" 
+                  className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-semibold underline"
+                >
+                  Learn more about the Tiered Framework →
+                </a>
               </div>
               <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 dark:from-purple-900/30 dark:to-purple-800/30 rounded-2xl shadow-lg p-8 border-2 border-purple-300 dark:border-purple-700">
-                <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Emerging Contaminants / Mixtures</h4>
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
-                  Addressing non-scheduled substances of concern and their combined effects on ecosystems.
+                <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Emerging Contaminants & Mixtures</h4>
+                <p className="text-gray-700 dark:text-gray-300 text-lg mb-3">
+                  The chemical landscape is constantly changing, requiring proactive approaches to address potential health hazards:
                 </p>
+                <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-lg list-disc list-inside ml-4">
+                  <li><strong>Non-scheduled Substances:</strong> Standards for priority contaminants</li>
+                  <li><strong>Complex Mixtures:</strong> Combined effects often not predicted by simple tests</li>
+                </ul>
               </div>
               <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-900/30 dark:to-orange-800/30 rounded-2xl shadow-lg p-8 border-2 border-orange-300 dark:border-orange-700">
                 <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Harnessing Available Knowledge</h4>
@@ -272,138 +271,12 @@ export default function PrioritizationClient() {
             </div>
           </div>
 
-          {/* Matrix Sediment Standards Framework */}
-          <div className="mb-16">
-            <h3 className="text-3xl font-bold text-center mb-12 text-gray-800 dark:text-white">Matrix Sediment Standards (SedS) Framework</h3>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-8">
-              <div className="flex justify-center mb-8">
-                <img 
-                  src="/matrix-graph.jpg" 
-                  alt="Matrix Sediment Standards Framework showing Direct Toxicity and Food Pathway Toxicity for Ecological and Human Health"
-                  className="max-w-full h-auto rounded-lg shadow-lg"
-                  onError={(e) => {
-                    // Fallback if image doesn't load
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                  }}
-                />
-              </div>
-              <div className="grid md:grid-cols-2 gap-8">
-                <div>
-                  <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Direct Toxicity (SedS-direct)</h4>
-                  <div className="space-y-4">
-                    <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
-                      <h5 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">SedS-directECO</h5>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        Protect aquatic organisms from direct exposure from contaminants in sediment.
-                      </p>
-                    </div>
-                    <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-4">
-                      <h5 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">SedS-directHH</h5>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        Protects people from direct contact risks (e.g., incidental ingestion, dermal contact) during recreational or cultural activities.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Food Pathway Toxicity (SedS-food)</h4>
-                  <div className="space-y-4">
-                    <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4">
-                      <h5 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">SedS-foodECO</h5>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        Protects piscivorous wildlife (e.g., otters, eagles, orcas) from the bioaccumulation and biomagnification of contaminants through the food chain.
-                      </p>
-                    </div>
-                    <div className="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-4">
-                      <h5 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">SedS-foodHH</h5>
-                      <p className="text-gray-700 dark:text-gray-300">
-                        Protects human consumers of fish, shellfish, and other aquatic foods.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-6 text-center">
-                <a 
-                  href="/survey-results/holistic-protection" 
-                  className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-semibold underline"
-                >
-                  Learn more about the Matrix Standards Framework →
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Expanding the Tiered Framework */}
-          <div className="mb-16">
-            <h3 className="text-3xl font-bold text-center mb-12 text-gray-800 dark:text-white">Expanding the Tiered Framework</h3>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6">
-                  <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-3">Tier 1: Matrix Sediment Standards</h4>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    &apos;Safe&apos; for any location due to conservative assumptions
-                  </p>
-                </div>
-                <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
-                  <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-3">Tier 2: Site-Specific Sediment Standards</h4>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    Bioavailability-adjusted and protective for site conditions
-                  </p>
-                </div>
-                <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-6">
-                  <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-3">Tier 3: Risk-Based Standards</h4>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    Protective for site conditions in accordance with Protocol 1
-                  </p>
-                </div>
-              </div>
-              <div className="mt-6 text-center">
-                <a 
-                  href="/survey-results/tiered-framework" 
-                  className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 font-semibold underline"
-                >
-                  Learn more about the Tiered Framework →
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* Emerging Contaminants & Mixtures */}
-          <div className="mb-16">
-            <h3 className="text-3xl font-bold text-center mb-12 text-gray-800 dark:text-white">Emerging Contaminants & Mixtures</h3>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-              <p className="text-xl text-gray-700 dark:text-gray-300 mb-6 text-center">
-                The chemical landscape is constantly changing, requiring proactive approaches to address potential health hazards.
-              </p>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-4">
-                  <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Non-scheduled Substances</h4>
-                  <p className="text-gray-700 dark:text-gray-300">Standards for priority contaminants</p>
-                </div>
-                <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
-                  <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Complex Mixtures</h4>
-                  <p className="text-gray-700 dark:text-gray-300">Combined effects often not predicted by simple tests</p>
-                </div>
-                <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4">
-                  <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Adaptive Frameworks</h4>
-                  <p className="text-gray-700 dark:text-gray-300">Flexible tools & incorporate new science in standards framework</p>
-                </div>
-                <div className="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-4">
-                  <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Proactive Hazard Identification</h4>
-                  <p className="text-gray-700 dark:text-gray-300">Develop the scientific and regulatory tools to proactively address new hazards as they are identified.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Data Gap, Feasibility & Prioritization Framework */}
           <div>
             <h3 className="text-3xl font-bold text-center mb-12 text-gray-800 dark:text-white">Data Gap, Feasibility & Prioritization Framework</h3>
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
               <div className="space-y-6">
-                <div className="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-4">
+                <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
                   <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Address Information Gaps</h4>
                   <p className="text-gray-700 dark:text-gray-300 text-lg mb-2">
                     Collaborative research to address priorities such as:
@@ -415,7 +288,7 @@ export default function PrioritizationClient() {
                     <li>Acknowledging Indigenous Knowledge & Science</li>
                   </ul>
                 </div>
-                <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
+                <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-4">
                   <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Acknowledge Feasibility</h4>
                   <p className="text-gray-700 dark:text-gray-300 text-lg">
                     Make use of existing resources where appropriate. Recognize limitations to time and expense of creating and approving new procedures.
@@ -427,59 +300,12 @@ export default function PrioritizationClient() {
                     Develop a systemic approach for introducing the most important changes and easiest improvements first.
                   </p>
                 </div>
-                <div className="bg-yellow-50 dark:bg-yellow-900/30 rounded-lg p-6">
+                <div className="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-6">
                   <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">Goal</h4>
                   <p className="text-gray-700 dark:text-gray-300 text-lg font-medium">
                     A framework for identifying and resolving data gaps, with short- and long-term goals for strategic research planning.
                   </p>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Framework Overview Section */}
-      <section className="py-12 px-6 bg-white/80 dark:bg-gray-800 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
-            Strategic Research Planning & Feasibility Assessment
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Card 1: The Challenge */}
-            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
-              <div className="bg-gradient-to-br from-red-500 to-red-600 text-white p-8 rounded-2xl shadow-2xl h-full">
-                <div className="text-4xl mb-4">⚠️</div>
-                <h3 className="text-2xl font-bold mb-4">The Challenge</h3>
-                <p className="text-white leading-relaxed">
-                  Multiple modernization approaches need coordination: matrix standards, tiered frameworks, 
-                  bioavailability adjustments, and contaminant expansion require strategic prioritization and feasibility assessment.
-                </p>
-              </div>
-            </div>
-
-            {/* Card 2: The Solution */}
-            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-8 rounded-2xl shadow-2xl h-full">
-                <div className="text-4xl mb-4">📊</div>
-                <h3 className="text-2xl font-bold mb-4">Collaborative Framework</h3>
-                <p className="text-white leading-relaxed">
-                  A comprehensive approach that assesses feasibility, prioritizes research initiatives, 
-                  and develops strategic plans for short-, medium-, and long-term modernization goals.
-                </p>
-              </div>
-            </div>
-
-            {/* Card 3: The Benefits */}
-            <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
-              <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-8 rounded-2xl shadow-2xl h-full">
-                <div className="text-4xl mb-4">🎯</div>
-                <h3 className="text-2xl font-bold mb-4">Strategic Implementation</h3>
-                <p className="text-white leading-relaxed">
-                  Coordinated resource allocation across all modernization approaches ensures 
-                  efficient progress while maintaining scientific rigor and practical implementation.
-                </p>
               </div>
             </div>
           </div>

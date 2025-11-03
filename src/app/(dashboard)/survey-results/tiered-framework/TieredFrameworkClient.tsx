@@ -112,7 +112,7 @@ export default function TieredFrameworkClient() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
             <div className="grid md:grid-cols-2 gap-8">
               <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Tiered Framework Beneficial</h3>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">Tiered Framework Beneficial</h3>
                 <div className="text-center mb-4">
                   <div className="text-5xl font-bold text-green-800 dark:text-green-400 mb-2">86.4%</div>
                   <p className="text-gray-700 dark:text-gray-300 text-lg">
@@ -122,7 +122,7 @@ export default function TieredFrameworkClient() {
               </div>
               
               <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Bioavailability Adjustments Important</h3>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">Bioavailability Adjustments Important</h3>
                 <div className="text-center mb-4">
                   <div className="text-5xl font-bold text-blue-900 dark:text-blue-400 mb-2">88.1%</div>
                   <p className="text-gray-700 dark:text-gray-300 text-lg">
