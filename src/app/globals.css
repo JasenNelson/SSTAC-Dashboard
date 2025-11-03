@@ -1344,11 +1344,6 @@ html.dark .hover\:bg-gray-50:hover {
   background-color: #1f2937 !important;
 }
 
-/* Fix CEW Early Bird Notice text in dark mode */
-.dark .bg-gradient-to-r.from-green-500.to-emerald-600 .text-green-100 {
-  color: #ffffff !important;
-}
-
 /* Fix refresh announcements button in dark mode */
 .dark .bg-blue-100.text-blue-800 {
   background-color: #1e3a8a !important;
@@ -1438,10 +1433,6 @@ html.dark .hover\:bg-gray-50:hover {
   background-color: #1f2937 !important;
 }
 
-/* CEW Early Bird Notice - fix dark mode */
-.dark .bg-gradient-to-r.from-green-500.to-emerald-600 {
-  background: linear-gradient(90deg, #065f46, #047857) !important;
-}
 
 .dark .text-green-100 {
   color: #d1fae5 !important;

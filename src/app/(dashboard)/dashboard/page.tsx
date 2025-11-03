@@ -109,56 +109,6 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Quick Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 text-center border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">📊</span>
-            </div>
-            <div className="text-3xl font-bold text-blue-600 mb-2">7</div>
-            <div className="text-gray-600 dark:text-gray-300 text-sm font-medium">Project Milestones</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 text-center border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">📝</span>
-            </div>
-            <div className="text-3xl font-bold text-green-600 mb-2">61</div>
-            <div className="text-gray-600 dark:text-gray-300 text-sm font-medium">Survey Responses</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 text-center border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">📢</span>
-            </div>
-            <div className="text-3xl font-bold text-purple-600 mb-2">3</div>
-            <div className="text-gray-600 dark:text-gray-300 text-sm font-medium">Active Announcements</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 text-center border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">🎯</span>
-            </div>
-            <div className="text-3xl font-bold text-orange-600 mb-2">Dec 2025</div>
-            <div className="text-gray-600 dark:text-gray-300 text-sm font-medium">Phase 1 Completion</div>
-          </div>
-        </div>
-        
-        {/* CEW Early Bird Notice */}
-        <div className="mb-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full backdrop-blur-sm mb-4">
-              <span className="text-3xl">🎯</span>
-            </div>
-            <p className="text-xl font-semibold mb-2">
-              CEW 2025 Early Bird Pricing Available
-            </p>
-            <p className="text-green-100 text-lg mb-3">
-              Register by <strong>August 22, 2025</strong> for reduced rates!
-            </p>
-            <p className="text-green-100 text-sm">
-              Don&apos;t miss the opportunity to register for the Canadian Ecotoxicity Workshop 2025 at reduced rates!
-            </p>
-          </div>
-        </div>
-
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Announcements */}
