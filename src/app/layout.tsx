@@ -8,11 +8,19 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: 'swap',
+  preload: false, // Disable preload - fonts load when actually used
+  // Fonts are defined as CSS variables but may not be used on initial render
+  // Disabling preload prevents browser warnings about unused preloaded resources
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: 'swap',
+  preload: false, // Disable preload - mono font only used in code/monospace contexts
+  // This font is typically only used for code blocks, not body text
+  // Disabling preload prevents browser warnings
 });
 
 export const metadata: Metadata = {

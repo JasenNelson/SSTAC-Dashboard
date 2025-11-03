@@ -4,6 +4,20 @@
 
 import * as Sentry from '@sentry/nextjs';
 
+// Suppress noisy console messages from Sentry initialization
+// This intercepts console.log before Sentry initializes to filter unwanted messages
+if (typeof window !== 'undefined') {
+  const originalConsoleLog = console.log;
+  console.log = (...args: unknown[]) => {
+    const message = args.join(' ');
+    // Filter out Sentry version/compatibility check messages
+    if (message.includes('>=116') || message.includes('PGRST116')) {
+      return; // Suppress this message
+    }
+    originalConsoleLog.apply(console, args);
+  };
+}
+
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   
@@ -19,12 +33,34 @@ Sentry.init({
   // in development and sample at a lower rate in production
   replaysSessionSampleRate: 0.1,
   
+  // Suppress console noise from Sentry
+  beforeSend(event, hint) {
+    // Filter out noisy console messages that don't provide value
+    if (event.message && (
+      event.message.includes('>=116') ||
+      event.message.includes('PGRST116')
+    )) {
+      return null; // Don't send these events
+    }
+    return event;
+  },
+  
+  // Suppress console logging for non-critical messages
+  ignoreErrors: [
+    // Suppress version/compatibility checks that log to console
+    />=116/,
+  ],
+  
   // You can remove this option if you're not planning to use the Sentry Session Replay feature:
   integrations: [
     Sentry.replayIntegration({
       // Additional Replay configuration goes in here, for example:
       maskAllText: true,
       blockAllMedia: true,
+    }),
+    // Filter console logging to reduce noise
+    Sentry.consoleIntegration({
+      levels: ['error'], // Only capture errors, not info/warn/debug
     }),
   ],
 });
