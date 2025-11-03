@@ -1,6 +1,6 @@
 // This file configures the initialization of Sentry on the client.
-// The config you add here will be used whenever a users loads a page in their browser.
-// https://docs.sentry.io/platforms/javascript/guides/nextjs/
+// Next.js 15+ pattern: Client-side Sentry configuration moved here from sentry.client.config.ts
+// https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/#instrumentation-client
 
 import * as Sentry from '@sentry/nextjs';
 
@@ -28,4 +28,15 @@ Sentry.init({
     }),
   ],
 });
+
+/**
+ * onRouterTransitionStart Hook for Navigation Tracking
+ * 
+ * This hook instruments client-side navigation transitions to provide
+ * better performance monitoring and error tracking for route changes.
+ * 
+ * This is polling-safe - it only adds navigation tracking and doesn't
+ * change any functionality or affect poll behavior.
+ */
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
 

@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import TWGSynthesisClient from './TWGSynthesisClient'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
 export default async function TWGSynthesisPage() {
   const cookieStore = await cookies()
@@ -46,7 +47,9 @@ export default async function TWGSynthesisPage() {
   try {
     const { data: emailRows } = await supabase.rpc('get_users_with_emails')
     if (emailRows && Array.isArray(emailRows)) {
-      emailMap = Object.fromEntries(emailRows.map((r: any) => [r.id, r.email]))
+      emailMap = Object.fromEntries(
+        emailRows.map((r: { id: string; email: string }) => [r.id, r.email])
+      )
     }
   } catch {}
 
@@ -65,7 +68,15 @@ export default async function TWGSynthesisPage() {
   }
 
   // Shape submissions to expected structure for client, including email
-  const mappedSubmissions = (baseSubmissions || []).map((s: any) => ({
+  type BaseSubmission = {
+    id: string;
+    user_id: string;
+    status: 'IN_PROGRESS' | 'SUBMITTED';
+    form_data: unknown;
+    created_at: string;
+    updated_at: string;
+  };
+  const mappedSubmissions = (baseSubmissions || []).map((s: BaseSubmission) => ({
     id: s.id,
     user_id: s.user_id,
     email: emailMap[s.user_id] || `User ${String(s.user_id).slice(0, 8)}...`,
@@ -77,12 +88,14 @@ export default async function TWGSynthesisPage() {
   }))
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <TWGSynthesisClient 
-        user={user}
-        submissions={mappedSubmissions}
-        files={files || []}
-      />
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <TWGSynthesisClient 
+          user={user}
+          submissions={mappedSubmissions}
+          files={files || []}
+        />
+      </div>
+    </ErrorBoundary>
   )
 }

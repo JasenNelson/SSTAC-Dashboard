@@ -1,20 +1,26 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import TagManagement from '@/components/dashboard/TagManagement';
 import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
 
 export default function TagsPageClient() {
-  // Refresh admin status when component mounts
+  const hasRefreshed = useRef(false);
+
+  // Refresh admin status when component mounts (only once, even in Strict Mode)
   useEffect(() => {
+    if (hasRefreshed.current) return;
+    
     const refreshAdmin = async () => {
-      console.log('🔄 Tags page mounted - refreshing admin status');
+      hasRefreshed.current = true;
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Tags page mounted - refreshing admin status');
+      }
       await refreshGlobalAdminStatus();
     };
     
     refreshAdmin();
   }, []);
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">

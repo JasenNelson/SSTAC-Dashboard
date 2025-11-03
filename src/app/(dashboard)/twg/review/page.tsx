@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import TWGReviewClient from './TWGReviewClient'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
 export default async function TWGReviewPage() {
   const cookieStore = await cookies()
@@ -87,11 +88,13 @@ export default async function TWGReviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <TWGReviewClient 
-        user={user}
-        existingSubmission={existingSubmission}
-      />
-    </div>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <TWGReviewClient 
+          user={user}
+          existingSubmission={existingSubmission}
+        />
+      </div>
+    </ErrorBoundary>
   )
 }

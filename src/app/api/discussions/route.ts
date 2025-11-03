@@ -1,15 +1,16 @@
 // src/app/api/discussions/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth';
+import { getAuthAndRateLimit } from '../_helpers/rate-limit-wrapper';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createAuthenticatedClient();
-    const user = await getAuthenticatedUser(supabase);
+    const { user, supabase, rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'discussion');
     
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    if (rateLimitResponse) return rateLimitResponse;
 
     const { data: discussions, error } = await supabase
       .from('discussions')
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch discussions' }, { status: 500 });
     }
 
-    return NextResponse.json({ discussions });
+    return NextResponse.json({ discussions }, { headers: rateLimitHeaders });
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -30,18 +31,18 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createAuthenticatedClient();
-    const user = await getAuthenticatedUser(supabase);
+    const { user, supabase, rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'discussion');
     
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
     const { title, content } = body;
 
     if (!title || !content) {
-      return NextResponse.json({ error: 'Title and content are required' }, { status: 400 });
+      return NextResponse.json({ error: 'Title and content are required' }, { status: 400, headers: rateLimitHeaders });
     }
 
     const { data: discussion, error } = await supabase
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create discussion' }, { status: 500 });
     }
 
-    return NextResponse.json({ discussion });
+    return NextResponse.json({ discussion }, { headers: rateLimitHeaders });
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

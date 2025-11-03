@@ -47,7 +47,6 @@ export default function RankingPoll({
 
   const fetchResults = useCallback(async () => {
     try {
-      console.log(`[RankingPoll ${pollIndex}] Fetching results for poll ${pollIndex} on page ${pagePath}`);
       // Determine API endpoint based on page path
       // Use unified API endpoint for all pages
       const apiEndpoint = '/api/ranking-polls/results';
@@ -59,12 +58,10 @@ export default function RankingPoll({
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        console.log(`[RankingPoll ${pollIndex}] API Response:`, data);
         setResults(data.results);
         
         // Check if user has already voted
         if (data.userRankings && data.userRankings.length > 0) {
-          console.log(`[RankingPoll ${pollIndex}] User has rankings:`, data.userRankings);
           setUserRankings(data.userRankings);
           
           // For CEW pages, show previous rankings but don't disable submit button
@@ -78,7 +75,6 @@ export default function RankingPoll({
               rank: data.userRankings[index] || null
             }));
             setRankingOptions(updatedOptions);
-            console.log(`[RankingPoll ${pollIndex}] Updated ranking options for display:`, updatedOptions);
           } else {
             // For authenticated pages, disable submit button as usual
             // Only set hasVoted to true if user is not in change vote mode
@@ -92,13 +88,8 @@ export default function RankingPoll({
               rank: data.userRankings[index] || null
             }));
             setRankingOptions(updatedOptions);
-            console.log(`[RankingPoll ${pollIndex}] Updated ranking options:`, updatedOptions);
           }
-        } else {
-          console.log(`[RankingPoll ${pollIndex}] No user rankings found`);
         }
-      } else {
-        console.log(`[RankingPoll ${pollIndex}] Failed to fetch results:`, response.status);
       }
     } catch (error) {
       console.error(`[RankingPoll ${pollIndex}] Error fetching results:`, error);
@@ -126,7 +117,6 @@ export default function RankingPoll({
   const checkCEWRankingStatus = () => {
     // For CEW pages, don't persist rankings at all - start fresh each time
     // This ensures true privacy in incognito mode
-    console.log(`[RankingPoll ${pollIndex}] CEW poll - no ranking persistence for privacy`);
   };
 
   const handleRankChange = (optionId: string, newRank: number) => {
@@ -206,7 +196,6 @@ export default function RankingPoll({
       });
 
       if (response.ok) {
-        console.log(`Successfully submitted ranking for poll ${pollIndex}`);
         setHasVoted(true);
         setShowResults(true);
         setUserRankings(rankings);
@@ -214,9 +203,6 @@ export default function RankingPoll({
         
         // Save ranking to sessionStorage for CEW pages
         // For CEW pages, don't save rankings locally for privacy
-        if (pagePath.startsWith('/cew-polls/')) {
-          console.log(`[RankingPoll ${pollIndex}] CEW poll - ranking submitted but not persisted locally for privacy`);
-        }
         
         // Fetch updated results
         await fetchResults();

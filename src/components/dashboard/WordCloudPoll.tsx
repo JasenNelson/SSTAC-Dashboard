@@ -66,7 +66,6 @@ const SafeWordCloud = ({ words, options }: { words: WordCloudData[]; options: an
     }
 
     // Use our custom wordcloud component
-    console.log('SafeWordCloud rendering with words:', safeWords);
     return (
       <CustomWordCloud
         words={safeWords}
@@ -198,8 +197,6 @@ export default function WordCloudPoll({
     
     setIsFetchingAggregated(true);
     try {
-      console.log(`[WordCloudPoll ${pollIndex}] Fetching aggregated results for poll ${pollIndex}`);
-      
       const apiEndpoint = '/api/wordcloud-polls/results';
       let url = `${apiEndpoint}?pagePath=${encodeURIComponent(pagePath)}&pollIndex=${pollIndex}`;
       if (authCode) {
@@ -209,7 +206,6 @@ export default function WordCloudPoll({
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        console.log(`[WordCloudPoll ${pollIndex}] Aggregated API Response:`, data);
         
         // Store aggregated results from ALL users
         setResults(data.results || { total_votes: 0, words: [], user_words: [] });
@@ -235,12 +231,9 @@ export default function WordCloudPoll({
       // Only fetch results for survey-results pages (authenticated users)
       // CEW pages should remain insert-only without fetching results
       if (pagePath.startsWith('/cew-polls/')) {
-        console.log(`[WordCloudPoll ${pollIndex}] CEW page - skipping results fetch for privacy`);
         setResults({ total_votes: 0, words: [], user_words: [] });
         return;
       }
-      
-      console.log(`[WordCloudPoll ${pollIndex}] Fetching results for poll ${pollIndex} on page ${pagePath}`);
       
       // Use unified API endpoint for survey-results pages only
       const apiEndpoint = '/api/wordcloud-polls/results';
@@ -253,19 +246,16 @@ export default function WordCloudPoll({
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        console.log(`[WordCloudPoll ${pollIndex}] API Response:`, data);
         setResults(data.results || { total_votes: 0, words: [], user_words: [] });
         
         // Check if user has already submitted words (from results.user_words)
         const userWordsFromResponse = data.results?.user_words;
         if (userWordsFromResponse && Array.isArray(userWordsFromResponse) && userWordsFromResponse.length > 0) {
-          console.log(`[WordCloudPoll ${pollIndex}] User has words:`, userWordsFromResponse);
           setUserWords(userWordsFromResponse);
           setHasVoted(true);
           // Don't auto-show aggregated results - user must click "View Results" button
           setShowResults(false);
         } else {
-          console.log(`[WordCloudPoll ${pollIndex}] No user words found`);
           setUserWords(null);
         }
       } else {

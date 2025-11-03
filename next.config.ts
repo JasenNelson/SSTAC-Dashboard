@@ -5,6 +5,10 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: false,
   },
+  // Reduce preload warnings by optimizing resource hints
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts'],
+  },
 };
 
 // Wrap the Next.js config with Sentry configuration

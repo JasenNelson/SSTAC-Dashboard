@@ -52,10 +52,8 @@ export default function PollWithResults({
         sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
         sessionStorage.setItem('cew-session-id', sessionId);
       }
-      console.log(`[PollWithResults] Session ID generated/retrieved: ${sessionId}`);
       return sessionId;
     }
-    console.log(`[PollWithResults] Using default session ID (server-side)`);
     return 'default';
   });
 
@@ -71,12 +69,10 @@ export default function PollWithResults({
   const checkCEWVoteStatus = () => {
     // For CEW pages, don't persist votes at all - start fresh each time
     // This ensures true privacy in incognito mode
-    console.log(`[PollWithResults ${pollIndex}] CEW poll - no vote persistence for privacy`);
   };
 
   const handleSelectOption = (optionIndex: number) => {
     if ((hasVoted && !showChangeOption) || isLoading) return;
-    console.log(`[PollWithResults ${pollIndex}] Selected option ${optionIndex}`);
     setSelectedOption(optionIndex);
     // Clear other text when selecting a new option
     if (!isOtherOption(options[optionIndex])) {
@@ -85,11 +81,7 @@ export default function PollWithResults({
   };
 
   const handleSubmitVote = async () => {
-    console.log(`[PollWithResults] handleSubmitVote called for poll ${pollIndex}`);
-    console.log(`[PollWithResults] selectedOption: ${selectedOption}, isLoading: ${isLoading}`);
-    
     if (selectedOption === null || isLoading) {
-      console.log(`[PollWithResults] Early return - selectedOption: ${selectedOption}, isLoading: ${isLoading}`);
       return;
     }
     
@@ -98,17 +90,6 @@ export default function PollWithResults({
       alert('Please provide details for your "Other" selection.');
       return;
     }
-
-    // Debug: Log session ID and vote details with timestamp
-    const voteTimestamp = new Date().toISOString();
-    console.log(`[PollWithResults] 🗳️ SUBMITTING VOTE - Poll ${pollIndex} at ${voteTimestamp}:`, {
-      sessionId,
-      authCode,
-      selectedOption,
-      pagePath,
-      timestamp: voteTimestamp,
-      userAgent: navigator.userAgent.substring(0, 50) + '...'
-    });
 
     // No device tracking for CEW pages - allow multiple votes
     setIsLoading(true);
@@ -145,14 +126,9 @@ export default function PollWithResults({
         
         // Save vote to sessionStorage for CEW pages
         // For CEW pages, don't save votes locally for privacy
-        if (pagePath.startsWith('/cew-polls/')) {
-          console.log(`[PollWithResults ${pollIndex}] CEW poll - vote submitted but not persisted locally for privacy`);
-        }
         
         // Fetch updated results to show new vote counts
-        console.log(`[PollWithResults ${pollIndex}] Fetching updated results after vote submission`);
         await fetchResults();
-        console.log(`[PollWithResults ${pollIndex}] Results fetch completed`);
         
         // Call parent callback if provided
         if (onVote) {
@@ -180,8 +156,6 @@ export default function PollWithResults({
 
   const fetchResults = async () => {
     try {
-      console.log(`[PollWithResults ${pollIndex}] Fetching results for poll ${pollIndex} on page ${pagePath}`);
-      
       // Use unified API endpoint for all pages
       const apiEndpoint = '/api/polls/results';
       
@@ -192,30 +166,19 @@ export default function PollWithResults({
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        console.log(`[PollWithResults ${pollIndex}] API Response:`, data);
-        console.log(`[PollWithResults ${pollIndex}] Setting results state with:`, data.results);
         setResults(data.results);
         
         // Check if user has already voted (for both authenticated and CEW pages)
         if (data.userVote !== null && data.userVote !== undefined) {
-          console.log(`[PollWithResults ${pollIndex}] User has vote:`, data.userVote);
-          console.log(`[PollWithResults ${pollIndex}] showChangeOption state:`, showChangeOption);
           setUserVote(data.userVote);
           setUserOtherText(data.userOtherText || '');
           
           // Only set hasVoted to true if user is not in change vote mode
           if (!showChangeOption) {
-            console.log(`[PollWithResults ${pollIndex}] Setting hasVoted to true (not in change mode)`);
             setHasVoted(true);
             setShowResults(true);
-          } else {
-            console.log(`[PollWithResults ${pollIndex}] Skipping hasVoted=true because in change mode`);
           }
-        } else {
-          console.log(`[PollWithResults ${pollIndex}] No user vote found`);
         }
-      } else {
-        console.log(`[PollWithResults ${pollIndex}] Failed to fetch results:`, response.status);
       }
     } catch (error) {
       console.error(`[PollWithResults ${pollIndex}] Error fetching results:`, error);
@@ -225,11 +188,9 @@ export default function PollWithResults({
   const handleChangeVote = () => {
     // Prevent change vote on CEW pages
     if (pagePath.startsWith('/cew-polls/')) {
-      console.log(`[PollWithResults ${pollIndex}] Change vote not allowed on CEW pages`);
       return;
     }
     
-    console.log(`[PollWithResults ${pollIndex}] handleChangeVote called - setting showChangeOption to true`);
     setShowChangeOption(true);
     setHasVoted(false);
     // Don't reset selectedOption immediately - let user see their previous choice and change it
@@ -238,13 +199,11 @@ export default function PollWithResults({
     
     // Don't call fetchResults immediately - it causes race condition with state updates
     // The results are already loaded, we just need to show the change interface
-    console.log(`[PollWithResults ${pollIndex}] Skipping fetchResults to avoid race condition`);
   };
 
   const handleCancelChange = () => {
     // Prevent cancel change on CEW pages
     if (pagePath.startsWith('/cew-polls/')) {
-      console.log(`[PollWithResults ${pollIndex}] Cancel change not allowed on CEW pages`);
       return;
     }
     
@@ -333,16 +292,6 @@ export default function PollWithResults({
           const isSelected = selectedOption === optionIndex;
           const isVoted = hasVoted;
           
-          // Debug logging
-          if (optionIndex === 0) { // Only log for first option to avoid spam
-            console.log(`[PollWithResults ${pollIndex}] Button state:`, {
-              hasVoted,
-              showChangeOption,
-              isVoted,
-              disabled: (isVoted && !showChangeOption) || isLoading
-            });
-          }
-          
           return (
             <div key={optionIndex} className="relative">
               <button
@@ -428,21 +377,13 @@ export default function PollWithResults({
 
 
       {/* Submit Button - show when not voted OR when in change vote mode */}
-      {(() => {
-        const shouldShowButton = !hasVoted || showChangeOption;
-        console.log(`[PollWithResults ${pollIndex}] Button state:`, { hasVoted, showChangeOption, selectedOption, shouldShowButton });
-        return shouldShowButton;
-      })() && (
+      {(!hasVoted || showChangeOption) && (
         <div className="mt-6 flex justify-center">
           <button
             onClick={() => {
               handleSubmitVote();
             }}
-            disabled={(() => {
-              const isDisabled = selectedOption === null || isLoading || (isSelectedOther() && !otherText.trim());
-              console.log(`[PollWithResults ${pollIndex}] Button disabled check:`, { selectedOption, isLoading, isSelectedOther: isSelectedOther(), otherText: otherText.trim(), isDisabled });
-              return isDisabled;
-            })()}
+            disabled={selectedOption === null || isLoading || (isSelectedOther() && !otherText.trim())}
             className={`px-8 py-3 font-semibold rounded-xl transition-colors duration-300 flex items-center space-x-2 ${
               selectedOption === null || isLoading || (isSelectedOther() && !otherText.trim())
                 ? 'bg-gray-400 text-gray-200 cursor-not-allowed'

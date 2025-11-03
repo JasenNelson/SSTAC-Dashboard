@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMilestone, updateMilestone, deleteMilestone } from '@/app/(dashboard)/admin/milestones/actions';
 import { createAuthenticatedClient } from '@/lib/supabase-auth';
+import { getAuthAndRateLimit } from '../_helpers/rate-limit-wrapper';
 
 export async function GET() {
   try {
@@ -25,14 +26,17 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const { rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'admin');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const formData = await request.formData();
     const result = await createMilestone(formData);
     
     if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
+      return NextResponse.json({ error: result.error }, { status: 400, headers: rateLimitHeaders });
     }
     
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: rateLimitHeaders });
   } catch (error) {
     console.error('Error in milestones POST:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -41,14 +45,17 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const { rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'admin');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const formData = await request.formData();
     const result = await updateMilestone(formData);
     
     if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
+      return NextResponse.json({ error: result.error }, { status: 400, headers: rateLimitHeaders });
     }
     
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: rateLimitHeaders });
   } catch (error) {
     console.error('Error in milestones PUT:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -57,14 +64,17 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const { rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'admin');
+    if (rateLimitResponse) return rateLimitResponse;
+
     const formData = await request.formData();
     const result = await deleteMilestone(formData);
     
     if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
+      return NextResponse.json({ error: result.error }, { status: 400, headers: rateLimitHeaders });
     }
     
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true }, { headers: rateLimitHeaders });
   } catch (error) {
     console.error('Error in milestones DELETE:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

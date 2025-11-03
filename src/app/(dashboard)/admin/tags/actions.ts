@@ -3,6 +3,8 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { createTagSchema, updateTagSchema, deleteTagSchema, parseFormData } from '@/lib/validation-schemas';
+import { logger } from '@/lib/logger';
 
 export async function createTag(formData: FormData) {
   const cookieStore = await cookies();
@@ -43,12 +45,12 @@ export async function createTag(formData: FormData) {
   }
 
   try {
-    const name = formData.get('name') as string;
-    const color = formData.get('color') as string;
-
-    if (!name || !color) {
-      return { error: 'Name and color are required' };
+    // Validate form data with Zod schema
+    const validation = parseFormData(formData, createTagSchema);
+    if (validation.error) {
+      return { error: validation.error };
     }
+    const { name, color } = validation.data!;
 
     // Check if tag already exists
     const { data: existingTag } = await supabase
@@ -75,14 +77,14 @@ export async function createTag(formData: FormData) {
       .single();
 
     if (error) {
-      console.error('Error creating tag:', error);
+      logger.error('Error creating tag', error, { operation: 'createTag', tagName: name });
       return { error: 'Failed to create tag' };
     }
 
     revalidatePath('/admin/tags');
     return { success: `Tag "${name}" created successfully` };
   } catch (error) {
-    console.error('Error creating tag:', error);
+    logger.error('Unexpected error creating tag', error, { operation: 'createTag' });
     return { error: 'An unexpected error occurred' };
   }
 }
@@ -126,13 +128,12 @@ export async function updateTag(formData: FormData) {
   }
 
   try {
-    const id = formData.get('id') as string;
-    const name = formData.get('name') as string;
-    const color = formData.get('color') as string;
-
-    if (!id || !name || !color) {
-      return { error: 'ID, name, and color are required' };
+    // Validate form data with Zod schema
+    const validation = parseFormData(formData, updateTagSchema);
+    if (validation.error) {
+      return { error: validation.error };
     }
+    const { id, name, color } = validation.data!;
 
     // Check if tag exists
     const { data: existingTag } = await supabase
@@ -168,14 +169,14 @@ export async function updateTag(formData: FormData) {
       .eq('id', id);
 
     if (error) {
-      console.error('Error updating tag:', error);
+      logger.error('Error updating tag', error, { operation: 'updateTag', tagId: id, tagName: name });
       return { error: 'Failed to update tag' };
     }
 
     revalidatePath('/admin/tags');
     return { success: `Tag "${name}" updated successfully` };
   } catch (error) {
-    console.error('Error updating tag:', error);
+    logger.error('Unexpected error updating tag', error, { operation: 'updateTag' });
     return { error: 'An unexpected error occurred' };
   }
 }
@@ -219,11 +220,12 @@ export async function deleteTag(formData: FormData) {
   }
 
   try {
-    const id = formData.get('id') as string;
-
-    if (!id) {
-      return { error: 'Tag ID is required' };
+    // Validate form data with Zod schema
+    const validation = parseFormData(formData, deleteTagSchema);
+    if (validation.error) {
+      return { error: validation.error };
     }
+    const { id } = validation.data!;
 
     // Check if tag exists
     const { data: existingTag } = await supabase
@@ -244,7 +246,7 @@ export async function deleteTag(formData: FormData) {
       .limit(1);
 
     if (checkError) {
-      console.error('Error checking tag usage:', checkError);
+      logger.error('Error checking tag usage', checkError, { operation: 'deleteTag', tagId: id });
       return { error: 'Failed to check tag usage' };
     }
 
@@ -261,14 +263,14 @@ export async function deleteTag(formData: FormData) {
       .eq('id', id);
 
     if (error) {
-      console.error('Error deleting tag:', error);
+      logger.error('Error deleting tag', error, { operation: 'deleteTag', tagId: id });
       return { error: 'Failed to delete tag' };
     }
 
     revalidatePath('/admin/tags');
     return { success: `Tag "${existingTag.name}" deleted successfully` };
   } catch (error) {
-    console.error('Error deleting tag:', error);
+    logger.error('Unexpected error deleting tag', error, { operation: 'deleteTag' });
     return { error: 'An unexpected error occurred' };
   }
 }

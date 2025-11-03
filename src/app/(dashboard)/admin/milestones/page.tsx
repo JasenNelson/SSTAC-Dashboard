@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import MilestonesPageClient from './MilestonesPageClient';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default async function AdminMilestonesPage() {
   const cookieStore = await cookies();
@@ -43,5 +44,9 @@ export default async function AdminMilestonesPage() {
     redirect('/dashboard');
   }
 
-  return <MilestonesPageClient />;
+  return (
+    <ErrorBoundary>
+      <MilestonesPageClient />
+    </ErrorBoundary>
+  );
 }

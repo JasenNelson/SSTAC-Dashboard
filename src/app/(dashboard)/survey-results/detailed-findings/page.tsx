@@ -237,7 +237,15 @@ export default function DetailedFindingsPage() {
               {/* Voices from the Field Section */}
               <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <VoicesCarousel
-                  quotes={stakeholderQuotes.filter(q => q.category === 'effectiveness' || q.category === 'challenges')}
+                  quotes={stakeholderQuotes
+                    .filter(q => q.category === 'effectiveness' || q.category === 'challenges')
+                    .map(q => ({
+                      id: q.id,
+                      text: q.text,
+                      author: q.context,
+                      background: 'Stakeholder feedback from expert survey',
+                      perspective: q.category === 'effectiveness' ? 'Effectiveness assessment' : 'Challenge identification'
+                    }))}
                   autoRotate={true}
                   rotationInterval={6000}
                   showNavigation={true}
@@ -296,7 +304,15 @@ export default function DetailedFindingsPage() {
               {/* Additional Voices from the Field */}
               <div className="bg-white border border-gray-200 rounded-xl p-6">
                 <VoicesCarousel
-                  quotes={stakeholderQuotes.filter(q => q.category === 'solutions' || q.category === 'recommendations')}
+                  quotes={stakeholderQuotes
+                    .filter(q => q.category === 'solutions' || q.category === 'recommendations')
+                    .map(q => ({
+                      id: q.id,
+                      text: q.text,
+                      author: q.context,
+                      background: 'Stakeholder feedback from expert survey',
+                      perspective: q.category === 'solutions' ? 'Solution recommendation' : 'Modernization recommendation'
+                    }))}
                   autoRotate={true}
                   rotationInterval={7000}
                   showNavigation={true}

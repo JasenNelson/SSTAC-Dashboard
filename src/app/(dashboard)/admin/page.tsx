@@ -3,6 +3,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import AdminDashboardClient from './AdminDashboardClient';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default async function AdminDashboardPage() {
   const cookieStore = await cookies();
@@ -103,5 +104,9 @@ export default async function AdminDashboardPage() {
     totalPollVotes
   };
 
-  return <AdminDashboardClient metrics={metrics} />;
+  return (
+    <ErrorBoundary>
+      <AdminDashboardClient metrics={metrics} />
+    </ErrorBoundary>
+  );
 }

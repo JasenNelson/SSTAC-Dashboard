@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/Toast';
 import LikeButton from '@/components/dashboard/LikeButton';
 import Link from 'next/link';
+import { User } from '@supabase/supabase-js';
 
 type Discussion = {
   id: number;
@@ -39,7 +40,7 @@ export default function DiscussionThreadPage() {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalReplies, setTotalReplies] = useState(0);

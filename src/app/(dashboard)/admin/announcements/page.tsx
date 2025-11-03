@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import AnnouncementsPageClient from './AnnouncementsPageClient';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default async function AdminAnnouncementsPage() {
   const cookieStore = await cookies();
@@ -43,5 +44,9 @@ export default async function AdminAnnouncementsPage() {
     redirect('/dashboard');
   }
 
-  return <AnnouncementsPageClient />;
+  return (
+    <ErrorBoundary>
+      <AnnouncementsPageClient />
+    </ErrorBoundary>
+  );
 }

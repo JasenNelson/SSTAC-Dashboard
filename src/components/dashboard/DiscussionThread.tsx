@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '../supabase-client';
 import { useToast } from '@/components/Toast';
 import LikeButton from './LikeButton';
+import type { User } from '@supabase/supabase-js';
 
 type Discussion = {
   id: number;
@@ -36,7 +37,7 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingReplies, setIsLoadingReplies] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const { showToast } = useToast();
   

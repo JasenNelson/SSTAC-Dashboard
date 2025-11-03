@@ -7,6 +7,8 @@ import { addDocument } from '@/app/(dashboard)/twg/documents/actions';
 import { useToast } from '@/components/Toast';
 import TagSelector from './TagSelector';
 
+type AddDocumentState = { error?: string | null };
+
 // A separate component for the submit button to use the `useFormStatus` hook.
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -23,7 +25,7 @@ function SubmitButton() {
 
 export default function NewDocumentForm() {
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
-  const [state, formAction] = useFormState(addDocument as any, { error: null });
+  const [state, formAction] = useFormState<AddDocumentState, FormData>(addDocument, { error: null });
   const { showToast } = useToast();
 
   // Show success toast when document is created successfully

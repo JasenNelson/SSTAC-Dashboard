@@ -36,10 +36,10 @@ export async function PUT(
     const body = await request.json();
     const { title, file_url, description, tags } = body;
 
-    // Check if user is admin or owns the document
+    // Check if document exists
     const { data: document } = await supabase
       .from('documents')
-      .select('user_id')
+      .select('id')
       .eq('id', documentId)
       .single();
 
@@ -47,6 +47,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     }
 
+    // Only admins can edit documents
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role')
@@ -54,11 +55,8 @@ export async function PUT(
       .eq('role', 'admin')
       .single();
 
-    const isAdmin = !!roleData;
-    const isOwner = document.user_id === user.id;
-
-    if (!isAdmin && !isOwner) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!roleData) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     // Update the document
@@ -129,10 +127,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Invalid document ID' }, { status: 400 });
     }
 
-    // Check if user is admin or owns the document
+    // Check if document exists
     const { data: document } = await supabase
       .from('documents')
-      .select('user_id')
+      .select('id')
       .eq('id', documentId)
       .single();
 
@@ -140,6 +138,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     }
 
+    // Only admins can delete documents
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role')
@@ -147,11 +146,8 @@ export async function DELETE(
       .eq('role', 'admin')
       .single();
 
-    const isAdmin = !!roleData;
-    const isOwner = document.user_id === user.id;
-
-    if (!isAdmin && !isOwner) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!roleData) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     // Delete the document (tags will be deleted automatically due to CASCADE)

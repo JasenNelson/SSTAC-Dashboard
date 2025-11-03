@@ -5,10 +5,11 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { addDocumentSchema, parseFormData } from '@/lib/validation-schemas';
 
 type AddDocumentState = { error?: string | null };
 
-export async function addDocument(prevState: AddDocumentState, formData: FormData): Promise<AddDocumentState | void> {
+export async function addDocument(prevState: AddDocumentState, formData: FormData): Promise<AddDocumentState> {
   const cookieStore = await cookies();
   
   const supabase = createServerClient(
@@ -29,11 +30,7 @@ export async function addDocument(prevState: AddDocumentState, formData: FormDat
     }
   );
 
-  const title = (formData.get('title') as string)?.trim();
-  const fileUrl = (formData.get('file_url') as string)?.trim();
-  const description = (formData.get('description') as string | null)?.trim() || null;
-  
-  // Extract tags from form data
+  // Extract tags from form data first (before validation)
   const tags: number[] = [];
   let index = 0;
   while (formData.get(`tags[${index}]`)) {
@@ -44,14 +41,29 @@ export async function addDocument(prevState: AddDocumentState, formData: FormDat
     index++;
   }
 
-  if (!title || !fileUrl) {
-    return { error: 'Title and file URL are required.' };
+  // Validate form data with Zod schema
+  const validation = parseFormData(formData, addDocumentSchema);
+  if (validation.error) {
+    return { error: validation.error };
   }
+  const { title, file_url: fileUrl, description } = validation.data!;
 
-  // Get current user for user_id and user_email
+  // Check authentication
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return { error: 'User not authenticated.' };
+  }
+
+  // Check admin role - only admins can create documents
+  const { data: roleData } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .single();
+
+  if (!roleData) {
+    return { error: 'Admin access required to create documents.' };
   }
 
   const { data: document, error } = await supabase

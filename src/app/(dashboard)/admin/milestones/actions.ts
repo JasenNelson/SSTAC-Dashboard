@@ -1,6 +1,10 @@
+'use server';
+
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { createMilestoneSchema, updateMilestoneSchema, parseFormData } from '@/lib/validation-schemas';
+import { logger } from '@/lib/logger';
 
 export async function createMilestone(formData: FormData) {
   const cookieStore = await cookies();
@@ -41,31 +45,12 @@ export async function createMilestone(formData: FormData) {
       return { error: 'Admin access required' };
     }
 
-    // Get form data
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
-    const targetDate = formData.get('target_date') as string;
-    const status = formData.get('status') as 'pending' | 'in_progress' | 'completed' | 'delayed';
-    const priority = formData.get('priority') as 'low' | 'medium' | 'high';
-
-    // Validate input
-    if (!title || !description || !targetDate) {
-      return { error: 'Title, description, and target date are required' };
+    // Validate form data with Zod schema
+    const validation = parseFormData(formData, createMilestoneSchema);
+    if (validation.error) {
+      return { error: validation.error };
     }
-
-    if (title.length > 200) {
-      return { error: 'Title must be 200 characters or less' };
-    }
-
-    if (description.length > 1000) {
-      return { error: 'Description must be 1000 characters or less' };
-    }
-
-    // Validate date
-    const targetDateObj = new Date(targetDate);
-    if (isNaN(targetDateObj.getTime())) {
-      return { error: 'Invalid target date' };
-    }
+    const { title, description, target_date: targetDate, status, priority } = validation.data!;
 
     // Create milestone
     const { error: insertError } = await supabase
@@ -80,7 +65,7 @@ export async function createMilestone(formData: FormData) {
       });
 
     if (insertError) {
-      console.error('Error creating milestone:', insertError);
+      logger.error('Error creating milestone', insertError, { operation: 'createMilestone', title });
       return { error: 'Failed to create milestone' };
     }
 
@@ -88,7 +73,7 @@ export async function createMilestone(formData: FormData) {
     revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
-    console.error('Error in createMilestone:', error);
+    logger.error('Unexpected error creating milestone', error, { operation: 'createMilestone' });
     return { error: 'An unexpected error occurred' };
   }
 }
@@ -132,32 +117,12 @@ export async function updateMilestone(formData: FormData) {
       return { error: 'Admin access required' };
     }
 
-    // Get form data
-    const id = formData.get('id') as string;
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
-    const targetDate = formData.get('target_date') as string;
-    const status = formData.get('status') as 'pending' | 'in_progress' | 'completed' | 'delayed';
-    const priority = formData.get('priority') as 'low' | 'medium' | 'high';
-
-    // Validate input
-    if (!id || !title || !description || !targetDate) {
-      return { error: 'ID, title, description, and target date are required' };
+    // Validate form data with Zod schema
+    const validation = parseFormData(formData, updateMilestoneSchema);
+    if (validation.error) {
+      return { error: validation.error };
     }
-
-    if (title.length > 200) {
-      return { error: 'Title must be 200 characters or less' };
-    }
-
-    if (description.length > 1000) {
-      return { error: 'Description must be 1000 characters or less' };
-    }
-
-    // Validate date
-    const targetDateObj = new Date(targetDate);
-    if (isNaN(targetDateObj.getTime())) {
-      return { error: 'Invalid target date' };
-    }
+    const { id, title, description, target_date: targetDate, status, priority } = validation.data!;
 
     // Check if milestone exists
     const { data: existingMilestone, error: fetchError } = await supabase
@@ -184,7 +149,7 @@ export async function updateMilestone(formData: FormData) {
       .eq('id', id);
 
     if (updateError) {
-      console.error('Error updating milestone:', updateError);
+      logger.error('Error updating milestone', updateError, { operation: 'updateMilestone', milestoneId: id, title });
       return { error: 'Failed to update milestone' };
     }
 
@@ -192,7 +157,7 @@ export async function updateMilestone(formData: FormData) {
     revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
-    console.error('Error in updateMilestone:', error);
+    logger.error('Unexpected error updating milestone', error, { operation: 'updateMilestone' });
     return { error: 'An unexpected error occurred' };
   }
 }
@@ -260,7 +225,7 @@ export async function deleteMilestone(formData: FormData) {
       .eq('id', id);
 
     if (deleteError) {
-      console.error('Error deleting milestone:', deleteError);
+      logger.error('Error deleting milestone', deleteError, { operation: 'deleteMilestone', milestoneId: id });
       return { error: 'Failed to delete milestone' };
     }
 
@@ -268,7 +233,7 @@ export async function deleteMilestone(formData: FormData) {
     revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
-    console.error('Error in deleteMilestone:', error);
+    logger.error('Unexpected error deleting milestone', error, { operation: 'deleteMilestone' });
     return { error: 'An unexpected error occurred' };
   }
 }

@@ -435,7 +435,13 @@ export default function Header() {
   };
 
   // Navigation links for authenticated users - removed direct links, now handled by menu
-  const navigationLinks: any[] = [];
+  // This array is kept for potential future use but is currently unused
+  interface NavigationLink {
+    href: string;
+    label: string;
+    icon: React.ReactNode;
+  }
+  const navigationLinks: NavigationLink[] = [];
 
   // Comprehensive menu links for desktop dropdown
   const allMenuLinks = [

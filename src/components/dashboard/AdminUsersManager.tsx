@@ -6,6 +6,19 @@ import { getUsers, toggleAdminRole, addUserRole, type UserWithRole } from '@/app
 import { Search, Filter, ChevronLeft, ChevronRight, Users, Shield, User } from 'lucide-react';
 import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
 
+/**
+ * AdminUsersManager Component
+ * 
+ * Provides comprehensive user management interface for administrators.
+ * Features:
+ * - User listing with search, filtering, and pagination
+ * - Admin role toggle functionality
+ * - Role assignment
+ * - Sorting by email, creation date, or role
+ * - Pagination support
+ * 
+ * Security: All operations require admin authentication via server actions.
+ */
 export default function AdminUsersManager() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -17,7 +30,7 @@ export default function AdminUsersManager() {
   const [newUserRole, setNewUserRole] = useState<'user' | 'admin'>('user');
   const [isAddingUser, setIsAddingUser] = useState(false);
   
-  // Enhanced features
+  // Enhanced features: search, filter, pagination, sorting
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -75,10 +88,23 @@ export default function AdminUsersManager() {
           return 0;
       }
 
+      // Type-safe comparison based on value types
       if (sortOrder === 'asc') {
-        return (aValue as any) > (bValue as any) ? 1 : -1;
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return aValue > bValue ? 1 : -1;
+        }
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return aValue > bValue ? 1 : -1;
+        }
+        return 0;
       } else {
-        return (aValue as any) < (bValue as any) ? 1 : -1;
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return aValue < bValue ? 1 : -1;
+        }
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return aValue < bValue ? 1 : -1;
+        }
+        return 0;
       }
     });
 

@@ -2,6 +2,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import TagsPageClient from './TagsPageClient';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default async function AdminTagsPage() {
   const cookieStore = await cookies();
@@ -42,5 +43,9 @@ export default async function AdminTagsPage() {
     redirect('/dashboard');
   }
 
-  return <TagsPageClient />;
+  return (
+    <ErrorBoundary>
+      <TagsPageClient />
+    </ErrorBoundary>
+  );
 }

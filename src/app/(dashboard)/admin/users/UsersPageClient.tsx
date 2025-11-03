@@ -4,12 +4,15 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import AdminUsersManager from '@/components/dashboard/AdminUsersManager';
 import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export default function UsersPageClient() {
   // Refresh admin status when component mounts
   useEffect(() => {
     const refreshAdmin = async () => {
-      console.log('🔄 Users page mounted - refreshing admin status');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Users page mounted - refreshing admin status');
+      }
       await refreshGlobalAdminStatus();
     };
     
@@ -18,7 +21,8 @@ export default function UsersPageClient() {
 
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <ErrorBoundary>
+      <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Panel</h1>
         <p className="text-gray-600">
@@ -52,6 +56,7 @@ export default function UsersPageClient() {
       </div>
       
       <AdminUsersManager />
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

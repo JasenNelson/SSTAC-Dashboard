@@ -6,12 +6,20 @@ This folder contains utility scripts for testing, debugging, and maintaining the
 
 ```
 scripts/
-├── debug/                    # SQL debugging scripts
-├── cleanup/                  # Data cleanup scripts
+├── verify/                   # Ongoing verification scripts (NEW)
+├── debug/                    # Active SQL debugging tools
+├── cleanup/                  # Safe data cleanup scripts
+├── archive/                  # Historical scripts (reference only)
+│   ├── fixes/               # Applied fix scripts
+│   ├── debug/               # Historical debug scripts
+│   ├── cleanup/             # Historical cleanup (some DANGEROUS)
+│   └── checks/              # Historical verification scripts
 ├── run-cew-100-test.ps1     # PowerShell test runner
 ├── run-cew-100-test.sh      # Bash test runner
 └── README.md                # This file
 ```
+
+**For archived scripts:** See `scripts/archive/README.md` for details and warnings.
 
 ---
 
@@ -60,29 +68,41 @@ chmod +x scripts/run-cew-100-test.sh
 
 ---
 
+## 🔍 **Verification Scripts** (`scripts/verify/`)
+
+SQL scripts for ongoing database verification and maintenance.
+
+### **Quick Reference**
+
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `verify_cew_security.sql` | Verify CEW poll security | Security audits |
+| `check_rls_policies.sql` | Verify RLS policies | Security verification |
+| `check_database_state.sql` | General database state | Health checks |
+| `check-triggers.sql` | Verify database triggers | Trigger verification |
+| `verify-matrix-pairing-integrity.sql` | Verify matrix graph data | Matrix graph troubleshooting |
+| `check-result-table-indexes.sql` | Verify indexes on result tables | Performance optimization verification |
+| `create-missing-result-indexes.sql` | Create missing composite indexes | Performance optimization fix (deferred) |
+| `monitor-query-performance.sql` | Advanced query performance monitoring | Priority 2 monitoring (requires pg_stat_statements, includes safety checks) |
+| `simple-query-monitoring.sql` | Simple query monitoring (no extensions) | Priority 2 monitoring (recommended, always works) |
+
+**Usage:** Copy script contents into Supabase SQL Editor and execute.
+
+---
+
 ## 🐛 **Debug Scripts** (`scripts/debug/`)
 
-SQL diagnostic queries for investigating database issues and analyzing vote data.
+Active SQL diagnostic tools for investigating database issues and analyzing vote data.
 
 ### **Quick Reference**
 
 | Script | Purpose | When to Use |
 |--------|---------|-------------|
 | `check-actual-vote-data.sql` | Verify vote data integrity | When votes seem incorrect |
-| `check-cew-importance-poll.sql` | Check CEW poll configuration | CEW poll issues |
-| `check-prioritization-options.sql` | Verify poll options | Missing options problem |
 | `database-vote-diagnostics.sql` | Comprehensive vote analysis | General troubleshooting |
-| `investigate-all-users-pairing.sql` | Check vote pairing | Matrix graph issues |
-| `investigate-lost-pairs.sql` | Find unpaired votes | Missing matrix data |
-| `investigate-matrix-clustering.sql` | Analyze data clustering | Overlapping points |
-| `investigate-matrix-data-points.sql` | Complete matrix analysis | Matrix graph debugging |
-| `investigate-missing-users.sql` | Find missing user data | User visibility issues |
-| `investigate-pairing-mismatch.sql` | Check pairing problems | Inconsistent pairing |
-| `investigate-poll-id-issue.sql` | Poll ID verification | Poll not found errors |
-| `matrix-pairing-single-query.sql` | Single query for pairing | Quick pairing check |
-| `matrix-vote-diagnostics.sql` | Matrix vote analysis | Matrix data issues |
-| `matrix-vote-pairing-diagnostics.sql` | Detailed pairing check | Complex pairing issues |
 | `user-id-analysis.sql` | User ID distribution | User tracking problems |
+
+**Note:** Historical debug scripts have been moved to `scripts/archive/debug/` for reference.
 
 ### **Detailed Script Documentation**
 
@@ -185,18 +205,17 @@ SQL diagnostic queries for investigating database issues and analyzing vote data
 
 ## 🧹 **Cleanup Scripts** (`scripts/cleanup/`)
 
-Data maintenance and cleanup utilities.
+Safe data maintenance and cleanup utilities.
 
 ### **Quick Reference**
 
 | Script | Purpose | ⚠️ Warning Level |
 |--------|---------|------------------|
 | `cleanup-matrix-test-data.sql` | Remove test data | MEDIUM |
-| `purge-all-votes.sql` | Delete ALL votes | ⚠️ HIGH |
-| `purge-k6-test-data.sql` | Remove k6 test data | MEDIUM |
-| `purge-single-choice-votes.sql` | Delete single-choice votes | HIGH |
-| `purge-votes-for-testing.sql` | Remove test votes | MEDIUM |
 | `update_prioritization_questions.sql` | Update question text | MEDIUM |
+| `drop-backup-tables.sql` | Drop backup tables | LOW |
+
+**Note:** Dangerous cleanup scripts (purge-*) have been moved to `scripts/archive/cleanup/` with warnings.
 
 ### **Detailed Script Documentation**
 
@@ -456,11 +475,19 @@ CREATE TABLE wordcloud_votes_backup_20250101 AS SELECT * FROM wordcloud_votes;
 
 ### **Adding New Scripts:**
 
-1. Place in appropriate subfolder (debug/ or cleanup/)
+1. Place in appropriate subfolder (`verify/`, `debug/`, or `cleanup/`)
 2. Add entry to Quick Reference table
 3. Document purpose and usage
 4. Include safety warnings
 5. Update this README
+
+### **Archiving Old Scripts:**
+
+When scripts are no longer actively used:
+1. Move to `scripts/archive/` with appropriate subfolder
+2. Add warning if script is dangerous (prefix filename with `DANGEROUS-`)
+3. Update archive README if significant
+4. Remove from active Quick Reference tables above
 
 ### **Updating Existing Scripts:**
 
@@ -472,7 +499,8 @@ CREATE TABLE wordcloud_votes_backup_20250101 AS SELECT * FROM wordcloud_votes;
 
 ---
 
-**Last Updated**: October 2025  
+**Last Updated**: 2025-01-31  
 **Maintained By**: SSTAC Dashboard Team  
+**Archive Info**: See `scripts/archive/README.md` for archived scripts  
 **Questions?**: Review `docs/` folder for detailed guides
 

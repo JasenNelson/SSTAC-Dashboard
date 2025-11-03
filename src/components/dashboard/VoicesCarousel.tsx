@@ -11,6 +11,13 @@ type Quote = {
   perspective: string;
 };
 
+interface VoicesCarouselProps {
+  quotes?: Quote[];
+  autoRotate?: boolean;
+  rotationInterval?: number;
+  showNavigation?: boolean;
+}
+
 const quotes: Quote[] = [
   {
     id: 1,
@@ -56,18 +63,21 @@ const quotes: Quote[] = [
   }
 ];
 
-export default function VoicesCarousel({ quotes, autoRotate = true, rotationInterval = 8000, showNavigation = true }: any) {
+export default function VoicesCarousel({ quotes: providedQuotes, autoRotate = true, rotationInterval = 8000, showNavigation = true }: VoicesCarouselProps) {
+  const quotesToUse = providedQuotes || quotes;
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
 
   useEffect(() => {
+    if (!autoRotate || quotesToUse.length === 0) return;
+    
     const interval = setInterval(() => {
-      setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % quotes.length);
-    }, 8000); // Change quote every 8 seconds
+      setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % quotesToUse.length);
+    }, rotationInterval);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [autoRotate, rotationInterval, quotesToUse.length]);
 
-  const currentQuote = quotes[currentQuoteIndex];
+  const currentQuote = quotesToUse[currentQuoteIndex];
 
   if (!currentQuote) return null;
 
@@ -87,8 +97,9 @@ export default function VoicesCarousel({ quotes, autoRotate = true, rotationInte
       </div>
 
       {/* Quote Navigation Dots */}
+      {showNavigation && (
       <div className="flex justify-center mt-6 space-x-2">
-        {quotes.map((_: any, index: number) => (
+        {quotesToUse.map((_, index: number) => (
           <button
             key={index}
             onClick={() => setCurrentQuoteIndex(index)}
@@ -101,11 +112,12 @@ export default function VoicesCarousel({ quotes, autoRotate = true, rotationInte
           />
         ))}
       </div>
+      )}
 
       {/* Quote Counter */}
       <div className="text-center mt-4">
         <span className="text-blue-500 text-sm">
-          Quote {currentQuoteIndex + 1} of {quotes.length}
+          Quote {currentQuoteIndex + 1} of {quotesToUse.length}
         </span>
       </div>
     </div>

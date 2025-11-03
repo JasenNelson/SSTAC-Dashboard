@@ -1,6 +1,10 @@
+'use server';
+
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
+import { createAnnouncementSchema, updateAnnouncementSchema, parseFormData } from '@/lib/validation-schemas';
+import { logger } from '@/lib/logger';
 
 export async function createAnnouncement(formData: FormData) {
   const cookieStore = await cookies();
@@ -41,24 +45,12 @@ export async function createAnnouncement(formData: FormData) {
       return { error: 'Admin access required' };
     }
 
-    // Get form data
-    const title = formData.get('title') as string;
-    const content = formData.get('content') as string;
-    const priority = formData.get('priority') as 'low' | 'medium' | 'high';
-    const isActive = formData.get('is_active') === 'true';
-
-    // Validate input
-    if (!title || !content) {
-      return { error: 'Title and content are required' };
+    // Validate form data with Zod schema
+    const validation = parseFormData(formData, createAnnouncementSchema);
+    if (validation.error) {
+      return { error: validation.error };
     }
-
-    if (title.length > 200) {
-      return { error: 'Title must be 200 characters or less' };
-    }
-
-    if (content.length > 2000) {
-      return { error: 'Content must be 2000 characters or less' };
-    }
+    const { title, content, priority, is_active: isActive } = validation.data!;
 
     // Create announcement
     const { error: insertError } = await supabase
@@ -72,7 +64,7 @@ export async function createAnnouncement(formData: FormData) {
       });
 
     if (insertError) {
-      console.error('Error creating announcement:', insertError);
+      logger.error('Error creating announcement', insertError, { operation: 'createAnnouncement', title });
       return { error: 'Failed to create announcement' };
     }
 
@@ -80,7 +72,7 @@ export async function createAnnouncement(formData: FormData) {
     revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
-    console.error('Error in createAnnouncement:', error);
+    logger.error('Unexpected error creating announcement', error, { operation: 'createAnnouncement' });
     return { error: 'An unexpected error occurred' };
   }
 }
@@ -124,25 +116,12 @@ export async function updateAnnouncement(formData: FormData) {
       return { error: 'Admin access required' };
     }
 
-    // Get form data
-    const id = formData.get('id') as string;
-    const title = formData.get('title') as string;
-    const content = formData.get('content') as string;
-    const priority = formData.get('priority') as 'low' | 'medium' | 'high';
-    const isActive = formData.get('is_active') === 'true';
-
-    // Validate input
-    if (!id || !title || !content) {
-      return { error: 'ID, title, and content are required' };
+    // Validate form data with Zod schema
+    const validation = parseFormData(formData, updateAnnouncementSchema);
+    if (validation.error) {
+      return { error: validation.error };
     }
-
-    if (title.length > 200) {
-      return { error: 'Title must be 200 characters or less' };
-    }
-
-    if (content.length > 2000) {
-      return { error: 'Content must be 2000 characters or less' };
-    }
+    const { id, title, content, priority, is_active: isActive } = validation.data!;
 
     // Check if announcement exists
     const { data: existingAnnouncement, error: fetchError } = await supabase
@@ -176,7 +155,7 @@ export async function updateAnnouncement(formData: FormData) {
     revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
-    console.error('Error in updateAnnouncement:', error);
+    logger.error('Unexpected error updating announcement', error, { operation: 'updateAnnouncement' });
     return { error: 'An unexpected error occurred' };
   }
 }
@@ -252,7 +231,7 @@ export async function deleteAnnouncement(formData: FormData) {
     revalidatePath('/dashboard');
     return { success: true };
   } catch (error) {
-    console.error('Error in deleteAnnouncement:', error);
+    logger.error('Unexpected error deleting announcement', error, { operation: 'deleteAnnouncement' });
     return { error: 'An unexpected error occurred' };
   }
 }

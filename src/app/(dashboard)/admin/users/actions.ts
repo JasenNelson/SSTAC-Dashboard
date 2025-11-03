@@ -3,7 +3,12 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { logger } from '@/lib/logger';
 
+/**
+ * Represents a user with their role information.
+ * Used throughout the admin user management system.
+ */
 export interface UserWithRole {
   id: string;
   email: string;
@@ -12,6 +17,19 @@ export interface UserWithRole {
   isAdmin: boolean;
 }
 
+/**
+ * Fetches all users with their role information for admin management.
+ * 
+ * Uses a fallback strategy:
+ * 1. First attempts to use `admin_users_comprehensive` view (preferred)
+ * 2. Falls back to `users_overview` view if available
+ * 3. Finally uses comprehensive user discovery across multiple tables
+ * 
+ * Requires admin authentication - redirects non-admins.
+ * 
+ * @returns Promise resolving to array of users with role information
+ * @throws Error if user fetch fails after all fallback attempts
+ */
 export async function getUsers(): Promise<UserWithRole[]> {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -54,7 +72,9 @@ export async function getUsers(): Promise<UserWithRole[]> {
       .order('auth_created_at', { ascending: false });
 
     if (!comprehensiveError && comprehensiveUsers) {
-      console.log('✅ Using comprehensive admin view for user data');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Using comprehensive admin view for user data');
+      }
       // Transform the comprehensive view data to match our interface
       const usersWithRoles: UserWithRole[] = comprehensiveUsers.map(userData => ({
         id: userData.id,
@@ -74,7 +94,9 @@ export async function getUsers(): Promise<UserWithRole[]> {
       .order('last_activity', { ascending: false });
 
     if (!usersError && usersData) {
-      console.log('✅ Using users_overview view for user data');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('✅ Using users_overview view for user data');
+      }
       // Transform the view data to match our interface
       const usersWithRoles: UserWithRole[] = usersData.map(userData => ({
         id: userData.id,
@@ -100,15 +122,32 @@ export async function getUsers(): Promise<UserWithRole[]> {
     }
 
     // If neither view exists, fall back to comprehensive user discovery
-    console.log('⚠️ No database views found, using comprehensive user discovery...');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('⚠️ No database views found, using comprehensive user discovery...');
+    }
     return await getUsersComprehensive(user);
   } catch (error) {
-    console.error('Error in getUsers:', error);
+    logger.error('Error in getUsers', error, { operation: 'getUsers' });
     throw new Error('Failed to fetch users');
   }
 }
 
-// Comprehensive user discovery that searches multiple sources
+/**
+ * Comprehensive user discovery fallback method.
+ * Searches across multiple database tables to find all users:
+ * - user_roles table
+ * - documents table
+ * - discussions table
+ * - likes table
+ * - polls, ranking_polls tables
+ * - Database function get_users_with_emails() if available
+ * 
+ * This method is used when database views are not available.
+ * 
+ * @param currentUser - Current authenticated user (required for context)
+ * @returns Promise resolving to array of users with role information
+ * @internal - Used internally by getUsers() as fallback
+ */
 async function getUsersComprehensive(currentUser: { id: string }): Promise<UserWithRole[]> {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -159,7 +198,7 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
       .not('user_id', 'is', null);
 
     if (docError) {
-      console.error('Error fetching document users:', docError);
+      logger.warn('Error fetching document users, continuing without document users', { operation: 'getUsersComprehensive', error: docError });
       // Continue without document users if there's an error
     }
 
@@ -170,7 +209,7 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
       .not('user_id', 'is', null);
 
     if (discError) {
-      console.error('Error fetching discussion users:', discError);
+      logger.warn('Error fetching discussion users, continuing without discussion users', { operation: 'getUsersComprehensive', error: discError });
       // Continue without discussion users if there's an error
     }
 
@@ -181,7 +220,7 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
       .not('user_id', 'is', null);
 
     if (likeError) {
-      console.error('Error fetching like users:', likeError);
+      logger.warn('Error fetching like users, continuing without like users', { operation: 'getUsersComprehensive', error: likeError });
       // Continue without like users if there's an error
     }
 
@@ -195,12 +234,18 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
 
       if (!authError && authUsersData) {
         authUsers = authUsersData;
-        console.log('✅ Retrieved user emails from database function');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ Retrieved user emails from database function');
+        }
       } else {
-        console.log('⚠️ Database function not available, using fallback method');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('⚠️ Database function not available, using fallback method');
+        }
       }
     } catch {
-      console.log('⚠️ Database function call failed, using fallback method');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('⚠️ Database function call failed, using fallback method');
+      }
     }
 
     // Create a comprehensive map of all users
@@ -355,11 +400,19 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
     
     return usersWithRoles;
   } catch (error) {
-    console.error('Error in getUsersComprehensive:', error);
+    logger.error('Error in getUsersComprehensive', error, { operation: 'getUsersComprehensive' });
     throw new Error('Failed to fetch users');
   }
 }
 
+/**
+ * Toggles admin role for a user.
+ * Adds admin role if user is not an admin, removes it if they are.
+ * 
+ * @param userId - UUID of the user to modify
+ * @param currentIsAdmin - Current admin status (true to remove, false to add)
+ * @throws Error if operation fails or user lacks admin privileges
+ */
 export async function toggleAdminRole(userId: string, currentIsAdmin: boolean): Promise<void> {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -429,6 +482,14 @@ export async function toggleAdminRole(userId: string, currentIsAdmin: boolean): 
   }
 }
 
+/**
+ * Adds a role to a user in the user_roles table.
+ * Currently used for adding non-admin roles.
+ * 
+ * @param userId - UUID of the user
+ * @param role - Role name to assign (e.g., 'member', 'admin')
+ * @throws Error if operation fails or user lacks admin privileges
+ */
 export async function addUserRole(userId: string, role: string): Promise<void> {
   const cookieStore = await cookies();
   const supabase = createServerClient(

@@ -168,11 +168,11 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
       const p8 = sub.form_data?.part8 || {}
 
       // Format rankings as readable strings
-      const formatRanking = (ranking: any, options: string[]) => {
+      const formatRanking = (ranking: Record<string, number> | null | undefined, options: string[]): string => {
         if (!ranking) return ''
         const entries = Object.entries(ranking)
           .filter(([_, rank]) => rank)
-          .sort(([_, a]: any, [__, b]: any) => a - b)
+          .sort(([_, a], [__, b]) => a - b)
           .map(([key, rank]) => `${rank}. ${key}`)
         return entries.join('; ')
       }
@@ -261,7 +261,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
     })
 
     // Create CSV content with proper escaping
-    const escapeCSV = (val: any): string => {
+    const escapeCSV = (val: unknown): string => {
       if (val === null || val === undefined) return '""'
       const str = String(val)
       // Escape quotes and wrap in quotes if contains comma, quote, or newline
@@ -345,7 +345,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
             </label>
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
+              onChange={(e) => setStatusFilter(e.target.value as 'ALL' | 'IN_PROGRESS' | 'SUBMITTED')}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="ALL">All Status</option>
@@ -566,7 +566,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                             <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
                               Contaminant Rankings: {Object.entries(p4.ranking)
                                 .filter(([_, rank]) => rank)
-                                .sort(([_, a]: any, [__, b]: any) => a - b)
+                                .sort(([_, a], [__, b]) => (a as number) - (b as number))
                                 .map(([key, rank]) => `${rank}. ${key}`)
                                 .join(', ')}
                             </div>
@@ -600,7 +600,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                             <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
                               Evidence Rankings: {Object.entries(p5.evidence)
                                 .filter(([_, rank]) => rank)
-                                .sort(([_, a]: any, [__, b]: any) => a - b)
+                                .sort(([_, a], [__, b]) => (a as number) - (b as number))
                                 .map(([key, rank]) => `${rank}. ${key}`)
                                 .join(', ')}
                             </div>
@@ -663,7 +663,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                             <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
                               Modernization Rankings: {Object.entries(p7.modernization)
                                 .filter(([_, rank]) => rank)
-                                .sort(([_, a]: any, [__, b]: any) => a - b)
+                                .sort(([_, a], [__, b]) => (a as number) - (b as number))
                                 .map(([key, rank]) => `${rank}. ${key.substring(0, 60)}${key.length > 60 ? '...' : ''}`)
                                 .join(', ')}
                             </div>
@@ -672,7 +672,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                             <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
                               Research Rankings: {Object.entries(p7.research)
                                 .filter(([_, rank]) => rank)
-                                .sort(([_, a]: any, [__, b]: any) => a - b)
+                                .sort(([_, a], [__, b]) => (a as number) - (b as number))
                                 .map(([key, rank]) => `${rank}. ${key.substring(0, 60)}${key.length > 60 ? '...' : ''}`)
                                 .join(', ')}
                             </div>

@@ -8,7 +8,9 @@ export default function MilestonesPageClient() {
   // Refresh admin status when component mounts
   useEffect(() => {
     const refreshAdmin = async () => {
-      console.log('🔄 Milestones page mounted - refreshing admin status');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Milestones page mounted - refreshing admin status');
+      }
       await refreshGlobalAdminStatus();
     };
     
