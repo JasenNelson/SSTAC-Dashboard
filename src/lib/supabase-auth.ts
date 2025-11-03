@@ -44,7 +44,7 @@ export async function createAuthenticatedClient(): Promise<SupabaseClient> {
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options });
-          } catch (error) {
+          } catch (_error) {
             // Cookie operations can fail in some edge cases
             // Fail silently to prevent breaking the request
           }
@@ -52,7 +52,7 @@ export async function createAuthenticatedClient(): Promise<SupabaseClient> {
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: '', ...options });
-          } catch (error) {
+          } catch (_error) {
             // Cookie operations can fail in some edge cases
             // Fail silently to prevent breaking the request
           }

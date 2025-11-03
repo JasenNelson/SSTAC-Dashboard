@@ -147,6 +147,7 @@ export default function PollWithResults({
         setSelectedOption(null);
       }
     } catch (error) {
+      console.error('Error submitting vote:', error);
       alert('Failed to submit vote. Please try again.');
       setSelectedOption(null);
     } finally {

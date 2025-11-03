@@ -5,8 +5,16 @@ import { getUsers, toggleAdminRole, addUserRole, type UserWithRole } from '../ac
 const mockRedirect = vi.fn();
 const mockCookies = vi.fn();
 
+// Next.js redirect() throws a special error to stop execution
+// We need to mock it to throw so tests can catch it
 vi.mock('next/navigation', () => ({
-  redirect: (path: string) => mockRedirect(path),
+  redirect: (path: string) => {
+    mockRedirect(path);
+    // Throw an error to simulate Next.js redirect behavior
+    const error = new Error('NEXT_REDIRECT');
+    (error as any).digest = `NEXT_REDIRECT;${path}`;
+    throw error;
+  },
 }));
 
 vi.mock('next/headers', () => ({
@@ -87,9 +95,23 @@ describe('Admin User Actions', () => {
       error: null,
     });
 
+    // Delete chain needs to support .eq().eq()
+    const mockDeleteEq1 = vi.fn();
+    const mockDeleteEq2 = vi.fn();
+    
+    mockDeleteEq1.mockReturnValue({
+      eq: mockDeleteEq2,
+    });
+    
+    mockDeleteEq2.mockReturnValue({
+      eq: vi.fn().mockResolvedValue({
+        data: null,
+        error: null,
+      }),
+    });
+    
     mockDelete.mockReturnValue({
-      data: null,
-      error: null,
+      eq: mockDeleteEq1,
     });
   });
 
@@ -198,19 +220,60 @@ describe('Admin User Actions', () => {
       });
 
       // All views return errors
+      // All views return errors to trigger fallback to getUsersComprehensive
       mockOrder.mockResolvedValue({
         data: null,
         error: { message: 'View not found' },
       });
 
-      mockFrom.mockImplementation(() => ({
-        select: () => ({
-          order: () => Promise.resolve({
-            data: null,
-            error: { message: 'Error' },
-          }),
-        }),
-      }));
+      // Track calls to distinguish between admin check and getUsersComprehensive
+      let userRolesCallCount = 0;
+      
+      // Mock getUsersComprehensive to throw an error (simulating all methods failing)
+      // When admin_users_comprehensive and users_overview both fail,
+      // getUsers() calls getUsersComprehensive which will also fail
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'admin_users_comprehensive' || table === 'users_overview') {
+          return {
+            select: () => ({
+              order: () => Promise.resolve({
+                data: null,
+                error: { message: 'View not found' },
+              }),
+            }),
+          };
+        }
+        
+        // For user_roles table:
+        // First call (callCount = 0) is admin check - needs full chain: .select().eq().eq().single()
+        // Second call (callCount = 1+) is from getUsersComprehensive - should fail
+        if (table === 'user_roles') {
+          const currentCall = userRolesCallCount++;
+          if (currentCall === 0) {
+            // Admin check - return normal chain
+            return {
+              select: mockSelect,
+              insert: mockInsert,
+              delete: mockDelete,
+            };
+          } else {
+            // getUsersComprehensive call - make it fail
+            return {
+              select: () => Promise.resolve({
+                data: null,
+                error: { message: 'Failed to fetch user roles' },
+              }),
+            };
+          }
+        }
+        
+        // Default fallback
+        return {
+          select: mockSelect,
+          insert: mockInsert,
+          delete: mockDelete,
+        };
+      });
 
       await expect(getUsers()).rejects.toThrow('Failed to fetch users');
     });
@@ -296,15 +359,12 @@ describe('Admin User Actions', () => {
         error: null,
       });
 
-      mockDelete.mockResolvedValue({
-        data: null,
-        error: null,
-      });
-
+      // The delete chain is already set up in beforeEach with proper .eq().eq() chain
+      // Just ensure it returns success
       await toggleAdminRole('user-456', true);
 
       expect(mockFrom).toHaveBeenCalledWith('user_roles');
-      // Should delete admin role
+      // Should delete admin role via the delete chain
       expect(mockDelete).toHaveBeenCalled();
     });
 

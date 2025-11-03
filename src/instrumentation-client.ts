@@ -58,10 +58,9 @@ Sentry.init({
       maskAllText: true,
       blockAllMedia: true,
     }),
-    // Filter console logging to reduce noise
-    Sentry.consoleIntegration({
-      levels: ['error'], // Only capture errors, not info/warn/debug
-    }),
+    // Note: consoleIntegration is not available in @sentry/nextjs
+    // Console filtering is handled via the console.log interceptor above
+    // and the beforeSend/ignoreErrors configuration below
   ],
 });
 

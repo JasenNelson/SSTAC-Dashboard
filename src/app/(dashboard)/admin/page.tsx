@@ -16,10 +16,10 @@ export default async function AdminDashboardPage() {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value, ...options }); } catch (error) {}
+          try { cookieStore.set({ name, value, ...options }); } catch (_error) {}
         },
         remove(name: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value: '', ...options }); } catch (error) {}
+          try { cookieStore.set({ name, value: '', ...options }); } catch (_error) {}
         },
       },
     }
