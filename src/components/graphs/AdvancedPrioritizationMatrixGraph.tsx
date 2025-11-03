@@ -31,7 +31,6 @@ export default function AdvancedPrioritizationMatrixGraph({
   const [visualizationMode, setVisualizationMode] = useState<VisualizationMode>('jittered');
 
   // Debug: Log individual pairs received
-  console.log(`🎯 Advanced Matrix Graph "${title}" received ${individualPairs.length} individual pairs:`, individualPairs);
 
   useEffect(() => {
     // Check for dark mode

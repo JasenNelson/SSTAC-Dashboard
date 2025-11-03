@@ -31,7 +31,7 @@ export default function ShareButton({
         await navigator.share(shareData);
         setShowShareMenu(false);
       } catch (error) {
-        console.log('Error sharing:', error);
+        console.error('Error sharing:', error);
       }
     } else {
       setShowShareMenu(true);
@@ -59,7 +59,7 @@ export default function ShareButton({
       setTimeout(() => setCopied(false), 2000);
       setShowShareMenu(false);
     } catch (error) {
-      console.log('Error copying to clipboard:', error);
+      console.error('Error copying to clipboard:', error);
     }
   };
 

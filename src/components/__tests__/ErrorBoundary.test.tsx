@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import ErrorBoundary from '../ErrorBoundary';
@@ -15,6 +15,11 @@ describe('ErrorBoundary', () => {
   beforeEach(() => {
     // Suppress console.error during tests
     vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    // Clean up environment stubs after each test
+    vi.unstubAllEnvs();
   });
 
   it('should render children when there is no error', () => {
@@ -67,8 +72,7 @@ describe('ErrorBoundary', () => {
   });
 
   it('should show error details in development mode', () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'development';
+    vi.stubEnv('NODE_ENV', 'development');
 
     render(
       <ErrorBoundary>
@@ -79,12 +83,11 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText(/error details/i)).toBeInTheDocument();
     expect(screen.getByText(/Test error/i)).toBeInTheDocument();
 
-    process.env.NODE_ENV = originalEnv;
+    vi.unstubAllEnvs();
   });
 
   it('should not show error details in production mode', () => {
-    const originalEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = 'production';
+    vi.stubEnv('NODE_ENV', 'production');
 
     render(
       <ErrorBoundary>
@@ -94,11 +97,21 @@ describe('ErrorBoundary', () => {
 
     expect(screen.queryByText(/error details/i)).not.toBeInTheDocument();
 
-    process.env.NODE_ENV = originalEnv;
+    vi.unstubAllEnvs();
   });
 
   it('should reset error state when reload button is clicked', () => {
-    const reloadSpy = vi.spyOn(window.location, 'reload').mockImplementation(() => {});
+    // Mock window.location.reload
+    const originalReload = window.location.reload;
+    const reloadSpy = vi.fn();
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...window.location,
+        reload: reloadSpy,
+      },
+      writable: true,
+      configurable: true,
+    });
 
     render(
       <ErrorBoundary>
@@ -111,7 +124,15 @@ describe('ErrorBoundary', () => {
 
     expect(reloadSpy).toHaveBeenCalled();
 
-    reloadSpy.mockRestore();
+    // Restore original reload
+    Object.defineProperty(window, 'location', {
+      value: {
+        ...window.location,
+        reload: originalReload,
+      },
+      writable: true,
+      configurable: true,
+    });
   });
 });
 

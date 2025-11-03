@@ -25,8 +25,6 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [visualizationMode, setVisualizationMode] = useState<VisualizationMode>('jittered');
 
-  // Debug: Log individual pairs received
-  console.log(`🎯 Matrix Graph "${title}" received ${individualPairs.length} individual pairs:`, individualPairs);
 
 
   useEffect(() => {
@@ -494,13 +492,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
           const clusterSizes = new Set(Array.from(clusters.values()).map(c => c.length));
           const hasMultipleSizes = clusterSizes.size > 1;
           
-          // Debug: Log cluster information
-          console.log(`🎨 Color Legend Debug for "${title}":`, {
-            totalClusters: clusters.size,
-            clusterSizes: Array.from(clusterSizes),
-            hasMultipleSizes,
-            individualPairs: individualPairs.length
-          });
+          // Color legend debug info removed for production
           
           if (hasMultipleSizes) {
             const sortedSizes = Array.from(clusterSizes).sort((a, b) => a - b);

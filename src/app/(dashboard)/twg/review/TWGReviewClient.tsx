@@ -46,7 +46,6 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
   // Refresh admin status on mount
   useEffect(() => {
     const refreshAdmin = async () => {
-      console.log('🔄 TWG Review page mounted - refreshing admin status')
       await refreshGlobalAdminStatus()
     }
     

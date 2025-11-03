@@ -18,41 +18,25 @@ type DiscussionSummary = {
 };
 
 export default function TwgDiscussionsPage() {
-  console.log('🚀 TwgDiscussionsPage component rendering...');
-  console.log('🔧 Component function called at:', new Date().toISOString());
-  console.log('🔧 Component mounting - about to set up state');
-  console.log('🔧 ===== COMPONENT MOUNTING =====');
-  
   const [discussions, setDiscussions] = useState<DiscussionSummary[]>([]);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
-  console.log('🔧 State initialized - discussions:', discussions.length, 'session:', !!session, 'isLoading:', isLoading);
   const [showNewForm, setShowNewForm] = useState(false);
   const supabase = useRef(createClient()).current;
   const fetchDiscussionsRef = useRef<() => Promise<void>>(() => Promise.resolve());
-  
-  console.log('🔧 Component state - discussions:', discussions.length, 'session:', !!session, 'isLoading:', isLoading);
 
   const fetchDiscussions = useCallback(async () => {
     try {
-      console.log('🔍 fetchDiscussions function called - starting...');
-      console.log('🔍 Supabase client:', !!supabase);
-      
       // First, let's test if the table exists with a simple count query
-      console.log('🔍 Testing if discussions table exists...');
       const { count, error: countError } = await supabase
         .from('discussions')
         .select('*', { count: 'exact', head: true });
       
-      console.log('🔍 Table test result - count:', count, 'error:', countError);
       if (countError) {
         console.error('❌ Table test failed:', countError);
         setDiscussions([]);
         return;
       }
-      
-      console.log('✅ Table exists, proceeding with full query...');
       
       // Add a timeout to prevent hanging
       const queryPromise = supabase
@@ -65,9 +49,6 @@ export default function TwgDiscussionsPage() {
       );
       
       const result = await Promise.race([queryPromise, timeoutPromise]) as any;
-      
-      console.log('📊 Raw discussions data:', result.data);
-      console.log('❌ Discussions error:', result.error);
 
       if (result.error) {
         console.error('❌ Error fetching discussions:', result.error);
@@ -76,13 +57,9 @@ export default function TwgDiscussionsPage() {
       }
 
       if (!result.data || result.data.length === 0) {
-        console.log('ℹ️ No discussions found in database');
         setDiscussions([]);
         return;
       }
-
-      console.log('✅ Discussions loaded:', result.data.length);
-      console.log('📝 First discussion sample:', result.data[0]);
 
       // Process discussions and get reply stats
       const discussionsWithStats = await Promise.all(
@@ -113,11 +90,9 @@ export default function TwgDiscussionsPage() {
         })
       );
 
-      console.log('✅ Discussions processed:', discussionsWithStats.length);
       setDiscussions(discussionsWithStats);
     } catch (error) {
       console.error('❌ Exception fetching discussions:', error);
-      console.error('❌ Error details:', error);
       setDiscussions([]);
     }
   }, []); // No dependencies since supabase is now stable
@@ -127,33 +102,17 @@ export default function TwgDiscussionsPage() {
 
   useEffect(() => {
     try {
-      console.log('🔧 ===== useEffect STARTING =====');
-      console.log('🔧 useEffect triggered - starting initialization');
-      console.log('🔧 fetchDiscussionsRef.current exists:', !!fetchDiscussionsRef.current);
-      
       const initializePage = async () => {
       try {
-        console.log('🔧 initializePage function called');
         // First, check if we already have a session
         const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
-        console.log('🔍 Current session check:', currentSession);
-        console.log('🔍 Session error:', sessionError);
         
         if (currentSession) {
-          console.log('✅ User is authenticated, setting session');
           setSession(currentSession);
-          console.log('🔧 About to call fetchDiscussions...');
-          console.log('🔧 fetchDiscussionsRef.current exists:', !!fetchDiscussionsRef.current);
           if (fetchDiscussionsRef.current) {
-            console.log('🔧 Calling fetchDiscussions...');
             await fetchDiscussionsRef.current();
-            console.log('🔧 fetchDiscussions call completed');
-          } else {
-            console.log('❌ fetchDiscussionsRef.current is undefined');
           }
-          console.log('🔧 fetchDiscussions completed');
         } else {
-          console.log('ℹ️ No current session found');
           // Still set loading to false even if no session
           setIsLoading(false);
         }
@@ -165,19 +124,14 @@ export default function TwgDiscussionsPage() {
 
     // Set a reasonable timeout for initial load
     const timeoutId = setTimeout(() => {
-      console.log('⚠️ Initial load timeout, setting loading to false');
       setIsLoading(false);
-    }, 5000); // Reduced to 5 seconds for faster debugging
+    }, 5000);
 
     initializePage();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 Auth state change:', event, session);
-      
       if (session) {
-        console.log('✅ User is authenticated, setting session');
         setSession(session);
-        console.log('🔄 Auth state change - fetching discussions...');
         try {
           if (fetchDiscussionsRef.current) {
             await fetchDiscussionsRef.current();
@@ -198,13 +152,9 @@ export default function TwgDiscussionsPage() {
       console.error('❌ useEffect error:', error);
     }
   }, []); // Remove fetchDiscussions dependency to prevent infinite loops
-  
-  console.log('🔧 ===== useEffect COMPLETED =====');
 
   const handleDiscussionCreated = useCallback(() => {
-    console.log('🔄 handleDiscussionCreated called');
     setShowNewForm(false);
-    console.log('🔄 Fetching updated discussions...');
     fetchDiscussions();
   }, [fetchDiscussions]);
 

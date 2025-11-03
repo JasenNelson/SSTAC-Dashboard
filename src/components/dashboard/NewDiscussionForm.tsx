@@ -19,10 +19,8 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('🚀 Form submission started');
     
     if (!title.trim() || !content.trim()) {
-      console.log('⚠️ Missing title or content');
       showToast({
         type: 'warning',
         title: 'Missing Information',
@@ -33,17 +31,11 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
     }
 
     setIsSubmitting(true);
-    console.log('📝 Creating discussion...');
 
     try {
-      console.log('🔐 About to call supabase.auth.getUser()...');
-      
       const { data: { user }, error: userError } = await supabase.auth.getUser();
-      console.log('👤 User result:', { user, userError });
-      console.log('👤 User:', user?.email);
       
       if (!user) {
-        console.log('❌ No user found');
         showToast({
           type: 'error',
           title: 'Authentication Required',
@@ -53,7 +45,6 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
         return;
       }
 
-      console.log('💾 Inserting discussion into database...');
       const { error } = await supabase
         .from('discussions')
         .insert({
@@ -72,7 +63,6 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
           duration: 3000
         });
       } else {
-        console.log('✅ Discussion created successfully');
         showToast({
           type: 'success',
           title: 'Discussion Created!',
@@ -81,7 +71,6 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
         });
         setTitle('');
         setContent('');
-        console.log('🔄 Calling onDiscussionCreated callback');
         onDiscussionCreated();
       }
     } catch (error) {
@@ -93,7 +82,6 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
         duration: 3000
       });
     } finally {
-      console.log('🏁 Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };

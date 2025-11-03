@@ -227,19 +227,12 @@ export default function Header() {
     };
 
     const timeoutId = setTimeout(() => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('⏰ Loading timeout reached - forcing loading to false');
-      }
       setIsLoading(false);
     }, 5000); // Increased timeout to 5 seconds
 
     getSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 Auth state change event:', event, 'Session:', session?.user?.email);
-      }
-      
       // Check if we're on a protected route
       const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025'];
       const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
@@ -289,10 +282,6 @@ export default function Header() {
 
     // Also check admin role on initial load if we have a session
     if (session?.user) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 Initial load - Checking admin role for user:', session.user.id);
-      }
-      
       // First try to restore from localStorage
       const restoredFromStorage = restoreAdminStatusFromStorage(session.user.id);
       if (restoredFromStorage) {
@@ -318,16 +307,8 @@ export default function Header() {
     if (session?.user) {
       // Always refresh admin status when navigating to admin pages
       if (pathname.startsWith('/admin')) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔄 Admin page navigation detected - refreshing admin status');
-        }
         refreshGlobalAdminStatus(true).then((isStillAdmin) => {
           setIsAdmin(isStillAdmin);
-          if (!isStillAdmin) {
-            if (process.env.NODE_ENV === 'development') {
-              console.log('⚠️ Admin status lost during navigation');
-            }
-          }
         });
       }
     }
@@ -337,16 +318,8 @@ export default function Header() {
   useEffect(() => {
     const handleRouteChange = () => {
       if (session?.user && pathname.startsWith('/admin')) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔄 Navigation event detected - refreshing admin status');
-        }
         refreshGlobalAdminStatus(true).then((isStillAdmin) => {
           setIsAdmin(isStillAdmin);
-          if (!isStillAdmin) {
-            if (process.env.NODE_ENV === 'development') {
-              console.log('⚠️ Admin status lost during navigation event');
-            }
-          }
         });
       }
     };
@@ -382,11 +355,6 @@ export default function Header() {
         if (session?.user) {
           const isStillAdmin = await refreshGlobalAdminStatus();
           setIsAdmin(isStillAdmin);
-          if (!isStillAdmin) {
-            if (process.env.NODE_ENV === 'development') {
-              console.log('⚠️ Admin status lost during periodic check');
-            }
-          }
         }
       }, 30000); // Check every 30 seconds (more frequent)
 
@@ -395,17 +363,10 @@ export default function Header() {
   }, [session?.user]);
 
   const handleLogout = async () => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Logout initiated for user:', session?.user?.email);
-    }
-    
     try {
       // Clear admin status backup using utility function
       await clearAdminStatusBackup();
       
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 Calling Supabase signOut...');
-      }
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -415,14 +376,8 @@ export default function Header() {
         setIsAdmin(false);
         router.push('/login');
       } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('✅ Supabase signOut successful');
-        }
         setSession(null);
         setIsAdmin(false);
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🔄 Redirecting to login page...');
-        }
         router.push('/login');
       }
     } catch (error) {

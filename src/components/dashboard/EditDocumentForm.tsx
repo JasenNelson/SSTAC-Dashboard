@@ -33,7 +33,6 @@ export default function EditDocumentForm({ document }: EditDocumentFormProps) {
 
   // Debug: Log the document being edited
   useEffect(() => {
-    console.log('🔍 Debug - Editing document:', document);
   }, [document]);
 
   // Handle form submission result

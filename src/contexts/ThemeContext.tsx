@@ -35,7 +35,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.body.classList.remove('light', 'dark');
       document.body.classList.add(theme);
       localStorage.setItem('theme', theme);
-      console.log('🎨 Theme applied:', theme, 'HTML Classes:', document.documentElement.className, 'Body Classes:', document.body.className);
     }
   }, [theme, mounted]);
 

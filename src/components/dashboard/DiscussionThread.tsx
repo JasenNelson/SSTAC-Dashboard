@@ -88,7 +88,6 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
 
   const fetchLikeCounts = useCallback(async () => { // Wrapped with useCallback
     try {
-      console.log('🔍 Fetching like counts for discussion:', discussion.id);
       // Fetch discussion likes
       const { data: discussionLikesData, error: discussionLikesError } = await supabase
         .from('likes')
@@ -96,27 +95,23 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
         .eq('discussion_id', discussion.id);
 
       if (!discussionLikesError && discussionLikesData) {
-        console.log('✅ Discussion likes loaded:', discussionLikesData.length);
         setDiscussionLikes(discussionLikesData.length);
         
         // Check if current user liked the discussion
         if (currentUser) {
           const userLiked = discussionLikesData.some(like => like.user_id === currentUser.id);
           setIsDiscussionLiked(userLiked);
-          console.log('👤 User liked discussion:', userLiked);
         }
       }
 
       // Fetch reply likes
       if (replies.length > 0) {
-        console.log('🔍 Fetching reply likes for', replies.length, 'replies');
         const { data: replyLikesData, error: replyLikesError } = await supabase
           .from('likes')
           .select('*')
           .in('reply_id', replies.map(reply => reply.id));
 
         if (!replyLikesError && replyLikesData) {
-          console.log('✅ Reply likes loaded:', replyLikesData.length);
           const replyLikesMap: { [key: number]: number } = {};
           const isReplyLikedMap: { [key: number]: boolean } = {};
           
@@ -131,10 +126,7 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
           
           setReplyLikes(replyLikesMap);
           setIsReplyLiked(isReplyLikedMap);
-          console.log('📊 Reply likes map:', replyLikesMap);
         }
-      } else {
-        console.log('ℹ️ No replies to fetch likes for');
       }
     } catch (error) {
       console.error('❌ Error fetching like counts:', error);
@@ -144,7 +136,6 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
   // Fetch likes after currentUser and replies are set
   useEffect(() => {
     if (currentUser && !isLoadingReplies) {
-      console.log('🔄 Fetching like counts for user:', currentUser.email);
       fetchLikeCounts();
     }
   }, [currentUser, discussion.id, isLoadingReplies, fetchLikeCounts]);
@@ -197,7 +188,6 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
     setIsSubmitting(true);
     
     if (!newReply.trim()) {
-      console.log('⚠️ Empty reply content, setting isSubmitting to false');
       showToast({
         type: 'warning',
         title: 'Missing Reply',
@@ -212,7 +202,6 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        console.log('❌ No user found, setting isSubmitting to false');
         showToast({
           type: 'error',
           title: 'Authentication Required',
@@ -267,7 +256,6 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
         duration: 3000
       });
     } finally {
-      console.log('🏁 Setting isSubmitting to false in finally block');
       setIsSubmitting(false);
     }
   };

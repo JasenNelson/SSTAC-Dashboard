@@ -42,7 +42,6 @@ export function ToastProvider({ children }: ToastProviderProps) {
   }, []);
 
   const showToast = useCallback((toast: Omit<Toast, 'id'>) => {
-    console.log('🧪 Toast showToast called:', toast);
     const id = Math.random().toString(36).substr(2, 9);
     const newToast: Toast = {
       ...toast,
@@ -51,14 +50,11 @@ export function ToastProvider({ children }: ToastProviderProps) {
       showProgress: toast.showProgress ?? true,
     };
 
-    console.log('🧪 Creating new toast:', newToast);
     setToasts(prev => [...prev, newToast]);
 
     // Auto-hide toast after duration
     if ((newToast.duration ?? 0) > 0) {
-      console.log('🧪 Setting timeout for toast:', id);
       setTimeout(() => {
-        console.log('🧪 Auto-hiding toast:', id);
         hideToast(id);
       }, newToast.duration);
     }

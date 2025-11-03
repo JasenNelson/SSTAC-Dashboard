@@ -33,7 +33,6 @@ export default function DeleteButton({ documentId, documentTitle }: DeleteButton
         throw new Error(errorData.error || 'Failed to delete document');
       }
 
-      console.log('Document deleted successfully');
       showToast({
         type: 'success',
         title: 'Document Deleted!',
