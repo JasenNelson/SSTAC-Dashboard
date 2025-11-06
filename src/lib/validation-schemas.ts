@@ -73,7 +73,20 @@ export const createAnnouncementSchema = z.object({
 });
 
 export const updateAnnouncementSchema = createAnnouncementSchema.extend({
-  id: z.string().uuid('Invalid announcement ID format'),
+  id: z.preprocess(
+    (val) => {
+      // Handle string, number, or undefined
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (!trimmed) return undefined;
+        const num = parseInt(trimmed, 10);
+        return isNaN(num) ? undefined : num;
+      }
+      return undefined;
+    },
+    z.number().int().positive('Announcement ID must be a positive integer')
+  ),
 });
 
 /**
@@ -161,19 +174,18 @@ export function parseFormData<T>(formData: FormData, schema: z.ZodSchema<T>): { 
         data[key] = stringValue === 'true';
       } else {
         // For numeric IDs, try to parse as number if it looks like a number
-        // This helps with milestone IDs which are numbers
-        // Handle ID fields - tags and milestones use numeric IDs, announcements use UUIDs
+        // This helps with milestone, tag, and announcement IDs which are all numbers
+        // Handle ID fields - tags, milestones, and announcements all use numeric IDs
         if (key === 'id' && typeof stringValue === 'string') {
           const trimmedValue = stringValue.trim();
           if (trimmedValue !== '') {
-            // Try to parse as number first (for tags and milestones)
+            // Try to parse as number first (for tags, milestones, and announcements)
             const numValue = Number(trimmedValue);
             // If it's a valid integer ID, convert it to number
-            // UUIDs will be kept as strings and validated by schema
             if (!isNaN(numValue) && Number.isInteger(numValue) && numValue > 0) {
               data[key] = numValue;
             } else {
-              // Keep as string for UUIDs (announcements)
+              // Keep as string if not a valid number (schema will validate)
               data[key] = trimmedValue;
             }
           } else {
