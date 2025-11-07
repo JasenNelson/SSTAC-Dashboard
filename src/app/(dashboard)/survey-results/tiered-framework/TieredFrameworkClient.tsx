@@ -145,7 +145,6 @@ export default function TieredFrameworkClient() {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Current Limitations */}
             <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-6">
-              <div className="text-4xl mb-4 text-center">⚠️</div>
               <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">Current Limitations of Generic Sediment Standards</h3>
               <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-lg">
                 <li className="flex items-start">
@@ -161,7 +160,6 @@ export default function TieredFrameworkClient() {
 
             {/* Proposed Benefits */}
             <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6">
-              <div className="text-4xl mb-4 text-center">✅</div>
               <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">Proposed Site-Specific Sediment Standards</h3>
               <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-lg">
                 <li className="flex items-start">
@@ -177,7 +175,6 @@ export default function TieredFrameworkClient() {
 
             {/* Enhanced Protection */}
             <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
-              <div className="text-4xl mb-4 text-center">🛡️</div>
               <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">Enhanced Protection</h3>
               <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-lg">
                 <li className="flex items-start">
