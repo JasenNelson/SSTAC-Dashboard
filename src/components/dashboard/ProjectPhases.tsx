@@ -39,10 +39,8 @@ export default function ProjectPhases() {
                         'Jurisdictional Scan', 
                         'Interim Scientific Framework Development',
                         'Community Engagement (Survey & CEW Session)',
-                        'Options Analysis',
-                        'Prioritization Framework',
-                        'Strategic Considerations',
-                        'Recommendations for Future Research'
+                        'Strategic Pathways & Options Analysis',
+                        'Conclusions & Recommendations'
                       ].map((subItem, index) => (
                         <div key={index} className="flex items-start space-x-2">
                           <span className="flex-shrink-0 w-3 h-3 bg-blue-400 rounded-full mt-1.5"></span>
