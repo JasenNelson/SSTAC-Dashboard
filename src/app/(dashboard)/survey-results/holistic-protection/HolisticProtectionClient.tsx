@@ -219,7 +219,6 @@ export default function HolisticProtectionClient() {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Direct Toxicity to Amphipods Only */}
             <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-6">
-              <div className="text-4xl mb-4">⚠️</div>
               <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">The Challenge</h3>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                 Direct Toxicity to Amphipods Only: Current standards based on amphipod toxicity, and assumed to be protective of other organisms.
@@ -228,7 +227,6 @@ export default function HolisticProtectionClient() {
 
             {/* Ecosystem Integrity */}
             <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
-              <div className="text-4xl mb-4">🔬</div>
               <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">The Matrix Framework</h3>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                 Ecosystem Integrity: Holistic protection requires ensuring the ecological health of bottom-dwelling and pelagic organisms.
@@ -237,7 +235,6 @@ export default function HolisticProtectionClient() {
 
             {/* Food Pathway Toxicity */}
             <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6">
-              <div className="text-4xl mb-4">🛡️</div>
               <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Holistic Protection</h3>
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                 Food Pathway Toxicity: Contaminants in sediment move through food webs, affecting fish, birds, wildlife and people.
