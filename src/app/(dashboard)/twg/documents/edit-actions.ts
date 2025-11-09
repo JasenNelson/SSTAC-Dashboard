@@ -43,25 +43,11 @@ export async function editDocument(
     const description = (formData.get('description') as string)?.trim();
     const tags = formData.getAll('tags').map(tag => parseInt(tag as string)).filter(id => !isNaN(id));
 
-    console.log('🔍 Debug - Form data received:', {
-      rawId,
-      documentId,
-      isNaN: isNaN(documentId),
-      title,
-      file_url,
-      description,
-      tags,
-      userId: user.id
-    });
-
     if (!documentId || isNaN(documentId) || !title || !file_url) {
       return { error: `Invalid document ID: ${rawId}. Document ID, title, and file URL are required.` };
     }
 
     // Check if user is admin or owns the document
-    console.log('🔍 Debug - Looking for document with ID:', documentId);
-    
-    // First, let's see what columns actually exist by selecting all columns
     const { data: document, error: documentError } = await supabase
       .from('documents')
       .select('*')
@@ -69,20 +55,15 @@ export async function editDocument(
       .single();
 
     if (documentError) {
-      console.error('🔍 Debug - Document lookup error:', documentError);
+      console.error('Document lookup error:', documentError);
       return { error: `Document lookup failed: ${documentError.message}` };
     }
 
     if (!document) {
-      console.log('🔍 Debug - No document found with ID:', documentId);
       return { error: 'Document not found' };
     }
 
-    console.log('🔍 Debug - Document found:', document);
-    console.log('🔍 Debug - Document columns:', Object.keys(document));
-
-    // For now, just check if user is admin since user_id column might not exist
-    console.log('🔍 Debug - Checking if user is admin');
+    // Check if user is admin
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role')
@@ -94,8 +75,6 @@ export async function editDocument(
     if (!isAdmin) {
       return { error: 'Forbidden - Admin access required' };
     }
-
-    console.log('🔍 Debug - User is admin, proceeding with update');
 
     // Update the document
     const { error: updateError } = await supabase

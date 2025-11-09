@@ -56,8 +56,6 @@ export async function updateDocument(prevState: UpdateState, formData: FormData)
     const fileUrl = (formData.get('file_url') as string)?.trim();
     const description = (formData.get('description') as string | null)?.trim() || null;
 
-    console.log('Form data received:', { idRaw, title, fileUrl, description });
-
     const id = typeof idRaw === 'string' ? parseInt(idRaw, 10) : Number(idRaw);
     if (!Number.isFinite(id)) {
       return { error: 'Invalid document id.' };

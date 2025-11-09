@@ -1,7 +1,7 @@
 # Authorization Review: Non-Poll APIs
 
 **Status:** ✅ **REVIEW COMPLETE**  
-**Date:** 2025-01-31  
+**Date:** November 2025  
 **Scope:** Admin and user management APIs (excludes all poll-related APIs)
 
 ---
@@ -233,6 +233,6 @@ All non-poll APIs have proper authorization checks:
 
 ---
 
-**Last Updated:** 2025-01-31  
+**Last Updated:** November 2025  
 **Next Steps:** Test authorization in practice, make decision on discussion moderation
 

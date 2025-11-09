@@ -1,7 +1,7 @@
 # Security Testing Plan for Non-Poll APIs
 
 **Status:** 📋 **PLANNING DOCUMENT**  
-**Last Updated:** 2025-01-31  
+**Last Updated:** November 2025  
 **Scope:** Admin and user management APIs (excludes all poll-related APIs)
 
 ---

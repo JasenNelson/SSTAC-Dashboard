@@ -1,12 +1,12 @@
 # Query Performance Monitoring Baseline
 
-**Date Established:** 2025-01-31  
+**Date Established:** November 2025  
 **Purpose:** Track performance metrics over time  
 **Script:** `scripts/verify/simple-query-monitoring.sql`
 
 ---
 
-## 📊 **Baseline Results (2025-01-31)**
+## 📊 **Baseline Results (November 2025)**
 
 ### **Overall Database Cache Performance**
 
@@ -29,7 +29,7 @@
 
 | Date | Cache Hit Rate | Total Cache Hits | Disk Reads | Status | Notes |
 |------|----------------|------------------|------------|--------|-------|
-| 2025-01-31 | **100.00%** | 4,287,482 | 0 | ✅ Excellent | Baseline established |
+| November 2025 | **100.00%** | 4,287,482 | 0 | ✅ Excellent | Baseline established |
 
 **Target:** Maintain cache hit rate > 95%
 
@@ -70,7 +70,7 @@
 
 ---
 
-## 📈 **Most Active Queries (2025-01-31)**
+## 📈 **Most Active Queries (November 2025)**
 
 ### **Top 10 Queries by Call Count:**
 
@@ -174,7 +174,7 @@ From `monitor-query-performance.sql` execution:
 
 ---
 
-**Last Updated:** 2025-01-31  
+**Last Updated:** November 2025  
 **Next Review:** Weekly during active polling  
 **Status:** ✅ All systems performing excellently
 

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import TagManagement from '@/components/dashboard/TagManagement';
 import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
+import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav';
 
 export default function TagsPageClient() {
   const hasRefreshed = useRef(false);
@@ -37,6 +38,7 @@ export default function TagsPageClient() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 relative z-10">
+        <AdminFunctionsNav />
         <TagManagement />
       </div>
     </div>

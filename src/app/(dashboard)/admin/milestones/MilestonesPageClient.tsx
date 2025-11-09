@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import MilestonesManagement from '@/components/dashboard/MilestonesManagement';
 import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
+import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav';
 
 export default function MilestonesPageClient() {
   // Refresh admin status when component mounts
@@ -29,6 +30,7 @@ export default function MilestonesPageClient() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 relative z-10">
+        <AdminFunctionsNav />
         <MilestonesManagement />
       </div>
     </div>

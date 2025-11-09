@@ -3,9 +3,9 @@
 ## Overview
 This guide documents critical debugging issues encountered with the admin poll results system and provides solutions to prevent future problems.
 
-**JANUARY 2025 UPDATES**: Added change vote functionality fixes, duplicate vote prevention, database schema improvements, and comprehensive polling system debugging. Added matrix graph investigation findings, K6 test user ID mismatch resolution, overlapping data points visualization system, and admin panel improvements.
+**2025 UPDATES**: Added change vote functionality fixes, duplicate vote prevention, database schema improvements, and comprehensive polling system debugging. Added matrix graph investigation findings, K6 test user ID mismatch resolution, overlapping data points visualization system, and admin panel improvements.
 
-## 🚨 CRITICAL: Change Vote Functionality Issues (2025-01-27) ✅ COMPLETELY RESOLVED
+## 🚨 CRITICAL: Change Vote Functionality Issues (2025) ✅ COMPLETELY RESOLVED
 
 ### **Duplicate Vote Creation Issue (RESOLVED)**
 **Problem**: Authenticated users changing votes created duplicate entries instead of updating existing votes
@@ -56,7 +56,7 @@ This guide documents critical debugging issues encountered with the admin poll r
 **Solution**: Changed from authCode check to isCEWPage check based on pagePath
 **Prevention**: Use pagePath patterns for user type detection, not parameter presence
 
-## 🚨 CRITICAL: Holistic Protection Question Text Updates (2025-01-26)
+## 🚨 CRITICAL: Holistic Protection Question Text Updates (2025)
 
 ### **Question Text Synchronization Issues (NEW ISSUE)**
 **Problem**: Holistic protection questions showed different text in CEW polls vs admin panel vs database
@@ -121,7 +121,7 @@ This guide documents critical debugging issues encountered with the admin poll r
 **Solution**: Fix all TypeScript errors and JSX compliance issues
 **Prevention**: Run `npm run build` frequently during development
 
-## 🚨 CRITICAL: CEW Poll Multiple Submissions (2025-01-25)
+## 🚨 CRITICAL: CEW Poll Multiple Submissions (2025)
 
 ### **CEW Poll Behavior Requirements (CRITICAL)**
 **Problem**: CEW polls must allow multiple submissions from same conference code (CEW2025)
@@ -145,9 +145,9 @@ This guide documents critical debugging issues encountered with the admin poll r
 - ✅ **Test multiple submissions** from same CEW code
 - ✅ **Verify admin panel counts** increase with each submission
 
-## 🚨 CRITICAL: Recurring Security & Indexing Issues (2025-01-20)
+## 🚨 CRITICAL: Recurring Security & Indexing Issues (2025)
 
-## 🚨 CRITICAL: Prioritization Matrix Graph System Issues (2025-01-20)
+## 🚨 CRITICAL: Prioritization Matrix Graph System Issues (2025)
 
 ### **Graph Integration TypeScript Errors (NEW ISSUE)**
 **Problem**: TypeScript compilation errors in graph integration components
@@ -200,7 +200,7 @@ const { data: votes } = await supabase
 - ✅ **Test API endpoints** with real data before integration
 - ✅ **Query both survey and CEW paths** for complete data
 
-## 🚨 CRITICAL: Wordcloud Division by Zero Error (2025-01-20)
+## 🚨 CRITICAL: Wordcloud Division by Zero Error (2025)
 
 ### **Wordcloud Results View Division by Zero (NEW ISSUE)**
 **Problem**: `wordcloud_results` view causes division by zero error when no votes exist
@@ -274,7 +274,7 @@ CREATE OR REPLACE VIEW ranking_results WITH (security_invoker = on) AS ...
 - **CRITICAL: ranking_results View Array Indexing**: The ranking_results view uses `rp.options[option_stats.option_index]` (NOT +1). The option_index values in ranking_votes table are 0-based (0,1,2,3) and the options JSONB array is also 0-based. Adding +1 breaks the mapping and causes blank option text in admin panel. NEVER modify this line: `'option_text', rp.options[option_stats.option_index]`. The system uses 0-based indexing throughout - do not "fix" what appears to be a 1-based vs 0-based issue.
 ```
 
-## ✅ Admin Panel Navigation Features (2025-01-20)
+## ✅ Admin Panel Navigation Features (2025)
 
 ### **Bidirectional Question Navigation Implementation**
 The admin poll results panel now includes advanced navigation features:
@@ -327,7 +327,7 @@ const navigateToNextQuestion = (currentPoll: PollResult) => {
 - **Consistent Application**: Applied to both ranking polls and single-choice polls
 - **No Layout Issues**: Adequate spacing maintained between response options
 
-## 🚨 CRITICAL: Poll Question & Option Updates (2025-01-18)
+## 🚨 CRITICAL: Poll Question & Option Updates (2025)
 
 ### **MANDATORY PROTOCOL FOR UPDATING POLL QUESTIONS**
 When updating poll questions and options across the system, follow this exact protocol to prevent system-wide failures:
@@ -693,7 +693,7 @@ SELECT rp.id AS ranking_poll_id,
 - Add performance metrics
 - Implement user analytics
 
-## 🚨 CRITICAL: Wordcloud UX Issues (2025-01-26)
+## 🚨 CRITICAL: Wordcloud UX Issues (2025)
 
 ### **Wordcloud Layout and Readability Problems (NEW ISSUE)**
 **Problem**: Wordcloud had poor user experience with overlapping words, pixelated text, and poor contrast
@@ -782,7 +782,7 @@ const colors = isDarkMode ? darkColors : lightColors;
 - ✅ **Test TypeScript builds** after component changes
 - ✅ **Simplify component logic** when only one poll type is used
 
-### **Admin Panel Filtering Logic Inconsistency (January 2025)**
+### **Admin Panel Filtering Logic Inconsistency (2025)**
 **Problem**: Left panel vote counts for ranking and wordcloud polls show combined totals regardless of filter selection
 **Symptoms**: 
 - Left panel shows 948, 947, 945 responses even when "SSTAC & TWG" filter is selected
@@ -856,7 +856,7 @@ if (poll.is_wordcloud) {
 
 ---
 
-## 🚨 **NEW DEBUGGING SCENARIOS (January 2025)**
+## 🚨 **NEW DEBUGGING SCENARIOS (2025)**
 
 ### **Scenario 11: K6 Test User ID Mismatch Issue**
 **Problem**: K6 test submitted 12,018 votes but all used same user_id (`CEW2025_default`), making vote pairing impossible for matrix graphs

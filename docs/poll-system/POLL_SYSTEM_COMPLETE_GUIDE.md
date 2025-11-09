@@ -2,9 +2,9 @@
 
 ## 🚨 CRITICAL: This Guide Prevents Future Misunderstandings
 
-**HISTORICAL CONTEXT**: This guide was created after January 2025 debugging incidents where multiple incorrect assumptions were made despite reviewing existing markdowns and running queries. Only after analyzing actual CSV exports of database tables was the true system structure understood.
+**HISTORICAL CONTEXT**: This guide was created after debugging incidents in 2025 where multiple incorrect assumptions were made despite reviewing existing markdowns and running queries. Only after analyzing actual CSV exports of database tables was the true system structure understood.
 
-**JANUARY 2025 UPDATE**: Added comprehensive debugging lessons from holistic protection question text update process, including question text synchronization issues, admin panel matching failures, matrix graph data integration complexity, and filter system implementation gaps. **MATRIX GRAPH VISUALIZATION ENHANCEMENT**: Added 4-mode overlapping data points visualization system (Jittered, Size-Scaled, Heatmap, Concentric), improved color spectrum, and comprehensive K6 testing with proper user ID generation. **UI CLEANUP**: Simplified matrix graph text display with "n = X" format, replaced individual color dots with gradient spectrum bar (max 6 segments), and added fallback messaging for single-cluster data. **WORDCLOUD RESULTS BUTTON**: Added "View All Responses" button to hide results by default and show aggregated data on click. Enhanced API to combine survey-results and cew-polls data sources matching admin panel logic.
+**2025 UPDATE**: Added comprehensive debugging lessons from holistic protection question text update process, including question text synchronization issues, admin panel matching failures, matrix graph data integration complexity, and filter system implementation gaps. **MATRIX GRAPH VISUALIZATION ENHANCEMENT**: Added 4-mode overlapping data points visualization system (Jittered, Size-Scaled, Heatmap, Concentric), improved color spectrum, and comprehensive K6 testing with proper user ID generation. **UI CLEANUP**: Simplified matrix graph text display with "n = X" format, replaced individual color dots with gradient spectrum bar (max 6 segments), and added fallback messaging for single-cluster data. **WORDCLOUD RESULTS BUTTON**: Added "View All Responses" button to hide results by default and show aggregated data on click. Enhanced API to combine survey-results and cew-polls data sources matching admin panel logic.
 
 ## 📊 **ACTUAL Database Structure (Based on CSV Analysis)**
 
@@ -26,7 +26,7 @@
 - **Vote Counting**: Count of unique participants (not sum of individual votes)
 - **CEW Behavior**: Multiple submissions allowed with unique user_id generation
 
-#### **3. Wordcloud Polls System** ✅ **COMPLETED (January 2025)**
+#### **3. Wordcloud Polls System** ✅ **COMPLETED (2025)**
 - **Table**: `wordcloud_polls`
 - **Votes Table**: `wordcloud_votes`
 - **Results View**: `wordcloud_results`
@@ -40,7 +40,7 @@
 - **Better Color Contrast**: Inverted color selection so larger words get darker, more readable colors
 - **Predefined Options**: Display descriptive options but submit simplified keywords
 - **Either/Or Selection**: Users can select predefined options OR enter custom words, not both
-- **Results Button Enhancement** ✅ **COMPLETED (January 2025)**:
+- **Results Button Enhancement** ✅ **COMPLETED (2025)**:
   - **Hidden by Default**: Results no longer auto-display on `/survey-results/*` pages
   - **"View All Responses" Button**: Appears after user submission to show aggregated results
   - **Aggregated Data**: Combines both `/survey-results` and `/cew-polls` data sources
@@ -52,7 +52,7 @@
 - **CEW Multiple Submissions**: Unique user_id generation allows multiple submissions from same conference code
 - **Unique Constraint**: `UNIQUE(poll_id, user_id, word)` prevents duplicate words from same user
 
-#### **4. Prioritization Matrix Graph System** ✅ **COMPLETED & VERIFIED (January 2025)**
+#### **4. Prioritization Matrix Graph System** ✅ **COMPLETED & VERIFIED (2025)**
 - **API Endpoint**: `/api/graphs/prioritization-matrix`
 - **Components**: `PrioritizationMatrixGraph.tsx` (admin panel), `SurveyMatrixGraph.tsx` (survey-results pages)
 - **UI Enhancements**: Clean text display with "n = X" format, color spectrum bar (max 6 dots), simplified legend
@@ -62,7 +62,7 @@
   - **Survey-Results Pages**: 
     - Holistic-protection: 4 matrix graphs for Q1-Q2, Q3-Q4, Q5-Q6, Q7-Q8 pairs
     - Prioritization: 1 matrix graph for Q1-Q2 pair
-- **Survey-Results Integration**: ✅ **COMPLETED (January 2025)**
+- **Survey-Results Integration**: ✅ **COMPLETED (2025)**
   - **Expandable Interface**: Clean, collapsible buttons that don't clutter page layout
   - **Data Integration**: Shows combined CEW + authenticated user data (no filtering)
   - **Consistent Experience**: Same visualization modes and functionality as admin panel
@@ -367,7 +367,7 @@ SELECT COUNT(*) FROM ranking_results;
 3. **Verify functionality**: Test admin panel after cleanup
 4. **Document changes**: Record what was removed/added
 
-## 🚨 **CRITICAL: Wordcloud System Implementation (January 2025)**
+## 🚨 **CRITICAL: Wordcloud System Implementation (2025)**
 
 ### **Division by Zero Protection**
 **ALWAYS include division by zero protection** in wordcloud_results view percentage calculations:
@@ -416,7 +416,7 @@ Without this protection, empty wordcloud polls cause division by zero errors and
 
 This guide should prevent future misunderstandings about the poll system structure and functionality.
 
-## 🧪 **K6 Testing System Enhancements (January 2025)**
+## 🧪 **K6 Testing System Enhancements (2025)**
 
 ### **K6 Test User ID Generation Fix**
 - **Problem**: K6 test submitted 12,018 votes but all used same user_id (`CEW2025_default`), making vote pairing impossible
@@ -440,7 +440,7 @@ This guide should prevent future misunderstandings about the poll system structu
 - **Session ID Format**: `CEW2025_${uniqueSessionId}` for consistent user tracking
 - **Vote Pairing**: Matrix graphs require same user_id for both importance & feasibility questions
 
-## 🐛 **COMPREHENSIVE DEBUGGING SCENARIOS (January 2025)**
+## 🐛 **COMPREHENSIVE DEBUGGING SCENARIOS (2025)**
 
 ### **Scenario 1: Question Text Synchronization Issues**
 **Problem**: Different question text displayed in CEW polls vs admin panel vs database

@@ -5,6 +5,7 @@ import { User } from '@supabase/supabase-js'
 import { refreshGlobalAdminStatus } from '@/lib/admin-utils'
 import InteractiveBarChart from '@/components/dashboard/InteractiveBarChart'
 import InteractivePieChart from '@/components/dashboard/InteractivePieChart'
+import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav'
 
 interface ReviewSubmission {
   id: string
@@ -302,6 +303,8 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
           Analyze and synthesize feedback from the Technical Working Group review process
         </p>
       </div>
+
+      <AdminFunctionsNav />
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

@@ -92,25 +92,25 @@ This document outlines a comprehensive plan for adding export functionality to t
 **Single-Choice Polls:**
 ```csv
 Question,Option Index,Option Text (Full),Votes,Percentage,Total Responses,Filter Mode,Export Date
-"What is the...",0,"Full option text here (no truncation)",15,45.45%,33,All Responses,2025-01-28
+"What is the...",0,"Full option text here (no truncation)",15,45.45%,33,All Responses,2025-XX-XX
 ```
 
 **Ranking Polls:**
 ```csv
 Question,Option Index,Option Text (Full),Average Rank,Votes,Total Responses,Filter Mode,Export Date
-"Rank the...",0,"Full option text here (no truncation)",2.3,20,33,All Responses,2025-01-28
+"Rank the...",0,"Full option text here (no truncation)",2.3,20,33,All Responses,2025-XX-XX
 ```
 
 **Wordcloud Polls:**
 ```csv
 Question,Word,Frequency,Percentage,Total Responses,Filter Mode,Export Date
-"What is...",Data,25,35.21%,71,All Responses,2025-01-28
+"What is...",Data,25,35.21%,71,All Responses,2025-XX-XX
 ```
 
 **Matrix Graphs:**
 ```csv
 Question Pair,User ID,User Type,Importance,Feasibility,Quadrant,Export Date
-"Q1-Q2 Pair",user123,authenticated,4,2,HIGH PRIORITY,2025-01-28
+"Q1-Q2 Pair",user123,authenticated,4,2,HIGH PRIORITY,2025-XX-XX
 ```
 
 **Features:**
@@ -275,13 +275,13 @@ Question Pair,User ID,User Type,Importance,Feasibility,Quadrant,Export Date
 **Format:**
 ```csv
 === EXPORT METADATA ===
-Export Date: 2025-01-28 14:30:00 UTC
+Export Date: 2025-XX-XX 14:30:00 UTC
 Filter Mode: All Responses
 Total Questions: 16
 Total Responses: 247
 TWG/SSTAC Responses: 142
 CEW Responses: 105
-Data Period: 2025-01-15 to 2025-01-28
+Data Period: 2025-XX-XX to 2025-XX-XX
 Export Version: v1.0
 ```
 
@@ -579,6 +579,6 @@ Export Version: v1.0
 ---
 
 **Document Version:** 1.0  
-**Created:** 2025-01-28  
-**Last Updated:** 2025-01-28
+**Created:** 2025  
+**Last Updated:** 2025
 

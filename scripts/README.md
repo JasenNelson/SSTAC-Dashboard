@@ -70,9 +70,36 @@ chmod +x scripts/run-cew-100-test.sh
 
 ## 🔍 **Verification Scripts** (`scripts/verify/`)
 
-SQL scripts for ongoing database verification and maintenance.
+SQL scripts for ongoing database verification and maintenance, plus automated code change verification.
 
-### **Quick Reference**
+### **Code Change Verification Scripts**
+
+| Script | Purpose | When to Use |
+|--------|---------|-------------|
+| `verify-code-changes.sh` | Automated code change verification (Bash) | Before committing code changes |
+| `verify-code-changes.ps1` | Automated code change verification (PowerShell) | Before committing code changes (Windows) |
+
+**Usage:**
+```bash
+# Bash/Linux/Mac
+./scripts/verify/verify-code-changes.sh
+
+# PowerShell (Windows)
+.\scripts\verify\verify-code-changes.ps1
+```
+
+**What it checks:**
+- ✅ Build succeeds
+- ✅ TypeScript type checking passes
+- ✅ Linting passes
+- ✅ Unit tests pass
+- ✅ No poll-related files in changes (warns if found)
+
+**See:** `docs/review-analysis/CODE_CHANGE_VERIFICATION_PROCESS.md` for complete verification process
+
+---
+
+### **Database Verification Scripts**
 
 | Script | Purpose | When to Use |
 |--------|---------|-------------|

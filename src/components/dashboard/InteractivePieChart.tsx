@@ -88,6 +88,13 @@ export default function InteractivePieChart({
   };
 
   // Create SVG path for pie slice
+  const formatCoordinate = (value: number) => {
+    if (Number.isNaN(value) || !Number.isFinite(value)) {
+      return 0
+    }
+    return Number(value.toFixed(6))
+  }
+
   const createSlicePath = (startAngle: number, endAngle: number) => {
     const start = polarToCartesian(centerX, centerY, radius, startAngle);
     const end = polarToCartesian(centerX, centerY, radius, endAngle);
@@ -95,9 +102,9 @@ export default function InteractivePieChart({
     const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
     
     return [
-      `M ${start.x} ${start.y}`,
-      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`,
-      `L ${centerX} ${centerY}`,
+      `M ${formatCoordinate(start.x)} ${formatCoordinate(start.y)}`,
+      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${formatCoordinate(end.x)} ${formatCoordinate(end.y)}`,
+      `L ${formatCoordinate(centerX)} ${formatCoordinate(centerY)}`,
       'Z',
     ].join(' ');
   };

@@ -3,18 +3,20 @@
 import { useEffect } from 'react';
 import AnnouncementsManagement from '@/components/dashboard/AnnouncementsManagement';
 import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
+import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav';
 
 export default function AnnouncementsPageClient() {
   // Refresh admin status when component mounts
   useEffect(() => {
     const refreshAdmin = async () => {
-      console.log('🔄 Announcements page mounted - refreshing admin status');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Announcements page mounted - refreshing admin status');
+      }
       await refreshGlobalAdminStatus();
     };
     
     refreshAdmin();
   }, []);
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -27,6 +29,7 @@ export default function AnnouncementsPageClient() {
         </div>
       </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-8 relative z-10">
+        <AdminFunctionsNav />
         <AnnouncementsManagement />
       </div>
     </div>

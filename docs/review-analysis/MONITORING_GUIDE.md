@@ -1,6 +1,6 @@
 # Query Performance Monitoring Guide
 
-**Date:** 2025-01-31  
+**Date:** November 2025  
 **Purpose:** Guide for Priority 2 monitoring tasks  
 **Related:** `QUERY_PERFORMANCE_ANALYSIS.md`, `QUERY_PERFORMANCE_TASKS_STATUS.md`
 
@@ -119,7 +119,7 @@ All Priority 2 tasks are **read-only** and **poll-safe**:
 
 | Date | Cache Hit Rate | Total Cache Hits | Disk Reads | Max Time (poll_results) | Max Time (ranking) | Max Time (wordcloud) | Notes |
 |------|----------------|------------------|------------|-------------------------|-------------------|---------------------|-------|
-| 2025-01-31 | **100.00%** ✅ | 4,287,482 | 0 | 424ms | 538ms | 482ms | Baseline - Excellent |
+| November 2025 | **100.00%** ✅ | 4,287,482 | 0 | 424ms | 538ms | 482ms | Baseline - Excellent |
 | | | | | | | | |
 
 **Update weekly** to track trends and identify degradation.
@@ -194,6 +194,6 @@ All Priority 2 tasks are **read-only** and **poll-safe**:
 
 ---
 
-**Last Updated:** 2025-01-31  
+**Last Updated:** November 2025  
 **Status:** Ready for use - All scripts are poll-safe (read-only)
 

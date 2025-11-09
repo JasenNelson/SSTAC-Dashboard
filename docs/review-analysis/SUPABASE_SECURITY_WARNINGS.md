@@ -1,6 +1,6 @@
 # Supabase Security Advisor Warnings & Suggestions - Analysis & Fix Plan
 
-**Date:** 2025-01-31  
+**Date:** November 2025  
 **Status:** 16 warnings + 11 suggestions identified, fix plan prepared  
 **Security Level:** WARN (External-facing security issues) + INFO (RLS suggestions)
 
@@ -28,7 +28,7 @@ Tables have Row Level Security (RLS) enabled but no policies exist. This can pre
 ### **Tables Identified**
 
 #### **✅ SAFE TO FIX: Backup Tables (10 tables)** ✅ **COMPLETE**
-All backup tables were historical data archives and have been **dropped** (2025-01-31):
+All backup tables were historical data archives and have been **dropped** (November 2025):
 
 1. ✅ `poll_votes_backup` - **DROPPED**
 2. ✅ `polls_backup` - **DROPPED**
@@ -104,7 +104,7 @@ These functions are part of the active poll system and should NOT be modified:
 
 SQL script to fix the 4 safe-to-fix functions: See `fix_function_search_path.sql`
 
-**Status:** ✅ **IMPLEMENTED AND VERIFIED** (2025-01-31)
+**Status:** ✅ **IMPLEMENTED AND VERIFIED** (November 2025)
 - ✅ `get_users_with_emails()` - search_path set
 - ✅ `handle_new_user()` - search_path set
 - ✅ `update_reply_updated_at()` - search_path set
@@ -133,7 +133,7 @@ The `SET search_path = public, pg_temp` ensures the function only searches the `
 ### **Security Issue**
 OTP (One-Time Password) expiry is set to more than 1 hour, which exceeds the recommended security threshold.
 
-### **Status:** ✅ **IMPLEMENTED** (2025-01-31)
+### **Status:** ✅ **IMPLEMENTED** (November 2025)
 - **Previous:** More than 1 hour (exceeded recommended)
 - **Fix Applied:** Updated to **1800 seconds (30 minutes)** in Supabase Dashboard
 - **Location:** Supabase Dashboard → Authentication → Providers → Email
