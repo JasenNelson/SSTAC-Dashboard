@@ -109,6 +109,7 @@ export default function PollResultsClient() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [showMatrixGraphs, setShowMatrixGraphs] = useState<{[key: string]: boolean}>({});
+  const [showPresentationControls, setShowPresentationControls] = useState(true);
   const supabase = createClient();
 
   // Toggle matrix graph visibility for a specific question pair
@@ -1409,6 +1410,29 @@ export default function PollResultsClient() {
             </button>
           </div>
 
+          {/* Display Options */}
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Display Options</h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => setShowPresentationControls((prev) => !prev)}
+                className={`w-full px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-between ${
+                  showPresentationControls
+                    ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+              >
+                <span>{showPresentationControls ? 'Hide Presentation Controls' : 'Show Presentation Controls'}</span>
+                <span className="text-sm">
+                  {showPresentationControls ? 'ON' : 'OFF'}
+                </span>
+              </button>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Toggle the per-question export button, join instructions, and QR code display in the results view.
+              </p>
+            </div>
+          </div>
+
           {/* Poll Question Groups */}
           <div className="mt-8">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Poll Groups</h3>
@@ -1682,99 +1706,103 @@ export default function PollResultsClient() {
                       </div>
                       
                       {/* Export Buttons */}
-                      <div className="flex items-start gap-2">
-                        <button
-                          onClick={() => {
-                            if (selectedPoll.is_wordcloud) {
-                              exportWordcloudPoll(selectedPoll);
-                            } else if (selectedPoll.is_ranking) {
-                              exportRankingPoll(selectedPoll);
-                            } else {
-                              exportSingleChoicePoll(selectedPoll);
-                            }
-                          }}
-                          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200"
-                          title="Export this question to CSV"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          Export CSV
-                        </button>
-                      </div>
+                      {showPresentationControls && (
+                        <div className="flex items-start gap-2">
+                          <button
+                            onClick={() => {
+                              if (selectedPoll.is_wordcloud) {
+                                exportWordcloudPoll(selectedPoll);
+                              } else if (selectedPoll.is_ranking) {
+                                exportRankingPoll(selectedPoll);
+                              } else {
+                                exportSingleChoicePoll(selectedPoll);
+                              }
+                            }}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200"
+                            title="Export this question to CSV"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Export CSV
+                          </button>
+                        </div>
+                      )}
                       
                       {/* QR Code and Join at containers - positioned on the right */}
-                      <div className={`flex items-start flex-shrink-0 ${isExpanded ? 'space-x-3 -ml-8 mt-2' : 'space-x-3'}`}>
-                        {(() => {
-                          const pollGroup = getPollGroup(selectedPoll.page_path);
-                          if (!pollGroup) return null;
-                          
-                          const getWebAddress = (group: string) => {
-                            switch (group) {
-                              case 'holistic-protection':
-                                return 'bit.ly/SABCS-Holistic';
-                              case 'tiered-framework':
-                                return 'bit.ly/SABCS-Tiered';
-                              case 'prioritization':
-                                return 'bit.ly/SABCS-Prio';
-                              default:
-                                return null;
-                            }
-                          };
-                          
-                          const webAddress = getWebAddress(pollGroup);
-                          
-                          return (
-                            <div className={`flex items-start ${isExpanded ? 'space-x-26' : 'space-x-3'}`}>
-                              {/* Web Address and Password */}
-                              {webAddress && (
+                      {showPresentationControls && (
+                        <div className={`flex items-start flex-shrink-0 ${isExpanded ? 'space-x-3 -ml-8 mt-2' : 'space-x-3'}`}>
+                          {(() => {
+                            const pollGroup = getPollGroup(selectedPoll.page_path);
+                            if (!pollGroup) return null;
+                            
+                            const getWebAddress = (group: string) => {
+                              switch (group) {
+                                case 'holistic-protection':
+                                  return 'bit.ly/SABCS-Holistic';
+                                case 'tiered-framework':
+                                  return 'bit.ly/SABCS-Tiered';
+                                case 'prioritization':
+                                  return 'bit.ly/SABCS-Prio';
+                                default:
+                                  return null;
+                              }
+                            };
+                            
+                            const webAddress = getWebAddress(pollGroup);
+                            
+                            return (
+                              <div className={`flex items-start ${isExpanded ? 'space-x-26' : 'space-x-3'}`}>
+                                {/* Web Address and Password */}
+                                {webAddress && (
+                                  <div 
+                                    className={`flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-200 ${isExpanded ? 'p-5 transform scale-[1.45]' : 'p-3'}`}
+                                    onClick={() => {
+                                      setExpandedPollGroup(pollGroup);
+                                      setQrCodeExpanded(!qrCodeExpanded);
+                                    }}
+                                    title="Click to expand for conference display"
+                                  >
+                                    {/* Join at section */}
+                                    <div className="flex flex-col items-center">
+                                      <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-base' : 'text-sm'}`} style={{color: '#1d4ed8'}}>
+                                        Join at:
+                                      </div>
+                                      <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-xl' : 'text-lg'}`} style={{color: '#1d4ed8'}}>
+                                        {webAddress}
+                                      </div>
+                                    </div>
+                                    {/* Spacing */}
+                                    <div className="h-2"></div>
+                                    {/* Password section */}
+                                    <div className="flex flex-col items-center">
+                                      <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-base' : 'text-sm'}`} style={{color: '#1d4ed8'}}>
+                                        Password:
+                                      </div>
+                                      <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-xl' : 'text-lg'}`} style={{color: '#1d4ed8'}}>
+                                        CEW2025
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                                {/* QR Code */}
                                 <div 
-                                  className={`flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-200 ${isExpanded ? 'p-5 transform scale-[1.45]' : 'p-3'}`}
+                                  className={`cursor-pointer hover:opacity-80 transition-opacity duration-200 ${isExpanded ? 'transform scale-[1.45] ml-8' : ''}`}
                                   onClick={() => {
                                     setExpandedPollGroup(pollGroup);
                                     setQrCodeExpanded(!qrCodeExpanded);
                                   }}
                                   title="Click to expand for conference display"
                                 >
-                                  {/* Join at section */}
-                                  <div className="flex flex-col items-center">
-                                    <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-base' : 'text-sm'}`} style={{color: '#1d4ed8'}}>
-                                      Join at:
-                                    </div>
-                                    <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-xl' : 'text-lg'}`} style={{color: '#1d4ed8'}}>
-                                      {webAddress}
-                                    </div>
-                                  </div>
-                                  {/* Spacing */}
-                                  <div className="h-2"></div>
-                                  {/* Password section */}
-                                  <div className="flex flex-col items-center">
-                                    <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-base' : 'text-sm'}`} style={{color: '#1d4ed8'}}>
-                                      Password:
-                                    </div>
-                                    <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-xl' : 'text-lg'}`} style={{color: '#1d4ed8'}}>
-                                      CEW2025
-                                    </div>
-                                  </div>
+                                  <QRCodeDisplay 
+                                    pollGroup={pollGroup} 
+                                  />
                                 </div>
-                              )}
-                              {/* QR Code */}
-                              <div 
-                                className={`cursor-pointer hover:opacity-80 transition-opacity duration-200 ${isExpanded ? 'transform scale-[1.45] ml-8' : ''}`}
-                                onClick={() => {
-                                  setExpandedPollGroup(pollGroup);
-                                  setQrCodeExpanded(!qrCodeExpanded);
-                                }}
-                                title="Click to expand for conference display"
-                              >
-                                <QRCodeDisplay 
-                                  pollGroup={pollGroup} 
-                                />
                               </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
+                            );
+                          })()}
+                        </div>
+                      )}
                     </div>
                   </div>
                   
