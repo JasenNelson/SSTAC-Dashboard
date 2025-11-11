@@ -272,7 +272,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
   return (
     <div className="flex min-h-screen">
       {/* Navigation Sidebar */}
-      <div className="hidden lg:block w-80 bg-blue-100 dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700">
+      <div className="hidden lg:block w-80 bg-blue-50 dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700">
         <div className="p-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             TWG Review
@@ -288,7 +288,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
               const meta = phaseMeta[phase]
               const isOpen = openPhases[phase]
               return (
-                <div key={phase} className="rounded-lg bg-white/60 dark:bg-gray-900/20 shadow-sm">
+                <div key={phase} className="rounded-lg bg-blue-100/70 dark:bg-gray-900/20 shadow-sm">
                   <button
                     type="button"
                     onClick={() => togglePhase(phase)}
@@ -315,8 +315,8 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
                             }}
                             className={`w-full text-left p-3 rounded-lg transition-colors ${
                               isActive
-                                ? 'bg-blue-100 dark:bg-blue-900'
-                                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                                ? 'bg-white/80 dark:bg-blue-900'
+                                : 'hover:bg-blue-50 dark:hover:bg-gray-700'
                             }`}
                           >
                             <div className="flex items-center justify-between">
@@ -398,7 +398,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
         {/* Mobile Navigation Overlay */}
         {isMobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="fixed inset-y-0 left-0 w-80 bg-blue-100 dark:bg-gray-800 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-y-0 left-0 w-80 bg-blue-50 dark:bg-gray-800 shadow-xl" onClick={(e) => e.stopPropagation()}>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">TWG Review</h1>
@@ -422,7 +422,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
                     const meta = phaseMeta[phase]
                     const isOpen = openPhases[phase]
                     return (
-                      <div key={phase} className="rounded-lg bg-white/60 dark:bg-gray-900/20 shadow-sm">
+                      <div key={phase} className="rounded-lg bg-blue-100/70 dark:bg-gray-900/20 shadow-sm">
                         <button
                           type="button"
                           onClick={() => togglePhase(phase)}
@@ -449,8 +449,8 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
                                   }}
                                   className={`w-full text-left p-3 rounded-lg transition-colors ${
                                     isActive
-                                      ? 'bg-blue-100 dark:bg-blue-900'
-                                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                                      ? 'bg-white/80 dark:bg-blue-900'
+                                      : 'hover:bg-blue-50 dark:hover:bg-gray-700'
                                   }`}
                                 >
                                   <div className="flex items-center justify-between">
@@ -517,30 +517,10 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               Expert Review Form: Modernizing British Columbia's Sediment Standards
             </h2>
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-              <p className="text-gray-700 dark:text-gray-300 mb-4">
-                Welcome and thank you for contributing your expertise to this critical initiative. 
-                This form is designed to collect detailed feedback on the{' '}
-                <a 
-                  href="https://docs.google.com/document/d/1szIIwrTLYB1if4B0Ied-3ke_7g7_7N36HXM20d22J2o/edit?usp=sharing" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline font-medium"
-                >
-                  'Modernizing British Columbia's Sediment Standards' report
-                </a>
-                . Your input will directly inform revision of this document and development of the 
-                options analysis and recommendations for the next phase of this project.
+            <div className="bg-blue-50 dark:bg-gray-900 border border-blue-200 dark:border-gray-700 rounded-lg p-4 mb-6">
+              <p className="text-gray-800 dark:text-gray-200">
+                Thank you for contributing your expertise to the Technical Working Group (TWG) review.
               </p>
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                <p><strong>Instructions:</strong></p>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>Please complete all sections to the best of your ability.</li>
-                  <li>You may use the 'Save Progress' button at any time to save your work and return later.</li>
-                  <li>The form is divided into sections that mirror the report's structure.</li>
-                  <li>Use the 'Submit Review' button in Part 12 to let us know your review is ready.</li>
-                </ul>
-              </div>
             </div>
           </div>
 

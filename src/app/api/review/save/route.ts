@@ -19,9 +19,10 @@ export async function POST(request: NextRequest) {
     // Check if user already has a review submission
     const { data: existingSubmission } = await supabase
       .from('review_submissions')
-      .select('id')
+      .select('id, status')
       .eq('user_id', user.id)
-      .eq('status', 'IN_PROGRESS')
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single()
 
     let result
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
         .from('review_submissions')
         .update({ 
           form_data: formData,
+          status: existingSubmission.status === 'SUBMITTED' ? 'IN_PROGRESS' : existingSubmission.status,
           updated_at: new Date().toISOString()
         })
         .eq('id', existingSubmission.id)

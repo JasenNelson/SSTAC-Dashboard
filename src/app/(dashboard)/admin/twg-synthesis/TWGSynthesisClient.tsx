@@ -167,6 +167,10 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
       const p6 = sub.form_data?.part6 || {}
       const p7 = sub.form_data?.part7 || {}
       const p8 = sub.form_data?.part8 || {}
+      const p9 = sub.form_data?.part9 || {}
+      const p10 = sub.form_data?.part10 || {}
+      const p11 = sub.form_data?.part11 || {}
+      const p12 = sub.form_data?.part12 || {}
 
       // Format rankings as readable strings
       const formatRanking = (ranking: Record<string, number> | null | undefined, options: string[]): string => {
@@ -257,7 +261,43 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
         
         // Part 8: Final Recommendations
         'Part 8 - Critical Gaps': (p8.gaps || '').replace(/"/g, '""').replace(/\n/g, ' '),
-        'Part 8 - Suggestions': (p8.suggestions || '').replace(/"/g, '""').replace(/\n/g, ' ')
+        'Part 8 - Suggestions': (p8.suggestions || '').replace(/"/g, '""').replace(/\n/g, ' '),
+
+        // Part 9: Strategic Pathways
+        'Part 9 - Option 1 Edits': (p9.option1Edits || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 9 - Option 2 Edits': (p9.option2Edits || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 9 - Option 3 Edits': (p9.option3Edits || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 9 - Alternate Pathway Ideas': (p9.otherPathwayIdeas || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 9 - Supporting Factors': p9.supportingFactors?.join('; ') || '',
+        'Part 9 - Supporting Factors Other': p9.supportingFactorsOther || '',
+        'Part 9 - Summary of Edits': (p9.pathwayRationale || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 9 - Recommendation & Timeline Updates': (p9.recommendationUpdates || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 9 - Implementation Risks': (p9.implementationRisks || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 9 - Line by Line (Section VI)': (p9.lineByLine || '').replace(/"/g, '""').replace(/\n/g, ' '),
+
+        // Part 10: Conclusions & Recommendations
+        'Part 10 - Recommendation Confidence': p10.recommendationConfidence || '',
+        'Part 10 - Priority Areas': p10.priorityAreas?.join('; ') || '',
+        'Part 10 - Priority Areas Other': p10.priorityAreasOther || '',
+        'Part 10 - Implementation Support': (p10.implementationSupport || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 10 - Line by Line (Section VII)': (p10.lineByLine || '').replace(/"/g, '""').replace(/\n/g, ' '),
+
+        // Part 11: Engagement Insights
+        'Part 11 - Prioritized Engagements': p11.prioritizedEngagements?.join('; ') || '',
+        'Part 11 - Prioritized Engagements Other': p11.prioritizedEngagementsOther || '',
+        'Part 11 - Summary Quality Assessment': p11.engagementSummaryQuality || '',
+        'Part 11 - Evidence Suggestions': (p11.evidenceSummary || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 11 - Engagement Interests': p11.engagementInterests?.join('; ') || '',
+        'Part 11 - Engagement Interests Other': p11.engagementInterestsOther || '',
+        'Part 11 - Line by Line (Section IV)': (p11.lineByLine || '').replace(/"/g, '""').replace(/\n/g, ' '),
+
+        // Part 12: “What We Heard” Reports
+        'Part 12 - Appendix D Status': p12.appendixStatus?.appendixD || '',
+        'Part 12 - Appendix G Status': p12.appendixStatus?.appendixG || '',
+        'Part 12 - Appendix J Status': p12.appendixStatus?.appendixJ || '',
+        'Part 12 - Alignment Summary': (p12.alignmentSummary || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 12 - Follow Up Needs': (p12.followUpNeeds || '').replace(/"/g, '""').replace(/\n/g, ' '),
+        'Part 12 - Line by Line (Appendices D/G/J)': (p12.lineByLine || '').replace(/"/g, '""').replace(/\n/g, ' ')
       }
     })
 
@@ -290,6 +330,12 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
     a.download = `twg-review-submissions-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     window.URL.revokeObjectURL(url)
+  }
+
+  const appendixLabels: Record<string, string> = {
+    appendixD: 'Appendix D Status',
+    appendixG: 'Appendix G Status',
+    appendixJ: 'Appendix J Status'
   }
 
   return (
@@ -470,12 +516,21 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                 const p6 = submission.form_data?.part6 || {}
                 const p7 = submission.form_data?.part7 || {}
                 const p8 = submission.form_data?.part8 || {}
+                const p9 = submission.form_data?.part9 || {}
+                const p10 = submission.form_data?.part10 || {}
+                const p11 = submission.form_data?.part11 || {}
+                const p12 = submission.form_data?.part12 || {}
                 
                 const hasContent = p2.comments || p3.sectionI || p3.sectionII || p3.sectionIII || 
                                   p3.sectionIV || p3.sectionV || p3.appendicesCD || p4.challenges || 
                                   p4.additionalComments || p5.guidance || p5.additionalComments ||
                                   p6.challenges || p6.additionalComments || p7.strategicPlanning ||
-                                  p7.additionalComments || p8.gaps || p8.suggestions
+                                  p7.additionalComments || p8.gaps || p8.suggestions ||
+                                  p9.option1Edits || p9.option2Edits || p9.option3Edits || p9.otherPathwayIdeas ||
+                                  p9.pathwayRationale || p9.recommendationUpdates || p9.implementationRisks || p9.lineByLine ||
+                                  p10.implementationSupport || p10.lineByLine ||
+                                  p11.evidenceSummary || p11.lineByLine ||
+                                  p12.alignmentSummary || p12.followUpNeeds || p12.lineByLine
 
                 if (!hasContent) return null
 
@@ -710,33 +765,210 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                           )}
                         </div>
                       )}
+
+                      {(p9.option1Edits || p9.option2Edits || p9.option3Edits || p9.otherPathwayIdeas || p9.pathwayRationale || p9.recommendationUpdates || p9.implementationRisks || p9.lineByLine) && (
+                        <div className="bg-white dark:bg-gray-800 rounded p-3">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 9: Strategic Pathways &amp; Options Analysis</h5>
+                          {(p9.option1Edits || p9.option2Edits || p9.option3Edits) && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2 space-y-1">
+                              {p9.option1Edits && <div><span className="font-semibold">Option 1:</span> {p9.option1Edits}</div>}
+                              {p9.option2Edits && <div><span className="font-semibold">Option 2:</span> {p9.option2Edits}</div>}
+                              {p9.option3Edits && <div><span className="font-semibold">Option 3:</span> {p9.option3Edits}</div>}
+                            </div>
+                          )}
+                          {p9.otherPathwayIdeas && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Alternate Pathway Ideas: {p9.otherPathwayIdeas}
+                            </div>
+                          )}
+                          {p9.supportingFactors && p9.supportingFactors.length > 0 && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Supporting Factors: {p9.supportingFactors.join(', ')}
+                            </div>
+                          )}
+                          {p9.supportingFactorsOther && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Additional Factor: {p9.supportingFactorsOther}
+                            </div>
+                          )}
+                          {p9.pathwayRationale && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Summary of Edits:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p9.pathwayRationale}</p>
+                            </div>
+                          )}
+                          {p9.recommendationUpdates && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Recommendation & Timeline Updates:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p9.recommendationUpdates}</p>
+                            </div>
+                          )}
+                          {p9.implementationRisks && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Risks & Dependencies:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p9.implementationRisks}</p>
+                            </div>
+                          )}
+                          {p9.lineByLine && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Line-by-Line (Section VI):</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p9.lineByLine}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {(p10.recommendationConfidence || (Array.isArray(p10.priorityAreas) && p10.priorityAreas.length > 0) || p10.implementationSupport || p10.lineByLine) && (
+                        <div className="bg-white dark:bg-gray-800 rounded p-3">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 10: Conclusions &amp; Recommendations</h5>
+                          {p10.recommendationConfidence && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Confidence Level: {p10.recommendationConfidence}
+                            </div>
+                          )}
+                          {p10.priorityAreas && p10.priorityAreas.length > 0 && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Priority Actions: {p10.priorityAreas.join(', ')}
+                            </div>
+                          )}
+                          {p10.priorityAreasOther && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Additional Priority: {p10.priorityAreasOther}
+                            </div>
+                          )}
+                          {p10.implementationSupport && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Implementation Support:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p10.implementationSupport}</p>
+                            </div>
+                          )}
+                          {p10.lineByLine && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Line-by-Line (Section VII):</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p10.lineByLine}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {(p11.prioritizedEngagements || p11.prioritizedEngagementsOther || p11.engagementSummaryQuality || p11.evidenceSummary || p11.engagementInterests || p11.engagementInterestsOther || p11.lineByLine) && (
+                        <div className="bg-white dark:bg-gray-800 rounded p-3">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 11: Community &amp; Stakeholder Engagement Insights</h5>
+                          {p11.prioritizedEngagements && p11.prioritizedEngagements.length > 0 && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Prioritized Engagements: {p11.prioritizedEngagements.join(', ')}
+                            </div>
+                          )}
+                          {p11.prioritizedEngagementsOther && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Additional Group: {p11.prioritizedEngagementsOther}
+                            </div>
+                          )}
+                          {p11.engagementSummaryQuality && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Summary Assessment: {p11.engagementSummaryQuality}
+                            </div>
+                          )}
+                          {p11.evidenceSummary && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Suggestions to Strengthen Section IV:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p11.evidenceSummary}</p>
+                            </div>
+                          )}
+                          {p11.engagementInterests && p11.engagementInterests.length > 0 && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Preferred Engagement Formats: {p11.engagementInterests.join(', ')}
+                            </div>
+                          )}
+                          {p11.engagementInterestsOther && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              Additional Format: {p11.engagementInterestsOther}
+                            </div>
+                          )}
+                          {p11.lineByLine && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Line-by-Line (Section IV):</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p11.lineByLine}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {((p12.appendixStatus && Object.keys(p12.appendixStatus).length > 0) || p12.alignmentSummary || p12.followUpNeeds || p12.lineByLine) && (
+                        <div className="bg-white dark:bg-gray-800 rounded p-3">
+                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 12: “What We Heard” Reports (Appendices D, G, J)</h5>
+                          {p12.appendixStatus && (
+                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2 space-y-1">
+                              {['appendixD', 'appendixG', 'appendixJ'].map((key) => (
+                                p12.appendixStatus?.[key] ? (
+                                  <div key={key}>
+                                    {appendixLabels[key] || key}: {p12.appendixStatus[key]}
+                                  </div>
+                                ) : null
+                              ))}
+                            </div>
+                          )}
+                          {p12.alignmentSummary && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Alignment with Recommendations:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p12.alignmentSummary}</p>
+                            </div>
+                          )}
+                          {p12.followUpNeeds && (
+                            <div className="mb-2">
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Follow-up Needs:</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p12.followUpNeeds}</p>
+                            </div>
+                          )}
+                          {p12.lineByLine && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Line-by-Line (Appendices D/G/J):</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p12.lineByLine}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )
               })}
               {filteredSubmissions.filter(sub => {
-                const hasContent = sub.form_data?.part2?.comments || sub.form_data?.part3?.sectionI || 
-                                  sub.form_data?.part3?.sectionII || sub.form_data?.part3?.sectionIII || 
-                                  sub.form_data?.part3?.sectionIV || sub.form_data?.part3?.sectionV || 
-                                  sub.form_data?.part3?.appendicesCD || sub.form_data?.part4?.challenges || 
-                                  sub.form_data?.part4?.additionalComments || sub.form_data?.part5?.guidance || 
-                                  sub.form_data?.part5?.additionalComments || sub.form_data?.part6?.challenges || 
+                const hasContent = sub.form_data?.part2?.comments || sub.form_data?.part3?.sectionI ||
+                                  sub.form_data?.part3?.sectionII || sub.form_data?.part3?.sectionIII ||
+                                  sub.form_data?.part3?.sectionIV || sub.form_data?.part3?.sectionV ||
+                                  sub.form_data?.part3?.appendicesCD || sub.form_data?.part4?.challenges ||
+                                  sub.form_data?.part4?.additionalComments || sub.form_data?.part5?.guidance ||
+                                  sub.form_data?.part5?.additionalComments || sub.form_data?.part6?.challenges ||
                                   sub.form_data?.part6?.additionalComments || sub.form_data?.part7?.strategicPlanning ||
-                                  sub.form_data?.part7?.additionalComments || sub.form_data?.part8?.gaps || 
-                                  sub.form_data?.part8?.suggestions
+                                  sub.form_data?.part7?.additionalComments || sub.form_data?.part8?.gaps ||
+                                  sub.form_data?.part8?.suggestions || sub.form_data?.part9?.option1Edits ||
+                                  sub.form_data?.part9?.option2Edits || sub.form_data?.part9?.option3Edits ||
+                                  sub.form_data?.part9?.otherPathwayIdeas || sub.form_data?.part9?.pathwayRationale ||
+                                  sub.form_data?.part9?.recommendationUpdates || sub.form_data?.part9?.implementationRisks ||
+                                  sub.form_data?.part9?.lineByLine || sub.form_data?.part10?.implementationSupport || sub.form_data?.part10?.lineByLine ||
+                                  sub.form_data?.part11?.evidenceSummary || sub.form_data?.part11?.lineByLine ||
+                                  sub.form_data?.part12?.alignmentSummary || sub.form_data?.part12?.followUpNeeds ||
+                                  sub.form_data?.part12?.lineByLine
                 return !hasContent
               }).length > 0 && (
                 <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
                   {filteredSubmissions.filter(sub => {
-                    const hasContent = sub.form_data?.part2?.comments || sub.form_data?.part3?.sectionI || 
-                                      sub.form_data?.part3?.sectionII || sub.form_data?.part3?.sectionIII || 
-                                      sub.form_data?.part3?.sectionIV || sub.form_data?.part3?.sectionV || 
-                                      sub.form_data?.part3?.appendicesCD || sub.form_data?.part4?.challenges || 
-                                      sub.form_data?.part4?.additionalComments || sub.form_data?.part5?.guidance || 
-                                      sub.form_data?.part5?.additionalComments || sub.form_data?.part6?.challenges || 
+                    const hasContent = sub.form_data?.part2?.comments || sub.form_data?.part3?.sectionI ||
+                                      sub.form_data?.part3?.sectionII || sub.form_data?.part3?.sectionIII ||
+                                      sub.form_data?.part3?.sectionIV || sub.form_data?.part3?.sectionV ||
+                                      sub.form_data?.part3?.appendicesCD || sub.form_data?.part4?.challenges ||
+                                      sub.form_data?.part4?.additionalComments || sub.form_data?.part5?.guidance ||
+                                      sub.form_data?.part5?.additionalComments || sub.form_data?.part6?.challenges ||
                                       sub.form_data?.part6?.additionalComments || sub.form_data?.part7?.strategicPlanning ||
-                                      sub.form_data?.part7?.additionalComments || sub.form_data?.part8?.gaps || 
-                                      sub.form_data?.part8?.suggestions
+                                      sub.form_data?.part7?.additionalComments || sub.form_data?.part8?.gaps ||
+                                      sub.form_data?.part8?.suggestions || sub.form_data?.part9?.option1Edits ||
+                                      sub.form_data?.part9?.option2Edits || sub.form_data?.part9?.option3Edits ||
+                                      sub.form_data?.part9?.otherPathwayIdeas || sub.form_data?.part9?.pathwayRationale ||
+                                      sub.form_data?.part9?.recommendationUpdates || sub.form_data?.part9?.implementationRisks ||
+                                      sub.form_data?.part9?.lineByLine || sub.form_data?.part10?.implementationSupport || sub.form_data?.part10?.lineByLine ||
+                                      sub.form_data?.part11?.evidenceSummary || sub.form_data?.part11?.lineByLine ||
+                                      sub.form_data?.part12?.alignmentSummary || sub.form_data?.part12?.followUpNeeds ||
+                                      sub.form_data?.part12?.lineByLine
                     return !hasContent
                   }).length} submission(s) with no qualitative responses yet
                 </div>
