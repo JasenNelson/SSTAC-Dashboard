@@ -269,10 +269,13 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
     }))
   }
 
+  const lightSidebarBg = 'bg-[#e6f4ff]'
+  const lightPanelBg = 'bg-white'
+
   return (
     <div className="flex min-h-screen">
       {/* Navigation Sidebar */}
-      <div className="hidden lg:block w-80 bg-blue-50 dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700">
+      <div className={`hidden lg:block w-80 ${isDarkMode ? 'bg-gray-800' : lightSidebarBg} shadow-lg border-r border-gray-200 dark:border-gray-700`}>
         <div className="p-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             TWG Review
@@ -288,7 +291,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
               const meta = phaseMeta[phase]
               const isOpen = openPhases[phase]
               return (
-                <div key={phase} className="rounded-lg bg-blue-100/70 dark:bg-gray-900/20 shadow-sm">
+                <div key={phase} className={`rounded-lg ${isDarkMode ? 'bg-gray-900/20' : lightPanelBg} shadow-sm border border-blue-100`}>
                   <button
                     type="button"
                     onClick={() => togglePhase(phase)}
@@ -315,8 +318,8 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
                             }}
                             className={`w-full text-left p-3 rounded-lg transition-colors ${
                               isActive
-                                ? 'bg-white/80 dark:bg-blue-900'
-                                : 'hover:bg-blue-50 dark:hover:bg-gray-700'
+                                ? `${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`
+                                : `${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50'}`
                             }`}
                           >
                             <div className="flex items-center justify-between">
@@ -398,23 +401,18 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
         {/* Mobile Navigation Overlay */}
         {isMobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="fixed inset-y-0 left-0 w-80 bg-blue-50 dark:bg-gray-800 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className={`fixed inset-y-0 left-0 w-80 ${isDarkMode ? 'bg-gray-800' : lightSidebarBg} shadow-xl`} onClick={(e) => e.stopPropagation()}>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">TWG Review</h1>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Review Navigation</h2>
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="text-gray-600 dark:text-gray-300"
                   >
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <span className="sr-only">Close menu</span>
+                    ✕
                   </button>
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Modernizing BC's Sediment Standards
-                </p>
-                
                 <nav className="space-y-4">
                   {phaseOrder.map((phase) => {
                     const groupSections = phaseGroups[phase]
@@ -422,7 +420,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
                     const meta = phaseMeta[phase]
                     const isOpen = openPhases[phase]
                     return (
-                      <div key={phase} className="rounded-lg bg-blue-100/70 dark:bg-gray-900/20 shadow-sm">
+                      <div key={phase} className={`rounded-lg ${isDarkMode ? 'bg-gray-900/20' : lightPanelBg} shadow-sm border border-blue-100`}>
                         <button
                           type="button"
                           onClick={() => togglePhase(phase)}
@@ -449,8 +447,8 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
                                   }}
                                   className={`w-full text-left p-3 rounded-lg transition-colors ${
                                     isActive
-                                      ? 'bg-white/80 dark:bg-blue-900'
-                                      : 'hover:bg-blue-50 dark:hover:bg-gray-700'
+                                      ? `${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`
+                                      : `${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50'}`
                                   }`}
                                 >
                                   <div className="flex items-center justify-between">
@@ -517,10 +515,15 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               Expert Review Form: Modernizing British Columbia's Sediment Standards
             </h2>
-            <div className="bg-blue-50 dark:bg-gray-900 border border-blue-200 dark:border-gray-700 rounded-lg p-4 mb-6">
-              <p className="text-gray-800 dark:text-gray-200">
-                Thank you for contributing your expertise to the Technical Working Group (TWG) review.
-              </p>
+            <div className={`rounded-lg p-4 mb-6 border ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-sky-100 border-sky-200'}`}>
+              <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                 Thank you for contributing your expertise to the Technical Working Group (TWG) review.
+               </p>
+              <ul className={`mt-3 space-y-2 text-sm list-disc list-inside ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <li>The "Save Progress" buttons let you capture everything you've entered without submitting.</li>
+                <li>You can be anywhere in the form and still switch parts using the navigation panel or mobile drawer—your notes stay in place.</li>
+                <li>Use the "Submit Review" button in Part 12 to let us know your review is ready.</li>
+              </ul>
             </div>
           </div>
 
