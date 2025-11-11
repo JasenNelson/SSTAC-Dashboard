@@ -13,6 +13,13 @@ interface ReviewSubmission {
   updated_at: string
 }
 
+type ReviewSection = {
+  id: number
+  title: string
+  description: string
+  phase: 'Phase 1 Review' | 'Phase 2 Review'
+}
+
 interface TWGReviewClientProps {
   user: User
   existingSubmission?: ReviewSubmission
@@ -27,6 +34,29 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
   const [completedSections, setCompletedSections] = useState<number[]>([])
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const sections: ReviewSection[] = [
+    { id: 1, title: 'Reviewer Information', description: 'Optional background information', phase: 'Phase 1 Review' },
+    { id: 2, title: 'High-Level Report Assessment', description: 'Overall impressions and ratings', phase: 'Phase 1 Review' },
+    { id: 3, title: 'Line-by-Line Comments', description: 'Detailed feedback by section', phase: 'Phase 1 Review' },
+    { id: 4, title: 'Matrix Sediment Standards Framework', description: 'Dual standard approach feedback', phase: 'Phase 1 Review' },
+    { id: 5, title: 'Tiered Assessment Approach', description: 'Scientific framework evaluation', phase: 'Phase 1 Review' },
+    { id: 6, title: 'Integration of Indigenous Knowledge', description: 'Knowledge systems integration', phase: 'Phase 1 Review' },
+    { id: 7, title: 'Prioritization and Strategic Direction', description: 'Research and implementation priorities', phase: 'Phase 1 Review' },
+    { id: 8, title: 'Final Recommendations', description: 'Critical gaps and suggestions', phase: 'Phase 1 Review' },
+    { id: 9, title: 'Strategic Pathways & Options Analysis', description: 'Assess implementation pathways and rationale', phase: 'Phase 2 Review' },
+    { id: 10, title: 'Conclusions & Recommendations', description: 'Evaluate proposed actions and readiness', phase: 'Phase 2 Review' },
+    { id: 11, title: 'Community & Stakeholder Engagement Insights', description: 'Assess engagement coverage and needs', phase: 'Phase 2 Review' },
+    { id: 12, title: '"What We Heard" Reports (Appendices D, G, J)', description: 'Validate synthesis of engagement findings', phase: 'Phase 2 Review' }
+  ]
+  const phaseGroups = sections.reduce<Record<string, ReviewSection[]>>((groups, section) => {
+    if (!groups[section.phase]) {
+      groups[section.phase] = []
+    }
+    groups[section.phase].push(section)
+    return groups
+  }, {})
+  const currentSectionData = sections.find((section) => section.id === currentSection)
 
   // Check for dark mode
   useEffect(() => {
@@ -95,6 +125,38 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
     if (formData.part8?.gaps && formData.part8?.suggestions) {
       completed.push(8)
     }
+
+    // Check Part 9: Strategic Pathways & Options Analysis
+    if (
+      (formData.part9?.option1Edits || formData.part9?.option2Edits || formData.part9?.option3Edits || formData.part9?.otherPathwayIdeas) &&
+      (formData.part9?.pathwayRationale || formData.part9?.implementationRisks || formData.part9?.recommendationUpdates || formData.part9?.lineByLine)
+    ) {
+      completed.push(9)
+    }
+
+    // Check Part 10: Conclusions & Recommendations
+    if (formData.part10?.recommendationConfidence && ((formData.part10?.priorityAreas?.length ?? 0) > 0)) {
+      completed.push(10)
+    }
+
+    // Check Part 11: Community & Stakeholder Engagement Insights (formerly question set)
+    const hasPrioritizedEngagements = (formData.part11?.prioritizedEngagements?.length ?? 0) > 0 || !!formData.part11?.prioritizedEngagementsOther
+    const hasEngagementInterests = (formData.part11?.engagementInterests?.length ?? 0) > 0 || !!formData.part11?.engagementInterestsOther
+    if (
+      (formData.part11?.engagementSummaryQuality || hasPrioritizedEngagements || hasEngagementInterests) &&
+      (formData.part11?.evidenceSummary || formData.part11?.lineByLine || hasPrioritizedEngagements || hasEngagementInterests)
+    ) {
+      completed.push(11)
+    }
+
+    // Check Part 12: "What We Heard" Reports (Appendices D, G, J)
+    if (
+      formData.part12?.appendixStatus &&
+      ['appendixD', 'appendixG', 'appendixJ'].every((key) => formData.part12.appendixStatus?.[key]) &&
+      (formData.part12?.alignmentSummary || formData.part12?.lineByLine)
+    ) {
+      completed.push(12)
+    }
     
     setCompletedSections(completed)
   }, [formData])
@@ -134,14 +196,18 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
     await handleSaveProgress()
     
     // Then move to next section
-    if (currentSection < 8) {
+    if (currentSection < sections.length) {
       setCurrentSection(currentSection + 1)
-      setCompletedSections(prev => [...prev, currentSection])
+      setCompletedSections(prev => {
+        const updated = new Set(prev)
+        updated.add(currentSection)
+        return Array.from(updated).sort((a, b) => a - b)
+      })
     }
   }
 
   const handleSubmit = async () => {
-    if (!confirm('Are you sure you want to submit your review? This action cannot be undone.')) {
+    if (!confirm('Submit your review now? You can return and submit again later if you add more information.')) {
       return
     }
     
@@ -159,8 +225,13 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
       const result = await response.json()
       
       if (result.success) {
-        alert('Review submitted successfully! Thank you for your feedback.')
-        window.location.href = '/dashboard'
+        setSaveMessage('Review submitted successfully! You can resubmit later if needed.')
+        setTimeout(() => setSaveMessage(''), 5000)
+        setCompletedSections(prev => {
+          const updated = new Set(prev)
+          sections.forEach(section => updated.add(section.id))
+          return Array.from(updated).sort((a, b) => a - b)
+        })
       } else {
         alert('Error submitting review. Please try again.')
       }
@@ -179,17 +250,6 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
     }))
   }
 
-  const sections = [
-    { id: 1, title: 'Reviewer Information', description: 'Optional background information' },
-    { id: 2, title: 'High-Level Report Assessment', description: 'Overall impressions and ratings' },
-    { id: 3, title: 'Line-by-Line Comments', description: 'Detailed feedback by section' },
-    { id: 4, title: 'Matrix Sediment Standards Framework', description: 'Dual standard approach feedback' },
-    { id: 5, title: 'Tiered Assessment Approach', description: 'Scientific framework evaluation' },
-    { id: 6, title: 'Integration of Indigenous Knowledge', description: 'Knowledge systems integration' },
-    { id: 7, title: 'Prioritization and Strategic Direction', description: 'Research and implementation priorities' },
-    { id: 8, title: 'Final Recommendations', description: 'Critical gaps and suggestions' }
-  ]
-
   return (
     <div className="flex min-h-screen">
       {/* Navigation Sidebar */}
@@ -202,46 +262,52 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
             Modernizing BC's Sediment Standards
           </p>
           
-          <nav className="space-y-2">
-            {sections.map((section) => (
-              <button
-                key={section.id}
-                onClick={() => setCurrentSection(section.id)}
-                className={`w-full text-left p-3 rounded-lg transition-colors ${
-                  currentSection === section.id
-                    ? 'bg-blue-100 dark:bg-blue-900'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div 
-                      className="font-medium" 
-                      style={{ 
-                        color: isDarkMode 
-                          ? (currentSection === section.id ? '#60A5FA' : '#D1D5DB')
-                          : '#000000'
-                      }}
-                    >
-                      Part {section.id}
-                    </div>
-                    <div 
-                      className="text-sm" 
-                      style={{ 
-                        color: isDarkMode 
-                          ? (currentSection === section.id ? '#60A5FA' : '#D1D5DB')
-                          : '#000000', 
-                        opacity: currentSection === section.id ? 1 : 0.75 
-                      }}
-                    >
-                      {section.title}
-                    </div>
-                  </div>
-                  {completedSections.includes(section.id) && (
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  )}
+          <nav className="space-y-4">
+            {Object.entries(phaseGroups).map(([phaseLabel, groupSections]) => (
+              <div key={phaseLabel} className="space-y-2">
+                <div className="text-sm font-bold italic text-red-600 dark:text-red-400 tracking-wide">
+                  {phaseLabel}
                 </div>
-              </button>
+                {groupSections.map((section) => {
+                  const isActive = currentSection === section.id
+                  const textColor = isDarkMode
+                    ? isActive
+                      ? '#60A5FA'
+                      : '#D1D5DB'
+                    : '#000000'
+                  return (
+                    <button
+                      key={section.id}
+                      onClick={() => setCurrentSection(section.id)}
+                      className={`w-full text-left p-3 rounded-lg transition-colors ${
+                        isActive
+                          ? 'bg-blue-100 dark:bg-blue-900'
+                          : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium" style={{ color: textColor }}>
+                            Part {section.id}
+                          </div>
+                          <div
+                            className="text-sm"
+                            style={{
+                              color: textColor,
+                              opacity: isActive ? 1 : 0.75
+                            }}
+                          >
+                            {section.title}
+                          </div>
+                        </div>
+                        {completedSections.includes(section.id) && (
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
             ))}
           </nav>
         </div>
@@ -271,7 +337,9 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">TWG Review</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-300">Part {currentSection}: {sections.find(s => s.id === currentSection)?.title}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {currentSectionData ? `${currentSectionData.phase} • Part ${currentSection}: ${currentSectionData.title}` : `Part ${currentSection}`}
+              </p>
             </div>
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -308,49 +376,55 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
                   Modernizing BC's Sediment Standards
                 </p>
                 
-                <nav className="space-y-2">
-                  {sections.map((section) => (
-                    <button
-                      key={section.id}
-                      onClick={() => {
-                        setCurrentSection(section.id)
-                        setIsMobileMenuOpen(false)
-                      }}
-                      className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        currentSection === section.id
-                          ? 'bg-blue-100 dark:bg-blue-900'
-                          : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div 
-                            className="font-medium" 
-                            style={{ 
-                              color: isDarkMode 
-                                ? (currentSection === section.id ? '#60A5FA' : '#D1D5DB')
-                                : '#000000'
-                            }}
-                          >
-                            Part {section.id}
-                          </div>
-                          <div 
-                            className="text-sm" 
-                            style={{ 
-                              color: isDarkMode 
-                                ? (currentSection === section.id ? '#60A5FA' : '#D1D5DB')
-                                : '#000000', 
-                              opacity: currentSection === section.id ? 1 : 0.75 
-                            }}
-                          >
-                            {section.title}
-                          </div>
-                        </div>
-                        {completedSections.includes(section.id) && (
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        )}
+                <nav className="space-y-4">
+                  {Object.entries(phaseGroups).map(([phaseLabel, groupSections]) => (
+                    <div key={phaseLabel} className="space-y-2">
+                      <div className="text-sm font-bold italic text-red-600 dark:text-red-400 tracking-wide">
+                        {phaseLabel}
                       </div>
-                    </button>
+                      {groupSections.map((section) => {
+                        const isActive = currentSection === section.id
+                        const textColor = isDarkMode
+                          ? isActive
+                            ? '#60A5FA'
+                            : '#D1D5DB'
+                          : '#000000'
+                        return (
+                          <button
+                            key={section.id}
+                            onClick={() => {
+                              setCurrentSection(section.id)
+                              setIsMobileMenuOpen(false)
+                            }}
+                            className={`w-full text-left p-3 rounded-lg transition-colors ${
+                              isActive
+                                ? 'bg-blue-100 dark:bg-blue-900'
+                                : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium" style={{ color: textColor }}>
+                                  Part {section.id}
+                                </div>
+                                <div
+                                  className="text-sm"
+                                  style={{
+                                    color: textColor,
+                                    opacity: isActive ? 1 : 0.75
+                                  }}
+                                >
+                                  {section.title}
+                                </div>
+                              </div>
+                              {completedSections.includes(section.id) && (
+                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                              )}
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
                   ))}
                 </nav>
                 
@@ -381,6 +455,11 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
         <div className="max-w-4xl mx-auto p-4 lg:p-8">
           {/* Header */}
           <div className="mb-8">
+            {currentSectionData && (
+              <div className="mb-3 text-base font-bold italic text-red-600 dark:text-red-400">
+                {currentSectionData.phase}
+              </div>
+            )}
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
               Expert Review Form: Modernizing British Columbia's Sediment Standards
             </h2>
@@ -405,7 +484,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
                   <li>Please complete all sections to the best of your ability.</li>
                   <li>You may use the 'Save Progress' button at any time to save your work and return later.</li>
                   <li>The form is divided into sections that mirror the report's structure.</li>
-                  <li>The estimated time to complete this review is 60-90 minutes.</li>
+                  <li>Use the 'Submit Review' button in Part 12 to let us know your review is ready.</li>
                 </ul>
               </div>
             </div>
@@ -468,8 +547,36 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
             />
           )}
 
+          {currentSection === 9 && (
+            <Part9StrategicPathways
+              data={formData.part9 || {}}
+              onChange={(data) => updateFormData('part9', data)}
+            />
+          )}
+
+          {currentSection === 10 && (
+            <Part10Conclusions
+              data={formData.part10 || {}}
+              onChange={(data) => updateFormData('part10', data)}
+            />
+          )}
+
+          {currentSection === 11 && (
+            <Part11EngagementInsights
+              data={formData.part11 || {}}
+              onChange={(data) => updateFormData('part11', data)}
+            />
+          )}
+
+          {currentSection === 12 && (
+            <Part12WhatWeHeard
+              data={formData.part12 || {}}
+              onChange={(data) => updateFormData('part12', data)}
+            />
+          )}
+
           {/* Save and Proceed Button */}
-          {currentSection < 8 && (
+          {currentSection < sections.length && (
             <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
               <div className="flex justify-between items-center">
                 <button
@@ -501,7 +608,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
           )}
 
           {/* Submit Button */}
-          {currentSection === 8 && (
+          {currentSection === sections.length && (
             <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
               <button
                 onClick={handleSubmit}
@@ -510,6 +617,11 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Review'}
               </button>
+              {saveMessage && (
+                <div className="mt-3 text-sm text-green-600 dark:text-green-400">
+                  {saveMessage}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1463,6 +1575,610 @@ function Part8FinalRecommendations({ data, onChange }: { data: any, onChange: (d
             />
             <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
               {(data.suggestions || '').length}/2000 characters
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+function Part9StrategicPathways({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+  const enablingFactors = [
+    'Invest in the desktop data compilation project before regulatory work',
+    'Stage implementation milestones with clear decision gates',
+    'Secure long-term funding for sustained scientific capacity',
+    'Establish formal governance structure for cross-agency coordination',
+    'Develop interim guidance to bridge between phases',
+    'Other'
+  ]
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        Part 9: Strategic Pathways &amp; Options Analysis
+      </h3>
+
+      <div className="space-y-6">
+        <div>
+          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+            Suggest edits or clarifications to each implementation pathway so the description accurately reflects what you would endorse:
+          </h4>
+          <div className="space-y-4">
+            {[
+              {
+                key: 'option1Edits',
+                label: 'Option 1 – Data-Driven Foundational Research (desktop study first)',
+                placeholder: 'What clarifications, caveats, or edits would you like to see for Option 1?'
+              },
+              {
+                key: 'option2Edits',
+                label: 'Option 2 – Phased Modernization (sequential implementation)',
+                placeholder: 'What clarifications, caveats, or edits would you like to see for Option 2?'
+              },
+              {
+                key: 'option3Edits',
+                label: 'Option 3 – Comprehensive Overhaul (full package at once)',
+                placeholder: 'What clarifications, caveats, or edits would you like to see for Option 3?'
+              }
+            ].map(({ key, label, placeholder }) => (
+              <div key={key}>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  {label}
+                </label>
+                <div className="relative">
+                  <textarea
+                    value={data[key] || ''}
+                    onChange={(e) => onChange({ ...data, [key]: e.target.value })}
+                    rows={4}
+                    maxLength={2000}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    placeholder={placeholder}
+                  />
+                  <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+                    {(data[key] || '').length}/2000 characters
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            If you would recommend an alternate pathway or hybrid approach, describe it here:
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.otherPathwayIdeas || ''}
+              onChange={(e) => onChange({ ...data, otherPathwayIdeas: e.target.value })}
+              rows={4}
+              maxLength={2000}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Outline any alternative approach or hybridization of the pathways you believe is necessary."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.otherPathwayIdeas || '').length}/2000 characters
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+            Which enabling factors are essential to implement your recommended edits or new ideas? (Select all that apply)
+          </h4>
+          <div className="space-y-3">
+            {enablingFactors.map((factor) => (
+              <label key={factor} className="flex items-start space-x-2">
+                <input
+                  type="checkbox"
+                  checked={data.supportingFactors?.includes(factor) || false}
+                  onChange={(e) => {
+                    const currentFactors = data.supportingFactors || []
+                    const updated = e.target.checked
+                      ? [...currentFactors, factor]
+                      : currentFactors.filter((item: string) => item !== factor)
+                    onChange({ ...data, supportingFactors: updated })
+                  }}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{factor}</span>
+              </label>
+            ))}
+          </div>
+
+          {data.supportingFactors?.includes('Other') && (
+            <div className="mt-3">
+              <input
+                type="text"
+                value={data.supportingFactorsOther || ''}
+                onChange={(e) => onChange({ ...data, supportingFactorsOther: e.target.value })}
+                placeholder="Please describe additional enabling factors..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Summarize the most important changes you recommend across the pathways, referencing Section VI where helpful:
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.pathwayRationale || ''}
+              onChange={(e) => onChange({ ...data, pathwayRationale: e.target.value })}
+              rows={6}
+              maxLength={2500}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Summarize the key edits or clarifications you would make across the pathways, noting any references to Section VI."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.pathwayRationale || '').length}/2500 characters
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            What updates to the recommendations—including revised timeline estimates—would strengthen Phase 2 planning?
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.recommendationUpdates || ''}
+              onChange={(e) => onChange({ ...data, recommendationUpdates: e.target.value })}
+              rows={4}
+              maxLength={1800}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Describe specific refinements to the recommendations, including approximate timelines or sequencing adjustments."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.recommendationUpdates || '').length}/1800 characters
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            What are the most significant risks or dependencies that must be managed for your recommended adjustments to succeed?
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.implementationRisks || ''}
+              onChange={(e) => onChange({ ...data, implementationRisks: e.target.value })}
+              rows={4}
+              maxLength={1500}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Identify the major risks, bottlenecks, or prerequisites (e.g., funding, staffing, policy changes)..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.implementationRisks || '').length}/1500 characters
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Line-by-line feedback for Section VI – Strategic Pathways &amp; Options Analysis (5,000 characters max):
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.lineByLine || ''}
+              onChange={(e) => onChange({ ...data, lineByLine: e.target.value })}
+              rows={8}
+              maxLength={5000}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Reference specific pages/lines in Section VI where edits or clarifications are required..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.lineByLine || '').length}/5000 characters
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+function Part10Conclusions({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+  const confidenceOptions = [
+    'Strongly support as written',
+    'Support with minor refinements',
+    'Needs additional substantiation',
+    'Requires major revisions'
+  ]
+
+  const priorityAreas = [
+    'Launch BC-specific desktop data compilation',
+    'Expand contaminant list and mixtures coverage',
+    'Develop bioavailability adjustment procedure and supporting protocol',
+    'Develop framework for deriving matrix sediment standards (SedS-direct & SedS-food)',
+    'Establish focused technical working groups',
+    'Other'
+  ]
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        Part 10: Conclusions &amp; Recommendations
+      </h3>
+
+      <div className="space-y-6">
+        <div>
+          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+            How well do the Conclusions &amp; Recommendations (Section VII) capture the path forward for modernizing BC's sediment standards?
+          </h4>
+          <div className="space-y-3">
+            {confidenceOptions.map((option) => (
+              <label key={option} className="flex items-start space-x-2">
+                <input
+                  type="radio"
+                  name="recommendationConfidence"
+                  value={option}
+                  checked={data.recommendationConfidence === option}
+                  onChange={(e) => onChange({ ...data, recommendationConfidence: e.target.value })}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+            Which recommended actions must be prioritized in the first 12–18 months? (Select all that apply)
+          </h4>
+          <div className="space-y-3">
+            {priorityAreas.map((area) => (
+              <label key={area} className="flex items-start space-x-2">
+                <input
+                  type="checkbox"
+                  checked={data.priorityAreas?.includes(area) || false}
+                  onChange={(e) => {
+                    const currentAreas = data.priorityAreas || []
+                    const updated = e.target.checked
+                      ? [...currentAreas, area]
+                      : currentAreas.filter((item: string) => item !== area)
+                    onChange({ ...data, priorityAreas: updated })
+                  }}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{area}</span>
+              </label>
+            ))}
+          </div>
+
+          {data.priorityAreas?.includes('Other') && (
+            <div className="mt-3">
+              <input
+                type="text"
+                value={data.priorityAreasOther || ''}
+                onChange={(e) => onChange({ ...data, priorityAreasOther: e.target.value })}
+                placeholder="Please specify additional priority actions..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            What resources, governance steps, or policy decisions are essential to operationalize the recommendations?
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.implementationSupport || ''}
+              onChange={(e) => onChange({ ...data, implementationSupport: e.target.value })}
+              rows={5}
+              maxLength={1800}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Identify funding, staffing, regulatory changes, or partnerships required..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.implementationSupport || '').length}/1800 characters
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Line-by-line feedback for Section VII – Conclusions &amp; Recommendations (5,000 characters max):
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.lineByLine || ''}
+              onChange={(e) => onChange({ ...data, lineByLine: e.target.value })}
+              rows={8}
+              maxLength={5000}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Reference specific lines in Section VII where revisions, clarifications, or evidence additions are needed..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.lineByLine || '').length}/5000 characters
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+function Part11EngagementInsights({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+  const prioritizedEngagementOptions = [
+    'First Nations / Indigenous Rights Holders',
+    'Remote and coastal communities',
+    'Industry and port authorities',
+    'Academic and research institutions',
+    'Youth and early-career practitioners',
+    'Environmental NGOs',
+    'Municipal/local governments',
+    'Public health / One Health experts',
+    'Other'
+  ]
+
+  const participationInterestOptions = [
+    'SABCS-hosted workshops or summits',
+    'Virtual technical meetings',
+    'Focused working groups on specialized topics',
+    'Joint sessions with other regulatory or advisory bodies',
+    'Other'
+  ]
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        Part 11: Community &amp; Stakeholder Engagement Insights
+      </h3>
+
+      <div className="space-y-6">
+        <div>
+          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+            Future phases will include expanded engagement beyond the survey, CEW session, and TWG feedback captured in Section IV. Which groups or knowledge holders should be prioritized? (Select all that apply)
+          </h4>
+          <div className="space-y-3">
+            {prioritizedEngagementOptions.map((option) => (
+              <label key={option} className="flex items-start space-x-2">
+                <input
+                  type="checkbox"
+                  checked={data.prioritizedEngagements?.includes(option) || false}
+                  onChange={(e) => {
+                    const current = data.prioritizedEngagements || []
+                    const updated = e.target.checked
+                      ? [...current, option]
+                      : current.filter((item: string) => item !== option)
+                    onChange({ ...data, prioritizedEngagements: updated })
+                  }}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
+              </label>
+            ))}
+          </div>
+
+          {data.prioritizedEngagements?.includes('Other') && (
+            <div className="mt-3">
+              <input
+                type="text"
+                value={data.prioritizedEngagementsOther || ''}
+                onChange={(e) => onChange({ ...data, prioritizedEngagementsOther: e.target.value })}
+                placeholder="Please specify additional groups or knowledge holders..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+            How well does Section IV capture and summarize the engagement completed so far (survey, CEW session, TWG feedback)?
+          </h4>
+          <div className="space-y-3">
+            {[
+              'Very well – accurately reflects available input',
+              'Reasonably well – minor clarifications needed',
+              'Partially – needs additional detail or emphasis',
+              'Not well – significant updates required'
+            ].map((option) => (
+              <label key={option} className="flex items-start space-x-2">
+                <input
+                  type="radio"
+                  name="engagementSummaryQuality"
+                  value={option}
+                  checked={data.engagementSummaryQuality === option}
+                  onChange={(e) => onChange({ ...data, engagementSummaryQuality: e.target.value })}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Provide examples or suggestions to strengthen Section IV based on the engagement completed to date.
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.evidenceSummary || ''}
+              onChange={(e) => onChange({ ...data, evidenceSummary: e.target.value })}
+              rows={5}
+              maxLength={1800}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Reference key insights from the survey, CEW session, or TWG feedback that should be highlighted or clarified."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.evidenceSummary || '').length}/1800 characters
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            What types of engagement activities would you be most interested in participating in during future phases? (Select all that apply)
+          </label>
+          <div className="space-y-3">
+            {participationInterestOptions.map((option) => (
+              <label key={option} className="flex items-start space-x-2">
+                <input
+                  type="checkbox"
+                  checked={data.engagementInterests?.includes(option) || false}
+                  onChange={(e) => {
+                    const currentInterests = data.engagementInterests || []
+                    const updated = e.target.checked
+                      ? [...currentInterests, option]
+                      : currentInterests.filter((item: string) => item !== option)
+                    onChange({ ...data, engagementInterests: updated })
+                  }}
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
+              </label>
+            ))}
+          </div>
+
+          {data.engagementInterests?.includes('Other') && (
+            <div className="mt-3">
+              <input
+                type="text"
+                value={data.engagementInterestsOther || ''}
+                onChange={(e) => onChange({ ...data, engagementInterestsOther: e.target.value })}
+                placeholder="Please describe other types of engagement you would join..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Line-by-line feedback for Section IV – Community &amp; Stakeholder Engagement Insights (5,000 characters max):
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.lineByLine || ''}
+              onChange={(e) => onChange({ ...data, lineByLine: e.target.value })}
+              rows={8}
+              maxLength={5000}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Provide precise edits for Section IV, referencing page and line numbers..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.lineByLine || '').length}/5000 characters
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
+function Part12WhatWeHeard({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+  const appendixOptions = [
+    { key: 'appendixD', label: 'Appendix D – Online Survey "What We Heard"' },
+    { key: 'appendixG', label: 'Appendix G – CEW Session "What We Heard"' },
+    { key: 'appendixJ', label: 'Appendix J – TWG White Paper Review "What We Heard"' }
+  ]
+
+  const statusOptions = [
+    'Ready as written',
+    'Needs minor edits for clarity/accuracy',
+    'Needs additional evidence or synthesis',
+    'Requires major restructuring'
+  ]
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+        Part 12: "What We Heard" Reports (Appendices D, G, J)
+      </h3>
+
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <h4 className="text-lg font-medium text-gray-900 dark:text-white">
+            For each appendix, indicate its readiness and whether further synthesis is required.
+          </h4>
+          {appendixOptions.map(({ key, label }) => (
+            <div key={key}>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {label}
+              </label>
+              <select
+                value={data.appendixStatus?.[key] || ''}
+                onChange={(e) => onChange({
+                  ...data,
+                  appendixStatus: { ...data.appendixStatus, [key]: e.target.value }
+                })}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              >
+                <option value="">Select readiness status</option>
+                {statusOptions.map((status) => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Do the key findings and objectives captured in Appendices D, G, and J align with the recommendations in Section VII? 
+            Please summarize any gaps that should be emphasized.
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.alignmentSummary || ''}
+              onChange={(e) => onChange({ ...data, alignmentSummary: e.target.value })}
+              rows={6}
+              maxLength={2000}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Highlight where the appendices reinforce the recommendations, and identify any missing themes or objectives that should be brought forward..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.alignmentSummary || '').length}/2000 characters
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            What additional documentation, polling, or qualitative analysis would strengthen the "What We Heard" narrative?
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.followUpNeeds || ''}
+              onChange={(e) => onChange({ ...data, followUpNeeds: e.target.value })}
+              rows={5}
+              maxLength={1500}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="List specific analyses, workshops, or materials needed (e.g., additional polling for emerging contaminants, sector-specific focus groups)..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.followUpNeeds || '').length}/1500 characters
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Line-by-line feedback for Appendices D, G, and J – "What We Heard" Reports (5,000 characters max):
+          </label>
+          <div className="relative">
+            <textarea
+              value={data.lineByLine || ''}
+              onChange={(e) => onChange({ ...data, lineByLine: e.target.value })}
+              rows={8}
+              maxLength={5000}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              placeholder="Provide precise edits for Appendices D, G, and J, referencing page or figure where revisions are required..."
+            />
+            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+              {(data.lineByLine || '').length}/5000 characters
             </div>
           </div>
         </div>
