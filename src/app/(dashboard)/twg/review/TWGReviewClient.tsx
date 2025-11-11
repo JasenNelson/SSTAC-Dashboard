@@ -13,11 +13,13 @@ interface ReviewSubmission {
   updated_at: string
 }
 
+type PhaseKey = 'Phase 1 Review' | 'Phase 2 Review'
+
 type ReviewSection = {
   id: number
   title: string
   description: string
-  phase: 'Phase 1 Review' | 'Phase 2 Review'
+  phase: PhaseKey
 }
 
 interface TWGReviewClientProps {
@@ -34,6 +36,10 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
   const [completedSections, setCompletedSections] = useState<number[]>([])
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [openPhases, setOpenPhases] = useState<Record<PhaseKey, boolean>>({
+    'Phase 1 Review': true,
+    'Phase 2 Review': true
+  })
 
   const sections: ReviewSection[] = [
     { id: 1, title: 'Reviewer Information', description: 'Optional background information', phase: 'Phase 1 Review' },
@@ -49,14 +55,20 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
     { id: 11, title: 'Community & Stakeholder Engagement Insights', description: 'Assess engagement coverage and needs', phase: 'Phase 2 Review' },
     { id: 12, title: '"What We Heard" Reports (Appendices D, G, J)', description: 'Validate synthesis of engagement findings', phase: 'Phase 2 Review' }
   ]
-  const phaseGroups = sections.reduce<Record<string, ReviewSection[]>>((groups, section) => {
-    if (!groups[section.phase]) {
-      groups[section.phase] = []
-    }
-    groups[section.phase].push(section)
-    return groups
-  }, {})
+  const phaseMeta: Record<PhaseKey, { label: string; date: string }> = {
+    'Phase 1 Review': { label: 'Phase 1 Review', date: 'Nov. 8, 2025' },
+    'Phase 2 Review': { label: 'Phase 2 Review', date: 'Dec. 1, 2025' }
+  }
+  const phaseOrder: PhaseKey[] = ['Phase 1 Review', 'Phase 2 Review']
+  const phaseGroups: Record<PhaseKey, ReviewSection[]> = {
+    'Phase 1 Review': [],
+    'Phase 2 Review': []
+  }
+  sections.forEach((section) => {
+    phaseGroups[section.phase].push(section)
+  })
   const currentSectionData = sections.find((section) => section.id === currentSection)
+  const currentPhaseMeta = currentSectionData ? phaseMeta[currentSectionData.phase] : null
 
   // Check for dark mode
   useEffect(() => {
@@ -250,6 +262,13 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
     }))
   }
 
+  const togglePhase = (phase: PhaseKey) => {
+    setOpenPhases((prev) => ({
+      ...prev,
+      [phase]: !prev[phase]
+    }))
+  }
+
   return (
     <div className="flex min-h-screen">
       {/* Navigation Sidebar */}
@@ -263,125 +282,23 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
           </p>
           
           <nav className="space-y-4">
-            {Object.entries(phaseGroups).map(([phaseLabel, groupSections]) => (
-              <div key={phaseLabel} className="space-y-2">
-                <div className="text-sm font-bold italic text-red-600 dark:text-red-400 tracking-wide">
-                  {phaseLabel}
-                </div>
-                {groupSections.map((section) => {
-                  const isActive = currentSection === section.id
-                  const textColor = isDarkMode
-                    ? isActive
-                      ? '#60A5FA'
-                      : '#D1D5DB'
-                    : '#000000'
-                  return (
-                    <button
-                      key={section.id}
-                      onClick={() => setCurrentSection(section.id)}
-                      className={`w-full text-left p-3 rounded-lg transition-colors ${
-                        isActive
-                          ? 'bg-blue-100 dark:bg-blue-900'
-                          : 'hover:bg-gray-100 dark:hover:bg-gray-700'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-medium" style={{ color: textColor }}>
-                            Part {section.id}
-                          </div>
-                          <div
-                            className="text-sm"
-                            style={{
-                              color: textColor,
-                              opacity: isActive ? 1 : 0.75
-                            }}
-                          >
-                            {section.title}
-                          </div>
-                        </div>
-                        {completedSections.includes(section.id) && (
-                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        )}
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-            ))}
-          </nav>
-        </div>
-        
-        {/* Save Progress Button */}
-        <div className="p-6 border-t border-gray-200 dark:border-gray-700">
-          <button
-            onClick={handleSaveProgress}
-            disabled={isSaving}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-          >
-            {isSaving ? 'Saving...' : 'Save Progress'}
-          </button>
-          
-          {saveMessage && (
-            <p className={`mt-2 text-sm ${saveMessage.includes('Error') ? 'text-red-600' : 'text-green-600'}`}>
-              {saveMessage}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto">
-        {/* Mobile Navigation Header */}
-        <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">TWG Review</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                {currentSectionData ? `${currentSectionData.phase} • Part ${currentSection}: ${currentSectionData.title}` : `Part ${currentSection}`}
-              </p>
-            </div>
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                {isMobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation Overlay */}
-        {isMobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="fixed inset-y-0 left-0 w-80 bg-blue-100 dark:bg-gray-800 shadow-xl" onClick={(e) => e.stopPropagation()}>
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">TWG Review</h1>
+            {phaseOrder.map((phase) => {
+              const groupSections = phaseGroups[phase]
+              if (!groupSections.length) return null
+              const meta = phaseMeta[phase]
+              const isOpen = openPhases[phase]
+              return (
+                <div key={phase} className="rounded-lg bg-white/60 dark:bg-gray-900/20 shadow-sm">
                   <button
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                    type="button"
+                    onClick={() => togglePhase(phase)}
+                    className="w-full flex items-center justify-between px-3 py-2 text-sm font-bold italic text-red-600 dark:text-red-400 tracking-wide"
                   >
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <span>{`${meta.label} — ${meta.date}`}</span>
+                    <span className="text-lg text-gray-700 dark:text-gray-200">{isOpen ? '−' : '+'}</span>
                   </button>
-                </div>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Modernizing BC's Sediment Standards
-                </p>
-                
-                <nav className="space-y-4">
-                  {Object.entries(phaseGroups).map(([phaseLabel, groupSections]) => (
-                    <div key={phaseLabel} className="space-y-2">
-                      <div className="text-sm font-bold italic text-red-600 dark:text-red-400 tracking-wide">
-                        {phaseLabel}
-                      </div>
+                  {isOpen && (
+                    <div className="px-1 pb-3 space-y-2">
                       {groupSections.map((section) => {
                         const isActive = currentSection === section.id
                         const textColor = isDarkMode
@@ -425,7 +342,144 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
                         )
                       })}
                     </div>
-                  ))}
+                  )}
+                </div>
+              )
+            })}
+          </nav>
+        </div>
+        
+        {/* Save Progress Button */}
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+          <button
+            onClick={handleSaveProgress}
+            disabled={isSaving}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          >
+            {isSaving ? 'Saving...' : 'Save Progress'}
+          </button>
+          
+          {saveMessage && (
+            <p className={`mt-2 text-sm ${saveMessage.includes('Error') ? 'text-red-600' : 'text-green-600'}`}>
+              {saveMessage}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Mobile Navigation Header */}
+        <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">TWG Review</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {currentSectionData && currentPhaseMeta
+                  ? `${currentPhaseMeta.label} — ${currentPhaseMeta.date} • Part ${currentSection}: ${currentSectionData.title}`
+                  : `Part ${currentSection}`}
+              </p>
+            </div>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation Overlay */}
+        {isMobileMenuOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => setIsMobileMenuOpen(false)}>
+            <div className="fixed inset-y-0 left-0 w-80 bg-blue-100 dark:bg-gray-800 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">TWG Review</h1>
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  Modernizing BC's Sediment Standards
+                </p>
+                
+                <nav className="space-y-4">
+                  {phaseOrder.map((phase) => {
+                    const groupSections = phaseGroups[phase]
+                    if (!groupSections.length) return null
+                    const meta = phaseMeta[phase]
+                    const isOpen = openPhases[phase]
+                    return (
+                      <div key={phase} className="rounded-lg bg-white/60 dark:bg-gray-900/20 shadow-sm">
+                        <button
+                          type="button"
+                          onClick={() => togglePhase(phase)}
+                          className="w-full flex items-center justify-between px-3 py-2 text-sm font-bold italic text-red-600 dark:text-red-400 tracking-wide"
+                        >
+                          <span>{`${meta.label} — ${meta.date}`}</span>
+                          <span className="text-lg text-gray-700 dark:text-gray-200">{isOpen ? '−' : '+'}</span>
+                        </button>
+                        {isOpen && (
+                          <div className="px-1 pb-3 space-y-2">
+                            {groupSections.map((section) => {
+                              const isActive = currentSection === section.id
+                              const textColor = isDarkMode
+                                ? isActive
+                                  ? '#60A5FA'
+                                  : '#D1D5DB'
+                                : '#000000'
+                              return (
+                                <button
+                                  key={section.id}
+                                  onClick={() => {
+                                    setCurrentSection(section.id)
+                                    setIsMobileMenuOpen(false)
+                                  }}
+                                  className={`w-full text-left p-3 rounded-lg transition-colors ${
+                                    isActive
+                                      ? 'bg-blue-100 dark:bg-blue-900'
+                                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <div className="font-medium" style={{ color: textColor }}>
+                                        Part {section.id}
+                                      </div>
+                                      <div
+                                        className="text-sm"
+                                        style={{
+                                          color: textColor,
+                                          opacity: isActive ? 1 : 0.75
+                                        }}
+                                      >
+                                        {section.title}
+                                      </div>
+                                    </div>
+                                    {completedSections.includes(section.id) && (
+                                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    )}
+                                  </div>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </nav>
                 
                 {/* Save Progress Button */}
@@ -455,9 +509,9 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
         <div className="max-w-4xl mx-auto p-4 lg:p-8">
           {/* Header */}
           <div className="mb-8">
-            {currentSectionData && (
+            {currentSectionData && currentPhaseMeta && (
               <div className="mb-3 text-base font-bold italic text-red-600 dark:text-red-400">
-                {currentSectionData.phase}
+                {`${currentPhaseMeta.label} — ${currentPhaseMeta.date}`}
               </div>
             )}
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
