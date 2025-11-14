@@ -1,14 +1,31 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User } from '@supabase/supabase-js'
 import { refreshGlobalAdminStatus } from '@/lib/admin-utils'
+import { useToast } from '@/components/Toast'
+import {
+  FormSectionKey,
+  Part1Data,
+  Part2Data,
+  Part3Data,
+  Part4Data,
+  Part5Data,
+  Part6Data,
+  Part7Data,
+  Part8Data,
+  Part9Data,
+  Part10Data,
+  Part11Data,
+  Part12Data,
+  SectionProps,
+  TWGReviewFormData
+} from './twgReviewTypes'
 
 interface ReviewSubmission {
   id: string
   user_id: string
   status: 'IN_PROGRESS' | 'SUBMITTED'
-  form_data: any
+  form_data: TWGReviewFormData
   created_at: string
   updated_at: string
 }
@@ -23,12 +40,13 @@ type ReviewSection = {
 }
 
 interface TWGReviewClientProps {
-  user: User
   existingSubmission?: ReviewSubmission
 }
 
-export default function TWGReviewClient({ user, existingSubmission }: TWGReviewClientProps) {
-  const [formData, setFormData] = useState<any>(existingSubmission?.form_data || {})
+const ensureSectionData = <T,>(section: T | undefined): T => section ?? ({} as T)
+
+export default function TWGReviewClient({ existingSubmission }: TWGReviewClientProps) {
+  const [formData, setFormData] = useState<TWGReviewFormData>(() => existingSubmission?.form_data ?? {})
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
@@ -40,6 +58,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
     'Phase 1 Review': true,
     'Phase 2 Review': true
   })
+  const { showToast } = useToast()
 
   const sections: ReviewSection[] = [
     { id: 1, title: 'Reviewer Information', description: 'Optional background information', phase: 'Phase 1 Review' },
@@ -50,14 +69,14 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
     { id: 6, title: 'Integration of Indigenous Knowledge', description: 'Knowledge systems integration', phase: 'Phase 1 Review' },
     { id: 7, title: 'Prioritization and Strategic Direction', description: 'Research and implementation priorities', phase: 'Phase 1 Review' },
     { id: 8, title: 'Final Recommendations', description: 'Critical gaps and suggestions', phase: 'Phase 1 Review' },
-    { id: 9, title: 'Strategic Pathways & Options Analysis', description: 'Assess implementation pathways and rationale', phase: 'Phase 2 Review' },
-    { id: 10, title: 'Conclusions & Recommendations', description: 'Evaluate proposed actions and readiness', phase: 'Phase 2 Review' },
-    { id: 11, title: 'Community & Stakeholder Engagement Insights', description: 'Assess engagement coverage and needs', phase: 'Phase 2 Review' },
-    { id: 12, title: '"What We Heard" Reports (Appendices D, G, J)', description: 'Validate synthesis of engagement findings', phase: 'Phase 2 Review' }
+    { id: 9, title: 'Community & Stakeholder Engagement Insights', description: 'Assess engagement coverage and needs', phase: 'Phase 2 Review' },
+    { id: 10, title: 'Strategic Pathways & Options Analysis', description: 'Assess implementation pathways and rationale', phase: 'Phase 2 Review' },
+    { id: 11, title: 'Conclusions & Recommendations', description: 'Evaluate proposed actions and readiness', phase: 'Phase 2 Review' },
+    { id: 12, title: 'What We Heard Reports (Appendices D, G, J)', description: 'Validate synthesis of engagement findings', phase: 'Phase 2 Review' }
   ]
   const phaseMeta: Record<PhaseKey, { label: string; date: string }> = {
-    'Phase 1 Review': { label: 'Phase 1 Review', date: 'Nov. 8, 2025' },
-    'Phase 2 Review': { label: 'Phase 2 Review', date: 'Dec. 1, 2025' }
+    'Phase 1 Review': { label: 'Phase 1 Review', date: 'Due Nov. 8, 2025' },
+    'Phase 2 Review': { label: 'Phase 2 Review', date: 'Due Dec. 1, 2025' }
   }
   const phaseOrder: PhaseKey[] = ['Phase 1 Review', 'Phase 2 Review']
   const phaseGroups: Record<PhaseKey, ReviewSection[]> = {
@@ -99,7 +118,9 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
     const completed: number[] = []
     
     // Check Part 1: Reviewer Information
-    if (formData.part1?.name && formData.part1?.expertise?.length > 0) {
+    const expertiseSelections = formData.part1?.expertise
+    const hasExpertise = Array.isArray(expertiseSelections) && expertiseSelections.length > 0
+    if (formData.part1?.name && hasExpertise) {
       completed.push(1)
     }
     
@@ -138,35 +159,39 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
       completed.push(8)
     }
 
-    // Check Part 9: Strategic Pathways & Options Analysis
-    if (
-      (formData.part9?.option1Edits || formData.part9?.option2Edits || formData.part9?.option3Edits || formData.part9?.otherPathwayIdeas) &&
-      (formData.part9?.pathwayRationale || formData.part9?.implementationRisks || formData.part9?.recommendationUpdates || formData.part9?.lineByLine)
-    ) {
-      completed.push(9)
-    }
-
-    // Check Part 10: Conclusions & Recommendations
-    if (formData.part10?.recommendationConfidence && ((formData.part10?.priorityAreas?.length ?? 0) > 0)) {
-      completed.push(10)
-    }
-
-    // Check Part 11: Community & Stakeholder Engagement Insights (formerly question set)
+    // Check Part 9: Community & Stakeholder Engagement Insights (uses part11 data)
     const hasPrioritizedEngagements = (formData.part11?.prioritizedEngagements?.length ?? 0) > 0 || !!formData.part11?.prioritizedEngagementsOther
     const hasEngagementInterests = (formData.part11?.engagementInterests?.length ?? 0) > 0 || !!formData.part11?.engagementInterestsOther
     if (
       (formData.part11?.engagementSummaryQuality || hasPrioritizedEngagements || hasEngagementInterests) &&
       (formData.part11?.evidenceSummary || formData.part11?.lineByLine || hasPrioritizedEngagements || hasEngagementInterests)
     ) {
+      completed.push(9)
+    }
+
+    // Check Part 10: Strategic Pathways & Options Analysis (uses part9 data)
+    if (
+      (formData.part9?.option1Edits || formData.part9?.option2Edits || formData.part9?.option3Edits || formData.part9?.otherPathwayIdeas) &&
+      (formData.part9?.pathwayRationale || formData.part9?.implementationRisks || formData.part9?.recommendationUpdates || formData.part9?.lineByLine)
+    ) {
+      completed.push(10)
+    }
+
+    // Check Part 11: Conclusions & Recommendations (uses part10 data)
+    if (formData.part10?.recommendationConfidence && ((formData.part10?.priorityAreas?.length ?? 0) > 0)) {
       completed.push(11)
     }
 
     // Check Part 12: "What We Heard" Reports (Appendices D, G, J)
-    if (
-      formData.part12?.appendixStatus &&
-      ['appendixD', 'appendixG', 'appendixJ'].every((key) => formData.part12.appendixStatus?.[key]) &&
-      (formData.part12?.alignmentSummary || formData.part12?.lineByLine)
-    ) {
+    const part12 = formData.part12
+    const appendixStatus = part12?.appendixStatus
+    const hasAllAppendices =
+      appendixStatus != null &&
+      (['appendixD', 'appendixG', 'appendixJ'] as const).every(
+        (key) => appendixStatus?.[key]
+      )
+
+    if (part12 && hasAllAppendices && (part12.alignmentSummary || part12.lineByLine)) {
       completed.push(12)
     }
     
@@ -245,20 +270,28 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
           return Array.from(updated).sort((a, b) => a - b)
         })
       } else {
-        alert('Error submitting review. Please try again.')
+        showToast({
+          type: 'error',
+          title: 'Submission failed',
+          message: 'Please try again.'
+        })
       }
     } catch (error) {
       console.error('Error submitting review:', error)
-      alert('Error submitting review. Please try again.')
+      showToast({
+        type: 'error',
+        title: 'Submission failed',
+        message: 'Please try again.'
+      })
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const updateFormData = (part: string, data: any) => {
-    setFormData((prev: any) => ({
+  const updateFormData = <K extends FormSectionKey>(part: K, data: NonNullable<TWGReviewFormData[K]>) => {
+    setFormData((prev) => ({
       ...prev,
-      [part]: { ...prev[part], ...data }
+      [part]: data
     }))
   }
 
@@ -281,7 +314,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
             TWG Review
           </h1>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Modernizing BC's Sediment Standards
+            Modernizing BC&rsquo;s Sediment Standards
           </p>
           
           <nav className="space-y-4">
@@ -297,7 +330,10 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
                     onClick={() => togglePhase(phase)}
                     className="w-full flex items-center justify-between px-3 py-2 text-sm font-bold italic text-red-600 dark:text-red-400 tracking-wide"
                   >
-                    <span>{`${meta.label} — ${meta.date}`}</span>
+                    <div className="flex flex-col">
+                      <span>{meta.label}</span>
+                      <span className="text-xs font-normal not-italic">({meta.date})</span>
+                    </div>
                     <span className="text-lg text-gray-700 dark:text-gray-200">{isOpen ? '−' : '+'}</span>
                   </button>
                   {isOpen && (
@@ -426,7 +462,10 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
                           onClick={() => togglePhase(phase)}
                           className="w-full flex items-center justify-between px-3 py-2 text-sm font-bold italic text-red-600 dark:text-red-400 tracking-wide"
                         >
-                          <span>{`${meta.label} — ${meta.date}`}</span>
+                          <div className="flex flex-col">
+                            <span>{meta.label}</span>
+                            <span className="text-xs font-normal not-italic">({meta.date})</span>
+                          </div>
                           <span className="text-lg text-gray-700 dark:text-gray-200">{isOpen ? '−' : '+'}</span>
                         </button>
                         {isOpen && (
@@ -513,101 +552,102 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
               </div>
             )}
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Expert Review Form: Modernizing British Columbia's Sediment Standards
+              Expert Review Form: Modernizing British Columbia&rsquo;s Sediment Standards
             </h2>
             <div className={`rounded-lg p-4 mb-6 border ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-sky-100 border-sky-200'}`}>
               <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
-                 Thank you for contributing your expertise to the Technical Working Group (TWG) review.
+                 Thank you for continuing to contribute your expertise to the Technical Working Group (TWG) review.
                </p>
               <ul className={`mt-3 space-y-2 text-sm list-disc list-inside ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                <li>The "Save Progress" buttons let you capture everything you've entered without submitting.</li>
+                <li>The &ldquo;Save Progress&rdquo; buttons let you capture everything you&rsquo;ve entered without submitting.</li>
                 <li>You can be anywhere in the form and still switch parts using the navigation panel or mobile drawer—your notes stay in place.</li>
-                <li>Use the "Submit Review" button in Part 12 to let us know your review is ready.</li>
+                <li>Use the &ldquo;Submit Review&rdquo; button in Part 12 to let us know your review is ready.</li>
+                <li>Please refer to the <a href="https://docs.google.com/document/d/1szIIwrTLYB1if4B0Ied-3ke_7g7_7N36HXM20d22J2o/edit?usp=sharing" target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">draft SABCS White Paper</a> for additional context.</li>
               </ul>
             </div>
           </div>
 
           {/* Form Sections */}
           {currentSection === 1 && (
-            <Part1ReviewerInformation 
-              data={formData.part1 || {}} 
-              onChange={(data) => updateFormData('part1', data)} 
+            <Part1ReviewerInformation
+              data={ensureSectionData(formData.part1)}
+              onChange={(data) => updateFormData('part1', data)}
             />
           )}
-          
+
           {currentSection === 2 && (
-            <Part2HighLevelAssessment 
-              data={formData.part2 || {}} 
-              onChange={(data) => updateFormData('part2', data)} 
+            <Part2HighLevelAssessment
+              data={ensureSectionData(formData.part2)}
+              onChange={(data) => updateFormData('part2', data)}
             />
           )}
-          
+
           {currentSection === 3 && (
-            <Part3LineByLineComments 
-              data={formData.part3 || {}} 
-              onChange={(data) => updateFormData('part3', data)} 
+            <Part3LineByLineComments
+              data={ensureSectionData(formData.part3)}
+              onChange={(data) => updateFormData('part3', data)}
             />
           )}
-          
+
           {currentSection === 4 && (
-            <Part4MatrixFramework 
-              data={formData.part4 || {}} 
-              onChange={(data) => updateFormData('part4', data)} 
+            <Part4MatrixFramework
+              data={ensureSectionData(formData.part4)}
+              onChange={(data) => updateFormData('part4', data)}
             />
           )}
-          
+
           {currentSection === 5 && (
-            <Part5TieredApproach 
-              data={formData.part5 || {}} 
-              onChange={(data) => updateFormData('part5', data)} 
+            <Part5TieredApproach
+              data={ensureSectionData(formData.part5)}
+              onChange={(data) => updateFormData('part5', data)}
             />
           )}
-          
+
           {currentSection === 6 && (
-            <Part6IndigenousKnowledge 
-              data={formData.part6 || {}} 
-              onChange={(data) => updateFormData('part6', data)} 
+            <Part6IndigenousKnowledge
+              data={ensureSectionData(formData.part6)}
+              onChange={(data) => updateFormData('part6', data)}
             />
           )}
-          
+
           {currentSection === 7 && (
-            <Part7Prioritization 
-              data={formData.part7 || {}} 
-              onChange={(data) => updateFormData('part7', data)} 
+            <Part7Prioritization
+              data={ensureSectionData(formData.part7)}
+              onChange={(data) => updateFormData('part7', data)}
             />
           )}
-          
+
           {currentSection === 8 && (
-            <Part8FinalRecommendations 
-              data={formData.part8 || {}} 
-              onChange={(data) => updateFormData('part8', data)} 
+            <Part8FinalRecommendations
+              data={ensureSectionData(formData.part8)}
+              onChange={(data) => updateFormData('part8', data)}
             />
           )}
 
           {currentSection === 9 && (
-            <Part9StrategicPathways
-              data={formData.part9 || {}}
-              onChange={(data) => updateFormData('part9', data)}
+            <Part11EngagementInsights
+              data={ensureSectionData(formData.part11)}
+              onChange={(data) => updateFormData('part11', data)}
             />
           )}
 
           {currentSection === 10 && (
-            <Part10Conclusions
-              data={formData.part10 || {}}
-              onChange={(data) => updateFormData('part10', data)}
+            <Part9StrategicPathways
+              data={ensureSectionData(formData.part9)}
+              onChange={(data) => updateFormData('part9', data)}
             />
           )}
 
           {currentSection === 11 && (
-            <Part11EngagementInsights
-              data={formData.part11 || {}}
-              onChange={(data) => updateFormData('part11', data)}
+            <Part10Conclusions
+              data={ensureSectionData(formData.part10)}
+              onChange={(data) => updateFormData('part10', data)}
             />
           )}
 
           {currentSection === 12 && (
             <Part12WhatWeHeard
-              data={formData.part12 || {}}
+              data={ensureSectionData(formData.part12)}
               onChange={(data) => updateFormData('part12', data)}
             />
           )}
@@ -668,7 +708,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
 }
 
 // Form Section Components
-function Part1ReviewerInformation({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part1ReviewerInformation({ data, onChange }: SectionProps<Part1Data>) {
   const expertiseOptions = [
     'Ecotoxicology',
     'Human Health Risk Assessment (HHRA)',
@@ -743,7 +783,7 @@ function Part1ReviewerInformation({ data, onChange }: { data: any, onChange: (da
   )
 }
 
-function Part2HighLevelAssessment({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part2HighLevelAssessment({ data, onChange }: SectionProps<Part2Data>) {
   const ratingOptions = ['Excellent', 'Good', 'Fair', 'Poor']
   
   return (
@@ -759,11 +799,11 @@ function Part2HighLevelAssessment({ data, onChange }: { data: any, onChange: (da
           </h4>
           
           <div className="space-y-4">
-            {[
+            {([
               { key: 'clarity', label: 'Overall Clarity and Readability' },
               { key: 'completeness', label: 'Completeness of the Scientific Review and Jurisdictional Scan' },
               { key: 'defensibility', label: 'Scientific Defensibility of the Proposed Framework' }
-            ].map(({ key, label }) => (
+            ] as Array<{ key: keyof Part2Data; label: string }>).map(({ key, label }) => (
               <div key={key}>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {label}:
@@ -811,7 +851,7 @@ function Part2HighLevelAssessment({ data, onChange }: { data: any, onChange: (da
   )
 }
 
-function Part3LineByLineComments({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part3LineByLineComments({ data, onChange }: SectionProps<Part3Data>) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
@@ -945,7 +985,7 @@ function Part3LineByLineComments({ data, onChange }: { data: any, onChange: (dat
   )
 }
 
-function Part4MatrixFramework({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part4MatrixFramework({ data, onChange }: SectionProps<Part4Data>) {
   const contaminantGroups = [
     'Mercury and its compounds',
     'Polychlorinated Biphenyls (PCBs)',
@@ -967,7 +1007,7 @@ function Part4MatrixFramework({ data, onChange }: { data: any, onChange: (data: 
             This section focuses on the <strong>Matrix Sediment Standards Framework</strong> (see Section V.B of the report), 
             which proposes separate standards for direct exposure (SedS-direct) and food pathway exposure (SedS-food) 
             to protect both ecological and human health. The initial public survey showed 83% of respondents found 
-            this 'Dual Standard' approach necessary.
+            this &lsquo;Dual Standard&rsquo; approach necessary.
           </p>
         </div>
         
@@ -1062,7 +1102,7 @@ function Part4MatrixFramework({ data, onChange }: { data: any, onChange: (data: 
   )
 }
 
-function Part5TieredApproach({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part5TieredApproach({ data, onChange }: SectionProps<Part5Data>) {
   const bioavailabilityOptions = [
     'Equilibrium partitioning models (e.g., based on organic carbon content)',
     'Normalization using Acid-Volatile Sulfides/Simultaneously Extracted Metals (AVS/SEM)',
@@ -1230,7 +1270,7 @@ function Part5TieredApproach({ data, onChange }: { data: any, onChange: (data: a
   )
 }
 
-function Part6IndigenousKnowledge({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part6IndigenousKnowledge({ data, onChange }: SectionProps<Part6Data>) {
   const tier0Options = [
     'Implement Tier 0 anti-degradation provisions for sediment quality',
     'Establish baseline sediment quality conditions for reference',
@@ -1429,7 +1469,7 @@ function Part6IndigenousKnowledge({ data, onChange }: { data: any, onChange: (da
   )
 }
 
-function Part7Prioritization({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part7Prioritization({ data, onChange }: SectionProps<Part7Data>) {
   const modernizationOptions = [
     'Development of a Scientific Framework for Deriving Site-Specific Sediment Standards (Bioavailability Adjustment)',
     'Development of a Matrix Sediment Standards Framework - Focus on Ecological Protection',
@@ -1453,7 +1493,7 @@ function Part7Prioritization({ data, onChange }: { data: any, onChange: (data: a
       <div className="space-y-8">
         <div>
           <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Based on your experience, please rank these four areas for modernization priority in BC's sediment 
+            Based on your experience, please rank these four areas for modernization priority in BC&rsquo;s sediment 
             standards (1 = highest):
           </h4>
           
@@ -1569,7 +1609,7 @@ function Part7Prioritization({ data, onChange }: { data: any, onChange: (data: a
 }
 
 
-function Part8FinalRecommendations({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part8FinalRecommendations({ data, onChange }: SectionProps<Part8Data>) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
@@ -1621,7 +1661,7 @@ function Part8FinalRecommendations({ data, onChange }: { data: any, onChange: (d
 }
 
 
-function Part9StrategicPathways({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part9StrategicPathways({ data, onChange }: SectionProps<Part9Data>) {
   const enablingFactors = [
     'Invest in the desktop data compilation project before regulatory work',
     'Stage implementation milestones with clear decision gates',
@@ -1634,32 +1674,32 @@ function Part9StrategicPathways({ data, onChange }: { data: any, onChange: (data
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Part 9: Strategic Pathways &amp; Options Analysis
+        Part 10: Strategic Pathways &amp; Options Analysis
       </h3>
 
       <div className="space-y-6">
         <div>
           <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-            Suggest edits or clarifications to each implementation pathway so the description accurately reflects what you would endorse:
+            Suggest edits or clarifications to each option (Part VI, Section B), so the description reflects what you would endorse:
           </h4>
           <div className="space-y-4">
-            {[
+            {([
               {
                 key: 'option1Edits',
-                label: 'Option 1 – Data-Driven Foundational Research (desktop study first)',
+                label: 'OPTION 1 – Data-Driven Foundational Research (desktop study first)',
                 placeholder: 'What clarifications, caveats, or edits would you like to see for Option 1?'
               },
               {
                 key: 'option2Edits',
-                label: 'Option 2 – Phased Modernization (sequential implementation)',
+                label: 'OPTION 2 – Phased Modernization (sequential implementation)',
                 placeholder: 'What clarifications, caveats, or edits would you like to see for Option 2?'
               },
               {
                 key: 'option3Edits',
-                label: 'Option 3 – Comprehensive Overhaul (full package at once)',
+                label: 'OPTION 3 – Comprehensive Overhaul (full package at once)',
                 placeholder: 'What clarifications, caveats, or edits would you like to see for Option 3?'
               }
-            ].map(({ key, label, placeholder }) => (
+            ] as Array<{ key: keyof Part9Data; label: string; placeholder: string }>).map(({ key, label, placeholder }) => (
               <div key={key}>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   {label}
@@ -1740,7 +1780,7 @@ function Part9StrategicPathways({ data, onChange }: { data: any, onChange: (data
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Summarize the most important changes you recommend across the pathways, referencing Section VI where helpful:
+            Summarize the most important change you recommend to the strategic pathways and options, referencing Section VI where helpful:
           </label>
           <div className="relative">
             <textarea
@@ -1819,7 +1859,7 @@ function Part9StrategicPathways({ data, onChange }: { data: any, onChange: (data
 }
 
 
-function Part10Conclusions({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part10Conclusions({ data, onChange }: SectionProps<Part10Data>) {
   const confidenceOptions = [
     'Strongly support as written',
     'Support with minor refinements',
@@ -1839,13 +1879,13 @@ function Part10Conclusions({ data, onChange }: { data: any, onChange: (data: any
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Part 10: Conclusions &amp; Recommendations
+        Part 11: Conclusions &amp; Recommendations
       </h3>
 
       <div className="space-y-6">
         <div>
           <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-            How well do the Conclusions &amp; Recommendations (Section VII) capture the path forward for modernizing BC's sediment standards?
+            How well do the Conclusions &amp; Recommendations (Section VII) capture the path forward for modernizing BC&rsquo;s sediment standards?
           </h4>
           <div className="space-y-3">
             {confidenceOptions.map((option) => (
@@ -1944,7 +1984,7 @@ function Part10Conclusions({ data, onChange }: { data: any, onChange: (data: any
 }
 
 
-function Part11EngagementInsights({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part11EngagementInsights({ data, onChange }: SectionProps<Part11Data>) {
   const prioritizedEngagementOptions = [
     'First Nations / Indigenous Rights Holders',
     'Remote and coastal communities',
@@ -1968,13 +2008,13 @@ function Part11EngagementInsights({ data, onChange }: { data: any, onChange: (da
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Part 11: Community &amp; Stakeholder Engagement Insights
+        Part 9: Community &amp; Stakeholder Engagement Insights
       </h3>
 
       <div className="space-y-6">
         <div>
           <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-            Future phases will include expanded engagement beyond the survey, CEW session, and TWG feedback captured in Section IV. Which groups or knowledge holders should be prioritized? (Select all that apply)
+            Future phases will include expanded engagement beyond the survey, CEW session, and TWG feedback captured in Section IV. Which groups or knowledge holders should be prioritized? (Select 3 most important)
           </h4>
           <div className="space-y-3">
             {prioritizedEngagementOptions.map((option) => (
@@ -1982,6 +2022,7 @@ function Part11EngagementInsights({ data, onChange }: { data: any, onChange: (da
                 <input
                   type="checkbox"
                   checked={data.prioritizedEngagements?.includes(option) || false}
+                  disabled={!data.prioritizedEngagements?.includes(option) && (data.prioritizedEngagements?.length || 0) >= 3}
                   onChange={(e) => {
                     const current = data.prioritizedEngagements || []
                     const updated = e.target.checked
@@ -1989,12 +2030,17 @@ function Part11EngagementInsights({ data, onChange }: { data: any, onChange: (da
                       : current.filter((item: string) => item !== option)
                     onChange({ ...data, prioritizedEngagements: updated })
                   }}
-                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
               </label>
             ))}
           </div>
+          {(data.prioritizedEngagements?.length || 0) >= 3 && (
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              You have selected 3 options. Please deselect one to choose a different option.
+            </p>
+          )}
 
           {data.prioritizedEngagements?.includes('Other') && (
             <div className="mt-3">
@@ -2115,7 +2161,7 @@ function Part11EngagementInsights({ data, onChange }: { data: any, onChange: (da
 }
 
 
-function Part12WhatWeHeard({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+function Part12WhatWeHeard({ data, onChange }: SectionProps<Part12Data>) {
   const appendixOptions = [
     { key: 'appendixD', label: 'Appendix D – Online Survey "What We Heard"' },
     { key: 'appendixG', label: 'Appendix G – CEW Session "What We Heard"' },
@@ -2132,7 +2178,7 @@ function Part12WhatWeHeard({ data, onChange }: { data: any, onChange: (data: any
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Part 12: "What We Heard" Reports (Appendices D, G, J)
+        Part 12: What We Heard Reports (Appendices D, G, J)
       </h3>
 
       <div className="space-y-6">
@@ -2140,7 +2186,7 @@ function Part12WhatWeHeard({ data, onChange }: { data: any, onChange: (data: any
           <h4 className="text-lg font-medium text-gray-900 dark:text-white">
             For each appendix, indicate its readiness and whether further synthesis is required.
           </h4>
-          {appendixOptions.map(({ key, label }) => (
+          {(appendixOptions as Array<{ key: keyof Part12Data['appendixStatus']; label: string }>).map(({ key, label }) => (
             <div key={key}>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {label}
@@ -2184,7 +2230,7 @@ function Part12WhatWeHeard({ data, onChange }: { data: any, onChange: (data: any
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            What additional documentation, polling, or qualitative analysis would strengthen the "What We Heard" narrative?
+            What additional documentation, polling, or qualitative analysis would strengthen the &quot;What We Heard&quot; narrative?
           </label>
           <div className="relative">
             <textarea
@@ -2203,7 +2249,7 @@ function Part12WhatWeHeard({ data, onChange }: { data: any, onChange: (data: any
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Line-by-line feedback for Appendices D, G, and J – "What We Heard" Reports (5,000 characters max):
+            Line-by-line feedback for Appendices D, G, and J – &quot;What We Heard&quot; Reports (5,000 characters max):
           </label>
           <div className="relative">
             <textarea
