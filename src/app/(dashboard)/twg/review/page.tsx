@@ -17,7 +17,7 @@ export default async function TWGReviewPage() {
         set(name: string, value: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value, ...options })
-          } catch (_error) {
+          } catch {
             // The `set` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
@@ -26,7 +26,7 @@ export default async function TWGReviewPage() {
         remove(name: string, options: CookieOptions) {
           try {
             cookieStore.set({ name, value: '', ...options })
-          } catch (_error) {
+          } catch {
             // The `remove` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing
             // user sessions.
@@ -90,10 +90,7 @@ export default async function TWGReviewPage() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-        <TWGReviewClient 
-          user={user}
-          existingSubmission={existingSubmission}
-        />
+        <TWGReviewClient existingSubmission={existingSubmission} />
       </div>
     </ErrorBoundary>
   )
