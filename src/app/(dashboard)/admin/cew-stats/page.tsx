@@ -3,6 +3,9 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import CEWStatsClient from './CEWStatsClient';
 
+// Force dynamic rendering - this page requires authentication
+export const dynamic = 'force-dynamic';
+
 export default async function CEWStatsPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
