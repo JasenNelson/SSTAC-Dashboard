@@ -1,110 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import CustomWordCloud from './CustomWordCloud';
-
-// Simple Error Boundary Component
-class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallback: React.ReactNode }, { hasError: boolean }> {
-  constructor(props: { children: React.ReactNode; fallback: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(_error: Error) {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('WordCloud Error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback;
-    }
-
-    return this.props.children;
-  }
-}
-
-// Safe WordCloud Component with additional error handling
-const SafeWordCloud = ({ words, options }: { words: WordCloudData[]; options: any }) => {
-  try {
-    // Additional validation - ensure words is an array
-    if (!Array.isArray(words)) {
-      return (
-        <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-          <div className="text-center">
-            <div className="text-4xl mb-2">⚠️</div>
-            <p>Invalid data format</p>
-          </div>
-        </div>
-      );
-    }
-
-    const safeWords = words.filter(word => {
-      const isValid = word &&
-        typeof word === 'object' &&
-        word.text &&
-        typeof word.text === 'string' &&
-        word.text.trim().length > 0 &&
-        typeof word.value === 'number' &&
-        word.value > 0;
-      
-      return isValid;
-    });
-
-    if (safeWords.length === 0) {
-      return (
-        <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-          <div className="text-center">
-            <div className="text-4xl mb-2">☁️</div>
-            <p>No valid words to display</p>
-          </div>
-        </div>
-      );
-    }
-
-    // Use our custom wordcloud component
-    return (
-      <CustomWordCloud
-        words={safeWords}
-        colors={options?.colors || ['#1e40af', '#2563eb', '#3b82f6']}
-        fontFamily={options?.fontFamily || 'Inter, system-ui, sans-serif'}
-        fontWeight={options?.fontWeight || 'normal'}
-        minSize={12}
-        maxSize={60}
-      />
-    );
-  } catch (error) {
-    console.error('SafeWordCloud Error:', error);
-    return (
-      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-        <div className="text-center">
-          <div className="text-4xl mb-2">⚠️</div>
-          <p>Error rendering wordcloud</p>
-        </div>
-      </div>
-    );
-  }
-};
-
-interface WordCloudData {
-  text: string;
-  value: number;
-}
-
-interface WordCloudPollProps {
-  pollIndex: number;
-  question: string;
-  maxWords: number;
-  wordLimit: number;
-  pagePath: string;
-  questionNumber?: number;
-  authCode?: string;
-  predefinedOptions?: Array<{ display: string; keyword: string }>;
-  onVote?: (pollIndex: number, words: string[]) => void;
-}
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useToast } from '@/components/Toast';
+import WordCloudInputSection from './wordcloud/WordCloudInputSection';
+import WordCloudResultsSection from './wordcloud/WordCloudResultsSection';
+import type { WordCloudPollProps, WordCloudResults } from './wordcloud/WordCloudTypes';
 
 export default function WordCloudPoll({ 
   pollIndex, 
@@ -117,26 +17,21 @@ export default function WordCloudPoll({
   predefinedOptions = [],
   onVote
 }: WordCloudPollProps) {
-  const [words, setWords] = useState<string[]>([]);
+  const { showToast } = useToast();
   const [hasVoted, setHasVoted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<{
-    total_votes: number;
-    words: WordCloudData[];
-    user_words?: string[];
-  }>({
+  const [results, setResults] = useState<WordCloudResults>({
     total_votes: 0,
     words: [],
     user_words: []
   });
-  const [showResults, setShowResults] = useState(false);
   const [showAggregatedResults, setShowAggregatedResults] = useState(false);
   const [isFetchingAggregated, setIsFetchingAggregated] = useState(false);
   const [userWords, setUserWords] = useState<string[] | null>(null);
   const [showChangeOption, setShowChangeOption] = useState(false);
   const [selectedPredefined, setSelectedPredefined] = useState<string[]>([]);
   const [customWords, setCustomWords] = useState<string>('');
-  const [isFetching, setIsFetching] = useState(false);
+  const isFetchingRef = useRef(false);
 
   // Handle predefined option selection
   const handlePredefinedToggle = (keyword: string) => {
@@ -146,7 +41,11 @@ export default function WordCloudPoll({
       } else {
         // Check if we're at max words limit
         if (prev.length >= maxWords) {
-          alert(`You can only select up to ${maxWords} words.`);
+          showToast({
+            type: 'warning',
+            title: 'Selection limit reached',
+            message: `You can only select up to ${maxWords} words.`
+          });
           return prev;
         }
         // Clear custom words when selecting predefined options
@@ -169,27 +68,30 @@ export default function WordCloudPoll({
     return [...selectedPredefined, ...customWordsArray];
   };
 
-  // Aquatic blue/green color schemes for word cloud
-  const colorSchemes = {
-    aquatic: {
-      colors: ['#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe'],
-      background: 'transparent'
-    },
-    ocean: {
-      colors: ['#0f766e', '#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4', '#ccfbf1'],
-      background: 'transparent'
-    },
-    marine: {
-      colors: ['#1e3a8a', '#1e40af', '#3b82f6', '#06b6d4', '#0891b2', '#0e7490'],
-      background: 'transparent'
-    },
-    teal: {
-      colors: ['#134e4a', '#0f766e', '#14b8a6', '#2dd4bf', '#5eead4', '#a7f3d0'],
-      background: 'transparent'
+  const applyExistingWords = useCallback((existingWords: string[] | null) => {
+    if (!existingWords || existingWords.length === 0) {
+      setSelectedPredefined([]);
+      setCustomWords('');
+      return;
     }
-  };
 
-  const [selectedColorScheme, setSelectedColorScheme] = useState<keyof typeof colorSchemes>('aquatic');
+    const keywordLookup = new Map(predefinedOptions.map(option => [option.keyword.toLowerCase(), option.keyword]));
+    const matchedKeywords: string[] = [];
+    const customOnly: string[] = [];
+
+    existingWords.forEach(word => {
+      const keyword = keywordLookup.get(word.toLowerCase());
+      if (keyword) {
+        matchedKeywords.push(keyword);
+      } else {
+        customOnly.push(word);
+      }
+    });
+
+    setSelectedPredefined(matchedKeywords);
+    setCustomWords(customOnly.join(' '));
+  }, [predefinedOptions]);
+
 
   // Handler to fetch and show aggregated results
   const handleViewResults = async () => {
@@ -213,20 +115,28 @@ export default function WordCloudPoll({
       } else {
         const errorData = await response.json().catch(() => ({}));
         console.error(`[WordCloudPoll ${pollIndex}] Failed to fetch aggregated results:`, response.status, errorData);
-        alert('Failed to load aggregated results. Please try again.');
+        showToast({
+          type: 'error',
+          title: 'Unable to load results',
+          message: 'Please try again.'
+        });
       }
     } catch (error) {
       console.error(`[WordCloudPoll ${pollIndex}] Error fetching aggregated results:`, error);
-      alert('Failed to load aggregated results. Please try again.');
+      showToast({
+        type: 'error',
+        title: 'Unable to load results',
+        message: 'Please try again.'
+      });
     } finally {
       setIsFetchingAggregated(false);
     }
   };
 
   const fetchResults = useCallback(async () => {
-    if (isFetching) return; // Prevent multiple simultaneous calls
-    
-    setIsFetching(true);
+    if (isFetchingRef.current) return; // Prevent multiple simultaneous calls
+
+    isFetchingRef.current = true;
     try {
       // Only fetch results for survey-results pages (authenticated users)
       // CEW pages should remain insert-only without fetching results
@@ -254,7 +164,6 @@ export default function WordCloudPoll({
           setUserWords(userWordsFromResponse);
           setHasVoted(true);
           // Don't auto-show aggregated results - user must click "View Results" button
-          setShowResults(false);
         } else {
           setUserWords(null);
         }
@@ -269,13 +178,13 @@ export default function WordCloudPoll({
       // Set empty results on error
       setResults({ total_votes: 0, words: [], user_words: [] });
     } finally {
-      setIsFetching(false);
+      isFetchingRef.current = false;
     }
-  }, [pagePath, pollIndex, authCode]);
+  }, [authCode, pagePath, pollIndex]);
 
   // Initialize and check for existing vote
   useEffect(() => {
-    setWords([]);
+    applyExistingWords(userWords);
     
     // Add a small delay to prevent rapid successive calls
     const timeoutId = setTimeout(() => {
@@ -288,28 +197,11 @@ export default function WordCloudPoll({
     }
     
     return () => clearTimeout(timeoutId);
-  }, [pagePath, pollIndex, authCode]);
+  }, [applyExistingWords, fetchResults, pagePath, pollIndex, authCode, userWords]);
 
   const checkCEWWordStatus = () => {
     // For CEW pages, don't persist words at all - start fresh each time
     // This ensures true privacy in incognito mode
-  };
-
-  const handleWordChange = (index: number, value: string) => {
-    const newWords = [...words];
-    newWords[index] = value;
-    setWords(newWords);
-  };
-
-  const addWordField = () => {
-    if (words.length < maxWords) {
-      setWords([...words, '']);
-    }
-  };
-
-  const removeWordField = (index: number) => {
-    const newWords = words.filter((_, i) => i !== index);
-    setWords(newWords);
   };
 
   const handleSubmitWords = async () => {
@@ -321,26 +213,42 @@ export default function WordCloudPoll({
     const allWords = getAllSelectedWords();
     
     if (allWords.length === 0) {
-      alert('Please select at least one option or enter custom words.');
+      showToast({
+        type: 'warning',
+        title: 'No words selected',
+        message: 'Please select at least one option or enter custom words.'
+      });
       return;
     }
 
     if (allWords.length > maxWords) {
-      alert(`Please select no more than ${maxWords} words total.`);
+      showToast({
+        type: 'warning',
+        title: 'Selection limit exceeded',
+        message: `Please select no more than ${maxWords} words total.`
+      });
       return;
     }
 
     // Validate word length
     const invalidWords = allWords.filter(word => word.length > wordLimit);
     if (invalidWords.length > 0) {
-      alert(`Words must be ${wordLimit} characters or less. Invalid words: ${invalidWords.join(', ')}`);
+      showToast({
+        type: 'warning',
+        title: 'Word too long',
+        message: `Words must be ${wordLimit} characters or less. Invalid words: ${invalidWords.join(', ')}`
+      });
       return;
     }
 
     // Check for duplicates
     const uniqueWords = [...new Set(allWords.map(word => word.toLowerCase()))];
     if (uniqueWords.length !== allWords.length) {
-      alert('Please select unique words (no duplicates).');
+      showToast({
+        type: 'warning',
+        title: 'Duplicate words',
+        message: 'Please select unique words (no duplicates).'
+      });
       return;
     }
 
@@ -369,13 +277,6 @@ export default function WordCloudPoll({
         setHasVoted(true);
         // For /survey-results/* pages, don't auto-show aggregated results
         // Only show user's confirmation. Aggregated results shown via button.
-        if (pagePath.startsWith('/cew-polls/')) {
-          // CEW pages: don't show results at all (privacy)
-          setShowResults(false);
-        } else {
-          // Survey-results pages: don't auto-show aggregated results
-          setShowResults(false);
-        }
         setUserWords(allWords);
         setShowChangeOption(false);
         
@@ -394,15 +295,19 @@ export default function WordCloudPoll({
       } else {
         const errorData = await response.json();
         console.error('API Error Response:', errorData);
-        if (errorData.error) {
-          alert(`Error: ${errorData.error}`);
-        } else {
-          alert('Failed to submit words. Please try again.');
-        }
+        showToast({
+          type: 'error',
+          title: 'Unable to submit words',
+          message: errorData.error ?? 'Please try again.'
+        });
       }
     } catch (error) {
       console.error('Error submitting words:', error);
-      alert(`Failed to submit words: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showToast({
+        type: 'error',
+        title: 'Unable to submit words',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
     } finally {
       setIsLoading(false);
     }
@@ -411,30 +316,15 @@ export default function WordCloudPoll({
   const handleChangeWords = () => {
     setShowChangeOption(true);
     setHasVoted(false);
-    setWords([]);
+    applyExistingWords(userWords);
   };
 
   const handleCancelChange = () => {
     setShowChangeOption(false);
     setHasVoted(true);
-    setWords(userWords || []);
+    applyExistingWords(userWords);
   };
 
-  const wordCloudOptions = {
-    colors: colorSchemes[selectedColorScheme].colors,
-    enableTooltip: true,
-    deterministic: false,
-    fontFamily: 'Inter, system-ui, sans-serif',
-    fontSizes: [12, 60] as [number, number],
-    fontStyle: 'normal' as const,
-    fontWeight: 'normal' as const,
-    padding: 1,
-    rotations: 3,
-    rotationAngles: [0, 90] as [number, number],
-    scale: 'sqrt' as const,
-    spiral: 'archimedean' as const,
-    transitionDuration: 1000,
-  };
 
   return (
     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-lg">
@@ -510,207 +400,24 @@ export default function WordCloudPoll({
       
       {/* Word Input Section */}
       {(!hasVoted || showChangeOption) && (
-        <div className="mb-8">
-          {/* Predefined Options */}
-          {predefinedOptions.length > 0 && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Choose ONE option below OR enter custom words (not both):
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {predefinedOptions.map((option, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handlePredefinedToggle(option.keyword)}
-                    className={`p-4 text-left rounded-lg border-2 transition-all duration-200 ${
-                      selectedPredefined.includes(option.keyword)
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100'
-                        : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-blue-300 dark:hover:border-blue-500'
-                    }`}
-                  >
-                    <div className="font-medium">{option.display}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Will submit: <strong>{option.keyword}</strong>
-                    </div>
-                  </button>
-                ))}
-              </div>
-              <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-                Selected: {selectedPredefined.length} option{selectedPredefined.length !== 1 ? 's' : ''}
-              </div>
-            </div>
-          )}
-
-          {/* Custom Words Input */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Or enter custom words (up to {maxWords} words, {wordLimit} characters each):
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                value={customWords}
-                onChange={(e) => handleCustomWordsChange(e.target.value)}
-                placeholder="Enter custom words separated by spaces"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                style={{ 
-                  pointerEvents: 'auto',
-                  position: 'relative',
-                  zIndex: 10
-                }}
-                autoComplete="off"
-              />
-            </div>
-            <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {customWords.trim() ? `${customWords.trim().split(/\s+/).filter(w => w.length > 0).length} custom words` : 'No custom words entered'}
-            </div>
-          </div>
-          
-          <div className="mt-6 text-center">
-            <button
-              onClick={handleSubmitWords}
-              disabled={isLoading || getAllSelectedWords().length === 0}
-              className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                isLoading || getAllSelectedWords().length === 0
-                  ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg transform hover:-translate-y-1'
-              }`}
-            >
-              {isLoading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Submitting...</span>
-                </div>
-              ) : (
-                showChangeOption ? 'Update Words' : 'Submit Words'
-              )}
-            </button>
-          </div>
-        </div>
+        <WordCloudInputSection
+          maxWords={maxWords}
+          wordLimit={wordLimit}
+          predefinedOptions={predefinedOptions}
+          selectedPredefined={selectedPredefined}
+          customWords={customWords}
+          isLoading={isLoading}
+          onPredefinedToggle={handlePredefinedToggle}
+          onCustomWordsChange={handleCustomWordsChange}
+          onSubmit={handleSubmitWords}
+          getAllSelectedWords={getAllSelectedWords}
+          showChangeOption={showChangeOption}
+        />
       )}
 
       {/* Results Visualization - Only show when aggregated results are requested */}
       {showAggregatedResults && (results?.words?.length > 0 || (userWords && userWords.length > 0)) && (
-        <div className="mt-8">
-          <div className="mb-4 flex items-center justify-between">
-            <h4 className="text-lg font-semibold text-gray-800 dark:text-white">
-              Word Cloud Results ({results.total_votes || 0} response{(results.total_votes || 0) !== 1 ? 's' : ''})
-            </h4>
-            
-            {/* Color Scheme Selector */}
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Color:</span>
-              <select
-                value={selectedColorScheme}
-                onChange={(e) => setSelectedColorScheme(e.target.value as keyof typeof colorSchemes)}
-                className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="aquatic">Aquatic Blue</option>
-                <option value="ocean">Ocean Teal</option>
-                <option value="marine">Marine Blue</option>
-                <option value="teal">Deep Teal</option>
-              </select>
-            </div>
-          </div>
-          
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-inner">
-              <div style={{ height: '400px', width: '100%' }}>
-                {(() => {
-                  // Show aggregated words from ALL users
-                  const wordsToShow = results.words || [];
-                  
-                  if (!wordsToShow || !Array.isArray(wordsToShow) || wordsToShow.length === 0) {
-                    return (
-                      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-                        <div className="text-center">
-                          <div className="text-4xl mb-2">☁️</div>
-                          <p>No words submitted yet</p>
-                          <p className="text-sm">Be the first to submit words!</p>
-                        </div>
-                      </div>
-                    );
-                  }
-                  
-                  const validWords = wordsToShow.filter(word => 
-                    word && 
-                    typeof word === 'object' && 
-                    word.text && 
-                    typeof word.text === 'string' && 
-                    word.text.trim().length > 0 && 
-                    typeof word.value === 'number' && 
-                    word.value > 0
-                  );
-                  
-                  
-                  if (validWords.length === 0) {
-                    return (
-                      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-                        <div className="text-center">
-                          <div className="text-4xl mb-2">⚠️</div>
-                          <p>No valid words to display</p>
-                        </div>
-                      </div>
-                    );
-                  }
-                  
-                  return (
-                    <ErrorBoundary fallback={
-                      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-                        <div className="text-center">
-                          <div className="text-4xl mb-2">⚠️</div>
-                          <p>Error displaying wordcloud</p>
-                          <p className="text-sm">Please refresh the page</p>
-                        </div>
-                      </div>
-                    }>
-                      <SafeWordCloud
-                        words={validWords}
-                        options={wordCloudOptions}
-                      />
-                    </ErrorBoundary>
-                  );
-                })()}
-              </div>
-            </div>
-          
-          {/* Word Frequency Table */}
-          {results.words && results.words.length > 0 && (
-            <div className="mt-6">
-              <h5 className="text-md font-semibold text-gray-800 dark:text-white mb-3">
-                Word Frequency
-              </h5>
-              <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow">
-                <div className="max-h-48 overflow-y-auto">
-                  {(() => {
-                    // Show aggregated words from ALL users
-                    const wordsToShow = results.words || [];
-                    
-                    const maxValue = Math.max(...wordsToShow.map(w => w.value));
-                    
-                    return wordsToShow.map((word, index) => (
-                      <div key={index} className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-                        <span className="font-medium text-gray-900 dark:text-white">{word.text}</span>
-                        <div className="flex items-center space-x-2">
-                          <div className="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                            <div 
-                              className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                              style={{ 
-                                width: `${Math.min((word.value / maxValue) * 100, 100)}%` 
-                              }}
-                            ></div>
-                          </div>
-                          <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 min-w-[2rem] text-right">
-                            {word.value}
-                          </span>
-                        </div>
-                      </div>
-                    ));
-                  })()}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <WordCloudResultsSection results={results} />
       )}
     </div>
   );
