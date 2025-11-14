@@ -5,6 +5,9 @@ import { cookies } from 'next/headers';
 import AdminDashboardClient from './AdminDashboardClient';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
+// Force dynamic rendering - this page requires authentication and uses Header with useAuth()
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboardPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -16,10 +19,10 @@ export default async function AdminDashboardPage() {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value, ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value, ...options }); } catch { /* noop */ }
         },
         remove(name: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value: '', ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value: '', ...options }); } catch { /* noop */ }
         },
       },
     }

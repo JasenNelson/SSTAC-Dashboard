@@ -1,10 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import QRCodeDisplay from '@/components/dashboard/QRCodeDisplay';
 import CustomWordCloud from '@/components/dashboard/CustomWordCloud';
 import PrioritizationMatrixGraph from '@/components/graphs/PrioritizationMatrixGraph';
+import { useToast } from '@/components/Toast';
+import {
+  fetchPollResultsData,
+  buildCombinedPollResults,
+  type CombinedPollResult as PollResult
+} from '@/services/pollResultsService';
 import {
   exportSingleChoicePollToCSV,
   exportRankingPollToCSV,
@@ -14,7 +20,6 @@ import {
   downloadCSV,
   generatePollExportFilename,
   generateBulkExportFilename,
-  getFilterModeDisplayName,
   type ExportMetadata as ExportMetadataType
 } from '@/lib/poll-export-utils';
 
@@ -25,7 +30,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallbac
     this.state = { hasError: false };
   }
 
-  static getDerivedStateFromError(_error: Error) {
+  static getDerivedStateFromError() {
     return { hasError: true };
   }
 
@@ -40,43 +45,6 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallbac
 
     return this.props.children;
   }
-}
-
-interface PollResult {
-  poll_id?: string;
-  ranking_poll_id?: string;
-  wordcloud_poll_id?: string;
-  page_path: string;
-  poll_index: number;
-  question: string;
-  options: string[];
-  total_votes: number;
-  results: Array<{
-    option_index: number;
-    option_text: string;
-    votes: number;
-    averageRank?: number;
-  }>;
-  is_ranking?: boolean;
-  is_wordcloud?: boolean;
-  wordcloud_words?: Array<{
-    text: string;
-    value: number;
-  }>;
-  combined_survey_votes?: number;
-  combined_cew_votes?: number;
-  survey_results?: Array<{
-    option_index: number;
-    option_text: string;
-    votes: number;
-    averageRank?: number;
-  }>;
-  cew_results?: Array<{
-    option_index: number;
-    option_text: string;
-    votes: number;
-    averageRank?: number;
-  }>;
 }
 
 interface IndividualVotePair {
@@ -95,6 +63,7 @@ interface MatrixData {
 }
 
 export default function PollResultsClient() {
+  const { showToast } = useToast();
   const [pollResults, setPollResults] = useState<PollResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -106,26 +75,51 @@ export default function PollResultsClient() {
   const [leftPanelVisible, setLeftPanelVisible] = useState(true);
   const [qrCodeExpanded, setQrCodeExpanded] = useState(false);
   const [expandedPollGroup, setExpandedPollGroup] = useState<string | null>(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [showMatrixGraphs, setShowMatrixGraphs] = useState<{[key: string]: boolean}>({});
   const [showPresentationControls, setShowPresentationControls] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // Toggle matrix graph visibility for a specific question pair
-  const toggleMatrixGraph = (questionPairKey: string) => {
+  const toggleMatrixGraph = useCallback((questionPairKey: string) => {
     setShowMatrixGraphs(prev => ({
       ...prev,
       [questionPairKey]: !prev[questionPairKey]
     }));
-  };
-
-  useEffect(() => {
-    fetchPollResults();
   }, []);
 
+  const fetchPollResults = useCallback(async () => {
+    try {
+      setLoading(true);
 
-  // Fetch matrix data for prioritization graphs
+      const { singleChoice, ranking, wordcloud, errors } = await fetchPollResultsData(supabase);
+
+      if (errors.singleChoice) {
+        console.error('Error fetching single-choice poll results:', errors.singleChoice);
+      }
+      if (errors.ranking) {
+        console.error('Error fetching ranking poll results:', errors.ranking);
+      }
+      if (errors.wordcloud) {
+        console.error('Error fetching wordcloud poll results:', errors.wordcloud);
+      }
+
+      const { combinedResults, fallbackResults } = buildCombinedPollResults(singleChoice, ranking, wordcloud);
+      const nextResults = combinedResults.length ? combinedResults : fallbackResults;
+
+      setPollResults(nextResults);
+    } catch (err) {
+      console.error('Error fetching poll results:', err);
+      setError('Failed to fetch poll results');
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    void fetchPollResults();
+  }, [fetchPollResults]);
+
   useEffect(() => {
     const fetchMatrixData = async () => {
       try {
@@ -133,734 +127,20 @@ export default function PollResultsClient() {
         const response = await fetch(`/api/graphs/prioritization-matrix?filter=${filterMode}`);
         console.log(`🔍 MATRIX API RESPONSE: Status ${response.status}`);
         if (response.ok) {
-        const data = await response.json();
-        console.log(`🔍 MATRIX API DATA:`, data);
-        console.log(`🔍 MATRIX API DATA DETAILED:`, JSON.stringify(data, null, 2));
-        setMatrixData(data);
+          const data = await response.json();
+          console.log('🔍 MATRIX API DATA:', data);
+          console.log('🔍 MATRIX API DATA DETAILED:', JSON.stringify(data, null, 2));
+          setMatrixData(data);
         } else {
           console.error(`❌ MATRIX API ERROR: ${response.status} ${response.statusText}`);
         }
       } catch (error) {
-        console.error("❌ MATRIX API FAILED:", error);
+        console.error('❌ MATRIX API FAILED:', error);
       }
     };
 
-    fetchMatrixData();
-  }, [pollResults, filterMode]); // Re-run when poll data or filter changes
-
-  const fetchPollResults = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch single-choice, ranking, and wordcloud poll results with error handling
-      const [singleChoiceResult, rankingResult, wordcloudResult] = await Promise.all([
-        supabase.from('poll_results').select('*').order('page_path', { ascending: true }).order('poll_index', { ascending: true }),
-        supabase.from('ranking_results').select('*').order('page_path', { ascending: true }).order('poll_index', { ascending: true }),
-        supabase.from('wordcloud_results').select('*').order('page_path', { ascending: true }).order('poll_index', { ascending: true })
-      ]);
-
-      // Handle errors gracefully without breaking admin status
-      if (singleChoiceResult.error) {
-        console.error('Error fetching single-choice poll results:', singleChoiceResult.error);
-        // Don't throw error, just log it and continue
-      }
-      if (rankingResult.error) {
-        console.error('Error fetching ranking poll results:', rankingResult.error);
-        // Don't throw error, just log it and continue
-      }
-      if (wordcloudResult.error) {
-        console.error('Error fetching wordcloud poll results:', wordcloudResult.error);
-        // Don't throw error, just log it and continue
-      }
-
-      // Process results with fallback for missing data
-      const singleChoiceData = singleChoiceResult.data || [];
-      const rankingData = rankingResult.data || [];
-      const wordcloudData = wordcloudResult.data || [];
-      
-      // Debug: Log specific data for tiered-framework
-      console.log('🔍 Raw single-choice data for tiered-framework:', 
-        singleChoiceData.filter(p => p.page_path.includes('tiered-framework'))
-      );
-      console.log('🔍 Raw ranking data for tiered-framework:', 
-        rankingData.filter(p => p.page_path.includes('tiered-framework'))
-      );
-      
-      // Debug: Log wordcloud data for prioritization
-      console.log('🔍 Raw wordcloud data for prioritization:', 
-        wordcloudData.filter(p => p.page_path.includes('prioritization'))
-      );
-
-      // Define current active polls to filter out old/test data
-      // Use more specific matching patterns to avoid false positives
-      const currentPollQuestions = [
-        // Holistic Protection Questions (8 single-choice questions - matching corrected database)
-        "Rank the importance of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs). (1 = very important to 5 = not important)",
-        "Rank the feasibility of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs). (1 = easily achievable to 5 = not feasible)",
-        "Rank the importance of developing CSR sediment standards for direct toxicity to human receptors (matrix standards). (1 = very important to 5 = not important)",
-        "Rank the feasibility of developing CSR sediment standards for direct toxicity to human receptors (matrix standards). (1 = easily achievable to 5 = not feasible)",
-        "Rank the importance of developing new CSR sediment standards for food-related toxicity to ecological receptors. (1 = very important to 5 = not important)",
-        "Rank the feasibility of developing new CSR sediment standards for food-related toxicity to ecological receptors. (1 = easily achievable to 5 = not feasible)",
-        "Rank the importance of developing CSR sediment standards for food-related toxicity to human receptors. (1 = very important to 5 = not important)",
-        "Rank the feasibility of developing CSR sediment standards for food-related toxicity to human receptors. (1 = easily achievable to 5 = not feasible)",
-        
-        // Tiered Framework Questions (3 single-choice questions)
-        "What is the primary regulatory advantage of using a probabilistic framework (e.g., Bayesian) to integrate EqP and BLM predictions into a scientific framework for deriving site-specific sediment standards (Tier 2)?",
-        "In developing a probabilistic framework for deriving site-specific sediment standards (Tier 2), which data type is most critical for effectively narrowing the uncertainty of the final risk estimate?",
-        "What is the biggest practical hurdle to overcome when implementing a Bayesian framework in the development of a scientific framework for deriving site-specific sediment standards (Tier 2)?",
-        
-        // Prioritization Questions (5 questions: 2 single-choice + 2 ranking + 1 wordcloud)
-        "Rank the importance of incorporating bioavailability adjustments into sediment standards. (1 = very important to 5 = not important)",
-        "Rank the feasibility of incorporating bioavailability adjustments into sediment standards. (1 = easily achievable to 5 = not feasible)",
-        "To help focus development of matrix standards, please rank the four actions below for the degree to which they would improve utility of the standards (1 = top priority; 4 = lowest priority). If you do not know or have an opinion, do not respond to any given question.",
-        "Of the four options below, what focus will provide greatest value to holistic sediment management in BC? (1 = top priority; 4 = lowest priority)",
-        "Overall, what is the greatest constraint to advancing holistic sediment protection in BC?"
-      ];
-
-      // Group polls by question to combine survey-results and cew-polls data
-      const pollGroups = new Map<string, {
-        surveyPoll?: any;
-        cewPoll?: any;
-        isRanking: boolean;
-        isWordcloud?: boolean;
-        question: string;
-        poll_index: number;
-        options: string[];
-      }>();
-
-      // Process single-choice polls
-      singleChoiceData.forEach(poll => {
-        // Only process polls that match current active questions
-        // Use more flexible matching to handle minor text differences
-        const matchesCurrentQuestion = currentPollQuestions.some(question => {
-          const pollStart = poll.question.substring(0, 100).toLowerCase();
-          const questionStart = question.substring(0, 100).toLowerCase();
-          return pollStart.includes(questionStart.substring(0, 50)) || 
-                 questionStart.includes(pollStart.substring(0, 50)) ||
-                 pollStart.includes('matrix sediment standards') && questionStart.includes('matrix sediment standards');
-        });
-        if (!matchesCurrentQuestion) {
-          console.log('🔍 Single-choice poll not matching current questions:', {
-            page_path: poll.page_path,
-            poll_index: poll.poll_index,
-            question_preview: poll.question.substring(0, 100)
-          });
-          return;
-        }
-        
-        console.log('✅ Single-choice poll matched:', {
-          page_path: poll.page_path,
-          poll_index: poll.poll_index,
-          total_votes: poll.total_votes,
-          question_preview: poll.question.substring(0, 100)
-        });
-        
-        // Debug: Check if this is holistic protection question 1
-        if (poll.page_path.includes('holistic-protection') && poll.poll_index === 0) {
-          console.log('🔍 HOLISTIC Q1 DEBUG:', {
-            poll_question: poll.question,
-            expected_question: currentPollQuestions[0],
-            match_found: currentPollQuestions.some(q => q.includes('ecosystem health from direct toxicity')),
-            poll_start: poll.question.substring(0, 100).toLowerCase(),
-            expected_start: currentPollQuestions[0].substring(0, 100).toLowerCase()
-          });
-        }
-        
-        
-        // Create a key that groups polls by topic and poll_index, regardless of page_path
-        // Use consistent keys for all topics to group survey and CEW polls together
-        let key;
-        if (poll.page_path.includes('holistic-protection')) {
-          key = `holistic-protection_${poll.poll_index}`;
-        } else if (poll.page_path.includes('tiered-framework')) {
-          key = `tiered-framework_${poll.poll_index}`;
-        } else if (poll.page_path.includes('prioritization')) {
-          key = `prioritization_${poll.poll_index}`;
-        } else if (poll.page_path.includes('wiks')) {
-          key = `wiks_${poll.poll_index}`;
-        } else {
-          // For any other topics, extract the topic name from the page path
-          const topic = poll.page_path.split('/').pop() || 'unknown';
-          key = `${topic}_${poll.poll_index}`;
-        }
-        
-        
-        if (!pollGroups.has(key)) {
-          pollGroups.set(key, {
-            isRanking: false,
-            question: poll.question,
-            poll_index: poll.poll_index,
-            options: poll.options
-          });
-        }
-        const group = pollGroups.get(key)!;
-        if (poll.page_path.startsWith('/survey-results') || poll.page_path === '/wiks') {
-          group.surveyPoll = poll;
-          console.log('📊 Added survey poll to group:', {
-            key,
-            page_path: poll.page_path,
-            poll_index: poll.poll_index,
-            total_votes: poll.total_votes
-          });
-        } else if (poll.page_path.startsWith('/cew-polls')) {
-          group.cewPoll = poll;
-          console.log('📊 Added CEW poll to group:', {
-            key,
-            page_path: poll.page_path,
-            poll_index: poll.poll_index,
-            total_votes: poll.total_votes
-          });
-          // For Holistic Protection, prefer the CEW question text
-          if (poll.page_path.includes('holistic-protection')) {
-            group.question = poll.question;
-            group.options = poll.options;
-          }
-        }
-      });
-
-      // Process ranking polls
-      rankingData.forEach(poll => {
-        // Debug: Log all ranking polls to see what we're working with
-        console.log('🔍 Processing ranking poll:', {
-          page_path: poll.page_path,
-          poll_index: poll.poll_index,
-          question_preview: poll.question.substring(0, 100),
-          total_votes: poll.total_votes
-        });
-        
-        // Only process polls that match current active questions
-        // Use more flexible matching to handle minor text differences
-        const matchesCurrentQuestion = currentPollQuestions.some(question => {
-          const pollStart = poll.question.substring(0, 100).toLowerCase();
-          const questionStart = question.substring(0, 100).toLowerCase();
-          return pollStart.includes(questionStart.substring(0, 50)) || 
-                 questionStart.includes(pollStart.substring(0, 50)) ||
-                 pollStart.includes('matrix standards') && questionStart.includes('matrix standards');
-        });
-        
-        if (!matchesCurrentQuestion) {
-          console.log('❌ Ranking poll filtered out - no matching question:', {
-            page_path: poll.page_path,
-            poll_index: poll.poll_index,
-            question_preview: poll.question.substring(0, 100)
-          });
-          return;
-        }
-        
-        console.log('✅ Ranking poll matched:', {
-          page_path: poll.page_path,
-          poll_index: poll.poll_index,
-          total_votes: poll.total_votes
-        });
-        
-        
-        // Create a key that groups polls by topic and poll_index, regardless of page_path
-        // Use consistent keys for all topics to group survey and CEW polls together
-        let key;
-        if (poll.page_path.includes('holistic-protection')) {
-          key = `holistic-protection_${poll.poll_index}`;
-        } else if (poll.page_path.includes('tiered-framework')) {
-          key = `tiered-framework_${poll.poll_index}`;
-        } else if (poll.page_path.includes('prioritization')) {
-          key = `prioritization_${poll.poll_index}`;
-        } else if (poll.page_path.includes('wiks')) {
-          key = `wiks_${poll.poll_index}`;
-        } else {
-          // For any other topics, extract the topic name from the page path
-          const topic = poll.page_path.split('/').pop() || 'unknown';
-          key = `${topic}_${poll.poll_index}`;
-        }
-        
-        if (!pollGroups.has(key)) {
-          pollGroups.set(key, {
-            isRanking: true,
-            question: poll.question,
-            poll_index: poll.poll_index,
-            options: poll.options
-          });
-        } else {
-          // If group already exists, ensure it's marked as ranking
-          const group = pollGroups.get(key)!;
-          group.isRanking = true;
-        }
-        const group = pollGroups.get(key)!;
-        if (poll.page_path.startsWith('/survey-results') || poll.page_path === '/wiks') {
-          group.surveyPoll = poll;
-        } else if (poll.page_path.startsWith('/cew-polls')) {
-          group.cewPoll = poll;
-          // For Holistic Protection, prefer the CEW question text
-          if (poll.page_path.includes('holistic-protection')) {
-            group.question = poll.question;
-            group.options = poll.options;
-          }
-        }
-      });
-
-      // Process wordcloud polls - aggregate by poll_id first
-      const wordcloudPollsMap = new Map<string, {
-        poll_id: string;
-        page_path: string;
-        poll_index: number;
-        question: string;
-        max_words: number;
-        word_limit: number;
-        total_votes: number;
-        words: Array<{ text: string; value: number }>;
-        surveyWords: Array<{ text: string; value: number }>;
-        cewWords: Array<{ text: string; value: number }>;
-      }>();
-
-      wordcloudData.forEach(poll => {
-        // Only process polls that match current active questions
-        // Use more flexible matching to handle minor text differences
-        const matchesCurrentQuestion = currentPollQuestions.some(question => {
-          const pollStart = poll.question.substring(0, 100).toLowerCase();
-          const questionStart = question.substring(0, 100).toLowerCase();
-          return pollStart.includes(questionStart.substring(0, 50)) || 
-                 questionStart.includes(pollStart.substring(0, 50)) ||
-                 pollStart.includes('barrier') && questionStart.includes('barrier');
-        });
-        if (!matchesCurrentQuestion) {
-          console.log('🔍 Wordcloud poll not matching current questions:', {
-            page_path: poll.page_path,
-            poll_index: poll.poll_index,
-            question_preview: poll.question.substring(0, 100)
-          });
-          return;
-        }
-
-        const pollId = poll.poll_id;
-        if (!wordcloudPollsMap.has(pollId)) {
-          wordcloudPollsMap.set(pollId, {
-            poll_id: pollId,
-            page_path: poll.page_path,
-            poll_index: poll.poll_index,
-            question: poll.question,
-            max_words: poll.max_words || 3,
-            word_limit: poll.word_limit || 20,
-            total_votes: poll.total_responses || 0,
-            words: [],
-            surveyWords: [],
-            cewWords: []
-          });
-        }
-
-        const pollData = wordcloudPollsMap.get(pollId)!;
-        
-        // Add word data
-        if (poll.word && poll.frequency) {
-          const wordData = { text: poll.word, value: poll.frequency };
-          pollData.words.push(wordData);
-          
-          if (poll.page_path.startsWith('/survey-results') || poll.page_path === '/wiks') {
-            pollData.surveyWords.push(wordData);
-          } else if (poll.page_path.startsWith('/cew-polls')) {
-            pollData.cewWords.push(wordData);
-          }
-        }
-      });
-
-      // Convert aggregated wordcloud data to poll groups
-      wordcloudPollsMap.forEach((pollData, pollId) => {
-        
-        // Create a key that groups polls by topic and poll_index
-        let key;
-        if (pollData.page_path.includes('tiered-framework')) {
-          key = `tiered-framework_${pollData.poll_index}`;
-        } else if (pollData.page_path.includes('holistic-protection')) {
-          key = `holistic-protection_${pollData.poll_index}`;
-        } else if (pollData.page_path.includes('prioritization')) {
-          key = `prioritization_${pollData.poll_index}`;
-        } else if (pollData.page_path.includes('wiks')) {
-          key = `wiks_${pollData.poll_index}`;
-        } else {
-          const topic = pollData.page_path.split('/').pop() || 'unknown';
-          key = `${topic}_${pollData.poll_index}`;
-        }
-
-        // Sort words by frequency
-        pollData.words.sort((a, b) => b.value - a.value);
-        pollData.surveyWords.sort((a, b) => b.value - a.value);
-        pollData.cewWords.sort((a, b) => b.value - a.value);
-
-        if (!pollGroups.has(key)) {
-          pollGroups.set(key, {
-            isRanking: false,
-            isWordcloud: true,
-            question: pollData.question,
-            poll_index: pollData.poll_index,
-            options: []
-          });
-        } else {
-          const group = pollGroups.get(key)!;
-          group.isWordcloud = true;
-        }
-
-        const group = pollGroups.get(key)!;
-        
-        // Create survey and CEW poll objects
-        if (pollData.surveyWords.length > 0) {
-          group.surveyPoll = {
-            ...pollData,
-            words: pollData.surveyWords,
-            total_votes: pollData.total_votes // Use database total_responses, not word frequency sum
-          };
-        }
-        
-        if (pollData.cewWords.length > 0) {
-          group.cewPoll = {
-            ...pollData,
-            words: pollData.cewWords,
-            total_votes: pollData.total_votes // Use database total_responses, not word frequency sum
-          };
-        }
-        
-        // Also create poll objects even if no words yet, but with correct total_votes
-        if (pollData.surveyWords.length === 0 && pollData.cewWords.length === 0) {
-          // No words yet, but we still need to create the poll structure
-          group.surveyPoll = {
-            ...pollData,
-            words: [],
-            total_votes: pollData.total_votes // Use database total_responses
-          };
-          group.cewPoll = {
-            ...pollData,
-            words: [],
-            total_votes: pollData.total_votes // Use database total_responses
-          };
-        }
-        
-        // Debug: Log wordcloud poll data processing
-        if (pollData.page_path.includes('prioritization')) {
-          console.log('🔍 Wordcloud poll data processing:', {
-            pollId: pollData.poll_id,
-            pagePath: pollData.page_path,
-            pollIndex: pollData.poll_index,
-            totalVotes: pollData.total_votes,
-            surveyWords: pollData.surveyWords,
-            cewWords: pollData.cewWords,
-            surveyPoll: group.surveyPoll ? { total_votes: group.surveyPoll.total_votes } : null,
-            cewPoll: group.cewPoll ? { total_votes: group.cewPoll.total_votes } : null
-          });
-        }
-      });
-
-      // Combine results for each group
-      const combinedResults: PollResult[] = [];
-      
-      
-      pollGroups.forEach((group, key) => {
-        const surveyPoll = group.surveyPoll;
-        const cewPoll = group.cewPoll;
-
-        let totalVotes = 0;
-        let surveyVotes = 0;
-        let cewVotes = 0;
-        let pollResults: any[] = [];
-        let surveyResults: any[] = [];
-        let cewResults: any[] = [];
-        let wordcloudWords: Array<{ text: string; value: number }> = [];
-
-        // Calculate vote counts based on poll type
-        if (group.isRanking) {
-          // For ranking polls, use total_votes field which represents unique participants
-          // Each user ranks ALL options, so total_votes = number of participants
-          // But we need to check the page_path to ensure proper separation
-          surveyVotes = surveyPoll && surveyPoll.page_path?.includes('/survey-results') ? (surveyPoll.total_votes || 0) : 0;
-          cewVotes = cewPoll && cewPoll.page_path?.includes('/cew-polls') ? (cewPoll.total_votes || 0) : 0;
-        } else if (group.isWordcloud) {
-          // For wordcloud polls, use total_responses from database which represents unique participants
-          // This is the correct way to count responses for wordcloud polls
-          // But we need to check the page_path to ensure proper separation
-          surveyVotes = surveyPoll && surveyPoll.page_path?.includes('/survey-results') ? (surveyPoll.total_votes || 0) : 0;
-          cewVotes = cewPoll && cewPoll.page_path?.includes('/cew-polls') ? (cewPoll.total_votes || 0) : 0;
-          
-          // Debug: Log wordcloud vote calculation
-          if (key.includes('prioritization')) {
-            console.log('🔍 Wordcloud vote calculation:', {
-              key,
-              surveyVotes,
-              cewVotes,
-              totalVotes: surveyVotes + cewVotes,
-              surveyPoll: surveyPoll ? { 
-                total_votes: surveyPoll.total_votes, 
-                words: surveyPoll.words?.length,
-                wordValues: surveyPoll.words?.map((w: any) => w.value) || []
-              } : null,
-              cewPoll: cewPoll ? { 
-                total_votes: cewPoll.total_votes, 
-                words: cewPoll.words?.length,
-                wordValues: cewPoll.words?.map((w: any) => w.value) || []
-              } : null
-            });
-          }
-        } else {
-          // For single-choice polls, sum up all votes in the results
-          // Each user selects ONE option, so sum of votes = total responses
-          // But we need to check the page_path to ensure proper separation
-          surveyVotes = surveyPoll && surveyPoll.page_path?.includes('/survey-results') ? (surveyPoll.results || []).reduce((sum: number, result: any) => sum + (result.votes || 0), 0) : 0;
-          cewVotes = cewPoll && cewPoll.page_path?.includes('/cew-polls') ? (cewPoll.results || []).reduce((sum: number, result: any) => sum + (result.votes || 0), 0) : 0;
-        }
-        totalVotes = surveyVotes + cewVotes;
-
-        // Debug: Log vote calculation for prioritization questions
-        if (key.includes('prioritization')) {
-          console.log('🔍 Prioritization vote calculation:', {
-            key,
-            isRanking: group.isRanking,
-            isWordcloud: group.isWordcloud,
-            surveyVotes,
-            cewVotes,
-            totalVotes,
-            surveyPoll: surveyPoll ? { total_votes: surveyPoll.total_votes, page_path: surveyPoll.page_path } : null,
-            cewPoll: cewPoll ? { total_votes: cewPoll.total_votes, page_path: cewPoll.page_path } : null
-          });
-        }
-
-        if (group.isRanking) {
-          // For ranking polls, we need to handle this differently
-          // Each person ranks ALL options, so we can't just sum votes
-          // We need to combine the ranking data properly
-          
-          if (surveyPoll && cewPoll) {
-            // Store original results separately
-            surveyResults = (surveyPoll.results || []).map((result: any) => ({
-              option_index: result.option_index,
-              option_text: result.option_text,
-              votes: surveyVotes, // Use participant count for ranking polls
-              averageRank: result.averageRank || 0
-            })).sort((a: any, b: any) => a.averageRank - b.averageRank);
-            
-            cewResults = (cewPoll.results || []).map((result: any) => ({
-              option_index: result.option_index,
-              option_text: result.option_text,
-              votes: cewVotes, // Use participant count for ranking polls
-              averageRank: result.averageRank || 0
-            })).sort((a: any, b: any) => a.averageRank - b.averageRank);
-            
-            // Combine them for "all" mode
-            const allResults = [...(surveyPoll.results || []), ...(cewPoll.results || [])];
-            
-            const optionMap = new Map<number, { 
-              totalRank: number, 
-              count: number, 
-              option_text: string
-            }>();
-            
-            allResults.forEach(result => {
-              if (!optionMap.has(result.option_index)) {
-                optionMap.set(result.option_index, {
-                  totalRank: 0,
-                  count: 0,
-                  option_text: result.option_text || group.options[result.option_index] || ''
-                });
-              }
-              const option = optionMap.get(result.option_index)!;
-              option.totalRank += (result.averageRank || 0) * (result.votes || 0);
-              option.count += result.votes || 0;
-            });
-            
-            pollResults = Array.from(optionMap.entries()).map(([optionIndex, data]) => ({
-              option_index: optionIndex,
-              option_text: data.option_text,
-              votes: totalVotes, // For ranking polls, votes should represent total participants
-              averageRank: data.count > 0 ? data.totalRank / data.count : 0
-            })).sort((a: any, b: any) => a.averageRank - b.averageRank);
-          } else if (surveyPoll) {
-            // Only survey data
-            surveyResults = (surveyPoll.results || []).map((result: any) => ({
-              option_index: result.option_index,
-              option_text: result.option_text,
-              votes: surveyVotes, // Use participant count for ranking polls
-              averageRank: result.averageRank || 0
-            })).sort((a: any, b: any) => a.averageRank - b.averageRank);
-            pollResults = surveyResults;
-          } else if (cewPoll) {
-            // Only CEW data
-            cewResults = (cewPoll.results || []).map((result: any) => ({
-              option_index: result.option_index,
-              option_text: result.option_text,
-              votes: cewVotes, // Use participant count for ranking polls
-              averageRank: result.averageRank || 0
-            })).sort((a: any, b: any) => a.averageRank - b.averageRank);
-            pollResults = cewResults;
-          } else {
-            pollResults = [];
-          }
-
-        } else if (group.isWordcloud) {
-          // For wordcloud polls, process word frequency data
-          
-          if (surveyPoll && cewPoll) {
-            // Combine word frequency data from both sources
-            const wordMap = new Map<string, number>();
-            
-            // Process survey words
-            if (surveyPoll.words) {
-              surveyPoll.words.forEach((word: any) => {
-                const key = word.text;
-                const value = word.value || 0;
-                if (key) {
-                  wordMap.set(key, (wordMap.get(key) || 0) + value);
-                }
-              });
-            }
-            
-            // Process CEW words
-            if (cewPoll.words) {
-              cewPoll.words.forEach((word: any) => {
-                const key = word.text;
-                const value = word.value || 0;
-                if (key) {
-                  wordMap.set(key, (wordMap.get(key) || 0) + value);
-                }
-              });
-            }
-            
-            // Convert to array and sort by frequency
-            wordcloudWords = Array.from(wordMap.entries())
-              .map(([text, value]) => ({ text, value }))
-              .sort((a, b) => b.value - a.value);
-          } else if (surveyPoll) {
-            // Only survey data
-            wordcloudWords = surveyPoll.words || [];
-          } else if (cewPoll) {
-            // Only CEW data
-            wordcloudWords = cewPoll.words || [];
-          }
-          
-          // For wordcloud polls, we don't have traditional results
-          pollResults = [];
-        } else {
-          // Create separate results for survey and CEW polls
-          if (surveyPoll && cewPoll) {
-            // Store original results separately
-            surveyResults = (surveyPoll.results || []).map((result: any) => ({
-              option_index: result.option_index,
-              option_text: result.option_text,
-              votes: result.votes || 0
-            })).sort((a: any, b: any) => b.votes - a.votes);
-            
-            cewResults = (cewPoll.results || []).map((result: any) => ({
-              option_index: result.option_index,
-              option_text: result.option_text,
-              votes: result.votes || 0
-            })).sort((a: any, b: any) => b.votes - a.votes);
-            
-            // Combine single-choice poll results
-            const optionMap = new Map<number, { votes: number, option_text: string }>();
-            
-            [...(surveyPoll?.results || []), ...(cewPoll?.results || [])].forEach(result => {
-              if (!optionMap.has(result.option_index)) {
-                optionMap.set(result.option_index, {
-                  votes: 0,
-                  option_text: result.option_text || group.options[result.option_index] || ''
-                });
-              }
-              optionMap.get(result.option_index)!.votes += result.votes || 0;
-            });
-            
-            pollResults = Array.from(optionMap.entries()).map(([optionIndex, data]) => ({
-              option_index: optionIndex,
-              option_text: data.option_text,
-              votes: data.votes
-            })).sort((a: any, b: any) => b.votes - a.votes);
-          } else if (surveyPoll) {
-            // Only survey data
-            surveyResults = (surveyPoll.results || []).map((result: any) => ({
-              option_index: result.option_index,
-              option_text: result.option_text,
-              votes: result.votes || 0
-            })).sort((a: any, b: any) => b.votes - a.votes);
-            pollResults = surveyResults;
-          } else if (cewPoll) {
-            // Only CEW data
-            cewResults = (cewPoll.results || []).map((result: any) => ({
-              option_index: result.option_index,
-              option_text: result.option_text,
-              votes: result.votes || 0
-            })).sort((a: any, b: any) => b.votes - a.votes);
-            pollResults = cewResults;
-          } else {
-            pollResults = [];
-          }
-        }
-
-        // Create combined poll result
-        const basePoll = surveyPoll || cewPoll;
-        const combinedPoll = {
-          ...basePoll,
-          total_votes: totalVotes, // Use calculated total instead of database total_votes
-          results: pollResults,
-          combined_survey_votes: surveyVotes, // Use calculated survey votes
-          combined_cew_votes: cewVotes, // Use calculated CEW votes
-          is_ranking: group.isRanking,
-          is_wordcloud: group.isWordcloud,
-          wordcloud_words: group.isWordcloud ? (wordcloudWords || []) : undefined,
-          page_path: surveyPoll?.page_path || cewPoll?.page_path || '/survey-results/holistic-protection',
-          survey_results: surveyResults,
-          cew_results: cewResults
-        };
-
-        
-        
-        
-        
-        // Debug logging for WIKS polls
-        if (key.includes('wiks')) {
-          console.log('🔍 DEBUG: WIKS Poll:', {
-            key,
-            page_path: combinedPoll.page_path,
-            question: combinedPoll.question.substring(0, 100) + '...',
-            surveyVotes,
-            cewVotes,
-            totalVotes,
-            combined_survey_votes: combinedPoll.combined_survey_votes,
-            combined_cew_votes: combinedPoll.combined_cew_votes,
-            isRanking: group.isRanking,
-            surveyPoll: surveyPoll ? { total_votes: surveyPoll.total_votes, results_count: surveyPoll.results?.length, page_path: surveyPoll.page_path } : null,
-            cewPoll: cewPoll ? { total_votes: cewPoll.total_votes, results_count: cewPoll.results?.length, page_path: cewPoll.page_path } : null
-          });
-        }
-
-        combinedResults.push(combinedPoll);
-      });
-
-      // Sort by page path and poll index
-      combinedResults.sort((a, b) => {
-        if (a.page_path !== b.page_path) {
-          return a.page_path.localeCompare(b.page_path);
-        }
-        return a.poll_index - b.poll_index;
-      });
-
-      // If no combined results, fallback to showing raw data
-      if (combinedResults.length === 0) {
-        const fallbackResults = [
-          ...singleChoiceData.map(poll => ({ 
-            ...poll, 
-            is_ranking: false,
-            combined_survey_votes: poll.total_votes || 0,
-            combined_cew_votes: 0
-          })),
-          ...rankingData.map(poll => ({ 
-            ...poll, 
-            is_ranking: true,
-            combined_survey_votes: poll.total_votes || 0,
-            combined_cew_votes: 0
-          }))
-        ];
-        setPollResults(fallbackResults);
-      } else {
-        setPollResults(combinedResults);
-      }
-    } catch (err) {
-      console.error('Error fetching poll results:', err);
-      setError('Failed to fetch poll results');
-    } finally {
-      setLoading(false);
-    }
-  };
+    void fetchMatrixData();
+  }, [filterMode]);
 
   const getPercentage = (votes: number, totalVotes: number) => {
     if (totalVotes === 0) return 0;
@@ -952,7 +232,11 @@ export default function PollResultsClient() {
 
   const exportWordcloudPoll = (poll: PollResult) => {
     if (!poll.wordcloud_words || poll.wordcloud_words.length === 0) {
-      alert('No wordcloud data available to export');
+      showToast({
+        type: 'info',
+        title: 'Nothing to export',
+        message: 'Wordcloud data is currently empty.'
+      });
       return;
     }
 
@@ -1040,7 +324,11 @@ export default function PollResultsClient() {
 
   const exportAllQuestions = () => {
     if (filteredPolls.length === 0) {
-      alert('No polls available to export');
+      showToast({
+        type: 'info',
+        title: 'Nothing to export',
+        message: 'No polls are available for export.'
+      });
       return;
     }
 
@@ -1068,7 +356,6 @@ export default function PollResultsClient() {
       csvLines.push('');
 
       if (poll.is_wordcloud) {
-        const filteredResults = getFilteredPollResults(poll);
         if (poll.wordcloud_words && poll.wordcloud_words.length > 0) {
           const totalVotes = poll.wordcloud_words.reduce((sum, word) => sum + (word.value || 0), 0);
           const wordsWithPercentages = poll.wordcloud_words.map(word => ({
@@ -1250,7 +537,6 @@ export default function PollResultsClient() {
     if (nextPoll) {
       const nextPollKey = nextPoll.poll_id || nextPoll.ranking_poll_id || `poll-${nextPoll.page_path}-${nextPoll.poll_index}`;
       setSelectedQuestion(nextPollKey);
-      setCurrentQuestionIndex(nextIndex);
       
       // If currently expanded, keep the new question expanded
       if (expandedPoll) {
@@ -1276,7 +562,6 @@ export default function PollResultsClient() {
     if (prevPoll) {
       const prevPollKey = prevPoll.poll_id || prevPoll.ranking_poll_id || `poll-${prevPoll.page_path}-${prevPoll.poll_index}`;
       setSelectedQuestion(prevPollKey);
-      setCurrentQuestionIndex(prevIndex);
       
       // If currently expanded, keep the new question expanded
       if (expandedPoll) {
@@ -1305,13 +590,6 @@ export default function PollResultsClient() {
     if (pagePath.includes('tiered-framework')) return 'tiered-framework';
     if (pagePath.includes('prioritization')) return 'prioritization';
     return null;
-  };
-
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
   };
 
   const groupPollsByTheme = (polls: PollResult[]) => {
@@ -1925,7 +1203,6 @@ export default function PollResultsClient() {
                     // For ranking polls, sort by average rank (lower is better)
                     (() => {
                       // Define pollKey once for the ranking poll chart
-                      const pollKey = selectedPoll.poll_id || selectedPoll.ranking_poll_id || `poll-${selectedPoll.page_path}-${selectedPoll.poll_index}`;
                       const filteredResults = getFilteredPollResults(selectedPoll);
                       let sortedResults = [...filteredResults].sort((a, b) => (a.averageRank || 0) - (b.averageRank || 0));
                       
@@ -1992,8 +1269,8 @@ export default function PollResultsClient() {
                         <div 
                           className="space-y-4"
                         >
-                            {sortedResults.map((result, index) => {
-                            const isTopChoice = index === 0; // First item after sorting by rank
+                            {sortedResults.map((result, idx) => {
+                            const isTopChoice = idx === 0; // First item after sorting by rank
                             
                             return (
                               <div key={result.option_index} className={`rounded-lg border-2 transition-all duration-300 ${
@@ -2078,7 +1355,6 @@ export default function PollResultsClient() {
                     // For single-choice polls, use expanded format for tiered-framework, compact for others
                     (() => {
                       // Define pollKey once for both expanded and compact formats
-                      const pollKey = selectedPoll.poll_id || `poll-${selectedPoll.page_path}-${selectedPoll.poll_index}`;
                       const filteredResults = getFilteredPollResults(selectedPoll);
                       const filteredTotal = filteredResults.reduce((sum, r) => sum + r.votes, 0);
                       const maxVotes = Math.max(...filteredResults.map(r => r.votes));
@@ -2136,7 +1412,7 @@ export default function PollResultsClient() {
                         <div 
                           className="space-y-4"
                         >
-                            {sortedResults.map((result, index) => {
+                            {sortedResults.map(result => {
                           const percentage = getPercentage(result.votes, filteredTotal);
                           const isTopChoice = result.votes === maxVotes;
                           
@@ -2231,9 +1507,8 @@ export default function PollResultsClient() {
                           className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow"
                         >
                           <div className="space-y-2">
-                            {sortedResults.map((result, index) => {
+                            {sortedResults.map(result => {
                               const percentage = getPercentage(result.votes, filteredTotal);
-                              const isTopChoice = result.votes === maxVotes;
                               
                               return (
                                 <div key={result.option_index} className="flex items-center space-x-3">

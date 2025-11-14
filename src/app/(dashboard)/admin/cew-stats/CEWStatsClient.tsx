@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 interface VoteStats {
   totalVotes: number;
@@ -16,30 +16,46 @@ interface VoteStats {
   }[];
 }
 
+type PollReference = {
+  page_path: string;
+  poll_index: number;
+  question: string;
+};
+
+type PollVoteRow = {
+  poll_id: string;
+  user_id: string;
+  option_index: number | null;
+  voted_at: string;
+  polls: PollReference[] | null;
+};
+
 export default function CEWStatsClient() {
   const [stats, setStats] = useState<VoteStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+  const supabase = useMemo<SupabaseClient>(
+    () =>
+      createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      ),
+    []
   );
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
-      // Get all votes
-      const { data: votes, error: votesError } = await supabase
+      const { data: voteRows, error: votesError } = await supabase
         .from('poll_votes')
-        .select(`
+        .select(
+          `
           poll_id,
           user_id,
           option_index,
           voted_at,
           polls!inner(page_path, poll_index, question)
-        `)
+        `
+        )
         .order('voted_at', { ascending: false });
 
       if (votesError) {
@@ -47,30 +63,39 @@ export default function CEWStatsClient() {
         return;
       }
 
-      // Calculate stats
+      const votes = (voteRows ?? []) as PollVoteRow[];
       const totalVotes = votes.length;
-      const anonymousVotes = votes.filter(v => v.user_id.startsWith('anon_')).length;
+      const anonymousVotes = votes.filter(v => v.user_id?.startsWith('anon_')).length;
       const authenticatedVotes = totalVotes - anonymousVotes;
 
-      // Group by page and poll
-      const pageStatsMap = new Map();
-      votes.forEach((vote: any) => {
-        const polls = vote.polls as any;
-        const key = `${polls.page_path}_${polls.poll_index}`;
+      const pageStatsMap = new Map<string, VoteStats['pageStats'][number]>();
+
+      votes.forEach(vote => {
+        const pollRef = vote.polls?.[0];
+        if (!pollRef) {
+          return;
+        }
+
+        const key = `${pollRef.page_path}_${pollRef.poll_index}`;
+
         if (!pageStatsMap.has(key)) {
           pageStatsMap.set(key, {
-            pagePath: polls.page_path,
-            pollIndex: polls.poll_index,
-            question: polls.question,
+            pagePath: pollRef.page_path,
+            pollIndex: pollRef.poll_index,
+            question: pollRef.question,
             totalVotes: 0,
             anonymousVotes: 0
           });
         }
-        
+
         const stat = pageStatsMap.get(key);
-        stat.totalVotes++;
-        if (vote.user_id.startsWith('anon_')) {
-          stat.anonymousVotes++;
+        if (!stat) {
+          return;
+        }
+
+        stat.totalVotes += 1;
+        if (vote.user_id?.startsWith('anon_')) {
+          stat.anonymousVotes += 1;
         }
       });
 
@@ -87,7 +112,20 @@ export default function CEWStatsClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    void fetchStats();
+  }, [fetchStats]);
+
+  const anonymousPercentage =
+    stats && stats.totalVotes
+      ? Math.round((stats.anonymousVotes / stats.totalVotes) * 100)
+      : 0;
+  const authenticatedPercentage =
+    stats && stats.totalVotes
+      ? Math.round((stats.authenticatedVotes / stats.totalVotes) * 100)
+      : 0;
 
   if (loading) {
     return (
@@ -132,7 +170,7 @@ export default function CEWStatsClient() {
               {stats?.anonymousVotes || 0}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {stats ? Math.round((stats.anonymousVotes / stats.totalVotes) * 100) : 0}% of total
+              {anonymousPercentage}% of total
             </p>
           </div>
           
@@ -144,7 +182,7 @@ export default function CEWStatsClient() {
               {stats?.authenticatedVotes || 0}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {stats ? Math.round((stats.authenticatedVotes / stats.totalVotes) * 100) : 0}% of total
+              {authenticatedPercentage}% of total
             </p>
           </div>
         </div>
@@ -184,7 +222,7 @@ export default function CEWStatsClient() {
 
         <div className="mt-6 text-center">
           <button
-            onClick={fetchStats}
+            onClick={() => void fetchStats()}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
             Refresh Stats

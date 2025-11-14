@@ -17,10 +17,10 @@ export async function createTag(formData: FormData) {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value, ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value, ...options }); } catch { /* noop */ }
         },
         remove(name: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value: '', ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value: '', ...options }); } catch { /* noop */ }
         },
       },
     }
@@ -100,10 +100,10 @@ export async function updateTag(formData: FormData) {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value, ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value, ...options }); } catch { /* noop */ }
         },
         remove(name: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value: '', ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value: '', ...options }); } catch { /* noop */ }
         },
       },
     }
@@ -192,10 +192,10 @@ export async function deleteTag(formData: FormData) {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value, ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value, ...options }); } catch { /* noop */ }
         },
         remove(name: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value: '', ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value: '', ...options }); } catch { /* noop */ }
         },
       },
     }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getUsers, toggleAdminRole, addUserRole, type UserWithRole } from '../actions';
+import { getUsers, toggleAdminRole, addUserRole } from '../actions';
 
 // Mock Next.js server-side functions
 const mockRedirect = vi.fn();
@@ -7,12 +7,16 @@ const mockCookies = vi.fn();
 
 // Next.js redirect() throws a special error to stop execution
 // We need to mock it to throw so tests can catch it
+interface RedirectError extends Error {
+  digest?: string;
+}
+
 vi.mock('next/navigation', () => ({
   redirect: (path: string) => {
     mockRedirect(path);
     // Throw an error to simulate Next.js redirect behavior
-    const error = new Error('NEXT_REDIRECT');
-    (error as any).digest = `NEXT_REDIRECT;${path}`;
+    const error: RedirectError = new Error('NEXT_REDIRECT');
+    error.digest = `NEXT_REDIRECT;${path}`;
     throw error;
   },
 }));

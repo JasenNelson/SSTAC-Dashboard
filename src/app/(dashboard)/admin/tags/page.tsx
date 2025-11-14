@@ -4,6 +4,9 @@ import { cookies } from 'next/headers';
 import TagsPageClient from './TagsPageClient';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
+// Force dynamic rendering - this page requires authentication and uses Header with useAuth()
+export const dynamic = 'force-dynamic';
+
 export default async function AdminTagsPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
@@ -15,10 +18,10 @@ export default async function AdminTagsPage() {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value, ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value, ...options }); } catch { /* noop */ }
         },
         remove(name: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value: '', ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value: '', ...options }); } catch { /* noop */ }
         },
       },
     }

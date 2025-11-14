@@ -4,6 +4,9 @@ import { cookies } from 'next/headers';
 import MilestonesPageClient from './MilestonesPageClient';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
+// Force dynamic rendering - this page requires authentication and uses Header with useAuth()
+export const dynamic = 'force-dynamic';
+
 export default async function AdminMilestonesPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(

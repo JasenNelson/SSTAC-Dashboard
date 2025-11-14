@@ -2,7 +2,11 @@ import { createServerClient } from '@supabase/ssr'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import TWGSynthesisClient from './TWGSynthesisClient'
+import type { TWGReviewFormData } from '@/app/(dashboard)/twg/review/twgReviewTypes'
 import ErrorBoundary from '@/components/ErrorBoundary'
+
+// Force dynamic rendering - this page requires authentication and uses Header with useAuth()
+export const dynamic = 'force-dynamic';
 
 export default async function TWGSynthesisPage() {
   const cookieStore = await cookies()
@@ -81,7 +85,7 @@ export default async function TWGSynthesisPage() {
     user_id: s.user_id,
     email: emailMap[s.user_id] || `User ${String(s.user_id).slice(0, 8)}...`,
     status: s.status,
-    form_data: s.form_data,
+    form_data: (s.form_data ?? {}) as TWGReviewFormData,
     created_at: s.created_at,
     updated_at: s.updated_at,
     file_count: 0, // not used for filtering; files listed separately
@@ -91,7 +95,6 @@ export default async function TWGSynthesisPage() {
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <TWGSynthesisClient 
-          user={user}
           submissions={mappedSubmissions}
           files={files || []}
         />

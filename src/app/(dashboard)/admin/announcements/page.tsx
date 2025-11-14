@@ -4,6 +4,9 @@ import { cookies } from 'next/headers';
 import AnnouncementsPageClient from './AnnouncementsPageClient';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
+// Force dynamic rendering - this page requires authentication and uses Header with useAuth()
+export const dynamic = 'force-dynamic';
+
 export default async function AdminAnnouncementsPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(

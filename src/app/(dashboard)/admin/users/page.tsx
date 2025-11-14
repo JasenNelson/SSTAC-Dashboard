@@ -3,6 +3,9 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import UsersPageClient from './UsersPageClient';
 
+// Force dynamic rendering - this page requires authentication and uses Header with useAuth()
+export const dynamic = 'force-dynamic';
+
 export default async function AdminUsersPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(

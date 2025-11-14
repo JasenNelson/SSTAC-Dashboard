@@ -1,18 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { User } from '@supabase/supabase-js'
 import { refreshGlobalAdminStatus } from '@/lib/admin-utils'
+import { TWGReviewFormData } from '../../twg/review/twgReviewTypes'
 import InteractiveBarChart from '@/components/dashboard/InteractiveBarChart'
 import InteractivePieChart from '@/components/dashboard/InteractivePieChart'
 import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav'
+import { useToast } from '@/components/Toast'
 
 interface ReviewSubmission {
   id: string
   user_id: string
   email: string
   status: 'IN_PROGRESS' | 'SUBMITTED'
-  form_data: any
+  form_data: TWGReviewFormData
   created_at: string
   updated_at: string
   file_count: number
@@ -29,12 +30,15 @@ interface ReviewFile {
 }
 
 interface TWGSynthesisClientProps {
-  user: User
   submissions: ReviewSubmission[]
   files: ReviewFile[]
 }
 
-export default function TWGSynthesisClient({ user, submissions, files }: TWGSynthesisClientProps) {
+const APPENDIX_KEYS = ['appendixD', 'appendixG', 'appendixJ'] as const
+type AppendixKey = (typeof APPENDIX_KEYS)[number]
+
+export default function TWGSynthesisClient({ submissions, files }: TWGSynthesisClientProps) {
+  const { showToast } = useToast()
   const formatDate = (dateStr: string) => {
     try {
       return new Date(dateStr).toISOString().slice(0, 10)
@@ -46,8 +50,6 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_PROGRESS' | 'SUBMITTED'>('ALL')
   const [expertiseFilter, setExpertiseFilter] = useState<string>('ALL')
-  const [selectedSubmission, setSelectedSubmission] = useState<ReviewSubmission | null>(null)
-
   // Refresh admin status on mount
   useEffect(() => {
     const refreshAdmin = async () => {
@@ -97,12 +99,12 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
   const totalFiles = files.length
 
   // Process quantitative data for charts
-  const processRatingData = (part: string, field: string) => {
+  const processRatingData = (part: keyof TWGReviewFormData, field: string) => {
     const ratings = ['Excellent', 'Good', 'Fair', 'Poor']
     const colors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'] // Green, Blue, Yellow, Red
     const data = ratings.map((rating, index) => {
       const count = submissions.filter(sub => 
-        sub.form_data?.[part]?.[field] === rating
+        (sub.form_data?.[part] as Record<string, unknown> | undefined)?.[field] === rating
       ).length
       
       return {
@@ -114,7 +116,33 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
     return data
   }
 
-  const processRankingData = (part: string, field: string, options: string[]) => {
+  const parseNumericRanking = (ranking?: Record<string, string>) => {
+    if (!ranking) return undefined;
+    const numericEntries = Object.entries(ranking)
+      .map(([key, value]) => [key, Number(value)] as const)
+      .filter(([, numberValue]) => !Number.isNaN(numberValue));
+    return numericEntries.length ? Object.fromEntries(numericEntries) : undefined;
+  };
+
+  const formatRankingList = (ranking?: Record<string, string>) => {
+    const numericRanking = parseNumericRanking(ranking);
+    if (!numericRanking) return '';
+    return Object.entries(numericRanking)
+      .sort(([, a], [, b]) => a - b)
+      .map(([key, rank]) => `${rank}. ${key}`)
+      .join(', ');
+  };
+
+  const formatRankingForCSV = (ranking?: Record<string, string>) => {
+    const numericRanking = parseNumericRanking(ranking);
+    if (!numericRanking) return '';
+    return Object.entries(numericRanking)
+      .sort(([, a], [, b]) => a - b)
+      .map(([key, rank]) => `${rank}. ${key}`)
+      .join('; ');
+  };
+
+  const processRankingData = (part: keyof TWGReviewFormData, field: string, options: string[]) => {
     const rankingData: { [key: string]: number[] } = {}
     
     options.forEach(option => {
@@ -122,12 +150,14 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
     })
 
     submissions.forEach(sub => {
-      const rankings = sub.form_data?.[part]?.[field]
+      const rankings = parseNumericRanking(
+        (sub.form_data?.[part] as Record<string, Record<string, string> | undefined> | undefined)?.[field]
+      )
       if (rankings) {
         options.forEach(option => {
           const rank = rankings[option]
-          if (rank) {
-            rankingData[option].push(parseInt(rank))
+          if (typeof rank === 'number' && !Number.isNaN(rank)) {
+            rankingData[option].push(rank)
           }
         })
       }
@@ -139,13 +169,8 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
       let value = 0
       
       if (ranks.length > 0) {
-        const sum = ranks.reduce((sum, rank) => {
-          const numericRank = parseInt(rank.toString())
-          return sum + (isNaN(numericRank) ? 0 : (6 - numericRank))
-        }, 0)
+        const sum = ranks.reduce((acc, rank) => acc + (6 - rank), 0)
         value = sum / ranks.length
-        // Ensure value is a valid number
-        value = isNaN(value) ? 0 : value
       }
       
       return {
@@ -171,16 +196,6 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
       const p10 = sub.form_data?.part10 || {}
       const p11 = sub.form_data?.part11 || {}
       const p12 = sub.form_data?.part12 || {}
-
-      // Format rankings as readable strings
-      const formatRanking = (ranking: Record<string, number> | null | undefined, options: string[]): string => {
-        if (!ranking) return ''
-        const entries = Object.entries(ranking)
-          .filter(([_, rank]) => rank)
-          .sort(([_, a], [__, b]) => a - b)
-          .map(([key, rank]) => `${rank}. ${key}`)
-        return entries.join('; ')
-      }
 
       return {
         // Basic Information
@@ -208,14 +223,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
         'Part 3 - Appendices C & D': (p3.appendicesCD || '').replace(/"/g, '""').replace(/\n/g, ' '),
         
         // Part 4: Matrix Framework
-        'Part 4 - Contaminant Rankings': formatRanking(p4.ranking, [
-          'Mercury and its compounds',
-          'Polychlorinated Biphenyls (PCBs)',
-          'Per- and Polyfluoroalkyl Substances (PFAS)',
-          'Dioxins and Furans',
-          'Legacy Organochlorine Pesticides',
-          'Other'
-        ]),
+        'Part 4 - Contaminant Rankings': formatRankingForCSV(p4.ranking),
         'Part 4 - Other Contaminant': p4.otherContaminant || '',
         'Part 4 - Challenges': (p4.challenges || '').replace(/"/g, '""').replace(/\n/g, ' '),
         'Part 4 - Additional Comments': (p4.additionalComments || '').replace(/"/g, '""').replace(/\n/g, ' '),
@@ -223,12 +231,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
         // Part 5: Tiered Approach
         'Part 5 - Bioavailability Method': p5.bioavailability || '',
         'Part 5 - Other Bioavailability': p5.otherBioavailability || '',
-        'Part 5 - Evidence Rankings': formatRanking(p5.evidence, [
-          'Site-specific bioavailability data',
-          'Bioaccumulation data in tissues',
-          'Benthic community structure analysis',
-          'Other'
-        ]),
+        'Part 5 - Evidence Rankings': formatRankingForCSV(p5.evidence),
         'Part 5 - Evidence Other Text': p5.evidenceOtherText || '',
         'Part 5 - Technical Guidance': (p5.guidance || '').replace(/"/g, '""').replace(/\n/g, ' '),
         'Part 5 - Additional Comments': (p5.additionalComments || '').replace(/"/g, '""').replace(/\n/g, ' '),
@@ -244,18 +247,8 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
         'Part 6 - Additional Comments': (p6.additionalComments || '').replace(/"/g, '""').replace(/\n/g, ' '),
         
         // Part 7: Prioritization
-        'Part 7 - Modernization Rankings': formatRanking(p7.modernization, [
-          'Development of Scientific Framework for Bioavailability',
-          'Matrix Framework - Ecological Protection',
-          'Matrix Framework - Human Health Protection',
-          'Standards for Non-scheduled Contaminants & Mixtures'
-        ]),
-        'Part 7 - Research Rankings': formatRanking(p7.research, [
-          'Ecosystem-level impacts research',
-          'In-vitro screening methods',
-          'Climate change toxicology impacts',
-          'Comprehensive BC database'
-        ]),
+        'Part 7 - Modernization Rankings': formatRankingForCSV(p7.modernization),
+        'Part 7 - Research Rankings': formatRankingForCSV(p7.research),
         'Part 7 - Strategic Planning': (p7.strategicPlanning || '').replace(/"/g, '""').replace(/\n/g, ' '),
         'Part 7 - Additional Comments': (p7.additionalComments || '').replace(/"/g, '""').replace(/\n/g, ' '),
         
@@ -313,7 +306,11 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
     }
 
     if (csvData.length === 0) {
-      alert('No data to export')
+      showToast({
+        type: 'info',
+        title: 'Nothing to export',
+        message: 'Add review submissions before exporting CSV data.'
+      })
       return
     }
 
@@ -332,7 +329,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
     window.URL.revokeObjectURL(url)
   }
 
-  const appendixLabels: Record<string, string> = {
+  const appendixLabels: Record<AppendixKey, string> = {
     appendixD: 'Appendix D Status',
     appendixG: 'Appendix G Status',
     appendixJ: 'Appendix J Status'
@@ -622,11 +619,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                           <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 4: Matrix Sediment Standards Framework</h5>
                           {p4.ranking && Object.keys(p4.ranking).length > 0 && (
                             <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                              Contaminant Rankings: {Object.entries(p4.ranking)
-                                .filter(([_, rank]) => rank)
-                                .sort(([_, a], [__, b]) => (a as number) - (b as number))
-                                .map(([key, rank]) => `${rank}. ${key}`)
-                                .join(', ')}
+                              Contaminant Rankings: {formatRankingList(p4.ranking)}
                             </div>
                           )}
                           {p4.otherContaminant && (
@@ -656,11 +649,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                           )}
                           {p5.evidence && Object.keys(p5.evidence).length > 0 && (
                             <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                              Evidence Rankings: {Object.entries(p5.evidence)
-                                .filter(([_, rank]) => rank)
-                                .sort(([_, a], [__, b]) => (a as number) - (b as number))
-                                .map(([key, rank]) => `${rank}. ${key}`)
-                                .join(', ')}
+                              Evidence Rankings: {formatRankingList(p5.evidence)}
                             </div>
                           )}
                           {p5.evidenceOtherText && (
@@ -719,20 +708,12 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                           <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 7: Prioritization and Strategic Direction</h5>
                           {p7.modernization && Object.keys(p7.modernization).length > 0 && (
                             <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                              Modernization Rankings: {Object.entries(p7.modernization)
-                                .filter(([_, rank]) => rank)
-                                .sort(([_, a], [__, b]) => (a as number) - (b as number))
-                                .map(([key, rank]) => `${rank}. ${key.substring(0, 60)}${key.length > 60 ? '...' : ''}`)
-                                .join(', ')}
+                              Matrix Modernization Priorities: {formatRankingList(p7.modernization)}
                             </div>
                           )}
                           {p7.research && Object.keys(p7.research).length > 0 && (
                             <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                              Research Rankings: {Object.entries(p7.research)
-                                .filter(([_, rank]) => rank)
-                                .sort(([_, a], [__, b]) => (a as number) - (b as number))
-                                .map(([key, rank]) => `${rank}. ${key.substring(0, 60)}${key.length > 60 ? '...' : ''}`)
-                                .join(', ')}
+                              Research Priorities: {formatRankingList(p7.research)}
                             </div>
                           )}
                           {p7.strategicPlanning && (
@@ -899,13 +880,15 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                           <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 12: “What We Heard” Reports (Appendices D, G, J)</h5>
                           {p12.appendixStatus && (
                             <div className="text-xs text-gray-600 dark:text-gray-400 mb-2 space-y-1">
-                              {['appendixD', 'appendixG', 'appendixJ'].map((key) => (
-                                p12.appendixStatus?.[key] ? (
+                              {APPENDIX_KEYS.map(key => {
+                                const status = p12.appendixStatus?.[key]
+                                if (!status) return null
+                                return (
                                   <div key={key}>
-                                    {appendixLabels[key] || key}: {p12.appendixStatus[key]}
+                                    {appendixLabels[key]}: {status}
                                   </div>
-                                ) : null
-                              ))}
+                                )
+                              })}
                             </div>
                           )}
                           {p12.alignmentSummary && (
@@ -992,8 +975,11 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                   </div>
                   <button
                     onClick={() => {
-                      // In a real implementation, you would download the file
-                      alert('File download would be implemented here')
+                      showToast({
+                        type: 'info',
+                        title: 'Download coming soon',
+                        message: 'File download will be implemented in a future update.'
+                      })
                     }}
                     className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
