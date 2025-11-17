@@ -66,7 +66,9 @@ export default function CEWStatsClient() {
       }
 
       // Type assertion for Supabase query result
-      const typedVotes = votes as VoteData[];
+      // Supabase returns polls as array but we expect single object (one-to-one relationship)
+      // Using unknown first to safely assert the type
+      const typedVotes = votes as unknown as VoteData[];
 
       // Calculate stats
       const totalVotes = typedVotes.length;
