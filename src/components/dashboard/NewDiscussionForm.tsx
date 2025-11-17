@@ -33,7 +33,7 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
     setIsSubmitting(true);
 
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
         showToast({

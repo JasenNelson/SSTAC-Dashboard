@@ -41,7 +41,7 @@ export default function PollResultsChart({
   showVoteCount = true,
   showPercentages = true,
   interactive = true,
-  options = [],
+  options: _options = [], // Reserved for future use
 }: PollResultsChartProps) {
   // Safety check for no results
   if (!results || results.total_votes === 0) {
@@ -193,8 +193,7 @@ export default function PollResultsChart({
       {pollType === 'ranking' ? (
         <div className="space-y-3">
           {chartData.map((item, index) => {
-            const rankValue = (item as any).originalValue;
-            const isHovered = false; // We'll add hover state if needed
+            const rankValue = (item as { originalValue?: number }).originalValue;
             
             return (
               <div key={index} className="group relative">

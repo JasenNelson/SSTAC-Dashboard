@@ -39,7 +39,7 @@ export default function LikeButton({
   const [likeDetails, setLikeDetails] = useState<Like[]>([]);
   const [showDetails, setShowDetails] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [popupPosition, setPopupPosition] = useState<'top' | 'bottom'>('top');
+  // const [popupPosition, setPopupPosition] = useState<'top' | 'bottom'>('top'); // Reserved for future use
   const supabase = createClient();
   const { showToast } = useToast();
 
