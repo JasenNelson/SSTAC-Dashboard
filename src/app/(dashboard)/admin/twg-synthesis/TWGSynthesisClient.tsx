@@ -124,6 +124,8 @@ interface TWGReviewFormData {
   part10?: TWGFormPart10
   part11?: TWGFormPart11
   part12?: TWGFormPart12
+  // Index signature to allow dynamic string-based access
+  [key: string]: TWGFormPart1 | TWGFormPart2 | TWGFormPart3 | TWGFormPart4 | TWGFormPart5 | TWGFormPart6 | TWGFormPart7 | TWGFormPart8 | TWGFormPart9 | TWGFormPart10 | TWGFormPart11 | TWGFormPart12 | undefined
 }
 
 interface ReviewSubmission {
@@ -220,9 +222,10 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
     const ratings = ['Excellent', 'Good', 'Fair', 'Poor']
     const colors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'] // Green, Blue, Yellow, Red
     const data = ratings.map((rating, index) => {
-      const count = submissions.filter(sub => 
-        sub.form_data?.[part]?.[field] === rating
-      ).length
+      const count = submissions.filter(sub => {
+        const partData = sub.form_data?.[part] as Record<string, unknown> | undefined
+        return partData?.[field] === rating
+      }).length
       
       return {
         label: rating,
@@ -241,12 +244,13 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
     })
 
     submissions.forEach(sub => {
-      const rankings = sub.form_data?.[part]?.[field]
+      const partData = sub.form_data?.[part] as Record<string, unknown> | undefined
+      const rankings = partData?.[field] as Record<string, number> | undefined
       if (rankings) {
         options.forEach(option => {
           const rank = rankings[option]
           if (rank) {
-            rankingData[option].push(parseInt(rank))
+            rankingData[option].push(parseInt(String(rank)))
           }
         })
       }
