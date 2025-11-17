@@ -193,7 +193,7 @@ export default function PollResultsChart({
       {pollType === 'ranking' ? (
         <div className="space-y-3">
           {chartData.map((item, index) => {
-            const rankValue = (item as { originalValue?: number }).originalValue;
+            const rankValue = (item as { originalValue?: number }).originalValue ?? item.value;
             
             return (
               <div key={index} className="group relative">
