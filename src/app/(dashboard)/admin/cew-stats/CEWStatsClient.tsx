@@ -3,6 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
+interface PollData {
+  page_path: string;
+  poll_index: number;
+  question: string;
+}
+
+interface VoteData {
+  poll_id: string;
+  user_id: string;
+  option_index: number;
+  voted_at: string;
+  polls: PollData;
+}
+
 interface VoteStats {
   totalVotes: number;
   anonymousVotes: number;
@@ -47,15 +61,28 @@ export default function CEWStatsClient() {
         return;
       }
 
+      if (!votes) {
+        return;
+      }
+
+      // Type assertion for Supabase query result
+      const typedVotes = votes as VoteData[];
+
       // Calculate stats
-      const totalVotes = votes.length;
-      const anonymousVotes = votes.filter(v => v.user_id.startsWith('anon_')).length;
+      const totalVotes = typedVotes.length;
+      const anonymousVotes = typedVotes.filter(v => v.user_id.startsWith('anon_')).length;
       const authenticatedVotes = totalVotes - anonymousVotes;
 
       // Group by page and poll
-      const pageStatsMap = new Map();
-      votes.forEach((vote: any) => {
-        const polls = vote.polls as any;
+      const pageStatsMap = new Map<string, {
+        pagePath: string;
+        pollIndex: number;
+        question: string;
+        totalVotes: number;
+        anonymousVotes: number;
+      }>();
+      typedVotes.forEach((vote: VoteData) => {
+        const polls = vote.polls;
         const key = `${polls.page_path}_${polls.poll_index}`;
         if (!pageStatsMap.has(key)) {
           pageStatsMap.set(key, {
@@ -68,9 +95,11 @@ export default function CEWStatsClient() {
         }
         
         const stat = pageStatsMap.get(key);
-        stat.totalVotes++;
-        if (vote.user_id.startsWith('anon_')) {
-          stat.anonymousVotes++;
+        if (stat) {
+          stat.totalVotes++;
+          if (vote.user_id.startsWith('anon_')) {
+            stat.anonymousVotes++;
+          }
         }
       });
 

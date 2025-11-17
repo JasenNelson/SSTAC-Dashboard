@@ -7,12 +7,131 @@ import InteractiveBarChart from '@/components/dashboard/InteractiveBarChart'
 import InteractivePieChart from '@/components/dashboard/InteractivePieChart'
 import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav'
 
+// TWG Review Form Data Structure
+interface TWGFormPart1 {
+  name?: string
+  expertise?: string[]
+  otherExpertise?: string
+}
+
+interface TWGFormPart2 {
+  clarity?: string
+  completeness?: string
+  defensibility?: string
+  comments?: string
+}
+
+interface TWGFormPart3 {
+  sectionI?: string
+  sectionII?: string
+  sectionIII?: string
+  sectionIV?: string
+  sectionV?: string
+  appendicesCD?: string
+}
+
+interface TWGFormPart4 {
+  ranking?: Record<string, number>
+  otherContaminant?: string
+  challenges?: string
+  additionalComments?: string
+}
+
+interface TWGFormPart5 {
+  bioavailability?: string
+  otherBioavailability?: string
+  evidence?: Record<string, number>
+  evidenceOtherText?: string
+  guidance?: string
+  additionalComments?: string
+}
+
+interface TWGFormPart6 {
+  tier0Approaches?: string[]
+  tier0OtherText?: string
+  frameworkElements?: string[]
+  frameworkOtherText?: string
+  studyComponents?: string[]
+  studyOtherText?: string
+  challenges?: string
+  additionalComments?: string
+}
+
+interface TWGFormPart7 {
+  modernization?: Record<string, number>
+  research?: Record<string, number>
+  strategicPlanning?: string
+  additionalComments?: string
+}
+
+interface TWGFormPart8 {
+  gaps?: string
+  suggestions?: string
+}
+
+interface TWGFormPart9 {
+  option1Edits?: string
+  option2Edits?: string
+  option3Edits?: string
+  otherPathwayIdeas?: string
+  supportingFactors?: string[]
+  supportingFactorsOther?: string
+  pathwayRationale?: string
+  recommendationUpdates?: string
+  implementationRisks?: string
+  lineByLine?: string
+}
+
+interface TWGFormPart10 {
+  recommendationConfidence?: string
+  priorityAreas?: string[]
+  priorityAreasOther?: string
+  implementationSupport?: string
+  lineByLine?: string
+}
+
+interface TWGFormPart11 {
+  prioritizedEngagements?: string[]
+  prioritizedEngagementsOther?: string
+  engagementSummaryQuality?: string
+  evidenceSummary?: string
+  engagementInterests?: string[]
+  engagementInterestsOther?: string
+  lineByLine?: string
+}
+
+interface TWGFormPart12 {
+  appendixStatus?: {
+    appendixD?: string
+    appendixG?: string
+    appendixJ?: string
+  }
+  alignmentSummary?: string
+  followUpNeeds?: string
+  lineByLine?: string
+}
+
+interface TWGReviewFormData {
+  part1?: TWGFormPart1
+  part2?: TWGFormPart2
+  part3?: TWGFormPart3
+  part4?: TWGFormPart4
+  part5?: TWGFormPart5
+  part6?: TWGFormPart6
+  part7?: TWGFormPart7
+  part8?: TWGFormPart8
+  part9?: TWGFormPart9
+  part10?: TWGFormPart10
+  part11?: TWGFormPart11
+  part12?: TWGFormPart12
+}
+
 interface ReviewSubmission {
   id: string
   user_id: string
   email: string
   status: 'IN_PROGRESS' | 'SUBMITTED'
-  form_data: any
+  form_data: TWGReviewFormData
   created_at: string
   updated_at: string
   file_count: number

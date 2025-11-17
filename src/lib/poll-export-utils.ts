@@ -92,7 +92,7 @@ export interface MatrixGraphExport {
 /**
  * Escape CSV values properly
  */
-function escapeCSV(value: any): string {
+function escapeCSV(value: unknown): string {
   if (value === null || value === undefined || value === '') {
     return '""';
   }
@@ -109,7 +109,7 @@ function escapeCSV(value: any): string {
 /**
  * Generate CSV row from array of values
  */
-function generateCSVRow(values: any[]): string {
+function generateCSVRow(values: unknown[]): string {
   return values.map(escapeCSV).join(',');
 }
 
