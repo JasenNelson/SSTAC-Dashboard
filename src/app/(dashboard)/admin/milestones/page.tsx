@@ -4,6 +4,8 @@ import { cookies } from 'next/headers';
 import MilestonesPageClient from './MilestonesPageClient';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminMilestonesPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(

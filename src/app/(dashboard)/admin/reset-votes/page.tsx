@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import ResetVotesClient from './ResetVotesClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ResetVotesPage() {
   // Authentication check
   const cookieStore = await cookies();

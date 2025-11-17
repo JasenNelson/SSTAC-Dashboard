@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import PollResultsClient from './PollResultsClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function PollResultsPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(

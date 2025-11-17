@@ -4,6 +4,8 @@ import { cookies } from 'next/headers'
 import TWGSynthesisClient from './TWGSynthesisClient'
 import ErrorBoundary from '@/components/ErrorBoundary'
 
+export const dynamic = 'force-dynamic';
+
 export default async function TWGSynthesisPage() {
   const cookieStore = await cookies()
   const supabase = createServerClient(

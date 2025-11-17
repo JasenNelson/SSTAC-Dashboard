@@ -4,6 +4,8 @@ import { cookies } from 'next/headers';
 import TagsPageClient from './TagsPageClient';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminTagsPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(

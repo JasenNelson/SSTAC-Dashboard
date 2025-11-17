@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import UsersPageClient from './UsersPageClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminUsersPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(

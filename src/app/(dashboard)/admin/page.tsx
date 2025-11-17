@@ -5,6 +5,8 @@ import { cookies } from 'next/headers';
 import AdminDashboardClient from './AdminDashboardClient';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminDashboardPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
