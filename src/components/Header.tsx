@@ -43,100 +43,6 @@ export default function Header() {
     };
   }, [isDesktopMenuOpen]);
 
-  // Memoize the admin role check to prevent unnecessary re-runs
-  const checkAdminRole = useCallback(async (userId: string, retryCount = 0) => {
-    try {
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Role check timeout')), 10000)
-      );
-      
-      // Check if user has any role in user_roles table first
-      const roleCheckPromise = supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-      
-      const result = await Promise.race([
-        roleCheckPromise,
-        timeoutPromise
-      ]) as { data: unknown; error: unknown };
-      
-      const { data: userRoles, error: userRolesError } = result;
-      
-      if (userRolesError) {
-        // Handle specific error cases
-        if ((userRolesError as any).code === 'PGRST116') {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('⚠️ user_roles table does not exist (PGRST116)');
-          }
-        } else if ((userRolesError as any).code === '42P17') {
-          console.error('❌ Infinite recursion detected in RLS policies');
-          // Try localStorage backup for infinite recursion
-          const backupAdminStatus = localStorage.getItem(`admin_status_${userId}`);
-          if (backupAdminStatus === 'true') {
-            setIsAdmin(true);
-            return true;
-          }
-        } else if ((userRolesError as any).code === '406') {
-          // 406 error means RLS policies are blocking access - user is likely not admin
-          if (process.env.NODE_ENV === 'development') {
-            console.log('ℹ️ User access blocked by RLS - likely not admin');
-          }
-          setIsAdmin(false);
-          localStorage.removeItem(`admin_status_${userId}`);
-          return false;
-        } else {
-          console.error('❌ Role check error:', userRolesError);
-        }
-        
-        // Check localStorage backup for other errors
-        const backupAdminStatus = localStorage.getItem(`admin_status_${userId}`);
-        if (backupAdminStatus === 'true') {
-          setIsAdmin(true);
-          return true;
-        }
-        
-        setIsAdmin(false);
-        return false;
-      }
-      
-      // Check if user has admin role
-      const hasAdminRole = (userRoles as any).some((role: unknown) => (role as any).role === 'admin');
-      
-      if (hasAdminRole) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('✅ User is admin via user_roles table');
-        }
-        setIsAdmin(true);
-        localStorage.setItem(`admin_status_${userId}`, 'true');
-        return true;
-      } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('ℹ️ User is not admin - roles found:', (userRoles as any).map((r: unknown) => (r as any).role));
-        }
-        setIsAdmin(false);
-        localStorage.removeItem(`admin_status_${userId}`);
-        return false;
-      }
-      
-    } catch (error) {
-      console.error('❌ Role check exception:', error);
-      
-      // Check localStorage backup before clearing admin status
-      const backupAdminStatus = localStorage.getItem(`admin_status_${userId}`);
-      if (backupAdminStatus === 'true') {
-        setIsAdmin(true);
-        return true;
-      }
-      
-      setIsAdmin(false);
-      return false;
-    }
-  }, [supabase]);
-
-
-
   // Function to restore admin status from localStorage
   const restoreAdminStatusFromStorage = useCallback((userId: string) => {
     const backupAdminStatus = localStorage.getItem(`admin_status_${userId}`);
@@ -158,7 +64,7 @@ export default function Header() {
         
         // Use getUser() instead of getSession() to properly validate and refresh tokens
         // getSession() can return stale sessions that fail on refresh
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const { error: userError } = await supabase.auth.getUser();
         
         if (userError) {
           console.error('[Header] Auth error:', userError);
@@ -285,27 +191,11 @@ export default function Header() {
       }
     });
 
-    // Also check admin role on initial load if we have a session
-    if (session?.user) {
-      // First try to restore from localStorage
-      const restoredFromStorage = restoreAdminStatusFromStorage(session.user.id);
-      if (restoredFromStorage) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('✅ Admin status restored from localStorage during initial load');
-        }
-      }
-      
-      // Use .then() instead of await in useEffect
-      refreshGlobalAdminStatus().then((isUserAdmin) => {
-        setIsAdmin(isUserAdmin);
-      });
-    }
-
     return () => {
       clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
-  }, [router, supabase, checkAdminRole, pathname, restoreAdminStatusFromStorage]);
+  }, [router, supabase, pathname, restoreAdminStatusFromStorage]);
 
   // Listen for route changes to refresh admin status
   useEffect(() => {
