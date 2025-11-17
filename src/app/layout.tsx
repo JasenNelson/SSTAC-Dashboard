@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { AdminProvider } from "@/contexts/AdminContext";
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const geistSans = Geist({
@@ -39,9 +41,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
+          <AuthProvider>
+            <AdminProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </AdminProvider>
+          </AuthProvider>
         </ThemeProvider>
         <SpeedInsights />
       </body>
