@@ -1,14 +1,19 @@
 // src/components/graphs/AdvancedPrioritizationMatrixGraph.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
-
-interface IndividualVotePair {
-  userId: string;
-  importance: number;
-  feasibility: number;
-  userType: 'authenticated' | 'cew';
-}
+import { useState } from 'react';
+import {
+  type IndividualVotePair,
+  type VisualizationMode,
+  calculateCoordinates,
+  createDataPointClusters,
+  createJitteredPoints,
+  createSizeScaledPoints,
+  createHeatmapPoints,
+  createConcentricPoints,
+  getMatrixGraphColors
+} from '@/lib/matrix-graph-utils';
+import { useDarkMode } from '@/hooks/useDarkMode';
 
 interface GraphProps {
   title: string;
@@ -18,8 +23,6 @@ interface GraphProps {
   individualPairs: IndividualVotePair[];
 }
 
-type VisualizationMode = 'jittered' | 'size-scaled' | 'heatmap' | 'concentric';
-
 export default function AdvancedPrioritizationMatrixGraph({ 
   title, 
   avgImportance, 
@@ -27,164 +30,17 @@ export default function AdvancedPrioritizationMatrixGraph({
   responses, 
   individualPairs 
 }: GraphProps) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const isDarkMode = useDarkMode();
   const [visualizationMode, setVisualizationMode] = useState<VisualizationMode>('jittered');
-
-  // Debug: Log individual pairs received
-
-  useEffect(() => {
-    // Check for dark mode
-    const checkDarkMode = () => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
-    };
-    
-    checkDarkMode();
-    
-    // Watch for theme changes
-    const observer = new MutationObserver(checkDarkMode);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
-    return () => observer.disconnect();
-  }, []);
-
-  // Helper function to convert scores (1-5) to coordinates within the safe plotting area
-  const calculateCoordinates = (importance: number, feasibility: number) => {
-    const invertedFeasibility = 6 - feasibility;
-    const x = 120 + ((invertedFeasibility - 1) / 4) * 560;
-    const y = 120 + ((importance - 1) / 4) * 280;
-    return { x, y };
-  };
-
-  // Create clusters for different visualization modes
-  const createClusters = (pairs: IndividualVotePair[]) => {
-    const clusters = new Map<string, IndividualVotePair[]>();
-    
-    // Group pairs by their exact coordinates
-    pairs.forEach(pair => {
-      const { x, y } = calculateCoordinates(pair.importance, pair.feasibility);
-      const key = `${x.toFixed(1)},${y.toFixed(1)}`;
-      
-      if (!clusters.has(key)) {
-        clusters.set(key, []);
-      }
-      clusters.get(key)!.push(pair);
-    });
-    
-    return clusters;
-  };
-
-  // Jittered visualization - spread overlapping points in a small radius
-  const createJitteredPoints = (clusters: Map<string, IndividualVotePair[]>) => {
-    const jitteredPoints: Array<{
-      pair: IndividualVotePair;
-      x: number;
-      y: number;
-      clusterSize: number;
-    }> = [];
-    
-    clusters.forEach((clusterPairs, key) => {
-      const [baseX, baseY] = key.split(',').map(Number);
-      const clusterSize = clusterPairs.length;
-      
-      if (clusterSize === 1) {
-        jitteredPoints.push({
-          pair: clusterPairs[0],
-          x: baseX,
-          y: baseY,
-          clusterSize: 1
-        });
-      } else {
-        const jitterRadius = Math.min(15, clusterSize * 2);
-        const angleStep = (2 * Math.PI) / clusterSize;
-        
-        clusterPairs.forEach((pair, index) => {
-          const angle = angleStep * index + (Math.random() - 0.5) * 0.3;
-          const distance = Math.random() * jitterRadius * 0.6 + jitterRadius * 0.4;
-          
-          const jitterX = baseX + Math.cos(angle) * distance;
-          const jitterY = baseY + Math.sin(angle) * distance;
-          
-          jitteredPoints.push({
-            pair,
-            x: jitterX,
-            y: jitterY,
-            clusterSize
-          });
-        });
-      }
-    });
-    
-    return jitteredPoints;
-  };
-
-  // Size-scaled visualization - larger dots for more overlapping points
-  const createSizeScaledPoints = (clusters: Map<string, IndividualVotePair[]>) => {
-    return Array.from(clusters.entries()).map(([key, clusterPairs]) => {
-      const [x, y] = key.split(',').map(Number);
-      const clusterSize = clusterPairs.length;
-      
-      return {
-        pairs: clusterPairs,
-        x,
-        y,
-        clusterSize,
-        radius: Math.min(12, 4 + clusterSize * 1.5) // Scale radius with cluster size
-      };
-    });
-  };
-
-  // Heatmap visualization - color intensity based on density
-  const createHeatmapPoints = (clusters: Map<string, IndividualVotePair[]>) => {
-    const maxClusterSize = Math.max(...Array.from(clusters.values()).map(c => c.length));
-    
-    return Array.from(clusters.entries()).map(([key, clusterPairs]) => {
-      const [x, y] = key.split(',').map(Number);
-      const clusterSize = clusterPairs.length;
-      const intensity = clusterSize / maxClusterSize;
-      
-      return {
-        pairs: clusterPairs,
-        x,
-        y,
-        clusterSize,
-        intensity
-      };
-    });
-  };
-
-  // Concentric circles visualization - multiple rings for overlapping points
-  const createConcentricPoints = (clusters: Map<string, IndividualVotePair[]>) => {
-    return Array.from(clusters.entries()).map(([key, clusterPairs]) => {
-      const [x, y] = key.split(',').map(Number);
-      const clusterSize = clusterPairs.length;
-      
-      return {
-        pairs: clusterPairs,
-        x,
-        y,
-        clusterSize
-      };
-    });
-  };
 
   // Convert average scores to coordinates
   const { x: avgX, y: avgY } = calculateCoordinates(avgImportance, avgFeasibility);
 
-  // Color scheme based on theme
-  const colors = {
-    background: isDarkMode ? '#1f2937' : 'white',
-    axis: isDarkMode ? '#ffffff' : '#000000',
-    text: isDarkMode ? '#ffffff' : '#374151',
-    textSecondary: isDarkMode ? '#d1d5db' : '#6b7280',
-    highPriority: '#059669',
-    noGo: '#dc2626',
-    averageStar: '#FFD700',
-    averageStarStroke: '#FFA500',
-    individualDot: '#2563eb'
-  };
+  // Color scheme based on theme (using shared utility)
+  const colors = getMatrixGraphColors(isDarkMode);
 
   // Get clusters and render based on visualization mode
-  const clusters = createClusters(individualPairs);
+  const clusters = createDataPointClusters(individualPairs);
 
   return (
     <div className="p-3 border rounded-lg shadow-md bg-white dark:bg-gray-800">

@@ -4,7 +4,7 @@
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { useEffect, useState } from 'react';
+import { useDarkMode } from '@/hooks/useDarkMode';
 
 type ChartData = {
   name: string;
@@ -42,27 +42,7 @@ const sampleData: ChartData[] = [
 ];
 
 export default function SurveyResultsChart() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    // Check if dark mode is active
-    const checkDarkMode = () => {
-      const isDark = document.documentElement.classList.contains('dark');
-      setIsDarkMode(isDark);
-    };
-
-    // Check on mount
-    checkDarkMode();
-
-    // Watch for theme changes
-    const observer = new MutationObserver(checkDarkMode);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-
-    return () => observer.disconnect();
-  }, []);
+  const isDarkMode = useDarkMode();
 
   // Theme-aware colors
   const textColor = isDarkMode ? '#f3f4f6' : '#6b7280';

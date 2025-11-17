@@ -3,13 +3,7 @@
 import { useEffect, useState } from 'react';
 import { BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
 import PrioritizationMatrixGraph from './PrioritizationMatrixGraph';
-
-interface IndividualVotePair {
-  userId: string;
-  importance: number;
-  feasibility: number;
-  userType: 'authenticated' | 'cew';
-}
+import type { IndividualVotePair } from '@/lib/matrix-graph-utils';
 
 interface MatrixData {
   title: string;

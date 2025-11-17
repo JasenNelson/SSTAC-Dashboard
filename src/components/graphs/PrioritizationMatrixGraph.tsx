@@ -1,15 +1,21 @@
 // src/components/graphs/PrioritizationMatrixGraph.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ScatterChart, Circle, Zap, Layers } from 'lucide-react';
-
-interface IndividualVotePair {
-  userId: string;
-  importance: number;
-  feasibility: number;
-  userType: 'authenticated' | 'cew';
-}
+import {
+  type IndividualVotePair,
+  type VisualizationMode,
+  calculateCoordinates,
+  createDataPointClusters,
+  createJitteredPoints,
+  createSizeScaledPoints,
+  createHeatmapPoints,
+  createConcentricPoints,
+  getMatrixGraphColors,
+  getClusterColor
+} from '@/lib/matrix-graph-utils';
+import { useDarkMode } from '@/hooks/useDarkMode';
 
 interface GraphProps {
   title: string;
@@ -19,195 +25,15 @@ interface GraphProps {
   individualPairs: IndividualVotePair[];
 }
 
-type VisualizationMode = 'jittered' | 'size-scaled' | 'heatmap' | 'concentric';
-
 export default function PrioritizationMatrixGraph({ title, avgImportance, avgFeasibility, responses, individualPairs }: GraphProps) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const isDarkMode = useDarkMode();
   const [visualizationMode, setVisualizationMode] = useState<VisualizationMode>('jittered');
-
-
-
-  useEffect(() => {
-    // Check for dark mode
-    const checkDarkMode = () => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
-    };
-    
-    checkDarkMode();
-    
-    // Watch for theme changes
-    const observer = new MutationObserver(checkDarkMode);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
-    return () => observer.disconnect();
-  }, []);
-
-  // Helper function to convert scores (1-5) to coordinates within the safe plotting area
-  // Note: API sends 1=Very Important, 5=Not Important (inverted scale)
-  // We need to invert this so 1 becomes high on the graph (top-right)
-  const calculateCoordinates = (importance: number, feasibility: number) => {
-    // Safe area: 120-680 pixels (560px range) to avoid edges and axis overlap
-    // Invert feasibility scale: 1 becomes 5, 5 becomes 1 for proper positioning
-    const invertedFeasibility = 6 - feasibility; // 1->5, 2->4, 3->3, 4->2, 5->1
-    // For importance: 1 (Very Important) should be at top (y=120), 5 (Not Important) at bottom (y=400)
-    // So we use importance directly, not inverted
-    const x = 120 + ((invertedFeasibility - 1) / 4) * 560; // 120 to 680
-    const y = 120 + ((importance - 1) / 4) * 280;   // 120 to 400 (1->120, 5->400)
-    
-    
-    return { x, y };
-  };
-
-  // Helper function to create clusters for overlapping data points
-  const createDataPointClusters = (pairs: IndividualVotePair[]) => {
-    const clusters = new Map<string, IndividualVotePair[]>();
-    
-    // Group pairs by their exact coordinates
-    pairs.forEach(pair => {
-      const { x, y } = calculateCoordinates(pair.importance, pair.feasibility);
-      const key = `${x.toFixed(1)},${y.toFixed(1)}`;
-      
-      if (!clusters.has(key)) {
-        clusters.set(key, []);
-      }
-      clusters.get(key)!.push(pair);
-    });
-    
-    return clusters;
-  };
-
-  // Jittered visualization - spread overlapping points in a small radius
-  const createJitteredPoints = (clusters: Map<string, IndividualVotePair[]>) => {
-    const jitteredPoints: Array<{
-      pair: IndividualVotePair;
-      x: number;
-      y: number;
-      clusterSize: number;
-    }> = [];
-    
-    clusters.forEach((clusterPairs, key) => {
-      const [baseX, baseY] = key.split(',').map(Number);
-      const clusterSize = clusterPairs.length;
-      
-      if (clusterSize === 1) {
-        jitteredPoints.push({
-          pair: clusterPairs[0],
-          x: baseX,
-          y: baseY,
-          clusterSize: 1
-        });
-      } else {
-        const jitterRadius = Math.min(15, clusterSize * 2);
-        const angleStep = (2 * Math.PI) / clusterSize;
-        
-        clusterPairs.forEach((pair, index) => {
-          const angle = angleStep * index + (Math.random() - 0.5) * 0.3;
-          const distance = Math.random() * jitterRadius * 0.6 + jitterRadius * 0.4;
-          
-          const jitterX = baseX + Math.cos(angle) * distance;
-          const jitterY = baseY + Math.sin(angle) * distance;
-          
-          jitteredPoints.push({
-            pair,
-            x: jitterX,
-            y: jitterY,
-            clusterSize
-          });
-        });
-      }
-    });
-    
-    return jitteredPoints;
-  };
-
-  // Size-scaled visualization - larger dots for more overlapping points
-  const createSizeScaledPoints = (clusters: Map<string, IndividualVotePair[]>) => {
-    return Array.from(clusters.entries()).map(([key, clusterPairs]) => {
-      const [x, y] = key.split(',').map(Number);
-      const clusterSize = clusterPairs.length;
-      
-      return {
-        pairs: clusterPairs,
-        x,
-        y,
-        clusterSize,
-        radius: Math.min(12, 4 + clusterSize * 1.5)
-      };
-    });
-  };
-
-  // Heatmap visualization - color intensity based on density
-  const createHeatmapPoints = (clusters: Map<string, IndividualVotePair[]>) => {
-    const maxClusterSize = Math.max(...Array.from(clusters.values()).map(c => c.length));
-    
-    return Array.from(clusters.entries()).map(([key, clusterPairs]) => {
-      const [x, y] = key.split(',').map(Number);
-      const clusterSize = clusterPairs.length;
-      const intensity = clusterSize / maxClusterSize;
-      
-      return {
-        pairs: clusterPairs,
-        x,
-        y,
-        clusterSize,
-        intensity
-      };
-    });
-  };
-
-  // Concentric circles visualization - multiple rings for overlapping points
-  const createConcentricPoints = (clusters: Map<string, IndividualVotePair[]>) => {
-    return Array.from(clusters.entries()).map(([key, clusterPairs]) => {
-      const [x, y] = key.split(',').map(Number);
-      const clusterSize = clusterPairs.length;
-      
-      return {
-        pairs: clusterPairs,
-        x,
-        y,
-        clusterSize
-      };
-    });
-  };
 
   // Convert average scores to coordinates
   const { x: avgX, y: avgY } = calculateCoordinates(avgImportance, avgFeasibility);
 
-  // Color scheme based on theme
-  const colors = {
-    background: isDarkMode ? '#1f2937' : 'white',
-    axis: isDarkMode ? '#ffffff' : '#000000',
-    text: isDarkMode ? '#ffffff' : '#374151',
-    textSecondary: isDarkMode ? '#d1d5db' : '#6b7280',
-    highPriority: '#059669', // Green stays the same
-    noGo: '#dc2626', // Red stays the same
-    averageStar: '#FFD700', // Golden star
-    averageStarStroke: '#FFA500', // Darker gold stroke
-    individualDot: '#2563eb' // Blue individual dots for better contrast
-  };
-
-  // Cluster size-based color scheme (light to dark blue progression)
-  const getClusterColor = (clusterSize: number) => {
-    if (clusterSize === 1) {
-      return '#3b82f6'; // Standard blue - single points (more visible than light blue)
-    } else if (clusterSize === 2) {
-      return '#2563eb'; // Medium dark blue - 2 points
-    } else if (clusterSize === 3) {
-      return '#1d4ed8'; // Dark blue - 3 points
-    } else if (clusterSize === 4) {
-      return '#1e40af'; // Darker blue - 4 points
-    } else if (clusterSize === 5) {
-      return '#1e3a8a'; // Very dark blue - 5 points
-    } else if (clusterSize === 6) {
-      return '#312e81'; // Indigo - 6 points
-    } else if (clusterSize <= 10) {
-      return '#4338ca'; // Dark indigo - 7-10 points
-    } else if (clusterSize <= 20) {
-      return '#3730a3'; // Deeper indigo - 11-20 points
-    } else {
-      return '#1e1b4b'; // Darkest indigo - 20+ points
-    }
-  };
+  // Color scheme based on theme (using shared utility)
+  const colors = getMatrixGraphColors(isDarkMode);
 
   return (
     <div className="p-3 border rounded-lg shadow-md bg-white dark:bg-gray-800">

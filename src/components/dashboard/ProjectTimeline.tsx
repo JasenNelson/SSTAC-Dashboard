@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-// import { createClientComponentClient } from '@supabase/ssr'; // Removed due to error
 
 type Milestone = {
   id: number;

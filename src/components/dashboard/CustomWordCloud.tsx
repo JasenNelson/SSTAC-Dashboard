@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useDarkMode } from '@/hooks/useDarkMode';
 
 interface WordCloudData {
   text: string;
@@ -29,24 +30,7 @@ export default function CustomWordCloud({
   maxSize = 60
 }: CustomWordCloudProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // Detect dark mode
-  useEffect(() => {
-    const checkDarkMode = () => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'));
-    };
-    
-    checkDarkMode();
-    
-    const observer = new MutationObserver(checkDarkMode);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    });
-    
-    return () => observer.disconnect();
-  }, []);
+  const isDarkMode = useDarkMode();
 
   useEffect(() => {
     if (!words || words.length === 0) {
