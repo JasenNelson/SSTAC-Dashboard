@@ -14,6 +14,15 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **TRUST user feedback** about when things were working
 - **HISTORICAL CONTEXT**: AI previously added throttling to `refreshGlobalAdminStatus()` which broke the discussions page
 
+**CRITICAL: Code Quality Standards**
+- **DO NOT introduce new lint warnings or errors** - Maintain existing code quality
+- **When modifying files:** Fix lint issues in the files you're changing, don't ignore them
+- **"If it ain't broke" does NOT mean:** "It's okay to introduce code quality issues"
+- **"If it ain't broke" DOES mean:** "Don't randomly change working code elsewhere"
+- **Lint warnings are NOT acceptable** - They indicate code quality issues that should be fixed
+- **If you must introduce a lint warning:** Explain why it's necessary and get explicit approval
+- **Before committing:** Check for new lint warnings in modified files using `read_lints` tool
+
 ### 2. "First, Do No Harm"
 - **TEST changes in isolation** before applying them broadly
 - **UNDERSTAND dependencies** before modifying core functions
@@ -91,10 +100,17 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 
 ### 9. Code Quality and Production Readiness Guidelines (CRITICAL)
 - **BUILD SUCCESS**: Always ensure successful production build before committing
+- **COMMIT VERIFICATION**: ALWAYS verify files are committed (not just staged) before pushing - See Section 13
 - **TYPE SAFETY**: Replace TypeScript `any` types with proper type definitions
 - **JSX COMPLIANCE**: Fix all unescaped quotes in JSX components using proper HTML entities
 - **IMPORT CLEANUP**: Remove unused imports and variables
-- **LINTING**: Address critical linting errors, warnings are acceptable for non-critical issues
+- **LINTING STANDARDS (CRITICAL)**: 
+  - **DO NOT introduce new lint warnings or errors** - Maintain code quality
+  - **When modifying files:** Fix lint issues in those files, don't ignore them
+  - **Check for new warnings:** Use `read_lints` tool before committing
+  - **Warnings are NOT acceptable** - They indicate code quality issues
+  - **If you must introduce a warning:** Get explicit approval and document why
+  - **Historical context:** Previously all linting issues were fixed; we should not regress
 - **PRODUCTION READY**: Code must be suitable for production deployment
 - **QUOTE ESCAPING**: Use `&apos;` for apostrophes, `&ldquo;` and `&rdquo;` for quotes
 - **TYPE DEFINITIONS**: Create proper interfaces for API responses and component props
@@ -124,6 +140,38 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **USE proper type definitions** for complex data structures
 - **TEST builds frequently** during development to catch type issues early
 - **HISTORICAL CONTEXT**: Missing type annotations caused production build failures
+
+### 13. Git Commit Verification Before Deployment (CRITICAL - PREVENTS DEPLOYMENT FAILURES)
+- **VERIFY ALL FILES ARE COMMITTED, NOT JUST STAGED** - This is the #1 cause of deployment failures
+- **Vercel builds from committed code, NOT staged changes** - Files must be in git history
+- **ALWAYS verify before pushing:**
+  1. Run `git status` - Check for files in "Changes to be committed" (staged but not committed)
+  2. Run `git diff --cached --name-only` - List all staged files
+  3. **IF files are staged but not committed, COMMIT THEM FIRST**
+  4. Run `git log -1 --name-only` - Verify files are in the latest commit
+  5. **NEVER push with uncommitted staged files** that are imported by other files
+- **CRITICAL CHECK**: If a component imports files (e.g., `import X from './folder/X'`), those files MUST be committed
+- **Local builds can pass even if files aren't committed** - Files exist locally but won't exist in Vercel's build
+- **Deployment failures will show "Cannot find module" errors** if imported files aren't committed
+- **HISTORICAL CONTEXT**: This caused 7 consecutive deployment failures in November 2025, leading to a rollback and days of lost work. Wordcloud files were staged but never committed, causing WordCloudPoll.tsx imports to fail in Vercel builds.
+- **PREVENTION CHECKLIST** (run before every push):
+  ```bash
+  # 1. Check for staged but uncommitted files
+  git status
+  
+  # 2. If files are staged, verify they're needed
+  git diff --cached --stat
+  
+  # 3. If files are needed, COMMIT THEM
+  git commit -m "descriptive message"
+  
+  # 4. Verify commit includes all files
+  git log -1 --name-only
+  
+  # 5. Only then push
+  git push
+  ```
+- **RED FLAGS**: If you see "Changes to be committed" in `git status` AND those files are imported by other files, STOP and commit them first
 
 ## 🗳️ **Poll and Ranking Question System Development Guidelines**
 
@@ -472,6 +520,138 @@ const handleCreateItem = async (formData: FormData) => {
 - ✅ **All triggers active** and functional
 - ✅ **Enhanced like system** complete and operational
 
+## ⚠️ Terminal Command Safety in AI Chat Sessions (CRITICAL)
+
+### **Connection Stability and Platform Compatibility**
+
+**Problem:** Terminal commands in AI chat sessions frequently cause connection failures due to:
+- Using Unix commands in Windows/PowerShell environments
+- Commands that produce excessive output
+- Long-running commands that timeout
+- Inappropriate command chaining or piping
+
+**CRITICAL RULES:**
+
+1. **Platform Detection and Compatibility**
+   - **ALWAYS detect the platform** before running terminal commands
+   - **Windows/PowerShell:** Use PowerShell-compatible commands only
+   - **Unix/Linux/Mac:** Use bash-compatible commands
+   - **NEVER assume** Unix commands work in Windows (e.g., `head`, `tail`, `grep` don't work in PowerShell)
+
+2. **Command Output Management (CRITICAL - Connection Stability)**
+   - **VERY CONSERVATIVE LIMITS:** Even "correct" commands can break connections
+   - **Limit output aggressively:**
+     - PowerShell: `| Select-Object -First 20` (NOT 50 or 100 - too large!)
+     - Unix: `| head -20` (NOT 50 or 100 - too large!)
+   - **Even 100 lines can cause connection failures** - use 20 lines maximum
+   - **Avoid commands** that produce unlimited output (e.g., `npm run build` without limits)
+   - **PREFER:** Check exit codes instead of capturing output when possible
+   - **If build succeeds (green checkmark visible):** Proceed without needing full output
+
+3. **Command Selection Guidelines**
+   - **Prefer simple commands** that complete quickly
+   - **Avoid long-running commands** (builds, tests) unless necessary
+   - **Use timeouts** for potentially long operations
+   - **Check exit codes** rather than parsing full output when possible
+
+4. **PowerShell-Specific Guidelines (Windows)**
+   - **Use:** `Select-Object -First N` instead of `head -N`
+   - **Use:** `Select-String` instead of `grep`
+   - **Use:** `Get-Content` instead of `cat`
+   - **Use:** `npm run build` directly (works fine, no piping needed)
+   - **Avoid:** Unix command aliases that may not exist
+
+5. **Build and Test Commands (HIGH RISK FOR CONNECTION FAILURES)**
+   - **PREFER:** Avoid running builds in chat if possible - check build status via file tools instead
+   - **If build must run:** Use minimal output capture:
+     - PowerShell: `npm run build 2>&1 | Select-Object -First 20` (20 lines max!)
+     - Unix: `npm run build 2>&1 | head -20` (20 lines max!)
+   - **Check exit code:** Exit code 0 = success, non-zero = failure
+   - **Warnings vs Errors (CRITICAL):**
+     - **Build errors:** Block commits - must be fixed
+     - **Lint warnings:** Should be fixed - they indicate code quality issues
+     - **DO NOT ignore warnings** - Use `read_lints` tool to check and fix before committing
+     - **If you introduce new warnings:** Fix them in the same commit
+   - **If connection fails after build:** 
+     - **If green checkmark/success visible:** Build succeeded - proceed with assessment
+     - **If warnings shown:** Build succeeded but warnings should be addressed
+     - **Save progress immediately** before connection fully fails
+   - **ALTERNATIVE:** Use `read_lints` tool instead of running build commands when possible
+
+6. **Error Handling and Recovery**
+   - **If connection fails:** Save progress and resume assessment
+   - **Don't restart** from beginning if partial results were obtained
+   - **Document what was learned** before connection failure
+   - **Use file operations** to save state if needed
+
+7. **Best Practices**
+   - **Test commands locally** before suggesting them in chat
+   - **Provide platform-specific alternatives** when suggesting commands
+   - **Explain what the command does** before running it
+   - **Use file-based operations** when possible (read_file, write_file tools)
+
+**Example Safe Command Patterns:**
+
+**Windows/PowerShell:**
+```powershell
+# SAFEST: Direct command (let it complete, check exit code)
+npm run build
+
+# SAFE: Very limited output (20 lines max - even 50 can break connection!)
+npm run build 2>&1 | Select-Object -First 20
+
+# SAFE: Check status (small output)
+git status
+git log --oneline -5  # Limit to 5 commits, not 10
+
+# PREFERRED: Use file tools instead of terminal when possible
+# Use read_lints tool instead of npm run build for lint checking
+```
+
+**Unix/Linux/Mac:**
+```bash
+# SAFEST: Direct command (let it complete, check exit code)
+npm run build
+
+# SAFE: Very limited output (20 lines max - even 50 can break connection!)
+npm run build 2>&1 | head -20
+
+# SAFE: Check status (small output)
+git status
+git log --oneline -5  # Limit to 5 commits, not 10
+
+# PREFERRED: Use file tools instead of terminal when possible
+# Use read_lints tool instead of npm run build for lint checking
+```
+
+**AVOID (Connection Breakers):**
+```bash
+# BAD: Unix command in Windows
+npm run build 2>&1 | head -50  # Fails in PowerShell
+
+# BAD: Too many lines (even 50-100 can break connection!)
+npm run build 2>&1 | Select-Object -First 100  # TOO LARGE - breaks connection
+
+# BAD: Unlimited output
+npm run build  # May cause connection timeout
+
+# BAD: Long-running without limits
+npm test  # May timeout
+
+# BAD: Large git log output
+git log --oneline -20  # Too many lines - use 5 max
+```
+
+**CRITICAL REMINDER:** Even commands with "correct" syntax can break connections if output is too large. **20 lines maximum** for any piped output. If you see a green checkmark or success indicator, **proceed without needing full output**.
+
+**HISTORICAL CONTEXT:** 
+- Connection failures are frequent when AI assistants use inappropriate terminal commands
+- **Even "correct" commands with 50-100 line limits can break connections** - use 20 lines maximum
+- Unix commands in Windows environments cause immediate failures
+- Commands that produce excessive output cause timeouts
+- **Multiple chat session failures** have occurred even with "correct" PowerShell syntax when output limits were too large (50-100 lines)
+- **Solution:** Use 20 lines maximum, or better yet - use file-based tools (read_lints, read_file) instead of terminal commands when possible
+
 ## 🚀 Development Commands
 
 ### Setup Commands
@@ -581,6 +761,16 @@ WHERE tablename IN ('user_roles', 'discussions', 'likes');
 - **ALWAYS verify the problem exists** before implementing solutions
 - **MEASURE before and after** to ensure changes actually improve things
 - **TRUST user feedback** about when things were working
+
+### Code Changes and Linting (CRITICAL)
+- **DO NOT introduce new lint warnings or errors** - Maintain existing code quality standards
+- **When modifying files:** Fix lint issues in those files as part of your changes
+- **Before committing:** Use `read_lints` tool to check for new warnings in modified files
+- **"If it ain't broke" does NOT mean:** "It's okay to introduce code quality issues"
+- **"If it ain't broke" DOES mean:** "Don't randomly change working code in unrelated files"
+- **Scope of changes:** Only modify files directly related to the task at hand
+- **If you must introduce a lint warning:** Get explicit approval and document why it's necessary
+- **Historical context:** All linting issues were previously fixed; we should not regress
 
 ### "First, Do No Harm"
 - **TEST changes in isolation** before applying them broadly
@@ -748,14 +938,27 @@ WHERE tablename IN ('user_roles', 'discussions', 'likes');
 **Solution**: Added `x-session-id` header to K6 test vote submissions: `headers: { 'x-session-id': sessionId }`
 **Prevention**: Always send `x-session-id` header for CEW poll API calls to ensure consistent user_id generation
 
-### **Lesson 13: Matrix Graph Logic Confirmation (2025)**
+### **Lesson 13: Git Commit Verification - Staged Files Not Committed (CRITICAL - November 2025)**
+**Problem**: 7 consecutive deployment failures caused rollback and days of lost work. Wordcloud component files were staged but never committed, causing "Cannot find module" errors in Vercel builds.
+**Root Cause**: Files were created and staged (`git add`) but never committed (`git commit`). Vercel builds from committed code, not staged changes. When WordCloudPoll.tsx imported files from `./wordcloud/`, those files didn't exist in the repository that Vercel cloned.
+**Bad Assumption**: "Local build succeeds, so deployment will work" - WRONG, local builds use filesystem, Vercel builds use git repository
+**Solution**: Always verify files are committed (not just staged) before pushing. Run `git status` and `git log -1 --name-only` to verify.
+**Prevention**: 
+- ALWAYS commit staged files before pushing
+- If a component imports files, those files MUST be in a commit
+- Run `git status` before every push to check for staged but uncommitted files
+- Verify with `git log -1 --name-only` that files are in the latest commit
+- See Section 13 for complete prevention checklist
+**Impact**: This single issue caused 7 deployment failures, a complete rollback, and days of lost work recovery time.
+
+### **Lesson 14: Matrix Graph Logic Confirmation (2025)**
 **Problem**: User reported "15 paired responses" but only "8 individual data points" displayed, suspecting algorithm bug
 **Root Cause**: Matrix graph logic was working correctly - shows unique users with paired votes, not total votes per question
 **Bad Assumption**: "Matrix graphs should show all votes" - WRONG, they show unique users who voted on both questions
 **Solution**: Confirmed correct behavior: Left panel shows total votes (15), matrix graph shows unique users with paired votes (8)
 **Prevention**: Understand that matrix graphs require same user_id for both importance AND feasibility questions for pairing
 
-### **Lesson 14: Matrix Graph Overlapping Data Points (2025)**
+### **Lesson 15: Matrix Graph Overlapping Data Points (2025)**
 **Problem**: Multiple users submitting identical (x,y) coordinates appeared as single dots, obscuring data density
 **Root Cause**: No visualization system for handling overlapping data points in matrix graphs
 **Solution**: Implemented 4-mode visualization system: Jittered (spreads points in small radius), Size-Scaled (larger dots for more points), Heatmap (color intensity based on density), Concentric (rings show overlapping points)
@@ -770,6 +973,7 @@ WHERE tablename IN ('user_roles', 'discussions', 'likes');
 4. **Validate Question Matching**: Admin panel vs database question text
 5. **Run Build Tests**: `npm run build` to catch TypeScript errors
 6. **Test k6 Scripts**: Use `k6 run` command, not `node`
+7. **Verify Git Commits**: Check `git status` and `git log -1 --name-only` before pushing (CRITICAL - prevents deployment failures)
 
 ### **Common Debugging Mistakes to Avoid**
 - ❌ **Assuming hardcoded data matches database**
@@ -781,6 +985,7 @@ WHERE tablename IN ('user_roles', 'discussions', 'likes');
 - ❌ **Assuming automatic question matching**
 - ❌ **Not checking option text in database**
 - ❌ **Ignoring duplicate data cleanup**
+- ❌ **Pushing with staged but uncommitted files** (CRITICAL - causes deployment failures)
 - ❌ **Not testing with known data sets**
 
 ## 🎉 Success Metrics

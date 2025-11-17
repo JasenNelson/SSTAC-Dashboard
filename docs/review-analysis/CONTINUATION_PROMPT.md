@@ -210,6 +210,16 @@ You are continuing work on the **SSTAC Dashboard** project. The project is curre
 - **TRUST user feedback** about when things were working
 - **PRESERVE working functionality** - don't break what works
 
+### **Code Quality and Linting (CRITICAL)**
+- **DO NOT introduce new lint warnings or errors** - Maintain existing code quality
+- **When modifying files:** Fix lint issues in those files, don't ignore them
+- **Before committing:** Use `read_lints` tool to check for new warnings in modified files
+- **"If it ain't broke" does NOT mean:** "It's okay to introduce code quality issues"
+- **"If it ain't broke" DOES mean:** "Don't randomly change working code elsewhere"
+- **Scope of changes:** Only modify files directly related to the task at hand
+- **Lint warnings are NOT acceptable** - They indicate code quality issues that should be fixed
+- **If you must introduce a warning:** Get explicit approval and document why
+
 ### **"First, Do No Harm"**
 - **TEST changes in isolation** before applying broadly
 - **UNDERSTAND dependencies** before modifying core functions
@@ -326,21 +336,25 @@ You are continuing work on the **SSTAC Dashboard** project. The project is curre
    ```
    1. Review change/improvement
    2. Verify no missing dependencies
-   3. Run `npm run build` locally (if needed - prefer read_lints tool)
+   3. Check for lint warnings in modified files:
+      - **MANDATORY:** Use `read_lints` tool on modified files before committing
+      - **Fix any new warnings** introduced by your changes
+      - **DO NOT ignore warnings** - they indicate code quality issues
+   4. Run `npm run build` locally (if needed - prefer read_lints tool)
       - **PREFER:** Use `read_lints` tool instead of running build commands
       - **If build must run:** Use `npm run build 2>&1 | Select-Object -First 20` (20 lines max!)
       - **Windows/PowerShell Note:** Use PowerShell-compatible commands only
-      - **Build Output:** Warnings are acceptable, only errors block commits
+      - **Build Output:** Errors block commits, warnings should be fixed
       - **Check for:** Green checkmark/success indicator OR exit code 0
       - **If connection fails after build:** If green checkmark visible, build succeeded - proceed
-   4. Verify build succeeds (no errors - warnings are OK)
-   5. Check for TypeScript errors (warnings are acceptable)
-   6. Run `npm run lint` (warnings acceptable, errors should be fixed)
-   7. Run `npm test` (all tests should pass)
-   8. If affects polls/TWG: Test thoroughly
-   9. Commit with descriptive message
-   10. Wait for deployment to succeed
-   11. Verify deployment succeeded before proceeding
+   5. Verify build succeeds (no errors)
+   6. Check for TypeScript errors (must be fixed, not ignored)
+   7. Run `npm run lint` (warnings should be fixed, errors must be fixed)
+   8. Run `npm test` (all tests should pass)
+   9. If affects polls/TWG: Test thoroughly
+   10. Commit with descriptive message
+   11. Wait for deployment to succeed
+   12. Verify deployment succeeded before proceeding
    ```
 
 ---
@@ -350,11 +364,14 @@ You are continuing work on the **SSTAC Dashboard** project. The project is curre
 1. **NEVER commit if build fails** - Always verify builds before committing
 2. **NEVER commit dependencies after dependents** - Always commit files in order
 3. **ALWAYS verify builds** - Run `npm run build` before every commit
-4. **PROTECT PRODUCTION** - Test thoroughly if changes affect live features
-5. **SMALL MODULES** - One logical change per commit
-6. **VERIFY DEPLOYMENT** - Wait for deployment success before next module
-7. **PRESERVE WORKING CODE** - Don't break what works
-8. **FOLLOW PRINCIPLES** - "If It Ain't Broke, Don't Fix It"
+4. **DO NOT introduce new lint warnings** - Check with `read_lints` tool before committing
+5. **Fix lint issues in modified files** - Don't ignore warnings, they indicate code quality issues
+6. **PROTECT PRODUCTION** - Test thoroughly if changes affect live features
+7. **SMALL MODULES** - One logical change per commit
+8. **VERIFY DEPLOYMENT** - Wait for deployment success before next module
+9. **PRESERVE WORKING CODE** - Don't break what works
+10. **FOLLOW PRINCIPLES** - "If It Ain't Broke, Don't Fix It" (but maintain code quality)
+11. **SCOPE OF CHANGES** - Only modify files directly related to the task, don't randomly change code elsewhere
 
 ### **Windows/PowerShell Compatibility & Connection Stability:**
 - **Use PowerShell-compatible commands only** - No Unix commands like `head`, `tail`, `grep`
