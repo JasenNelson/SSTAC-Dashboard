@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import TWGSynthesisClient from './TWGSynthesisClient'
+import TWGSynthesisClient, { type TWGReviewFormData } from './TWGSynthesisClient'
 import ErrorBoundary from '@/components/ErrorBoundary'
 
 export const dynamic = 'force-dynamic';
@@ -53,7 +53,9 @@ export default async function TWGSynthesisPage() {
         emailRows.map((r: { id: string; email: string }) => [r.id, r.email])
       )
     }
-  } catch {}
+  } catch {
+    // Silently handle RPC errors - email map will be empty
+  }
 
   // Get review files
   const { data: files, error: filesError } = await supabase
@@ -83,7 +85,7 @@ export default async function TWGSynthesisPage() {
     user_id: s.user_id,
     email: emailMap[s.user_id] || `User ${String(s.user_id).slice(0, 8)}...`,
     status: s.status,
-    form_data: s.form_data,
+    form_data: s.form_data as TWGReviewFormData,
     created_at: s.created_at,
     updated_at: s.updated_at,
     file_count: 0, // not used for filtering; files listed separately
