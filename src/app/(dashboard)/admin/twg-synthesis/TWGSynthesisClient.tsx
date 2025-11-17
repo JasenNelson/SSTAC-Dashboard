@@ -1022,13 +1022,14 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
                           <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 12: “What We Heard” Reports (Appendices D, G, J)</h5>
                           {p12.appendixStatus && (
                             <div className="text-xs text-gray-600 dark:text-gray-400 mb-2 space-y-1">
-                              {['appendixD', 'appendixG', 'appendixJ'].map((key) => (
-                                p12.appendixStatus?.[key] ? (
+                              {['appendixD', 'appendixG', 'appendixJ'].map((key) => {
+                                const status = p12.appendixStatus as Record<string, string | undefined> | undefined
+                                return status?.[key] ? (
                                   <div key={key}>
-                                    {appendixLabels[key] || key}: {p12.appendixStatus[key]}
+                                    {appendixLabels[key] || key}: {status[key]}
                                   </div>
                                 ) : null
-                              ))}
+                              })}
                             </div>
                           )}
                           {p12.alignmentSummary && (
