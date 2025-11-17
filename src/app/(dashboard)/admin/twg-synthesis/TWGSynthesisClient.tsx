@@ -111,7 +111,7 @@ interface TWGFormPart12 {
   lineByLine?: string
 }
 
-interface TWGReviewFormData {
+export interface TWGReviewFormData {
   part1?: TWGFormPart1
   part2?: TWGFormPart2
   part3?: TWGFormPart3
