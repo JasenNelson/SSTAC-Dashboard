@@ -154,6 +154,11 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **Local builds can pass even if files aren't committed** - Files exist locally but won't exist in Vercel's build
 - **Deployment failures will show "Cannot find module" errors** if imported files aren't committed
 - **HISTORICAL CONTEXT**: This caused 7 consecutive deployment failures in November 2025, leading to a rollback and days of lost work. Wordcloud files were staged but never committed, causing WordCloudPoll.tsx imports to fail in Vercel builds.
+- **PREVENTION SYSTEM**: A comprehensive deployment failure prevention system was implemented in November 2025 (see `docs/review-analysis/DEPLOYMENT_PREVENTION_SYSTEM.md`). This includes:
+  - Pre-commit hooks: Catch TypeScript and lint errors before commit
+  - Pre-push hooks: Full build verification before push
+  - CI expansion: Automated checks on all staging branches
+  - **However, the prevention system cannot catch uncommitted files** - manual verification is still required
 - **PREVENTION CHECKLIST** (run before every push):
   ```bash
   # 1. Check for staged but uncommitted files
@@ -172,6 +177,7 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
   git push
   ```
 - **RED FLAGS**: If you see "Changes to be committed" in `git status` AND those files are imported by other files, STOP and commit them first
+- **See Also:** `docs/review-analysis/DEPLOYMENT_PREVENTION_SYSTEM.md` for comprehensive prevention system documentation
 
 ## 🗳️ **Poll and Ranking Question System Development Guidelines**
 

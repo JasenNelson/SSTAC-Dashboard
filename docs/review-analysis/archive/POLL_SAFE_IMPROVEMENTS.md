@@ -1,15 +1,10 @@
-# Poll-Safe Improvements: A- Achievement Items
+# Poll-Safe Improvements: A- Achievement Items (Archived)
+
+> **Status Update (November 2025):** CEW polling is complete. The strict “poll-safe” freeze has been lifted, so poll components and APIs can be modified after normal regression testing. This document is now archived; track active follow-ups in `NEXT_STEPS.md`, `2025-11-11_UPDATE_LOG.md`, and `A_MINUS_ACHIEVEMENT_PLAN.md`.
 
 **Goal:** Identify improvements from A_MINUS_ACHIEVEMENT_PLAN.md that can be completed **WITHOUT** impacting SSTAC & TWG users participating in polls on survey-results pages.
 
-**Constraint:** Must not touch:
-- ❌ Poll components (PollWithResults, RankingPoll, WordCloudPoll)
-- ❌ Poll API routes (`/api/polls/*`, `/api/ranking-polls/*`, `/api/wordcloud-polls/*`)
-- ❌ Survey-results pages (`/survey-results/*`)
-- ❌ CEW poll pages (`/cew-polls/*`)
-- ❌ Admin poll results pages (reading-only, but better safe than sorry)
-- ❌ Matrix graph API routes
-- ❌ Any authentication utilities used by polls
+**Historic Constraint (Phase 1-3):** During live polling we avoided poll files, APIs, and survey-results pages. That restriction ended in November 2025 once CEW polling closed; the notes below remain for context.
 
 ---
 
@@ -115,6 +110,19 @@
 - **Exclude:**
   - All poll APIs
   - All survey-results APIs
+
+---
+
+### **7. Legacy Test User Cleanup** ✅ **COMPLETE**
+- **Impact:** Removes stale auth accounts and associated content (discussions, likes, TWG drafts, poll votes)
+- **Risk:** 🟢 ZERO (deletion of unused data only)
+- **Grade Impact:** +0.5 point (Data Quality / Security Hygiene)
+- **Effort:** Medium (requires Supabase SQL + verification)
+- **Status:** ✅ Completed 2025-11-11 using documented backup/delete procedure
+- **Notes:**
+  - Took pre-deletion backups of poll/discussion tables
+  - Deleted identities/refresh tokens before removing `auth.users`
+  - Verified zero remaining rows with follow-up queries (see `NEXT_STEPS.md`)
 
 ---
 
@@ -302,9 +310,11 @@
 
 ---
 
-## ⚠️ **CRITICAL EXCLUSIONS** (Never touch these)
+## ⚠️ Historical Exclusions (live polling phase)
 
-### **Files to NEVER Modify:**
+> These were enforced while CEW polling was active. They’re now reference points—changes are permissible again, but continue to regression-test poll dashboards and exports after any update.
+
+### **Previously Protected Files:**
 - ❌ `src/components/PollWithResults.tsx`
 - ❌ `src/components/RankingPoll.tsx`
 - ❌ `src/components/WordCloudPoll.tsx`
@@ -317,7 +327,7 @@
 - ❌ `src/app/api/graphs/prioritization-matrix/**`
 - ❌ Any utility functions used by poll components
 
-### **APIs to NEVER Modify:**
+### **Previously Protected APIs:**
 - ❌ `/api/polls/submit`
 - ❌ `/api/polls/results`
 - ❌ `/api/ranking-polls/submit`
@@ -326,7 +336,7 @@
 - ❌ `/api/wordcloud-polls/results`
 - ❌ `/api/graphs/prioritization-matrix`
 
-### **Pages to NEVER Modify:**
+### **Previously Protected Pages:**
 - ❌ `/survey-results/*`
 - ❌ `/cew-polls/*`
 - ❌ `/admin/poll-results` (admin viewing only, but safe exclusion)

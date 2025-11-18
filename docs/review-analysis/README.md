@@ -8,10 +8,12 @@
 
 This folder contains the complete comprehensive review conducted in early November 2025 (last weekend), analyzing all 8 phases of the SSTAC Dashboard project. The project was initiated in August 2025. It includes assessments, findings, roadmaps, and recommendations for improving code quality, security, testing, and architecture.
 
-**Overall Project Grade:** B+ (83-84%) - Phase 3 complete, all tests passed ✅  
+**Overall Project Grade:** B+ (83-84%) - Phase 3 complete, Phase 2 recovery complete, Phase 3.1 (WordCloud) recovered ✅  
 **Starting Grade:** C (66%) - Functional but needs comprehensive refactoring  
-**Current Grade:** B+ (83-84%) - Phase 3 Validation & Security complete  
-**Target Grade:** A- (85-89%) with remaining enhancement plan
+**Current Grade:** B+ (83-84%) - Phase 3 complete, Phase 2 recovery complete, WordCloud recovery complete  
+**Target Grade:** A- (85-89%) with remaining enhancement plan  
+**Rollback Status:** ✅ Complete (Nov 14, 2025) - Rolled back to commit `1a972b4` due to 7 deployment failures  
+**Recovery Status:** ✅ Phase 1 Complete | ✅ Phase 2 Complete | ⚠️ Phase 3 Partial (WordCloud ✅, others deferred)
 
 ---
 
@@ -29,6 +31,9 @@ This folder contains the complete comprehensive review conducted in early Novemb
 **[NEXT_STEPS.md](NEXT_STEPS.md)** ⭐ - Implementation Roadmap  
 *Current roadmap with next actions and priorities*
 
+**[ROLLBACK_SUMMARY.md](ROLLBACK_SUMMARY.md)** ⚠️ **CRITICAL** - Rollback Details & Recovery Strategy  
+*Complete documentation of rollback, lost work, and systematic recovery strategy*
+
 **[A_MINUS_ACHIEVEMENT_PLAN.md](A_MINUS_ACHIEVEMENT_PLAN.md)** - Path to A-  
 *Detailed plan for achieving A- grade (85-89%) - only 1-5 points remaining*
 
@@ -42,7 +47,11 @@ This folder contains the complete comprehensive review conducted in early Novemb
 ### **📈 Progress & Completion**
 
 **Current Status:**
-- **[REVIEW_SUMMARY.md](REVIEW_SUMMARY.md)** ⭐ - Executive summary with current status (B+ 83-84%)
+- **[ROLLBACK_SUMMARY.md](ROLLBACK_SUMMARY.md)** ⚠️ **CRITICAL** - Complete rollback details and recovery strategy
+- **[CURRENT_STATUS.md](CURRENT_STATUS.md)** ⭐ - Current project status (B+ 83-84%, WordCloud recovery complete)
+- **[WORDCLOUD_COMMIT_DEPLOYMENT_INVESTIGATION.md](WORDCLOUD_COMMIT_DEPLOYMENT_INVESTIGATION.md)** ⭐ - WordCloud recovery investigation and solution (Jan 2025)
+- **[REVIEW_SUMMARY.md](REVIEW_SUMMARY.md)** ⭐ - Executive summary with current status
+- **[PHASE2_COMPLETION_SUMMARY.md](PHASE2_COMPLETION_SUMMARY.md)** ⭐ - Phase 2 Service Layer Recovery complete (Nov 17, 2025)
 - **[PHASE3_COMPLETION_SUMMARY.md](PHASE3_COMPLETION_SUMMARY.md)** ⭐ - Phase 3 Validation & Security complete
 
 **Historical Records (Archived):**
@@ -77,8 +86,8 @@ This folder contains the complete comprehensive review conducted in early Novemb
 
 **Implementation Guides:**
 - **[NEXT_STEPS.md](NEXT_STEPS.md)** ⭐ - Implementation roadmap and next actions
-- **[POLL_SAFE_IMPROVEMENTS.md](POLL_SAFE_IMPROVEMENTS.md)** - Safe improvements ready to work on
 - **[A_MINUS_ACHIEVEMENT_PLAN.md](A_MINUS_ACHIEVEMENT_PLAN.md)** - Path to A- grade (only 1-5 points remaining)
+- **[archive/POLL_SAFE_IMPROVEMENTS.md](archive/POLL_SAFE_IMPROVEMENTS.md)** - Historical: Safe improvements (archived)
 
 **Technical Reference:**
 - **[SUPABASE_AUTH_UTILITY.md](SUPABASE_AUTH_UTILITY.md)** - Auth utility reference
@@ -161,5 +170,7 @@ REVIEW_SUMMARY.md and NEXT_STEPS.md files.
 
 ---
 
-**Phase 3 complete (B+ 83-84%). See A_MINUS_ACHIEVEMENT_PLAN.md for remaining work to reach A- (85-89%) - only 1-5 points needed.**
+**Phase 3 complete (B+ 83-84%). WordCloud recovery complete (Jan 2025). See A_MINUS_ACHIEVEMENT_PLAN.md for remaining work to reach A- (85-89%) - only 1-5 points needed.**
+
+**Critical Lesson Learned:** Always verify files are committed (not just staged) before pushing. This caused 7 deployment failures in November 2025. See `AGENTS.md` Section 13 for prevention checklist.
 

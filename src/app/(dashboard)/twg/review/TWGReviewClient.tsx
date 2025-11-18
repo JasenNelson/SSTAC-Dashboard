@@ -519,6 +519,16 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
               <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
                  Thank you for contributing your expertise to the Technical Working Group (TWG) review.
                </p>
+              <p className={`mt-3 text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <a 
+                  href="https://docs.google.com/document/d/1szIIwrTLYB1if4B0Ied-3ke_7g7_7N36HXM20d22J2o/edit?usp=sharing" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
+                >
+                  View the white paper: Modernizing BC Sediment Quality Standards v2.5 DRAFT
+                </a>
+              </p>
               <ul className={`mt-3 space-y-2 text-sm list-disc list-inside ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 <li>The "Save Progress" buttons let you capture everything you've entered without submitting.</li>
                 <li>You can be anywhere in the form and still switch parts using the navigation panel or mobile drawer—your notes stay in place.</li>
