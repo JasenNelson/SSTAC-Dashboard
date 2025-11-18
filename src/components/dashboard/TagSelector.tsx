@@ -81,8 +81,8 @@ export default function TagSelector({ selectedTags, onTagsChange, className = ''
   }
 
   return (
-    <div className={className}>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+    <div className={className} role="group" aria-labelledby="tags-label">
+      <label id="tags-label" className="block text-sm font-medium text-gray-700 mb-2">
         Tags
       </label>
       
@@ -101,9 +101,10 @@ export default function TagSelector({ selectedTags, onTagsChange, className = ''
                 <button
                   type="button"
                   onClick={() => handleTagToggle(tag?.id || 0)}
-                  className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-white hover:bg-black hover:bg-opacity-20 transition-colors"
+                  className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full text-white hover:bg-black hover:bg-opacity-20 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent"
+                  aria-label={`Remove ${tagName} tag`}
                 >
-                  ×
+                  <span aria-hidden="true">×</span>
                 </button>
               </span>
             );
@@ -123,6 +124,7 @@ export default function TagSelector({ selectedTags, onTagsChange, className = ''
               checked={selectedTags.includes(tag.id)}
               onChange={() => handleTagToggle(tag.id)}
               className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              aria-label={`Select ${tag.name} tag`}
             />
             <span
               className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"

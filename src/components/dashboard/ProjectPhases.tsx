@@ -23,10 +23,18 @@ export default function ProjectPhases() {
                 <div className="flex-1">
                   <button 
                     onClick={() => setExpandedWhitePaper(!expandedWhitePaper)}
-                    className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setExpandedWhitePaper(!expandedWhitePaper);
+                      }
+                    }}
+                    className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+                    aria-expanded={expandedWhitePaper}
+                    aria-label={`${expandedWhitePaper ? 'Collapse' : 'Expand'} SABCS White Paper details`}
                   >
                     <span>SABCS White Paper (&apos;High-Level Summary&apos;)</span>
-                    <span className={`transform transition-transform ${expandedWhitePaper ? 'rotate-180' : ''}`}>
+                    <span className={`transform transition-transform ${expandedWhitePaper ? 'rotate-180' : ''}`} aria-hidden="true">
                       ▼
                     </span>
                   </button>
