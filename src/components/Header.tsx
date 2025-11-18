@@ -8,6 +8,7 @@ import { createClient } from './supabase-client';
 import type { Session } from '@supabase/supabase-js';
 import { refreshGlobalAdminStatus, clearAdminStatusBackup } from '@/lib/admin-utils';
 import ThemeToggle from './ThemeToggle';
+import { MENU_LINKS, MENU_CATEGORIES } from './header/menuConfig';
 
 
 
@@ -398,28 +399,8 @@ export default function Header() {
   }
   const navigationLinks: NavigationLink[] = [];
 
-  // Comprehensive menu links for desktop dropdown
-  const allMenuLinks = [
-    // Main
-    { href: '/dashboard', label: 'Dashboard', icon: '🏠', category: 'Main' },
-    
-    // Engagement
-    { href: '/survey-results', label: 'Survey Results', icon: '📊', category: 'Engagement' },
-    { href: '/twg/review', label: 'TWG White Paper Review', icon: '📝', category: 'Engagement' },
-    
-    // Core Themes
-    { href: '/survey-results/holistic-protection', label: 'Holistic Protection', icon: '🛡️', category: 'Core Themes' },
-    { href: '/survey-results/tiered-framework', label: 'Tiered Framework', icon: '📈', category: 'Core Themes' },
-    { href: '/survey-results/prioritization', label: 'Prioritization Framework', icon: '🧪', category: 'Core Themes' },
-    { href: '/wiks', label: 'Weaving Indigenous Knowledges & Science', icon: '🌿', category: 'Core Themes' },
-    
-    // Resources
-    { href: '/twg/documents', label: 'Documents', icon: '📄', category: 'Resources' },
-    { href: '/twg/discussions', label: 'Discussion Forum', icon: '💬', category: 'Resources' },
-    
-    // CEW Conference (moved to bottom)
-    { href: '/cew-2025', label: 'SABCS Session', icon: '📅', category: 'CEW Conference' },
-  ];
+  // Use menu links from menuConfig.ts
+  const allMenuLinks = MENU_LINKS;
 
   // Admin-only navigation links - simplified to single dashboard link
   // Individual admin pages are accessed through the main admin dashboard
@@ -513,7 +494,7 @@ export default function Header() {
                 {isDesktopMenuOpen && (
                   <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-600 z-50">
                     <div className="py-1 max-h-96 overflow-y-auto">
-                      {['Main', 'Engagement', 'Core Themes', 'Resources', 'CEW Conference'].map((category) => (
+                      {MENU_CATEGORIES.map((category) => (
                         <div key={category}>
                           <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700">
                             {category}
@@ -609,7 +590,7 @@ export default function Header() {
         {session && isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4">
             <nav className="space-y-1">
-              {['Main', 'Engagement', 'Core Themes', 'Resources', 'CEW Conference'].map((category) => (
+              {MENU_CATEGORIES.map((category) => (
                 <div key={category}>
                   <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700">
                     {category}
