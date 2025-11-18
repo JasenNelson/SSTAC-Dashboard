@@ -22,11 +22,19 @@ When you need to run a command that might crash the chat:
 
 **Workflow:**
 1. Identify the dangerous command needed (e.g., `npm test`)
-2. Create a prompt file: `docs/review-analysis/FRESH_CHAT_COMMAND_PROMPT.md`
-3. Create a results file: `docs/review-analysis/COMMAND_RESULTS.md` (or similar)
+2. Create a prompt file with timestamp: `docs/review-analysis/FRESH_CHAT_[COMMAND]_[TIMESTAMP].md` (e.g., `FRESH_CHAT_TEST_2025-11-18.md`)
+3. Create a results file with matching timestamp: `docs/review-analysis/[COMMAND]_RESULTS_[TIMESTAMP].md` (e.g., `TEST_RESULTS_2025-11-18.md`)
 4. Ask user: "This command might crash the chat. Please run it in a fresh chat using the prompt I'll create. I'll prepare the context and results file."
 5. The fresh chat runs the command, saves results to the markdown file, and provides next steps
-6. Return to this chat with results and continue work
+6. **After results are reviewed:** Clean up temporary files (prompt and results files) unless they contain important information to keep
+7. Return to this chat with results and continue work
+
+**File Cleanup Rules:**
+- **Temporary prompt files:** Delete after the fresh chat completes and results are reviewed
+- **Results files:** Delete after issues are resolved, unless they document important findings
+- **Naming convention:** Use timestamps in filenames to make cleanup easier: `FRESH_CHAT_[PURPOSE]_[YYYY-MM-DD].md`
+- **Keep only if:** Results document important bugs, test failures that need tracking, or serve as reference documentation
+- **Always clean up:** Prompt files (they're just instructions), interim test results that are no longer relevant
 
 ---
 
@@ -167,6 +175,18 @@ After documentation updates, proceed with next items from `NEXT_STEPS.md`:
 - Continue with safe, production-ready improvements
 - Maintain B+ grade while working toward A-
 
+### Step 4: Clean Up Temporary Files (If Any)
+After completing work, check for and clean up temporary files:
+- Use `glob_file_search` to find: `FRESH_CHAT_*.md` and `*_RESULTS_*.md`
+- Delete prompt files (they're temporary instructions)
+- Delete results files unless they document important findings
+- Keep only files that serve as reference documentation
+
+**Periodic Cleanup:**
+- At the start of a session, check for old temporary files
+- Files older than a few days that are no longer relevant should be cleaned up
+- Use timestamps in filenames to identify old files easily
+
 ### ⚠️ If User Asks to Run Tests or Other Potentially Dangerous Commands
 
 **SMART WORKFLOW - Use Fresh Chat:**
@@ -175,30 +195,37 @@ If you need to run a command that might crash (like `npm test`, `npm run test:un
 
 1. **Acknowledge the request:** "I'll help you run that command. Since it might crash this chat, let me set up a fresh chat session for it."
 
-2. **Create a prompt file** (`docs/review-analysis/FRESH_CHAT_COMMAND_PROMPT.md`) with:
+2. **Create a prompt file** with timestamp: `docs/review-analysis/FRESH_CHAT_[PURPOSE]_[YYYY-MM-DD].md` (e.g., `FRESH_CHAT_TEST_2025-11-18.md`) with:
    - Context about what we're trying to accomplish
    - The command to run
    - Where to save results
    - What to do with the results
+   - **Cleanup instructions** for the fresh chat
 
-3. **Create a results file** (`docs/review-analysis/COMMAND_RESULTS.md`) for the fresh chat to save output
+3. **Create a results file** with matching timestamp: `docs/review-analysis/[PURPOSE]_RESULTS_[YYYY-MM-DD].md` (e.g., `TEST_RESULTS_2025-11-18.md`) for the fresh chat to save output
 
 4. **Ask user:** "Please start a fresh chat and use the prompt file I created. The fresh chat will run the command, save results, and provide next steps."
 
-5. **Example prompt structure:**
+5. **After results are reviewed:** Clean up temporary files:
+   - Delete the prompt file (it's just instructions)
+   - Delete the results file unless it contains important findings to keep
+   - Use `glob_file_search` to find temporary files: `FRESH_CHAT_*.md` and `*_RESULTS_*.md`
+
+6. **Example prompt structure:**
    ```markdown
    # Fresh Chat Command Execution
    
    **Context:** [What we're trying to accomplish]
    **Command:** [The command to run]
-   **Results File:** [Path to results markdown]
+   **Results File:** [Path to results markdown with timestamp]
    
    **Instructions:**
    1. Run the command
    2. Save all output to the results markdown file
    3. Analyze results and provide next steps
    4. If more dangerous commands are needed, create new prompt files
-   5. Tell user to return to original chat with results
+   5. **Clean up:** After saving results, delete this prompt file (it's temporary)
+   6. Tell user to return to original chat with results
    ```
 
 **Alternative - If User Shares Error Messages:**
@@ -269,13 +296,23 @@ AI Response:
 "I'll set up a fresh chat session for that command since it might crash this chat. 
 Let me create a prompt file with context and a results file."
 
-[AI creates FRESH_CHAT_COMMAND_PROMPT.md and COMMAND_RESULTS.md]
+[AI creates FRESH_CHAT_TEST_2025-11-18.md and TEST_RESULTS_2025-11-18.md]
 
 "Please start a fresh chat and reference the prompt file I created. The fresh chat 
 will run the command, save results to the markdown file, and provide next steps."
 
-✅ GOOD: Create prompt file with context for fresh chat
-✅ GOOD: Create results markdown file for output
+[After results are reviewed]
+
+AI Response:
+"Results reviewed. Cleaning up temporary files..."
+
+[AI deletes FRESH_CHAT_TEST_2025-11-18.md]
+[AI keeps or deletes TEST_RESULTS_2025-11-18.md based on content]
+
+✅ GOOD: Create prompt file with timestamp for easy cleanup
+✅ GOOD: Create results markdown file with matching timestamp
+✅ GOOD: Delete prompt file after fresh chat completes
+✅ GOOD: Delete results file after review unless it has important findings
 ✅ GOOD: Use file-based tools when appropriate (read_file, read_lints, grep)
 ✅ GOOD: Check CI/CD status via GitHub Actions web interface when possible
 ```
