@@ -1,7 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 # Run full build verification before push
 # This catches TypeScript errors that Vercel will see
 npm run pre-push
-
