@@ -19,10 +19,10 @@ export default async function TwgResultsPage() {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value, ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value, ...options }); } catch {}
         },
         remove(name: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value: '', ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value: '', ...options }); } catch {}
         },
       },
     }
