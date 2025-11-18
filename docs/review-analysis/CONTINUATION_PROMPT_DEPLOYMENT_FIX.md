@@ -7,9 +7,26 @@
 
 ---
 
-## 🚨 CRITICAL WARNING - READ FIRST
+## ⚠️ Handling Potentially Dangerous Commands
 
-**TERMINAL COMMAND SAFETY:** Previous chat sessions have crashed when running test commands or commands with large output. **NEVER run `npm test` or `npm run test:unit`** - they crash chats. Even `Select-Object -First 150` crashes. Use file-based tools (`read_file`, `read_lints`, `grep`) instead. See "Terminal Command Safety" section below for complete guidelines.
+**CONTEXT:** Some commands (like `npm test`, `npm run test:unit`, or commands with large output) have caused chat crashes in the past. However, we still need to be able to run these commands for important work like testing.
+
+**SMART APPROACH - Use Fresh Chat for Dangerous Commands:**
+
+When you need to run a command that might crash the chat:
+1. **DO NOT run it in this chat** - preserve context here
+2. **DO ask the user** to run it in a fresh chat session
+3. **DO create a prompt file** with necessary context for the fresh chat
+4. **DO create a results markdown file** where the fresh chat should save command output
+5. **DO provide clear instructions** for the fresh chat to return results and next steps
+
+**Workflow:**
+1. Identify the dangerous command needed (e.g., `npm test`)
+2. Create a prompt file: `docs/review-analysis/FRESH_CHAT_COMMAND_PROMPT.md`
+3. Create a results file: `docs/review-analysis/COMMAND_RESULTS.md` (or similar)
+4. Ask user: "This command might crash the chat. Please run it in a fresh chat using the prompt I'll create. I'll prepare the context and results file."
+5. The fresh chat runs the command, saves results to the markdown file, and provides next steps
+6. Return to this chat with results and continue work
 
 ---
 
@@ -22,7 +39,10 @@ You are continuing work on the SSTAC Dashboard project after successfully resolv
 3. **Continue with next steps** from the project roadmap
 4. **Maintain production safety** - all changes must be tested and verified
 
-**🚨 CRITICAL:** **NEVER run `npm test` or test commands** - they crash chats. Use file-based tools instead. If user reports test errors, ask them to share specific error messages rather than trying to run tests yourself.
+**⚠️ Handling Test Commands and Other Potentially Dangerous Commands:**
+- **If you need to run `npm test` or similar:** Use the "Fresh Chat" workflow (see warning section above)
+- **If user asks to run tests:** Offer to create a fresh chat prompt with context, or use file-based tools if appropriate
+- **For safer commands:** Use file-based tools (`read_file`, `read_lints`, `grep`) when possible
 
 ---
 
@@ -147,16 +167,44 @@ After documentation updates, proceed with next items from `NEXT_STEPS.md`:
 - Continue with safe, production-ready improvements
 - Maintain B+ grade while working toward A-
 
-### ⚠️ If User Reports Test Errors
-**CRITICAL:** If user mentions test errors or asks about tests:
-1. **DO NOT run `npm test` or any test commands** - they crash chats
-2. **DO ask user to share specific error messages** from their terminal
-3. **DO use file-based tools** to examine test files:
-   - Use `read_file` to read test files
-   - Use `grep` (file tool) to search for error patterns
-   - Use `read_lints` to check for linting issues
-4. **DO NOT try to capture test output** - even with `Select-Object -First 150` it crashes
-5. **DO focus on fixing specific errors** the user reports, not running tests yourself
+### ⚠️ If User Asks to Run Tests or Other Potentially Dangerous Commands
+
+**SMART WORKFLOW - Use Fresh Chat:**
+
+If you need to run a command that might crash (like `npm test`, `npm run test:unit`, or commands with large output):
+
+1. **Acknowledge the request:** "I'll help you run that command. Since it might crash this chat, let me set up a fresh chat session for it."
+
+2. **Create a prompt file** (`docs/review-analysis/FRESH_CHAT_COMMAND_PROMPT.md`) with:
+   - Context about what we're trying to accomplish
+   - The command to run
+   - Where to save results
+   - What to do with the results
+
+3. **Create a results file** (`docs/review-analysis/COMMAND_RESULTS.md`) for the fresh chat to save output
+
+4. **Ask user:** "Please start a fresh chat and use the prompt file I created. The fresh chat will run the command, save results, and provide next steps."
+
+5. **Example prompt structure:**
+   ```markdown
+   # Fresh Chat Command Execution
+   
+   **Context:** [What we're trying to accomplish]
+   **Command:** [The command to run]
+   **Results File:** [Path to results markdown]
+   
+   **Instructions:**
+   1. Run the command
+   2. Save all output to the results markdown file
+   3. Analyze results and provide next steps
+   4. If more dangerous commands are needed, create new prompt files
+   5. Tell user to return to original chat with results
+   ```
+
+**Alternative - If User Shares Error Messages:**
+- Use file-based tools to examine test files
+- Focus on fixing specific errors reported
+- Use `read_file`, `grep`, `read_lints` as appropriate
 
 ---
 
@@ -185,39 +233,51 @@ After documentation updates, proceed with next items from `NEXT_STEPS.md`:
 
 **CRITICAL RULES:**
 
-1. **NEVER run `npm test` or `npm run test:unit` in terminal**
-   - These commands produce large output that crashes chats
-   - **INSTEAD:** Use file-based tools or let user run tests manually
-   - **If tests have errors:** Ask user to share specific error messages, don't try to capture output
+1. **For potentially dangerous commands (like `npm test`):**
+   - **DO NOT run in this chat** - use the "Fresh Chat" workflow instead
+   - **DO create a prompt file** with context for a fresh chat
+   - **DO create a results markdown file** for the fresh chat to save output
+   - **DO ask user** to run the command in a fresh chat using your prompt
 
-2. **NEVER use large output limits**
-   - ❌ **BAD:** `Select-Object -First 150` (crashes!)
-   - ❌ **BAD:** `Select-Object -First 100` (crashes!)
-   - ❌ **BAD:** `Select-Object -First 50` (may crash!)
-   - ✅ **SAFE:** `Select-Object -First 20` (maximum safe limit)
-   - ✅ **BETTER:** Use file-based tools instead
+2. **Commands that might crash:**
+   - `npm test` or `npm run test:unit` (large output)
+   - Commands with extensive output
+   - Long-running commands
+   - **Solution:** Use Fresh Chat workflow (see section above)
 
-3. **PREFER file-based tools over terminal commands:**
-   - ✅ Use `read_lints` tool instead of `npm run lint`
-   - ✅ Use `read_file` to check test files
-   - ✅ Use `grep` (file tool) to search code
+3. **For safer operations:**
+   - ✅ Use file-based tools (`read_file`, `read_lints`, `grep`) when possible
+   - ✅ Use `read_lints` tool instead of `npm run lint` when checking linting
+   - ✅ Read files directly to understand issues
+   - ✅ Prefer file-based tools over terminal commands when appropriate
    - ✅ Use `list_dir` to check file structure
    - ❌ Avoid `npm test`, `npm run test:unit`, `npm run build` with output capture
 
 4. **If user reports test errors:**
-   - **DO NOT** run test commands to investigate
-   - **DO** ask user to share specific error messages
    - **DO** use file-based tools to examine test files
    - **DO** read test files directly to understand issues
+   - **DO** ask user to share specific error messages if needed
+   - **IF you need to run tests:** Use the Fresh Chat workflow (see section above)
 
 5. **Reference:** See `docs/AGENTS.md` Section "Terminal Command Safety in AI Chat Sessions (CRITICAL)" for complete guidelines
 
-**Example Safe Approach:**
+**Example Workflow for Dangerous Commands:**
 ```
-❌ BAD: npm run test:unit 2>&1 | Select-Object -First 150  # CRASHES!
-✅ GOOD: Read test files directly with read_file tool
-✅ GOOD: Ask user to share specific error messages
-✅ GOOD: Use read_lints tool for linting checks
+User: "Can you run npm test?"
+
+AI Response:
+"I'll set up a fresh chat session for that command since it might crash this chat. 
+Let me create a prompt file with context and a results file."
+
+[AI creates FRESH_CHAT_COMMAND_PROMPT.md and COMMAND_RESULTS.md]
+
+"Please start a fresh chat and reference the prompt file I created. The fresh chat 
+will run the command, save results to the markdown file, and provide next steps."
+
+✅ GOOD: Create prompt file with context for fresh chat
+✅ GOOD: Create results markdown file for output
+✅ GOOD: Use file-based tools when appropriate (read_file, read_lints, grep)
+✅ GOOD: Check CI/CD status via GitHub Actions web interface when possible
 ```
 
 ### Production Safety

@@ -11,18 +11,23 @@ describe('rate-limit', () => {
   beforeEach(() => {
     // Note: Rate limit store is in-memory and shared across tests
     // Each test should use unique identifiers to avoid conflicts
+    // Clear the store before each test to ensure isolation
+    // Access the internal store via the module (if possible) or use unique IDs
   });
 
   describe('checkRateLimit', () => {
     it('should allow first request', () => {
-      const result = checkRateLimit('test-user', RATE_LIMIT_CONFIGS.default);
+      // Use timestamp to ensure unique identifier per test run
+      const identifier = `test-user-first-${Date.now()}-${Math.random()}`;
+      const result = checkRateLimit(identifier, RATE_LIMIT_CONFIGS.default);
       expect(result.success).toBe(true);
       expect(result.remaining).toBe(199); // 200 - 1
       expect(result.resetTime).toBeGreaterThan(Date.now());
     });
 
     it('should track multiple requests within window', () => {
-      const identifier = 'test-user';
+      // Use timestamp to ensure unique identifier per test run
+      const identifier = `test-user-track-multiple-${Date.now()}-${Math.random()}`;
       const config = RATE_LIMIT_CONFIGS.default;
 
       // Make 5 requests
@@ -34,7 +39,7 @@ describe('rate-limit', () => {
     });
 
     it('should block requests when limit exceeded', () => {
-      const identifier = 'test-user';
+      const identifier = 'test-user-blocked';
       const config: RateLimitOptions = {
         max: 3,
         windowMs: 60000,
@@ -54,7 +59,8 @@ describe('rate-limit', () => {
     });
 
     it('should reset after window expires', async () => {
-      const identifier = 'test-user';
+      // Use timestamp to ensure unique identifier per test run
+      const identifier = `test-user-reset-window-${Date.now()}-${Math.random()}`;
       const config: RateLimitOptions = {
         max: 2,
         windowMs: 100, // Very short window for testing
@@ -66,10 +72,10 @@ describe('rate-limit', () => {
       const blocked = checkRateLimit(identifier, config);
       expect(blocked.success).toBe(false);
 
-      // Wait for window to expire
-      await new Promise(resolve => setTimeout(resolve, 150));
+      // Wait for window to expire (add buffer for timing precision)
+      await new Promise(resolve => setTimeout(resolve, 250));
 
-      // Should allow new requests
+      // Should allow new requests (window expired, new entry created)
       const result = checkRateLimit(identifier, config);
       expect(result.success).toBe(true);
       expect(result.remaining).toBe(1);
@@ -94,7 +100,7 @@ describe('rate-limit', () => {
     });
 
     it('should use custom message when provided', () => {
-      const identifier = 'test-user';
+      const identifier = 'test-user-custom-message';
       const config: RateLimitOptions = {
         max: 1,
         windowMs: 60000,
@@ -174,35 +180,41 @@ describe('rate-limit', () => {
       expect(result).toBeNull();
     });
 
-    it('should return 429 response when rate limit exceeded', () => {
+    it('should return 429 response when rate limit exceeded', async () => {
       const request = new Request('http://localhost/api/test');
+      // Use timestamp to ensure unique identifier per test run
+      const userId = `user-429-test-${Date.now()}-${Math.random()}`;
       
       // Exhaust the rate limit by making multiple requests
       // Using admin config which has lower limit (100)
       for (let i = 0; i < 101; i++) {
-        rateLimitMiddleware(request, 'user-123', 'admin');
+        rateLimitMiddleware(request, userId, 'admin');
       }
       
       // Next request should be blocked
-      const result = rateLimitMiddleware(request, 'user-123', 'admin');
+      const result = rateLimitMiddleware(request, userId, 'admin');
       
       expect(result).not.toBeNull();
       if (result) {
         expect(result.status).toBe(429);
-        const json = JSON.parse(result.body as unknown as string);
+        // Response.body is a ReadableStream, need to read it
+        const bodyText = await result.text();
+        const json = JSON.parse(bodyText);
         expect(json.error).toBeDefined();
       }
     });
 
     it('should include rate limit headers in response when exceeded', () => {
       const request = new Request('http://localhost/api/test');
+      // Use timestamp to ensure unique identifier per test run
+      const userId = `user-headers-${Date.now()}-${Math.random()}`;
       
       // Exhaust the rate limit
       for (let i = 0; i < 101; i++) {
-        rateLimitMiddleware(request, 'user-456', 'admin');
+        rateLimitMiddleware(request, userId, 'admin');
       }
       
-      const result = rateLimitMiddleware(request, 'user-456', 'admin');
+      const result = rateLimitMiddleware(request, userId, 'admin');
       
       if (result) {
         expect(result.headers.get('X-RateLimit-Limit')).toBe('100');

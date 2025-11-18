@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { logger } from '../logger';
 
 describe('logger', () => {
-  let originalEnv: string | undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let consoleLogSpy: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -13,7 +12,6 @@ describe('logger', () => {
   let consoleDebugSpy: any;
 
   beforeEach(() => {
-    originalEnv = process.env.NODE_ENV;
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -21,49 +19,33 @@ describe('logger', () => {
   });
 
   afterEach(() => {
-    if (originalEnv !== undefined) {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: originalEnv,
-        writable: true,
-        configurable: true,
-      });
-    }
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
   });
 
   describe('info', () => {
     it('should log info messages in development', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       logger.info('Test info message', { key: 'value' });
       
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       const logCall = consoleLogSpy.mock.calls[0][0] as string;
       expect(logCall).toContain('Test info message');
-      expect(logCall).toContain('"level":"info"');
-      expect(logCall).toContain('"key":"value"');
+      // Parse JSON to check structure (pretty-printed JSON has newlines)
+      const parsed = JSON.parse(logCall);
+      expect(parsed.level).toBe('info');
+      expect(parsed.key).toBe('value');
     });
 
     it('should not log info messages in production', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'production',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'production');
       logger.info('Test info message');
       
       expect(consoleLogSpy).not.toHaveBeenCalled();
     });
 
     it('should format message as JSON in development', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       logger.info('Test message', { userId: '123', action: 'create' });
       
       const logCall = consoleLogSpy.mock.calls[0][0] as string;
@@ -76,11 +58,7 @@ describe('logger', () => {
     });
 
     it('should use pretty formatting in development', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       logger.info('Test');
       
       const logCall = consoleLogSpy.mock.calls[0][0] as string;
@@ -91,25 +69,19 @@ describe('logger', () => {
 
   describe('warn', () => {
     it('should log warn messages in development', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       logger.warn('Test warning', { warning: 'data' });
       
       expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
       const logCall = consoleWarnSpy.mock.calls[0][0] as string;
       expect(logCall).toContain('Test warning');
-      expect(logCall).toContain('"level":"warn"');
+      // Parse JSON to check structure (pretty-printed JSON has newlines)
+      const parsed = JSON.parse(logCall);
+      expect(parsed.level).toBe('warn');
     });
 
     it('should not log warn messages in production', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'production',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'production');
       logger.warn('Test warning');
       
       expect(consoleWarnSpy).not.toHaveBeenCalled();
@@ -118,22 +90,14 @@ describe('logger', () => {
 
   describe('error', () => {
     it('should always log error messages regardless of environment', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'production',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'production');
       logger.error('Test error');
       
       expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should log error with Error object', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       const error = new Error('Test error message');
       logger.error('Operation failed', error, { operation: 'test' });
       
@@ -149,11 +113,7 @@ describe('logger', () => {
     });
 
     it('should log error with string error', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       logger.error('Operation failed', 'String error', { context: 'test' });
       
       const logCall = consoleErrorSpy.mock.calls[0][0] as string;
@@ -163,11 +123,7 @@ describe('logger', () => {
     });
 
     it('should log error without error object', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       logger.error('Operation failed', undefined, { context: 'test' });
       
       const logCall = consoleErrorSpy.mock.calls[0][0] as string;
@@ -178,11 +134,7 @@ describe('logger', () => {
     });
 
     it('should use compact JSON in production', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'production',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'production');
       const error = new Error('Test');
       logger.error('Error message', error);
       
@@ -196,25 +148,19 @@ describe('logger', () => {
 
   describe('debug', () => {
     it('should log debug messages in development', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       logger.debug('Debug message', { debug: 'data' });
       
       expect(consoleDebugSpy).toHaveBeenCalledTimes(1);
       const logCall = consoleDebugSpy.mock.calls[0][0] as string;
       expect(logCall).toContain('Debug message');
-      expect(logCall).toContain('"level":"debug"');
+      // Parse JSON to check structure (pretty-printed JSON has newlines)
+      const parsed = JSON.parse(logCall);
+      expect(parsed.level).toBe('debug');
     });
 
     it('should not log debug messages in production', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'production',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'production');
       logger.debug('Debug message');
       
       expect(consoleDebugSpy).not.toHaveBeenCalled();
@@ -223,11 +169,7 @@ describe('logger', () => {
 
   describe('context handling', () => {
     it('should include all context fields in log', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       logger.info('Test', {
         userId: '123',
         action: 'create',
@@ -244,11 +186,7 @@ describe('logger', () => {
     });
 
     it('should handle empty context', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       logger.info('Test');
       
       const logCall = consoleLogSpy.mock.calls[0][0] as string;
@@ -259,11 +197,7 @@ describe('logger', () => {
     });
 
     it('should handle undefined context', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       logger.info('Test', undefined);
       
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
@@ -275,11 +209,7 @@ describe('logger', () => {
 
   describe('timestamp', () => {
     it('should include ISO timestamp in all logs', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       logger.info('Test');
       
       const logCall = consoleLogSpy.mock.calls[0][0] as string;
@@ -294,11 +224,7 @@ describe('logger', () => {
 
   describe('production vs development formatting', () => {
     it('should use compact JSON in production for errors', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'production',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'production');
       logger.error('Error');
       
       const logCall = consoleErrorSpy.mock.calls[0][0] as string;
@@ -307,11 +233,7 @@ describe('logger', () => {
     });
 
     it('should use pretty JSON in development', () => {
-      Object.defineProperty(process.env, 'NODE_ENV', {
-        value: 'development',
-        writable: true,
-        configurable: true,
-      });
+      vi.stubEnv('NODE_ENV', 'development');
       logger.info('Info');
       
       const logCall = consoleLogSpy.mock.calls[0][0] as string;
