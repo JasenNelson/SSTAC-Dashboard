@@ -4,9 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:stable": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "pre-push": "npm run lint && npm run typecheck && npm run build",
     "test": "vitest",
     "test:unit": "vitest run",
     "test:watch": "vitest watch",
@@ -14,7 +17,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:debug": "playwright test --debug"
+    "test:e2e:debug": "playwright test --debug",
+    "prepare": "husky"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.22.0",
@@ -46,6 +50,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
     "happy-dom": "^20.0.10",
+    "husky": "^9.1.7",
     "jsdom": "^27.1.0",
     "tailwindcss": "^4",
     "typescript": "^5",

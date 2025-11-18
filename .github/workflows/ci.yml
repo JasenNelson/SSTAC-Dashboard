@@ -2,9 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, develop, 'chore/**', 'feature/**', 'fix/**']
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, 'chore/**', 'feature/**', 'fix/**']
 
 jobs:
   lint-and-typecheck:
