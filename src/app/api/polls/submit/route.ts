@@ -40,11 +40,11 @@ export async function POST(request: NextRequest) {
     // For CEW pages, allow multiple votes by inserting new records
     // For authenticated users, use upsert to allow vote changes
     
-    let voteData, voteError;
+    let voteError;
     
     if (isCEWPage) {
       // CEW pages: Always insert new vote (allow multiple votes per CEW code)
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('poll_votes')
         .insert({
           poll_id: pollData,
@@ -52,10 +52,8 @@ export async function POST(request: NextRequest) {
           option_index: optionIndex,
           other_text: otherText || null,
           voted_at: new Date().toISOString()
-        })
-        .select();
+        });
       
-      voteData = data;
       voteError = error;
     } else {
       // Authenticated users: Delete existing votes first, then insert new one
@@ -72,7 +70,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Insert new vote
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('poll_votes')
         .insert({
           poll_id: pollData,
@@ -80,10 +78,8 @@ export async function POST(request: NextRequest) {
           option_index: optionIndex,
           other_text: otherText || null,
           voted_at: new Date().toISOString()
-        })
-        .select();
+        });
       
-      voteData = data;
       voteError = error;
     }
 
