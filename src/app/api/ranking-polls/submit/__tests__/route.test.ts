@@ -292,9 +292,12 @@ describe('POST /api/ranking-polls/submit', () => {
         }),
       });
       
-      const mockInsert = vi.fn().mockResolvedValue({
+      const mockSelect = vi.fn().mockResolvedValue({
         data: [{ id: 'new-vote' }],
         error: null,
+      });
+      const mockInsert = vi.fn().mockReturnValue({
+        select: mockSelect,
       });
       
       const mockSupabaseClient = {

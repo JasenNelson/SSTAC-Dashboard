@@ -371,11 +371,9 @@ describe('POST /api/polls/submit', () => {
       const mockSupabaseClient = {
         rpc: vi.fn().mockResolvedValue({ data: mockPollId, error: null }),
         from: vi.fn().mockReturnValue({
-          insert: vi.fn().mockReturnValue({
-            select: vi.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Vote error' },
-            }),
+          insert: vi.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'Vote error' },
           }),
         }),
       };
