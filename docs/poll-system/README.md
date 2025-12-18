@@ -24,6 +24,9 @@ The SSTAC Dashboard implements three separate poll systems, each with unique vot
 **[POLL_SYSTEM_DEBUGGING_GUIDE.md](POLL_SYSTEM_DEBUGGING_GUIDE.md)** - Debugging Guide  
 *Common issues, troubleshooting steps, and diagnostic procedures*
 
+**[CEW_DATA_FLOW.md](CEW_DATA_FLOW.md)** - CEW vs. Authenticated Data Flow  
+*Detailed technical distinction between anonymous and authenticated data paths*
+
 **[SAFE_POLL_UPDATE_PROTOCOL.md](SAFE_POLL_UPDATE_PROTOCOL.md)** - Safe Modification Protocol  
 *Step-by-step process for making changes without breaking existing polls*
 

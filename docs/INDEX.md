@@ -39,6 +39,7 @@ Triggered by poll-adjacent changes (poll APIs, poll UI, admin poll results, matr
 - `docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md`
 - `docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md`
 - `docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md`
+- `docs/poll-system/CEW_DATA_FLOW.md`
 
 The exact required sections are enumerated in `docs/_meta/docs-manifest.json` under `bundles.POLLING_GATE.requires_sections`.
 
@@ -52,6 +53,7 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 - `docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md`
 - `docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md`
 - `docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md`
+- `docs/poll-system/CEW_DATA_FLOW.md`
 
 ### System design (reference)
 - `docs/system-design/README.md`
@@ -65,6 +67,10 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 - `docs/review-analysis/NEXT_STEPS.md`
 - `docs/review-analysis/REVIEW_SUMMARY.md`
 - `docs/review-analysis/archive/` (historical records)
+
+### Operations (reference)
+- `docs/operations/VERCEL_SETUP.md`
+- `docs/operations/MONITORING_GUIDE.md`
 
 ## Legacy index
 

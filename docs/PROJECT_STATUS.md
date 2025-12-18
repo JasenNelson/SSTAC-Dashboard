@@ -27,8 +27,8 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - ✅ Database performance monitoring baseline established (100% cache hit rate)
 
 **For details:** 
-- Deployment: `docs/review-analysis/VERCEL_SETUP.md`
-- Database Performance: `docs/review-analysis/MONITORING_BASELINE.md`
+- Deployment: `docs/operations/VERCEL_SETUP.md`
+- Database Performance: `docs/review-analysis/archive/MONITORING_BASELINE.md`
 
 ---
 
@@ -64,7 +64,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **ErrorBoundary**: Global error boundary implemented for admin pages with graceful error handling
 - **All Tests Passed**: Comprehensive testing completed, build successful, no regressions
 
-**For Details:** See `docs/review-analysis/archive/PHASE3_COMPLETION_SUMMARY.md` and `docs/review-analysis/PHASE3_TESTING_CHECKLIST.md`
+**For Details:** See `docs/review-analysis/archive/PHASE3_COMPLETION_SUMMARY.md` and `docs/review-analysis/archive/PHASE3_TESTING_CHECKLIST.md`
 
 ### **Database Performance & Monitoring** ✅ COMPLETED (November 2025)
 - **Performance Baseline:** 100% cache hit rate, all queries < 1ms average
@@ -72,7 +72,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **Index Verification:** Missing indexes identified and deferred (poll-safe approach)
 - **Query Analysis:** Comprehensive analysis completed, no optimization needed
 
-**For Details:** See `docs/review-analysis/MONITORING_BASELINE.md` and `docs/review-analysis/QUERY_PERFORMANCE_ANALYSIS.md`
+**For Details:** See `docs/review-analysis/archive/MONITORING_BASELINE.md` and `docs/review-analysis/archive/QUERY_PERFORMANCE_ANALYSIS.md`
 
 ### **Production Console Cleanup** ✅ COMPLETED (November 2025)
 - **Poll Component Cleanup:** Removed all debug console.log statements from production poll components
@@ -100,7 +100,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **Production Safety**: Zero incidents during all improvements
 - **Documentation**: Comprehensive completion summaries and improvement plans
 
-**For Details:** See `docs/review-analysis/archive/MASTER_COMPLETION_SUMMARY.md` (historical) and `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md`
+**For Details:** See `docs/review-analysis/archive/MASTER_COMPLETION_SUMMARY.md` (historical) and `docs/review-analysis/archive/A_MINUS_ACHIEVEMENT_PLAN.md`
 
 ---
 
@@ -692,7 +692,7 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 - ✅ Most indexes verified and working
 - ⏸️ One missing index identified (wordcloud_results) - deferred until after polling week
 
-**For Details:** See `docs/review-analysis/MONITORING_BASELINE.md` and `docs/review-analysis/QUERY_PERFORMANCE_ANALYSIS.md`
+**For Details:** See `docs/review-analysis/archive/MONITORING_BASELINE.md` and `docs/review-analysis/archive/QUERY_PERFORMANCE_ANALYSIS.md`
 
 ---
 
@@ -756,7 +756,7 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 
 ### **Next Steps: Path to A- (85-89%)**
 - **Only 1-5 points remaining** to reach A- grade
-- **See**: `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md` for detailed plan
+- **See**: `docs/review-analysis/archive/A_MINUS_ACHIEVEMENT_PLAN.md` for detailed plan
 - **Optional Enhancements**:
   - Additional TypeScript `any` type cleanup in non-poll areas
   - Redis-based rate limiting for multi-instance deployments
@@ -844,7 +844,7 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 
 The SSTAC & TWG Dashboard now provides a **professional, production-ready platform** with enterprise-level security, validation, and user management capabilities. The platform has achieved **A- (85-89%) grade** (November 17, 2025) and is targeting A (90%+) for the next phase.
 
-**Next Steps**: See `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md` for path to A- grade.
+**Next Steps**: See `docs/review-analysis/archive/A_MINUS_ACHIEVEMENT_PLAN.md` for path to A- grade.
 
 ---
 
