@@ -202,7 +202,7 @@ key system design decisions and visualization patterns
 ### **Path 3: Review & Assessment**
 
 1. Read [Review Summary](review-analysis/REVIEW_SUMMARY.md) - Overview
-2. Read [Phase 3 Completion](review-analysis/PHASE3_COMPLETION_SUMMARY.md) - Latest completed phase
+2. Read [Phase 3 Completion](review-analysis/archive/PHASE3_COMPLETION_SUMMARY.md) - Latest completed phase
 3. Read [Master Summary](review-analysis/archive/MASTER_COMPLETION_SUMMARY.md) - Weeks 1-16 overview (historical)
 4. Choose [Next Steps](review-analysis/NEXT_STEPS.md) or [Safe Roadmap](review-analysis/archive/PRODUCTION_SAFE_ROADMAP.md) (historical)
 5. Track with [Grade Projection](review-analysis/archive/GRADE_PROJECTION.md) (historical)
