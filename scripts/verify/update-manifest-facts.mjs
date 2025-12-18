@@ -12,7 +12,7 @@
  *   npm run docs:manifest:update -- --k6
  */
 
-import { readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
 
@@ -73,8 +73,6 @@ function extractPlaywrightCount() {
 function extractK6Count() {
   try {
     // Count k6 test files
-    const { readdirSync } = require('fs');
-    const { join } = require('path');
     const testsDir = join(process.cwd(), 'tests');
     const files = readdirSync(testsDir);
     const k6Files = files.filter(f => f.startsWith('k6-') && f.endsWith('.js'));
