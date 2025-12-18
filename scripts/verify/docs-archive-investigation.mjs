@@ -222,9 +222,6 @@ function main() {
   const mdFilesAbs = listMarkdownFiles(rootAbs)
   const mdFilesRepo = mdFilesAbs.map((p) => normalizeRepoPath(path.relative(path.resolve('.'), p)))
 
-  const fileIndex = new Map()
-  mdFilesRepo.forEach((p, i) => fileIndex.set(p, i))
-
   // Preload docs content + heading slugs
   const contents = new Map() // repoPath -> raw markdown
   const contentsNoFences = new Map()
@@ -377,12 +374,13 @@ function main() {
   // Emit
   const inboundCounts = {}
   for (const [k, set] of inbound.entries()) inboundCounts[k] = set.size
+  const outboundObject = Object.fromEntries(outbound.entries())
 
   const result = {
     docs_root: args.root,
     markdown_files: mdFilesRepo,
     link_graph: {
-      outbound,
+      outbound: outboundObject,
       inbound_counts: inboundCounts
     },
     broken_links: broken,
