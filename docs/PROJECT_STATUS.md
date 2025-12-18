@@ -4,11 +4,11 @@
 
 **Canonical docs entrypoint:** See `docs/INDEX.md`.
 
-**Volatile metrics policy:** Test counts and other volatile metrics must live in `docs/_meta/docs-manifest.json` (`facts`) to avoid contradictions across docs.
+**Volatile metrics policy:** Test counts, grades, and similar metrics must live in `docs/_meta/docs-manifest.json` (`facts`) to avoid contradictions across docs.
 
-The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** with comprehensive features for sediment standards development through stakeholder engagement and administrative tools.
+This file is a **reference snapshot** of system capabilities and recent work. For “what’s current” (including any volatile metrics), use `docs/INDEX.md` and the manifest `facts`.
 
-**LATEST UPDATE (December 7, 2025)**: Security Update & Test Fixes COMPLETED - Next.js updated to 15.4.8 (CVE-2025-66478 patched), test mocks fixed for Supabase client API, and GitHub CI/CD checks passing (unit tests, production build, E2E tests, security scan). Current test counts/status are tracked in `docs/_meta/docs-manifest.json`.
+**LATEST UPDATE (December 7, 2025)**: Security update & test fixes completed — Next.js updated to 15.4.8 (CVE-2025-66478 patched) and test mocks updated for Supabase client API. Current test counts/status are tracked in `docs/_meta/docs-manifest.json`.
 
 **Previous Update (November 2025)**: Comprehensive review completed. Phase 3: Validation & Security completed; survey-results content updates completed; wordcloud “View All Responses” button enhancement completed; change-vote functionality verified across poll systems; matrix graphs integrated into survey-results pages.
 
@@ -16,15 +16,13 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 
 **Platform:** Vercel  
 **Method:** Automatic deployments via GitHub commits  
-**Performance:** 99% Real Experience Score (Excellent)  
-**Build Time:** ~1 minute average  
-**Success Rate:** 100%  
+**Performance / build metrics:** Vary over time; do not hardcode in docs (use Vercel Speed Insights + CI runs as the source of truth).
 
 **Monitoring:**
-- ✅ Vercel Speed Insights active (99% score)
+- ✅ Vercel Speed Insights active
 - ✅ Sentry error tracking configured
 - ✅ Automated deployments on every commit
-- ✅ Database performance monitoring baseline established (100% cache hit rate)
+- ✅ Database performance monitoring baseline established (see monitoring baseline doc)
 
 **For details:** 
 - Deployment: `docs/review-analysis/VERCEL_SETUP.md`
@@ -49,12 +47,10 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **Status**: ✅ Complete - All pages live in production
 
 ### **A- Grade Achievement** ✅ COMPLETED (November 17, 2025)
-- **Grade Achievement**: Achieved A- (85-89%) through TypeScript type safety improvements
-- **Target Updated**: Target grade updated to A (90%+) for next phase
-- **Impact**: +1-2 points from B+ (84-86%) → A- (85-89%)
+- **Milestone**: TypeScript type-safety improvements completed in safe, non-poll areas
 - **Work Completed**: Fixed all `any` types in safe, non-poll areas (TWGSynthesisClient.tsx, CEWStatsClient.tsx, poll-export-utils.ts)
 - **Commit**: `d285cbd` - TypeScript type safety improvements
-- **Status**: ✅ Complete - A- grade achieved
+- **Status**: ✅ Complete
 
 ### **Phase 3: Validation & Security** ✅ COMPLETED (November 2025)
 - **Zod Validation**: Centralized validation schemas for all non-poll APIs (tags, announcements, milestones, documents, discussions)
@@ -67,7 +63,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 **For Details:** See `docs/review-analysis/PHASE3_COMPLETION_SUMMARY.md` and `docs/review-analysis/PHASE3_TESTING_CHECKLIST.md`
 
 ### **Database Performance & Monitoring** ✅ COMPLETED (November 2025)
-- **Performance Baseline:** 100% cache hit rate, all queries < 1ms average
+- **Performance Baseline:** Baseline established and documented (see monitoring baseline doc)
 - **Monitoring Scripts:** Verification and monitoring tools created and tested
 - **Index Verification:** Missing indexes identified and deferred (poll-safe approach)
 - **Query Analysis:** Comprehensive analysis completed, no optimization needed
@@ -87,8 +83,8 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **Vitest Mocking:** Replaced direct NODE_ENV assignment with `vi.stubEnv()` for proper environment variable mocking
 - **Test Reliability:** Added proper cleanup with `afterEach` hook for environment stubs
 - **Window Location Mocking:** Fixed `window.location.reload` mocking in test suite
-- **All Tests Passing:** 7/7 ErrorBoundary tests now pass successfully
-- **Build Success:** Production build succeeds with no TypeScript or test errors
+- **All Tests Passing:** ErrorBoundary tests pass successfully (see manifest `facts` for canonical counts)
+- **Build Success:** Production build succeeds with no TypeScript or test errors (at time of update)
 
 **Impact:** GitHub Actions CI/CD pipeline now passes without test failures, improved test reliability
 
@@ -96,7 +92,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **Testing Infrastructure**: Vitest unit tests, Playwright E2E tests, CI/CD GitHub Actions workflow (see `docs/_meta/docs-manifest.json` for volatile metrics)
 - **Code Quality**: Supabase auth utility centralization (16 routes migrated), 200+ lines of duplicate code eliminated
 - **Code Cleanup**: Conditional logging, debug code removal, unused import cleanup
-- **Grade Improvement**: C (66%) → A- (85-89%) through safe, incremental improvements including Phase 3 and TypeScript improvements (Nov 17, 2025)
+- **Outcome**: Safe, incremental improvements delivered without incidents
 - **Production Safety**: Zero incidents during all improvements
 - **Documentation**: Comprehensive completion summaries and improvement plans
 
@@ -264,11 +260,10 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 
 ### **K6 Load Testing & Performance Validation** ✅ COMPLETED (2025)
 - **Comprehensive Load Testing**: Successfully tested CEW polling system with 100 concurrent users using k6
-- **Perfect Performance Results**: 100% poll submission success rate, 0% HTTP failures, sub-300ms response times
+- **Performance Results**: Poll submissions succeeded under load; see testing docs for canonical results
 - **Conference Readiness**: System proven capable of handling expected CEW 2025 conference load
 - **Infrastructure Validation**: Paid-tier Vercel and Supabase infrastructure performing excellently
-- **Load Test Metrics**: 1,715 successful poll submissions, 3,033 HTTP requests, 23.6 requests/second sustained
-- **Performance Thresholds**: All thresholds met (p95 < 2000ms, failure rate < 0.1%, success rate > 95%)
+- **Load Test Metrics**: See `docs/testing/` and manifest `facts` for canonical, up-to-date metrics
 
 ### **TWG Review Access & Authentication Improvements** ✅ COMPLETED (2025)
 - **Simplified Access Control**: Removed role checks from TWG Review page - now requires authentication only
@@ -326,7 +321,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 - **Professional UI**: Consistent visual experience across all interfaces
 
 ### **Enhanced User Management System** ✅ COMPLETED
-- **100% User Visibility**: Admin dashboard now shows all authenticated users
+- **Full User Visibility**: Admin dashboard shows authenticated users
 - **Real Email Addresses**: No more "User 1234..." - displays actual user emails
 - **Automatic Role Assignment**: New signups automatically get 'member' role
 - **Complete Activity Tracking**: Monitor user engagement and participation
@@ -424,7 +419,7 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 #### **2. User Management System** ✅ COMPLETED
 
 **Complete User Visibility**
-- **Coverage**: 100% of authenticated users
+- **Coverage**: All authenticated users (expected)
 - **Discovery**: Automatic detection of all users
 - **No Missing Users**: Every signup becomes visible
 
@@ -677,7 +672,7 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 ### **Database Query Performance** ✅ **EXCELLENT** (November 2025)
 
 **Monitoring Status:**
-- ✅ **Cache Hit Rate:** 100% (4,287,482 cache hits, 0 disk reads)
+- ✅ **Cache Hit Rate:** Baseline established (see monitoring baseline doc)
 - ✅ **Top Queries:** All < 1ms average execution time
 - ✅ **Application Queries:** Performing excellently (e.g., `get_or_create_poll`: 0.15ms avg)
 - ✅ **Monitoring:** Baseline established, scripts ready for weekly tracking
@@ -700,11 +695,11 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 
 ### **Load Testing Results** ✅ VALIDATED (2025)
 - **Concurrent Users**: Successfully handled 100 concurrent users
-- **Poll Submissions**: 100% success rate (1,715 out of 1,715 polls)
-- **HTTP Performance**: 0% failure rate (3,033 requests, all successful)
-- **Response Times**: Average 139ms, 95th percentile 265ms (well under 2s threshold)
-- **Throughput**: 23.6 requests/second sustained load
-- **Data Transfer**: 103 kB/s received, 12 kB/s sent
+- **Poll Submissions**: Successful under load (see testing docs + manifest facts for canonical metrics)
+- **HTTP Performance**: Successful under load (see testing docs + manifest facts)
+- **Response Times**: Within thresholds (see testing docs + manifest facts)
+- **Throughput**: See testing docs + manifest facts
+- **Data Transfer**: See testing docs + manifest facts
 - **System Stability**: Zero downtime during 2-minute load test
 
 ### **Database Performance** ✅ OPTIMIZED
@@ -755,8 +750,7 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 - **ErrorBoundary**: ✅ Complete for admin pages
 
 ### **Next Steps: Path to A- (85-89%)**
-- **Only 1-5 points remaining** to reach A- grade
-- **See**: `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md` for detailed plan
+- **See**: `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md` for detailed plan and current priorities
 - **Optional Enhancements**:
   - Additional TypeScript `any` type cleanup in non-poll areas
   - Redis-based rate limiting for multi-instance deployments
@@ -776,10 +770,10 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 - **Rate Limiting**: All non-poll APIs protected with configurable limits
 - **Authorization Review**: Complete security audit completed, all checks verified
 - **ErrorBoundary**: Graceful error handling for admin pages
-- **Grade Improvement**: B- (77%) → B+ (83-84%) = +6-7 points
+- **Impact**: See `docs/review-analysis/PHASE3_COMPLETION_SUMMARY.md` (treat any metrics there as historical unless sourced from manifest facts)
 
 ### **Enhanced User Engagement Achievements (Previous Phase)**
-- **100% User Visibility**: Admin dashboard shows all authenticated users
+- **Full User Visibility**: Admin dashboard shows authenticated users
 - **Real Email Addresses**: No more "User 1234..." display
 - **Automatic Role Assignment**: New signups get 'member' role automatically
 - **Enhanced Like System**: Complete user interaction tracking
@@ -812,19 +806,16 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 ## 📚 **Documentation Status**
 
 ### **Updated Documents**
-- ✅ **README.md**: Updated with Phase 3 completion and current grade (B+ 83-84%)
+- ✅ **README.md**: Updated with Phase 3 completion references
 - ✅ **AGENTS.md**: Updated with Phase 3 completion, security enhancements, and current status
 - ✅ **PROJECT_STATUS.md**: Current project status, Phase 3 completion, and capabilities
 - ✅ **QUICK_START_TEMPLATES.md**: Updated templates with Phase 3 references
-- ✅ **docs/review-analysis/README.md**: Updated with Phase 3 documentation and current grade
+- ✅ **docs/review-analysis/README.md**: Updated with Phase 3 documentation references
 - ✅ **docs/review-analysis/PHASE3_COMPLETION_SUMMARY.md**: Complete Phase 3 completion summary
 - ✅ **docs/review-analysis/NEXT_STEPS.md**: Updated with Phase 3 completion and Sprint 2 progress
 
 ### **Documentation Quality**
-- **Technical Accuracy**: 100% - All documents reflect current implementation
-- **Completeness**: 95% - Comprehensive coverage of all features
-- **Usability**: 90% - Clear instructions and examples
-- **Maintenance**: 85% - Regular updates and improvements
+- Avoid hardcoded quality percentages; keep quality signals qualitative unless sourced + verified in manifest facts.
 
 ## 🏆 **Conclusion**
 
@@ -835,17 +826,17 @@ User Login → Supabase Auth → Session with UUID → Query user_roles → Dete
 - ✅ **Rate Limiting**: All non-poll APIs protected with configurable limits
 - ✅ **Authorization Review**: Complete security audit with all checks verified
 - ✅ **ErrorBoundary**: Graceful error handling for admin pages
-- ✅ **Grade Improvement**: B- (77%) → B+ (83-84%) = +6-7 points
+- ✅ See `docs/review-analysis/PHASE3_COMPLETION_SUMMARY.md` for detailed historical notes
 
 **Enhanced User Engagement** (previous phase) delivered:
 - ✅ **Enhanced Like System**: Complete with user attribution and real-time updates
-- ✅ **User Management System**: 100% user visibility with real email addresses
+- ✅ **User Management System**: Full user visibility with real email addresses
 - ✅ **Authentication Improvements**: Robust admin badge persistence and error handling
 
-The SSTAC & TWG Dashboard now provides a **professional, production-ready platform** with enterprise-level security, validation, and user management capabilities. The platform has achieved **A- (85-89%) grade** (November 17, 2025) and is targeting A (90%+) for the next phase.
+The SSTAC & TWG Dashboard provides a professional platform with enterprise-level security, validation, and user management capabilities (see `docs/INDEX.md` for canonical current status and manifest `facts` for metrics).
 
 **Next Steps**: See `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md` for path to A- grade.
 
 ---
 
-**Project Status**: ✅ **PRODUCTION READY** - The system is fully functional with production-ready security, validation, and logging infrastructure. Current grade: **A- (85-89%)** - Achieved November 17, 2025. Target grade: **A (90%+)**.
+**Canonical current status** (including any grade/status claims) lives in `docs/INDEX.md`.
