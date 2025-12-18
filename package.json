@@ -18,7 +18,11 @@
     "docs:gate": "node scripts/verify/docs-gate.mjs",
     "docs:gate:json": "node scripts/verify/docs-gate.mjs --json",
     "docs:archive:investigate": "node scripts/verify/docs-archive-investigation.mjs",
-    "docs:archive:investigate:json": "node scripts/verify/docs-archive-investigation.mjs --json"
+    "docs:archive:investigate:json": "node scripts/verify/docs-archive-investigation.mjs --json",
+    "docs:manifest:update": "node scripts/verify/update-manifest-facts.mjs",
+    "docs:manifest:update:vitest": "node scripts/verify/update-manifest-facts.mjs --vitest",
+    "docs:manifest:update:playwright": "node scripts/verify/update-manifest-facts.mjs --playwright",
+    "docs:manifest:update:k6": "node scripts/verify/update-manifest-facts.mjs --k6"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.22.0",

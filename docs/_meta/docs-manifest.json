@@ -41,10 +41,10 @@
   "facts": {
     "testing": {
       "vitest_test_count": {
-        "status": "unknown",
-        "value": null,
-        "source": "Derive from vitest output; do not trust markdown counts.",
-        "last_verified": null
+        "status": "verified",
+        "value": 142,
+        "source": "npm run test:unit output (December 2025)",
+        "last_verified": "2025-12-07"
       },
       "playwright_test_count": {
         "status": "unknown",
