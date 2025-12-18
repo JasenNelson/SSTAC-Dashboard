@@ -1,23 +1,23 @@
 # A- Achievement Plan: Remaining Work Based on Original 40 Enhancements
 
-**Status:** ✅ **A- ACHIEVED** (November 17, 2025) | 📋 **PLANNING FOR A GRADE**  
+**Status:** ✅ **Target Grade Achieved** (see manifest `facts`) | 📋 **PLANNING FOR A GRADE**
 **Project Start:** August 2025  
-**Current Grade:** **A- (85-89%)** - Achieved November 17, 2025 ✅  
-**Target Grade:** A (90%+) - Updated November 17, 2025  
-**Gap:** 1-5 percentage points needed to reach A grade
+**Current Grade:** See manifest `facts`
+**Target Grade:** See manifest `facts`
+**Gap:** See manifest `facts`
 
 ---
 
 ## 📊 Completion Status Overview
 
-### **Current State (A- 85-89%)** ✅ **ACHIEVED** (November 17, 2025)
+### **Current State** ✅ **ACHIEVED** (November 17, 2025)
 Completed work (August - November 2025):
 - ✅ Testing infrastructure: Vitest, Playwright, CI/CD setup
 - ✅ Unit tests: passing (see `docs/_meta/docs-manifest.json` → `facts.testing`)
 - ✅ Code cleanup: Conditional logging, imports, debug code removal
 - ✅ Supabase utility integration: 16 routes migrated
 - ✅ Phase 3: Zod validation, structured logging, rate limiting, authorization review, ErrorBoundary
-- ✅ **TypeScript Type Safety Improvements** (November 17, 2025) - Achieved A- grade
+- ✅ **TypeScript Type Safety Improvements** (November 17, 2025)
 - ✅ Component decomposition planning complete (refactoring deferred)
 - ✅ **CEW & TWG Results Pages** (November 18, 2025) - Recovered and deployed
 
@@ -29,22 +29,22 @@ Completed work (August - November 2025):
 
 ---
 
-## 🎯 Gap Analysis: What's Needed for A (90%+)
+## 🎯 Gap Analysis
 
-**Note:** A- (85-89%) was achieved November 17, 2025 through TypeScript type safety improvements. This plan now focuses on reaching A grade (90%+).
+**Note:** Target grade milestone was achieved November 17, 2025 through TypeScript type safety improvements. This plan now focuses on reaching the next grade level (see manifest `facts`).
 
 Based on Grade Projection vs Current State:
 
-| Sprint | Original Plan | Current Status | Gap |
-|:-------|:--------------|:---------------|:-----|
-| **Sprint 1** (Quick Wins) | C → C+ (69%) | ✅ Complete | None |
-| **Sprint 2** (Security Foundation) | C+ → C+ (71%) | ⚠️ Partial | Rate limiting, ErrorBoundary, `any` types |
-| **Sprint 3** (Testing Infrastructure) | C+ → B- (76%) | ✅ Complete | None |
-| **Sprint 4** (Component Refactoring) | B- → B (79%) | ⏸️ Not Started | All items deferred |
-| **Sprint 5** (Security & Validation) | B → B (81%) | ⚠️ Partial | Zod, security testing, npm audit |
-| **Sprint 6** (Major Refactoring) | B → B+ (85%) | ⏸️ Not Started | All items deferred |
-| **Sprint 7** (Quality Improvements) | B+ → A- (88%) | ✅ A- Achieved | A- achieved via TypeScript improvements (Nov 17, 2025) - Additional work deferred |
-| **Sprint 8** (Optimization) | A- → A (90%+) | ⏸️ Not Started | Targeting A grade - Additional optimization work |
+| Sprint | Target | Current Status | Gap |
+|:-------|:-------|:---------------|:-----|
+| **Sprint 1** (Quick Wins) | Milestone 1 | ✅ Complete | None |
+| **Sprint 2** (Security Foundation) | Milestone 2 | ⚠️ Partial | Rate limiting, ErrorBoundary, `any` types |
+| **Sprint 3** (Testing Infrastructure) | Milestone 3 | ✅ Complete | None |
+| **Sprint 4** (Component Refactoring) | Milestone 4 | ⏸️ Not Started | All items deferred |
+| **Sprint 5** (Security & Validation) | Milestone 5 | ⚠️ Partial | Zod, security testing, npm audit |
+| **Sprint 6** (Major Refactoring) | Milestone 6 | ⏸️ Not Started | All items deferred |
+| **Sprint 7** (Quality Improvements) | Target Grade | ✅ Achieved | Target achieved via TypeScript improvements (Nov 17, 2025) - Additional work deferred |
+| **Sprint 8** (Optimization) | Next Grade | ⏸️ Not Started | Targeting next level - Additional optimization work |
 
 ---
 
@@ -132,7 +132,7 @@ Based on Grade Projection vs Current State:
 3. Begin Sprint 4 gently (with extreme caution)
 4. Skip/delay Sprints 6-8 until maintenance window
 
-**Expected Grade:** B+ (80-82%)
+**Expected Grade:** See manifest `facts`
 
 **Pros:**
 - ✅ Low production risk
@@ -158,7 +158,7 @@ Based on Grade Projection vs Current State:
 - Major refactoring during production use
 - Higher risk of user impact
 
-**Expected Grade:** A- (85-89%)
+**Expected Grade:** Target Grade
 
 **Pros:**
 - ✅ Achieves A- grade target
@@ -189,7 +189,7 @@ Based on Grade Projection vs Current State:
 4. Complete Sprint 8 (optimization) (1 week)
 5. Defer Sprint 7 & remaining Sprint 6
 
-**Expected Grade:** B+ (82-84%)
+**Expected Grade:** See manifest `facts`
 
 **Pros:**
 - ✅ Moderate risk management
@@ -206,50 +206,50 @@ Based on Grade Projection vs Current State:
 
 ## 📊 Grade Impact Analysis by Remaining Items
 
-### **High-Impact, Lower-Risk Items** (+5-7 points total)
+### **High-Impact, Lower-Risk Items** (see manifest `facts` for points)
 
 **Sprint 2 Completion** (Missing items 7-10):
-- Rate limiting: +2 points (API Architecture)
-- Authorization fixes: +2 points (API Architecture, Security)
-- ErrorBoundary: +1 point (Frontend Architecture)
-- Remove `any` types: +1 point (Code Quality)
-- **Total: +6 points → B- (77%) → B+ (83%)**
+- Rate limiting: API Architecture
+- Authorization fixes: API Architecture, Security
+- ErrorBoundary: Frontend Architecture
+- Remove `any` types: Code Quality
+- **Outcome: Improved grade posture**
 
 **Sprint 5 Completion** (Missing items 21-22, 24-25):
-- Zod validation: +1 point (API Architecture)
-- Security testing: +1 point (Testing & QA)
-- Structured logging: +1 point (Code Quality)
-- npm audit fixes: +1 point (Code Quality)
-- **Total: +4 points → B (81%) → B+ (85%)**
+- Zod validation: API Architecture
+- Security testing: Testing & QA
+- Structured logging: Code Quality
+- npm audit fixes: Code Quality
+- **Outcome: Improved grade posture**
 
-**Combined Sprint 2 + 5:** B- (77%) → B+ (85%) = **A- achieved!** ✅ (November 17, 2025)
+**Combined Sprint 2 + 5:** Target milestone achieved! ✅ (November 17, 2025)
 
 ---
 
-### **High-Impact, Higher-Risk Items** (+3-4 points each)
+### **High-Impact, Higher-Risk Items** (see manifest `facts` for points)
 
 **Sprint 4 (Component Refactoring):**
-- Header split: +1 point (Architecture Patterns)
-- AuthContext/AdminContext: +1 point (Architecture Patterns)
-- PollResultsClient service layer: +1 point (Code Quality)
-- Toast notifications: +1 point (Frontend Architecture)
-- **Total: +4 points but HIGH RISK**
+- Header split: Architecture Patterns
+- AuthContext/AdminContext: Architecture Patterns
+- PollResultsClient service layer: Code Quality
+- Toast notifications: Frontend Architecture
+- **Outcome: Improved architecture but HIGH RISK**
 
 **Sprint 6 (Major Refactoring):**
-- Complete PollResultsClient rewrite: +3 points (Code Quality)
-- State standardization: +1 point (Architecture Patterns)
-- Matrix graph extraction: +1 point (Code Quality)
-- WordCloudPoll split: +1 point (Code Quality)
-- CSS refactoring: +1 point (Code Quality)
-- **Total: +7 points but VERY HIGH RISK**
+- Complete PollResultsClient rewrite: Code Quality
+- State standardization: Architecture Patterns
+- Matrix graph extraction: Code Quality
+- WordCloudPoll split: Code Quality
+- CSS refactoring: Code Quality
+- **Outcome: Improved maintainability but VERY HIGH RISK**
 
 ---
 
-## 🏆 Recommended Path to A: **Pragmatic Approach**
+## 🏆 Recommended Path: **Pragmatic Approach**
 
-**Status:** ✅ A- (85-89%) achieved November 17, 2025
+**Status:** ✅ Target Grade achieved November 17, 2025
 
-### **Goal:** A- (85-89%) → A (90%+) in 6-8 weeks safely
+### **Goal:** Reach the next grade level safely
 
 ### **Phase 1: Low-Risk Completion (Weeks 17-19)** ⏱️ 3 weeks
 
@@ -262,7 +262,7 @@ Based on Grade Projection vs Current State:
 - ✅ Run npm audit and fix
 - ✅ Consider security testing
 
-**Expected Result:** A- (85-89%) → A (87-90%)  
+**Expected Result:** Improved grade level
 **Risk Level:** 🟢 LOW  
 **User Impact:** NONE
 
@@ -279,7 +279,7 @@ Based on Grade Projection vs Current State:
 - ⏸️ Defer Header split (too risky)
 - ⏸️ Defer PollResultsClient refactor (too large)
 
-**Expected Result:** A- (87-89%) → A (89-91%)  
+**Expected Result:** Improved grade level
 **Risk Level:** 🟡 LOW-MEDIUM  
 **User Impact:** MINIMAL (toast improvements are good)
 
@@ -298,7 +298,7 @@ Based on Grade Projection vs Current State:
 - Accessibility features
 - Next.js 16 upgrade
 
-**Expected Result:** A (89-91%) → A (91-93%)  
+**Expected Result:** Improved grade level
 **Risk Level:** 🟡 MEDIUM-HIGH  
 **Requires:** Dedicated maintenance window
 
@@ -306,30 +306,30 @@ Based on Grade Projection vs Current State:
 
 ## 📅 Timeline Summary
 
-### **Conservative Approach (Current A- → A-):**
+### **Conservative Approach:**
 - ✅ Weeks 1-16: Infrastructure & planning (COMPLETE)
-- ✅ Weeks 17-19: TypeScript improvements - **A- ACHIEVED** (Nov 17, 2025)
+- ✅ Weeks 17-19: TypeScript improvements - **Target Grade ACHIEVED** (Nov 17, 2025)
 - ⏸️ Weeks 20-24: Complete remaining safe items
-- ⏸️ **Result: A- (87-89%) in 4 more weeks**
+- ⏸️ **Result: Improved gradePosture in 4 more weeks**
 
-### **Pragmatic Approach (A- → A):**
+### **Pragmatic Approach:**
 - ✅ Weeks 1-16: Infrastructure & planning (COMPLETE)
-- ✅ Weeks 17-19: TypeScript improvements - **A- ACHIEVED** (Nov 17, 2025)
+- ✅ Weeks 17-19: TypeScript improvements - **Target Grade ACHIEVED** (Nov 17, 2025)
 - ⏸️ Weeks 20-24: Strategic partial refactoring
-- ⏸️ **Result: A (89-91%) in 8 more weeks**
+- ⏸️ **Result: Improved gradePosture in 8 more weeks**
 
-### **Aggressive Approach (A- → A Full):**
+### **Aggressive Approach:**
 - ✅ Weeks 1-16: Infrastructure & planning (COMPLETE)
-- ✅ Weeks 17-19: TypeScript improvements - **A- ACHIEVED** (Nov 17, 2025)
+- ✅ Weeks 17-19: TypeScript improvements - **Target Grade ACHIEVED** (Nov 17, 2025)
 - ⏸️ Weeks 20-32: Complete all 40 enhancements
-- ⏸️ **Result: A (91-93%) in 16 more weeks**
+- ⏸️ **Result: Improved gradePosture in 16 more weeks**
 
 ---
 
 ## 🎯 Recommended: Pragmatic Path
 
-**Status:** ✅ A- (85-89%) achieved November 17, 2025  
-**Complete in 8 weeks for A (89-91%)**
+**Status:** ✅ Target Grade achieved November 17, 2025  
+**Complete in 8 weeks for next level**
 
 ### **Week-by-Week Breakdown:**
 
@@ -408,8 +408,8 @@ Based on Grade Projection vs Current State:
 - ✅ Performance measurements recorded
 - ✅ All tests passing
 
-### **A- Achievement When:**
-- ✅ Grade reaches 85-87%
+### **Target Grade Achievement When:**
+- ✅ Grade reaches target level
 - ✅ All planned enhancements complete
 - ✅ Production stable with no incidents
 - ✅ Test coverage maintained
@@ -422,9 +422,9 @@ Based on Grade Projection vs Current State:
 ### **Grade Progression:**
 - **Starting:** C (66%)
 - **After Weeks 1-16:** B- (77%)
-- **After Week 19:** **A- (85-89%)** ✅ **ACHIEVED** (November 17, 2025)
-- **After Week 24:** A (89-91%) (target)
-- **Final (with maintenance work):** A (91-93%) (target)
+- **After Week 19:** **Target Grade ACHIEVED** (November 17, 2025)
+- **After Week 24:** Next level (target)
+- **Final (with maintenance work):** Advanced level (target)
 
 ### **Code Quality Improvements:**
 - 200+ lines of duplicate code already eliminated
@@ -445,13 +445,13 @@ Based on Grade Projection vs Current State:
 
 **Choose your path:**
 
-1. **Conservative** → A- (87-89%) in 4 weeks, minimal risk
-2. **Pragmatic** → A (89-91%) in 8 weeks, low-medium risk
-3. **Aggressive** → A (91-93%) in 16 weeks, medium-high risk
+1. **Conservative** → 4 weeks, minimal risk
+2. **Pragmatic** → 8 weeks, low-medium risk
+3. **Aggressive** → 16 weeks, medium-high risk
 
 **My Recommendation:** Pragmatic path provides best balance of grade improvement, risk management, and timeline.
 
 ---
 
-**Status Update:** ✅ A- (85-89%) was achieved November 17, 2025 through TypeScript type safety improvements. This plan now provides a clear, actionable path from A- (85-89%) to A (90%+) following the original enhancement roadmap while respecting production safety constraints.
+**Status Update:** ✅ Target Grade achieved November 17, 2025 through TypeScript type safety improvements. This plan now provides a clear, actionable path forward following the original enhancement roadmap while respecting production safety constraints.
 
