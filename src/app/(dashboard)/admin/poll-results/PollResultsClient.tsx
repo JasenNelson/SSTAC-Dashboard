@@ -2,21 +2,13 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { PollResult, MatrixData, IndividualVotePair } from './types';
 import QRCodeDisplay from '@/components/dashboard/QRCodeDisplay';
+import QRCodeModal from './components/QRCodeModal';
+import FilterSidebar from './components/FilterSidebar';
 import CustomWordCloud from '@/components/dashboard/CustomWordCloud';
 import PrioritizationMatrixGraph from '@/components/graphs/PrioritizationMatrixGraph';
-import {
-  exportSingleChoicePollToCSV,
-  exportRankingPollToCSV,
-  exportWordcloudPollToCSV,
-  exportMatrixGraphToCSV,
-  generateExportMetadata,
-  downloadCSV,
-  generatePollExportFilename,
-  generateBulkExportFilename,
-  getFilterModeDisplayName,
-  type ExportMetadata as ExportMetadataType
-} from '@/lib/poll-export-utils';
+import { usePollExport } from './hooks/usePollExport';
 
 // Simple Error Boundary Component
 class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallback: React.ReactNode }, { hasError: boolean }> {
@@ -40,58 +32,6 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallbac
 
     return this.props.children;
   }
-}
-
-interface PollResult {
-  poll_id?: string;
-  ranking_poll_id?: string;
-  wordcloud_poll_id?: string;
-  page_path: string;
-  poll_index: number;
-  question: string;
-  options: string[];
-  total_votes: number;
-  results: Array<{
-    option_index: number;
-    option_text: string;
-    votes: number;
-    averageRank?: number;
-  }>;
-  is_ranking?: boolean;
-  is_wordcloud?: boolean;
-  wordcloud_words?: Array<{
-    text: string;
-    value: number;
-  }>;
-  combined_survey_votes?: number;
-  combined_cew_votes?: number;
-  survey_results?: Array<{
-    option_index: number;
-    option_text: string;
-    votes: number;
-    averageRank?: number;
-  }>;
-  cew_results?: Array<{
-    option_index: number;
-    option_text: string;
-    votes: number;
-    averageRank?: number;
-  }>;
-}
-
-interface IndividualVotePair {
-  userId: string;
-  importance: number;
-  feasibility: number;
-  userType: 'authenticated' | 'cew';
-}
-
-interface MatrixData {
-  title: string;
-  avgImportance: number;
-  avgFeasibility: number;
-  responses: number;
-  individualPairs: IndividualVotePair[];
 }
 
 export default function PollResultsClient() {
@@ -867,311 +807,6 @@ export default function PollResultsClient() {
     return Math.round((votes / totalVotes) * 100);
   };
 
-  // Export functions for each poll type
-  const exportSingleChoicePoll = (poll: PollResult) => {
-    const filteredResults = getFilteredPollResults(poll);
-    const totalVotes = filteredResults.reduce((sum, r) => sum + r.votes, 0);
-    
-    // Get full option text from options array
-    const getFullOptionText = (index: number): string => {
-      if (!poll.options || !Array.isArray(poll.options)) return `Option ${index + 1}`;
-      return poll.options[index] || `Option ${index + 1}`;
-    };
-
-    const exportData = {
-      question: poll.question,
-      pollType: 'Single-Choice',
-      pagePath: poll.page_path,
-      pollIndex: poll.poll_index,
-      filterMode: filterMode,
-      totalResponses: totalVotes,
-      twgResponses: filterMode === 'all' ? poll.combined_survey_votes : undefined,
-      cewResponses: filterMode === 'all' ? poll.combined_cew_votes : undefined,
-      options: filteredResults.map(result => {
-        const fullText = getFullOptionText(result.option_index);
-        const percentage = totalVotes > 0 ? (result.votes / totalVotes) * 100 : 0;
-        
-        // For "all" filter, try to get breakdown from survey/cew results
-        let twgVotes: number | undefined;
-        let cewVotes: number | undefined;
-        
-        if (filterMode === 'all') {
-          const surveyResult = poll.survey_results?.find(r => r.option_index === result.option_index);
-          const cewResult = poll.cew_results?.find(r => r.option_index === result.option_index);
-          twgVotes = surveyResult?.votes || 0;
-          cewVotes = cewResult?.votes || 0;
-        }
-        
-        return {
-          optionIndex: result.option_index,
-          optionText: fullText, // Full text, no truncation
-          votes: result.votes,
-          percentage: percentage,
-          twgVotes: filterMode === 'all' ? twgVotes : undefined,
-          cewVotes: filterMode === 'all' ? cewVotes : undefined
-        };
-      })
-    };
-
-    const csvContent = exportSingleChoicePollToCSV(exportData);
-    const filename = generatePollExportFilename('single-choice', poll.page_path, poll.poll_index, filterMode);
-    downloadCSV(csvContent, filename);
-  };
-
-  const exportRankingPoll = (poll: PollResult) => {
-    const filteredResults = getFilteredPollResults(poll);
-    const totalVotes = filteredResults.length > 0 ? filteredResults[0].votes : poll.total_votes;
-    
-    // Get full option text from options array
-    const getFullOptionText = (index: number): string => {
-      if (!poll.options || !Array.isArray(poll.options)) return `Option ${index + 1}`;
-      return poll.options[index] || `Option ${index + 1}`;
-    };
-
-    const exportData = {
-      question: poll.question,
-      pollType: 'Ranking',
-      pagePath: poll.page_path,
-      pollIndex: poll.poll_index,
-      filterMode: filterMode,
-      totalResponses: totalVotes,
-      twgResponses: filterMode === 'all' ? poll.combined_survey_votes : undefined,
-      cewResponses: filterMode === 'all' ? poll.combined_cew_votes : undefined,
-      options: filteredResults.map(result => ({
-        optionIndex: result.option_index,
-        optionText: getFullOptionText(result.option_index), // Full text, no truncation
-        averageRank: result.averageRank || 0,
-        votes: result.votes
-      }))
-    };
-
-    const csvContent = exportRankingPollToCSV(exportData);
-    const filename = generatePollExportFilename('ranking', poll.page_path, poll.poll_index, filterMode);
-    downloadCSV(csvContent, filename);
-  };
-
-  const exportWordcloudPoll = (poll: PollResult) => {
-    if (!poll.wordcloud_words || poll.wordcloud_words.length === 0) {
-      alert('No wordcloud data available to export');
-      return;
-    }
-
-    const totalVotes = poll.wordcloud_words.reduce((sum, word) => sum + (word.value || 0), 0);
-    const totalResponses = poll.total_votes || totalVotes;
-
-    // Calculate percentages
-    const wordsWithPercentages = poll.wordcloud_words.map(word => ({
-      word: word.text,
-      frequency: word.value,
-      percentage: totalVotes > 0 ? (word.value / totalVotes) * 100 : 0
-    }));
-
-    const exportData = {
-      question: poll.question,
-      pollType: 'Wordcloud',
-      pagePath: poll.page_path,
-      pollIndex: poll.poll_index,
-      filterMode: filterMode,
-      totalResponses: totalResponses,
-      twgResponses: filterMode === 'all' ? poll.combined_survey_votes : undefined,
-      cewResponses: filterMode === 'all' ? poll.combined_cew_votes : undefined,
-      words: wordsWithPercentages
-    };
-
-    const csvContent = exportWordcloudPollToCSV(exportData);
-    const filename = generatePollExportFilename('wordcloud', poll.page_path, poll.poll_index, filterMode);
-    downloadCSV(csvContent, filename);
-  };
-
-  const exportMatrixGraph = (graph: MatrixData, question1Text: string, question2Text: string, questionPair: string) => {
-    // Classify data points into quadrants
-    const classifyQuadrant = (importance: number, feasibility: number): string => {
-      // Scale: 1 = high, 5 = low
-      // High Priority: High importance (1-2), High feasibility (1-2)
-      // No Go: High importance (1-2), Low feasibility (4-5)
-      // Longer-term: Low importance (4-5), High feasibility (1-2)
-      // Possibly Later?: Everything else
-      
-      if (importance <= 2 && feasibility <= 2) return 'HIGH PRIORITY';
-      if (importance <= 2 && feasibility >= 4) return 'NO GO';
-      if (importance >= 4 && feasibility <= 2) return 'LONGER-TERM';
-      return 'POSSIBLY LATER?';
-    };
-
-    const quadrantCounts = {
-      highPriority: 0,
-      noGo: 0,
-      longerTerm: 0,
-      possiblyLater: 0
-    };
-
-    const classifiedPoints = graph.individualPairs.map(point => {
-      const quadrant = classifyQuadrant(point.importance, point.feasibility);
-      if (quadrant === 'HIGH PRIORITY') quadrantCounts.highPriority++;
-      else if (quadrant === 'NO GO') quadrantCounts.noGo++;
-      else if (quadrant === 'LONGER-TERM') quadrantCounts.longerTerm++;
-      else quadrantCounts.possiblyLater++;
-      
-      return {
-        userId: point.userId,
-        userType: point.userType,
-        importance: point.importance,
-        feasibility: point.feasibility,
-        quadrant: quadrant
-      };
-    });
-
-    const exportData = {
-      questionPair: questionPair,
-      question1Text: question1Text,
-      question2Text: question2Text,
-      filterMode: filterMode,
-      totalResponses: graph.responses,
-      avgImportance: graph.avgImportance,
-      avgFeasibility: graph.avgFeasibility,
-      quadrantCounts: quadrantCounts,
-      dataPoints: classifiedPoints
-    };
-
-    const csvContent = exportMatrixGraphToCSV(exportData);
-    const filename = `matrix-graph-${questionPair.toLowerCase().replace(/\s+/g, '-')}-${filterMode}-${new Date().toISOString().slice(0, 10)}.csv`;
-    downloadCSV(csvContent, filename);
-  };
-
-  const exportAllQuestions = () => {
-    if (filteredPolls.length === 0) {
-      alert('No polls available to export');
-      return;
-    }
-
-    const exportDate = new Date();
-    const voteCounts = getFilteredVoteCounts();
-
-    // Generate metadata
-    const metadata: ExportMetadataType = {
-      exportDate: exportDate.toISOString(),
-      filterMode: filterMode,
-      totalQuestions: filteredPolls.length,
-      totalResponses: voteCounts.total,
-      twgResponses: voteCounts.twg,
-      cewResponses: voteCounts.cew,
-      exportVersion: '1.0'
-    };
-
-    const csvLines: string[] = [];
-    csvLines.push(generateExportMetadata(metadata));
-    csvLines.push('');
-
-    // Export each poll
-    filteredPolls.forEach((poll, index) => {
-      csvLines.push(`=== QUESTION ${index + 1} ===`);
-      csvLines.push('');
-
-      if (poll.is_wordcloud) {
-        const filteredResults = getFilteredPollResults(poll);
-        if (poll.wordcloud_words && poll.wordcloud_words.length > 0) {
-          const totalVotes = poll.wordcloud_words.reduce((sum, word) => sum + (word.value || 0), 0);
-          const wordsWithPercentages = poll.wordcloud_words.map(word => ({
-            word: word.text,
-            frequency: word.value,
-            percentage: totalVotes > 0 ? (word.value / totalVotes) * 100 : 0
-          }));
-
-          const exportData = {
-            question: poll.question,
-            pollType: 'Wordcloud',
-            pagePath: poll.page_path,
-            pollIndex: poll.poll_index,
-            filterMode: filterMode,
-            totalResponses: poll.total_votes || totalVotes,
-            twgResponses: filterMode === 'all' ? poll.combined_survey_votes : undefined,
-            cewResponses: filterMode === 'all' ? poll.combined_cew_votes : undefined,
-            words: wordsWithPercentages
-          };
-          csvLines.push(exportWordcloudPollToCSV(exportData));
-        }
-      } else if (poll.is_ranking) {
-        const filteredResults = getFilteredPollResults(poll);
-        const totalVotes = filteredResults.length > 0 ? filteredResults[0].votes : poll.total_votes;
-        
-        const getFullOptionText = (index: number): string => {
-          if (!poll.options || !Array.isArray(poll.options)) return `Option ${index + 1}`;
-          return poll.options[index] || `Option ${index + 1}`;
-        };
-
-        const exportData = {
-          question: poll.question,
-          pollType: 'Ranking',
-          pagePath: poll.page_path,
-          pollIndex: poll.poll_index,
-          filterMode: filterMode,
-          totalResponses: totalVotes,
-          twgResponses: filterMode === 'all' ? poll.combined_survey_votes : undefined,
-          cewResponses: filterMode === 'all' ? poll.combined_cew_votes : undefined,
-          options: filteredResults.map(result => ({
-            optionIndex: result.option_index,
-            optionText: getFullOptionText(result.option_index),
-            averageRank: result.averageRank || 0,
-            votes: result.votes
-          }))
-        };
-        csvLines.push(exportRankingPollToCSV(exportData));
-      } else {
-        // Single-choice poll
-        const filteredResults = getFilteredPollResults(poll);
-        const totalVotes = filteredResults.reduce((sum, r) => sum + r.votes, 0);
-        
-        const getFullOptionText = (index: number): string => {
-          if (!poll.options || !Array.isArray(poll.options)) return `Option ${index + 1}`;
-          return poll.options[index] || `Option ${index + 1}`;
-        };
-
-        const exportData = {
-          question: poll.question,
-          pollType: 'Single-Choice',
-          pagePath: poll.page_path,
-          pollIndex: poll.poll_index,
-          filterMode: filterMode,
-          totalResponses: totalVotes,
-          twgResponses: filterMode === 'all' ? poll.combined_survey_votes : undefined,
-          cewResponses: filterMode === 'all' ? poll.combined_cew_votes : undefined,
-          options: filteredResults.map(result => {
-            const fullText = getFullOptionText(result.option_index);
-            const percentage = totalVotes > 0 ? (result.votes / totalVotes) * 100 : 0;
-            
-            let twgVotes: number | undefined;
-            let cewVotes: number | undefined;
-            
-            if (filterMode === 'all') {
-              const surveyResult = poll.survey_results?.find(r => r.option_index === result.option_index);
-              const cewResult = poll.cew_results?.find(r => r.option_index === result.option_index);
-              twgVotes = surveyResult?.votes || 0;
-              cewVotes = cewResult?.votes || 0;
-            }
-            
-            return {
-              optionIndex: result.option_index,
-              optionText: fullText,
-              votes: result.votes,
-              percentage: percentage,
-              twgVotes: filterMode === 'all' ? twgVotes : undefined,
-              cewVotes: filterMode === 'all' ? cewVotes : undefined
-            };
-          })
-        };
-        csvLines.push(exportSingleChoicePollToCSV(exportData));
-      }
-
-      csvLines.push('');
-      csvLines.push('');
-    });
-
-    const csvContent = csvLines.join('\n');
-    const filename = generateBulkExportFilename(filterMode);
-    downloadCSV(csvContent, filename);
-  };
-
-
   const filteredPolls = useMemo(() => {
     if (filterMode === 'all') {
       return pollResults;
@@ -1232,6 +867,20 @@ export default function PollResultsClient() {
       return poll.results;
     }
   };
+
+  // Use export hook for CSV export functionality
+  const {
+    exportSingleChoicePoll,
+    exportRankingPoll,
+    exportWordcloudPoll,
+    exportMatrixGraph,
+    exportAllQuestions
+  } = usePollExport({
+    filterMode,
+    filteredPolls,
+    getFilteredPollResults,
+    getFilteredVoteCounts
+  });
 
   const navigateToNextQuestion = (currentPoll: PollResult) => {
     // Get all polls in the same group
@@ -1372,208 +1021,26 @@ export default function PollResultsClient() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       {/* Fixed Left Panel */}
       {leftPanelVisible && (
-        <div className="fixed left-0 top-0 w-80 h-screen bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 flex-shrink-0 overflow-y-auto z-10">
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Filter Results</h2>
-          
-          {/* Filter Buttons */}
-          <div className="space-y-3">
-            <button
-              onClick={() => setFilterMode('twg')}
-              className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${
-                filterMode === 'twg'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-            >
-              SSTAC & TWG Only
-            </button>
-            <button
-              onClick={() => setFilterMode('cew')}
-              className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${
-                filterMode === 'cew'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-            >
-              CEW Only
-            </button>
-            <button
-              onClick={() => setFilterMode('all')}
-              className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${
-                filterMode === 'all'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
-            >
-              All Responses
-            </button>
-          </div>
-
-          {/* Display Options */}
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Display Options</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => setShowPresentationControls((prev) => !prev)}
-                className={`w-full px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-between ${
-                  showPresentationControls
-                    ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                <span>{showPresentationControls ? 'Hide Presentation Controls' : 'Show Presentation Controls'}</span>
-                <span className="text-sm">
-                  {showPresentationControls ? 'ON' : 'OFF'}
-                </span>
-              </button>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Toggle the per-question export button, join instructions, and QR code display in the results view.
-              </p>
-            </div>
-          </div>
-
-          {/* Poll Question Groups */}
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Poll Groups</h3>
-            <div className="space-y-2">
-              {Object.entries(groupPollsByTheme(filteredPolls)).map(([themeId, theme]) => {
-                if (theme.polls.length === 0) return null;
-                
-                const isExpanded = expandedGroup === themeId;
-                const getThemeColors = (themeId: string) => {
-                  switch (themeId) {
-                    case 'holistic-protection':
-                      return {
-                        bg: 'bg-blue-50 dark:bg-blue-900/20',
-                        hover: 'hover:bg-blue-100 dark:hover:bg-blue-900/30',
-                        text: 'text-gray-900 dark:text-blue-100',
-                        questionBg: 'bg-blue-100 dark:bg-blue-800/30',
-                        questionHover: 'hover:bg-blue-200 dark:hover:bg-blue-800/40'
-                      };
-                    case 'tiered-framework':
-                      return {
-                        bg: 'bg-orange-50 dark:bg-orange-600/20',
-                        hover: 'hover:bg-orange-100 dark:hover:bg-orange-600/30',
-                        text: 'text-gray-900 dark:text-orange-200',
-                        questionBg: 'bg-orange-100 dark:bg-orange-700/30',
-                        questionHover: 'hover:bg-orange-200 dark:hover:bg-orange-700/40'
-                      };
-                    case 'prioritization':
-                      return {
-                        bg: 'bg-purple-50 dark:bg-purple-900/20',
-                        hover: 'hover:bg-purple-100 dark:hover:bg-purple-900/30',
-                        text: 'text-gray-900 dark:text-purple-100',
-                        questionBg: 'bg-purple-100 dark:bg-purple-800/30',
-                        questionHover: 'hover:bg-purple-200 dark:hover:bg-purple-800/40'
-                      };
-                    default:
-                      return {
-                        bg: 'bg-gray-50 dark:bg-gray-700/20',
-                        hover: 'hover:bg-gray-100 dark:hover:bg-gray-700/30',
-                        text: 'text-gray-900 dark:text-gray-100',
-                        questionBg: 'bg-gray-100 dark:bg-gray-600/30',
-                        questionHover: 'hover:bg-gray-200 dark:hover:bg-gray-600/40'
-                      };
-                  }
-                };
-                
-                const colors = getThemeColors(themeId);
-                
-                return (
-                  <div key={themeId} className="space-y-1">
-                    <button
-                      onClick={() => setExpandedGroup(isExpanded ? null : themeId)}
-                      className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${colors.bg} ${colors.text} ${colors.hover} flex items-center justify-between`}
-                    >
-                      <span>{theme.name}</span>
-                      <span className="text-sm">
-                        {isExpanded ? '▼' : '▶'}
-                      </span>
-                    </button>
-                    
-                    {isExpanded && (
-                      <div className="ml-4 space-y-1">
-                        {theme.polls.map((poll) => {
-                          const pollKey = poll.poll_id || poll.ranking_poll_id || `poll-${poll.page_path}-${poll.poll_index}`;
-                          // For all poll types, use filtered results to respect the current filter mode
-                          const totalVotes = getFilteredPollResults(poll).reduce((sum, r) => sum + r.votes, 0);
-                          
-                          return (
-                            <button
-                              key={pollKey}
-                              onClick={() => setSelectedQuestion(pollKey)}
-                              className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${colors.questionBg} ${colors.text} ${colors.questionHover} flex items-center justify-between ${
-                                selectedQuestion === pollKey ? 'ring-2 ring-blue-500' : ''
-                              }`}
-                            >
-                              <span>Question {poll.poll_index + 1}</span>
-                              <span className="text-xs bg-white dark:bg-gray-600 px-2 py-1 rounded-full">
-                                {totalVotes} {(poll.is_ranking || poll.is_wordcloud) ? 'responses' : 'votes'}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          
-          {/* Export All Button */}
-          <div className="mt-4">
-            <button
-              onClick={exportAllQuestions}
-              disabled={loading || filteredPolls.length === 0}
-              className="w-full px-4 py-3 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              title="Export all questions to a single CSV file"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              Export All ({filteredPolls.length} questions)
-            </button>
-          </div>
-
-          {/* Refresh Button */}
-          <div className="mt-4">
-            <button
-              onClick={() => {
-                fetchPollResults();
-                setLastRefresh(new Date());
-              }}
-              disabled={loading}
-              className="w-full px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Refreshing...
-                </>
-              ) : (
-                <>
-                  🔄 Refresh Results
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* Hide Panel Button */}
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={() => setLeftPanelVisible(false)}
-              className="flex items-center justify-center w-10 h-10 bg-gray-600 dark:bg-gray-500 text-white rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors shadow-lg"
-              title="Hide filter panel"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
+        <FilterSidebar
+          filterMode={filterMode}
+          setFilterMode={setFilterMode}
+          showPresentationControls={showPresentationControls}
+          setShowPresentationControls={setShowPresentationControls}
+          filteredPolls={filteredPolls}
+          expandedGroup={expandedGroup}
+          setExpandedGroup={setExpandedGroup}
+          selectedQuestion={selectedQuestion}
+          setSelectedQuestion={setSelectedQuestion}
+          loading={loading}
+          onRefresh={() => {
+            fetchPollResults();
+            setLastRefresh(new Date());
+          }}
+          onExportAll={exportAllQuestions}
+          onHidePanel={() => setLeftPanelVisible(false)}
+          groupPollsByTheme={groupPollsByTheme}
+          getFilteredPollResults={getFilteredPollResults}
+        />
       )}
 
       {/* Show Panel Button - appears when panel is hidden */}
@@ -2433,84 +1900,11 @@ export default function PollResultsClient() {
       </div>
 
       {/* Expanded QR Code and Join at Overlay */}
-      {qrCodeExpanded && (
-        <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={() => setQrCodeExpanded(false)}
-        >
-          <div 
-            className="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-5xl mx-4 relative transform scale-[1.5]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button */}
-            <button
-              onClick={() => setQrCodeExpanded(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-
-            {/* Expanded content */}
-            <div className="flex flex-col items-center space-y-8">
-              <h3 className="text-3xl font-bold text-gray-800 dark:text-white text-center">
-                Conference Poll Access
-              </h3>
-              
-              <div className="flex flex-col lg:flex-row items-center justify-center space-y-8 lg:space-y-0 lg:space-x-12 w-full">
-                {/* Expanded Join at container */}
-                <div className="flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-800 w-full lg:w-auto lg:min-w-[400px] lg:max-w-[450px]">
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="text-3xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
-                      Join at:
-                    </div>
-                    <div className="text-4xl font-bold text-blue-700 dark:text-white whitespace-nowrap text-center" style={{color: '#1d4ed8'}}>
-                      {(() => {
-                        const getWebAddress = (group: string) => {
-                          switch (group) {
-                            case 'holistic-protection':
-                              return 'bit.ly/SABCS-Holistic';
-                            case 'tiered-framework':
-                              return 'bit.ly/SABCS-Tiered';
-                            case 'prioritization':
-                              return 'bit.ly/SABCS-Prio';
-                            default:
-                              return 'bit.ly/SABCS-Holistic'; // Default fallback
-                          }
-                        };
-                        
-                        return getWebAddress(expandedPollGroup || 'holistic-protection');
-                      })()}
-                    </div>
-                  </div>
-                  
-                  <div className="h-6"></div>
-                  
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="text-3xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
-                      Password:
-                    </div>
-                    <div className="text-5xl font-bold text-blue-700 dark:text-white" style={{color: '#1d4ed8'}}>
-                      CEW2025
-                    </div>
-                  </div>
-                </div>
-
-                {/* Expanded QR Code */}
-                <div className="flex items-center justify-center">
-                  <div className="transform scale-140">
-                    <QRCodeDisplay 
-                      pollGroup={(expandedPollGroup || 'holistic-protection') as 'holistic-protection' | 'tiered-framework' | 'prioritization' | 'wiks'} 
-                    />
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
+      <QRCodeModal 
+        isOpen={qrCodeExpanded} 
+        onClose={() => setQrCodeExpanded(false)} 
+        expandedPollGroup={expandedPollGroup} 
+      />
     </div>
   );
 }

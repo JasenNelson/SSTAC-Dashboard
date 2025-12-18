@@ -23,12 +23,10 @@ This folder contains review/assessment artifacts from **November 2025**:
 
 ---
 
-## Key documents
+## Active Guides
 
-- **Phase 3 completion**: [`archive/PHASE3_COMPLETION_SUMMARY.md`](archive/PHASE3_COMPLETION_SUMMARY.md)
-- **Path / plan**: [`A_MINUS_ACHIEVEMENT_PLAN.md`](A_MINUS_ACHIEVEMENT_PLAN.md)
-- **Poll-safe tasks**: [`POLL_SAFE_IMPROVEMENTS.md`](POLL_SAFE_IMPROVEMENTS.md)
-- **Change verification**: [`CODE_CHANGE_VERIFICATION_PROCESS.md`](CODE_CHANGE_VERIFICATION_PROCESS.md)
+- **Vercel Setup**: [`../operations/VERCEL_SETUP.md`](../operations/VERCEL_SETUP.md)
+- **Monitoring Guide**: [`../operations/MONITORING_GUIDE.md`](../operations/MONITORING_GUIDE.md)
 
 ---
 

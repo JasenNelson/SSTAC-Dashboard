@@ -57,7 +57,7 @@
       },
       "k6_script_count": {
         "status": "verified",
-        "value": 23,
+        "value": 6,
         "source": "tests/k6-*.js inventory (2025-12-18)",
         "last_verified": "2025-12-18"
       }
@@ -108,6 +108,26 @@
       "notes": "Legacy index; should point to docs/INDEX.md and avoid volatile metrics."
     },
     {
+      "id": "ops.vercel_setup",
+      "path": "docs/operations/VERCEL_SETUP.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "operations",
+        "deployment",
+        "vercel"
+      ]
+    },
+    {
+      "id": "ops.monitoring_guide",
+      "path": "docs/operations/MONITORING_GUIDE.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "operations",
+        "monitoring",
+        "performance"
+      ]
+    },
+    {
       "id": "core.project_status",
       "path": "docs/PROJECT_STATUS.md",
       "lifecycle": "REFERENCE",
@@ -149,6 +169,16 @@
       "domain_tags": [
         "polling",
         "debugging"
+      ]
+    },
+    {
+      "id": "poll.cew_data_flow",
+      "path": "docs/poll-system/CEW_DATA_FLOW.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "polling",
+        "cew",
+        "data-flow"
       ]
     },
     {
@@ -242,6 +272,254 @@
         "completion-summary"
       ],
       "notes": "Component planning completion summary."
+    },
+    {
+      "id": "archive.lint_fixes_proposal",
+      "path": "docs/review-analysis/archive/LINT_FIXES_PROPOSAL.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "linting"
+      ]
+    },
+    {
+      "id": "archive.npm_audit_findings",
+      "path": "docs/review-analysis/archive/NPM_AUDIT_FINDINGS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "security"
+      ]
+    },
+    {
+      "id": "archive.monitoring_baseline",
+      "path": "docs/review-analysis/archive/MONITORING_BASELINE.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "monitoring"
+      ]
+    },
+    {
+      "id": "archive.query_performance_status",
+      "path": "docs/review-analysis/archive/QUERY_PERFORMANCE_TASKS_STATUS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "performance"
+      ]
+    },
+    {
+      "id": "archive.accessibility_improvements",
+      "path": "docs/review-analysis/archive/TEST_RESULTS_ACCESSIBILITY_IMPROVEMENTS_2025-11-18.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "accessibility"
+      ]
+    },
+    {
+      "id": "archive.sprit4_review",
+      "path": "docs/review-analysis/archive/SPRINT4_LAYOUT_AND_COMPONENT_REVIEW.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "refactoring"
+      ]
+    },
+    {
+      "id": "archive.phase2_matrix_graph_issue",
+      "path": "docs/review-analysis/archive/PHASE2_MATRIX_GRAPH_ISSUE_RESOLUTION.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "matrix-graphs"
+      ]
+    },
+    {
+      "id": "archive.security_testing_plan",
+      "path": "docs/review-analysis/archive/SECURITY_TESTING_PLAN.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "security"
+      ]
+    },
+    {
+      "id": "review.authorization",
+      "path": "docs/review-analysis/archive/AUTHORIZATION_REVIEW.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "security",
+        "authorization"
+      ]
+    },
+    {
+      "id": "review.phase3_testing_checklist",
+      "path": "docs/review-analysis/archive/PHASE3_TESTING_CHECKLIST.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "testing"
+      ]
+    },
+    {
+      "id": "review.poll_export_plan",
+      "path": "docs/review-analysis/archive/POLL_RESULTS_EXPORT_PLAN.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "polling"
+      ]
+    },
+    {
+      "id": "review.poll_safe_improvements",
+      "path": "docs/review-analysis/archive/POLL_SAFE_IMPROVEMENTS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "polling",
+        "safety"
+      ]
+    },
+    {
+      "id": "review.security_integration",
+      "path": "docs/review-analysis/archive/SECURITY_INTEGRATION_SUMMARY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "security"
+      ]
+    },
+    {
+      "id": "review.supabase_auth_utility",
+      "path": "docs/review-analysis/archive/SUPABASE_AUTH_UTILITY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "supabase",
+        "auth"
+      ]
+    },
+    {
+      "id": "review.battle_scars_10",
+      "path": "docs/review-analysis/archive/TOP_10_BATTLE_SCARS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "retrospective"
+      ]
+    },
+    {
+      "id": "review.battle_scars_50",
+      "path": "docs/review-analysis/archive/TOP_50_BATTLE_SCARS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "retrospective"
+      ]
+    },
+    {
+      "id": "review.verification_process",
+      "path": "docs/review-analysis/archive/CODE_CHANGE_VERIFICATION_PROCESS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "process"
+      ]
+    },
+    {
+      "id": "review.current_status_nov",
+      "path": "docs/review-analysis/archive/CURRENT_STATUS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "status"
+      ]
+    },
+    {
+      "id": "review.query_performance_nov",
+      "path": "docs/review-analysis/archive/QUERY_PERFORMANCE_ANALYSIS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "performance"
+      ]
+    },
+    {
+      "id": "review.a_minus_plan",
+      "path": "docs/review-analysis/archive/A_MINUS_ACHIEVEMENT_PLAN.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "planning",
+        "grading"
+      ]
+    },
+    {
+      "id": "review.k6_coverage",
+      "path": "docs/review-analysis/archive/K6_TEST_COVERAGE_ANALYSIS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "testing",
+        "k6"
+      ]
+    },
+    {
+      "id": "review.code_changes_analysis",
+      "path": "docs/review-analysis/archive/CODE_CHANGES_ANALYSIS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "debugging"
+      ]
+    },
+    {
+      "id": "review.fresh_chat_prompts",
+      "path": "docs/review-analysis/archive/FRESH_CHAT_VERIFICATION_PROMPTS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "debugging"
+      ]
+    },
+    {
+      "id": "review.poll_debugging_protocol",
+      "path": "docs/review-analysis/archive/POLL_SUBMISSION_DEBUGGING_PROTOCOL.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "debugging"
+      ]
+    },
+    {
+      "id": "review.todays_changes",
+      "path": "docs/review-analysis/archive/TODAYS_CHANGES_REVIEW.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "debugging"
+      ]
+    },
+    {
+      "id": "review.verification_analysis",
+      "path": "docs/review-analysis/archive/VERIFICATION_RESULTS_ANALYSIS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "debugging"
+      ]
+    },
+    {
+      "id": "review.supabase_security_nov",
+      "path": "docs/review-analysis/archive/SUPABASE_SECURITY_WARNINGS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "security"
+      ]
     }
   ],
   "section_catalog": {

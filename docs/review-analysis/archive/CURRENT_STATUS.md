@@ -194,14 +194,14 @@ Start    Sprint 1   Sprint 3   Sprint 4   Sprint 6      Current
 
 ### **Planning & Status**
 - **[A_MINUS_ACHIEVEMENT_PLAN.md](A_MINUS_ACHIEVEMENT_PLAN.md)** - Path to A- grade
-- **[NEXT_STEPS.md](NEXT_STEPS.md)** - Current roadmap and next actions
-- **[REVIEW_SUMMARY.md](REVIEW_SUMMARY.md)** - Executive summary
+- **[NEXT_STEPS.md](../NEXT_STEPS.md)** - Current roadmap and next actions
+- **[REVIEW_SUMMARY.md](../REVIEW_SUMMARY.md)** - Executive summary
 
 ### **Recent Work**
 - **Rollback / recovery context**: This repo references a rollback and recovery period, but the detailed log files are tracked in git history and the backup branch referenced in this document (instead of standalone markdown files).
   - **Tip**: Use `git log` and look for the rollback target commit referenced near the top of this document.
   - **Backup branch**: `backup-before-rollback-2025-11-14` (if present in your repo/remote)
-- **[archive/PHASE3_COMPLETION_SUMMARY.md](archive/PHASE3_COMPLETION_SUMMARY.md)** - Phase 3 details
+- **[archive/PHASE3_COMPLETION_SUMMARY.md](PHASE3_COMPLETION_SUMMARY.md)** - Phase 3 details
 
 ### **Process**
 - **[CODE_CHANGE_VERIFICATION_PROCESS.md](CODE_CHANGE_VERIFICATION_PROCESS.md)** - Verification process
@@ -247,7 +247,7 @@ Start    Sprint 1   Sprint 3   Sprint 4   Sprint 6      Current
 - **Risk:** None
 - **Status:** 4 new test files created, ready for execution
 
-**See:** `NEXT_STEPS.md` for detailed implementation plan
+**See:** `../NEXT_STEPS.md` for detailed implementation plan
 
 ### **⚠️ Rollback - Work Recovery Status (Nov 14-17, 2025):**
 
@@ -314,7 +314,7 @@ Start    Sprint 1   Sprint 3   Sprint 4   Sprint 6      Current
 - **Accessibility Improvements** - Run accessibility checklist
 - **Performance Optimization** - Update safe dependencies
 
-**See:** `NEXT_STEPS.md` for detailed next actions and `2025-11-13_UPDATE_LOG.md` for latest planning session
+**See:** `../NEXT_STEPS.md` for detailed next actions and `2025-11-13_UPDATE_LOG.md` for latest planning session
 
 ---
 

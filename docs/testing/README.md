@@ -21,7 +21,7 @@ This folder contains comprehensive testing documentation, including the k6 load 
 **[K6_COMPREHENSIVE_TESTING_PLAN.md](K6_COMPREHENSIVE_TESTING_PLAN.md)** - Complete Testing Plan  
 *Test inventory, environment setup, execution instructions, and CI/CD integration*
 
-**[K6_TEST_COVERAGE_ANALYSIS.md](K6_TEST_COVERAGE_ANALYSIS.md)** - Coverage Analysis  
+**[K6_TEST_COVERAGE_ANALYSIS.md](../review-analysis/archive/K6_TEST_COVERAGE_ANALYSIS.md)** - Coverage Analysis  
 *Detailed breakdown of test coverage by endpoint, scenario, and type*
 
 ---
@@ -38,7 +38,7 @@ and performance validation.
 ### **Running Tests**
 1. Read **K6_COMPREHENSIVE_TESTING_PLAN.md** for setup
 2. Follow execution instructions
-3. Check **K6_TEST_COVERAGE_ANALYSIS.md** for expected results
+3. Check **[K6_TEST_COVERAGE_ANALYSIS.md](../review-analysis/archive/K6_TEST_COVERAGE_ANALYSIS.md)** for expected results
 
 ### **Adding New Tests**
 1. Reference existing test patterns

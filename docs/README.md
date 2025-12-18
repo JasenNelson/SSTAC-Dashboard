@@ -164,10 +164,12 @@ key system design decisions and visualization patterns
 |------|---------------|----------------|
 | Add new poll | [Poll System](poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md) | [Safe Update](poll-system/SAFE_POLL_UPDATE_PROTOCOL.md) |
 | Debug vote counting | [Poll Debugging](poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md) | [Debug Scripts](../scripts/debug/) |
-| Run tests | [Testing Guide](testing/K6_TEST_COVERAGE_ANALYSIS.md) | [Test Scripts](../tests/) |
+| Run tests | [Testing Guide](review-analysis/archive/K6_TEST_COVERAGE_ANALYSIS.md) | [Test Scripts](../tests/) |
 | Review assessments | [Review Analysis](review-analysis/REVIEW_SUMMARY.md) | N/A |
 | Fix matrix graphs | [System Design](system-design/MATRIX_GRAPH_VISUALIZATION.md) | [Matrix Debug](../scripts/debug/) |
 | Review guidelines | [AGENTS.md](AGENTS.md) | N/A |
+| Vercel Setup | [Operations](operations/VERCEL_SETUP.md) | N/A |
+| Monitoring | [Operations](operations/MONITORING_GUIDE.md) | N/A |
 
 ---
 
