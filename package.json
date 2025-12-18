@@ -16,7 +16,9 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
     "docs:gate": "node scripts/verify/docs-gate.mjs",
-    "docs:gate:json": "node scripts/verify/docs-gate.mjs --json"
+    "docs:gate:json": "node scripts/verify/docs-gate.mjs --json",
+    "docs:archive:investigate": "node scripts/verify/docs-archive-investigation.mjs",
+    "docs:archive:investigate:json": "node scripts/verify/docs-archive-investigation.mjs --json"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.22.0",
