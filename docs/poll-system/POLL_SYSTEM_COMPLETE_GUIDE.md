@@ -126,8 +126,8 @@
 ```
 
 #### **Vote Tables**
-- **poll_votes**: ~11 votes (single-choice votes only)
-- **ranking_votes**: 72 votes (ranking votes only)
+- **poll_votes**: single-choice votes only (see manifest `facts` for canonical counts)
+- **ranking_votes**: ranking votes only (see manifest `facts` for canonical counts)
 
 ## 🏗️ **System Architecture**
 
@@ -419,7 +419,7 @@ This guide should prevent future misunderstandings about the poll system structu
 ## 🧪 **K6 Testing System Enhancements (2025)**
 
 ### **K6 Test User ID Generation Fix**
-- **Problem**: K6 test submitted 12,018 votes but all used same user_id (`CEW2025_default`), making vote pairing impossible
+- **Problem**: K6 test submitted many votes but all used same user_id (`CEW2025_default`), making vote pairing impossible
 - **Root Cause**: API ignored k6's `user_id` in JSON payload and generated its own from `x-session-id` header
 - **Solution**: Added `x-session-id` header to K6 test vote submissions
 - **Implementation**: `headers: { 'x-session-id': sessionId }` where `sessionId = userId`
@@ -432,7 +432,7 @@ This guide should prevent future misunderstandings about the poll system structu
   - Varied distributions for realistic testing
   - Multiple graph types coverage (Holistic Protection, Prioritization, Tiered Framework)
   - Realistic scenarios (balanced, skewed, clustered, edge cases)
-- **Expected Result**: ~100 unique users with proper vote pairing for matrix graphs
+- **Expected Result**: Unique users with proper vote pairing for matrix graphs (see manifest `facts` for canonical metrics)
 
 ### **Critical API Behavior Understanding**
 - **CEW Poll API**: Generates `user_id` from `x-session-id` header, ignores JSON payload `user_id`
