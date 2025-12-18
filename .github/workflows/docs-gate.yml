@@ -8,6 +8,14 @@ on:
       - 'scripts/verify/docs-gate.mjs'
       - 'package.json'
       - 'package-lock.json'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'docs/**'
+      - 'scripts/verify/docs-gate.mjs'
+      - 'package.json'
+      - 'package-lock.json'
   workflow_dispatch: {}
 
 permissions:
@@ -41,6 +49,10 @@ jobs:
       - name: Run docs gate (PR diff)
         if: ${{ github.event_name == 'pull_request' }}
         run: npm run docs:gate -- --base "${{ github.event.pull_request.base.sha }}" --head "${{ github.event.pull_request.head.sha }}"
+
+      - name: Run docs gate (push diff)
+        if: ${{ github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000' }}
+        run: npm run docs:gate -- --base "${{ github.event.before }}" --head "${{ github.sha }}"
 
       - name: Run docs gate (manual)
         if: ${{ github.event_name == 'workflow_dispatch' }}
