@@ -1,157 +1,127 @@
-# Pre-Commit Checklist - Poll System Fixes
+# Pre-Commit Checklist (Debugging)
 
-## Files Changed Today
+This is a lightweight checklist for preparing a safe commit during incident/debug work.
 
-### Code Changes (Reverted to Minimal)
-- ✅ `src/app/api/polls/submit/route.ts` - Reverted unnecessary logging
-- ✅ `src/components/PollWithResults.tsx` - Reverted enhanced error display  
-- ✅ `src/components/CEWCodeInput.tsx` - Re-opened polling (restored input form)
-
-### Documentation Created
-- ✅ `docs/debugging/POLL_SUBMISSION_DEBUGGING_PROTOCOL.md` - Debugging guide
-- ✅ `docs/debugging/TODAYS_CHANGES_REVIEW.md` - Review of changes
-- ✅ `docs/debugging/FRESH_CHAT_VERIFICATION_PROMPTS.md` - Verification prompts
-- ✅ `docs/debugging/VERIFICATION_RESULTS_ANALYSIS.md` - Analysis results
-- ✅ `docs/debugging/CODE_CHANGES_ANALYSIS.md` - Code change analysis
-
-### Diagnostic Scripts (Optional - Can exclude from commit)
-- `scripts/debug/comprehensive-poll-systems-investigation.sql`
-- `scripts/debug/test-get-or-create-poll.sql`
-- `scripts/debug/check-poll-votes-constraints.sql`
-- `scripts/debug/fix-get-or-create-poll-security.sql`
-- `scripts/debug/fix-poll-votes-user-id-constraint.sql`
-- `scripts/debug/fix-all-poll-vote-constraints.sql`
+For the full, repo-wide verification process, also see `docs/review-analysis/CODE_CHANGE_VERIFICATION_PROCESS.md`.
 
 ---
 
-## Testing Checklist
+## 1) Confirm scope + files
 
-### 1. Manual Testing - Single-Choice Polls
-- [ ] Navigate to `/cew-polls/tiered-framework`
-- [ ] Enter CEW code (e.g., `CEW2025`)
-- [ ] Submit a single-choice poll response
-- [ ] Verify submission succeeds
-- [ ] Check that vote appears in results
-
-### 2. Manual Testing - Ranking Polls
-- [ ] Navigate to `/cew-polls/prioritization`
-- [ ] Enter CEW code (e.g., `CEW2025`)
-- [ ] Submit a ranking poll response
-- [ ] Verify submission succeeds
-- [ ] Check that rankings appear in results
-
-### 3. Manual Testing - Wordcloud Polls
-- [ ] Navigate to `/cew-polls/prioritization` (Question 5)
-- [ ] Enter CEW code (e.g., `CEW2025`)
-- [ ] Submit a wordcloud response
-- [ ] Verify submission succeeds
-- [ ] Check that words appear in results
-
-### 4. Code Quality Checks
-- [ ] Run `npm run lint` - Should pass
-- [ ] Run `npm run build` - Should compile without errors
-- [ ] Check TypeScript errors - Should be none
-
----
-
-## Lint Check Commands
+- [ ] Identify the **intent** of the change (bugfix vs refactor vs docs-only).
+- [ ] List the **files actually changed** (`git status` / `git diff`).
+- [ ] If you touched poll-adjacent code, run docs gate to confirm required review:
 
 ```bash
-# Check all files
-npm run lint
-
-# Check specific files
-npm run lint -- src/app/api/polls/submit/route.ts
-npm run lint -- src/components/PollWithResults.tsx
-npm run lint -- src/components/CEWCodeInput.tsx
+npm run docs:gate -- --base origin/main --head HEAD
 ```
 
 ---
 
-## Build Check
+## 2) Manual testing (poll systems)
+
+If the change is poll-adjacent, verify **all three** poll systems (single-choice, ranking, wordcloud):
+
+### Single-choice polls
+- [ ] Navigate to `/cew-polls/tiered-framework`
+- [ ] Enter CEW code (e.g., `CEW2025`)
+- [ ] Submit a single-choice response
+- [ ] Verify submission succeeds and appears in results
+
+### Ranking polls
+- [ ] Navigate to `/cew-polls/prioritization`
+- [ ] Enter CEW code (e.g., `CEW2025`)
+- [ ] Submit a ranking response
+- [ ] Verify submission succeeds and appears in results
+
+### Wordcloud polls
+- [ ] Navigate to `/cew-polls/prioritization` (wordcloud question)
+- [ ] Enter CEW code (e.g., `CEW2025`)
+- [ ] Submit a wordcloud response
+- [ ] Verify submission succeeds and appears in results
+
+---
+
+## 3) Quality gates
+
+Run the basics:
 
 ```bash
-# Test production build
+npm run lint
 npm run build
 ```
 
----
-
-## Git Commit Strategy
-
-### Option 1: Minimal Commit (Recommended)
-Only commit the essential changes:
+Optional (but recommended when TypeScript changes are involved):
 
 ```bash
-# Stage only the code changes
-git add src/app/api/polls/submit/route.ts
-git add src/components/PollWithResults.tsx
-git add src/components/CEWCodeInput.tsx
-
-# Stage debugging documentation (useful for future)
-git add docs/debugging/
-
-# Commit
-git commit -m "Fix CEW poll submissions - remove blocking constraints and fix RLS policies
-
-- Re-opened CEW polling by restoring CEWCodeInput form
-- Removed unnecessary error logging (matches codebase cleanup standards)
-- Database fixes applied separately:
-  - Dropped poll_votes_user_id_check constraint
-  - Fixed ranking_votes RLS policy to use {public} role
-- Added debugging documentation for future reference"
+npx tsc --noEmit
 ```
 
-### Option 2: Include Diagnostic Scripts
-If you want to keep the diagnostic SQL scripts:
+---
+
+## 4) Staging strategy
+
+### Essential code changes
+
+```bash
+# Stage only what you intend to ship
+# (examples)
+# git add src/app/api/...
+# git add src/components/...
+```
+
+### Documentation (optional)
+
+```bash
+git add docs/debugging/
+```
+
+### Diagnostic scripts (optional)
 
 ```bash
 git add scripts/debug/
 ```
 
-### Option 3: Exclude Documentation
-If you don't want to commit the debugging docs yet:
+### Do NOT commit (review separately)
+
+- `docs/AGENTS.md` (treat as authoritative; avoid incidental edits)
+- `docs/PROJECT_STATUS.md` (avoid treating as canonical)
+- Unrelated docs changes elsewhere
+
+---
+
+## 5) Verification before commit
 
 ```bash
-# Only commit code changes
-git add src/app/api/polls/submit/route.ts
-git add src/components/PollWithResults.tsx
-git add src/components/CEWCodeInput.tsx
+# Check what will be committed
+git diff --cached
+
+# Verify no unexpected changes
+git status
 ```
 
 ---
 
-## What NOT to Commit
+## 6) Commit message template (example)
 
-- ❌ Other modified docs files (AGENTS.md, PROJECT_STATUS.md, etc.) - Review separately
-- ❌ Untracked review-analysis files - Review separately
-- ❌ Diagnostic SQL scripts - Optional, can exclude
+```text
+Fix <area>: <short summary>
+
+- What changed and why
+- What was verified (manual + lint/build)
+- Any follow-ups or constraints
+```
 
 ---
 
-## Verification Before Commit
+## Appendix: Historical example (CEW poll submission fix)
 
-1. ✅ All three poll types work (single-choice, ranking, wordcloud)
-2. ✅ No linting errors
-3. ✅ Build succeeds
-4. ✅ Code changes are minimal (logging removed)
-5. ✅ Database fixes already applied (not in this commit)
+**What actually fixed the issue:**
+1. Database: Dropped `poll_votes_user_id_check` constraint
+2. Database: Fixed `ranking_votes` RLS policy to use `{public}` role
+3. Code: Re-opened polling by restoring `CEWCodeInput` form
 
----
-
-## Commit Message Template
-
-```
-Fix CEW poll submissions - remove blocking constraints and fix RLS policies
-
-- Re-opened CEW polling by restoring CEWCodeInput form
-- Removed unnecessary error logging to match codebase cleanup standards
-- Database fixes (applied separately):
-  - Dropped poll_votes_user_id_check constraint blocking CEW user IDs
-  - Fixed ranking_votes RLS policy to use {public} role for anonymous access
-
-All three poll systems (single-choice, ranking, wordcloud) now accept CEW submissions.
-
-Added debugging documentation for future troubleshooting.
-```
-
+**Code changes made (example):**
+- `src/app/api/polls/submit/route.ts` - Removed unnecessary logging (reverted)
+- `src/components/PollWithResults.tsx` - Removed enhanced error display (reverted)
+- `src/components/CEWCodeInput.tsx` - Restored input form (re-opened polling)
