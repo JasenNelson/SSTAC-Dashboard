@@ -135,7 +135,7 @@
    - ✅ Integrated into all non-poll API routes (tags, announcements, milestones, discussions, documents)
    - ✅ Rate limit headers added to all responses
    - ✅ Helper function created for consistent integration
-   - ✅ See: `PHASE3_COMPLETION_SUMMARY.md`
+   - ✅ See: `archive/PHASE3_COMPLETION_SUMMARY.md`
 
 3. ✅ **Fix Inconsistent Authorization** (COMPLETE - Phase 3)
    - ✅ Complete authorization review documented

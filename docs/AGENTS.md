@@ -5,7 +5,7 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 
 **Status (reference snapshot)**: Production-ready platform with comprehensive testing infrastructure, code quality improvements, security enhancements, and all core features operational. This file is a safety guide, **not** the canonical “current status” source—use `docs/INDEX.md` and `docs/_meta/docs-manifest.json` for canonical navigation and volatile facts (metrics, status, etc.).
 
-For detailed progress history, see `docs/review-analysis/archive/MASTER_COMPLETION_SUMMARY.md` (historical) and `docs/review-analysis/PHASE3_COMPLETION_SUMMARY.md` (Phase 3 completion summary).
+For detailed progress history, see `docs/review-analysis/archive/MASTER_COMPLETION_SUMMARY.md` (historical) and `docs/review-analysis/archive/PHASE3_COMPLETION_SUMMARY.md` (Phase 3 completion summary).
 
 ## 🎯 Core Development Principles
 

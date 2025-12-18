@@ -28,7 +28,7 @@ I want to focus on: [specify your focus area]
 Key documents to review:
 - docs/review-analysis/REVIEW_SUMMARY.md
 - docs/review-analysis/NEXT_STEPS.md  
-- docs/review-analysis/PHASE3_COMPLETION_SUMMARY.md (Phase 3 complete)
+- docs/review-analysis/archive/PHASE3_COMPLETION_SUMMARY.md (Phase 3 complete)
 - docs/review-analysis/PRODUCTION_SAFE_ROADMAP.md
 - docs/review-analysis/GRADE_PROJECTION.md
 ```

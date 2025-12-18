@@ -201,7 +201,7 @@ Start    Sprint 1   Sprint 3   Sprint 4   Sprint 6      Current
 - **Rollback / recovery context**: This repo references a rollback and recovery period, but the detailed log files are tracked in git history and the backup branch referenced in this document (instead of standalone markdown files).
   - **Tip**: Use `git log` and look for the rollback target commit referenced near the top of this document.
   - **Backup branch**: `backup-before-rollback-2025-11-14` (if present in your repo/remote)
-- **[PHASE3_COMPLETION_SUMMARY.md](PHASE3_COMPLETION_SUMMARY.md)** - Phase 3 details
+- **[archive/PHASE3_COMPLETION_SUMMARY.md](archive/PHASE3_COMPLETION_SUMMARY.md)** - Phase 3 details
 
 ### **Process**
 - **[CODE_CHANGE_VERIFICATION_PROCESS.md](CODE_CHANGE_VERIFICATION_PROCESS.md)** - Verification process

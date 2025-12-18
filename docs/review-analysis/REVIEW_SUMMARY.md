@@ -13,7 +13,7 @@ This file is an executive summary of a comprehensive assessment completed in ear
 
 1. `REVIEW_SUMMARY.md` (this file)
 2. `NEXT_STEPS.md`
-3. `PHASE3_COMPLETION_SUMMARY.md`
+3. `archive/PHASE3_COMPLETION_SUMMARY.md`
 
 ---
 
@@ -31,7 +31,7 @@ This file is an executive summary of a comprehensive assessment completed in ear
 ## Where to go next
 
 - **Roadmap / task queue**: `docs/review-analysis/NEXT_STEPS.md`
-- **Phase 3 completion**: `docs/review-analysis/PHASE3_COMPLETION_SUMMARY.md`
+- **Phase 3 completion**: `docs/review-analysis/archive/PHASE3_COMPLETION_SUMMARY.md`
 - **Change verification**: `docs/review-analysis/CODE_CHANGE_VERIFICATION_PROCESS.md`
 - **Historical deep dives**: `docs/review-analysis/archive/`
 
