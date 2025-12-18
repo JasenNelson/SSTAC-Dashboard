@@ -62,7 +62,7 @@ Use these templates in fresh AI chats to provide instant context for:
 **Who needs this**: Everyone
 
 **Contents:**
-- Current project state (PRODUCTION READY)
+- Reference snapshot of system capabilities (non-canonical; no volatile metrics)
 - Recent major updates
 - Completed features
 - System architecture overview
@@ -90,7 +90,7 @@ Use these templates in fresh AI chats to provide instant context for:
 **Contents:**
 - Comprehensive 8-phase project review (Jan 2025)
 - 40 prioritized enhancements identified
-- Phase 3 (Validation & Security) complete - B+ (83-84%) achieved
+- Phase completion summaries and improvement planning (see `docs/INDEX.md` + manifest `facts` for canonical metrics)
 - Grade projection and improvement tracking
 - Production-safe vs full roadmap options
 
@@ -206,10 +206,10 @@ key system design decisions and visualization patterns
 3. Read [Master Summary](review-analysis/archive/MASTER_COMPLETION_SUMMARY.md) - Weeks 1-16 overview (historical)
 4. Choose [Next Steps](review-analysis/NEXT_STEPS.md) or [Safe Roadmap](review-analysis/archive/PRODUCTION_SAFE_ROADMAP.md) (historical)
 5. Track with [Grade Projection](review-analysis/archive/GRADE_PROJECTION.md) (historical)
-6. Plan implementation (only 1-5 points needed for A-)
+6. Plan implementation (see `docs/INDEX.md` + manifest `facts` for canonical current targets)
 
 **Time**: 1-2 hours  
-**Outcome**: Understand project health (B+ 83-84%), Phase 3 completion, and remaining improvement plan
+**Outcome**: Understand review context, Phase 3 completion, and remaining improvement plan
 
 ---
 
@@ -271,16 +271,9 @@ key system design decisions and visualization patterns
 
 ## 📊 **Documentation Statistics**
 
-| Category | Documents | Total Size | Last Updated |
-|----------|-----------|------------|--------------|
-| Core Docs | AGENTS.md, PROJECT_STATUS.md | ~78 KB | Jan 2025 |
-| [Review & Analysis](review-analysis/) | 7 files | ~200 KB | Jan 2025 |
-| [Poll System](poll-system/) | 3 files | ~90 KB | Jan 2025 |
-| [Testing](testing/) | 2 files | ~25 KB | Jan 2025 |
-| [System Design](system-design/) | 3 files | ~40 KB | Jan 2025 |
+Volatile doc counts/sizes drift frequently; treat them as non-canonical.
 
-**Total**: ~433 KB of organized documentation  
-**Coverage**: Comprehensive across all systems
+If you need counts/metrics, store them in `docs/_meta/docs-manifest.json` (`facts`) with provenance.
 
 ---
 
@@ -290,7 +283,7 @@ key system design decisions and visualization patterns
 
 1. **After any major change:**
    - Update relevant guide (check folder)
-   - Update PROJECT_STATUS.md
+   - Update `docs/INDEX.md` and/or `docs/_meta/docs-manifest.json` (`facts`) if the change affects “what’s current”
    - Update this index if needed
 
 2. **After debugging session:**
@@ -301,7 +294,7 @@ key system design decisions and visualization patterns
 3. **After adding features:**
    - Update AGENTS.md if core rules change
    - Update [Poll System Guide](poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md)
-   - Update PROJECT_STATUS.md
+   - Update `docs/INDEX.md` / manifest facts if this affects canonical status or metrics
 
 ### **Documentation Review Schedule**
 
@@ -369,6 +362,5 @@ key system design decisions and visualization patterns
 
 **Last Updated**: November 2025  
 **Maintained By**: SSTAC Dashboard Team  
-**Documentation Coverage**: 100% of core systems  
-**Organized Folders**: 4 topic areas with README guides
+**Documentation Coverage**: See `docs/INDEX.md` / manifest for canonical status
 

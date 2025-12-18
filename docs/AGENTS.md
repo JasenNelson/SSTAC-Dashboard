@@ -3,7 +3,7 @@
 ## 🎯 Project Overview
 A comprehensive dashboard platform for the **Sediment Standards Technical Advisory Committee (SSTAC)** and **Technical Working Group (TWG)**. This platform manages sediment standards development through stakeholder engagement, document management, and administrative tools.
 
-**Status (reference snapshot)**: Production-ready platform with comprehensive testing infrastructure, code quality improvements, security enhancements, and all core features operational. This file is a safety guide, **not** the canonical “current status” source—use `docs/INDEX.md` and `docs/_meta/docs-manifest.json` for canonical navigation and volatile facts (test counts, etc.).
+**Status (reference snapshot)**: Production-ready platform with comprehensive testing infrastructure, code quality improvements, security enhancements, and all core features operational. This file is a safety guide, **not** the canonical “current status” source—use `docs/INDEX.md` and `docs/_meta/docs-manifest.json` for canonical navigation and volatile facts (metrics, status, etc.).
 
 For detailed progress history, see `docs/review-analysis/archive/MASTER_COMPLETION_SUMMARY.md` (historical) and `docs/review-analysis/PHASE3_COMPLETION_SUMMARY.md` (Phase 3 completion summary).
 
@@ -52,7 +52,7 @@ For detailed progress history, see `docs/review-analysis/archive/MASTER_COMPLETI
 
 ### 7. Performance Optimization Guidelines (CRITICAL)
 - **MEASURE FIRST**: Check if performance issues actually exist before optimizing
-- **Database Performance**: Baseline established (100% cache hit rate, all queries < 1ms avg) - See `docs/review-analysis/MONITORING_BASELINE.md`
+- **Database Performance**: Baseline established (see `docs/review-analysis/MONITORING_BASELINE.md`)
 - **Monitoring**: Use `scripts/verify/simple-query-monitoring.sql` for weekly performance tracking
 - **ISOLATE TESTING**: Test optimizations in separate branches first
 - **USER CONSULTATION**: Ask if "excessive" calls are actually problematic
@@ -636,11 +636,10 @@ WHERE tablename IN ('user_roles', 'discussions', 'likes');
 - **Phase 3**: Validation & Security (November 2025) - Zod validation, structured logging, rate limiting, authorization review, ErrorBoundary
 
 ### 🎯 Current Status
-- **Grade**: **A- (85-89%)** - Achieved November 17, 2025 ✅
-- **Target Grade**: A (90%+) - Updated November 17, 2025
+- **Status**: See `docs/INDEX.md` / manifest `facts` for canonical current status and metrics.
 - **Production Ready**: All security, validation, and logging infrastructure complete
 - **Recent Work**: CEW & TWG Results pages recovered and deployed (November 18, 2025)
-- **Next Steps**: See `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md` for path to A grade
+- **Next Steps**: See `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md` for current roadmap
 
 ### 🚀 Next Steps
 - Optional TypeScript cleanup in non-poll areas
@@ -790,8 +789,8 @@ WHERE tablename IN ('user_roles', 'discussions', 'likes');
 ## 🎉 Success Metrics
 
 ### Phase 3 Achievements
-- **100% User Visibility**: Admin dashboard shows all authenticated users
-- **Real Email Addresses**: No more "User 1234..." display
+- **User Visibility**: Admin dashboard shows all authenticated users
+- **Email Addresses**: No more "User 1234..." display
 - **Automatic Role Assignment**: New signups get 'member' role automatically
 - **Enhanced Like System**: Complete user interaction tracking
 - **Admin Badge Persistence**: Robust system preventing badge disappearance
