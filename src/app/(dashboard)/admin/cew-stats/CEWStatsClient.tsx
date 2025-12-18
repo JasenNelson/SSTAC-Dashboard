@@ -45,7 +45,7 @@ export default function CEWStatsClient() {
 
       // Calculate stats
       const totalVotes = votes.length;
-      const anonymousVotes = votes.filter(v => v.user_id.startsWith('anon_')).length;
+      const anonymousVotes = votes.filter(v => v.user_id.startsWith('CEW2025_')).length;
       const authenticatedVotes = totalVotes - anonymousVotes;
 
       // Group by page and poll
@@ -65,7 +65,7 @@ export default function CEWStatsClient() {
         
         const stat = pageStatsMap.get(key);
         stat.totalVotes++;
-        if (vote.user_id.startsWith('anon_')) {
+        if (vote.user_id.startsWith('CEW2025_')) {
           stat.anonymousVotes++;
         }
       });

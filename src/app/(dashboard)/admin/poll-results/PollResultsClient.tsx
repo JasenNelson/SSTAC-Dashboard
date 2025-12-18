@@ -822,16 +822,16 @@ export default function PollResultsClient() {
     });
   }, [pollResults, filterMode]);
 
-  const getFilteredVoteCounts = () => {
+  const getFilteredVoteCounts = useCallback(() => {
     return {
       twg: filteredPolls.reduce((sum, poll) => sum + (poll.combined_survey_votes || 0), 0),
       cew: filteredPolls.reduce((sum, poll) => sum + (poll.combined_cew_votes || 0), 0),
       total: filteredPolls.reduce((sum, poll) => sum + poll.total_votes, 0)
     };
-  };
+  }, [filteredPolls]);
 
   // Get filtered results for a specific poll based on filter mode
-  const getFilteredPollResults = (poll: PollResult) => {
+  const getFilteredPollResults = useCallback((poll: PollResult) => {
     if (poll.is_wordcloud) {
       // For wordcloud polls, create mock results based on vote counts
       const surveyVotes = poll.combined_survey_votes || 0;
@@ -866,7 +866,7 @@ export default function PollResultsClient() {
       // For "all" filter, return combined results
       return poll.results;
     }
-  };
+  }, [filterMode]);
 
   // Use export hook for CSV export functionality
   const {
