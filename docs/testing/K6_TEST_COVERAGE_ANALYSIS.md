@@ -10,47 +10,47 @@ Your current k6 test suite provides **good basic coverage** but has **significan
 
 ### **STRENGTHS - What's Working Well**
 
-#### **1. Question Types Coverage (75% Complete)**
-- ✅ **Single-Choice Polls**: 10 questions tested (8 holistic + 2 prioritization)
-- ✅ **Ranking Polls**: 2 questions tested (prioritization Q3-Q4)
-- ✅ **Wordcloud Polls**: 1 question tested (prioritization Q5)
+#### **1. Question Types Coverage**
+- ✅ **Single-Choice Polls**: Questions tested (see manifest `facts` for canonical metrics)
+- ✅ **Ranking Polls**: Questions tested (see manifest `facts`)
+- ✅ **Wordcloud Polls**: Questions tested (see manifest `facts`)
 
-#### **2. Performance Testing (80% Complete)**
-- ✅ **Load Testing**: 20 concurrent users for general polls
-- ✅ **Response Time**: 95% under 2 seconds threshold
-- ✅ **Error Rate**: <10% failure rate threshold
-- ✅ **Focused Testing**: 50 wordcloud submissions
+#### **2. Performance Testing**
+- ✅ **Load Testing**: Concurrent users for general polls (see manifest `facts`)
+- ✅ **Response Time**: Within threshold
+- ✅ **Error Rate**: Within threshold
+- ✅ **Focused Testing**: Wordcloud submissions
 
-#### **3. API Endpoint Coverage (60% Complete)**
+#### **3. API Endpoint Coverage**
 - ✅ **Single-Choice API**: `/api/polls/submit`
 - ✅ **Ranking API**: `/api/ranking-polls/submit`
 - ✅ **Wordcloud API**: `/api/wordcloud-polls/submit`
 
 ### **GAPS IDENTIFIED - What's Missing**
 
-#### **1. Page Coverage (50% Complete)**
+#### **1. Page Coverage**
 - ✅ **CEW Polls**: All 3 pages tested (holistic, tiered, prioritization)
-- ❌ **Survey-Results Pages**: 0% tested (holistic, tiered, prioritization)
+- ❌ **Survey-Results Pages**: Tested (see manifest `facts` for coverage)
 - ❌ **WIKS Page**: Not tested (shows "Coming Soon")
 
-#### **2. Authentication Testing (25% Complete)**
+#### **2. Authentication Testing**
 - ✅ **CEW Authentication**: Tested with CEW codes
 - ❌ **Authenticated Users**: No testing
 - ❌ **Mixed Authentication**: No testing of both types simultaneously
 - ❌ **Session Management**: No testing of session persistence
 
-#### **3. Data Validation Testing (0% Complete)**
+#### **3. Data Validation Testing**
 - ❌ **Response Accuracy**: No verification that submitted data matches received data
 - ❌ **Data Integrity**: No testing of database consistency
 - ❌ **Admin Panel Integration**: No testing of admin panel data display
 
-#### **4. Edge Cases and Error Conditions (0% Complete)**
+#### **4. Edge Cases and Error Conditions**
 - ❌ **Invalid Input Testing**: No testing of malformed requests
 - ❌ **Rate Limiting**: No testing of rate limits
 - ❌ **Concurrent Submissions**: Limited concurrent user testing
 - ❌ **Network Failures**: No testing of network interruption scenarios
 
-#### **5. Matrix Graph Testing (0% Complete - CRITICAL GAP)**
+#### **5. Matrix Graph Testing**
 - ❌ **Vote Pairing**: No testing of importance/feasibility question pairing
 - ❌ **User ID Consistency**: No testing of user_id generation for matrix graphs
 - ❌ **Data Point Visualization**: No testing of overlapping data points scenarios
@@ -58,7 +58,7 @@ Your current k6 test suite provides **good basic coverage** but has **significan
 - ❌ **Filter Functionality**: No testing of filter combinations
 - ❌ **Data Aggregation**: No testing of data combination logic
 
-#### **6. Mobile and Responsiveness Testing (0% Complete)**
+#### **6. Mobile and Responsiveness Testing**
 - ❌ **Mobile Performance**: No mobile-specific testing
 - ❌ **Responsive Design**: No testing of different screen sizes
 - ❌ **Touch Interactions**: No testing of mobile-specific interactions
@@ -68,7 +68,7 @@ Your current k6 test suite provides **good basic coverage** but has **significan
 ## 🎯 **MATRIX GRAPH TESTING ENHANCEMENTS (2025)**
 
 ### **Critical Issue Resolved: K6 Test User ID Mismatch**
-- **Problem**: K6 test submitted 12,018 votes but all used same user_id (`CEW2025_default`), making vote pairing impossible
+- **Problem**: K6 test submitted many votes but all used same user_id (`CEW2025_default`), making vote pairing impossible
 - **Root Cause**: API ignored k6's `user_id` in JSON payload and generated its own from `x-session-id` header
 - **Solution**: Added `x-session-id` header to K6 test vote submissions
 - **Implementation**: `headers: { 'x-session-id': sessionId }` where `sessionId = userId`
@@ -82,7 +82,7 @@ Your current k6 test suite provides **good basic coverage** but has **significan
   - **Multiple Graph Types**: Holistic Protection, Prioritization, Tiered Framework
   - **Realistic Scenarios**: Balanced, skewed, clustered, and edge case distributions
   - **User ID Consistency**: Proper `x-session-id` header implementation
-- **Expected Result**: ~100 unique users with proper vote pairing for matrix graphs
+- **Expected Result**: Unique users with proper vote pairing for matrix graphs (see manifest `facts`)
 
 ### **Matrix Graph Investigation Tools**
 - **Database Investigation**: `investigate-matrix-data-points.sql` - 8-step comprehensive analysis
@@ -167,23 +167,25 @@ k6 run k6-wordcloud-test.js    # Focus on wordcloud polls
 
 ## 📈 **COVERAGE METRICS**
 
+> **Canonical metrics:** See `docs/_meta/docs-manifest.json` (`facts`) for up-to-date coverage and test counts.
+
 ### **Current Test Suite Coverage**
-- **Pages**: 50% (3/6 pages)
-- **Question Types**: 75% (3/4 types)
-- **API Endpoints**: 60% (3/5 endpoints)
-- **Authentication**: 25% (1/4 types)
-- **Data Validation**: 0% (0/3 types)
-- **Error Handling**: 0% (0/4 types)
-- **Matrix Graphs**: 0% (0/3 types)
+- **Pages**: See manifest `facts`
+- **Question Types**: See manifest `facts`
+- **API Endpoints**: See manifest `facts`
+- **Authentication**: See manifest `facts`
+- **Data Validation**: See manifest `facts`
+- **Error Handling**: See manifest `facts`
+- **Matrix Graphs**: See manifest `facts`
 
 ### **Enhanced Test Suite Coverage**
-- **Pages**: 100% (6/6 pages)
-- **Question Types**: 100% (4/4 types)
-- **API Endpoints**: 100% (5/5 endpoints)
-- **Authentication**: 100% (4/4 types)
-- **Data Validation**: 100% (3/3 types)
-- **Error Handling**: 100% (4/4 types)
-- **Matrix Graphs**: 100% (3/3 types)
+- **Pages**: See manifest `facts`
+- **Question Types**: See manifest `facts`
+- **API Endpoints**: See manifest `facts`
+- **Authentication**: See manifest `facts`
+- **Data Validation**: See manifest `facts`
+- **Error Handling**: See manifest `facts`
+- **Matrix Graphs**: See manifest `facts`
 
 ## 🎯 **RECOMMENDATIONS**
 
