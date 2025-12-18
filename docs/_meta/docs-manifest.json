@@ -21,7 +21,10 @@
         "Do not duplicate 'current grade' across multiple docs.",
         "If a metric is needed, store it here with provenance or derive it from commands/logs."
       ],
-      "required_provenance_fields": ["source", "last_verified"]
+      "required_provenance_fields": [
+        "source",
+        "last_verified"
+      ]
     },
     "archive_policy": {
       "rule": "Do not move/archive/delete docs until the archive investigation gates pass (link graph, duplication clusters, unique-value extraction, inbound reference checks)."
@@ -41,10 +44,10 @@
   "facts": {
     "testing": {
       "vitest_test_count": {
-        "status": "unknown",
-        "value": null,
-        "source": "Derive from vitest output; do not trust markdown counts.",
-        "last_verified": null
+        "status": "verified",
+        "value": 142,
+        "source": "npm run test:unit output (2025-12-18)",
+        "last_verified": "2025-12-18"
       },
       "playwright_test_count": {
         "status": "unknown",
@@ -72,58 +75,81 @@
       "id": "docs.index",
       "path": "docs/INDEX.md",
       "lifecycle": "AUTHORITATIVE",
-      "domain_tags": ["docs-system"],
+      "domain_tags": [
+        "docs-system"
+      ],
       "notes": "Canonical docs entrypoint."
     },
     {
       "id": "docs.manifest",
       "path": "docs/_meta/docs-manifest.json",
       "lifecycle": "AUTHORITATIVE",
-      "domain_tags": ["docs-system"]
+      "domain_tags": [
+        "docs-system"
+      ]
     },
     {
       "id": "core.agents",
       "path": "docs/AGENTS.md",
       "lifecycle": "AUTHORITATIVE",
-      "domain_tags": ["safety", "architecture", "polling"]
+      "domain_tags": [
+        "safety",
+        "architecture",
+        "polling"
+      ]
     },
     {
       "id": "docs.readme_legacy",
       "path": "docs/README.md",
       "lifecycle": "REFERENCE",
-      "domain_tags": ["docs-system"],
+      "domain_tags": [
+        "docs-system"
+      ],
       "notes": "Legacy index; should point to docs/INDEX.md and avoid volatile metrics."
     },
     {
       "id": "core.project_status",
       "path": "docs/PROJECT_STATUS.md",
       "lifecycle": "REFERENCE",
-      "domain_tags": ["status"],
+      "domain_tags": [
+        "status"
+      ],
       "notes": "Must not be treated as canonical for volatile metrics once docs/INDEX.md exists."
     },
     {
       "id": "testing.index",
       "path": "docs/testing/README.md",
       "lifecycle": "REFERENCE",
-      "domain_tags": ["testing"]
+      "domain_tags": [
+        "testing"
+      ]
     },
     {
       "id": "poll.complete_guide",
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
       "lifecycle": "AUTHORITATIVE",
-      "domain_tags": ["polling", "matrix-graphs"]
+      "domain_tags": [
+        "polling",
+        "matrix-graphs"
+      ]
     },
     {
       "id": "poll.safe_update_protocol",
       "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
       "lifecycle": "AUTHORITATIVE",
-      "domain_tags": ["polling", "operations"]
+      "domain_tags": [
+        "polling",
+        "operations"
+      ]
     },
     {
       "id": "poll.debugging_guide",
       "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
       "lifecycle": "AUTHORITATIVE",
-      "domain_tags": ["polling", "debugging"]
+      "domain_tags": [
+        "polling",
+        "debugging"
+      ]
     }
   ],
   "section_catalog": {
@@ -315,7 +341,9 @@
   "bundles": {
     "API_GATE": {
       "description": "Triggered by any API route change; lightweight required-doc set.",
-      "triggers": ["src/app/api/**"],
+      "triggers": [
+        "src/app/api/**"
+      ],
       "requires_documents": [
         {
           "doc_id": "docs.index",
@@ -329,7 +357,9 @@
     },
     "POLLING_GATE": {
       "description": "Triggered by poll-adjacent changes; heavyweight; must review all three poll systems every time.",
-      "includes": ["API_GATE"],
+      "includes": [
+        "API_GATE"
+      ],
       "triggers": [
         "src/app/api/polls/**",
         "src/app/api/ranking-polls/**",

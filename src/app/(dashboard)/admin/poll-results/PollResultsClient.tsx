@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import QRCodeDisplay from '@/components/dashboard/QRCodeDisplay';
 import CustomWordCloud from '@/components/dashboard/CustomWordCloud';
@@ -120,35 +120,8 @@ export default function PollResultsClient() {
     }));
   };
 
-  useEffect(() => {
-    fetchPollResults();
-  }, []);
-
-
-  // Fetch matrix data for prioritization graphs
-  useEffect(() => {
-    const fetchMatrixData = async () => {
-      try {
-        console.log(`🔍 MATRIX API CALL: Fetching matrix data with filter=${filterMode}`);
-        const response = await fetch(`/api/graphs/prioritization-matrix?filter=${filterMode}`);
-        console.log(`🔍 MATRIX API RESPONSE: Status ${response.status}`);
-        if (response.ok) {
-        const data = await response.json();
-        console.log(`🔍 MATRIX API DATA:`, data);
-        console.log(`🔍 MATRIX API DATA DETAILED:`, JSON.stringify(data, null, 2));
-        setMatrixData(data);
-        } else {
-          console.error(`❌ MATRIX API ERROR: ${response.status} ${response.statusText}`);
-        }
-      } catch (error) {
-        console.error("❌ MATRIX API FAILED:", error);
-      }
-    };
-
-    fetchMatrixData();
-  }, [pollResults, filterMode]); // Re-run when poll data or filter changes
-
-  const fetchPollResults = async () => {
+  // Wrap fetchPollResults in useCallback to stabilize function reference
+  const fetchPollResults = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -860,7 +833,34 @@ export default function PollResultsClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty deps - function doesn't depend on any props/state
+
+  useEffect(() => {
+    fetchPollResults();
+  }, [fetchPollResults]);
+
+  // Fetch matrix data for prioritization graphs
+  useEffect(() => {
+    const fetchMatrixData = async () => {
+      try {
+        console.log(`🔍 MATRIX API CALL: Fetching matrix data with filter=${filterMode}`);
+        const response = await fetch(`/api/graphs/prioritization-matrix?filter=${filterMode}`);
+        console.log(`🔍 MATRIX API RESPONSE: Status ${response.status}`);
+        if (response.ok) {
+        const data = await response.json();
+        console.log(`🔍 MATRIX API DATA:`, data);
+        console.log(`🔍 MATRIX API DATA DETAILED:`, JSON.stringify(data, null, 2));
+        setMatrixData(data);
+        } else {
+          console.error(`❌ MATRIX API ERROR: ${response.status} ${response.statusText}`);
+        }
+      } catch (error) {
+        console.error("❌ MATRIX API FAILED:", error);
+      }
+    };
+
+    fetchMatrixData();
+  }, [pollResults, filterMode]); // Re-run when poll data or filter changes
 
   const getPercentage = (votes: number, totalVotes: number) => {
     if (totalVotes === 0) return 0;
