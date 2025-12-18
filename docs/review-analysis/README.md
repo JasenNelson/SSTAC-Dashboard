@@ -8,10 +8,7 @@
 
 This folder contains the complete comprehensive review conducted in early November 2025 (last weekend), analyzing all 8 phases of the SSTAC Dashboard project. The project was initiated in August 2025. It includes assessments, findings, roadmaps, and recommendations for improving code quality, security, testing, and architecture.
 
-**Overall Project Grade:** **A- (85-89%)** - Achieved November 17, 2025 ✅  
-**Starting Grade:** C (66%) - Functional but needs comprehensive refactoring  
-**Current Grade:** **A- (85-89%)** - Achieved November 17, 2025 ✅  
-**Target Grade:** A (90%+) - Updated November 17, 2025
+**Canonical docs entrypoint:** See `docs/INDEX.md`.\n\n**Volatile metrics policy:** Grades, test counts, and similar metrics must be tracked in `docs/_meta/docs-manifest.json` (`facts`) to avoid contradictions across docs.\n\nThis folder contains both reference planning docs and historical records (see `archive/`).
 
 ---
 
@@ -118,13 +115,11 @@ REVIEW_SUMMARY.md and NEXT_STEPS.md files.
 
 ## 📊 Current Status
 
-- **Starting Grade:** C (66%)
-- **Current Grade:** **A- (85-89%)** ⬆️ +19-23 points - Achieved November 17, 2025 ✅
-- **Target Grade:** A (90%+) - Updated November 17, 2025 - Only 1-5 points remaining
-- **Status:** Phase 3 Complete ✅ (Weeks 1-16 + Phase 3)
+- **Status:** Phase 3 complete ✅ (Weeks 1-16 + Phase 3)
+- **Metrics:** See `docs/_meta/docs-manifest.json` (`facts`) for canonical, up-to-date counts.
 
 ### **Completed Work:**
-- ✅ Testing infrastructure (Vitest, Playwright, CI/CD) - 122 unit tests passing
+- ✅ Testing infrastructure (Vitest, Playwright, CI/CD) established
 - ✅ Code cleanup (conditional logging, imports, debug code removal)
 - ✅ Supabase auth utility created and integrated (16 routes)
 - ✅ **Phase 3 Complete:** Zod validation, structured logging, rate limiting, authorization review, ErrorBoundary
@@ -141,7 +136,7 @@ REVIEW_SUMMARY.md and NEXT_STEPS.md files.
 - Next.js App Router properly implemented
 - Good documentation and patterns
 - RESTful API with consistent routing
-- 23 k6 load tests exist
+- Load testing exists (k6) (see `docs/testing/` and manifest facts)
 
 ### 🔴 **Remaining Critical Issues**
 - ✅ **Rate Limiting:** ✅ Complete (all non-poll APIs protected)
@@ -151,7 +146,7 @@ REVIEW_SUMMARY.md and NEXT_STEPS.md files.
 - ⚠️ **Type Safety:** Some `any` types remain in poll components (intentionally untouched)
 
 ### ✅ **Improvements Made:**
-- ✅ **Tests Added:** 122 unit tests + E2E tests
+- ✅ **Tests Added:** Unit tests + E2E tests added (see testing docs + manifest facts)
 - ✅ **Code Duplication:** 16 routes migrated to centralized utility
 - ✅ **Logging:** Structured logging implemented, conditional logging in many files
 - ✅ **Validation:** Zod schemas centralized for all non-poll APIs

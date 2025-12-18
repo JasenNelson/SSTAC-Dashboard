@@ -1,0 +1,395 @@
+{
+  "manifest_version": 1,
+  "repo": {
+    "name": "SSTAC-Dashboard",
+    "workspace_root": "F:/SSTAC-Dashboard"
+  },
+  "policies": {
+    "lifecycle_definitions": {
+      "AUTHORITATIVE": "Must be kept correct; can be required by gates.",
+      "REFERENCE": "Helpful but not canonical; must not claim global 'current project status' or repeat volatile metrics.",
+      "HISTORICAL": "Snapshot; do not update except for minimal link repairs / disclaimers."
+    },
+    "current_status_claims_policy": {
+      "canonical_entrypoint": "docs/INDEX.md",
+      "rule": "Only docs/INDEX.md may claim global 'current project status' or host volatile metrics. Other docs must point to docs/INDEX.md and/or facts in this manifest."
+    },
+    "facts_policy": {
+      "canonical_store": "docs/_meta/docs-manifest.json:facts",
+      "ban_list": [
+        "Do not hardcode volatile counts (e.g. tests: 122 vs 142) across multiple markdown files.",
+        "Do not duplicate 'current grade' across multiple docs.",
+        "If a metric is needed, store it here with provenance or derive it from commands/logs."
+      ],
+      "required_provenance_fields": ["source", "last_verified"]
+    },
+    "archive_policy": {
+      "rule": "Do not move/archive/delete docs until the archive investigation gates pass (link graph, duplication clusters, unique-value extraction, inbound reference checks)."
+    },
+    "gate_evaluation": {
+      "path_normalization": {
+        "replace_backslashes": true,
+        "strip_leading_dot_slash": true,
+        "case_sensitive_match": true
+      },
+      "heading_verification": {
+        "heading_regex": "^#{1,6}\\s+(.+)$",
+        "match_mode": "exact_heading_text_after_hashes"
+      }
+    }
+  },
+  "facts": {
+    "testing": {
+      "vitest_test_count": {
+        "status": "unknown",
+        "value": null,
+        "source": "Derive from vitest output; do not trust markdown counts.",
+        "last_verified": null
+      },
+      "playwright_test_count": {
+        "status": "unknown",
+        "value": null,
+        "source": "Derive from playwright inventory/config; do not trust markdown counts.",
+        "last_verified": null
+      },
+      "k6_script_count": {
+        "status": "unknown",
+        "value": null,
+        "source": "Derive from tests/k6-*.js inventory; do not trust markdown counts.",
+        "last_verified": null
+      }
+    }
+  },
+  "known_issues": {
+    "broken_doc_links_detected": {
+      "scan_scope": "docs/**",
+      "broken_count": 0,
+      "note": "Resolved: internal docs link scan currently reports 0 broken links."
+    }
+  },
+  "documents": [
+    {
+      "id": "docs.index",
+      "path": "docs/INDEX.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": ["docs-system"],
+      "notes": "Canonical docs entrypoint."
+    },
+    {
+      "id": "docs.manifest",
+      "path": "docs/_meta/docs-manifest.json",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": ["docs-system"]
+    },
+    {
+      "id": "core.agents",
+      "path": "docs/AGENTS.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": ["safety", "architecture", "polling"]
+    },
+    {
+      "id": "docs.readme_legacy",
+      "path": "docs/README.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": ["docs-system"],
+      "notes": "Legacy index; should point to docs/INDEX.md and avoid volatile metrics."
+    },
+    {
+      "id": "core.project_status",
+      "path": "docs/PROJECT_STATUS.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": ["status"],
+      "notes": "Must not be treated as canonical for volatile metrics once docs/INDEX.md exists."
+    },
+    {
+      "id": "testing.index",
+      "path": "docs/testing/README.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": ["testing"]
+    },
+    {
+      "id": "poll.complete_guide",
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": ["polling", "matrix-graphs"]
+    },
+    {
+      "id": "poll.safe_update_protocol",
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": ["polling", "operations"]
+    },
+    {
+      "id": "poll.debugging_guide",
+      "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": ["polling", "debugging"]
+    }
+  ],
+  "section_catalog": {
+    "pcg.actual_db_structure": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "📊 **ACTUAL Database Structure (Based on CSV Analysis)**"
+    },
+    "pcg.three_separate_systems": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**Three Completely Separate Poll Systems**"
+    },
+    "pcg.single_choice_system": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**1. Single-Choice Polls System**"
+    },
+    "pcg.ranking_system": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**2. Ranking Polls System**"
+    },
+    "pcg.wordcloud_system": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**3. Wordcloud Polls System** ✅ **COMPLETED (2025)**"
+    },
+    "pcg.system_architecture": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "🏗️ **System Architecture**"
+    },
+    "pcg.critical_data_flow": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**Critical Data Flow Understanding**"
+    },
+    "pcg.question_matching_logic": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**Question Matching Logic**"
+    },
+    "pcg.vote_counting_differences": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**Vote Counting Differences**"
+    },
+    "pcg.key_system_rules": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "🎯 **Key System Rules**"
+    },
+    "pcg.never_mix_poll_types": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**1. Never Mix Poll Types**"
+    },
+    "pcg.question_synchronization": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**2. Question Synchronization**"
+    },
+    "pcg.vote_storage_rules": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**3. Vote Storage Rules**"
+    },
+    "pcg.results_view_usage": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**4. Results View Usage**"
+    },
+    "pcg.verification_queries": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "📊 **Verification Queries**"
+    },
+    "pcg.check_current_poll_state": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**Check Current Poll State**"
+    },
+    "pcg.check_vote_counts": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**Check Vote Counts**"
+    },
+    "pcg.wordcloud_critical": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "🚨 **CRITICAL: Wordcloud System Implementation (2025)**"
+    },
+    "pcg.wordcloud_div0": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**Division by Zero Protection**"
+    },
+    "pcg.k6_enhancements": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "🧪 **K6 Testing System Enhancements (2025)**"
+    },
+    "pcg.k6_user_id_fix": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**K6 Test User ID Generation Fix**"
+    },
+    "pcg.critical_api_behavior": {
+      "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
+      "heading_text_exact": "**Critical API Behavior Understanding**"
+    },
+    "sup.pre_update_checklist": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "📋 **Pre-Update Checklist**"
+    },
+    "sup.verify_current_state": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "**1. Verify Current System State**"
+    },
+    "sup.backup": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "**2. Create Comprehensive Backup**"
+    },
+    "sup.update_by_type": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "🔄 **Update Protocol by Poll Type**"
+    },
+    "sup.single_choice_section": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "**Single-Choice Polls (`polls` table)**"
+    },
+    "sup.ranking_section": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "**Ranking Polls (`ranking_polls` table)**"
+    },
+    "sup.wordcloud_section": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "**Wordcloud Polls (`wordcloud_polls` table)**"
+    },
+    "sup.three_way_sync": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "🎯 **Three-Way Synchronization Requirements**"
+    },
+    "sup.critical_rule_three_places": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "**Critical Rule: Every poll must exist in THREE places with identical content**"
+    },
+    "sup.admin_matching_logic": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "**Admin Panel Question Matching Logic**"
+    },
+    "sup.emergency_rollback": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "🚨 **Emergency Rollback Procedure**"
+    },
+    "sup.question_text_protocol": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "🚨 **CRITICAL: Question Text Update Protocol (ENHANCED)**"
+    },
+    "sup.question_text_sync_requirements": {
+      "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
+      "heading_text_exact": "**Question Text Synchronization Requirements**"
+    },
+    "dbg.cew_multiple_submissions": {
+      "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
+      "heading_text_exact": "🚨 CRITICAL: CEW Poll Multiple Submissions (2025)"
+    },
+    "dbg.cew_behavior_requirements": {
+      "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
+      "heading_text_exact": "**CEW Poll Behavior Requirements (CRITICAL)**"
+    },
+    "dbg.wordcloud_div0": {
+      "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
+      "heading_text_exact": "🚨 CRITICAL: Wordcloud Division by Zero Error (2025)"
+    },
+    "dbg.wordcloud_results_div0": {
+      "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
+      "heading_text_exact": "**Wordcloud Results View Division by Zero (NEW ISSUE)**"
+    },
+    "dbg.security_invoker": {
+      "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
+      "heading_text_exact": "**Supabase Security Invoker Warning (RECURRING ISSUE)**"
+    },
+    "dbg.ranking_indexing_bug": {
+      "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
+      "heading_text_exact": "**Ranking Results View Array Indexing Bug (RECURRING ISSUE)**"
+    },
+    "dbg.ranking_indexing_critical": {
+      "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
+      "heading_text_exact": "7. Ranking Results View Array Indexing (CRITICAL)"
+    },
+    "dbg.user_type_detection": {
+      "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
+      "heading_text_exact": "**API User Type Detection Logic (RESOLVED)**"
+    },
+    "dbg.missing_rls_delete_policy": {
+      "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
+      "heading_text_exact": "**Missing RLS DELETE Policy Issue (RESOLVED)**"
+    },
+    "dbg.poll_question_option_updates": {
+      "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
+      "heading_text_exact": "🚨 CRITICAL: Poll Question & Option Updates (2025)"
+    },
+    "dbg.mandatory_update_protocol": {
+      "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
+      "heading_text_exact": "**MANDATORY PROTOCOL FOR UPDATING POLL QUESTIONS**"
+    }
+  },
+  "bundles": {
+    "API_GATE": {
+      "description": "Triggered by any API route change; lightweight required-doc set.",
+      "triggers": ["src/app/api/**"],
+      "requires_documents": [
+        {
+          "doc_id": "docs.index",
+          "why": "Canonical navigation + gate rules."
+        },
+        {
+          "doc_id": "core.agents",
+          "why": "Core safety rules; prevents known high-cost mistakes."
+        }
+      ]
+    },
+    "POLLING_GATE": {
+      "description": "Triggered by poll-adjacent changes; heavyweight; must review all three poll systems every time.",
+      "includes": ["API_GATE"],
+      "triggers": [
+        "src/app/api/polls/**",
+        "src/app/api/ranking-polls/**",
+        "src/app/api/wordcloud-polls/**",
+        "src/app/(dashboard)/admin/poll-results/**",
+        "src/app/**/survey-results/**",
+        "src/app/cew-polls/**",
+        "src/components/PollWithResults.tsx",
+        "src/components/dashboard/RankingPoll.tsx",
+        "src/components/dashboard/WordCloudPoll.tsx",
+        "src/app/api/graphs/prioritization-matrix/**"
+      ],
+      "requires_sections": [
+        "pcg.actual_db_structure",
+        "pcg.three_separate_systems",
+        "pcg.single_choice_system",
+        "pcg.ranking_system",
+        "pcg.wordcloud_system",
+        "pcg.system_architecture",
+        "pcg.critical_data_flow",
+        "pcg.question_matching_logic",
+        "pcg.vote_counting_differences",
+        "pcg.key_system_rules",
+        "pcg.never_mix_poll_types",
+        "pcg.question_synchronization",
+        "pcg.vote_storage_rules",
+        "pcg.results_view_usage",
+        "pcg.verification_queries",
+        "pcg.check_current_poll_state",
+        "pcg.check_vote_counts",
+        "pcg.wordcloud_critical",
+        "pcg.wordcloud_div0",
+        "pcg.k6_enhancements",
+        "pcg.k6_user_id_fix",
+        "pcg.critical_api_behavior",
+        "sup.pre_update_checklist",
+        "sup.verify_current_state",
+        "sup.backup",
+        "sup.update_by_type",
+        "sup.single_choice_section",
+        "sup.ranking_section",
+        "sup.wordcloud_section",
+        "sup.three_way_sync",
+        "sup.critical_rule_three_places",
+        "sup.admin_matching_logic",
+        "sup.emergency_rollback",
+        "sup.question_text_protocol",
+        "sup.question_text_sync_requirements",
+        "dbg.cew_multiple_submissions",
+        "dbg.cew_behavior_requirements",
+        "dbg.wordcloud_div0",
+        "dbg.wordcloud_results_div0",
+        "dbg.security_invoker",
+        "dbg.ranking_indexing_bug",
+        "dbg.ranking_indexing_critical",
+        "dbg.user_type_detection",
+        "dbg.missing_rls_delete_policy",
+        "dbg.poll_question_option_updates",
+        "dbg.mandatory_update_protocol"
+      ]
+    }
+  }
+}

@@ -13,7 +13,7 @@
 ### **Current State (A- 85-89%)** ✅ **ACHIEVED** (November 17, 2025)
 Completed work (August - November 2025):
 - ✅ Testing infrastructure: Vitest, Playwright, CI/CD setup
-- ✅ Unit tests: 122 tests passing
+- ✅ Unit tests: passing (see `docs/_meta/docs-manifest.json` → `facts.testing`)
 - ✅ Code cleanup: Conditional logging, imports, debug code removal
 - ✅ Supabase utility integration: 16 routes migrated
 - ✅ Phase 3: Zod validation, structured logging, rate limiting, authorization review, ErrorBoundary
@@ -64,7 +64,7 @@ Based on Grade Projection vs Current State:
 
 **Sprint 3 (Complete):**
 11. ✅ Setup Vitest + React Testing Library
-12. ✅ Add unit tests (122 tests passing)
+12. ✅ Add unit tests (see `docs/_meta/docs-manifest.json` → `facts.testing`)
 13. ✅ Add E2E tests with Playwright
 14. ✅ Integrate tests into CI/CD pipeline
 15. ✅ Add test coverage reporting

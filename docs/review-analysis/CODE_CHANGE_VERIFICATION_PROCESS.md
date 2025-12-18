@@ -51,7 +51,7 @@ npx tsc --noEmit
 ```bash
 npm run test:unit
 ```
-**Expected:** All existing tests pass (122 tests)  
+**Expected:** All existing unit tests pass (see `docs/_meta/docs-manifest.json` → `facts.testing`)  
 **Action if fails:** Fix broken tests or update tests if behavior intentionally changed
 
 ### 5. **E2E Tests**
@@ -258,7 +258,7 @@ After making changes:
 - [ ] **Build succeeds** - `npm run build` completes without errors
 - [ ] **Linting passes** - No new linting errors
 - [ ] **Type checking passes** - No TypeScript errors
-- [ ] **Unit tests pass** - All 122 tests pass
+- [ ] **Unit tests pass** - All unit tests pass (see `docs/_meta/docs-manifest.json` → `facts.testing`)
 - [ ] **E2E tests pass** - All E2E tests pass
 - [ ] **Manual testing complete** - All affected features tested
 - [ ] **No poll impact** - Verified no poll-related files touched

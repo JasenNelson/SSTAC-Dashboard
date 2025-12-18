@@ -8,12 +8,9 @@
 
 This folder contains comprehensive testing documentation, including the k6 load testing infrastructure that currently provides the project's primary test coverage (API endpoints and performance).
 
-**Current Status:** 
-- **k6 Load Tests**: 23 tests providing good API coverage ✅
-- **Unit Tests**: 122 tests using Vitest + React Testing Library ✅ **NEW**
-- **E2E Tests**: Playwright tests for critical workflows ✅ **NEW**
-- **CI/CD**: Automated testing on every PR ✅ **NEW**
-- **Test Reliability**: ErrorBoundary tests fixed, all passing (7/7) ✅ **NEW**
+**Status (reference):** This document describes testing **capabilities and procedures**.
+
+**Volatile metrics policy:** Test counts and “how many are passing” must be tracked in `docs/_meta/docs-manifest.json` (`facts.testing`) to avoid contradictions across docs.
 
 ---
 
@@ -53,7 +50,7 @@ and performance validation.
 
 ## 📊 Current Test Coverage
 
-### **✅ Well Covered (23 tests)**
+### **✅ Well Covered**
 - **Poll Systems:** All 3 poll types (submit + results)
 - **Discussion System:** CRUD operations
 - **Documents:** Access and management
@@ -65,11 +62,12 @@ and performance validation.
 
 **Unit Tests:**
 - ✅ **Vitest** configured and running
-- ✅ **122 unit tests** passing
+- ✅ Unit test suite passing (see `docs/_meta/docs-manifest.json` → `facts.testing`)
 - ✅ **React Testing Library** for component testing
 - ✅ Coverage tracking enabled
 - ✅ **ErrorBoundary Tests:** All 7 tests passing with proper environment variable mocking
 - ✅ **GitHub Actions:** CI/CD pipeline passes without test errors
+- ✅ **Test Mocks Fixed:** Supabase client API mocks corrected for poll submission tests
 
 **E2E Tests:**
 - ✅ **Playwright** configured and running
@@ -128,12 +126,14 @@ tests/k6/
 
 ### **Testing Infrastructure Status**
 
-**Completed (Weeks 1-16):**
+**Completed (Weeks 1-16, December 2025):**
 - ✅ Unit testing infrastructure (Vitest, React Testing Library)
 - ✅ E2E testing infrastructure (Playwright)
 - ✅ CI/CD integration
-- ✅ 122 unit tests written and passing
+- ✅ Unit test suite in place (see `docs/_meta/docs-manifest.json` → `facts.testing`)
 - ✅ Test coverage reporting
+- ✅ Test mock fixes for Supabase client API (December 7, 2025)
+- ✅ Next.js security update (15.4.8) - CVE-2025-66478 patched
 
 **Next Steps:**
 See `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md` for remaining testing improvements (security testing, expanded coverage).
@@ -166,5 +166,7 @@ k6 run k6-test.js
 
 ---
 
-**Testing infrastructure established with k6 load tests, Vitest unit tests (122 tests), and Playwright E2E tests. CI/CD integration ensures all tests run automatically.**
+**Testing infrastructure established** with k6 load tests, Vitest unit tests, and Playwright E2E tests. CI/CD integration ensures tests run automatically.
+
+For current test counts/status, see `docs/_meta/docs-manifest.json` → `facts.testing`.
 

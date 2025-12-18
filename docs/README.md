@@ -2,15 +2,19 @@
 
 Complete documentation for the SSTAC & TWG Dashboard project.
 
+> **Canonical entrypoint:** Use **`docs/INDEX.md`** as the single source of “what’s current”.  
+> **Volatile metrics policy:** Test counts, grades, and similar metrics must live in `docs/_meta/docs-manifest.json` (`facts`) to avoid contradictions.
+
 ## 🗺️ **Documentation Map**
 
 ### **🔰 Start Here**
 
 New to the project? Read these in order:
 
-1. **[Main README](../README.md)** - Project overview and quick start
-2. **[Project Status](PROJECT_STATUS.md)** - Current features and capabilities
+1. **[Canonical Docs Index](INDEX.md)** - Start here (canonical)
+2. **[Main README](../README.md)** - Project overview and quick start
 3. **[Core Guidelines](AGENTS.md)** - Essential development rules
+4. **[Project Status](PROJECT_STATUS.md)** - Reference snapshot (non-canonical)
 
 ### **🚀 Quick Start Templates**
 
@@ -119,8 +123,8 @@ the poll architecture and safe modification procedures
 **Adding tests?** Read `testing/README.md` first
 
 **Contents:**
-- k6 load testing plans (23 tests)
-- Unit testing (Vitest, 122 tests) ✅
+- k6 load testing plans (see `docs/testing/` and `docs/_meta/docs-manifest.json` → `facts.testing`)
+- Unit testing (Vitest) (see `docs/_meta/docs-manifest.json` → `facts.testing`)
 - E2E testing (Playwright) ✅
 - CI/CD integration ✅
 - Coverage analysis
@@ -199,9 +203,9 @@ key system design decisions and visualization patterns
 
 1. Read [Review Summary](review-analysis/REVIEW_SUMMARY.md) - Overview
 2. Read [Phase 3 Completion](review-analysis/PHASE3_COMPLETION_SUMMARY.md) - Latest completed phase
-3. Read [Master Summary](review-analysis/MASTER_COMPLETION_SUMMARY.md) - Weeks 1-16 overview
-4. Choose [Next Steps](review-analysis/NEXT_STEPS.md) or [Safe Roadmap](review-analysis/PRODUCTION_SAFE_ROADMAP.md)
-5. Track with [Grade Projection](review-analysis/GRADE_PROJECTION.md)
+3. Read [Master Summary](review-analysis/archive/MASTER_COMPLETION_SUMMARY.md) - Weeks 1-16 overview (historical)
+4. Choose [Next Steps](review-analysis/NEXT_STEPS.md) or [Safe Roadmap](review-analysis/archive/PRODUCTION_SAFE_ROADMAP.md) (historical)
+5. Track with [Grade Projection](review-analysis/archive/GRADE_PROJECTION.md) (historical)
 6. Plan implementation (only 1-5 points needed for A-)
 
 **Time**: 1-2 hours  

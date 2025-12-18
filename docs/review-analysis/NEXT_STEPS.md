@@ -1,5 +1,8 @@
 # Next Steps After Comprehensive Review
 
+> **Canonical docs entrypoint:** `docs/INDEX.md`  
+> **Note:** This file is a planning snapshot; canonical volatile metrics live in `docs/_meta/docs-manifest.json` (`facts`).
+
 **Date:** November 2025 (Comprehensive review completed last weekend)  
 **Project:** SSTAC Dashboard  
 **Project Start:** August 2025  
@@ -27,7 +30,7 @@
 - **Next.js Architecture**: App Router properly implemented
 - **Documentation**: Good documentation and patterns
 - **API Design**: RESTful with consistent routing
-- **Load Testing**: 23 k6 load tests exist
+- **Load Testing**: k6 load tests exist (see `docs/testing/` and `docs/_meta/docs-manifest.json` → `facts.testing`)
 
 ### 🔴 Remaining Issues
 1. ⚠️ **God Components**: PollResultsClient.tsx (2,079 lines) - planning done, refactoring deferred
@@ -64,6 +67,17 @@
 - ✅ **Successfully deployed to production** - Pages live and operational
 - **Commits:** `7d96435` (main recovery), `ee30235` (header integration), `a1268b2` (verification & lint fixes), `ff779ac` (next-themes dependency)
 - **Status:** ✅ Complete - All pages live in production
+
+### **Security Update & Test Fixes** ✅ COMPLETE (December 7, 2025)
+- ✅ **Next.js Security Update**: Updated from 15.4.6 → 15.4.8 to fix CVE-2025-66478 (critical security vulnerability)
+- ✅ **eslint-config-next Updated**: Updated to 15.4.8 to match Next.js version
+- ✅ **Test Mock Fixes**: Fixed Supabase client API mocks in poll submission tests
+  - Fixed `polls/submit` test to return error directly from `insert()` (no `.select()` chain)
+  - Fixed `ranking-polls/submit` test to return object with `.select()` method for authenticated user flow
+- ✅ **All Tests Passing**: Unit test suite now passing (see `docs/_meta/docs-manifest.json` → `facts.testing`)
+- ✅ **CI/CD Status**: All GitHub Actions checks passing (unit tests, production build, E2E tests, security scan)
+- **Commits:** `c0aaba5` (Next.js security update), `1725046` (test mock fixes)
+- **Status:** ✅ Complete - All tests passing, security vulnerability patched, CI/CD green
 
 ### Phase 3: Validation & Security ✅ COMPLETE
 
@@ -159,7 +173,7 @@
    - ✅ Installed and configured
    - ✅ CI/CD integrated
 
-2. ✅ **Add Unit Tests** (COMPLETE - 122 tests passing)
+2. ✅ **Add Unit Tests** (COMPLETE)
    - Start with utilities and API routes
    - Critical paths first
    - Poll submission logic
@@ -384,7 +398,7 @@
 
 ### ✅ Phase 1 Complete (Weeks 1-4) - ACHIEVED:
 - ✅ Conditional logging implemented (many files)
-- ✅ Unit tests infrastructure running (122 tests)
+- ✅ Unit tests infrastructure running
 - ✅ Testing infrastructure complete
 - ✅ Rate limiting implemented (completed in Phase 3)
 - ✅ Authorization checks completed (completed in Phase 3)

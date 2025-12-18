@@ -1,10 +1,16 @@
 # Project Status - SSTAC & TWG Dashboard
 
-## 🎯 **Current Project Status: PRODUCTION READY** ✅
+## 🎯 Project Status (Reference Snapshot)
+
+**Canonical docs entrypoint:** See `docs/INDEX.md`.
+
+**Volatile metrics policy:** Test counts and other volatile metrics must live in `docs/_meta/docs-manifest.json` (`facts`) to avoid contradictions across docs.
 
 The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** with comprehensive features for sediment standards development through stakeholder engagement and administrative tools.
 
-**LATEST UPDATE (November 2025)**: Comprehensive review completed last weekend. Phase 3: Validation & Security COMPLETED. - Reorganized prioritization page structure: moved "Developing a Prioritization Framework" section to follow "What We Heard", removed "Modernizing BC's Sediment Standards Framework" section, removed standalone "Matrix Sediment Standards Framework" and "Expanding the Tiered Framework" sections (content consolidated into "Key Areas for Modernizing" containers with links), standardized color order throughout page, removed all icons from containers, added colored backgrounds to "What We Heard" containers, centered text in "What We Heard" sections across all survey-results pages. Survey-Results Pages Content Update COMPLETED - All three survey-results pages (holistic-protection, prioritization, tiered-framework) updated with revised presentation content. Removed outdated information and fabricated statistics. Implemented accurate framework structures matching latest presentations. Fixed UI/UX issues for light/dark mode consistency (text color, container colors). Applied consistent color schemes across all sections. Section reordering: "What We Heard" sections repositioned for better user experience. Menu structure updated: WIKS relocated under "Prioritization Framework" and renamed to "Weaving Indigenous Knowledges & Science". Reference materials added (revised content files and matrix-graph.jpg). Wordcloud Results Button Enhancement COMPLETED - Added "View All Responses" button to wordcloud polls on `/survey-results/*` pages. Results now hidden by default, displayed on button click after user submission. Button shows aggregated results combining both survey-results and cew-polls data sources. Enhanced API endpoint to match admin panel "all responses" filter logic. CEW pages remain unchanged for privacy. All test cases passed, matches admin panel data exactly. Change Vote Functionality COMPLETELY FIXED & VERIFIED - All polling systems now support proper vote changes for authenticated users without creating duplicates. Fixed single-choice polls, ranking polls, and wordcloud polls change vote functionality. Added partial unique database index for authenticated users only while preserving CEW insert-only behavior. Fixed missing RLS DELETE policy that was causing silent delete failures. Fixed API user type detection logic to use pagePath instead of authCode. All change vote functionality now works correctly with stable vote counts. Matrix Graph Survey-Results Integration COMPLETED - Matrix graphs now available on both survey-results pages with expandable interface.
+**LATEST UPDATE (December 7, 2025)**: Security Update & Test Fixes COMPLETED - Next.js updated to 15.4.8 (CVE-2025-66478 patched), test mocks fixed for Supabase client API, and GitHub CI/CD checks passing (unit tests, production build, E2E tests, security scan). Current test counts/status are tracked in `docs/_meta/docs-manifest.json`.
+
+**Previous Update (November 2025)**: Comprehensive review completed. Phase 3: Validation & Security completed; survey-results content updates completed; wordcloud “View All Responses” button enhancement completed; change-vote functionality verified across poll systems; matrix graphs integrated into survey-results pages.
 
 ## 🚀 **Deployment & Hosting**
 
@@ -87,14 +93,14 @@ The SSTAC & TWG Dashboard is a **fully functional, production-ready platform** w
 **Impact:** GitHub Actions CI/CD pipeline now passes without test failures, improved test reliability
 
 ### **Testing & Code Quality Infrastructure** ✅ COMPLETED (November 2025)
-- **Testing Infrastructure**: Vitest unit tests (122 tests), Playwright E2E tests, CI/CD GitHub Actions workflow
+- **Testing Infrastructure**: Vitest unit tests, Playwright E2E tests, CI/CD GitHub Actions workflow (see `docs/_meta/docs-manifest.json` for volatile metrics)
 - **Code Quality**: Supabase auth utility centralization (16 routes migrated), 200+ lines of duplicate code eliminated
 - **Code Cleanup**: Conditional logging, debug code removal, unused import cleanup
 - **Grade Improvement**: C (66%) → A- (85-89%) through safe, incremental improvements including Phase 3 and TypeScript improvements (Nov 17, 2025)
 - **Production Safety**: Zero incidents during all improvements
 - **Documentation**: Comprehensive completion summaries and improvement plans
 
-**For Details:** See `docs/review-analysis/MASTER_COMPLETION_SUMMARY.md` and `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md`
+**For Details:** See `docs/review-analysis/archive/MASTER_COMPLETION_SUMMARY.md` (historical) and `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md`
 
 ---
 

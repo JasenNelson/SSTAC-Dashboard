@@ -1,5 +1,8 @@
 # Comprehensive Review Summary
 
+> **Canonical docs entrypoint:** `docs/INDEX.md`  
+> **Note:** This file is a reference summary and may contain historical metrics. Canonical volatile metrics live in `docs/_meta/docs-manifest.json` (`facts`).
+
 **Project:** SSTAC Dashboard  
 **Project Start:** August 2025  
 **Review Completion Date:** Early November 2025 (last weekend)  
@@ -41,13 +44,15 @@ This comprehensive assessment analyzed **129 files (~25,682 lines of code)**, **
 - Rate limiting: Integrated into all non-poll API routes
 - Authorization review: Complete security audit
 - ErrorBoundary: Global error boundary for admin pages
-- Testing infrastructure: 122 unit tests + E2E tests
+- Testing infrastructure: Unit tests + E2E tests (see `docs/_meta/docs-manifest.json` for volatile metrics)
 - Code cleanup: Conditional logging, debug code removal
+- Security update: Next.js 15.4.8 (CVE-2025-66478 patched) - December 7, 2025
 
 **Grade Improvement:** C (66%) → **A- (85-89%)** = **+19-23 points** ⬆️ (A- achieved November 17, 2025)
 
 **Completed Work Summary:**
-- Testing infrastructure (Vitest, Playwright, CI/CD) - 122 unit tests passing
+- Testing infrastructure (Vitest, Playwright, CI/CD) established (see `docs/_meta/docs-manifest.json` for volatile metrics)
+- Security update: Next.js 15.4.8, test mock fixes, all CI/CD checks passing
 - Code cleanup (conditional logging, imports, debug code removal)
 - Supabase auth utility created and integrated (16 routes migrated)
 - Phase 3 complete: Zod validation, structured logging, rate limiting, authorization review, ErrorBoundary
@@ -71,7 +76,7 @@ This comprehensive assessment analyzed **129 files (~25,682 lines of code)**, **
 - **Load Testing**: 23 k6 tests exist
 
 ### ✅ **Improvements Made (Weeks 1-16 + Phase 3):**
-- **Tests Added**: 122 unit tests + E2E tests (0% → significant coverage)
+- **Tests Added**: Unit tests + E2E tests added (see `docs/testing/` and manifest facts)
 - **Code Duplication**: 16 routes migrated to centralized Supabase utility
 - **Logging**: Structured logging implemented, conditional logging in many files
 - **Validation**: Zod schemas centralized for all non-poll APIs
@@ -94,25 +99,25 @@ This comprehensive assessment analyzed **129 files (~25,682 lines of code)**, **
 - Complete findings and recommendations
 - *Moved to archive as historical reference*
 
-### 2. **Next Steps Guide** (`docs/NEXT_STEPS.md`)
+### 2. **Next Steps Guide** (`docs/review-analysis/NEXT_STEPS.md`)
 - Immediate actions for Week 1
 - 20-week enhancement roadmap
 - Success metrics and resources
 - Learning materials
 
-### 3. **Grade Projection** (`docs/GRADE_PROJECTION.md`)
+### 3. **Grade Projection** (`docs/review-analysis/archive/GRADE_PROJECTION.md`)
 - Sprint-by-sprint improvement tracking
 - Expected grade trajectory: C → A- (89%)
 - Confidence levels and risk assessment
 - Key milestones defined
 
-### 4. **Production Safe Roadmap** (`docs/PRODUCTION_SAFE_ROADMAP.md`)
+### 4. **Production Safe Roadmap** (`docs/review-analysis/archive/PRODUCTION_SAFE_ROADMAP.md`)
 - Conservative approach for live production
 - Zero-risk improvements (Weeks 1-4) ✅ **COMPLETE**
 - Minimal-risk enhancements (Weeks 5-12) ✅ **COMPLETE**
 - Major refactoring deferred (planning complete)
 
-### 5. **Achievement Plan** (`docs/A_MINUS_ACHIEVEMENT_PLAN.md`)
+### 5. **Achievement Plan** (`docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md`)
 - Path from B- (77%) to A- (85-89%)
 - Detailed plan for remaining enhancements
 - Risk assessment and timeline
@@ -125,7 +130,7 @@ This comprehensive assessment analyzed **129 files (~25,682 lines of code)**, **
 
 **Month 1: Foundation (Zero Risk)** ✅
 - ✅ Setup testing, monitoring, CI/CD
-- ✅ Write tests for existing code (122 tests)
+- ✅ Write unit tests for existing code (see `docs/_meta/docs-manifest.json` → `facts.testing`)
 - **Achieved: B- (77%)** (exceeded C+ target)
 
 **Month 2-4: Quality & Integration** ✅
@@ -162,7 +167,7 @@ See `A_MINUS_ACHIEVEMENT_PLAN.md` for detailed path forward.
 ## 🎓 Key Takeaways
 
 1. **Solid Foundation**: Database and architecture are well-designed ✅
-2. **Testing Gap**: ~~0% coverage~~ → 122 tests added ✅ (still improving)
+2. **Testing Gap**: ~~0% coverage~~ → unit tests added ✅ (see `docs/_meta/docs-manifest.json` → `facts.testing`)
 3. **Security Concerns**: Rate limiting and authorization fixes still needed ⚠️
 4. **Code Quality**: Progress made (16 routes migrated, planning complete) ✅
 5. **Maintainability**: Component decomposition planned, refactoring deferred ⏸️

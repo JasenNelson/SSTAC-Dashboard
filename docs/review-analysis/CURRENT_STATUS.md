@@ -1,4 +1,7 @@
-﻿# Current Project Status - SSTAC Dashboard
+# Current Project Status - SSTAC Dashboard
+
+> **Canonical docs entrypoint:** `docs/INDEX.md`  
+> **Note:** This file is a reference snapshot. Canonical volatile metrics live in `docs/_meta/docs-manifest.json` (`facts`).
 
 **Last Updated:** November 18, 2025 (CEW/TWG Results Pages Recovered & Deployed)  
 **Current Grade:** **A- (85-89%)** ⬆️ - Achieved November 17, 2025  
@@ -30,7 +33,7 @@
 |:-------|:-------|:-------------|:------|
 | **Sprint 1** (Quick Wins) | ✅ Complete | C → C+ (69%) | Code cleanup, debug removal |
 | **Sprint 2** (Security Foundation) | ✅ Complete | C+ → C+ (71%) | Rate limiting, ErrorBoundary, typing |
-| **Sprint 3** (Testing Infrastructure) | ✅ Complete | C+ → B- (76%) | 122 unit tests, E2E tests, CI/CD |
+| **Sprint 3** (Testing Infrastructure) | ✅ Complete | C+ → B- (76%) | Unit tests, E2E tests, CI/CD (see `docs/_meta/docs-manifest.json` for volatile metrics) |
 | **Sprint 4** (Component Refactoring) | ✅ Complete | B- → B (79%) | Toast notifications ✅, Auth/Admin contexts ✅ RECOVERED, Header split ✅ RECOVERED |
 | **Sprint 5** (Security & Validation) | ✅ Complete | B → B (81%) | Zod validation, security testing, npm audit |
 | **Sprint 6** (Major Refactoring) | ✅ Recovered | B → B+ (85%) | Matrix graph utilities ✅, Poll service ✅, WordCloudPoll split ✅, Matrix component updates ✅ - All recovered |
@@ -168,7 +171,7 @@ Start    Sprint 1   Sprint 3   Sprint 4   Sprint 6      Current
 ## 🔍 Key Metrics
 
 ### **Code Quality**
-- ✅ 122 unit tests passing
+- ✅ Unit tests passing (see `docs/_meta/docs-manifest.json` → `facts.testing`)
 - ✅ Zero lint warnings (`npm run lint` clean)
 - ✅ TypeScript strict mode compliant
 - ✅ 16 routes migrated to centralized auth utility
@@ -195,10 +198,9 @@ Start    Sprint 1   Sprint 3   Sprint 4   Sprint 6      Current
 - **[REVIEW_SUMMARY.md](REVIEW_SUMMARY.md)** - Executive summary
 
 ### **Recent Work**
-- **[ROLLBACK_SUMMARY.md](ROLLBACK_SUMMARY.md)** - ⚠️ **CRITICAL:** Complete rollback details and recovery strategy
-- **[ROLLBACK_VERIFICATION_CHECKLIST.md](ROLLBACK_VERIFICATION_CHECKLIST.md)** - Rollback verification steps
-- **[2025-11-13_UPDATE_LOG.md](2025-11-13_UPDATE_LOG.md)** - Planning session (work completed but rolled back)
-- **[2025-11-11_UPDATE_LOG.md](2025-11-11_UPDATE_LOG.md)** - Previous work log
+- **Rollback / recovery context**: This repo references a rollback and recovery period, but the detailed log files are tracked in git history and the backup branch referenced in this document (instead of standalone markdown files).
+  - **Tip**: Use `git log` and look for the rollback target commit referenced near the top of this document.
+  - **Backup branch**: `backup-before-rollback-2025-11-14` (if present in your repo/remote)
 - **[PHASE3_COMPLETION_SUMMARY.md](PHASE3_COMPLETION_SUMMARY.md)** - Phase 3 details
 
 ### **Process**

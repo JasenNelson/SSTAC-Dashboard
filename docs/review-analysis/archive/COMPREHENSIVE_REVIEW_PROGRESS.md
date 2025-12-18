@@ -165,7 +165,7 @@ To continue this review in a fresh AI chat window, see `docs/CONTINUATION_PROMPT
 
 5. **Potential Verbosity:**
    - "Poll and Ranking Question System Documentation" section (lines 467-653) is very detailed (~186 lines)
-   - Some duplication with `docs/POLL_SYSTEM_COMPLETE_GUIDE.md`
+   - Some duplication with `docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md`
    - Consider consolidating detailed technical documentation into dedicated guides
 
 6. **Testing Commands May Not Exist:**
@@ -214,7 +214,7 @@ To continue this review in a fresh AI chat window, see `docs/CONTINUATION_PROMPT
 - **Total Lines:** 743
 - **Verbose Sections:**
   - Poll and Ranking Question System Documentation: ~186 lines (lines 467-653)
-  - Could be condensed by referencing `docs/POLL_SYSTEM_COMPLETE_GUIDE.md` instead
+  - Could be condensed by referencing `docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md` instead
   - Features section is comprehensive but appropriate length
   - Architecture section is well-balanced
 
@@ -225,8 +225,8 @@ To continue this review in a fresh AI chat window, see `docs/CONTINUATION_PROMPT
 #### Consolidation Opportunities:
 
 1. **Poll System Documentation Consolidation**
-   - Lines 467-653 duplicate content from `docs/POLL_SYSTEM_COMPLETE_GUIDE.md`
-   - Could replace with: "See [Poll System Guide](docs/POLL_SYSTEM_COMPLETE_GUIDE.md) for complete documentation"
+   - Lines 467-653 duplicate content from `docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md`
+   - Could replace with: "See [Poll System Guide](../../poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md) for complete documentation"
    - Would reduce README by ~180 lines
 
 2. **Quick Reference vs Detailed Documentation**
@@ -239,8 +239,8 @@ To continue this review in a fresh AI chat window, see `docs/CONTINUATION_PROMPT
 ✅ All documentation links verified:
 - `docs/AGENTS.md` - exists
 - `docs/PROJECT_STATUS.md` - exists
-- `docs/POLL_SYSTEM_COMPLETE_GUIDE.md` - exists
-- `docs/POLL_SYSTEM_DEBUGGING_GUIDE.md` - exists
+- `docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md` - exists
+- `docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md` - exists
 - `docs/DEBUGGING_LESSONS_LEARNED.md` - exists
 - `docs/SAFE_POLL_UPDATE_PROTOCOL.md` - exists
 - `docs/MATRIX_GRAPH_VISUALIZATION.md` - exists
