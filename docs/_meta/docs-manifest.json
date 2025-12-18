@@ -56,10 +56,10 @@
         "last_verified": null
       },
       "k6_script_count": {
-        "status": "unknown",
-        "value": null,
-        "source": "Derive from tests/k6-*.js inventory; do not trust markdown counts.",
-        "last_verified": null
+        "status": "verified",
+        "value": 23,
+        "source": "tests/k6-*.js inventory (2025-12-18)",
+        "last_verified": "2025-12-18"
       }
     }
   },
