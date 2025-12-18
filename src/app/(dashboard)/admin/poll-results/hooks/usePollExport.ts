@@ -1,4 +1,5 @@
 import { PollResult, MatrixData } from '../types';
+import React, { useCallback } from 'react';
 import {
   exportSingleChoicePollToCSV,
   exportRankingPollToCSV,
@@ -33,7 +34,7 @@ export function usePollExport({
   getFilteredPollResults,
   getFilteredVoteCounts
 }: UsePollExportParams) {
-  const exportSingleChoicePoll = (poll: PollResult) => {
+  const exportSingleChoicePoll = useCallback((poll: PollResult) => {
     const filteredResults = getFilteredPollResults(poll);
     const totalVotes = filteredResults.reduce((sum, r) => sum + r.votes, 0);
     
@@ -81,9 +82,9 @@ export function usePollExport({
     const csvContent = exportSingleChoicePollToCSV(exportData);
     const filename = generatePollExportFilename('single-choice', poll.page_path, poll.poll_index, filterMode);
     downloadCSV(csvContent, filename);
-  };
+  }, [filterMode, getFilteredPollResults]);
 
-  const exportRankingPoll = (poll: PollResult) => {
+  const exportRankingPoll = useCallback((poll: PollResult) => {
     const filteredResults = getFilteredPollResults(poll);
     const totalVotes = filteredResults.length > 0 ? filteredResults[0].votes : poll.total_votes;
     
@@ -113,9 +114,9 @@ export function usePollExport({
     const csvContent = exportRankingPollToCSV(exportData);
     const filename = generatePollExportFilename('ranking', poll.page_path, poll.poll_index, filterMode);
     downloadCSV(csvContent, filename);
-  };
+  }, [filterMode, getFilteredPollResults]);
 
-  const exportWordcloudPoll = (poll: PollResult) => {
+  const exportWordcloudPoll = useCallback((poll: PollResult) => {
     if (!poll.wordcloud_words || poll.wordcloud_words.length === 0) {
       alert('No wordcloud data available to export');
       return;
@@ -146,9 +147,9 @@ export function usePollExport({
     const csvContent = exportWordcloudPollToCSV(exportData);
     const filename = generatePollExportFilename('wordcloud', poll.page_path, poll.poll_index, filterMode);
     downloadCSV(csvContent, filename);
-  };
+  }, [filterMode]);
 
-  const exportMatrixGraph = (graph: MatrixData, question1Text: string, question2Text: string, questionPair: string) => {
+  const exportMatrixGraph = useCallback((graph: MatrixData, question1Text: string, question2Text: string, questionPair: string) => {
     // Classify data points into quadrants
     const classifyQuadrant = (importance: number, feasibility: number): string => {
       // Scale: 1 = high, 5 = low
@@ -201,9 +202,9 @@ export function usePollExport({
     const csvContent = exportMatrixGraphToCSV(exportData);
     const filename = `matrix-graph-${questionPair.toLowerCase().replace(/\s+/g, '-')}-${filterMode}-${new Date().toISOString().slice(0, 10)}.csv`;
     downloadCSV(csvContent, filename);
-  };
+  }, [filterMode]);
 
-  const exportAllQuestions = () => {
+  const exportAllQuestions = useCallback(() => {
     if (filteredPolls.length === 0) {
       alert('No polls available to export');
       return;
@@ -233,7 +234,6 @@ export function usePollExport({
       csvLines.push('');
 
       if (poll.is_wordcloud) {
-        const filteredResults = getFilteredPollResults(poll);
         if (poll.wordcloud_words && poll.wordcloud_words.length > 0) {
           const totalVotes = poll.wordcloud_words.reduce((sum, word) => sum + (word.value || 0), 0);
           const wordsWithPercentages = poll.wordcloud_words.map(word => ({
@@ -334,7 +334,7 @@ export function usePollExport({
     const csvContent = csvLines.join('\n');
     const filename = generateBulkExportFilename(filterMode);
     downloadCSV(csvContent, filename);
-  };
+  }, [filterMode, filteredPolls, getFilteredPollResults, getFilteredVoteCounts]);
 
   return {
     exportSingleChoicePoll,
