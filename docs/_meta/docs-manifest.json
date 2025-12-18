@@ -150,6 +150,98 @@
         "polling",
         "debugging"
       ]
+    },
+    {
+      "id": "archive.master_completion",
+      "path": "docs/review-analysis/archive/MASTER_COMPLETION_SUMMARY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "completion-summary"
+      ],
+      "notes": "Consolidated historical overview of all completion summaries."
+    },
+    {
+      "id": "archive.phase3_completion",
+      "path": "docs/review-analysis/archive/PHASE3_COMPLETION_SUMMARY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "completion-summary",
+        "phase3"
+      ],
+      "notes": "Phase 3: Validation & Security completion summary (November 2025)."
+    },
+    {
+      "id": "archive.week1_2_completion",
+      "path": "docs/review-analysis/archive/WEEK1-2_COMPLETION_SUMMARY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "completion-summary"
+      ],
+      "notes": "Testing infrastructure setup completion summary."
+    },
+    {
+      "id": "archive.week3_4_completion",
+      "path": "docs/review-analysis/archive/WEEK3-4_COMPLETION_SUMMARY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "completion-summary"
+      ],
+      "notes": "Code cleanup completion summary."
+    },
+    {
+      "id": "archive.week5_6_completion",
+      "path": "docs/review-analysis/archive/WEEK5-6_COMPLETION_SUMMARY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "completion-summary"
+      ],
+      "notes": "Utility extraction completion summary."
+    },
+    {
+      "id": "archive.week9_utility_integration",
+      "path": "docs/review-analysis/archive/WEEK9_UTILITY_INTEGRATION_SUMMARY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "completion-summary"
+      ],
+      "notes": "Auth utility integration completion summary."
+    },
+    {
+      "id": "archive.week9_10_testing_completion",
+      "path": "docs/review-analysis/archive/WEEK9-10_TESTING_COMPLETION_SUMMARY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "completion-summary",
+        "testing"
+      ],
+      "notes": "Testing completion summary."
+    },
+    {
+      "id": "archive.week11_12_completion",
+      "path": "docs/review-analysis/archive/WEEK11-12_COMPLETION_SUMMARY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "completion-summary"
+      ],
+      "notes": "Supabase migration completion summary."
+    },
+    {
+      "id": "archive.week13_16_completion",
+      "path": "docs/review-analysis/archive/WEEK13-16_COMPLETION_SUMMARY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "completion-summary"
+      ],
+      "notes": "Component planning completion summary."
     }
   ],
   "section_catalog": {

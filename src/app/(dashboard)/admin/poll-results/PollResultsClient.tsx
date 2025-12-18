@@ -110,7 +110,7 @@ export default function PollResultsClient() {
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [showMatrixGraphs, setShowMatrixGraphs] = useState<{[key: string]: boolean}>({});
   const [showPresentationControls, setShowPresentationControls] = useState(true);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // Toggle matrix graph visibility for a specific question pair
   const toggleMatrixGraph = (questionPairKey: string) => {

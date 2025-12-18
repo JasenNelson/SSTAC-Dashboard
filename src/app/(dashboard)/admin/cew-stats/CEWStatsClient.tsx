@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 interface VoteStats {
@@ -19,10 +19,10 @@ interface VoteStats {
 export default function CEWStatsClient() {
   const [stats, setStats] = useState<VoteStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient(
+  const supabase = useMemo(() => createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  ), []);
 
   const fetchStats = useCallback(async () => {
     try {
