@@ -833,7 +833,7 @@ export default function PollResultsClient() {
     } finally {
       setLoading(false);
     }
-  }, []); // Empty deps - function doesn't depend on any props/state
+  }, [supabase]); // Include supabase to prevent stale closure
 
   useEffect(() => {
     fetchPollResults();

@@ -50,10 +50,10 @@
         "last_verified": "2025-12-18"
       },
       "playwright_test_count": {
-        "status": "unknown",
-        "value": null,
-        "source": "Derive from playwright inventory/config; do not trust markdown counts.",
-        "last_verified": null
+        "status": "verified",
+        "value": 6,
+        "source": "playwright test --list output (2025-12-18)",
+        "last_verified": "2025-12-18"
       },
       "k6_script_count": {
         "status": "verified",
