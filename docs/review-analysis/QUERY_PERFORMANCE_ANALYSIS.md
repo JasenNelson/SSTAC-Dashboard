@@ -349,7 +349,7 @@ ORDER BY tablename, indexname;
 - Occasional max_time spikes in result queries (424-538ms)
 
 ### **📈 Performance Grade:**
-**A- (85-90%)** - Excellent overall performance with minor areas for monitoring
+Excellent overall performance with minor areas for monitoring (see manifest `facts` for latest benchmarks)
 
 ---
 

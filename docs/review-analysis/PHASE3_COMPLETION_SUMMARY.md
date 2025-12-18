@@ -140,8 +140,8 @@
 - Multiple API route files (integrated rate limiting)
 
 ### **Lines of Code:**
-- ~500 lines of new code (utilities + validation schemas)
-- ~200 lines modified (logging + validation integration)
+- new utilities + validation schemas
+- logging + validation integration
 
 ### **Test Coverage:**
 - Unit tests for admin actions (existing)
@@ -209,17 +209,15 @@
 
 ## 📈 **Expected Grade Impact**
 
-### **Current Grade:** B (80-81%)
+**Status**: milestone achieved (see manifest `facts` for canonical metrics)
 
 ### **Phase 3 Improvements:**
-- ✅ Zod validation: +1 point (API Architecture)
-- ✅ Structured logging: +1 point (Code Quality)
-- ✅ Rate limiting utility: +0.5 points (Security)
-- ✅ Authorization review: +0.5 points (Security)
+- ✅ Zod validation: API Architecture
+- ✅ Structured logging: Code Quality
+- ✅ Rate limiting utility: Security
+- ✅ Authorization review: Security
 
-### **Expected New Grade:** B+ (82-83%)
-
-**Progress:** B- (77%) → B+ (83%) = **+6 percentage points** across all phases
+**Progress:** see manifest `facts` for grade improvements across all phases
 
 ---
 
@@ -301,7 +299,7 @@ After Phase 3 completion, Supabase Security Advisor review identified additional
 **Deferred (9 items):**
 - Poll-related function search_path fixes (following poll-safe approach)
 
-**Estimated Impact:** +3-4 grade points (Security improvements)
+**Estimated Impact:** Security improvements
 
 **Implementation:** See `NEXT_STEPS.md` → Sprint 5.5: Supabase Security Fixes
 
@@ -320,5 +318,5 @@ All Phase 3 implementations are complete and all tests have passed. All features
 ---
 
 **Last Updated:** November 2025  
-**Completion:** Implementation 100% | Testing 100% | All Tests Passed ✅
+**Completion:** milestone achieved ✅
 
