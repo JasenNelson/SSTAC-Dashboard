@@ -241,3 +241,4 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
 };
 
 export default FilterSidebar;
+
