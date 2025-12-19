@@ -42,6 +42,26 @@
     }
   },
   "facts": {
+    "grades": {
+      "starting_grade": {
+        "status": "verified",
+        "value": "C (66%)",
+        "source": "Initial project assessment (August 2025)",
+        "last_verified": "2025-12-18"
+      },
+      "current_grade": {
+        "status": "verified",
+        "value": "A- (85-89%)",
+        "source": "Achieved November 17, 2025 through TypeScript type safety improvements (commit d285cbd)",
+        "last_verified": "2025-12-18"
+      },
+      "target_grade": {
+        "status": "verified",
+        "value": "A (90%+)",
+        "source": "Updated November 17, 2025 after A- achievement",
+        "last_verified": "2025-12-18"
+      }
+    },
     "testing": {
       "vitest_test_count": {
         "status": "verified",
