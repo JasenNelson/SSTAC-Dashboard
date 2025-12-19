@@ -7,17 +7,17 @@
 **Project:** SSTAC Dashboard  
 **Project Start:** August 2025  
 **Status:** ✅ Review Complete | ✅ Phase 3 Complete | ✅ Sprint 4 Docs Polish Complete | ✅ Target Grade Achieved
-**Starting Grade:** See manifest `facts`
-**Current Grade:** See manifest `facts`
-**Target Grade:** See manifest `facts`
+**Starting Grade:** See manifest `facts.grades.starting_grade`
+**Current Grade:** See manifest `facts.grades.current_grade`
+**Target Grade:** See manifest `facts.grades.target_grade`
 
 ---
 
 ## 🎯 Current Status
 
-**Starting Grade:** See manifest `facts`
-**Current Grade:** See manifest `facts`
-**Target Grade:** See manifest `facts`
+**Starting Grade:** See manifest `facts.grades.starting_grade`
+**Current Grade:** See manifest `facts.grades.current_grade`
+**Target Grade:** See manifest `facts.grades.target_grade`
 
 **Approach:** Production-safe improvements prioritizing safety over speed. All work completed with zero production incidents.
 
