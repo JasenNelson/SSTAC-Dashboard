@@ -49,3 +49,4 @@ export interface MatrixData {
   responses: number;
   individualPairs: IndividualVotePair[];
 }
+

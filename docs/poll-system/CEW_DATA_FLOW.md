@@ -98,3 +98,4 @@ To simulate realistic CEW traffic, K6 tests **must** send a unique `x-session-id
 | **Duplicate Submissions** | Overwrites (Upsert) | Adds New (Additive) |
 | **Data Source** | `/survey-results/*` | `/cew-polls/*` |
 | **Primary Identifier** | Supabase Auth Token | `x-session-id` Header |
+

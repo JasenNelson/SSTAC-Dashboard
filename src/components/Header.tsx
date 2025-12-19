@@ -11,7 +11,7 @@ import { MENU_LINKS, MENU_CATEGORIES } from './header/menuConfig';
 
 export default function Header() {
   const { session, isLoading: authLoading, signOut } = useAuth();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, clearAdminStatus } = useAdmin();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
   const router = useRouter();
@@ -36,27 +36,67 @@ export default function Header() {
 
   // Handle protected route redirects when session is lost
   useEffect(() => {
-    if (authLoading) return; // Don't redirect while loading
-
     const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025'];
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
-    if (isProtectedRoute && !session) {
-      const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
-      router.push(loginUrl);
+    if (!isProtectedRoute) return; // Not a protected route, no action needed
+
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    // If auth is still loading, set a timeout fallback to prevent indefinite waiting
+    // This ensures we don't wait forever if auth loading gets stuck
+    if (authLoading) {
+      // Set a 5-second timeout fallback
+      timeoutId = setTimeout(() => {
+        // After 5 seconds, if still loading and no session, redirect to login
+        // This handles edge cases where auth loading might hang
+        if (!session) {
+          const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
+          router.push(loginUrl);
+        }
+      }, 5000);
+
+      return () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      };
     }
+
+    // Auth loading is complete - add a small delay to ensure session state is stable
+    // This prevents race conditions where authLoading becomes false before session is set
+    const checkDelay = setTimeout(() => {
+      if (!session) {
+        const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
+        router.push(loginUrl);
+      }
+    }, 100); // Small delay to allow session state to stabilize
+
+    return () => {
+      clearTimeout(checkDelay);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [session, authLoading, pathname, router]);
 
   const handleLogout = useCallback(async () => {
     try {
+      // Clear admin status backup before signing out
+      await clearAdminStatus();
       await signOut();
       router.push('/login');
     } catch (error) {
       console.error('❌ Logout error:', error);
-      // Even if logout fails, redirect to login
+      // Even if logout fails, try to clear admin status and redirect to login
+      try {
+        await clearAdminStatus();
+      } catch (clearError) {
+        console.error('❌ Error clearing admin status:', clearError);
+      }
       router.push('/login');
     }
-  }, [signOut, router]);
+  }, [signOut, clearAdminStatus, router]);
 
   // Navigation links for authenticated users - removed direct links, now handled by menu
   // This array is kept for potential future use but is currently unused

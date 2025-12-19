@@ -90,3 +90,4 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({ isOpen, onClose, expandedPoll
 };
 
 export default QRCodeModal;
+
