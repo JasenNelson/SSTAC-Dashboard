@@ -50,14 +50,36 @@ const QUESTION_PAIRS = [
   { title: "Matrix Standards (Human Health - Food-Related)", importanceIndex: 6, feasibilityIndex: 7, pagePath: 'holistic-protection' },
 ];
 
+// Cache storage with TTL (10 minutes for matrix data)
+const MATRIX_CACHE_TTL_MS = 10 * 60 * 1000;
+const matrixDataCache = new Map<string, { data: any; timestamp: number }>();
+
 export async function GET(request: Request) {
   console.log('🚀 MATRIX API CALLED - Starting prioritization matrix API');
   const supabase = await createAnonymousClient();
-  
+
   // Get filter parameter from URL
   const { searchParams } = new URL(request.url);
   const filter = searchParams.get('filter') || 'all';
+  const cacheKey = `matrix_${filter}`;
   console.log(`🚀 MATRIX API - Filter mode: ${filter}`);
+
+  // Check cache
+  if (matrixDataCache.has(cacheKey)) {
+    const cachedEntry = matrixDataCache.get(cacheKey)!;
+    const cacheAge = Date.now() - cachedEntry.timestamp;
+
+    if (cacheAge < MATRIX_CACHE_TTL_MS) {
+      console.log(`✅ MATRIX API - Cache hit for filter: ${filter}, age: ${cacheAge}ms`);
+      return NextResponse.json(cachedEntry.data, {
+        headers: {
+          'Cache-Control': 'public, max-age=600, s-maxage=600',
+          'X-Cache': 'HIT',
+          'X-Cache-Age': `${cacheAge}ms`
+        }
+      });
+    }
+  }
 
   try {
     // 1. Fetch poll results from BOTH survey and CEW paths
@@ -481,7 +503,18 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json(matrixData);
+    // Store in cache
+    matrixDataCache.set(cacheKey, {
+      data: matrixData,
+      timestamp: Date.now()
+    });
+
+    return NextResponse.json(matrixData, {
+      headers: {
+        'Cache-Control': 'public, max-age=600, s-maxage=600',
+        'X-Cache': 'MISS'
+      }
+    });
 
   } catch (error) {
     console.error('Graph data API error:', error);

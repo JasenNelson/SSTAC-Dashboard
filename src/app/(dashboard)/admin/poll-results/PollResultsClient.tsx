@@ -7,10 +7,12 @@ import ResultsDisplay from './components/ResultsDisplay';
 import { usePollExport } from './hooks/usePollExport';
 import { usePollData } from './hooks/usePollData';
 import { useResultsState } from './hooks/useResultsState';
+import { useMatrixDataCache } from './hooks/useMatrixDataCache';
 
 export default function PollResultsClient() {
   // Use hooks for data fetching and UI state management
   const { pollResults, loading, error, matrixData, setMatrixData, fetchPollResults } = usePollData();
+  const { fetchMatrixData, clearCache: clearMatrixCache } = useMatrixDataCache();
   const {
     expandedPoll,
     setExpandedPoll,
@@ -34,21 +36,15 @@ export default function PollResultsClient() {
     toggleMatrixGraph
   } = useResultsState();
 
-  // Fetch matrix data for prioritization graphs (debounced to reduce API calls)
+  // Fetch matrix data with caching and request deduplication (debounced to reduce API calls)
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
         console.log(`🔍 MATRIX API CALL: Fetching matrix data with filter=${filterMode}`);
-        const response = await fetch(`/api/graphs/prioritization-matrix?filter=${filterMode}`);
-        console.log(`🔍 MATRIX API RESPONSE: Status ${response.status}`);
-        if (response.ok) {
-        const data = await response.json();
+        const data = await fetchMatrixData(filterMode as 'all' | 'twg' | 'cew');
         console.log(`🔍 MATRIX API DATA:`, data);
         console.log(`🔍 MATRIX API DATA DETAILED:`, JSON.stringify(data, null, 2));
         setMatrixData(data);
-        } else {
-          console.error(`❌ MATRIX API ERROR: ${response.status} ${response.statusText}`);
-        }
       } catch (error) {
         console.error("❌ MATRIX API FAILED:", error);
       }
@@ -56,7 +52,7 @@ export default function PollResultsClient() {
 
     return () => clearTimeout(timer); // Clean up timer on effect re-run
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterMode]); // Only depend on filterMode, not pollResults (reduces API calls 40-60%)
+  }, [filterMode, fetchMatrixData]); // Only depend on filterMode, not pollResults (reduces API calls 40-60%)
 
   const filteredPolls = useMemo(() => {
     if (filterMode === 'all') {
