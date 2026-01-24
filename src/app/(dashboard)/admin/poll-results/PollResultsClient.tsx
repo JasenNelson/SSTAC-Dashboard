@@ -133,7 +133,7 @@ export default function PollResultsClient() {
     getFilteredVoteCounts
   });
 
-  const navigateToNextQuestion = (currentPoll: PollResult) => {
+  const navigateToNextQuestion = useCallback((currentPoll: PollResult) => {
     // Get all polls in the same group
     const pollGroup = getPollGroup(currentPoll.page_path);
     const groupPolls = filteredPolls.filter(poll => getPollGroup(poll.page_path) === pollGroup);
@@ -156,9 +156,9 @@ export default function PollResultsClient() {
         setExpandedPoll(nextPollKey);
       }
     }
-  };
+  }, [filteredPolls, expandedPoll, setSelectedQuestion, setExpandedPoll]);
 
-  const navigateToPreviousQuestion = (currentPoll: PollResult) => {
+  const navigateToPreviousQuestion = useCallback((currentPoll: PollResult) => {
     // Get all polls in the same group
     const pollGroup = getPollGroup(currentPoll.page_path);
     const groupPolls = filteredPolls.filter(poll => getPollGroup(poll.page_path) === pollGroup);
@@ -181,9 +181,9 @@ export default function PollResultsClient() {
         setExpandedPoll(prevPollKey);
       }
     }
-  };
+  }, [filteredPolls, expandedPoll, setSelectedQuestion, setExpandedPoll]);
 
-  const getPageTitle = (pagePath: string) => {
+  const getPageTitle = useCallback((pagePath: string) => {
     const pathMap: { [key: string]: string } = {
       '/survey-results/holistic-protection': 'Holistic Protection',
       '/survey-results/tiered-framework': 'Tiered Framework',
@@ -196,16 +196,16 @@ export default function PollResultsClient() {
       '/cew-polls/prioritization': 'Prioritization Framework', // Same as survey-results
     };
     return pathMap[pagePath] || pagePath;
-  };
+  }, []);
 
-  const getPollGroup = (pagePath: string): 'holistic-protection' | 'tiered-framework' | 'prioritization' | null => {
+  const getPollGroup = useCallback((pagePath: string): 'holistic-protection' | 'tiered-framework' | 'prioritization' | null => {
     if (pagePath.includes('holistic-protection')) return 'holistic-protection';
     if (pagePath.includes('tiered-framework')) return 'tiered-framework';
     if (pagePath.includes('prioritization')) return 'prioritization';
     return null;
-  };
+  }, []);
 
-  const groupPollsByTheme = (polls: PollResult[]) => {
+  const groupPollsByTheme = useCallback((polls: PollResult[]) => {
     const themes = {
       'holistic-protection': {
         name: 'Holistic Protection',
@@ -228,7 +228,7 @@ export default function PollResultsClient() {
       }
     };
     return themes;
-  };
+  }, []);
 
   if (loading) {
     return (
