@@ -264,6 +264,7 @@ export default function CustomWordCloud({
         height={height}
         className="max-w-full max-h-full"
         style={{ width: '100%', height: '100%' }}
+        data-testid="word-cloud"
       />
     </div>
   );

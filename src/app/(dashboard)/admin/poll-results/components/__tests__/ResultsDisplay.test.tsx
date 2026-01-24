@@ -138,7 +138,7 @@ describe('ResultsDisplay', () => {
     expect(screen.getByText('Rank these options')).toBeInTheDocument();
   });
 
-  it('should render with wordcloud poll', () => {
+  it('should render with wordcloud poll', async () => {
     render(
       <ResultsDisplay
         {...defaultProps}
@@ -146,7 +146,9 @@ describe('ResultsDisplay', () => {
       />
     );
     expect(screen.getByText('What are your thoughts?')).toBeInTheDocument();
-    expect(screen.getByTestId('word-cloud')).toBeInTheDocument();
+    // Wait for lazy-loaded WordcloudDisplay component to load
+    const wordcloud = await screen.findByTestId('word-cloud', {}, { timeout: 5000 });
+    expect(wordcloud).toBeInTheDocument();
   });
 
   it('should handle empty poll results gracefully', () => {

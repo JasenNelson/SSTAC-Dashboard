@@ -1,13 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { PollResult, MatrixData } from '../types';
 import QRCodeDisplay from '@/components/dashboard/QRCodeDisplay';
 import QRCodeModal from './QRCodeModal';
-import MatrixGraphRenderer from './MatrixGraphRenderer';
-import WordcloudDisplay from './WordcloudDisplay';
 import RankingDisplay from './RankingDisplay';
 import SingleChoiceDisplay from './SingleChoiceDisplay';
+
+// Lazy load heavy components to reduce initial bundle size
+const MatrixGraphRenderer = lazy(() => import('./MatrixGraphRenderer'));
+const WordcloudDisplay = lazy(() => import('./WordcloudDisplay'));
 
 interface ResultsDisplayProps {
   selectedPoll: PollResult;
@@ -340,7 +342,9 @@ function ResultsDisplay({
 
         <div className={`space-y-2 ${isExpanded ? 'space-y-2 flex-1 px-4' : ''}`}>
           {selectedPoll.is_wordcloud ? (
-            <WordcloudDisplay selectedPoll={selectedPoll} />
+            <Suspense fallback={<div className="text-center py-8 text-gray-500">Loading wordcloud...</div>}>
+              <WordcloudDisplay selectedPoll={selectedPoll} />
+            </Suspense>
           ) : selectedPoll.is_ranking ? (
             <RankingDisplay
               selectedPoll={selectedPoll}
@@ -356,15 +360,17 @@ function ResultsDisplay({
           )}
         </div>
 
-        {/* Matrix Graphs Renderer - Handles prioritization and holistic graphs */}
-        <MatrixGraphRenderer
-          selectedPoll={selectedPoll}
-          matrixData={matrixData}
-          showMatrixGraphs={showMatrixGraphs}
-          toggleMatrixGraph={toggleMatrixGraph}
-          exportMatrixGraph={exportMatrixGraph}
-          filteredPolls={filteredPolls}
-        />
+        {/* Matrix Graphs Renderer - Handles prioritization and holistic graphs (lazy loaded) */}
+        <Suspense fallback={<div className="text-center py-8 text-gray-500">Loading graphs...</div>}>
+          <MatrixGraphRenderer
+            selectedPoll={selectedPoll}
+            matrixData={matrixData}
+            showMatrixGraphs={showMatrixGraphs}
+            toggleMatrixGraph={toggleMatrixGraph}
+            exportMatrixGraph={exportMatrixGraph}
+            filteredPolls={filteredPolls}
+          />
+        </Suspense>
       </div>
 
       {/* Expanded QR Code and Join at Overlay */}

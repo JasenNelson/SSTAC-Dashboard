@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { PollResult } from '../types';
-import CustomWordCloud from '@/components/dashboard/CustomWordCloud';
+
+// Lazy load CustomWordCloud since it's a heavy canvas-based component
+const CustomWordCloud = lazy(() => import('@/components/dashboard/CustomWordCloud'));
 
 interface WordcloudDisplayProps {
   selectedPoll: PollResult;
@@ -69,14 +71,16 @@ function WordcloudDisplay({ selectedPoll }: WordcloudDisplayProps) {
                   </div>
                 }
               >
-                <CustomWordCloud
-                  words={selectedPoll.wordcloud_words}
-                  colors={['#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe']}
-                  fontFamily="Inter, system-ui, sans-serif"
-                  fontWeight="normal"
-                  minSize={12}
-                  maxSize={60}
-                />
+                <Suspense fallback={<div className="flex items-center justify-center h-full text-gray-500">Loading wordcloud...</div>}>
+                  <CustomWordCloud
+                    words={selectedPoll.wordcloud_words}
+                    colors={['#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#dbeafe']}
+                    fontFamily="Inter, system-ui, sans-serif"
+                    fontWeight="normal"
+                    minSize={12}
+                    maxSize={60}
+                  />
+                </Suspense>
               </ErrorBoundary>
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
