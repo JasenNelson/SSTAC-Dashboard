@@ -26,7 +26,9 @@
       "Bash(find:*)",
       "Bash(cat:*)",
       "Bash(tail:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(head:*)",
+      "Bash(tree:*)"
     ]
   }
 }
