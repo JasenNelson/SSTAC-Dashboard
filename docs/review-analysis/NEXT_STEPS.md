@@ -77,6 +77,15 @@
 - ✅ **CI Integration**: Wired `docs:gate` and `docs:archive:investigate` into GitHub Actions.
 - **Status:** ✅ Complete - Documentation system is now organized and maintainable.
 
+### **Documentation System & Deployment Pattern** ✅ COMPLETE (January 24, 2026)
+- ✅ **Adapted /update-docs skill** from Regulatory-Review project to SSTAC-Dashboard's manifest-based system
+- ✅ **Created docs/LESSONS.md** with reusable patterns and architectural decisions
+- ✅ **Documented native module pattern**: lazy loading + webpack externals for multi-environment support
+- ✅ **Captured deployment insights**: Vercel serverless compatibility for regulatory-review feature
+- ✅ **Updated manifest facts** with session progress and multi-environment approach
+- **Key deliverables:** LESSONS.md, /update-docs skill, deployment pattern documentation
+- **Status:** ✅ Complete - Documentation system ready for capturing future insights
+
 ### **Security Update & Test Fixes** ✅ COMPLETE (December 7, 2025)
 - ✅ **Next.js Security Update**: Updated from 15.4.6 → 15.4.8 to fix CVE-2025-66478 (critical security vulnerability)
 - ✅ **eslint-config-next Updated**: Updated to 15.4.8 to match Next.js version

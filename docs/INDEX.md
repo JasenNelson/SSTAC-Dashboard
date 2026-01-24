@@ -72,6 +72,9 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 - `docs/operations/VERCEL_SETUP.md`
 - `docs/operations/MONITORING_GUIDE.md`
 
+### Lessons & Patterns (reference; updated via /update-docs skill)
+- `docs/LESSONS.md` - Reusable patterns, architectural decisions, and deployment insights
+
 ## Legacy index
 
 - `docs/README.md` is a legacy index. It should not be treated as canonical.

@@ -42,6 +42,19 @@
     }
   },
   "facts": {
+    "session_2026_01_24": {
+      "status": "completed",
+      "work_summary": "Adapted /update-docs skill from Regulatory-Review project; created docs/LESSONS.md; documented native module pattern for multi-environment support",
+      "created_files": [
+        ".claude/skills/update-docs/SKILL.md",
+        "docs/LESSONS.md",
+        ".claude/SESSION_SUMMARY.md"
+      ],
+      "critical_lessons": 1,
+      "deployment_insights": "Native modules require lazy loading + webpack externals for serverless compatibility",
+      "multi_environment_support": "local (SQLite + full features) + serverless (graceful 503 fallback)",
+      "last_verified": "2026-01-24"
+    },
     "grades": {
       "starting_grade": {
         "status": "verified",
@@ -200,6 +213,18 @@
         "cew",
         "data-flow"
       ]
+    },
+    {
+      "id": "docs.lessons",
+      "path": "docs/LESSONS.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "docs-system",
+        "lessons",
+        "patterns",
+        "architecture"
+      ],
+      "notes": "Reusable lessons and patterns discovered during development; updated via /update-docs skill."
     },
     {
       "id": "archive.master_completion",
