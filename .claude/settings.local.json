@@ -10,7 +10,15 @@
       "Bash(powershell -ExecutionPolicy Bypass -File \"F:\\\\Regulatory-Review\\\\.claude\\\\scripts\\\\safe-exit-check.ps1\")",
       "Bash(ls:*)",
       "Bash(git push)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(find \"F:\"\" -name \"*update*docs*\" -o -name \"SKILL.md\" 2>/dev/null | grep -i \"update-docs|update_docs \")",
+      "Bash(powershell -Command \"Test-Json -Path ''F:\\\\sstac-dashboard\\\\docs\\\\_meta\\\\docs-manifest.json'' -ErrorAction Stop; Write-Host ''✓ Manifest JSON is valid''\")",
+      "Bash(node:*)",
+      "Bash(test:*)",
+      "Bash(wc:*)",
+      "Bash(npm run test:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
