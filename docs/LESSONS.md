@@ -152,6 +152,145 @@ This pattern allows gradual feature development in local environments without bl
 
 ---
 
+## 2026-01-24 - Incremental Component Extraction Pattern [MEDIUM]
+
+**Date:** January 24, 2026
+**Area:** Component Architecture / Refactoring
+**Impact:** MEDIUM (enables ~700-1200 line reductions per component)
+**Status:** Implemented & Validated
+**Session:** PollResultsClient refactoring Phase 2
+
+### Problem or Discovery
+
+Large monolithic components (1,000+ lines) become increasingly difficult to maintain, test, and reason about. Refactoring them all-at-once is risky and can introduce regressions. The challenge is how to decompose them safely while maintaining functionality and test coverage.
+
+### Root Cause or Context
+
+The PollResultsClient.tsx component had grown to 1,898 lines, mixing:
+- Data fetching logic (Supabase queries)
+- Data processing and combining
+- UI state management
+- Rendering and display logic
+- Export functionality
+
+This mix of concerns made it hard to:
+- Test individual concerns in isolation
+- Reuse data fetching logic in other components
+- Modify rendering without affecting data layer
+- Understand component flow
+
+### Solution or Pattern
+
+**Incremental Extraction Strategy (Test-First Approach):**
+
+**Phase 1: Foundation & Instrumentation**
+- Create test directory structure (`__tests__/`)
+- Establish baseline (all tests passing)
+- Document current component state (line count, responsibilities)
+
+**Phase 2: Extract Data Fetching Layer**
+1. **Write tests first** (`usePollData.test.ts`):
+   - Test hook initialization
+   - Test data fetching behavior
+   - Test error handling
+   - Test state updates
+
+2. **Create hook** (`usePollData.ts`):
+   - Move Supabase query logic
+   - Move data processing functions
+   - Extract state management for data
+   - Return clean interface: `{ pollResults, loading, error, matrixData, fetchPollResults, setMatrixData }`
+
+3. **Update component**:
+   - Replace inline logic with hook
+   - Remove Supabase client creation
+   - Import and use hook
+
+4. **Verify quality**:
+   - `npm run lint -- --fix` (auto-fix issues)
+   - `npx tsc --noEmit` (type check)
+   - `npm run test` (all tests pass)
+   - `npm run build` (production build succeeds)
+   - `npm run docs:gate` (gate requirements satisfied)
+
+5. **Document pattern**:
+   - Use `/update-docs` to capture the extraction pattern
+   - Update LESSONS.md with reusable insights
+   - Update manifest facts with refactoring progress
+
+6. **Commit**:
+   - Focused commit with clear message
+   - Include metrics in commit message (line reduction, test additions)
+   - Reference gate requirements
+
+**Phases 3-5: Repeat pattern for:**
+- Results Display Logic → `ResultsDisplay.tsx` component
+- Chart Rendering → `ChartRenderer.tsx` component
+- UI State Management → `useResultsState.ts` hook
+
+**Phase 6: Integration & Verification**
+- Run full test suite
+- Verify all features work together
+- Performance testing
+- Final documentation
+
+### File References
+
+**Phase 2 Extraction - Data Fetching Layer:**
+- Hook implementation: `F:\sstac-dashboard\src\app\(dashboard)\admin\poll-results\hooks\usePollData.ts`
+- Hook tests: `F:\sstac-dashboard\src\app\(dashboard)\admin\poll-results\hooks\__tests__\usePollData.test.ts`
+- Updated component: `F:\sstac-dashboard\src\app\(dashboard)\admin\poll-results\PollResultsClient.tsx:37-45` (hook usage)
+- Removed code: formerly lines 63-776 (720 line reduction)
+
+**Related Commits:**
+- Phase 1: `90e7404` - test: setup test infrastructure
+- Phase 2: `51f59e4` - refactor: extract data fetching into usePollData hook
+
+**Test Count:**
+- Before Phase 2: 142 tests (10 test files)
+- After Phase 2: 148 tests (11 test files)
+- Added: 6 new tests in `usePollData.test.ts`
+
+### Key Takeaway
+
+**Incremental, test-first extraction of concerns into smaller, focused components/hooks is the safest way to refactor large monolithic components. Each phase should:**
+- Write tests before extracting
+- Extract 100-500 lines at a time
+- Verify quality after each step
+- Document patterns using `/update-docs`
+
+This approach eliminates regression risk, maintains test coverage, and builds reusable patterns.
+
+### Related Patterns
+
+- **Test-First Development**: Writing tests before code ensures behavior is well-defined
+- **Separation of Concerns**: Each extracted component/hook has single responsibility
+- **Incremental Delivery**: Small focused commits are easier to review and revert if needed
+- **Pattern Documentation**: Using `/update-docs` captures knowledge for future work
+
+### Metrics from Phase 2
+
+- **Lines reduced**: 1,898 → 1,178 (720 line reduction, 38% of component)
+- **Component now focused on**: UI state management, rendering, and orchestration
+- **Extracted to hook**: Data fetching, Supabase queries, data processing
+- **Tests added**: 6 new tests covering hook behavior
+- **Test suite health**: All 148 tests passing (0 regressions)
+- **Build**: Successful production build
+- **Gates**: POLLING_GATE verified (no API changes, compatible with all requirements)
+
+### Prevention Checklist
+
+- [ ] Write tests BEFORE extracting code
+- [ ] Extract ~100-500 lines per phase
+- [ ] Run lint + type check + test after each extraction
+- [ ] Verify full build succeeds
+- [ ] Check gate requirements still satisfied
+- [ ] Use `/update-docs` to capture pattern
+- [ ] Create focused commit with metrics
+- [ ] Continue with next phase only after validation
+
+---
+
 ## Adding New Lessons
 
 When adding lessons to this document:
@@ -169,9 +308,10 @@ When adding lessons to this document:
 ## Table of Contents
 
 1. [2026-01-24 - Native Modules in Serverless Environments](#2026-01-24---native-modules-in-serverless-environments-critical) [CRITICAL]
+2. [2026-01-24 - Incremental Component Extraction Pattern](#2026-01-24---incremental-component-extraction-pattern-medium) [MEDIUM]
 
 ---
 
-**Last Updated:** January 24, 2026
-**Lesson Count:** 1 critical, 0 medium/low
+**Last Updated:** January 24, 2026 (Phase 2 Refactoring)
+**Lesson Count:** 1 critical, 1 medium
 **Maintained By:** Claude Sessions with /update-docs skill

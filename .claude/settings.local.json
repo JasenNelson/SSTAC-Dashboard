@@ -19,7 +19,9 @@
       "Bash(npm run test:*)",
       "Bash(npx eslint:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run docs:gate:*)"
+      "Bash(npm run docs:gate:*)",
+      "Bash(git push:*)",
+      "Skill(update-docs)"
     ]
   }
 }

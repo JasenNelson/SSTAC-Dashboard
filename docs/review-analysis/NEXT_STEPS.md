@@ -86,6 +86,30 @@
 - **Key deliverables:** LESSONS.md, /update-docs skill, deployment pattern documentation
 - **Status:** ✅ Complete - Documentation system ready for capturing future insights
 
+### **PollResultsClient Refactoring - Phase 1-2** ✅ COMPLETE (January 24, 2026)
+- ✅ **Phase 1: Foundation & Instrumentation** - Setup test infrastructure, baseline established (142 tests passing)
+- ✅ **Phase 2: Data Fetching Extraction** - Created `usePollData.ts` hook
+  - Extracted 720 lines from PollResultsClient (1,898 → 1,178 lines, 38% reduction)
+  - Added 6 new tests (142 → 148 total tests passing)
+  - Removed Supabase client logic, data processing, poll combining logic to dedicated hook
+  - No functional changes, fully backward compatible
+  - POLLING_GATE verified: No API changes
+  - Build successful, all tests passing
+- ✅ **Captured Lesson**: Incremental Component Extraction Pattern (test-first, 6-phase approach)
+- **Remaining Phases**: Phase 3-6 planned for subsequent work
+  - Phase 3: Extract Results Display → `ResultsDisplay.tsx` (~400-500 lines)
+  - Phase 4: Extract Chart Rendering → `ChartRenderer.tsx` (~300-400 lines)
+  - Phase 5: Extract UI State → `useResultsState.ts` hook (~100 lines)
+  - Phase 6: Final Integration & Verification
+- **Expected Final Grade Impact**: +2-3 points total (A- → A at 90%+)
+- **Key Resources**:
+  - Comprehensive planning: `.claude/REFACTORING_STRATEGY.md`
+  - Checklists: `.claude/REFACTORING_CHECKLIST.md`
+  - Skills guide: `.claude/REFACTORING_SKILLS_GUIDE.md`
+  - Roadmap: `.claude/REFACTORING_ROADMAP.md`
+  - Quick start: `.claude/REFACTORING_START_HERE.md`
+- **Status:** ✅ Phase 2 Complete - Ready for Phase 3
+
 ### **Security Update & Test Fixes** ✅ COMPLETE (December 7, 2025)
 - ✅ **Next.js Security Update**: Updated from 15.4.6 → 15.4.8 to fix CVE-2025-66478 (critical security vulnerability)
 - ✅ **eslint-config-next Updated**: Updated to 15.4.8 to match Next.js version
