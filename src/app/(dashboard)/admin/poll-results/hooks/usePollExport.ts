@@ -1,5 +1,5 @@
 import { PollResult, MatrixData } from '../types';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import {
   exportSingleChoicePollToCSV,
   exportRankingPollToCSV,

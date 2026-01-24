@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npx tsx:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"F:\\\\Regulatory-Review\\\\.claude\\\\scripts\\\\safe-exit-check.ps1\")",
+      "Bash(ls:*)",
+      "Bash(git push)",
+      "Bash(npm install:*)"
+    ]
+  }
+}

@@ -3,11 +3,20 @@
  *
  * Searches through the evidence excerpts from the ingested submission
  * to help reviewers find relevant content in the application.
+ *
+ * NOTE: This API only works in local development where SQLite is available.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import Database from 'better-sqlite3';
 import path from 'path';
+
+let Database: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Database = require('better-sqlite3');
+} catch {
+  // better-sqlite3 not available
+}
 
 // Path to the regulatory review database
 const DB_PATH = path.join(process.cwd(), 'src', 'data', 'regulatory-review.db');
@@ -38,6 +47,13 @@ interface SearchResult {
 }
 
 export async function GET(request: NextRequest) {
+  if (!Database) {
+    return NextResponse.json(
+      { error: 'Submission search is only available in local development' },
+      { status: 503 }
+    );
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get('q');
   const submissionId = searchParams.get('submissionId');

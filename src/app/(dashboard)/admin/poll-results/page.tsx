@@ -14,10 +14,14 @@ export default async function PollResultsPage() {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value, ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value, ...options }); } catch {
+            // Ignore cookie setting errors
+          }
         },
         remove(name: string, options: CookieOptions) {
-          try { cookieStore.set({ name, value: '', ...options }); } catch (_error) {}
+          try { cookieStore.set({ name, value: '', ...options }); } catch {
+            // Ignore cookie removal errors
+          }
         },
       },
     }

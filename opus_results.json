@@ -1,0 +1,1202 @@
+[
+  {
+    "policy_id": "P2-G-039",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "This policy addresses physical/chemical property modifications through Director's decision for site-specific standards. The WARP determined groundwater pathway inoperable, so GPM parameter modifications not required."
+  },
+  {
+    "policy_id": "P4-G-T1-S-R7",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Regional sulfur background for Region 7 (Omineca/Peace). The WARP site is in Region 4 (Kootenay), so this regional standard does not apply."
+  },
+  {
+    "policy_id": "P16-DEF-011",
+    "status": "PASS",
+    "evidence_excerpt": "Soil assessment has focussed on shallow soils... surface soil is a medium with which receptors can routinely come into contact... discrete, shallow (0 m to 0.15 m) soil samples",
+    "reasoning": "The WARP demonstrates clear understanding of soil surface through its sampling methodology targeting the upper surface of the soil layer."
+  },
+  {
+    "policy_id": "P2-G-056",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "the potential influence of soil impacts from historical aerial emissions on groundwater... has been evaluated and determined to be an inoperable pathway",
+    "reasoning": "Distance to point of compliance parameters are not applicable since the groundwater pathway was determined to be inoperable."
+  },
+  {
+    "policy_id": "P16-LNAPL-MOB-001a",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "LNAPL presence criteria not applicable. The WARP addresses metals contamination (As, Cd, Pb, Zn) from aerial deposition, not non-aqueous phase liquids."
+  },
+  {
+    "policy_id": "P16-DNAPL-PRES-001c",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "DNAPL detection criteria not applicable. The WARP addresses metals contamination from aerial deposition, not dense non-aqueous phase liquids."
+  },
+  {
+    "policy_id": "P4-G-T1-Cu-R3",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Regional copper background for Region 3 (Thompson/Nicola/Okanagan). The WARP site is in Region 4 (Kootenay), so this regional standard does not apply."
+  },
+  {
+    "policy_id": "P2-G-161",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "groundwater remediation is not addressed within this WARP",
+    "reasoning": "Model parameter selection for GPM not applicable since groundwater pathway was determined inoperable and groundwater remediation is not addressed."
+  },
+  {
+    "policy_id": "P2-G-196",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Alternate method for site-specific standards derivation not applicable as the WARP uses established CSR standards and Protocol 4 backgrounds rather than deriving alternate SSS."
+  },
+  {
+    "policy_id": "P1-G-002",
+    "status": "PASS",
+    "evidence_excerpt": "The site investigation supports the objective of the WARP... site investigation focussed on metals contamination in surficial soils within the EM Area",
+    "reasoning": "The WARP describes a comprehensive Detailed Site Investigation completed to characterize contamination extent and support risk assessment."
+  },
+  {
+    "policy_id": "P1-G-140",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA) - focus on young children... Ecological Risk Assessment (ERA) - focus on plant communities",
+    "reasoning": "Risk assessments were conducted with identified receptors, but the excerpt does not detail all exposure parameters used in the models."
+  },
+  {
+    "policy_id": "P1-G-034",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA)",
+    "reasoning": "HHRA was conducted but the specific interim guidance document for short-term carcinogen exposure is not explicitly cited in the excerpt."
+  },
+  {
+    "policy_id": "P8-V2-019",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Financial security policy regarding remediation implementation effectiveness. This administrative financial requirement is outside the scope of the WARP technical submission."
+  },
+  {
+    "policy_id": "P1-G-221",
+    "status": "PASS",
+    "evidence_excerpt": "95% UCLM soil Pb concentration for each property... data are divided into land-use classifications so they can be compared to current CSR standards",
+    "reasoning": "The WARP includes statistical interpretation (95% UCLM calculations) and comparison of contamination data to standards."
+  },
+  {
+    "policy_id": "P3-V2-025",
+    "status": "PASS",
+    "evidence_excerpt": "present remediation and management strategies and approaches to address risks to human health and the environment",
+    "reasoning": "The WARP explicitly addresses ensuring no unacceptable risk through HHRA and ERA and presents remediation strategies to manage identified risks."
+  },
+  {
+    "policy_id": "P4-G-029",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Administrative fee policy for director approval applications. This is an administrative requirement not addressed in the technical WARP submission."
+  },
+  {
+    "policy_id": "P8-V2-003",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Definition of one-time capital costs for financial security calculations. Financial security policies are outside the scope of this remediation plan."
+  },
+  {
+    "policy_id": "P16-DEF-006b",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Marine water high water mark definition not applicable. The WARP addresses an inland site in the Lower Columbia River valley, not marine environments."
+  },
+  {
+    "policy_id": "P2-G-004",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "groundwater remediation is not addressed within this WARP... determined to be an inoperable pathway",
+    "reasoning": "Site-specific standards for groundwater uses not applicable since the groundwater pathway was determined inoperable."
+  },
+  {
+    "policy_id": "P4-G-T1-Pb-MV",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Regional lead background for Metro Vancouver. The WARP site is in Region 4 (Kootenay), so this regional standard does not apply."
+  },
+  {
+    "policy_id": "P1-G-181",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA) - focus on plant communities",
+    "reasoning": "ERA was conducted focusing on plant communities, but specific toxicological endpoints evaluated are not detailed in the excerpt."
+  },
+  {
+    "policy_id": "P4-G-T1-Sr-R4",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "The final list of COPCs... was As, Cd, Pb and Zn",
+    "reasoning": "Strontium background for Region 4 (Kootenay). While the correct region, strontium is not a contaminant of potential concern in this WARP."
+  },
+  {
+    "policy_id": "P1-G-134",
+    "status": "PASS",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA) - focus on plant communities... terrestrial wildland ecosystems and plant community impacts",
+    "reasoning": "The ERA considered site-specific ecological receptors, specifically plant communities relevant to historical smelter emissions impacts."
+  },
+  {
+    "policy_id": "P2-G-068",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Source width parameter for GPM model not applicable since groundwater pathway was determined inoperable."
+  },
+  {
+    "policy_id": "P4-G-T1-Hg-R5",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Mercury background for Region 5 (Cariboo). Wrong region and mercury is not a COPC in this WARP."
+  },
+  {
+    "policy_id": "P2-G-008",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Matrix standards in CSR Schedule 3.1 based on a site-wide median soil pH",
+    "reasoning": "The WARP references CSR Schedule 3.1 mandatory standards but does not explicitly discuss non-substitutable factors."
+  },
+  {
+    "policy_id": "P8-V2-014",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Security determination procedural steps. Financial security policies are outside the scope of this WARP technical submission."
+  },
+  {
+    "policy_id": "P1-G-166",
+    "status": "PARTIAL",
+    "evidence_excerpt": "31 potential contaminants of concern were considered in the ERA",
+    "reasoning": "ERA was conducted but specific EcoTRV forms and exposure bases are not detailed in the excerpt."
+  },
+  {
+    "policy_id": "P4-G-011",
+    "status": "PASS",
+    "evidence_excerpt": "the mechanism for impacts to soil is aerial deposition of metals-enriched particulate... sampling involves collecting... discrete, shallow (0 m to 0.15 m) soil samples",
+    "reasoning": "The WARP appropriately samples native surficial soils affected by aerial deposition rather than fill materials."
+  },
+  {
+    "policy_id": "P2-G-159",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Leachate test method for SSS derivation not applicable since groundwater pathway was determined inoperable."
+  },
+  {
+    "policy_id": "P8-V2-048",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Security bond threshold requirements. Financial security policies are outside the scope of this WARP."
+  },
+  {
+    "policy_id": "P2-G-016",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Matrix standards in CSR Schedule 3.1",
+    "reasoning": "CSR Schedule 3.1 is referenced for standards but mandatory matrix standards for specific site-specific factors not explicitly detailed."
+  },
+  {
+    "policy_id": "P16-INTRO-002",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "NAPL and odorous substance standards not applicable. The WARP addresses metals contamination, not NAPLs or odorous substances."
+  },
+  {
+    "policy_id": "P3-V2-005",
+    "status": "PASS",
+    "evidence_excerpt": "all land use classifications under the CSR are present: Residential, Urban Park, Commercial, Industrial, and Agricultural. The land use descriptions are consistent with definitions in the CSR.",
+    "reasoning": "The WARP clearly defines land use categories consistent with CSR definitions including residential/urban park quality."
+  },
+  {
+    "policy_id": "P2-G-206",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Protocol 27 soil leaching assessment reference not applicable since groundwater pathway determined inoperable."
+  },
+  {
+    "policy_id": "P1-G-192",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Soil, groundwater, surface water and sediment (potentially affected media)",
+    "reasoning": "Sediment is identified as potentially affected media but specific sediment sensitivity protection levels not detailed."
+  },
+  {
+    "policy_id": "P4-G-T1-V-R2",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Vanadium background for Region 2 (Lower Mainland). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P8-V2-032",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Security review timeline requirements. Financial security policies are outside the scope of this WARP."
+  },
+  {
+    "policy_id": "P1-G-162",
+    "status": "PARTIAL",
+    "evidence_excerpt": "sediment (potentially affected media)",
+    "reasoning": "Sediment mentioned as potentially affected media but CCME sediment guidelines not explicitly cited."
+  },
+  {
+    "policy_id": "P1-G-253",
+    "status": "PASS",
+    "evidence_excerpt": "present remediation and management strategies and approaches to address risks... regulatory mechanism for approving and implementing remediation activities",
+    "reasoning": "The WARP addresses requirements for containing, controlling, and monitoring substances through its remediation and management strategies."
+  },
+  {
+    "policy_id": "P16-MIGRATION-002b",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "NAPL monitoring requirements not applicable. The WARP addresses metals contamination, not NAPLs."
+  },
+  {
+    "policy_id": "P4-G-T1-Sn-R1",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Tin background for Region 1 (Vancouver Island). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P4-G-T1-Mn-R6",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Manganese background for Region 6 (Skeena). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P2-G-064",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Water hardness for hardness-sensitive substances in SSS derivation not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P2-G-133",
+    "status": "PARTIAL",
+    "evidence_excerpt": "groundwater occurrence in two main aquifer types: a valley fill aquifer and upland aquifer(s)",
+    "reasoning": "Aquifer types described in conceptual site model but specific aquifer thickness parameters not detailed."
+  },
+  {
+    "policy_id": "P1-G-108",
+    "status": "PASS",
+    "evidence_excerpt": "terrestrial wildland ecosystems and plant community impacts from historical smelter emissions",
+    "reasoning": "Terrestrial habitat and ecological receptors (plant communities) were assessed through the LCEMP program."
+  },
+  {
+    "policy_id": "P16-TABLE1-005",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "LNAPL thickness criteria for soil types not applicable. The WARP addresses metals, not LNAPLs."
+  },
+  {
+    "policy_id": "P2-G-147",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Half-life modification for frozen days not applicable since groundwater pathway inoperable and GPM not used."
+  },
+  {
+    "policy_id": "P4-G-T1-V-R4",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "The final list of COPCs... was As, Cd, Pb and Zn",
+    "reasoning": "Vanadium background for Region 4 (Kootenay). While correct region, vanadium is not a COPC in this WARP."
+  },
+  {
+    "policy_id": "P16-LNAPL-MOB-001c-iii",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Preferential pathways with LNAPL criteria not applicable. The WARP addresses metals, not LNAPLs."
+  },
+  {
+    "policy_id": "P2-G-150",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Model documentation printout for GPM not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P2-G-022",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "SSS flowchart navigation not applicable since site-specific standards derivation via GPM not required."
+  },
+  {
+    "policy_id": "P4-G-T1-S-R1",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Sulfur background for Region 1 (Vancouver Island). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P16-DEF-004-PARENT",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Fractured bedrock definition not applicable. The WARP focuses on surficial soil contamination from aerial deposition."
+  },
+  {
+    "policy_id": "P4-G-008",
+    "status": "PASS",
+    "evidence_excerpt": "Background data from ENV Protocol 4 (ENV, 2017) and other supplemental reference data",
+    "reasoning": "The WARP uses Protocol 4 background concentrations for determining EM Area boundary and standards applicability."
+  },
+  {
+    "policy_id": "P1-G-256",
+    "status": "PARTIAL",
+    "evidence_excerpt": "regulatory mechanism for approving and implementing remediation activities... is an Approval in Principle",
+    "reasoning": "AIP mechanism mentioned but Performance Verification Plan requirements not explicitly detailed in excerpt."
+  },
+  {
+    "policy_id": "P1-G-046",
+    "status": "PARTIAL",
+    "evidence_excerpt": "risk assessment includes: Human Health Risk Assessment (HHRA)... Ecological Risk Assessment (ERA)",
+    "reasoning": "Risk assessments conducted but uncertainty analysis details not provided in the excerpt."
+  },
+  {
+    "policy_id": "P1-G-136",
+    "status": "PASS",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA) - focus on plant communities... terrestrial wildland ecosystems and plant community impacts",
+    "reasoning": "ERA provides scientific justification for focusing on plant communities as the relevant ecological receptors for smelter emissions impacts."
+  },
+  {
+    "policy_id": "P4-G-T1-Fe-R7",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Iron background for Region 7 (Omineca/Peace). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P2-G-095",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Literature parameters for GPM not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P2-G-190",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "SSS vs matrix standard comparison not applicable since site-specific standards derivation not required."
+  },
+  {
+    "policy_id": "P4-G-T1-Se-R6",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Selenium background for Region 6 (Skeena). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P2-G-200",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Modified GPM method relief not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P14-V2-011",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Barite site barium background requirements not applicable. This is not a barite site."
+  },
+  {
+    "policy_id": "P2-G-049",
+    "status": "PASS",
+    "evidence_excerpt": "Matrix standards in CSR Schedule 3.1 based on a site-wide median soil pH",
+    "reasoning": "Site-specific soil pH was determined and used for establishing applicable matrix standards."
+  },
+  {
+    "policy_id": "P1-G-086",
+    "status": "PARTIAL",
+    "evidence_excerpt": "sediment (potentially affected media)",
+    "reasoning": "Sediment identified as potentially affected media but biologically active zone characterization details not provided."
+  },
+  {
+    "policy_id": "P2-G-096",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Mandatory site-specific factors in CSR Schedule 3.1",
+    "reasoning": "Site-specific factors referenced but detailed parameter derivation not described."
+  },
+  {
+    "policy_id": "P4-G-T1-Co-R2",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Cobalt background for Region 2 (Lower Mainland). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P2-G-063",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "pH requirements for pentachlorophenol not applicable. PCP is not a contaminant in this metals-focused WARP."
+  },
+  {
+    "policy_id": "P1-G-095",
+    "status": "PASS",
+    "evidence_excerpt": "site investigation focussed on metals contamination in surficial soils... Soil assessment has focussed on shallow soils for two reasons",
+    "reasoning": "Field study design rationale provided, explaining focus on shallow soils due to aerial deposition mechanism."
+  },
+  {
+    "policy_id": "P3-V2-016",
+    "status": "PARTIAL",
+    "evidence_excerpt": "remediation and management strategies and approaches",
+    "reasoning": "Remediation strategies presented but detailed cost-benefit analysis not included in excerpt."
+  },
+  {
+    "policy_id": "P4-G-T1-As-MV",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Arsenic background for Metro Vancouver. The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P4-G-009",
+    "status": "PASS",
+    "evidence_excerpt": "Background data from ENV Protocol 4 (ENV, 2017)",
+    "reasoning": "Protocol 4 regional estimates are referenced and used as local background concentrations for EM Area determination."
+  },
+  {
+    "policy_id": "P4-G-T1-Mn-R1",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Manganese background for Region 1 (Vancouver Island). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P14-V2-017",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Barite site barium sampling requirements not applicable. This is not a barite site."
+  },
+  {
+    "policy_id": "P1-G-258",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Approval in Principle",
+    "reasoning": "AIP application mentioned but Performance Verification Plan submission details not provided."
+  },
+  {
+    "policy_id": "P16-MOBILE-003",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Mobile NAPL criteria not applicable. The WARP addresses metals contamination, not NAPLs."
+  },
+  {
+    "policy_id": "P2-G-092",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "GPM methodology for matrix standards vs SSS not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P1-G-250",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Administrative policy regarding risk assessment return for errors. This is a procedural matter outside the WARP scope."
+  },
+  {
+    "policy_id": "P2-G-032",
+    "status": "PASS",
+    "evidence_excerpt": "Matrix standards in CSR Schedule 3.1 based on a site-wide median soil pH",
+    "reasoning": "Site-specific soil pH values were determined and used for applicable standards derivation."
+  },
+  {
+    "policy_id": "P4-G-T1-V-R5",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Vanadium background for Region 5 (Cariboo). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P1-G-150",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "De novo human health TRV derivation procedures not addressed in the excerpt."
+  },
+  {
+    "policy_id": "P4-G-T1-Sn-R3",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Tin background for Region 3 (Thompson/Nicola/Okanagan). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P1-G-011",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Soil, groundwater, surface water and sediment (potentially affected media)",
+    "reasoning": "Surface water mentioned as potentially affected media but specific water quality guidelines not detailed."
+  },
+  {
+    "policy_id": "P2-G-030",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Table 1 model parameters for GPM not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P16-DEF-006a",
+    "status": "PARTIAL",
+    "evidence_excerpt": "surface water and sediment (potentially affected media)",
+    "reasoning": "Surface water mentioned but high water mark definition not explicitly addressed."
+  },
+  {
+    "policy_id": "P4-G-T1-Zn-R3",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Zinc background for Region 3 (Thompson/Nicola/Okanagan). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P1-G-244",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA)... Ecological Risk Assessment (ERA)",
+    "reasoning": "Risk assessments conducted but specific TRV citations not provided in the excerpt."
+  },
+  {
+    "policy_id": "P2-G-127",
+    "status": "PASS",
+    "evidence_excerpt": "Based on the results of hydrogeological and groundwater quality investigations conducted over three decades, a hydrogeological conceptual site model was developed",
+    "reasoning": "Comprehensive groundwater investigation data was collected to develop the hydrogeological conceptual site model."
+  },
+  {
+    "policy_id": "P16-TABLE1-002",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "LNAPL thickness criteria not applicable. The WARP addresses metals contamination, not LNAPLs."
+  },
+  {
+    "policy_id": "P1-G-204",
+    "status": "PARTIAL",
+    "evidence_excerpt": "arsenic (As)... addressed in this WARP",
+    "reasoning": "Arsenic (a carcinogen) is a COPC and HHRA was conducted, but Protocol 30 specific requirements not detailed."
+  },
+  {
+    "policy_id": "P1-G-097",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA) - focus on plant communities",
+    "reasoning": "Ecological assessment conducted but seasonal sampling program details not provided in excerpt."
+  },
+  {
+    "policy_id": "P2-G-148",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Modified GPM documentation not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P1-G-082",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Rationale for bioaccumulation/bioconcentration factors not provided in the excerpt."
+  },
+  {
+    "policy_id": "P2-G-115",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Groundwater sampling for hydrocarbons not applicable. This WARP addresses metals, not hydrocarbons."
+  },
+  {
+    "policy_id": "P1-G-182",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA)... Risk-based remediation targets derived",
+    "reasoning": "ERA conducted with risk-based targets but specific ecological protection levels (ECx) not detailed."
+  },
+  {
+    "policy_id": "P14-V2-001",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Anthropogenic barium definition not applicable. This is not a barite site."
+  },
+  {
+    "policy_id": "P2-G-040",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Source length parameter for GPM not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P1-G-015",
+    "status": "PARTIAL",
+    "evidence_excerpt": "surface water and sediment (potentially affected media)",
+    "reasoning": "Surface water assessed but specific WQG concentrations at high water mark not detailed."
+  },
+  {
+    "policy_id": "P8-V2-031",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Notification requirements for sale/bankruptcy. Financial security policies are outside WARP scope."
+  },
+  {
+    "policy_id": "P2-G-033",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "pH requirements for pentachlorophenol not applicable. PCP is not a contaminant in this WARP."
+  },
+  {
+    "policy_id": "P1-G-072",
+    "status": "PASS",
+    "evidence_excerpt": "the potential influence of soil impacts... on groundwater in the EM Area has been evaluated and determined to be an inoperable pathway based on the following lines of evidence",
+    "reasoning": "Full documentation provided for why drinking water/groundwater pathway was determined incomplete, with multiple lines of evidence."
+  },
+  {
+    "policy_id": "P1-G-175",
+    "status": "PASS",
+    "evidence_excerpt": "at least two samples from each property are submitted to a laboratory for total metals analysis using the SALM (strong acid leachable metals) analytical method",
+    "reasoning": "Ministry-approved laboratory analytical methods (SALM) are used for soil samples."
+  },
+  {
+    "policy_id": "P1-G-069",
+    "status": "PASS",
+    "evidence_excerpt": "Given the absence of impacts to groundwater that can be attributed to historical aerial emissions... groundwater remediation is not addressed within this WARP",
+    "reasoning": "Drinking water pathway assessment completed; determined inoperable with documented rationale."
+  },
+  {
+    "policy_id": "P2-G-085",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Vertical distance to water table parameter not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P1-G-196",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA)",
+    "reasoning": "ERA conducted but species at risk protection levels not explicitly addressed in excerpt."
+  },
+  {
+    "policy_id": "P1-G-143",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA) - focus on young children",
+    "reasoning": "HHRA conducted but specific Protocol 28 TRV sources not detailed in excerpt."
+  },
+  {
+    "policy_id": "P4-G-T1-Sn-MV",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Tin background for Metro Vancouver. The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P4-G-T1-Sn-R7",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Tin background for Region 7 (Omineca/Peace). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P1-G-040",
+    "status": "PASS",
+    "evidence_excerpt": "The risk assessment includes: Human Health Risk Assessment (HHRA)... Ecological Risk Assessment (ERA)... Risk-based remediation targets derived",
+    "reasoning": "The WARP report is organized with distinct sections covering site investigation, risk assessment components, and supporting programs."
+  },
+  {
+    "policy_id": "P1-G-050",
+    "status": "PASS",
+    "evidence_excerpt": "present remediation and management strategies and approaches to address risks to human health and the environment",
+    "reasoning": "Remedial strategies presented to address residual contamination consistent with EMA section 56 requirements."
+  },
+  {
+    "policy_id": "P1-G-158",
+    "status": "PARTIAL",
+    "evidence_excerpt": "31 potential contaminants of concern were considered in the ERA",
+    "reasoning": "ERA conducted with comprehensive COPC list but EPA Eco-SSL documents not explicitly referenced."
+  },
+  {
+    "policy_id": "P1-G-003",
+    "status": "PASS",
+    "evidence_excerpt": "the highest soil metals concentrations are consistently found in the upper 0.6 m of soil, and below this depth they decrease... The figures clearly demonstrate decreasing metals concentrations with depth",
+    "reasoning": "Horizontal and vertical delineation completed, demonstrating contamination extent and stable/decreasing concentration profiles."
+  },
+  {
+    "policy_id": "P1-G-233",
+    "status": "PARTIAL",
+    "evidence_excerpt": "remediation and management strategies and approaches",
+    "reasoning": "Risk management strategies presented but before/after risk control evaluation not explicitly detailed."
+  },
+  {
+    "policy_id": "P16-DEF-002",
+    "status": "PASS",
+    "evidence_excerpt": "No spatial pattern of metals concentrations exceeding CSR standards in groundwater... spatial distribution of exceedances in low flow surface water samples is not consistent with the spatial distribution of soil metals concentrations",
+    "reasoning": "Contaminant migration assessment completed, evaluating potential spreading between soil and groundwater/surface water."
+  },
+  {
+    "policy_id": "P4-G-T1-Ag-R2",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Silver background for Region 2 (Lower Mainland). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P4-G-T1-Be-R5",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Beryllium background for Region 5 (Cariboo). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P1-G-217",
+    "status": "PARTIAL",
+    "evidence_excerpt": "risk assessment includes: Human Health Risk Assessment (HHRA)... Ecological Risk Assessment (ERA)",
+    "reasoning": "Risk assessments completed but specific uncertainty identification not detailed in excerpt."
+  },
+  {
+    "policy_id": "P4-G-T1-Cu-R7",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Copper background for Region 7 (Omineca/Peace). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P1-G-168",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "De novo EcoTRV derivation procedures not addressed in the excerpt."
+  },
+  {
+    "policy_id": "P4-G-025",
+    "status": "PASS",
+    "evidence_excerpt": "at least two samples from each property are submitted to a laboratory for total metals analysis using the SALM (strong acid leachable metals) analytical method",
+    "reasoning": "Ministry-approved SALM analytical method explicitly referenced for laboratory analysis."
+  },
+  {
+    "policy_id": "P1-G-198",
+    "status": "PARTIAL",
+    "evidence_excerpt": "31 potential contaminants of concern were considered in the ERA... The final list of COPCs... was As, Cd, Pb and Zn",
+    "reasoning": "ERA used multiple lines of evidence to narrow COPCs but weight-of-evidence methodology not detailed."
+  },
+  {
+    "policy_id": "P4-G-T1-Ni-R4",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "The final list of COPCs... was As, Cd, Pb and Zn",
+    "reasoning": "Nickel background for Region 4 (Kootenay). While correct region, nickel is not a COPC in this WARP."
+  },
+  {
+    "policy_id": "P1-G-055",
+    "status": "PASS",
+    "evidence_excerpt": "31 potential contaminants of concern were considered in the ERA... The final list of COPCs that required further evaluation in the ERA was As, Cd, Pb and Zn",
+    "reasoning": "COPCs listed with clear rationale for screening from 31 potential substances down to 4 final COPCs."
+  },
+  {
+    "policy_id": "P3-V2-018",
+    "status": "PARTIAL",
+    "evidence_excerpt": "remediation and management strategies and approaches... regulatory mechanism for approving... is an Approval in Principle",
+    "reasoning": "Remediation approach presented through AIP but permanent solutions preference analysis not detailed."
+  },
+  {
+    "policy_id": "P3-V2-023",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Non-hazardous waste blending policy not applicable. This WARP addresses in-situ metals contamination management."
+  },
+  {
+    "policy_id": "P1-G-032",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Radiological risk assessment guidance not applicable. The WARP addresses metals, not radionuclides."
+  },
+  {
+    "policy_id": "P4-G-T1-Cu-R5",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Copper background for Region 5 (Cariboo). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P4-G-T1-Cd-R7",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Cadmium background for Region 7 (Omineca/Peace). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P2-G-007",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Matrix standards in CSR Schedule 3.1",
+    "reasoning": "CSR Schedule 3.1 referenced but specific mandatory non-substitutable standards not explicitly discussed."
+  },
+  {
+    "policy_id": "P2-G-090",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "GPM model processes not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P4-G-031",
+    "status": "PASS",
+    "evidence_excerpt": "Background data from ENV Protocol 4 (ENV, 2017)",
+    "reasoning": "Protocol 4 referenced which specifies the units and rounding conventions for background concentrations."
+  },
+  {
+    "policy_id": "P8-V2-018",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Security step 4 remediation approval. Financial security policies are outside WARP scope."
+  },
+  {
+    "policy_id": "P2-G-052",
+    "status": "PARTIAL",
+    "evidence_excerpt": "a hydrogeological conceptual site model was developed... two main aquifer types",
+    "reasoning": "Aquifer characterization completed but specific hydraulic conductivity values not detailed."
+  },
+  {
+    "policy_id": "P2-G-191",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "SSS vs mandatory standards comparison not applicable since SSS derivation not required."
+  },
+  {
+    "policy_id": "P8-V2-047",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Bond value monitoring requirements. Financial security policies are outside WARP scope."
+  },
+  {
+    "policy_id": "P8-V2-044",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Letter of credit fee responsibility. Financial security policies are outside WARP scope."
+  },
+  {
+    "policy_id": "P2-G-160",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Modelled leachate concentration calculation not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P1-G-195",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Agricultural... land use classifications under the CSR are present",
+    "reasoning": "Agricultural land use identified but livestock watering protection levels not specifically addressed."
+  },
+  {
+    "policy_id": "P8-V2-015",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "High risk site determination for security. Financial security policies are outside WARP scope."
+  },
+  {
+    "policy_id": "P1-G-128",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Site-specific bioavailability adjustments not discussed in the excerpt."
+  },
+  {
+    "policy_id": "P1-G-131",
+    "status": "PASS",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA) - focus on young children... Trail Lead Task Force... THEP",
+    "reasoning": "Human receptor characteristics identified with young children as the focus, consistent with Protocol 28 approaches."
+  },
+  {
+    "policy_id": "P1-G-265",
+    "status": "PARTIAL",
+    "evidence_excerpt": "THEP (Trail Area Health & Environment Program)... Children's Blood Lead Testing",
+    "reasoning": "Ongoing monitoring programs exist (THEP) that would identify discrepancies in risk assumptions."
+  },
+  {
+    "policy_id": "P3-V2-014",
+    "status": "PASS",
+    "evidence_excerpt": "present remediation and management strategies and approaches to address risks to human health and the environment",
+    "reasoning": "Potential adverse effects explicitly considered through HHRA and ERA in developing remediation strategies."
+  },
+  {
+    "policy_id": "P4-G-T1-B-R2",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Boron background for Region 2 (Lower Mainland). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P1-G-065",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Beneficial use exemptions under Protocol 13 not addressed in the excerpt."
+  },
+  {
+    "policy_id": "P2-G-170",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Leachate test documentation not applicable since leachate testing method not used."
+  },
+  {
+    "policy_id": "P4-G-036",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Metro Vancouver area limits not applicable. The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P4-G-003",
+    "status": "PASS",
+    "evidence_excerpt": "Background data from ENV Protocol 4 (ENV, 2017)",
+    "reasoning": "Regional background concentration definition used consistent with Protocol 4 methodology."
+  },
+  {
+    "policy_id": "P16-INTRO-003",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "NAPL protocol requirements not applicable. The WARP addresses metals contamination, not NAPLs."
+  },
+  {
+    "policy_id": "P2-G-141",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Distance to point of compliance modification not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P4-G-T1-Fe-R5",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Iron background for Region 5 (Cariboo). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P1-G-039",
+    "status": "PASS",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA) - focus on plant communities",
+    "reasoning": "ERA conducted as required, with ecological receptors and risk-based targets derived."
+  },
+  {
+    "policy_id": "P3-V2-010",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Blending with risk-based standards not applicable to this in-situ contamination management approach."
+  },
+  {
+    "policy_id": "P1-G-129",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA) - focus on young children",
+    "reasoning": "HHRA conducted with exposure assessment but Protocol 28 not explicitly cited as source."
+  },
+  {
+    "policy_id": "P1-G-248",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Director return authority is an administrative policy outside the WARP technical submission scope."
+  },
+  {
+    "policy_id": "P4-G-T1-Co-R1",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Cobalt background for Region 1 (Vancouver Island). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P16-ODOR-002",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Odorous substance contamination criteria not applicable. The WARP addresses metals, not odorous substances."
+  },
+  {
+    "policy_id": "P4-G-T1-Se-R4",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "The final list of COPCs... was As, Cd, Pb and Zn",
+    "reasoning": "Selenium background for Region 4 (Kootenay). While correct region, selenium is not a COPC."
+  },
+  {
+    "policy_id": "P1-G-085",
+    "status": "PASS",
+    "evidence_excerpt": "the highest soil metals concentrations are consistently found in the upper 0.6 m of soil, and below this depth they decrease... trending toward the EM Area concentration limits within the upper 1 m of soil",
+    "reasoning": "Soil characterization extends beyond 1 metre where relevant, with vertical profiling documented."
+  },
+  {
+    "policy_id": "P2-G-172",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Leachate vs water standards comparison not applicable since leachate testing not used."
+  },
+  {
+    "policy_id": "P4-G-T1-Mn-R7",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Manganese background for Region 7 (Omineca/Peace). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P1-G-081",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA) - focus on plant communities",
+    "reasoning": "ERA conducted for plant communities but food chain impacts rationale not explicitly provided."
+  },
+  {
+    "policy_id": "P8-V2-002",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Financial security definition. Financial security policies are outside WARP scope."
+  },
+  {
+    "policy_id": "P1-G-255",
+    "status": "PASS",
+    "evidence_excerpt": "This Wide Area Remediation Plan (WARP) was developed... The regulatory mechanism for approving and implementing remediation activities outlined in this WARP is an Approval in Principle",
+    "reasoning": "AIP application requirements addressed through the remediation plan and compliance with CSR section 47."
+  },
+  {
+    "policy_id": "P2-G-098",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Source dimension modification methodology not applicable since GPM not used."
+  },
+  {
+    "policy_id": "P2-G-018",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Two SSS methods (Modified GPM and Leachate Test) not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P2-G-019",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "QP method choice for SSS derivation not applicable since site-specific standards not derived."
+  },
+  {
+    "policy_id": "P2-G-180",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Site-specific parameters outside ranges not applicable since GPM not used."
+  },
+  {
+    "policy_id": "P1-G-262",
+    "status": "PASS",
+    "evidence_excerpt": "The regulatory mechanism for approving and implementing remediation activities outlined in this WARP is an Approval in Principle",
+    "reasoning": "Risk acceptance decision process addressed through AIP mechanism for approving the remediation approach."
+  },
+  {
+    "policy_id": "P3-V2-022",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Blending prohibition not applicable to this in-situ contamination management approach."
+  },
+  {
+    "policy_id": "P4-G-T1-Co-R4",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "The final list of COPCs... was As, Cd, Pb and Zn",
+    "reasoning": "Cobalt background for Region 4 (Kootenay). While correct region, cobalt is not a COPC."
+  },
+  {
+    "policy_id": "P2-G-163",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Leachate vs water standard comparison not applicable since leachate testing not used."
+  },
+  {
+    "policy_id": "P1-G-083",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Site-specific bioaccumulation/bioconcentration factors not discussed in the excerpt."
+  },
+  {
+    "policy_id": "P4-G-T1-Sb-R3",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Antimony background for Region 3 (Thompson/Nicola/Okanagan). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P2-G-164",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Leachate vs modelled concentration comparison not applicable since leachate testing not used."
+  },
+  {
+    "policy_id": "P1-G-249",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Report return policy for errors is an administrative matter outside WARP scope."
+  },
+  {
+    "policy_id": "P4-G-T1-Mo-R5",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Molybdenum background for Region 5 (Cariboo). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P16-LNAPL-MOB-001c-PARENT",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "LNAPL measurement criteria not applicable. The WARP addresses metals, not LNAPLs."
+  },
+  {
+    "policy_id": "P2-G-054",
+    "status": "PARTIAL",
+    "evidence_excerpt": "groundwater occurrence in two main aquifer types: a valley fill aquifer and upland aquifer(s)",
+    "reasoning": "Aquifer types identified but specific aquifer thickness parameters not detailed."
+  },
+  {
+    "policy_id": "P4-G-T1-Cr-R7",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Chromium background for Region 7 (Omineca/Peace). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P14-V2-002",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Barite definition not applicable. This is not a barite site."
+  },
+  {
+    "policy_id": "P2-G-088",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "GPM description for matrix standards derivation not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P1-G-043",
+    "status": "PASS",
+    "evidence_excerpt": "The risk assessment includes: Human Health Risk Assessment (HHRA)... Ecological Risk Assessment (ERA)",
+    "reasoning": "Exposure assessment component included as part of the comprehensive HHRA and ERA."
+  },
+  {
+    "policy_id": "P16-DEF-004c",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Fractured bedrock fracture visibility criteria not applicable. Focus is on surficial soil contamination."
+  },
+  {
+    "policy_id": "P1-G-075",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA)",
+    "reasoning": "HHRA conducted but occupational exposure pathways for subsurface workers not specifically detailed."
+  },
+  {
+    "policy_id": "P1-G-051",
+    "status": "PASS",
+    "evidence_excerpt": "remediation and management strategies and approaches to address risks to human health and the environment",
+    "reasoning": "Risk-based remediation approach presented through the WARP to address residual contamination."
+  },
+  {
+    "policy_id": "P1-G-169",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "De novo EcoTRV derivation sources not addressed in the excerpt."
+  },
+  {
+    "policy_id": "P1-G-126",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA)... Ecological Risk Assessment (ERA)",
+    "reasoning": "Risk assessments conducted but routes of exposure for each endpoint not explicitly detailed."
+  },
+  {
+    "policy_id": "P4-G-T1-Zn-R4",
+    "status": "PASS",
+    "evidence_excerpt": "zinc (Zn)... The final list of COPCs... was As, Cd, Pb and Zn... Background data from ENV Protocol 4",
+    "reasoning": "Zinc is a COPC and the site is in Region 4 (Kootenay). Protocol 4 background concentrations applied."
+  },
+  {
+    "policy_id": "P4-G-T1-Co-R6",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Cobalt background for Region 6 (Skeena). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P2-G-208",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Protocol 2 document authority metadata is administrative and outside WARP scope."
+  },
+  {
+    "policy_id": "P2-G-043",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Infiltration parameter for GPM not applicable since groundwater pathway inoperable."
+  },
+  {
+    "policy_id": "P1-G-054",
+    "status": "PASS",
+    "evidence_excerpt": "31 potential contaminants of concern were considered in the ERA... The final list of COPCs that required further evaluation in the ERA was As, Cd, Pb and Zn",
+    "reasoning": "COPCs from DSI carried forward to COPC screening in the risk assessment."
+  },
+  {
+    "policy_id": "P1-G-130",
+    "status": "PASS",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA) - focus on young children... Trail Lead Task Force... concerns raised regarding Pb health risks to children",
+    "reasoning": "Site-specific human receptors (young children) considered appropriate based on lead exposure concerns."
+  },
+  {
+    "policy_id": "P4-G-T1-Zn-MV",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Zinc background for Metro Vancouver. The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P4-G-T1-Mn-R4",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "The final list of COPCs... was As, Cd, Pb and Zn",
+    "reasoning": "Manganese background for Region 4 (Kootenay). While correct region, manganese is not a COPC."
+  },
+  {
+    "policy_id": "P4-G-T1-Sr-R6",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Strontium background for Region 6 (Skeena). The WARP site is in Region 4 (Kootenay)."
+  },
+  {
+    "policy_id": "P1-G-222",
+    "status": "PASS",
+    "evidence_excerpt": "Soil assessment results... are provided in Tables 1 through 6. The data are divided into land-use classifications",
+    "reasoning": "Tabulated tools used to communicate risk characterization, with data organized by land use classifications."
+  },
+  {
+    "policy_id": "P4-G-T1-Mn-R3",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Manganese background for Region 3 (Thompson/Nicola/Okanagan). The WARP site is in Region 4 (Kootenay)."
+  }
+]

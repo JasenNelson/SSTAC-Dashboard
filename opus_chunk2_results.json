@@ -1,0 +1,1202 @@
+[
+  {
+    "policy_id": "P1-G-001",
+    "status": "PASS",
+    "evidence_excerpt": "The risk assessment includes: Human Health Risk Assessment (HHRA)... Ecological Risk Assessment (ERA)... Risk-based remediation targets derived",
+    "reasoning": "Risk assessment is used as part of the remediation strategy, with conditions met including delineation and stable contamination."
+  },
+  {
+    "policy_id": "P1-G-004",
+    "status": "PASS",
+    "evidence_excerpt": "Lateral delineation of soil contamination... The lateral extent of metals contamination... is defined by the EM Area... The figures clearly demonstrate decreasing metals concentrations with depth",
+    "reasoning": "Both horizontal (lateral) and vertical extent of contamination delineated for all COPCs (As, Cd, Pb, Zn)."
+  },
+  {
+    "policy_id": "P1-G-005",
+    "status": "PASS",
+    "evidence_excerpt": "Stack Pb emissions have been reduced by 99.5% since the installation of the KIVCET Smelter in 1997... decreasing metals concentrations with depth, trending toward the EM Area concentration limits",
+    "reasoning": "Contamination demonstrated as stable/decreasing through emission reductions and vertical concentration profiles showing decreasing trends."
+  },
+  {
+    "policy_id": "P1-G-006",
+    "status": "PARTIAL",
+    "evidence_excerpt": "risk assessment includes: Human Health Risk Assessment (HHRA)... Ecological Risk Assessment (ERA)",
+    "reasoning": "Risk assessments completed by qualified professionals, but specific QP qualifications and expertise not detailed in excerpt."
+  },
+  {
+    "policy_id": "P1-G-007",
+    "status": "PASS",
+    "evidence_excerpt": "Matrix standards in CSR Schedule 3.1... Risk-based remediation targets derived",
+    "reasoning": "Both generic numerical standards (CSR Schedule 3.1) and risk-based standards addressed in the WARP."
+  },
+  {
+    "policy_id": "P1-G-008",
+    "status": "PASS",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA) - focus on young children... Ecological Risk Assessment (ERA) - focus on plant communities... Risk-based remediation targets derived",
+    "reasoning": "Risk-based standards applied through HHRA (specified risk levels) and ERA (protection levels for plant communities)."
+  },
+  {
+    "policy_id": "P1-G-009",
+    "status": "PASS",
+    "evidence_excerpt": "The risk assessment includes: Human Health Risk Assessment (HHRA)... Ecological Risk Assessment (ERA)",
+    "reasoning": "Human health and ecological risk assessments are integrated within the WARP framework."
+  },
+  {
+    "policy_id": "P1-G-010",
+    "status": "PASS",
+    "evidence_excerpt": "Risk-based remediation targets derived... regulatory mechanism for approving and implementing remediation activities",
+    "reasoning": "Risk-based standards used to confirm remediation approach through the Approval in Principle mechanism."
+  },
+  {
+    "policy_id": "P1-G-012",
+    "status": "PARTIAL",
+    "evidence_excerpt": "surface water and sediment (potentially affected media)",
+    "reasoning": "Surface water mentioned as potentially affected media but aquatic receiving environment definition not explicitly detailed."
+  },
+  {
+    "policy_id": "P1-G-013",
+    "status": "PASS",
+    "evidence_excerpt": "The potential influence of soil impacts... on groundwater in the EM Area has been evaluated and determined to be an inoperable pathway",
+    "reasoning": "Numerical standards assessment completed; groundwater pathway determined inoperable based on evidence that quality meets standards."
+  },
+  {
+    "policy_id": "P1-G-014",
+    "status": "PASS",
+    "evidence_excerpt": "Groundwater quality had not been significantly affected by historical aerial emissions... No spatial pattern of metals concentrations exceeding CSR standards in groundwater",
+    "reasoning": "Demonstrated that groundwater meets aquatic life standards through comprehensive three-decade investigation."
+  },
+  {
+    "policy_id": "P1-G-016",
+    "status": "PASS",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA)... Risk-based remediation targets derived",
+    "reasoning": "Detailed risk assessment conducted to demonstrate acceptable risks where numeric criteria assessment warranted further evaluation."
+  },
+  {
+    "policy_id": "P1-G-017",
+    "status": "PASS",
+    "evidence_excerpt": "Groundwater quality had not been significantly affected by historical aerial emissions... No spatial pattern of metals concentrations exceeding CSR standards in groundwater",
+    "reasoning": "Groundwater concentrations demonstrated to be below CSR standards, supporting pathway as inoperable."
+  },
+  {
+    "policy_id": "P1-G-018",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "groundwater remediation is not addressed within this WARP",
+    "reasoning": "Site-specific risk-based groundwater standards not required as groundwater pathway determined inoperable."
+  },
+  {
+    "policy_id": "P1-G-019",
+    "status": "PARTIAL",
+    "evidence_excerpt": "The spatial distribution of exceedances in low flow surface water samples is not consistent with the spatial distribution of soil metals concentrations",
+    "reasoning": "Surface water assessed but specific substance concentrations at groundwater entry points not detailed."
+  },
+  {
+    "policy_id": "P1-G-020",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA) - focus on plant communities",
+    "reasoning": "ERA conducted but specific site-specific risk-based standards for receiving environment not detailed in excerpt."
+  },
+  {
+    "policy_id": "P1-G-021",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Technical Guidance 15 not explicitly referenced in the WARP excerpt for determining substance concentrations."
+  },
+  {
+    "policy_id": "P1-G-022",
+    "status": "PARTIAL",
+    "evidence_excerpt": "sediment (potentially affected media)... Ecological Risk Assessment (ERA)",
+    "reasoning": "Sediment identified as potentially affected media and ERA conducted, but specific sediment contaminant exceedance assessment not detailed."
+  },
+  {
+    "policy_id": "P1-G-023",
+    "status": "PASS",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA) - focus on young children... Risk-based remediation targets derived",
+    "reasoning": "HHRA conducted to demonstrate acceptable human health risks with focus on the most sensitive receptor (young children)."
+  },
+  {
+    "policy_id": "P1-G-024",
+    "status": "PASS",
+    "evidence_excerpt": "Matrix standards in CSR Schedule 3.1... The data are divided into land-use classifications so they can be compared to current CSR standards",
+    "reasoning": "CSR standards applied to contaminated site with appropriate comparison to land use classifications."
+  },
+  {
+    "policy_id": "P1-G-025",
+    "status": "PASS",
+    "evidence_excerpt": "The total EM Area is approximately 25,400 ha... 2,251 residential properties have been sampled... 95% UCLM soil Pb concentration",
+    "reasoning": "Risk assessment complexity matches site complexity with extensive sampling program and statistical methods for large EM Area."
+  },
+  {
+    "policy_id": "P1-G-026",
+    "status": "PARTIAL",
+    "evidence_excerpt": "95% UCLM soil Pb concentration for each property",
+    "reasoning": "Statistical methods documented (95% UCLM) but full probabilistic distribution rationale not detailed."
+  },
+  {
+    "policy_id": "P1-G-027",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA)",
+    "reasoning": "HHRA conducted but specific Health Canada guidance documents not cited in the excerpt."
+  },
+  {
+    "policy_id": "P1-G-028",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA)",
+    "reasoning": "HHRA conducted but Health Canada PQRA guidance not explicitly referenced."
+  },
+  {
+    "policy_id": "P1-G-029",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA)",
+    "reasoning": "HHRA conducted but Health Canada TRV guidance not explicitly referenced."
+  },
+  {
+    "policy_id": "P1-G-030",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Peer review guidance document not referenced in the WARP excerpt."
+  },
+  {
+    "policy_id": "P1-G-031",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA)",
+    "reasoning": "HHRA conducted but complex DQRACHEM guidance not explicitly referenced."
+  },
+  {
+    "policy_id": "P1-G-033",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Soil vapour intrusion guidance not applicable as WARP addresses metals contamination, not volatile substances."
+  },
+  {
+    "policy_id": "P1-G-035",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA)... Agricultural... land use classifications",
+    "reasoning": "Agricultural land use present suggesting country foods may be relevant, but specific guidance not cited."
+  },
+  {
+    "policy_id": "P1-G-036",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "HHRA peer review checklist not referenced in the WARP excerpt."
+  },
+  {
+    "policy_id": "P1-G-037",
+    "status": "PARTIAL",
+    "evidence_excerpt": "soil samples... SALM (strong acid leachable metals) analytical method",
+    "reasoning": "Soil bioavailability may be relevant but specific guidance not cited in excerpt."
+  },
+  {
+    "policy_id": "P1-G-038",
+    "status": "PARTIAL",
+    "evidence_excerpt": "sediment (potentially affected media)",
+    "reasoning": "Sediment identified but contaminated sediment direct contact guidance not explicitly referenced."
+  },
+  {
+    "policy_id": "P1-G-041",
+    "status": "PASS",
+    "evidence_excerpt": "31 potential contaminants of concern were considered in the ERA... The final list of COPCs that required further evaluation... was As, Cd, Pb and Zn",
+    "reasoning": "Problem formulation completed with COPC identification and screening from 31 to 4 final substances."
+  },
+  {
+    "policy_id": "P1-G-042",
+    "status": "PASS",
+    "evidence_excerpt": "a hydrogeological conceptual site model was developed. The conceptual site model describes groundwater occurrence in two main aquifer types",
+    "reasoning": "Conceptual site model developed describing hydrogeological conditions, land uses, and media."
+  },
+  {
+    "policy_id": "P1-G-044",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA) - focus on plant communities... Risk-based remediation targets derived",
+    "reasoning": "Toxicity/effects assessment conducted through ERA and HHRA but specific details not provided."
+  },
+  {
+    "policy_id": "P1-G-045",
+    "status": "PASS",
+    "evidence_excerpt": "Risk-based remediation targets derived... address risks to human health and the environment",
+    "reasoning": "Risk characterization completed resulting in risk-based remediation targets."
+  },
+  {
+    "policy_id": "P1-G-047",
+    "status": "PASS",
+    "evidence_excerpt": "The final list of COPCs... was As, Cd, Pb and Zn... determined to be an inoperable pathway",
+    "reasoning": "Conclusions provided including final COPC list and pathway operability determinations."
+  },
+  {
+    "policy_id": "P1-G-048",
+    "status": "PASS",
+    "evidence_excerpt": "HHRA - focus on young children... ERA - focus on plant communities... Soil, groundwater, surface water and sediment (potentially affected media)",
+    "reasoning": "Contaminant-pathway-receptor combinations identified including media, receptors, and exposure pathways."
+  },
+  {
+    "policy_id": "P1-G-049",
+    "status": "PASS",
+    "evidence_excerpt": "present remediation and management strategies and approaches to address risks... THEP... LCEMP",
+    "reasoning": "Risk assessment used alongside active remediation programs (THEP, LCEMP) rather than as sole strategy."
+  },
+  {
+    "policy_id": "P1-G-052",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Matrix standards in CSR Schedule 3.1... Risk-based remediation targets derived",
+    "reasoning": "Both standards derivation (CSR standards) and risk assessment approaches used but distinction not explicitly detailed."
+  },
+  {
+    "policy_id": "P1-G-053",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Modification of Protocol 28 toxicological equations not described in excerpt."
+  },
+  {
+    "policy_id": "P1-G-056",
+    "status": "PASS",
+    "evidence_excerpt": "31 potential contaminants of concern were considered in the ERA... The final list of COPCs that required further evaluation... was As, Cd, Pb and Zn",
+    "reasoning": "Substances evaluated comprehensively with 31 potential COPCs screened, demonstrating consideration of substances with and without standards."
+  },
+  {
+    "policy_id": "P1-G-057",
+    "status": "PASS",
+    "evidence_excerpt": "31 potential contaminants of concern were considered in the ERA",
+    "reasoning": "Multiple substances included and evaluated in the risk assessment."
+  },
+  {
+    "policy_id": "P1-G-058",
+    "status": "PASS",
+    "evidence_excerpt": "Risk-based remediation targets derived",
+    "reasoning": "Risk assessment results shown to comply with risk-based standards through derived remediation targets."
+  },
+  {
+    "policy_id": "P1-G-059",
+    "status": "PARTIAL",
+    "evidence_excerpt": "sediment (potentially affected media)... Human Health Risk Assessment (HHRA)",
+    "reasoning": "Sediment identified as potentially affected media but human health sediment assessment not detailed."
+  },
+  {
+    "policy_id": "P1-G-060",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Intertidal zone standards not applicable; the WARP addresses an inland site in the Lower Columbia River valley."
+  },
+  {
+    "policy_id": "P1-G-061",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Subtidal/intertidal sediment standards not applicable to this inland freshwater site."
+  },
+  {
+    "policy_id": "P1-G-062",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Intertidal sediment land use determination not applicable to this inland site."
+  },
+  {
+    "policy_id": "P1-G-063",
+    "status": "PASS",
+    "evidence_excerpt": "all land use classifications under the CSR are present: Residential, Urban Park, Commercial, Industrial, and Agricultural",
+    "reasoning": "Land uses clearly identified and defined, not requiring default to residential."
+  },
+  {
+    "policy_id": "P1-G-064",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Protocol 13 beneficial use scenarios not specifically addressed in the WARP excerpt."
+  },
+  {
+    "policy_id": "P1-G-066",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Beneficial use ecological/health risk consideration not addressed in excerpt."
+  },
+  {
+    "policy_id": "P1-G-067",
+    "status": "PASS",
+    "evidence_excerpt": "Soil assessment has focussed on shallow soils for two reasons: the mechanism for impacts to soil is aerial deposition... surface soil is a medium with which receptors... can routinely come into contact",
+    "reasoning": "Scientific justification provided for relevant media (shallow soils) and potential exposure pathways to receptors."
+  },
+  {
+    "policy_id": "P1-G-068",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA) - focus on plant communities",
+    "reasoning": "ERA conducted but Protocol 20 and FCSAP guidance not explicitly cited."
+  },
+  {
+    "policy_id": "P1-G-070",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Volatile substance inhalation pathways not applicable; WARP addresses metals (As, Cd, Pb, Zn), not volatile compounds."
+  },
+  {
+    "policy_id": "P1-G-071",
+    "status": "PASS",
+    "evidence_excerpt": "The potential influence of soil impacts... on groundwater in the EM Area has been evaluated and determined to be an inoperable pathway",
+    "reasoning": "Drinking water pathway determined incomplete/inoperable with full documentation of rationale."
+  },
+  {
+    "policy_id": "P1-G-073",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA)",
+    "reasoning": "HHRA conducted but subsurface worker acute exposure specifically not addressed in excerpt."
+  },
+  {
+    "policy_id": "P1-G-074",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "WorkSafeBC requirements not explicitly addressed in the WARP excerpt."
+  },
+  {
+    "policy_id": "P1-G-076",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Vapour contamination assessment not applicable; WARP addresses metals from aerial deposition, not volatile substances."
+  },
+  {
+    "policy_id": "P1-G-077",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Protocol 22 vapour attenuation not applicable to metals contamination."
+  },
+  {
+    "policy_id": "P1-G-078",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Technical Guidance 4 vapour investigation not applicable to metals contamination."
+  },
+  {
+    "policy_id": "P1-G-079",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA)... lead... cadmium",
+    "reasoning": "Bioaccumulative metals (Pb, Cd) addressed in ERA but food chain evaluation not detailed."
+  },
+  {
+    "policy_id": "P1-G-080",
+    "status": "PARTIAL",
+    "evidence_excerpt": "ERA - focus on plant communities",
+    "reasoning": "Lower trophic level organisms (plant communities) assessed but food chain impacts to higher trophic levels not detailed."
+  },
+  {
+    "policy_id": "P1-G-084",
+    "status": "PASS",
+    "evidence_excerpt": "highest soil metals concentrations are consistently found in the upper 0.6 m of soil, and below this depth they decrease... within the upper 1 m of soil",
+    "reasoning": "Top 1m of soil characterized with high confidence through extensive sampling program."
+  },
+  {
+    "policy_id": "P1-G-087",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "ERA - focus on plant communities",
+    "reasoning": "Wildlife fur/feather exposure not applicable as ERA focused on plant communities, not wildlife receptors."
+  },
+  {
+    "policy_id": "P1-G-088",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "ERA - focus on plant communities",
+    "reasoning": "Dermal exposure for amphibians/reptiles not applicable as ERA focused on plant communities."
+  },
+  {
+    "policy_id": "P1-G-089",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": "ERA - focus on plant communities",
+    "reasoning": "Inhalation pathway for ecological receptors not applicable; ERA focused on plant communities, not animal receptors."
+  },
+  {
+    "policy_id": "P1-G-090",
+    "status": "PARTIAL",
+    "evidence_excerpt": "collecting a minimum of 10, discrete, shallow (0 m to 0.15 m) soil samples on each property",
+    "reasoning": "Systematic sampling methodology described but BC Field Sampling Manual not explicitly referenced."
+  },
+  {
+    "policy_id": "P1-G-091",
+    "status": "PASS",
+    "evidence_excerpt": "2,251 residential properties have been sampled... minimum of 10, discrete, shallow... soil samples on each property",
+    "reasoning": "Extensive sampling (2,251 properties, minimum 10 samples each) commensurate with 25,400 ha EM Area complexity."
+  },
+  {
+    "policy_id": "P1-G-092",
+    "status": "PASS",
+    "evidence_excerpt": "at least two samples from each property are submitted to a laboratory... 95% UCLM soil Pb concentration for each property",
+    "reasoning": "Sample numbers ensure high confidence in statistical calculations (95% UCLM) through replicate sampling approach."
+  },
+  {
+    "policy_id": "P1-G-093",
+    "status": "PASS",
+    "evidence_excerpt": "at least two samples from each property are submitted to a laboratory for total metals analysis using the SALM (strong acid leachable metals) analytical method",
+    "reasoning": "Laboratory analysis conducted using approved SALM analytical method."
+  },
+  {
+    "policy_id": "P20-V2-001",
+    "status": "PASS",
+    "evidence_excerpt": "a hydrogeological conceptual site model was developed... describes groundwater occurrence in two main aquifer types... exposure pathways",
+    "reasoning": "Conceptual site model defined and developed including hydrogeological conditions and exposure pathways."
+  },
+  {
+    "policy_id": "P20-V2-002",
+    "status": "PASS",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA)... Ecological Risk Assessment (ERA)... Risk-based remediation targets derived",
+    "reasoning": "Detailed risk assessment completed in accordance with Protocol 1 requirements."
+  },
+  {
+    "policy_id": "P20-V2-003",
+    "status": "PASS",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA) - focus on plant communities... 31 potential contaminants of concern were considered",
+    "reasoning": "Ecological risk assessment conducted quantitatively evaluating impacts on biota (plant communities)."
+  },
+  {
+    "policy_id": "P20-V2-004",
+    "status": "PARTIAL",
+    "evidence_excerpt": "risk assessment includes: Human Health Risk Assessment (HHRA)... Ecological Risk Assessment (ERA)",
+    "reasoning": "Risk assessments conducted by professionals but specific QP definition criteria not detailed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-005",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Risk-based remediation targets derived",
+    "reasoning": "TRVs likely used in risk assessment but specific definition and values not provided."
+  },
+  {
+    "policy_id": "P20-V2-006",
+    "status": "PASS",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA)... Approval in Principle",
+    "reasoning": "DERA completed for regulatory purposes supporting the AIP instrument."
+  },
+  {
+    "policy_id": "P20-V2-007",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Deviations from ministry guidance not documented in excerpt; compliance assumed."
+  },
+  {
+    "policy_id": "P20-V2-008",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Checklist column response requirements not detailed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-009",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Rationale for negative responses to mandatory items not detailed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-010",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "QP signature on checklist Part 3 not addressed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-011",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA)... Approval in Principle",
+    "reasoning": "ERA report submitted for AIP but checklist completion not explicitly addressed."
+  },
+  {
+    "policy_id": "P20-V2-012",
+    "status": "PASS",
+    "evidence_excerpt": "historical aerial emissions from Teck Trail Operations... Ecological Risk Assessment (ERA) - focus on plant communities",
+    "reasoning": "ERA provides context for contamination source and effects on ecological receptors."
+  },
+  {
+    "policy_id": "P20-V2-013",
+    "status": "PASS",
+    "evidence_excerpt": "mechanism for impacts to soil is aerial deposition of metals-enriched particulate... surface soil is a medium with which receptors... can routinely come into contact",
+    "reasoning": "Physical, chemical, and biological processes influencing contaminant effects described."
+  },
+  {
+    "policy_id": "P20-V2-014",
+    "status": "PASS",
+    "evidence_excerpt": "31 potential contaminants of concern were considered in the ERA... The final list of COPCs... was As, Cd, Pb and Zn... focus on plant communities",
+    "reasoning": "Process described for selecting COPCs (31 screened to 4) and ecological receptors (plant communities)."
+  },
+  {
+    "policy_id": "P20-V2-015",
+    "status": "PASS",
+    "evidence_excerpt": "hydrogeological conceptual site model was developed... exposure pathways... groundwater... determined to be an inoperable pathway",
+    "reasoning": "CSM includes potential COPCs, exposure pathways, and identifies operative vs inoperable pathways."
+  },
+  {
+    "policy_id": "P20-V2-016",
+    "status": "PARTIAL",
+    "evidence_excerpt": "95% UCLM soil Pb concentration for each property",
+    "reasoning": "Statistical methodology provided but complete risk equations not detailed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-017",
+    "status": "PASS",
+    "evidence_excerpt": "Risk-based remediation targets derived... address risks to human health and the environment",
+    "reasoning": "Final conclusion provided on acceptability of ecological risk through risk-based remediation targets."
+  },
+  {
+    "policy_id": "P20-V2-018",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA)",
+    "reasoning": "ERA completed but comprehensive uncertainty analysis not detailed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-019",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Weight-of-evidence approach and a priori weightings not detailed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-020",
+    "status": "PARTIAL",
+    "evidence_excerpt": "risk assessment includes: Human Health Risk Assessment (HHRA)... Ecological Risk Assessment (ERA)",
+    "reasoning": "Risk assessment conducted but specific participant qualifications not detailed."
+  },
+  {
+    "policy_id": "P20-V2-021",
+    "status": "PASS",
+    "evidence_excerpt": "Lateral delineation of soil contamination... began in the early 2000s... hydrogeological and groundwater quality investigations conducted over three decades",
+    "reasoning": "Previous investigations described and their findings used to design current assessment."
+  },
+  {
+    "policy_id": "P20-V2-022",
+    "status": "PASS",
+    "evidence_excerpt": "Based on the results of hydrogeological and groundwater quality investigations conducted over three decades, a hydrogeological conceptual site model was developed",
+    "reasoning": "Extent of reliance on previous assessments documented through CSM development."
+  },
+  {
+    "policy_id": "P20-V2-023",
+    "status": "PARTIAL",
+    "evidence_excerpt": "ENV Director approved EM Area Boundary derivation",
+    "reasoning": "Director approval referenced but preapproval documentation not detailed."
+  },
+  {
+    "policy_id": "P20-V2-024",
+    "status": "PASS",
+    "evidence_excerpt": "regulatory mechanism for approving and implementing remediation activities outlined in this WARP is an Approval in Principle",
+    "reasoning": "Conditions for AIP instrument clearly stated."
+  },
+  {
+    "policy_id": "P20-V2-025",
+    "status": "PASS",
+    "evidence_excerpt": "2,251 residential properties have been sampled for metals in surface soil... A total of... soil samples",
+    "reasoning": "Extensive field data provided for ecological risk assessment."
+  },
+  {
+    "policy_id": "P20-V2-026",
+    "status": "PASS",
+    "evidence_excerpt": "at least two samples from each property are submitted to a laboratory for total metals analysis using the SALM... analytical method",
+    "reasoning": "Laboratory data provided through SALM analysis of soil samples."
+  },
+  {
+    "policy_id": "P20-V2-027",
+    "status": "PASS",
+    "evidence_excerpt": "present remediation and management strategies and approaches to address risks to human health and the environment",
+    "reasoning": "Objectives of ERA documented - to address risks and support remediation strategies."
+  },
+  {
+    "policy_id": "P20-V2-028",
+    "status": "PARTIAL",
+    "evidence_excerpt": "ERA - focus on plant communities... groundwater... determined to be an inoperable pathway",
+    "reasoning": "Assessment endpoints defined (plant communities) and pathways evaluated but measurement endpoints not detailed."
+  },
+  {
+    "policy_id": "P20-V2-029",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Risk-based remediation targets derived... address risks to human health and the environment",
+    "reasoning": "Endpoints linked to objectives but explicit linkage documentation not detailed."
+  },
+  {
+    "policy_id": "P20-V2-030",
+    "status": "PASS",
+    "evidence_excerpt": "all land use classifications under the CSR are present: Residential, Urban Park, Commercial, Industrial, and Agricultural",
+    "reasoning": "All current land uses identified and considered in screening."
+  },
+  {
+    "policy_id": "P20-V2-031",
+    "status": "PASS",
+    "evidence_excerpt": "The land use descriptions are consistent with definitions in the CSR",
+    "reasoning": "Land use assumptions documented with rationale based on CSR definitions."
+  },
+  {
+    "policy_id": "P20-V2-032",
+    "status": "PASS",
+    "evidence_excerpt": "31 potential contaminants of concern were considered in the ERA",
+    "reasoning": "Potential COPCs clearly identified and listed."
+  },
+  {
+    "policy_id": "P20-V2-033",
+    "status": "PASS",
+    "evidence_excerpt": "a hydrogeological conceptual site model was developed",
+    "reasoning": "CSM included describing conditions and exposure pathways."
+  },
+  {
+    "policy_id": "P20-V2-034",
+    "status": "PASS",
+    "evidence_excerpt": "surface soil is a medium with which receptors... can routinely come into contact... groundwater... determined to be an inoperable pathway",
+    "reasoning": "Direct exposure pathways (soil contact) and indirect pathways (groundwater) identified and considered."
+  },
+  {
+    "policy_id": "P20-V2-035",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Previous SLRA and pathway exclusion confirmation not addressed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-036",
+    "status": "PASS",
+    "evidence_excerpt": "95% UCLM soil Pb concentration... The data are divided into land-use classifications",
+    "reasoning": "Statistical methods (95% UCLM) used with rationale for land use comparison."
+  },
+  {
+    "policy_id": "P20-V2-037",
+    "status": "PASS",
+    "evidence_excerpt": "31 potential contaminants of concern were considered... The final list of COPCs... was As, Cd, Pb and Zn",
+    "reasoning": "Rationale provided for narrowing from 31 potential COPCs to 4 requiring further evaluation."
+  },
+  {
+    "policy_id": "P20-V2-038",
+    "status": "PARTIAL",
+    "evidence_excerpt": "site investigation focussed on metals contamination in surficial soils within the EM Area",
+    "reasoning": "Site investigation conducted but QP site visit not explicitly documented."
+  },
+  {
+    "policy_id": "P20-V2-039",
+    "status": "PASS",
+    "evidence_excerpt": "receptors (young children and plant communities) can routinely come into contact... ERA - focus on plant communities",
+    "reasoning": "Receptors identified based on exposure potential and ecological relevance."
+  },
+  {
+    "policy_id": "P20-V2-040",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA)",
+    "reasoning": "ERA conducted but red/blue listed species assessment not explicitly documented."
+  },
+  {
+    "policy_id": "P20-V2-041",
+    "status": "PASS",
+    "evidence_excerpt": "The final list of COPCs that required further evaluation in the ERA was As, Cd, Pb and Zn... plant communities",
+    "reasoning": "Contaminant-pathway-receptor combinations identified for further assessment."
+  },
+  {
+    "policy_id": "P20-V2-042",
+    "status": "PASS",
+    "evidence_excerpt": "31 potential contaminants of concern were considered... The final list of COPCs... was As, Cd, Pb and Zn",
+    "reasoning": "Rationale implied for excluding 27 substances from further evaluation."
+  },
+  {
+    "policy_id": "P20-V2-043",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Bioassay methodology and rationale not addressed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-044",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Multiple lines of evidence integration approach not detailed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-045",
+    "status": "PASS",
+    "evidence_excerpt": "The final list of COPCs that required further evaluation... Risk-based remediation targets derived",
+    "reasoning": "Each identified contaminant-pathway-receptor combination evaluated through ERA."
+  },
+  {
+    "policy_id": "P20-V2-046",
+    "status": "PASS",
+    "evidence_excerpt": "all land use classifications under the CSR are present: Residential, Urban Park, Commercial, Industrial, and Agricultural",
+    "reasoning": "Each applicable land use scenario evaluated in the risk assessment."
+  },
+  {
+    "policy_id": "P20-V2-047",
+    "status": "PARTIAL",
+    "evidence_excerpt": "95% UCLM soil Pb concentration for each property",
+    "reasoning": "Exposure point concentration methods described (95% UCLM) but complete rationale not detailed."
+  },
+  {
+    "policy_id": "P20-V2-048",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Fate and transport model equations not provided in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-049",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Exposure model equations and input data for QA not provided in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-050",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Exposure model parameters and rationale not detailed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-051",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Exposure model structure and parameter uncertainty not addressed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-052",
+    "status": "PASS",
+    "evidence_excerpt": "2,251 residential properties have been sampled... collecting a minimum of 10, discrete, shallow (0 m to 0.15 m) soil samples",
+    "reasoning": "Survey methodology including sampling locations and approach documented."
+  },
+  {
+    "policy_id": "P20-V2-053",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "TRV selection rationale not provided in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-054",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "TRV sources and derivation not documented in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-055",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "TRV toxicity endpoints not identified in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-056",
+    "status": "PARTIAL",
+    "evidence_excerpt": "ERA - focus on plant communities... Risk-based remediation targets derived",
+    "reasoning": "Protection levels used but compliance with ministry policy not explicitly stated."
+  },
+  {
+    "policy_id": "P20-V2-057",
+    "status": "PASS",
+    "evidence_excerpt": "Background data from ENV Protocol 4 (ENV, 2017) and other supplemental reference data",
+    "reasoning": "Reference conditions (Protocol 4 background) documented with rationale."
+  },
+  {
+    "policy_id": "P20-V2-058",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Site-specific toxicity testing quality standards not addressed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-059",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Most contaminated area toxicity testing not addressed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-060",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Risk estimate equations not detailed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-061",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Hazard quotient preference not addressed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-062",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Hazard quotient documentation not provided in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-063",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Alternative to hazard quotients rationale not provided in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-064",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "HQ exceeding unity rationale not addressed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-065",
+    "status": "PASS",
+    "evidence_excerpt": "Risk-based remediation targets derived... address risks to human health and the environment",
+    "reasoning": "Risks for identified pathways assessed and categorized through derived targets."
+  },
+  {
+    "policy_id": "P20-V2-066",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Risk-based remediation targets derived",
+    "reasoning": "Conclusions provided but explicit consistency with assessment endpoints not detailed."
+  },
+  {
+    "policy_id": "P20-V2-067",
+    "status": "PASS",
+    "evidence_excerpt": "present remediation and management strategies and approaches to address risks to human health and the environment",
+    "reasoning": "Explicit risk conclusion provided regarding significance of ecological risk."
+  },
+  {
+    "policy_id": "P20-V2-068",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA)",
+    "reasoning": "ERA completed but explicit uncertainty evaluation not detailed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-069",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Weight-of-evidence a priori weightings not addressed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-070",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Weight-of-evidence consistency with problem formulation not addressed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-071",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Weight-of-evidence uncertainty evaluation not addressed in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-072",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA)... Approval in Principle",
+    "reasoning": "ERA conducted for AIP application but QP confirmation statement not provided in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-073",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "QP accuracy confirmation not provided in excerpt."
+  },
+  {
+    "policy_id": "P20-V2-074",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Ecological Risk Assessment (ERA)",
+    "reasoning": "ERA conducted implying qualified professionals but experience confirmation not provided."
+  },
+  {
+    "policy_id": "P28-G-001",
+    "status": "PASS",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA) - focus on young children",
+    "reasoning": "Toddler receptor appropriately used as focus of HHRA for residential land use."
+  },
+  {
+    "policy_id": "P28-G-002",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Human Health Risk Assessment (HHRA)",
+    "reasoning": "HHRA conducted but adult lifespan/body weight parameters not explicitly detailed."
+  },
+  {
+    "policy_id": "P28-G-003",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Soil ingestion rates (WL) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-004",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Soil ingestion rates (AL) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-005",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Soil ingestion rates (PL) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-006",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Soil ingestion rates (RLLD) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-007",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Soil ingestion rates (RLHD) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-008",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Soil ingestion rates (CL) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-009",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Soil ingestion rates (IL) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-010",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Exposure time calculation (WL) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-011",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Exposure time calculation (AL) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-012",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Exposure time calculation (PL) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-013",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Exposure time calculation (RLLD) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-014",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Exposure time calculation (RLHD) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-015",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Exposure time calculation (CL) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-016",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Exposure time calculation (IL) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-017",
+    "status": "PARTIAL",
+    "evidence_excerpt": "lead (Pb)... HHRA - focus on young children... concerns raised regarding Pb health risks to children",
+    "reasoning": "Lead recognized as requiring special consideration (no threshold) but specific ET calculation not detailed."
+  },
+  {
+    "policy_id": "P28-G-018",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Soil allocation factor (SAF = 0.2) not explicitly detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-019",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Absorption factor ingestion (AFI) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-020",
+    "status": "PARTIAL",
+    "evidence_excerpt": "arsenic (As)... HHRA",
+    "reasoning": "Arsenic addressed in HHRA but specific bioavailability factor (60%) not detailed."
+  },
+  {
+    "policy_id": "P28-G-021",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Risk-specific dose (RsD) not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-022",
+    "status": "PARTIAL",
+    "evidence_excerpt": "arsenic (As)... lead... HHRA",
+    "reasoning": "Arsenic (carcinogen) addressed but Protocol 30 classification process not explicitly detailed."
+  },
+  {
+    "policy_id": "P28-G-023",
+    "status": "PARTIAL",
+    "evidence_excerpt": "HHRA",
+    "reasoning": "HHRA conducted but non-carcinogenic endpoint adoption process not detailed."
+  },
+  {
+    "policy_id": "P28-G-024",
+    "status": "PARTIAL",
+    "evidence_excerpt": "arsenic (As)... Human Health Risk Assessment (HHRA)",
+    "reasoning": "Carcinogenic substance (As) addressed but dual endpoint calculation not detailed."
+  },
+  {
+    "policy_id": "P28-G-025",
+    "status": "PASS",
+    "evidence_excerpt": "Background data from ENV Protocol 4 (ENV, 2017)",
+    "reasoning": "Background concentrations considered through Protocol 4 for standards comparison."
+  },
+  {
+    "policy_id": "P28-G-026",
+    "status": "PARTIAL",
+    "evidence_excerpt": "Matrix standards in CSR Schedule 3.1... data are divided into land-use classifications",
+    "reasoning": "Land use standards applied but RSL selection process not detailed."
+  },
+  {
+    "policy_id": "P28-G-027",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Soil allocation and cancer risk level adjustments not detailed in excerpt."
+  },
+  {
+    "policy_id": "P28-G-028",
+    "status": "PASS",
+    "evidence_excerpt": "Residential, Urban Park... HHRA - focus on young children... Groundwater may be used for drinking water",
+    "reasoning": "Residential land use scenario addressed with toddler as critical receptor; groundwater drinking water evaluated."
+  },
+  {
+    "policy_id": "P28-G-029",
+    "status": "PARTIAL",
+    "evidence_excerpt": "all land use classifications under the CSR are present: Residential, Urban Park",
+    "reasoning": "High density residential addressed within land use classifications but specific restrictions not detailed."
+  },
+  {
+    "policy_id": "P28-G-030",
+    "status": "PASS",
+    "evidence_excerpt": "Commercial... land use classifications... HHRA - focus on young children",
+    "reasoning": "Commercial land use present with toddler access considered in HHRA."
+  },
+  {
+    "policy_id": "P28-G-031",
+    "status": "PASS",
+    "evidence_excerpt": "Industrial... land use classifications",
+    "reasoning": "Industrial land use addressed within EM Area classifications."
+  },
+  {
+    "policy_id": "P28-G-032",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Dioxin TEF values not applicable; WARP addresses metals (As, Cd, Pb, Zn), not dioxins."
+  },
+  {
+    "policy_id": "P28-G-033",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Dioxin TEF values not applicable; WARP addresses metals, not dioxins."
+  },
+  {
+    "policy_id": "P28-G-034",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Dioxin TEF values not applicable; WARP addresses metals, not dioxins."
+  },
+  {
+    "policy_id": "P28-G-035",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Dioxin TEF values not applicable; WARP addresses metals, not dioxins."
+  },
+  {
+    "policy_id": "P28-G-036",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Dioxin TEF values not applicable; WARP addresses metals, not dioxins."
+  },
+  {
+    "policy_id": "P28-G-037",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Dioxin TEF values not applicable; WARP addresses metals, not dioxins."
+  },
+  {
+    "policy_id": "P28-G-038",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Dioxin TEF values not applicable; WARP addresses metals, not dioxins."
+  },
+  {
+    "policy_id": "P30-V2-001",
+    "status": "PARTIAL",
+    "evidence_excerpt": "arsenic (As)... Human Health Risk Assessment (HHRA)",
+    "reasoning": "Arsenic (a carcinogenic substance) addressed in HHRA but carcinogenic classification definition not explicitly cited."
+  },
+  {
+    "policy_id": "P30-V2-002",
+    "status": "PARTIAL",
+    "evidence_excerpt": "arsenic (As)... Human Health Risk Assessment (HHRA)",
+    "reasoning": "HHRA conducted for arsenic but dual endpoint assessment (non-carcinogenic and carcinogenic) not explicitly detailed."
+  },
+  {
+    "policy_id": "P30-V2-003",
+    "status": "PARTIAL",
+    "evidence_excerpt": "arsenic (As)",
+    "reasoning": "Arsenic present as COPC; classification criteria application not detailed."
+  },
+  {
+    "policy_id": "P30-V2-004",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "US EPA Guidelines classification not explicitly referenced in excerpt."
+  },
+  {
+    "policy_id": "P30-V2-005",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "US EPA Proposed Guidelines classification not referenced in excerpt."
+  },
+  {
+    "policy_id": "P30-V2-006",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "US EPA Group A classification not referenced in excerpt."
+  },
+  {
+    "policy_id": "P30-V2-007",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "US EPA Group B1 classification not referenced in excerpt."
+  },
+  {
+    "policy_id": "P30-V2-008",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "IARC Group 1 classification not explicitly referenced in excerpt."
+  },
+  {
+    "policy_id": "P30-V2-009",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "IARC Group 2A classification not referenced in excerpt."
+  },
+  {
+    "policy_id": "P30-V2-010",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "PAH carcinogenicity classification not applicable; WARP addresses metals, not PAHs."
+  },
+  {
+    "policy_id": "P30-V2-011",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Benz(a)anthracene not applicable; WARP addresses metals, not PAHs."
+  },
+  {
+    "policy_id": "P30-V2-012",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Benzo(a)pyrene not applicable; WARP addresses metals, not PAHs."
+  },
+  {
+    "policy_id": "P30-V2-013",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Listed PAH compounds not applicable; WARP addresses metals, not PAHs."
+  },
+  {
+    "policy_id": "P30-V2-014",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Benzo(g,h,i)perylene classification not applicable; WARP addresses metals, not PAHs."
+  },
+  {
+    "policy_id": "P30-V2-015",
+    "status": "NOT_APPLICABLE",
+    "evidence_excerpt": null,
+    "reasoning": "Benzo(g,h,i)perylene regulatory status not applicable; WARP addresses metals."
+  },
+  {
+    "policy_id": "P30-V2-016",
+    "status": "PARTIAL",
+    "evidence_excerpt": "cadmium (Cd)... zinc (Zn)",
+    "reasoning": "Cadmium and zinc addressed as non-carcinogenic COPCs but classification process not detailed."
+  },
+  {
+    "policy_id": "P30-V2-017",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "US EPA IRIS database alphanumeric descriptors not referenced in excerpt."
+  },
+  {
+    "policy_id": "P30-V2-018",
+    "status": "NOT_FOUND",
+    "evidence_excerpt": null,
+    "reasoning": "Post-1999 weight-of-evidence descriptors not referenced in excerpt."
+  }
+]

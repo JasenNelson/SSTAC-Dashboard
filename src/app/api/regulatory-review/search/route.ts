@@ -3,11 +3,21 @@
  *
  * Searches the RRAA knowledge base (rraa_v3_2.db) for policies
  * matching the user's query using full-text search.
+ *
+ * NOTE: This API only works in local development. It requires access to
+ * external database files that are not available in Vercel.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import Database from 'better-sqlite3';
 import path from 'path';
+
+let Database: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Database = require('better-sqlite3');
+} catch {
+  // better-sqlite3 not available
+}
 
 // Path to the main RRAA knowledge base
 const RRAA_DB_PATH = path.join(process.cwd(), '..', 'Regulatory-Review', 'engine', 'data', 'rraa_v3_2.db');
@@ -28,6 +38,13 @@ interface PolicyResult {
 }
 
 export async function GET(request: NextRequest) {
+  if (!Database) {
+    return NextResponse.json(
+      { error: 'Policy search is only available in local development' },
+      { status: 503 }
+    );
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get('q');
   const tier = searchParams.get('tier');
