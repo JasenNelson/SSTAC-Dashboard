@@ -25,7 +25,8 @@
       "Bash(dir \"F:\\\\sstac-dashboard\\\\src\\\\app\\\\\\(dashboard\\)\\\\admin\\\\poll-results\"\" /b)",
       "Bash(find:*)",
       "Bash(cat:*)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Bash(npm test:*)"
     ]
   }
 }

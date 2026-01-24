@@ -1,8 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { PollResult, MatrixData } from '../types';
+
+// Cache configuration
+const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+
+interface CacheEntry {
+  data: PollResult[];
+  timestamp: number;
+}
+
+// Global cache to share data across hook instances
+const pollDataCache = new Map<string, CacheEntry>();
 
 export function usePollData() {
   const [pollResults, setPollResults] = useState<PollResult[]>([]);
@@ -10,10 +21,27 @@ export function usePollData() {
   const [error, setError] = useState<string | null>(null);
   const [matrixData, setMatrixData] = useState<MatrixData[]>([]);
   const supabase = useMemo(() => createClient(), []);
+  const cacheKeyRef = useRef('poll_data_default');
 
   // Wrap fetchPollResults in useCallback to stabilize function reference
-  const fetchPollResults = useCallback(async () => {
+  const fetchPollResults = useCallback(async (forceRefresh = false) => {
     try {
+      const cacheKey = cacheKeyRef.current;
+
+      // Check cache if not forcing refresh
+      if (!forceRefresh && pollDataCache.has(cacheKey)) {
+        const cachedEntry = pollDataCache.get(cacheKey)!;
+        const cacheAge = Date.now() - cachedEntry.timestamp;
+
+        // Return cached data if still fresh (less than CACHE_DURATION_MS old)
+        if (cacheAge < CACHE_DURATION_MS) {
+          setPollResults(cachedEntry.data);
+          setLoading(false);
+          setError(null);
+          return;
+        }
+      }
+
       setLoading(true);
 
       // Fetch single-choice, ranking, and wordcloud poll results with error handling
@@ -271,8 +299,9 @@ export function usePollData() {
       });
 
       // If no combined results, fallback to showing raw data
+      let finalResults: PollResult[];
       if (combinedResults.length === 0) {
-        const fallbackResults = [
+        finalResults = [
           ...singleChoiceData.map(poll => ({
             ...poll,
             is_ranking: false,
@@ -286,10 +315,17 @@ export function usePollData() {
             combined_cew_votes: 0
           }))
         ];
-        setPollResults(fallbackResults);
       } else {
-        setPollResults(combinedResults);
+        finalResults = combinedResults;
       }
+
+      // Cache the results
+      pollDataCache.set(cacheKey, {
+        data: finalResults,
+        timestamp: Date.now()
+      });
+
+      setPollResults(finalResults);
     } catch (err) {
       console.error('Error fetching poll results:', err);
       setError('Failed to fetch poll results');
@@ -302,12 +338,24 @@ export function usePollData() {
     fetchPollResults();
   }, [fetchPollResults]);
 
+  // Function to manually clear cache (useful for admin updates)
+  const clearCache = useCallback(() => {
+    pollDataCache.delete(cacheKeyRef.current);
+  }, []);
+
+  // Function to refresh data, bypassing cache
+  const refreshData = useCallback(() => {
+    return fetchPollResults(true);
+  }, [fetchPollResults]);
+
   return {
     pollResults,
     loading,
     error,
     matrixData,
     fetchPollResults,
-    setMatrixData
+    setMatrixData,
+    clearCache,
+    refreshData
   };
 }

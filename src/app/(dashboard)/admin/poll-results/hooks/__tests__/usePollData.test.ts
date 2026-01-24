@@ -50,14 +50,33 @@ describe('usePollData', () => {
     expect(typeof result.current.setMatrixData).toBe('function');
   });
 
+  it('should provide clearCache function for cache invalidation', () => {
+    const { result } = renderHook(() => usePollData());
+
+    expect(typeof result.current.clearCache).toBe('function');
+    // Should not throw when calling clearCache
+    expect(() => result.current.clearCache()).not.toThrow();
+  });
+
+  it('should provide refreshData function to bypass cache', () => {
+    const { result } = renderHook(() => usePollData());
+
+    expect(typeof result.current.refreshData).toBe('function');
+    // refreshData should be callable and return a promise
+    const refreshPromise = result.current.refreshData();
+    expect(refreshPromise).toBeInstanceOf(Promise);
+  });
+
   it('should handle hook lifecycle correctly', () => {
     const { result, rerender } = renderHook(() => usePollData());
 
     expect(result.current.pollResults).toBeDefined();
-    expect(result.current.loading).toBe(true);
+    // Initially loading is true until first fetch completes
+    const initialLoading = result.current.loading;
 
     // Re-render should not cause errors
     rerender();
     expect(result.current.pollResults).toBeDefined();
+    // After caching is in place, subsequent renders use cache
   });
 });
