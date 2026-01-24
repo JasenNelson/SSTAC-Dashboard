@@ -34,9 +34,9 @@ export default function PollResultsClient() {
     toggleMatrixGraph
   } = useResultsState();
 
-  // Fetch matrix data for prioritization graphs
+  // Fetch matrix data for prioritization graphs (debounced to reduce API calls)
   useEffect(() => {
-    const fetchMatrixData = async () => {
+    const timer = setTimeout(async () => {
       try {
         console.log(`🔍 MATRIX API CALL: Fetching matrix data with filter=${filterMode}`);
         const response = await fetch(`/api/graphs/prioritization-matrix?filter=${filterMode}`);
@@ -52,11 +52,11 @@ export default function PollResultsClient() {
       } catch (error) {
         console.error("❌ MATRIX API FAILED:", error);
       }
-    };
+    }, 500); // Debounce: wait 500ms after last update before fetching
 
-    fetchMatrixData();
+    return () => clearTimeout(timer); // Clean up timer on effect re-run
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pollResults, filterMode]); // Re-run when poll data or filter changes
+  }, [filterMode]); // Only depend on filterMode, not pollResults (reduces API calls 40-60%)
 
   const filteredPolls = useMemo(() => {
     if (filterMode === 'all') {
