@@ -254,10 +254,10 @@ export default function WIKSClient() {
                 <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">Final Thoughts: Landscape = Kin</h3>
                 <div className="mt-4 text-gray-900 dark:text-gray-300 space-y-3">
                   <p>
-                    The panel&apos;s final thoughts centered on the foundational concept that in many First Nations languages, <strong>&quot;Landscape = Kin&quot;</strong>. This perspective reframes environmental protection: &quot;How we care about the environment should be how we care about our family&quot;.
+                    The panel&apos;s final thoughts centered on the foundational concept that in many First Nations languages, including in Dr. Water&apos;s ancestral Coast Salish language Hul&apos;qumi&apos;num, <strong>&quot;Landscape = Kin&quot;</strong>. This perspective reframes environmental protection: &quot;How we care about the environment should be how we care about our family&quot;.
                   </p>
                   <p>
-                    Speakers reinforced this by comparing care for the land and water to caring for an ill family member. They also highlighted the role of language as a framing tool, noting that land is language – not an analogy but a lived reality. The existence of dozens of words for land, water, and invertebrates reflects this continuum, and even the sounds of words (like the sound of a river running low) can teach us how to relate to the environment.
+                    Speakers reinforced this by comparing care for the land and water to caring for an ill family member. They also highlighted the role of language as a framing tool, noting that land is language – not an analogy but a lived reality. The existence of dozens of words for land, water, and invertebrate animals reflects this continuum, and even the sounds of words (like the sound of a river running low) can teach us how to relate to the environment.
                   </p>
                 </div>
               </div>
