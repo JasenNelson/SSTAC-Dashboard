@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { PollResult } from '../types';
 
 interface RankingDisplayProps {
@@ -15,74 +15,82 @@ interface RankingDisplayProps {
 }
 
 function RankingDisplay({ selectedPoll, isExpanded, getFilteredPollResults }: RankingDisplayProps) {
-  // For ranking polls, sort by average rank (lower is better)
-  const filteredResults = getFilteredPollResults(selectedPoll);
-  let sortedResults = [...filteredResults].sort(
-    (a, b) => (a.averageRank || 0) - (b.averageRank || 0)
-  );
+  // Memoize the sorted results to avoid recalculating on every render
+  const sortedResults = useMemo(() => {
+    // For ranking polls, sort by average rank (lower is better)
+    const filteredResults = getFilteredPollResults(selectedPoll);
+    let results = [...filteredResults].sort(
+      (a, b) => (a.averageRank || 0) - (b.averageRank || 0)
+    );
 
-  // For prioritization questions, ensure all 5 options are shown in order
-  if (selectedPoll.page_path.includes('prioritization')) {
-    // Create a complete set of all 5 options (0-4) with default values for missing ones
-    const completeResults = [];
-    const resultsMap = new Map(filteredResults.map((r) => [r.option_index, r]));
+    // For prioritization questions, ensure all 5 options are shown in order
+    if (selectedPoll.page_path.includes('prioritization')) {
+      // Create a complete set of all 5 options (0-4) with default values for missing ones
+      const completeResults = [];
+      const resultsMap = new Map(filteredResults.map((r) => [r.option_index, r]));
 
-    // Debug: Log the options array to see what we have
-    console.log('🔍 Prioritization ranking poll options:', {
-      pollIndex: selectedPoll.poll_index,
-      options: selectedPoll.options,
-      optionsType: typeof selectedPoll.options,
-      optionsLength: selectedPoll.options?.length,
-      isArray: Array.isArray(selectedPoll.options),
-      stringified: JSON.stringify(selectedPoll.options),
-    });
+      // Debug: Log the options array to see what we have
+      console.log('🔍 Prioritization ranking poll options:', {
+        pollIndex: selectedPoll.poll_index,
+        options: selectedPoll.options,
+        optionsType: typeof selectedPoll.options,
+        optionsLength: selectedPoll.options?.length,
+        isArray: Array.isArray(selectedPoll.options),
+        stringified: JSON.stringify(selectedPoll.options),
+      });
 
-    // For prioritization questions 3 and 4, only create 4 options (0-3), for others create 5
-    const maxOptions =
-      selectedPoll.poll_index === 2 || selectedPoll.poll_index === 3 ? 4 : 5; // poll_index 2 = question 3, poll_index 3 = question 4
-    for (let i = 0; i < maxOptions; i++) {
-      if (resultsMap.has(i)) {
-        completeResults.push(resultsMap.get(i)!);
-      } else {
-        // Create a placeholder result for missing options
-        // Try to get option text from the options array, with better fallback
-        let optionText = `Option ${i + 1}`;
+      // For prioritization questions 3 and 4, only create 4 options (0-3), for others create 5
+      const maxOptions =
+        selectedPoll.poll_index === 2 || selectedPoll.poll_index === 3 ? 4 : 5; // poll_index 2 = question 3, poll_index 3 = question 4
+      for (let i = 0; i < maxOptions; i++) {
+        if (resultsMap.has(i)) {
+          completeResults.push(resultsMap.get(i)!);
+        } else {
+          // Create a placeholder result for missing options
+          // Try to get option text from the options array, with better fallback
+          let optionText = `Option ${i + 1}`;
 
-        // Try to parse options if they're stored as JSON string
-        let optionsArray = selectedPoll.options;
-        if (typeof selectedPoll.options === 'string') {
-          try {
-            optionsArray = JSON.parse(selectedPoll.options);
-          } catch (e) {
-            console.warn('Failed to parse options JSON:', e);
+          // Try to parse options if they're stored as JSON string
+          let optionsArray = selectedPoll.options;
+          if (typeof selectedPoll.options === 'string') {
+            try {
+              optionsArray = JSON.parse(selectedPoll.options);
+            } catch (e) {
+              console.warn('Failed to parse options JSON:', e);
+            }
           }
-        }
 
-        if (optionsArray && Array.isArray(optionsArray) && optionsArray[i]) {
-          optionText = optionsArray[i];
-        } else if (optionsArray && typeof optionsArray === 'object' && optionsArray[i]) {
-          optionText = optionsArray[i];
-        }
+          if (optionsArray && Array.isArray(optionsArray) && optionsArray[i]) {
+            optionText = optionsArray[i];
+          } else if (optionsArray && typeof optionsArray === 'object' && optionsArray[i]) {
+            optionText = optionsArray[i];
+          }
 
-        completeResults.push({
-          option_index: i,
-          option_text: optionText,
-          votes: 0,
-          averageRank: 0,
-        });
+          completeResults.push({
+            option_index: i,
+            option_text: optionText,
+            votes: 0,
+            averageRank: 0,
+          });
+        }
       }
+      results = completeResults.sort((a, b) => (a.averageRank || 0) - (b.averageRank || 0));
     }
-    sortedResults = completeResults.sort((a, b) => (a.averageRank || 0) - (b.averageRank || 0));
-  }
 
-  // Check if this is a question that needs larger text (Questions 1-8 in holistic, Questions 1-2 in prioritization)
-  const needsLargerText =
-    (selectedPoll.page_path.includes('holistic-protection') &&
-      selectedPoll.poll_index >= 0 &&
-      selectedPoll.poll_index <= 7) ||
-    (selectedPoll.page_path.includes('prioritization') &&
-      selectedPoll.poll_index >= 0 &&
-      selectedPoll.poll_index <= 1);
+    return results;
+  }, [selectedPoll, getFilteredPollResults]);
+
+  // Memoize text size calculation to avoid recalculating on every render
+  const needsLargerText = useMemo(
+    () =>
+      (selectedPoll.page_path.includes('holistic-protection') &&
+        selectedPoll.poll_index >= 0 &&
+        selectedPoll.poll_index <= 7) ||
+      (selectedPoll.page_path.includes('prioritization') &&
+        selectedPoll.poll_index >= 0 &&
+        selectedPoll.poll_index <= 1),
+    [selectedPoll.page_path, selectedPoll.poll_index]
+  );
 
   return (
     <div className="space-y-4">

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { PollResult } from '../types';
 
 interface SingleChoiceDisplayProps {
@@ -24,61 +24,70 @@ function SingleChoiceDisplay({
   isExpanded,
   getFilteredPollResults,
 }: SingleChoiceDisplayProps) {
-  const filteredResults = getFilteredPollResults(selectedPoll);
-  const filteredTotal = filteredResults.reduce((sum, r) => sum + r.votes, 0);
-  const maxVotes = Math.max(...filteredResults.map((r) => r.votes));
+  // Memoize sorted results calculation to avoid recalculating on every render
+  const { sortedResults, filteredTotal, maxVotes } = useMemo(() => {
+    const filteredResults = getFilteredPollResults(selectedPoll);
+    const total = filteredResults.reduce((sum, r) => sum + r.votes, 0);
+    const max = Math.max(...filteredResults.map((r) => r.votes));
 
-  // For prioritization and tiered-framework questions, ensure all options are shown in order
-  let sortedResults = [...filteredResults].sort((a, b) => a.option_index - b.option_index);
+    // For prioritization and tiered-framework questions, ensure all options are shown in order
+    let results = [...filteredResults].sort((a, b) => a.option_index - b.option_index);
 
-  if (selectedPoll.page_path.includes('prioritization')) {
-    // Create a complete set of all 5 options (0-4) with 0 votes for missing ones
-    const completeResults = [];
-    const resultsMap = new Map(filteredResults.map((r) => [r.option_index, r]));
+    if (selectedPoll.page_path.includes('prioritization')) {
+      // Create a complete set of all 5 options (0-4) with 0 votes for missing ones
+      const completeResults = [];
+      const resultsMap = new Map(filteredResults.map((r) => [r.option_index, r]));
 
-    for (let i = 0; i < 5; i++) {
-      if (resultsMap.has(i)) {
-        completeResults.push(resultsMap.get(i)!);
-      } else {
-        // Create a placeholder result for missing options
-        completeResults.push({
-          option_index: i,
-          option_text: selectedPoll.options?.[i] || `Option ${i + 1}`,
-          votes: 0,
-        });
+      for (let i = 0; i < 5; i++) {
+        if (resultsMap.has(i)) {
+          completeResults.push(resultsMap.get(i)!);
+        } else {
+          // Create a placeholder result for missing options
+          completeResults.push({
+            option_index: i,
+            option_text: selectedPoll.options?.[i] || `Option ${i + 1}`,
+            votes: 0,
+          });
+        }
       }
-    }
-    sortedResults = completeResults;
-  } else if (selectedPoll.page_path.includes('tiered-framework')) {
-    // Create a complete set of all 5 options (0-4) with 0 votes for missing ones
-    const completeResults = [];
-    const resultsMap = new Map(filteredResults.map((r) => [r.option_index, r]));
+      results = completeResults;
+    } else if (selectedPoll.page_path.includes('tiered-framework')) {
+      // Create a complete set of all 5 options (0-4) with 0 votes for missing ones
+      const completeResults = [];
+      const resultsMap = new Map(filteredResults.map((r) => [r.option_index, r]));
 
-    for (let i = 0; i < 5; i++) {
-      if (resultsMap.has(i)) {
-        completeResults.push(resultsMap.get(i)!);
-      } else {
-        // Create a placeholder result for missing options
-        completeResults.push({
-          option_index: i,
-          option_text: selectedPoll.options?.[i] || `Option ${i + 1}`,
-          votes: 0,
-        });
+      for (let i = 0; i < 5; i++) {
+        if (resultsMap.has(i)) {
+          completeResults.push(resultsMap.get(i)!);
+        } else {
+          // Create a placeholder result for missing options
+          completeResults.push({
+            option_index: i,
+            option_text: selectedPoll.options?.[i] || `Option ${i + 1}`,
+            votes: 0,
+          });
+        }
       }
+      results = completeResults;
     }
-    sortedResults = completeResults;
-  }
 
-  // Use expanded format for tiered-framework questions (same as ranking polls)
-  if (selectedPoll.page_path.includes('tiered-framework')) {
-    // Check if this is a question that needs larger text (Questions 1-8 in holistic, Questions 1-2 in prioritization)
-    const needsLargerText =
+    return { sortedResults: results, filteredTotal: total, maxVotes: max };
+  }, [selectedPoll, getFilteredPollResults]);
+
+  // Memoize text size calculation to avoid recalculating on every render
+  const needsLargerText = useMemo(
+    () =>
       (selectedPoll.page_path.includes('holistic-protection') &&
         selectedPoll.poll_index >= 0 &&
         selectedPoll.poll_index <= 7) ||
       (selectedPoll.page_path.includes('prioritization') &&
         selectedPoll.poll_index >= 0 &&
-        selectedPoll.poll_index <= 1);
+        selectedPoll.poll_index <= 1),
+    [selectedPoll.page_path, selectedPoll.poll_index]
+  );
+
+  // Use expanded format for tiered-framework questions (same as ranking polls)
+  if (selectedPoll.page_path.includes('tiered-framework')) {
 
     return (
       <div className="space-y-4">
@@ -190,15 +199,6 @@ function SingleChoiceDisplay({
     if (ratio >= 0.2) return 'bg-gradient-to-r from-blue-500 to-blue-600'; // Low votes - blue
     return 'bg-gradient-to-r from-blue-400 to-blue-500'; // Lowest votes - light blue
   };
-
-  // Check if this is a question that needs larger text (Questions 1-8 in holistic, Questions 1-2 in prioritization)
-  const needsLargerText =
-    (selectedPoll.page_path.includes('holistic-protection') &&
-      selectedPoll.poll_index >= 0 &&
-      selectedPoll.poll_index <= 7) ||
-    (selectedPoll.page_path.includes('prioritization') &&
-      selectedPoll.poll_index >= 0 &&
-      selectedPoll.poll_index <= 1);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
