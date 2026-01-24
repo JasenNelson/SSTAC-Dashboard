@@ -37,7 +37,6 @@ export function trackVote(pagePath: string, pollIndex: number): boolean {
   // Check if this device already voted on this poll
   const existingTracker = localStorage.getItem(trackerKey);
   if (existingTracker) {
-    const tracker: VoteTracker = JSON.parse(existingTracker);
     if (process.env.NODE_ENV === 'development') {
       console.log(`Device ${deviceId} already voted on ${pagePath} poll ${pollIndex}`);
     }

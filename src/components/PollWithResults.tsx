@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import PollResultsChart from './dashboard/PollResultsChart';
 
 interface PollOption {
@@ -57,19 +57,50 @@ export default function PollWithResults({
     return 'default';
   });
 
-  // Fetch results when component mounts
+  const fetchResults = useCallback(async () => {
+    try {
+      // Use unified API endpoint for all pages
+      const apiEndpoint = '/api/polls/results';
+
+      let url = `${apiEndpoint}?pagePath=${encodeURIComponent(pagePath)}&pollIndex=${pollIndex}`;
+      if (authCode) {
+        url += `&authCode=${encodeURIComponent(authCode)}`;
+      }
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        setResults(data.results);
+
+        // Check if user has already voted (for both authenticated and CEW pages)
+        if (data.userVote !== null && data.userVote !== undefined) {
+          setUserVote(data.userVote);
+          setUserOtherText(data.userOtherText || '');
+
+          // Only set hasVoted to true if user is not in change vote mode
+          if (!showChangeOption) {
+            setHasVoted(true);
+            setShowResults(true);
+          }
+        }
+      }
+    } catch (error) {
+      console.error(`[PollWithResults ${pollIndex}] Error fetching results:`, error);
+    }
+  }, [pagePath, pollIndex, authCode, showChangeOption]);
+
+  const checkCEWVoteStatus = () => {
+    // For CEW pages, don't persist votes at all - start fresh each time
+    // This ensures true privacy in incognito mode
+  };
+
+  // Fetch results when component mounts or props change
   useEffect(() => {
     fetchResults();
     // Check for existing vote in sessionStorage for CEW pages
     if (pagePath.startsWith('/cew-polls/')) {
       checkCEWVoteStatus();
     }
-  }, []);
-
-  const checkCEWVoteStatus = () => {
-    // For CEW pages, don't persist votes at all - start fresh each time
-    // This ensures true privacy in incognito mode
-  };
+  }, [fetchResults, pagePath]);
 
   const handleSelectOption = (optionIndex: number) => {
     if ((hasVoted && !showChangeOption) || isLoading) return;
@@ -116,7 +147,7 @@ export default function PollWithResults({
       });
 
       if (response.ok) {
-        const result = await response.json();
+        await response.json(); // Consume response body
         setHasVoted(true);
         setShowResults(true);
         setUserVote(selectedOption);
@@ -152,37 +183,6 @@ export default function PollWithResults({
       setSelectedOption(null);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const fetchResults = async () => {
-    try {
-      // Use unified API endpoint for all pages
-      const apiEndpoint = '/api/polls/results';
-      
-      let url = `${apiEndpoint}?pagePath=${encodeURIComponent(pagePath)}&pollIndex=${pollIndex}`;
-      if (authCode) {
-        url += `&authCode=${encodeURIComponent(authCode)}`;
-      }
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setResults(data.results);
-        
-        // Check if user has already voted (for both authenticated and CEW pages)
-        if (data.userVote !== null && data.userVote !== undefined) {
-          setUserVote(data.userVote);
-          setUserOtherText(data.userOtherText || '');
-          
-          // Only set hasVoted to true if user is not in change vote mode
-          if (!showChangeOption) {
-            setHasVoted(true);
-            setShowResults(true);
-          }
-        }
-      }
-    } catch (error) {
-      console.error(`[PollWithResults ${pollIndex}] Error fetching results:`, error);
     }
   };
 
@@ -249,7 +249,7 @@ export default function PollWithResults({
                 You voted: <strong>Option {String.fromCharCode(65 + userVote)}: {options[userVote]}</strong>
                 {userOtherText && (
                   <span className="block mt-1 text-sm">
-                    <strong>Your "Other" response:</strong> "{userOtherText}"
+                    <strong>Your &ldquo;Other&rdquo; response:</strong> &ldquo;{userOtherText}&rdquo;
                   </span>
                 )}
               </span>
@@ -359,7 +359,7 @@ export default function PollWithResults({
       {!hasVoted && isSelectedOther() && (
         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <label htmlFor={`other-text-${pollIndex}`} className="block text-sm font-medium text-gray-900 dark:text-blue-200 mb-2">
-            Please provide details for your "Other" selection:
+            Please provide details for your &ldquo;Other&rdquo; selection:
           </label>
           <textarea
             id={`other-text-${pollIndex}`}

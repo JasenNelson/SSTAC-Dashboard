@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { PollResult, MatrixData, IndividualVotePair } from './types';
+import { PollResult, MatrixData } from './types';
 import QRCodeDisplay from '@/components/dashboard/QRCodeDisplay';
 import QRCodeModal from './components/QRCodeModal';
 import FilterSidebar from './components/FilterSidebar';
@@ -46,7 +46,7 @@ export default function PollResultsClient() {
   const [leftPanelVisible, setLeftPanelVisible] = useState(true);
   const [qrCodeExpanded, setQrCodeExpanded] = useState(false);
   const [expandedPollGroup, setExpandedPollGroup] = useState<string | null>(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [, setCurrentQuestionIndex] = useState(0);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [showMatrixGraphs, setShowMatrixGraphs] = useState<{[key: string]: boolean}>({});
   const [showPresentationControls, setShowPresentationControls] = useState(true);
@@ -374,7 +374,7 @@ export default function PollResultsClient() {
       });
 
       // Convert aggregated wordcloud data to poll groups
-      wordcloudPollsMap.forEach((pollData, pollId) => {
+      wordcloudPollsMap.forEach((pollData) => {
         
         // Create a key that groups polls by topic and poll_index
         let key;
@@ -956,13 +956,6 @@ export default function PollResultsClient() {
     return null;
   };
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
   const groupPollsByTheme = (polls: PollResult[]) => {
     const themes = {
       'holistic-protection': {
@@ -1391,8 +1384,6 @@ export default function PollResultsClient() {
                   ) : selectedPoll.is_ranking ? (
                     // For ranking polls, sort by average rank (lower is better)
                     (() => {
-                      // Define pollKey once for the ranking poll chart
-                      const pollKey = selectedPoll.poll_id || selectedPoll.ranking_poll_id || `poll-${selectedPoll.page_path}-${selectedPoll.poll_index}`;
                       const filteredResults = getFilteredPollResults(selectedPoll);
                       let sortedResults = [...filteredResults].sort((a, b) => (a.averageRank || 0) - (b.averageRank || 0));
                       
@@ -1544,8 +1535,6 @@ export default function PollResultsClient() {
                   ) : (
                     // For single-choice polls, use expanded format for tiered-framework, compact for others
                     (() => {
-                      // Define pollKey once for both expanded and compact formats
-                      const pollKey = selectedPoll.poll_id || `poll-${selectedPoll.page_path}-${selectedPoll.poll_index}`;
                       const filteredResults = getFilteredPollResults(selectedPoll);
                       const filteredTotal = filteredResults.reduce((sum, r) => sum + r.votes, 0);
                       const maxVotes = Math.max(...filteredResults.map(r => r.votes));
@@ -1603,7 +1592,7 @@ export default function PollResultsClient() {
                         <div 
                           className="space-y-4"
                         >
-                            {sortedResults.map((result, index) => {
+                            {sortedResults.map((result) => {
                           const percentage = getPercentage(result.votes, filteredTotal);
                           const isTopChoice = result.votes === maxVotes;
                           
@@ -1698,10 +1687,9 @@ export default function PollResultsClient() {
                           className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow"
                         >
                           <div className="space-y-2">
-                            {sortedResults.map((result, index) => {
+                            {sortedResults.map((result) => {
                               const percentage = getPercentage(result.votes, filteredTotal);
-                              const isTopChoice = result.votes === maxVotes;
-                              
+
                               return (
                                 <div key={result.option_index} className="flex items-center space-x-3">
                                   <div 
