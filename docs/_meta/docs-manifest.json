@@ -212,10 +212,10 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 193,
-        "source": "npm run test output - Phase 5 refactoring complete (2026-01-24)",
+        "value": 222,
+        "source": "npm run test output - Phase 5 refactoring + test expansion complete (2026-01-24)",
         "last_verified": "2026-01-24",
-        "note": "Increased from 142 to 193 (+51 tests) through 4-phase incremental refactoring with comprehensive test coverage for extracted components and hooks"
+        "note": "Increased from 142 to 222 (+80 tests) through 4-phase incremental refactoring (+51 tests) and targeted test expansion for export/filter functionality (+29 tests: usePollExport.ts +15, FilterSidebar.tsx +14)"
       },
       "playwright_test_count": {
         "status": "verified",

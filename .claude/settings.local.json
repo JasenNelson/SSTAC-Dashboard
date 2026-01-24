@@ -21,7 +21,10 @@
       "Bash(npx tsc:*)",
       "Bash(npm run docs:gate:*)",
       "Bash(git push:*)",
-      "Skill(update-docs)"
+      "Skill(update-docs)",
+      "Bash(dir \"F:\\\\sstac-dashboard\\\\src\\\\app\\\\\\(dashboard\\)\\\\admin\\\\poll-results\"\" /b)",
+      "Bash(find:*)",
+      "Bash(cat:*)"
     ]
   }
 }
