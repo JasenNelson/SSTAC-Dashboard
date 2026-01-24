@@ -258,7 +258,7 @@ export default function PollResultsClient() {
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Error</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
           <button
-            onClick={fetchPollResults}
+            onClick={() => fetchPollResults()}
             className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
           >
             Try Again
