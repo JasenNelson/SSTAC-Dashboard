@@ -230,6 +230,15 @@ export default function PollResultsClient() {
     return themes;
   }, []);
 
+  // Memoize selectedPoll lookup to avoid O(n) search on every render
+  const selectedPoll = useMemo(() => {
+    if (!selectedQuestion) return undefined;
+    return filteredPolls.find(poll => {
+      const pollKey = poll.poll_id || poll.ranking_poll_id || `poll-${poll.page_path}-${poll.poll_index}`;
+      return pollKey === selectedQuestion;
+    });
+  }, [filteredPolls, selectedQuestion]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -343,25 +352,15 @@ export default function PollResultsClient() {
             <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">Select a Question</h3>
             <p className="text-gray-500 dark:text-gray-500">Choose a question from the left panel to view its results.</p>
           </div>
+        ) : !selectedPoll ? (
+          <div className="text-center py-12">
+            <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">❌</div>
+            <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">Question Not Found</h3>
+            <p className="text-gray-500 dark:text-gray-500">The selected question could not be found.</p>
+          </div>
         ) : (
           <div>
             {(() => {
-              // Find the selected poll
-              const selectedPoll = filteredPolls.find(poll => {
-                const pollKey = poll.poll_id || poll.ranking_poll_id || `poll-${poll.page_path}-${poll.poll_index}`;
-                return pollKey === selectedQuestion;
-              });
-
-              if (!selectedPoll) {
-                return (
-                  <div className="text-center py-12">
-                    <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">❌</div>
-                    <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">Question Not Found</h3>
-                    <p className="text-gray-500 dark:text-gray-500">The selected question could not be found.</p>
-                  </div>
-                );
-              }
-
               const isExpanded = expandedPoll === (selectedPoll.poll_id || selectedPoll.ranking_poll_id || `poll-${selectedPoll.page_path}-${selectedPoll.poll_index}`);
 
               return (
