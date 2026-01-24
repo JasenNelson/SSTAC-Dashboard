@@ -1,36 +1,38 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import { PollResult } from './types';
 import FilterSidebar from './components/FilterSidebar';
 import ResultsDisplay from './components/ResultsDisplay';
 import { usePollExport } from './hooks/usePollExport';
 import { usePollData } from './hooks/usePollData';
+import { useResultsState } from './hooks/useResultsState';
 
 export default function PollResultsClient() {
-  // Use hook for data fetching
+  // Use hooks for data fetching and UI state management
   const { pollResults, loading, error, matrixData, setMatrixData, fetchPollResults } = usePollData();
-
-  // UI state
-  const [expandedPoll, setExpandedPoll] = useState<string | null>(null);
-  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
-  const [selectedQuestion, setSelectedQuestion] = useState<string | null>(null);
-  const [filterMode, setFilterMode] = useState<'all' | 'twg' | 'cew'>('all');
-  const [leftPanelVisible, setLeftPanelVisible] = useState(true);
-  const [qrCodeExpanded, setQrCodeExpanded] = useState(false);
-  const [expandedPollGroup, setExpandedPollGroup] = useState<string | null>(null);
-  const [, setCurrentQuestionIndex] = useState(0);
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [showMatrixGraphs, setShowMatrixGraphs] = useState<{[key: string]: boolean}>({});
-  const [showPresentationControls, setShowPresentationControls] = useState(true);
-
-  // Toggle matrix graph visibility for a specific question pair
-  const toggleMatrixGraph = (questionPairKey: string) => {
-    setShowMatrixGraphs(prev => ({
-      ...prev,
-      [questionPairKey]: !prev[questionPairKey]
-    }));
-  };
+  const {
+    expandedPoll,
+    setExpandedPoll,
+    expandedGroup,
+    setExpandedGroup,
+    selectedQuestion,
+    setSelectedQuestion,
+    filterMode,
+    setFilterMode,
+    leftPanelVisible,
+    setLeftPanelVisible,
+    qrCodeExpanded,
+    setQrCodeExpanded,
+    expandedPollGroup,
+    setExpandedPollGroup,
+    lastRefresh,
+    setLastRefresh,
+    showMatrixGraphs,
+    showPresentationControls,
+    setShowPresentationControls,
+    toggleMatrixGraph
+  } = useResultsState();
 
   // Fetch matrix data for prioritization graphs
   useEffect(() => {
@@ -148,7 +150,6 @@ export default function PollResultsClient() {
     if (nextPoll) {
       const nextPollKey = nextPoll.poll_id || nextPoll.ranking_poll_id || `poll-${nextPoll.page_path}-${nextPoll.poll_index}`;
       setSelectedQuestion(nextPollKey);
-      setCurrentQuestionIndex(nextIndex);
 
       // If currently expanded, keep the new question expanded
       if (expandedPoll) {
@@ -174,7 +175,6 @@ export default function PollResultsClient() {
     if (prevPoll) {
       const prevPollKey = prevPoll.poll_id || prevPoll.ranking_poll_id || `poll-${prevPoll.page_path}-${prevPoll.poll_index}`;
       setSelectedQuestion(prevPollKey);
-      setCurrentQuestionIndex(prevIndex);
 
       // If currently expanded, keep the new question expanded
       if (expandedPoll) {
