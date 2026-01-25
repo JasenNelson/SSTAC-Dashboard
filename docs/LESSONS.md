@@ -357,14 +357,124 @@ When adding lessons to this document:
 
 ---
 
+## 2026-01-24 - Python Gitignore Rules Interfering with JavaScript Projects [MEDIUM]
+
+**Date:** January 24, 2026
+**Area:** Git / DevOps Configuration
+**Impact:** MEDIUM (caused Vercel build failure, required force-push to fix)
+**Status:** Resolved
+**Session:** TWGReviewClient Phase 2 refactoring deployment
+
+### Problem or Discovery
+
+Created 12 new component files in `src/app/(dashboard)/twg/review/parts/` directory. All files were present locally and built successfully. However, after pushing to remote, Vercel build failed with "Module not found" errors for all Part components. Investigation revealed the files were never committed to Git due to `.gitignore` rules.
+
+**Root Cause:** The `.gitignore` file inherited Python packaging rules that ignored `/parts/` directories globally (line 64: `parts/`), originally intended for Python `setuptools` but applying to all `parts/` directories in the repo, including JavaScript component directories.
+
+### Root Cause or Context
+
+The `.gitignore` file at repository root contains comprehensive Python development exclusions copied from Python templates. One rule:
+
+```
+# Python Distribution / packaging
+.Python
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/           # ← This line causes the issue
+sdist/
+```
+
+This rule prevents Git from tracking ANY directory named `parts/` anywhere in the repo. When we created `src/app/(dashboard)/twg/review/parts/`, Git ignored all files in it automatically, but:
+
+1. Local build succeeded (files existed on disk)
+2. `git status` showed only new files outside the ignored `parts/` directory
+3. `git add` silently skipped the ignored `parts/` directory
+4. `git push` sent incomplete code to remote
+5. Vercel build cloned incomplete code and failed on missing imports
+
+The error was silent - Git didn't warn that files were being ignored; they just weren't staged.
+
+### Solution or Pattern
+
+**Three-step fix for language-template gitignore conflicts:**
+
+**1. Add .gitignore exception for project-specific directories (before other rules)**
+
+Edit `.gitignore` to add exceptions BEFORE the conflicting rule:
+
+```gitignore
+*.pem
+
+# Exception for Next.js component parts directory
+!src/app/**/parts/
+
+# Log files
+npm-debug.log*
+```
+
+The `!` prefix means "don't ignore these". Placement matters - exceptions must come before the rule they override.
+
+**2. Force-add ignored files to staging**
+
+```bash
+git add -f src/app/(dashboard)/twg/review/parts/
+```
+
+The `-f` (force) flag stages files even if they're in `.gitignore`.
+
+**3. Amend previous commit or create new commit**
+
+```bash
+# If commit not yet pushed:
+git commit --amend --no-edit
+
+# If already pushed, amend then force-push:
+git push --force-with-lease
+```
+
+### File References
+
+- `.gitignore` line 20-21: Added exception rule
+- Commit: `2f42ae5` - Shows 12 Part components added after amendment
+- Related files:
+  - `src/app/(dashboard)/twg/review/parts/Part1ReviewerInformation.tsx` (and 11 others)
+  - `src/app/(dashboard)/twg/review/components/TWGReviewFormContainer.tsx:4-15` (imports Part components)
+
+### Key Takeaway
+
+**When creating new directories in language-specific projects:**
+
+1. **Check .gitignore for conflicting rules** - Search for your directory name in all .gitignore files
+2. **Add exceptions for project-specific paths** - Use `!pattern/` to override global ignore rules
+3. **Verify with `git status -u`** - Shows untracked files; empty means something is being ignored
+4. **Force-add if needed** - Use `git add -f` to stage ignored files
+5. **Test before pushing** - Build locally with `npm run build` to catch import errors
+
+### Prevention Checklist
+
+- [ ] Search .gitignore for any patterns matching your new directory names
+- [ ] Add exceptions for new component directories at top of .gitignore
+- [ ] After creating new files, run `git status` and verify they appear as untracked
+- [ ] Run `git add .` and check status again - files should move to staged
+- [ ] Run local build (`npm run build`) before pushing to catch import errors
+- [ ] Test Vercel preview build - catches what CI will see
+- [ ] Use `git diff --cached` to review all changes before committing
+
+---
+
 ## Table of Contents
 
 1. [2026-01-24 - Native Modules in Serverless Environments](#2026-01-24---native-modules-in-serverless-environments-critical) [CRITICAL]
 2. [2026-01-24 - Incremental Component Extraction Pattern](#2026-01-24---incremental-component-extraction-pattern-high) [HIGH - Phases 2-5 Complete]
+3. [2026-01-24 - Python Gitignore Rules Interfering with JavaScript Projects](#2026-01-24---python-gitignore-rules-interfering-with-javascript-projects-medium) [MEDIUM]
 
 ---
 
-**Last Updated:** January 24, 2026 (Phases 2-5 Complete, Phase 6 Verified)
-**Lesson Count:** 1 critical, 1 high (comprehensive 6-phase refactoring)
-**Refactoring Status:** ✓ COMPLETE (Incremental extraction pattern proven and documented)
+**Last Updated:** January 24, 2026 (TWGReviewClient Phase 2 Complete)
+**Lesson Count:** 1 critical, 1 high, 1 medium (deployment and architecture patterns)
+**Refactoring Status:** ✓ TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
 **Maintained By:** Claude Sessions with /update-docs skill
