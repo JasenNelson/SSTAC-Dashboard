@@ -466,15 +466,328 @@ git push --force-with-lease
 
 ---
 
+## 2026-01-25 - Multi-Layer Security Hardening Pattern [HIGH]
+
+**Date:** January 25, 2026
+**Area:** Security / API Protection
+**Impact:** HIGH (fixes 3 critical vulnerabilities, adds 6 security headers)
+**Status:** Implemented & Verified
+**Session:** Phase 2 Security Hardening (Tasks 2.1-2.5)
+
+### Problem or Discovery
+
+Production applications face multiple independent security threats that require a coordinated defense strategy:
+1. Authentication bypass vulnerabilities (localStorage fallbacks)
+2. Unprotected public endpoints allowing unauthorized access
+3. Missing security headers leaving application vulnerable to MIME sniffing, clickjacking, XSS
+4. Rate limiting only working per-instance (not across distributed deployments)
+5. Weak user ID generation allowing predictable identifiers
+6. File uploads without validation enabling malicious file execution
+
+A piecemeal approach fixing one vulnerability at a time leaves application exposed to others. Phase 2 demonstrated the value of a coordinated security hardening strategy.
+
+### Root Cause or Context
+
+Security vulnerabilities accumulate over time as features are added without comprehensive security review:
+
+1. **Admin Bypass Issue**: Early implementation cached admin status in localStorage for performance. When database was slow or unavailable, fallback to localStorage allowed unauthenticated users to gain admin privileges by setting `localStorage.admin_status = true` in browser console.
+
+2. **Public Endpoint Issue**: Announcements endpoint was initially public to allow all users to see notifications. However, without authentication, it exposed user data to external attackers.
+
+3. **Missing Security Headers**: Headers like Content-Security-Policy, X-Frame-Options, and X-Content-Type-Options are not added by default by Next.js. Without them, browsers apply minimal protection, leaving application vulnerable to:
+   - MIME sniffing attacks (content treated as wrong type)
+   - Clickjacking (app loaded in invisible iframe and user tricked into clicking)
+   - XSS attacks (inline scripts executed without restriction)
+
+4. **Rate Limiting per Instance**: In-memory rate limiting only works on single server. In production with load balancing across multiple instances, each instance maintains separate rate limit counters. Attacker hitting different instances can exceed rate limits.
+
+5. **Timestamp-based User IDs**: CEW polls generate user IDs using `${timestamp}_${Math.random()}`. Timestamp is predictable, Math.random() is not cryptographically secure. Attacker can guess valid user IDs and impersonate other voters.
+
+6. **Unvalidated File Uploads**: File upload endpoint accepted any file type and size, enabling:
+   - Malicious executable uploads
+   - Server storage exhaustion (large file bombs)
+   - Type confusion (upload executable with .pdf extension)
+
+### Solution or Pattern
+
+**Coordinated Multi-Layer Security Strategy (Defense in Depth):**
+
+**1. Authentication & Authorization - Server-Side Only (src/lib/admin-utils.ts)**
+```typescript
+// REMOVE all localStorage fallbacks
+// Admin status ALWAYS verified server-side
+export async function isUserAdmin(supabase: SupabaseClient, userId: string): Promise<boolean> {
+  const { data: roleData } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', 'admin')
+    .single();
+
+  const isAdmin = !!roleData;
+  return isAdmin; // Always return server-verified result, never fallback
+}
+```
+
+**Pattern:** Never trust client-side caches for security-sensitive data. Always verify server-side. Fail secure (return false) on any error.
+
+**2. Protect Public Endpoints (src/app/api/announcements/route.ts)**
+```typescript
+export async function GET(request: NextRequest) {
+  const supabase = await createAuthenticatedClient();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return NextResponse.json(
+      { error: 'Unauthorized: Authentication required' },
+      { status: 401 }
+    );
+  }
+
+  // Only authenticated users can see announcements
+  const { data: announcements } = await supabase
+    .from('announcements')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  return NextResponse.json(announcements);
+}
+```
+
+**Pattern:** Default to "require authentication". Only make endpoints truly public if explicitly required (and document why). Use explicit user auth check at start of route.
+
+**3. Comprehensive Security Headers (src/middleware.ts)**
+
+```typescript
+// Content-Security-Policy: Restrict resource loading sources
+response.headers.set(
+  'Content-Security-Policy',
+  "default-src 'self'; " +
+  "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+  "style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; " +
+  "font-src 'self' data:; " +
+  "connect-src 'self' https://*.supabase.co"
+)
+
+// X-Content-Type-Options: Prevent MIME type sniffing
+response.headers.set('X-Content-Type-Options', 'nosniff')
+
+// X-Frame-Options: Prevent clickjacking
+response.headers.set('X-Frame-Options', 'DENY')
+
+// X-XSS-Protection: Enable browser XSS protection
+response.headers.set('X-XSS-Protection', '1; mode=block')
+
+// Referrer-Policy: Don't leak referrer info to third-party
+response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+
+// Permissions-Policy: Disable unnecessary browser features
+response.headers.set(
+  'Permissions-Policy',
+  'geolocation=(), microphone=(), camera=(), payment=()'
+)
+
+// Strict-Transport-Security: Force HTTPS (production only)
+if (process.env.NODE_ENV === 'production') {
+  response.headers.set(
+    'Strict-Transport-Security',
+    'max-age=31536000; includeSubDomains; preload'
+  )
+}
+```
+
+**Pattern:** Add security headers in middleware (applies to all responses). Set in middleware instead of individual routes for consistency.
+
+**4. Distributed Rate Limiting (src/lib/rate-limit-redis.ts)**
+
+```typescript
+export async function checkRateLimitRedis(
+  identifier: string,
+  options: RateLimitOptions
+): Promise<RateLimitResult> {
+  const isRedisAvailable = await initializeRedis();
+
+  if (!isRedisAvailable) {
+    // Fallback to in-memory for development
+    return checkRateLimitInMemory(identifier, options);
+  }
+
+  // Use Redis for production (works across multiple instances)
+  const key = `rl:${identifier}`;
+  const entry = await redisClient.get(key);
+
+  if (!entry) {
+    // New window - increment from 1
+    const data = { count: 1, resetTime: Date.now() + options.windowMs };
+    await redisClient.setex(key, Math.ceil(options.windowMs / 1000), JSON.stringify(data));
+    return { success: true, remaining: options.max - 1, resetTime: data.resetTime };
+  }
+
+  // Existing window - check if limit exceeded
+  const data = JSON.parse(entry);
+  if (data.count >= options.max) {
+    return { success: false, remaining: 0, resetTime: data.resetTime };
+  }
+
+  // Increment counter
+  data.count++;
+  await redisClient.setex(key, Math.ceil(options.windowMs / 1000), JSON.stringify(data));
+  return { success: true, remaining: options.max - data.count, resetTime: data.resetTime };
+}
+```
+
+**Pattern:** Redis for production (distributed state), in-memory fallback for development. Test rate limiting works across multiple server instances.
+
+**5. Cryptographically Secure User ID Generation (src/lib/supabase-auth.ts)**
+
+```typescript
+import { randomBytes } from 'crypto';
+
+export function generateCEWUserId(authCode: string = 'CEW2025', sessionId?: string | null): string {
+  if (sessionId) {
+    return `${authCode}_${sessionId}`;
+  }
+
+  // Use crypto.randomBytes instead of timestamp + Math.random()
+  // randomBytes is cryptographically secure and unpredictable
+  try {
+    const randomHex = randomBytes(16).toString('hex');
+    return `${authCode}_${randomHex}`;
+  } catch {
+    // Fallback (should never happen in production)
+    const fallbackRandom = Array.from({ length: 32 }, () =>
+      Math.floor(Math.random() * 16).toString(16)
+    ).join('');
+    return `${authCode}_${fallbackRandom}`;
+  }
+}
+```
+
+**Pattern:** Use `crypto.randomBytes` for any security-sensitive randomness (user IDs, tokens, nonces). Never use `Math.random()` or timestamps.
+
+**6. File Upload Validation (src/app/api/review/upload/route.ts)**
+
+```typescript
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/plain',
+];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_EXTENSIONS = ['pdf', 'docx', 'txt'];
+
+export async function POST(request: NextRequest) {
+  const file = formData.get('file') as File;
+
+  // Whitelist validation - only allow specific types
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+    return NextResponse.json(
+      { error: `Invalid file type. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}` },
+      { status: 400 }
+    );
+  }
+
+  // Size validation - prevent storage exhaustion
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json(
+      { error: `File too large. Max: ${MAX_FILE_SIZE / 1024 / 1024}MB` },
+      { status: 413 }
+    );
+  }
+
+  // Extension validation - prevent type confusion
+  const fileExt = file.name.split('.').pop()?.toLowerCase();
+  if (!fileExt || !ALLOWED_EXTENSIONS.includes(fileExt)) {
+    return NextResponse.json(
+      { error: `Invalid extension. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}` },
+      { status: 400 }
+    );
+  }
+
+  // Upload only after all validation passes
+  const { data, error } = await supabase.storage.from('documents').upload(filePath, file);
+}
+```
+
+**Pattern:** Whitelist-based validation (specify what's allowed), not blacklist (specify what's forbidden). Validate at 3 levels: MIME type, extension, size.
+
+### File References
+
+**Critical Vulnerabilities Fixed:**
+- `F:\sstac-dashboard\src\lib\admin-utils.ts:90-100` - Removed localStorage fallback
+- `F:\sstac-dashboard\src\app\api\announcements\route.ts:1-30` - Added auth check
+- `F:\sstac-dashboard\package.json` - Updated tar >= 7.6.0 (npm audit fix)
+
+**Security Headers:**
+- `F:\sstac-dashboard\src\middleware.ts:9-54` - 6 security headers + HSTS (production)
+
+**Rate Limiting:**
+- `F:\sstac-dashboard\src\lib\rate-limit-redis.ts:79-161` - Redis-based rate limiting
+- `F:\sstac-dashboard\src\app\api\_helpers\rate-limit-wrapper.ts:19-56` - Rate limit integration
+
+**User ID Generation:**
+- `F:\sstac-dashboard\src\lib\supabase-auth.ts:18` - Import crypto.randomBytes
+- `F:\sstac-dashboard\src\lib\supabase-auth.ts:224-252` - generateCEWUserId with crypto
+
+**File Upload Validation:**
+- `F:\sstac-dashboard\src\app\api\review\upload\route.ts:8-17` - MIME types whitelist
+- `F:\sstac-dashboard\src\app\api\review\upload\route.ts:41-72` - Validation checks
+
+**Related Commits:**
+- `2ed8a18` - Task 2.1: Fix 3 critical vulnerabilities
+- `39afcb2` - Task 2.2: Add security headers middleware
+- `d90e504` - Task 2.3: File upload validation
+- `bb2f8ee` - Task 2.4: Redis rate limiting
+- `8b4ff31` - Task 2.5: CEW ID crypto fix
+
+### Key Takeaway
+
+**Security requires coordinated defense across multiple layers:**
+1. **Authentication**: Never trust client-side verification; always verify server-side
+2. **Authorization**: Require auth by default; only allow public access when explicitly needed
+3. **Headers**: Add comprehensive security headers in middleware for all responses
+4. **Rate Limiting**: Use distributed storage (Redis) for multi-instance deployments
+5. **Cryptography**: Use crypto.randomBytes for security-sensitive randomness
+6. **Input Validation**: Whitelist allowed values; validate at multiple levels (type, extension, size)
+
+Implementing all 6 layers together is more effective than any single layer alone. Each layer catches different attack vectors.
+
+### Related Patterns
+
+- **Server-Side Verification**: Never trust client claims about security-sensitive data
+- **Fail Secure**: When in doubt, return false/deny rather than true/allow
+- **Defense in Depth**: Multiple overlapping protections catch different attacks
+- **Distributed State**: For stateful features (rate limiting), use Redis in production
+- **Cryptographic Randomness**: Use crypto module, never Math.random or timestamps
+- **Whitelist Validation**: Specify what's allowed, not what's forbidden
+- **Middleware for Cross-Cutting Concerns**: Security headers belong in middleware, not individual routes
+
+### Prevention Checklist
+
+- [ ] All security-sensitive data verified server-side (never client-side fallback)
+- [ ] All endpoints require authentication by default (explicitly allow public endpoints)
+- [ ] Security headers set in middleware for all responses
+- [ ] Rate limiting uses distributed storage in production (Redis or similar)
+- [ ] All random values use crypto.randomBytes (never Math.random or timestamps)
+- [ ] All file uploads validated at 3+ levels (type, extension, size)
+- [ ] npm audit shows 0 HIGH/CRITICAL vulnerabilities
+- [ ] Security headers verified with curl -I http://localhost:3000
+- [ ] Rate limiting tested across multiple server instances
+- [ ] File upload tested with invalid types (should reject)
+
+---
+
 ## Table of Contents
 
 1. [2026-01-24 - Native Modules in Serverless Environments](#2026-01-24---native-modules-in-serverless-environments-critical) [CRITICAL]
 2. [2026-01-24 - Incremental Component Extraction Pattern](#2026-01-24---incremental-component-extraction-pattern-high) [HIGH - Phases 2-5 Complete]
 3. [2026-01-24 - Python Gitignore Rules Interfering with JavaScript Projects](#2026-01-24---python-gitignore-rules-interfering-with-javascript-projects-medium) [MEDIUM]
+4. [2026-01-25 - Multi-Layer Security Hardening Pattern](#2026-01-25---multi-layer-security-hardening-pattern-high) [HIGH]
 
 ---
 
-**Last Updated:** January 24, 2026 (TWGReviewClient Phase 2 Complete)
-**Lesson Count:** 1 critical, 1 high, 1 medium (deployment and architecture patterns)
+**Last Updated:** January 25, 2026 (Phase 2 Security Hardening Complete)
+**Lesson Count:** 1 critical, 2 high, 1 medium (deployment, security, architecture patterns)
+**Security Status:** ✓ Phase 2 COMPLETE - All 5 tasks done, 3 critical vulnerabilities fixed, 6 security headers added
 **Refactoring Status:** ✓ TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
 **Maintained By:** Claude Sessions with /update-docs skill
