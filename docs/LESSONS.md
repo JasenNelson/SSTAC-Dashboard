@@ -10,6 +10,92 @@
 
 ---
 
+## 2026-01-25 - Test Expectations Must Track Implementation Changes [HIGH]
+
+**Date:** January 25, 2026
+**Area:** Testing / Quality Assurance
+**Impact:** HIGH (blocked CI/CD pipeline and deployment verification)
+**Status:** Implemented & Validated
+**Session:** Phase 2 test fix and validation
+
+### Problem or Discovery
+
+After Phase 2 security hardening was implemented (3 vulnerability fixes, 6 security headers, cryptographic ID generation), unit tests failed in the CI/CD pipeline because test expectations didn't match the actual implementation changes. Two separate issues cascaded:
+
+1. **CEW User ID Format Mismatch**: Tests expected timestamp-based format (`CEW2025_session_1234567890_abc`) but Phase 2 Task 2.5 changed to cryptographically secure format (`CEW2025_a3681a8bb4f83d6cf9f11868cc01d2b6`)
+2. **Invalid Vitest Matchers**: Tests used `toStartWith()` method which doesn't exist in Vitest/Chai, causing test execution failures
+
+### Root Cause or Context
+
+Three cascading issues:
+
+1. **Test Expectations Decay**: When implementation changes (especially in fundamental functions like ID generation), all test files that depend on that function must be updated. Phase 2 refactored `generateCEWUserId()` but tests weren't systematically updated.
+
+2. **Incomplete Matcher Knowledge**: Test files used `toStartWith()` assuming Vitest supports all string methods. Vitest/Chai only supports specific matchers; arbitrary method names fail silently until test execution.
+
+3. **Security Changes Have Cascading Effects**: Phase 2 Task 2.1 removed localStorage fallback for admin status. Tests expected localStorage to be checked as backup - these expectations needed updating too.
+
+### Solution or Pattern
+
+**Three-Pronged Test Update Pattern:**
+
+**1. Update Implementation-Dependent Format Expectations (Line Changes)**
+```typescript
+// BEFORE - Phase 2 hadn't been applied yet:
+expect(userId).toMatch(/^CEW2025_session_\d+_[a-z0-9]+$/);
+
+// AFTER - Matches new crypto format:
+expect(userId).toMatch(/^CEW2025_[a-f0-9]{32}$/);
+expect(userId).toHaveLength(37); // 8 + 1 + 32 = 37
+```
+
+**2. Replace Invalid Matchers with Valid Vitest Methods**
+```typescript
+// INVALID:
+expect(userId).toStartWith('CEW2025_');  // ❌ Chai doesn't support toStartWith()
+
+// VALID:
+// Use regex matching instead (already covers prefix validation)
+expect(userId).toMatch(/^CEW2025_/);
+// Or use substring comparison:
+expect(userId.substring(0, 8)).toBe('CEW2025_');
+```
+
+**3. Remove/Update Security Fallback Expectations**
+```typescript
+// BEFORE - Expected localStorage backup:
+if (databaseError) {
+  expect(result).toBe(localStorage.getItem('admin_status_user-123'));
+}
+
+// AFTER - Phase 2 security fix removed fallback:
+if (databaseError) {
+  expect(result).toBe(false); // Always fail safely, never use localStorage
+}
+```
+
+### File References
+
+**Files Updated for Format Changes:**
+- `F:\sstac-dashboard\src\lib\supabase-auth.test.ts:313-340` - CEW user ID generation format expectations
+- `F:\sstac-dashboard\src\lib\__tests__\auth-flow.test.ts:182-184` - Format consistency checks
+- `F:\sstac-dashboard\src\app\api\polls\submit\__tests__\route.test.ts:152` - Generation fallback format
+
+**Files Updated for Security Changes:**
+- `F:\sstac-dashboard\src\lib\admin-utils.test.ts:80-347` - Removed localStorage expectations, removed invalid syntax
+
+**Test Execution Results:**
+- Before fixes: 2 failed, 227 passed (invalid matcher error, syntax errors)
+- After fixes: 0 failed, 246 passed ✅
+- Build status: Success
+- CI/CD pipeline: All gates passing
+
+### Key Takeaway
+
+**When implementation changes occur, systematically update all dependent tests:** (1) Identify which tests depend on changed code, (2) Run tests to identify mismatches, (3) Update format expectations first, (4) Replace invalid matchers with valid alternatives, (5) Remove/update fallback/backup expectations that relied on old behavior.
+
+---
+
 ## 2026-01-24 - Native Modules in Serverless Environments [CRITICAL]
 
 **Date:** January 24, 2026
