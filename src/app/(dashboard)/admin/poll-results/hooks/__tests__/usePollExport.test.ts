@@ -36,6 +36,11 @@ describe('usePollExport', () => {
     total_votes: 100,
     combined_survey_votes: 60,
     combined_cew_votes: 40,
+    results: [
+      { option_index: 0, option_text: 'Option A', votes: 60 },
+      { option_index: 1, option_text: 'Option B', votes: 25 },
+      { option_index: 2, option_text: 'Option C', votes: 15 }
+    ],
     survey_results: [
       { option_index: 0, option_text: 'Option A', votes: 40 },
       { option_index: 1, option_text: 'Option B', votes: 15 },
@@ -63,6 +68,11 @@ describe('usePollExport', () => {
     total_votes: 80,
     combined_survey_votes: 50,
     combined_cew_votes: 30,
+    results: [
+      { option_index: 0, option_text: 'Item A', votes: 80, averageRank: 1.55 },
+      { option_index: 1, option_text: 'Item B', votes: 80, averageRank: 2.05 },
+      { option_index: 2, option_text: 'Item C', votes: 80, averageRank: 2.85 }
+    ],
     survey_results: [
       { option_index: 0, option_text: 'Item A', votes: 50, averageRank: 1.5 },
       { option_index: 1, option_text: 'Item B', votes: 50, averageRank: 2.0 },
@@ -88,6 +98,11 @@ describe('usePollExport', () => {
     total_votes: 100,
     combined_survey_votes: 60,
     combined_cew_votes: 40,
+    results: [
+      { option_index: 0, option_text: 'ecosystem', votes: 45 },
+      { option_index: 1, option_text: 'protection', votes: 35 },
+      { option_index: 2, option_text: 'health', votes: 20 }
+    ],
     survey_results: [],
     cew_results: [],
     wordcloud_words: [
@@ -105,9 +120,9 @@ describe('usePollExport', () => {
     avgFeasibility: 2.8,
     responses: 50,
     individualPairs: [
-      { userId: 'user-1', userType: 'twg', importance: 1, feasibility: 1 },
+      { userId: 'user-1', userType: 'authenticated', importance: 1, feasibility: 1 },
       { userId: 'user-2', userType: 'cew', importance: 2, feasibility: 3 },
-      { userId: 'user-3', userType: 'twg', importance: 4, feasibility: 2 },
+      { userId: 'user-3', userType: 'authenticated', importance: 4, feasibility: 2 },
       { userId: 'user-4', userType: 'cew', importance: 5, feasibility: 4 }
     ],
     ...overrides
@@ -304,9 +319,9 @@ describe('usePollExport', () => {
     // Data with different quadrant scenarios
     const matrixData = mockMatrixData({
       individualPairs: [
-        { userId: 'user-1', userType: 'twg', importance: 1, feasibility: 1 }, // HIGH PRIORITY
+        { userId: 'user-1', userType: 'authenticated', importance: 1, feasibility: 1 }, // HIGH PRIORITY
         { userId: 'user-2', userType: 'cew', importance: 1, feasibility: 4 }, // NO GO
-        { userId: 'user-3', userType: 'twg', importance: 4, feasibility: 1 }, // LONGER-TERM
+        { userId: 'user-3', userType: 'authenticated', importance: 4, feasibility: 1 }, // LONGER-TERM
         { userId: 'user-4', userType: 'cew', importance: 3, feasibility: 3 }  // POSSIBLY LATER?
       ]
     });

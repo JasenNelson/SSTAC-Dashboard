@@ -22,7 +22,7 @@ describe('FilterSidebar', () => {
     survey_results: [],
     cew_results: [],
     wordcloud_words: [],
-    results: undefined,
+    results: [],
     ...overrides
   });
 
