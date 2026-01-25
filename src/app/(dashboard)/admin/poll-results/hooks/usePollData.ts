@@ -262,7 +262,7 @@ export function usePollData() {
         const totalVotes = surveyVotes + cewVotes;
 
         const basePoll = surveyPoll || cewPoll;
-        const combinedPoll = {
+        const combinedPoll: PollResult = {
           ...basePoll,
           total_votes: totalVotes,
           results: pollResults,
@@ -272,6 +272,9 @@ export function usePollData() {
           is_wordcloud: group.isWordcloud,
           wordcloud_words: group.isWordcloud ? (wordcloudWords?.map(text => ({ text, value: 1 })) || []) : undefined,
           page_path: surveyPoll?.page_path || cewPoll?.page_path || '/survey-results/holistic-protection',
+          poll_index: group.poll_index,
+          question: group.question,
+          options: group.options,
           survey_results: surveyResults,
           cew_results: cewResults
         };
