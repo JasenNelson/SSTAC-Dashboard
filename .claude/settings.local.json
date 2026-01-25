@@ -38,7 +38,13 @@
       "Bash(gh project create:*)",
       "Bash(gh auth:*)",
       "Bash(npx supabase:*)",
-      "Bash(powershell -Command \"Test-Json -Path ''docs/_meta/docs-manifest.json''\")"
+      "Bash(powershell -Command \"Test-Json -Path ''docs/_meta/docs-manifest.json''\")",
+      "Bash(copy \"F:\\\\Regulatory-Review\\\\engine\\\\docs\\\\active\\\\development\\\\DEV_MANAGER_HANDOFF.md\" \"F:\\\\Regulatory-Review\\\\engine\\\\docs\\\\archive\\\\2026-01\\\\DEV_MANAGER_HANDOFF_v129.0_ARCHIVED.md\")",
+      "Bash(python engine/scripts/sync_tier2_to_dashboard.py:*)",
+      "Skill(mcp-builder)",
+      "WebFetch(domain:docs.vercel.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(python:*)"
     ]
   }
 }
