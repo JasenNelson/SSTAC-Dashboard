@@ -85,7 +85,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique filename
-    const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
     const filePath = `review-files/${user.id}/${fileName}`
 
