@@ -5,7 +5,6 @@
  */
 
 import type {
-  Poll,
   PollResults,
   RankingResults,
   WordcloudResults,
@@ -88,6 +87,7 @@ export interface GetPollResultsResponse extends ApiResponse<PollResults> {
 }
 
 // POST /api/polls/submit
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SubmitPollRequest extends PollSubmitPayload {}
 
 export interface SubmitPollResponse extends ApiResponse<{ pollId: string }> {
@@ -105,6 +105,7 @@ export interface GetRankingResultsResponse extends ApiResponse<RankingResults> {
 }
 
 // POST /api/ranking-polls/submit
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SubmitRankingRequest extends RankingSubmitPayload {}
 
 export interface SubmitRankingResponse extends ApiResponse<{ pollId: string }> {
@@ -117,9 +118,11 @@ export interface GetWordcloudResultsRequest {
   pageContext?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetWordcloudResultsResponse extends ApiResponse<WordcloudResults> {}
 
 // POST /api/wordcloud-polls/submit
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SubmitWordcloudRequest extends WordcloudSubmitPayload {}
 
 export interface SubmitWordcloudResponse extends ApiResponse<{ pollId: string }> {
@@ -137,11 +140,14 @@ export interface GetDiscussionsRequest {
   sortBy?: 'newest' | 'popular' | 'mostReplied';
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetDiscussionsResponse extends PaginatedResponse<Discussion> {}
 
 // POST /api/discussions
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateDiscussionRequest extends DiscussionCreatePayload {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateDiscussionResponse extends ApiResponse<Discussion> {}
 
 // GET /api/discussions/[id]
@@ -149,6 +155,7 @@ export interface GetDiscussionRequest {
   id: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetDiscussionResponse extends ApiResponse<Discussion & { replies: DiscussionReply[] }> {}
 
 // GET /api/discussions/[id]/replies
@@ -158,11 +165,14 @@ export interface GetDiscussionRepliesRequest {
   pageSize?: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetDiscussionRepliesResponse extends PaginatedResponse<DiscussionReply> {}
 
 // POST /api/discussions/[id]/replies
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateReplyRequest extends DiscussionReplyPayload {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateReplyResponse extends ApiResponse<DiscussionReply> {}
 
 // =============================================================================
@@ -176,11 +186,14 @@ export interface GetDocumentsRequest {
   pageSize?: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetDocumentsResponse extends PaginatedResponse<Document> {}
 
 // POST /api/documents
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateDocumentRequest extends DocumentCreatePayload {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateDocumentResponse extends ApiResponse<Document> {}
 
 // GET /api/documents/[id]
@@ -188,9 +201,11 @@ export interface GetDocumentRequest {
   id: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetDocumentResponse extends ApiResponse<Document> {}
 
 // DELETE /api/documents/[id]
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DeleteDocumentResponse extends ApiResponse<{ deleted: boolean }> {}
 
 // =============================================================================
@@ -202,11 +217,14 @@ export interface GetTagsRequest {
   search?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetTagsResponse extends ApiResponse<Tag[]> {}
 
 // POST /api/tags
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateTagRequest extends TagCreatePayload {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateTagResponse extends ApiResponse<Tag> {}
 
 // =============================================================================
@@ -219,11 +237,14 @@ export interface GetAnnouncementsRequest {
   priority?: 'low' | 'medium' | 'high';
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetAnnouncementsResponse extends ApiResponse<Announcement[]> {}
 
 // POST /api/announcements (Admin only)
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateAnnouncementRequest extends AnnouncementCreatePayload {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateAnnouncementResponse extends ApiResponse<Announcement> {}
 
 // =============================================================================
@@ -236,11 +257,14 @@ export interface GetMilestonesRequest {
   sortBy?: 'date' | 'priority';
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetMilestonesResponse extends ApiResponse<Milestone[]> {}
 
 // POST /api/milestones (Admin only)
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateMilestoneRequest extends MilestoneCreatePayload {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateMilestoneResponse extends ApiResponse<Milestone> {}
 
 // =============================================================================
@@ -275,6 +299,7 @@ export interface ReviewUploadRequest {
   fileType: 'document' | 'evidence' | 'attachment';
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ReviewUploadResponse extends ApiResponse<{
   fileId: string;
   fileName: string;
@@ -329,6 +354,7 @@ export interface GetRegulatoryAssessmentDetailRequest {
   csapId: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetRegulatoryAssessmentDetailResponse extends ApiResponse<RegulatoryAssessment & {
   judgment?: RegulatoryJudgment;
   relatedAssessments?: RegulatoryAssessment[];
@@ -345,6 +371,7 @@ export interface CreateJudgmentRequest {
   routingReason?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CreateJudgmentResponse extends ApiResponse<RegulatoryJudgment> {}
 
 // GET /api/regulatory-review/progress
@@ -352,6 +379,7 @@ export interface GetReviewProgressRequest {
   submissionId: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetReviewProgressResponse extends ApiResponse<{
   total: number;
   reviewed: number;
@@ -366,6 +394,7 @@ export interface GetValidationStatsRequest {
   validationType?: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetValidationStatsResponse extends ApiResponse<{
   total: number;
   passed: number;
@@ -378,6 +407,7 @@ export interface GetMatchingDetailRequest {
   assessmentId: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetMatchingDetailResponse extends ApiResponse<{
   csapId: string;
   keywordsMatched: string[];
@@ -396,6 +426,7 @@ export interface RunAssessmentEngineRequest {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RunAssessmentEngineResponse extends ApiResponse<{
   jobId: string;
   status: 'queued' | 'processing' | 'completed' | 'failed';
@@ -412,6 +443,7 @@ export interface GetMatrixDataRequest {
   includeRankings?: boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface GetMatrixDataResponse extends ApiResponse<{
   xAxis: string; // Axis label
   yAxis: string; // Axis label
@@ -442,6 +474,7 @@ export interface AuthCallbackRequest {
   state: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AuthCallbackResponse extends ApiResponse<{
   accessToken: string;
   refreshToken?: string;
@@ -471,12 +504,14 @@ export interface SearchResult {
   score: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SearchResponse extends ApiResponse<SearchResult[]> {}
 
 // =============================================================================
 // Health Check & System Endpoints
 // =============================================================================
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface HealthCheckResponse extends ApiResponse<{
   status: 'healthy' | 'degraded' | 'down';
   timestamp: string;

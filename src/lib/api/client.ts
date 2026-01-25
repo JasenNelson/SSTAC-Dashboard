@@ -191,7 +191,7 @@ export class ApiClient {
   async getPollData(pagePath: string, pollIndex: number) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('polls')
           .select('*')
@@ -205,7 +205,7 @@ export class ApiClient {
   async getPollResults(pagePath: string, pollIndex: number) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('poll_results')
           .select('*')
@@ -219,7 +219,7 @@ export class ApiClient {
   async getUserPollVote(pollId: string, userId: string) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('poll_votes')
           .select('*')
@@ -238,7 +238,7 @@ export class ApiClient {
   ) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase.from('poll_votes').insert({
           poll_id: pollId,
           user_id: userId,
@@ -257,7 +257,7 @@ export class ApiClient {
   async getRankingPollData(pagePath: string, pollIndex: number) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('ranking_polls')
           .select('*')
@@ -271,7 +271,7 @@ export class ApiClient {
   async getRankingResults(pagePath: string, pollIndex: number) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('ranking_results')
           .select('*')
@@ -295,7 +295,7 @@ export class ApiClient {
     }));
 
     return this.executeQuery(
-      () => supabase.from('ranking_votes').insert(votes),
+      async () => supabase.from('ranking_votes').insert(votes),
       `submitRankingVotes(${pollId}, ${rankings.length} items)`
     );
   }
@@ -307,7 +307,7 @@ export class ApiClient {
   async getWordcloudPollData(pagePath: string, pollIndex: number) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('wordcloud_polls')
           .select('*')
@@ -321,7 +321,7 @@ export class ApiClient {
   async getWordcloudResults(pagePath: string, pollIndex: number) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('wordcloud_results')
           .select('*')
@@ -335,7 +335,7 @@ export class ApiClient {
   async submitWordcloudVote(pollId: string, userId: string | null, word: string) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase.from('wordcloud_votes').insert({
           poll_id: pollId,
           user_id: userId,
@@ -353,7 +353,7 @@ export class ApiClient {
   async getDiscussions(limit: number = 20, offset: number = 0) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('discussions')
           .select('*')
@@ -366,7 +366,7 @@ export class ApiClient {
   async getDiscussionById(discussionId: string) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('discussions')
           .select('*')
@@ -379,7 +379,7 @@ export class ApiClient {
   async createDiscussion(title: string, content: string, userId: string, userEmail: string) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase.from('discussions').insert({
           title,
           content,
@@ -395,7 +395,7 @@ export class ApiClient {
   async getDiscussionReplies(discussionId: string, limit: number = 50, offset: number = 0) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('discussion_replies')
           .select('*')
@@ -409,7 +409,7 @@ export class ApiClient {
   async createDiscussionReply(discussionId: string, content: string, userId: string, userEmail: string) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase.from('discussion_replies').insert({
           discussion_id: discussionId,
           content,
@@ -438,7 +438,7 @@ export class ApiClient {
     }
 
     return this.executeQuery(
-      () => query.range(offset, offset + limit - 1),
+      async () => query.range(offset, offset + limit - 1),
       `getDocuments(tag=${tag}, limit=${limit})`
     );
   }
@@ -446,7 +446,7 @@ export class ApiClient {
   async getDocumentById(documentId: string) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('documents')
           .select('*')
@@ -463,7 +463,7 @@ export class ApiClient {
   async getTags() {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () => supabase.from('tags').select('*').order('name', { ascending: true }),
+      async () => supabase.from('tags').select('*').order('name', { ascending: true }),
       'getTags()'
     );
   }
@@ -471,7 +471,7 @@ export class ApiClient {
   async createTag(name: string, color: string, userId: string) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase.from('tags').insert({
           name,
           color,
@@ -490,7 +490,7 @@ export class ApiClient {
   async getAnnouncements() {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('announcements')
           .select('*')
@@ -504,7 +504,7 @@ export class ApiClient {
   async getMilestones() {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('milestones')
           .select('*')
@@ -521,7 +521,7 @@ export class ApiClient {
   async getReviewSubmission(submissionId: string) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('review_submissions')
           .select('*')
@@ -540,7 +540,7 @@ export class ApiClient {
 
     if (submissionId) {
       return this.executeQuery(
-        () =>
+        async () =>
           supabase
             .from('review_submissions')
             .update({
@@ -553,7 +553,7 @@ export class ApiClient {
     }
 
     return this.executeQuery(
-      () =>
+      async () =>
         supabase.from('review_submissions').insert({
           user_id: userId,
           status: 'draft',
@@ -568,7 +568,7 @@ export class ApiClient {
   async submitReviewSubmission(submissionId: string) {
     const supabase = await createAuthenticatedClient();
     return this.executeQuery(
-      () =>
+      async () =>
         supabase
           .from('review_submissions')
           .update({

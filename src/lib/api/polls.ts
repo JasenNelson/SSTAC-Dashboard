@@ -49,6 +49,10 @@ export async function getPollWithUserVote(
       throw new Error(`Failed to fetch poll results: ${resultsError.message}`);
     }
 
+    if (!resultsData) {
+      return { results: null };
+    }
+
     // Get user's vote if authenticated
     let userVote: number | null = null;
     let userOtherText: string | null = null;
@@ -158,6 +162,10 @@ export async function getRankingPollWithUserVote(
       throw new Error(`Failed to fetch ranking results: ${resultsError.message}`);
     }
 
+    if (!resultsData) {
+      return { results: null };
+    }
+
     return {
       results: resultsData as RankingResults,
     };
@@ -236,6 +244,10 @@ export async function getWordcloudResults(
 
     if (resultsError && resultsError.code !== 'PGRST116') {
       throw new Error(`Failed to fetch wordcloud results: ${resultsError.message}`);
+    }
+
+    if (!resultsData) {
+      return { results: null };
     }
 
     return {

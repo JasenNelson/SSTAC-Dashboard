@@ -29,6 +29,7 @@
     "@sentry/nextjs": "^10.22.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.54.0",
+    "@upstash/redis": "^1.36.1",
     "@vercel/speed-insights": "^1.2.0",
     "better-sqlite3": "^12.6.0",
     "html2canvas": "^1.4.1",

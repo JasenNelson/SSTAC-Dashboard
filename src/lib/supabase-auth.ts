@@ -229,25 +229,15 @@ export function generateCEWUserId(authCode: string = 'CEW2025', sessionId?: stri
   // Task 2.5 Security Fix: Use cryptographically secure random generation
   // No longer using timestamp-based IDs which are guessable
   try {
-    // Import dynamically to avoid CommonJS/ESM issues
-    const { randomBytes } = require('crypto');
     const randomHex = randomBytes(16).toString('hex');
     return `${authCode}_${randomHex}`;
   } catch {
     // Fallback for environments where crypto isn't available
-    // Still cryptographically secure if using Node.js crypto
-    const { randomBytes } = require('crypto');
-    try {
-      const randomHex = randomBytes(16).toString('hex');
-      return `${authCode}_${randomHex}`;
-    } catch {
-      // Last resort: use Math.random() only if crypto unavailable
-      // (should never happen in production)
-      const fallbackRandom = Array.from({ length: 32 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join('');
-      return `${authCode}_${fallbackRandom}`;
-    }
+    // (should never happen in production)
+    const fallbackRandom = Array.from({ length: 32 }, () =>
+      Math.floor(Math.random() * 16).toString(16)
+    ).join('');
+    return `${authCode}_${fallbackRandom}`;
   }
 }
 
