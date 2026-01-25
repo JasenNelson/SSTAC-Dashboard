@@ -2,15 +2,12 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { PollResult, MatrixData } from '../types';
+import { PollResult, MatrixData, PollGroupEntry, CacheEntry, PollResultItem } from '../types';
 
 // Cache configuration
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
-interface CacheEntry {
-  data: PollResult[];
-  timestamp: number;
-}
+// CacheEntry moved to types.ts
 
 // Global cache to share data across hook instances
 const pollDataCache = new Map<string, CacheEntry>();
@@ -88,15 +85,7 @@ export function usePollData() {
       ];
 
       // Group polls by question to combine survey-results and cew-polls data
-      const pollGroups = new Map<string, {
-        surveyPoll?: any;
-        cewPoll?: any;
-        isRanking: boolean;
-        isWordcloud?: boolean;
-        question: string;
-        poll_index: number;
-        options: string[];
-      }>();
+      const pollGroups = new Map<string, PollGroupEntry>();
 
       // Process single-choice polls
       singleChoiceData.forEach(poll => {
@@ -225,21 +214,21 @@ export function usePollData() {
       });
 
       // Combine results from survey and CEW polls
-      const combinedResults: any[] = [];
+      const combinedResults: PollResult[] = [];
 
       pollGroups.forEach((group, key) => {
         const surveyPoll = group.surveyPoll;
         const cewPoll = group.cewPoll;
 
-        let pollResults: any[] = [];
-        let surveyResults: any[] = [];
-        let cewResults: any[] = [];
+        let pollResults: PollResultItem[] = [];
+        let surveyResults: PollResultItem[] = [];
+        let cewResults: PollResultItem[] = [];
         let surveyVotes = 0;
         let cewVotes = 0;
         let wordcloudWords: string[] | null = null;
 
         if (group.isWordcloud && surveyPoll) {
-          const words = (surveyPoll.results || []).map((r: any) => r.text || r.word);
+          const words = (surveyPoll.results || []).map((r: PollResultItem) => r.option_text);
           wordcloudWords = Array.from(new Set(words));
           pollResults = surveyPoll.results || [];
         } else if (!group.isRanking && surveyPoll) {
@@ -281,7 +270,7 @@ export function usePollData() {
           combined_cew_votes: cewVotes,
           is_ranking: group.isRanking,
           is_wordcloud: group.isWordcloud,
-          wordcloud_words: group.isWordcloud ? (wordcloudWords || []) : undefined,
+          wordcloud_words: group.isWordcloud ? (wordcloudWords?.map(text => ({ text, value: 1 })) || []) : undefined,
           page_path: surveyPoll?.page_path || cewPoll?.page_path || '/survey-results/holistic-protection',
           survey_results: surveyResults,
           cew_results: cewResults
