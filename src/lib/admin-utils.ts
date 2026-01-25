@@ -1,15 +1,20 @@
-// src/lib/admin-utils.ts
-// Utility functions for admin status management across components
+/**
+ * Admin Status Verification Utility
+ * Task 2.1 Security Fix - Removed localStorage fallback
+ *
+ * SECURITY: Admin status is ALWAYS verified server-side through Supabase auth
+ * No client-side caching or localStorage fallbacks allowed
+ */
 
 import { createClient } from '@/lib/supabase/client';
 
 // Throttling mechanism to prevent excessive calls
 let lastRefreshTime = 0;
-const REFRESH_THROTTLE_MS = 50; // 50ms minimum between calls (minimal throttling for production)
+const REFRESH_THROTTLE_MS = 50; // 50ms minimum between calls
 
 /**
- * Global function to refresh admin status
- * This can be called from any component to ensure admin badge persistence
+ * Refresh admin status - ALWAYS checks server, never falls back to localStorage
+ * SECURITY: This function must ALWAYS verify against Supabase, not cache
  */
 export async function refreshGlobalAdminStatus(force = false): Promise<boolean> {
   try {
@@ -19,26 +24,17 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
       if (process.env.NODE_ENV === 'development') {
         console.log('⏰ Admin status refresh throttled - too soon since last call');
       }
-      // Return cached admin status instead of false
-      try {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const backupAdminStatus = localStorage.getItem(`admin_status_${user.id}`);
-          return backupAdminStatus === 'true';
-        }
-      } catch (error) {
-        console.error('❌ Error checking cached admin status:', error);
-      }
+      // During throttle period, return false (safer default)
+      // Do not check localStorage
       return false;
     }
     lastRefreshTime = now;
 
     const supabase = createClient();
-    
+
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
+
     if (userError || !user) {
       if (process.env.NODE_ENV === 'development') {
         console.log('⚠️ No user found during admin status refresh');
@@ -47,10 +43,10 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
     }
 
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Refreshing admin status for user:', user.email);
+      console.log('🔄 Verifying admin status for user:', user.email);
     }
 
-    // Check if user has admin role
+    // Check if user has admin role in database
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
       .select('role')
@@ -60,70 +56,40 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
 
     if (roleError) {
       console.error('❌ Error checking admin role:', roleError);
-      
-      // Check localStorage backup
-      const backupAdminStatus = localStorage.getItem(`admin_status_${user.id}`);
-      if (backupAdminStatus === 'true') {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('✅ Admin status restored from localStorage backup');
-        }
-        return true;
-      }
-      
+      // SECURITY: On error, return false, never fall back to localStorage
       return false;
     }
 
     const isAdmin = !!roleData;
-    
+
     if (isAdmin) {
-      // Update localStorage backup
-      localStorage.setItem(`admin_status_${user.id}`, 'true');
       if (process.env.NODE_ENV === 'development') {
-        console.log('✅ Admin status confirmed and backed up');
+        console.log('✅ User verified as admin');
       }
     } else {
-      // Remove localStorage backup if not admin
-      localStorage.removeItem(`admin_status_${user.id}`);
       if (process.env.NODE_ENV === 'development') {
-        console.log('ℹ️ User is not admin - backup cleared');
+        console.log('ℹ️ User is not admin');
       }
     }
 
     return isAdmin;
   } catch (error) {
     console.error('❌ Error in refreshGlobalAdminStatus:', error);
-    
-    // Try to restore from localStorage as fallback
-    try {
-      const fallbackSupabase = createClient();
-      const { data: { user } } = await fallbackSupabase.auth.getUser();
-      if (user) {
-        const backupAdminStatus = localStorage.getItem(`admin_status_${user.id}`);
-        if (backupAdminStatus === 'true') {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('✅ Admin status restored from localStorage fallback');
-          }
-          return true;
-        }
-      }
-    } catch (fallbackError) {
-      console.error('❌ Fallback error:', fallbackError);
-    }
-    
+    // SECURITY: Always return false on error, never attempt localStorage fallback
     return false;
   }
 }
 
 /**
  * Check if current user has admin role
- * Returns boolean indicating admin status
+ * SECURITY: ALWAYS verifies against server, no localStorage fallback
  */
 export async function checkCurrentUserAdminStatus(): Promise<boolean> {
   try {
     const supabase = createClient();
-    
+
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    
+
     if (userError || !user) {
       return false;
     }
@@ -136,57 +102,41 @@ export async function checkCurrentUserAdminStatus(): Promise<boolean> {
       .maybeSingle();
 
     if (roleError) {
-      // Check localStorage backup
-      const backupAdminStatus = localStorage.getItem(`admin_status_${user.id}`);
-      return backupAdminStatus === 'true';
+      console.error('❌ Error checking admin role:', roleError);
+      // SECURITY: Return false on error, do not check localStorage
+      return false;
     }
 
     const isAdmin = !!roleData;
-    
-    // Update localStorage backup
-    if (isAdmin) {
-      localStorage.setItem(`admin_status_${user.id}`, 'true');
-    } else {
-      localStorage.removeItem(`admin_status_${user.id}`);
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 Admin status check: ${isAdmin ? '✅ Admin' : '❌ Not admin'}`);
     }
 
     return isAdmin;
   } catch (error) {
     console.error('❌ Error checking admin status:', error);
-    
-    // Try localStorage fallback
-    try {
-      const fallbackSupabase = createClient();
-      const { data: { user } } = await fallbackSupabase.auth.getUser();
-      if (user) {
-        const backupAdminStatus = localStorage.getItem(`admin_status_${user.id}`);
-        return backupAdminStatus === 'true';
-      }
-    } catch (fallbackError) {
-      console.error('❌ Fallback error:', fallbackError);
-    }
-    
+    // SECURITY: Return false on any error
     return false;
   }
 }
 
 /**
- * Clear admin status backup for current user
- * Useful during logout or role changes
+ * Clear any cached admin data
+ * Called during logout or role changes
  */
 export async function clearAdminStatusBackup(): Promise<void> {
   try {
     const supabase = createClient();
-    
+
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (user) {
-      localStorage.removeItem(`admin_status_${user.id}`);
       if (process.env.NODE_ENV === 'development') {
-        console.log('🧹 Admin status backup cleared for user:', user.email);
+        console.log('🧹 Admin verification requested for user:', user.email);
       }
     }
   } catch (error) {
-    console.error('❌ Error clearing admin status backup:', error);
+    console.error('❌ Error during admin status clear:', error);
   }
 }
