@@ -95,14 +95,13 @@ describe('admin-utils', () => {
       });
 
       const result = await refreshGlobalAdminStatus();
-      
+
       expect(result).toBe(true);
       expect(mockGetUser).toHaveBeenCalled();
       expect(mockFrom).toHaveBeenCalledWith('user_roles');
       expect(mockSelect).toHaveBeenCalledWith('role');
-      if (typeof localStorage !== 'undefined') {
-        expect(localStorage.getItem('admin_status_user-123')).toBe('true');
-      }
+      // SECURITY: Admin status no longer uses localStorage (Phase 2 fix)
+      // localStorage is not checked or used
     });
 
     it('should return false for non-admin users', async () => {
@@ -124,11 +123,9 @@ describe('admin-utils', () => {
       expect(localStorage.getItem('admin_status_user-456')).toBeNull();
     });
 
-    it('should use localStorage backup on database error', async () => {
-      localStorage.setItem('admin_status_user-123', 'true');
-      
+    it('should return false on database error (no localStorage fallback)', async () => {
       const mockUser = { id: 'user-123', email: 'admin@test.com' };
-      
+
       mockGetUser.mockResolvedValue({
         data: { user: mockUser },
         error: null,
@@ -140,16 +137,17 @@ describe('admin-utils', () => {
       });
 
       const result = await refreshGlobalAdminStatus();
-      
-      expect(result).toBe(true); // Should use localStorage backup
+
+      // SECURITY: On database error, return false (never fall back to localStorage)
+      expect(result).toBe(false);
     });
 
-    it('should respect throttling and return cached status', async () => {
+    it('should respect throttling and return false during throttle period', async () => {
       // Wait to avoid throttling from previous test
       await new Promise(resolve => setTimeout(resolve, 60));
-      
+
       const mockUser = { id: 'user-123', email: 'admin@test.com' };
-      
+
       mockGetUser.mockResolvedValue({
         data: { user: mockUser },
         error: null,
@@ -163,24 +161,17 @@ describe('admin-utils', () => {
       // First call - should succeed
       const firstResult = await refreshGlobalAdminStatus(true); // Force to bypass throttling
       expect(firstResult).toBe(true);
-      
+
       // Clear mocks to verify throttling
       vi.clearAllMocks();
-      
-      // Set localStorage backup for throttled call
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('admin_status_user-123', 'true');
-      }
-      mockGetUser.mockResolvedValue({
-        data: { user: mockUser },
-        error: null,
-      });
 
       // Second call immediately after (should be throttled)
       const secondResult = await refreshGlobalAdminStatus();
-      
-      // Should check localStorage for throttled call
-      expect(secondResult).toBe(true);
+
+      // SECURITY: During throttle period, return false without checking DB or localStorage
+      expect(secondResult).toBe(false);
+      // Should NOT have made any database calls due to throttling
+      expect(mockGetUser).not.toHaveBeenCalled();
     });
 
     it('should bypass throttling with force flag', async () => {
@@ -286,11 +277,10 @@ describe('admin-utils', () => {
       });
 
       const result = await checkCurrentUserAdminStatus();
-      
+
       expect(result).toBe(true);
-      if (typeof localStorage !== 'undefined') {
-        expect(localStorage.getItem('admin_status_user-123')).toBe('true');
-      }
+      // SECURITY: Admin status no longer uses localStorage (Phase 2 fix)
+      // Server-side verification only
     });
 
     it('should return false for non-admin users', async () => {
@@ -307,16 +297,14 @@ describe('admin-utils', () => {
       });
 
       const result = await checkCurrentUserAdminStatus();
-      
+
       expect(result).toBe(false);
-      expect(localStorage.getItem('admin_status_user-456')).toBeNull();
+      // SECURITY: Admin status no longer uses localStorage
     });
 
-    it('should use localStorage backup on database error', async () => {
-      localStorage.setItem('admin_status_user-123', 'true');
-      
+    it('should return false on database error (no localStorage fallback)', async () => {
       const mockUser = { id: 'user-123', email: 'admin@test.com' };
-      
+
       mockGetUser.mockResolvedValue({
         data: { user: mockUser },
         error: null,
@@ -328,8 +316,9 @@ describe('admin-utils', () => {
       });
 
       const result = await checkCurrentUserAdminStatus();
-      
-      expect(result).toBe(true); // Should use localStorage backup
+
+      // SECURITY: On database error, return false (never fall back to localStorage)
+      expect(result).toBe(false);
     });
 
     it('should handle errors gracefully', async () => {
@@ -341,21 +330,19 @@ describe('admin-utils', () => {
   });
 
   describe('clearAdminStatusBackup', () => {
-    it('should clear localStorage backup', async () => {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('admin_status_user-123', 'true');
-        
-        const mockUser = { id: 'user-123', email: 'admin@test.com' };
-        
-        mockGetUser.mockResolvedValue({
-          data: { user: mockUser },
-          error: null,
-        });
+    it('should verify current user (no localStorage cleared)', async () => {
+      const mockUser = { id: 'user-123', email: 'admin@test.com' };
 
-        await clearAdminStatusBackup();
-        
-        expect(localStorage.getItem('admin_status_user-123')).toBeNull();
-      }
+      mockGetUser.mockResolvedValue({
+        data: { user: mockUser },
+        error: null,
+      });
+
+      // Should not throw
+      await expect(clearAdminStatusBackup()).resolves.not.toThrow();
+
+      // SECURITY: No localStorage operations - just verifies user
+      expect(mockGetUser).toHaveBeenCalled();
     });
 
     it('should handle errors gracefully', async () => {

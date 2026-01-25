@@ -176,11 +176,12 @@ describe('Authentication Flow Tests', () => {
     it('should generate fallback IDs when no session ID provided', () => {
       const userId1 = generateCEWUserId('CEW2025', null);
       const userId2 = generateCEWUserId('CEW2025', null);
-      
-      // Should be different due to timestamp/random
-      // Format: CEW2025_session_{timestamp}_{randomSuffix}
-      expect(userId1).toMatch(/^CEW2025_session_\d+_[a-z0-9]+$/);
-      expect(userId2).toMatch(/^CEW2025_session_\d+_[a-z0-9]+$/);
+
+      // Should be different due to cryptographic randomness
+      // Format: CEW2025_{32-char-hex} from crypto.randomBytes(16)
+      expect(userId1).toMatch(/^CEW2025_[a-f0-9]{32}$/);
+      expect(userId2).toMatch(/^CEW2025_[a-f0-9]{32}$/);
+      expect(userId1).not.toBe(userId2); // Should be cryptographically different
     });
   });
 
