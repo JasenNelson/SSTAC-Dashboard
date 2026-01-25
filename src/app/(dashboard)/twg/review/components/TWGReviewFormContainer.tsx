@@ -1,18 +1,22 @@
 'use client'
 
+import { Suspense, lazy } from 'react'
 import type { ReviewSection } from '../types'
-import Part1ReviewerInformation from '../parts/Part1ReviewerInformation'
-import Part2HighLevelAssessment from '../parts/Part2HighLevelAssessment'
-import Part3LineByLineComments from '../parts/Part3LineByLineComments'
-import Part4MatrixFramework from '../parts/Part4MatrixFramework'
-import Part5TieredApproach from '../parts/Part5TieredApproach'
-import Part6IndigenousKnowledge from '../parts/Part6IndigenousKnowledge'
-import Part7Prioritization from '../parts/Part7Prioritization'
-import Part8FinalRecommendations from '../parts/Part8FinalRecommendations'
-import Part9StrategicPathways from '../parts/Part9StrategicPathways'
-import Part10Conclusions from '../parts/Part10Conclusions'
-import Part11EngagementInsights from '../parts/Part11EngagementInsights'
-import Part12WhatWeHeard from '../parts/Part12WhatWeHeard'
+import { PartLoadingFallback } from './PartLoadingFallback'
+import { PartErrorBoundary } from './PartErrorBoundary'
+
+const Part1ReviewerInformation = lazy(() => import('../parts/Part1ReviewerInformation'))
+const Part2HighLevelAssessment = lazy(() => import('../parts/Part2HighLevelAssessment'))
+const Part3LineByLineComments = lazy(() => import('../parts/Part3LineByLineComments'))
+const Part4MatrixFramework = lazy(() => import('../parts/Part4MatrixFramework'))
+const Part5TieredApproach = lazy(() => import('../parts/Part5TieredApproach'))
+const Part6IndigenousKnowledge = lazy(() => import('../parts/Part6IndigenousKnowledge'))
+const Part7Prioritization = lazy(() => import('../parts/Part7Prioritization'))
+const Part8FinalRecommendations = lazy(() => import('../parts/Part8FinalRecommendations'))
+const Part9StrategicPathways = lazy(() => import('../parts/Part9StrategicPathways'))
+const Part10Conclusions = lazy(() => import('../parts/Part10Conclusions'))
+const Part11EngagementInsights = lazy(() => import('../parts/Part11EngagementInsights'))
+const Part12WhatWeHeard = lazy(() => import('../parts/Part12WhatWeHeard'))
 
 interface TWGReviewFormContainerProps {
   currentSection: number
@@ -72,87 +76,135 @@ export function TWGReviewFormContainer({
 
         {/* Form Sections */}
         {currentSection === 1 && (
-          <Part1ReviewerInformation
-            data={formData.part1 || {}}
-            onChange={(data) => onUpdateFormData('part1', data)}
-          />
+          <PartErrorBoundary partNumber={1}>
+            <Suspense fallback={<PartLoadingFallback />}>
+              <Part1ReviewerInformation
+                data={formData.part1 || {}}
+                onChange={(data) => onUpdateFormData('part1', data)}
+              />
+            </Suspense>
+          </PartErrorBoundary>
         )}
 
         {currentSection === 2 && (
-          <Part2HighLevelAssessment
-            data={formData.part2 || {}}
-            onChange={(data) => onUpdateFormData('part2', data)}
-          />
+          <PartErrorBoundary partNumber={2}>
+            <Suspense fallback={<PartLoadingFallback />}>
+              <Part2HighLevelAssessment
+                data={formData.part2 || {}}
+                onChange={(data) => onUpdateFormData('part2', data)}
+              />
+            </Suspense>
+          </PartErrorBoundary>
         )}
 
         {currentSection === 3 && (
-          <Part3LineByLineComments
-            data={formData.part3 || {}}
-            onChange={(data) => onUpdateFormData('part3', data)}
-          />
+          <PartErrorBoundary partNumber={3}>
+            <Suspense fallback={<PartLoadingFallback />}>
+              <Part3LineByLineComments
+                data={formData.part3 || {}}
+                onChange={(data) => onUpdateFormData('part3', data)}
+              />
+            </Suspense>
+          </PartErrorBoundary>
         )}
 
         {currentSection === 4 && (
-          <Part4MatrixFramework
-            data={formData.part4 || {}}
-            onChange={(data) => onUpdateFormData('part4', data)}
-          />
+          <PartErrorBoundary partNumber={4}>
+            <Suspense fallback={<PartLoadingFallback />}>
+              <Part4MatrixFramework
+                data={formData.part4 || {}}
+                onChange={(data) => onUpdateFormData('part4', data)}
+              />
+            </Suspense>
+          </PartErrorBoundary>
         )}
 
         {currentSection === 5 && (
-          <Part5TieredApproach
-            data={formData.part5 || {}}
-            onChange={(data) => onUpdateFormData('part5', data)}
-          />
+          <PartErrorBoundary partNumber={5}>
+            <Suspense fallback={<PartLoadingFallback />}>
+              <Part5TieredApproach
+                data={formData.part5 || {}}
+                onChange={(data) => onUpdateFormData('part5', data)}
+              />
+            </Suspense>
+          </PartErrorBoundary>
         )}
 
         {currentSection === 6 && (
-          <Part6IndigenousKnowledge
-            data={formData.part6 || {}}
-            onChange={(data) => onUpdateFormData('part6', data)}
-          />
+          <PartErrorBoundary partNumber={6}>
+            <Suspense fallback={<PartLoadingFallback />}>
+              <Part6IndigenousKnowledge
+                data={formData.part6 || {}}
+                onChange={(data) => onUpdateFormData('part6', data)}
+              />
+            </Suspense>
+          </PartErrorBoundary>
         )}
 
         {currentSection === 7 && (
-          <Part7Prioritization
-            data={formData.part7 || {}}
-            onChange={(data) => onUpdateFormData('part7', data)}
-          />
+          <PartErrorBoundary partNumber={7}>
+            <Suspense fallback={<PartLoadingFallback />}>
+              <Part7Prioritization
+                data={formData.part7 || {}}
+                onChange={(data) => onUpdateFormData('part7', data)}
+              />
+            </Suspense>
+          </PartErrorBoundary>
         )}
 
         {currentSection === 8 && (
-          <Part8FinalRecommendations
-            data={formData.part8 || {}}
-            onChange={(data) => onUpdateFormData('part8', data)}
-          />
+          <PartErrorBoundary partNumber={8}>
+            <Suspense fallback={<PartLoadingFallback />}>
+              <Part8FinalRecommendations
+                data={formData.part8 || {}}
+                onChange={(data) => onUpdateFormData('part8', data)}
+              />
+            </Suspense>
+          </PartErrorBoundary>
         )}
 
         {currentSection === 9 && (
-          <Part9StrategicPathways
-            data={formData.part9 || {}}
-            onChange={(data) => onUpdateFormData('part9', data)}
-          />
+          <PartErrorBoundary partNumber={9}>
+            <Suspense fallback={<PartLoadingFallback />}>
+              <Part9StrategicPathways
+                data={formData.part9 || {}}
+                onChange={(data) => onUpdateFormData('part9', data)}
+              />
+            </Suspense>
+          </PartErrorBoundary>
         )}
 
         {currentSection === 10 && (
-          <Part10Conclusions
-            data={formData.part10 || {}}
-            onChange={(data) => onUpdateFormData('part10', data)}
-          />
+          <PartErrorBoundary partNumber={10}>
+            <Suspense fallback={<PartLoadingFallback />}>
+              <Part10Conclusions
+                data={formData.part10 || {}}
+                onChange={(data) => onUpdateFormData('part10', data)}
+              />
+            </Suspense>
+          </PartErrorBoundary>
         )}
 
         {currentSection === 11 && (
-          <Part11EngagementInsights
-            data={formData.part11 || {}}
-            onChange={(data) => onUpdateFormData('part11', data)}
-          />
+          <PartErrorBoundary partNumber={11}>
+            <Suspense fallback={<PartLoadingFallback />}>
+              <Part11EngagementInsights
+                data={formData.part11 || {}}
+                onChange={(data) => onUpdateFormData('part11', data)}
+              />
+            </Suspense>
+          </PartErrorBoundary>
         )}
 
         {currentSection === 12 && (
-          <Part12WhatWeHeard
-            data={formData.part12 || {}}
-            onChange={(data) => onUpdateFormData('part12', data)}
-          />
+          <PartErrorBoundary partNumber={12}>
+            <Suspense fallback={<PartLoadingFallback />}>
+              <Part12WhatWeHeard
+                data={formData.part12 || {}}
+                onChange={(data) => onUpdateFormData('part12', data)}
+              />
+            </Suspense>
+          </PartErrorBoundary>
         )}
 
         {/* Save and Proceed Button */}
