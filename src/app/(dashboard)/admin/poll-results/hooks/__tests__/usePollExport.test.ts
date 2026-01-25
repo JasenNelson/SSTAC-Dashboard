@@ -37,14 +37,14 @@ describe('usePollExport', () => {
     combined_survey_votes: 60,
     combined_cew_votes: 40,
     survey_results: [
-      { option_index: 0, votes: 40 },
-      { option_index: 1, votes: 15 },
-      { option_index: 2, votes: 5 }
+      { option_index: 0, option_text: 'Option A', votes: 40 },
+      { option_index: 1, option_text: 'Option B', votes: 15 },
+      { option_index: 2, option_text: 'Option C', votes: 5 }
     ],
     cew_results: [
-      { option_index: 0, votes: 25 },
-      { option_index: 1, votes: 10 },
-      { option_index: 2, votes: 5 }
+      { option_index: 0, option_text: 'Option A', votes: 25 },
+      { option_index: 1, option_text: 'Option B', votes: 10 },
+      { option_index: 2, option_text: 'Option C', votes: 5 }
     ],
     wordcloud_words: [],
     ranking_poll_id: undefined,
@@ -64,14 +64,14 @@ describe('usePollExport', () => {
     combined_survey_votes: 50,
     combined_cew_votes: 30,
     survey_results: [
-      { option_index: 0, votes: 50, averageRank: 1.5 },
-      { option_index: 1, votes: 50, averageRank: 2.0 },
-      { option_index: 2, votes: 50, averageRank: 2.8 }
+      { option_index: 0, option_text: 'Item A', votes: 50, averageRank: 1.5 },
+      { option_index: 1, option_text: 'Item B', votes: 50, averageRank: 2.0 },
+      { option_index: 2, option_text: 'Item C', votes: 50, averageRank: 2.8 }
     ],
     cew_results: [
-      { option_index: 0, votes: 30, averageRank: 1.6 },
-      { option_index: 1, votes: 30, averageRank: 2.1 },
-      { option_index: 2, votes: 30, averageRank: 2.9 }
+      { option_index: 0, option_text: 'Item A', votes: 30, averageRank: 1.6 },
+      { option_index: 1, option_text: 'Item B', votes: 30, averageRank: 2.1 },
+      { option_index: 2, option_text: 'Item C', votes: 30, averageRank: 2.9 }
     ],
     wordcloud_words: [],
     ...overrides

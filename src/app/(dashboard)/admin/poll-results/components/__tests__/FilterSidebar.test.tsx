@@ -8,6 +8,8 @@ describe('FilterSidebar', () => {
   // Mock poll data
   const mockPoll = (overrides?: Partial<PollResult>): PollResult => ({
     poll_id: 'poll-1',
+    ranking_poll_id: '',
+    wordcloud_poll_id: undefined,
     question: 'Test question',
     options: ['Option A', 'Option B'],
     is_wordcloud: false,
@@ -20,7 +22,7 @@ describe('FilterSidebar', () => {
     survey_results: [],
     cew_results: [],
     wordcloud_words: [],
-    ranking_poll_id: undefined,
+    results: undefined,
     ...overrides
   });
 

@@ -1,6 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMatrixDataCache } from '../useMatrixDataCache';
+import type { MatrixData } from '../../types';
 
 // Mock fetch API
 global.fetch = vi.fn();
@@ -34,7 +35,7 @@ describe('useMatrixDataCache', () => {
   });
 
   it('should handle successful matrix data fetch', async () => {
-    const mockData = [
+    const mockData: MatrixData[] = [
       {
         title: 'Site-Specific Standards',
         avgImportance: 4.2,
@@ -100,7 +101,7 @@ describe('useMatrixDataCache', () => {
   });
 
   it('should call fetch API endpoint', async () => {
-    const mockData = [];
+    const mockData: MatrixData[] = [];
 
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
