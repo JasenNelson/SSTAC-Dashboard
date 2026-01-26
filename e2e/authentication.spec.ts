@@ -4,6 +4,8 @@ test.describe('Authentication Flows', () => {
   test.beforeEach(async ({ page }) => {
     // Clear all cookies and storage before each test
     await page.context().clearCookies();
+    // Navigate to page before clearing storage (required for Firefox/WebKit security)
+    await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.evaluate(() => sessionStorage.clear());
   });

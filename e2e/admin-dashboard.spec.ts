@@ -5,8 +5,10 @@ test.describe('Admin Dashboard Workflows', () => {
     // Note: These tests are designed to run against a dev server with test data.
     // In a real environment, you would use a test user's credentials or mocked auth.
 
-    // Clear cookies and storage
+    // Clear cookies first
     await context.clearCookies();
+    // Navigate to page before clearing storage (required for Firefox/WebKit security)
+    await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.evaluate(() => sessionStorage.clear());
   });
