@@ -273,47 +273,102 @@ Monitor by region:
 
 ---
 
-## 6. Creating Custom Dashboards
+## 6. Creating Custom Dashboards (All Free)
 
-### 6.1 Using Vercel Analytics
+### 6.1 Vercel Analytics Dashboard (Completely Free)
 
-1. Go to Vercel Dashboard → Analytics
-2. Click "Create Dashboard"
-3. Add widgets:
+1. Go to Vercel Dashboard → Analytics (free, included)
+2. View automatically-generated metrics:
 
-   **Widget: Core Web Vitals**
-   - Type: Time series
-   - Metric: LCP, INP, CLS
-   - Resolution: 1-hour buckets
-   - Last 30 days with trend line
+   **Core Web Vitals Widget** (automatic)
+   - LCP, INP, CLS with trends
+   - Real-time updates
+   - Last 30 days history
+   - No setup needed
 
-   **Widget: API Performance**
-   - Type: Time series
-   - Metric: Response time (by endpoint)
-   - Percentiles: p50, p95, p99
-   - Resolution: 5-minute buckets
+   **API Performance Widget** (automatic)
+   - Response time by endpoint
+   - Error rates
+   - Request volume
+   - No configuration needed
 
-   **Widget: Error Rates**
-   - Type: Time series
-   - Metric: 4xx and 5xx errors
-   - Breakdown: By endpoint
-   - Alert if > 0.1%
+   **Regional Performance** (automatic)
+   - Edge network latency
+   - By geographic region
+   - No extra cost
 
-### 6.2 Alternative: Custom Dashboard (Grafana/Datadog)
+### 6.2 Custom Dashboard with Supabase (Free)
 
-For more advanced dashboards, use:
+Create your own metrics dashboard by querying logs:
 
-**Grafana** (open-source):
-- Self-hosted or Grafana Cloud
-- Create dashboards from Prometheus metrics
-- Custom alert rules
-- Cost: Free (self-hosted) or $50+/month (Cloud)
+**Query: Error rate dashboard**
+```sql
+SELECT
+  DATE_TRUNC('hour', created_at) as hour,
+  COUNT(*) as total_errors,
+  COUNT(CASE WHEN level = 'CRITICAL' THEN 1 END) as critical_errors
+FROM error_logs
+WHERE created_at > NOW() - INTERVAL '24 hours'
+GROUP BY DATE_TRUNC('hour', created_at)
+ORDER BY hour DESC;
+```
 
-**Datadog** (commercial):
-- Real User Monitoring (RUM)
-- Custom dashboards
-- Advanced alerting
-- Cost: $15+ per metric per month
+**Query: API performance dashboard**
+```sql
+SELECT
+  source,
+  COUNT(*) as request_count,
+  ROUND(AVG(CAST(context->>'duration' AS NUMERIC))::numeric, 2) as avg_duration_ms,
+  MAX(CAST(context->>'duration' AS NUMERIC)) as max_duration_ms
+FROM logs
+WHERE source = 'api'
+  AND created_at > NOW() - INTERVAL '24 hours'
+GROUP BY source
+ORDER BY request_count DESC;
+```
+
+**Query: User activity dashboard**
+```sql
+SELECT
+  DATE(created_at) as date,
+  COUNT(DISTINCT user_id) as active_users,
+  COUNT(*) as total_events
+FROM logs
+WHERE created_at > NOW() - INTERVAL '30 days'
+GROUP BY DATE(created_at)
+ORDER BY date DESC;
+```
+
+### 6.3 Simple HTML Dashboard (Optional)
+
+Create a basic HTML page to display metrics:
+
+```typescript
+// src/app/dashboard/metrics/page.tsx
+export default async function MetricsDashboard() {
+  // Query Supabase for metrics
+  const errorCount = await getErrorCount();
+  const avgResponseTime = await getAvgResponseTime();
+  const activeUsers = await getActiveUsers();
+
+  return (
+    <div className="grid grid-cols-3 gap-4 p-6">
+      <Card>
+        <h3>24h Errors</h3>
+        <p className="text-2xl">{errorCount}</p>
+      </Card>
+      <Card>
+        <h3>Avg Response Time</h3>
+        <p className="text-2xl">{avgResponseTime}ms</p>
+      </Card>
+      <Card>
+        <h3>Active Users</h3>
+        <p className="text-2xl">{activeUsers}</p>
+      </Card>
+    </div>
+  );
+}
+```
 
 ---
 

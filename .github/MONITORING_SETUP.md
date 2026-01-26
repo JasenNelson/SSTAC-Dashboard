@@ -3,90 +3,125 @@
 **Status:** Configuration and Implementation Guide
 **Last Updated:** 2026-01-26
 **Responsibility:** DevOps Team
+**Cost:** $0 (Uses only free/included services)
 
 ---
 
 ## Overview
 
-This document outlines the complete monitoring and alerting strategy for SSTAC Dashboard production environment.
+This document outlines the complete monitoring and alerting strategy for SSTAC Dashboard production environment using **only free and included services**.
 
-**Key Systems:**
-- Error Tracking: Sentry
-- Performance Monitoring: Vercel Analytics
-- Uptime Monitoring: Vercel Health Checks
-- Log Aggregation: Structured Logging + Aggregation Service
-- Custom Metrics: Next.js instrumentation
+**Key Systems (All Free):**
+- Error Tracking: Vercel built-in logs + Structured logging to database
+- Performance Monitoring: Vercel Analytics (included)
+- Uptime Monitoring: Vercel Health Checks (included)
+- Log Aggregation: Supabase (included) + Structured logging to database
+- Custom Metrics: Vercel Analytics + Next.js instrumentation
 
 ---
 
-## 1. Sentry Error Tracking Setup
+## 1. Error Tracking (Using Vercel + Database)
 
-### 1.1 Prerequisites
-- Sentry account created at https://sentry.io
-- Project created for SSTAC Dashboard
-- DSN key available from Sentry
+### 1.1 Architecture
 
-### 1.2 Environment Configuration
+**Errors are captured in 3 places (all free):**
 
-Add to `.env.local` and GitHub Secrets:
+1. **Vercel Function Logs** (automatic, free)
+   - Every error in API routes logged
+   - Accessible via Vercel dashboard
+   - 24-hour retention (free tier)
+
+2. **Database Error Log Table** (Supabase, free)
+   - Structured error records stored in `error_logs` table
+   - Full search capability
+   - Long-term retention (yours to manage)
+
+3. **Application Logs** (stdout/stderr)
+   - Console.error for development
+   - Structured JSON logs for production
+
+### 1.2 Setup: Error Log Database Table
+
+Create `error_logs` table in Supabase:
+
+```sql
+CREATE TABLE IF NOT EXISTS error_logs (
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  level TEXT NOT NULL,
+  message TEXT NOT NULL,
+  context JSONB,
+  user_id TEXT,
+  request_id TEXT,
+  source TEXT,
+  environment TEXT,
+  version TEXT
+);
+
+-- Index for fast queries
+CREATE INDEX idx_error_logs_created_at ON error_logs(created_at DESC);
+CREATE INDEX idx_error_logs_level ON error_logs(level);
+CREATE INDEX idx_error_logs_user_id ON error_logs(user_id);
+CREATE INDEX idx_error_logs_environment ON error_logs(environment);
 ```
-NEXT_PUBLIC_SENTRY_DSN=https://[key]@sentry.io/[project-id]
-SENTRY_ORG=your-org-name
-SENTRY_PROJECT=sstac-dashboard
-SENTRY_AUTH_TOKEN=[auth-token-from-sentry]
-SENTRY_ENVIRONMENT=production
+
+### 1.3 Error Capture Flow
+
+**When error occurs:**
+1. Logged via `logger.error()` in your code
+2. Console error in Vercel logs (automatic)
+3. JSON-structured log to database via `/api/logs/store` endpoint
+4. Searchable and analyzable in database
+
+### 1.4 Vercel Error Dashboard
+
+Access: https://vercel.com/[project]/functions
+
+Shows:
+- All function errors
+- Error frequency
+- Cold start issues
+- Execution time
+- 24-hour retention (free)
+
+### 1.5 Database Query for Errors
+
+```sql
+-- Find all errors in last 24 hours
+SELECT * FROM error_logs
+WHERE level = 'ERROR'
+  AND created_at > NOW() - INTERVAL '24 hours'
+ORDER BY created_at DESC
+LIMIT 100;
+
+-- Find errors by user
+SELECT * FROM error_logs
+WHERE user_id = 'user-123'
+ORDER BY created_at DESC;
+
+-- Find critical errors
+SELECT * FROM error_logs
+WHERE level = 'CRITICAL'
+ORDER BY created_at DESC;
 ```
 
-### 1.3 Current Implementation Status
+### 1.6 Manual Alert Thresholds (Check Regularly)
 
-**Browser Errors:** ✅ CONFIGURED
-- Sentry automatically captures JavaScript errors
-- Next.js wrapper configured in `instrumentation.ts`
-- Source maps uploaded for better error context
+Run these queries periodically and alert if thresholds exceeded:
 
-**Server Errors:** ✅ CONFIGURED
-- API route errors captured
-- Database connection errors logged
-- Authentication failures tracked
+```sql
+-- Error rate check (errors per hour)
+SELECT
+  DATE_TRUNC('hour', created_at) as hour,
+  COUNT(*) as error_count
+FROM error_logs
+WHERE environment = 'production'
+  AND created_at > NOW() - INTERVAL '24 hours'
+GROUP BY DATE_TRUNC('hour', created_at)
+ORDER BY hour DESC;
 
-**Performance Monitoring:** ✅ CONFIGURED
-- Core Web Vitals tracking enabled
-- API endpoint performance captured
-- Database query slow logs monitored
-
-### 1.4 Alert Thresholds
-
-| Metric | Threshold | Action |
-|--------|-----------|--------|
-| New Error Rate | 10+ errors/minute | Page in DevOps team |
-| Critical Errors | 5G+ severity errors | Immediate Slack notification |
-| Error Frequency | 100+ errors/day | Daily summary email |
-| LCP Degradation | >2.5s (was 2.0s) | Alert to performance team |
-| API Error Rate | >2% requests | Check API logs, investigate |
-
-### 1.5 Sentry Notification Rules
-
-**Setup in Sentry UI:**
-
-1. **Critical Path Errors**
-   - Error level: Error or higher
-   - Action: Slack #incidents-prod
-   - Rate: Immediate
-
-2. **Performance Regressions**
-   - Metric: LCP > 2.5s
-   - Action: Slack #performance
-   - Rate: On regression detection
-
-3. **Database Errors**
-   - Message contains: "connection", "timeout", "pool"
-   - Action: Slack #infrastructure
-   - Rate: Batched (5 min)
-
-4. **Auth Failures**
-   - Event: Auth error
-   - Action: Slack #security
-   - Rate: Batched (15 min)
+-- Alert if any hour has > 10 errors
+```
 
 ---
 
@@ -290,25 +325,36 @@ export async function getCached<T>(key: string): Promise<T | null> {
 
 ---
 
-## 5. Slack Integration for Alerts
+## 5. Email/Webhook Alerting (Manual Setup)
 
-### 5.1 Setup Slack Webhooks
+### 5.1 Email-Based Alerts (Optional)
 
-1. Create Slack app: https://api.slack.com/apps
-2. Add Incoming Webhooks
-3. Create webhooks for:
-   - #incidents-prod
-   - #performance
-   - #infrastructure
-   - #security
+For critical errors, send email:
 
-4. Add to GitHub Secrets:
-   - SLACK_WEBHOOK_INCIDENTS
-   - SLACK_WEBHOOK_PERFORMANCE
-   - SLACK_WEBHOOK_INFRASTRUCTURE
-   - SLACK_WEBHOOK_SECURITY
+```typescript
+// src/app/api/logs/store/route.ts
+if (entry.level === 'CRITICAL') {
+  // Send email via Resend (free tier) or your email service
+  await sendAlert(`Critical Error: ${entry.message}`);
+}
+```
 
-### 5.2 Alert Message Format
+### 5.2 Webhook-Based Alerts (Free Options)
+
+Send alerts to free services:
+- Discord webhooks (free)
+- Telegram bot (free)
+- Custom email via SendGrid free tier
+- GitHub Discussions/Issues (free)
+
+### 5.3 Optional Slack Integration (If you have Slack workspace)
+
+1. Create Slack app: https://api.slack.com/apps (free)
+2. Add Incoming Webhooks (no cost)
+3. Copy webhook URL to environment variables
+4. Send alerts to Slack:
+
+### 5.4 Alert Message Format
 
 ```json
 {

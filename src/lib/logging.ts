@@ -122,22 +122,21 @@ class Logger {
   }
 
   private async sendToAggregationService(entry: LogEntry): Promise<void> {
-    // Implementation depends on log aggregation service
-    // Examples:
-    // - LogRocket: lr.captureException()
-    // - Datadog: window.DD_RUM.addUserAction()
-    // - CloudWatch: putLogEvents()
-    // For now, we'll leave this as a hook point
-
-    if (entry.level === LogLevel.ERROR || entry.level === LogLevel.CRITICAL) {
-      // Send errors to Sentry if configured
-      if (typeof window === 'undefined' && process.env.SENTRY_DSN) {
-        try {
-          // This would be handled by Sentry's automatic error tracking
-          // but we could also explicitly send here if needed
-        } catch (error) {
-          console.error('Failed to send log to aggregation service', error);
-        }
+    // Log to database for persistence and searching
+    // This is completely free and you own the data
+    if (typeof window === 'undefined' && entry.level === LogLevel.ERROR) {
+      try {
+        // Send error logs to database for audit trail
+        // Uses Supabase which you already have
+        await fetch('/api/logs/store', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(entry),
+        }).catch(() => {
+          // Silently fail - don't let logging errors break the app
+        });
+      } catch (error) {
+        console.error('Failed to persist log to database', error);
       }
     }
   }

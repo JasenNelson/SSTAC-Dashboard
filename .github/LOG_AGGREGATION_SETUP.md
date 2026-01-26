@@ -136,129 +136,171 @@ if (!hasPermission(user, resource)) {
 
 ---
 
-## 2. Log Aggregation Service Selection
+## 2. Log Storage Architecture (Using Supabase - FREE)
 
-### 2.1 Comparison of Options
+### 2.1 Free Solution Overview
 
-| Service | Cost | Features | Integration | Best For |
-|---------|------|----------|-------------|----------|
-| **LogRocket** | $99-499/mo | Session replay, log aggregation, error tracking | NPM package + API | Full product monitoring |
-| **Datadog** | $15-150+ per host | APM, logs, infrastructure, alerting | Agent-based | Large-scale infrastructure |
-| **CloudWatch** | Pay-per-log | AWS-native, integrated with Lambda/RDS | Built-in to AWS | AWS-first deployments |
-| **Sentry** | $29-499/mo | Error tracking, performance, logs | API/SDK | Error and performance focus |
-| **LogTail** | $75-300/mo | Simple log aggregation, search, alerts | API/HTTP | Lightweight log collection |
+**Logs stored directly in your Supabase database** (same service you already use):
+- ✅ No new services or costs
+- ✅ Full ownership of your data
+- ✅ Unlimited queries and search
+- ✅ Retention as long as you want
+- ✅ Integrated with your existing data
 
-### 2.2 Recommendation: Multi-Service Approach
+### 2.2 Log Storage Tables
 
-**For optimal coverage, use combination:**
+Create two tables in Supabase for log storage:
 
-1. **Sentry** (Primary error tracking)
-   - Already configured from Phase 2
-   - Captures errors, performance metrics
-   - Provides alerting
+**Table 1: Application Logs** (all logs)
+```sql
+CREATE TABLE logs (
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  level TEXT NOT NULL,
+  message TEXT NOT NULL,
+  context JSONB,
+  environment TEXT,
+  request_id TEXT,
+  user_id TEXT,
+  source TEXT,
+  version TEXT
+);
 
-2. **LogRocket** OR **LogTail** (Log aggregation)
-   - Collects all logs
-   - Provides full-text search
-   - Session context
-   - Cost-effective (~$100-200/month)
+CREATE INDEX idx_logs_created_at ON logs(created_at DESC);
+CREATE INDEX idx_logs_level ON logs(level);
+CREATE INDEX idx_logs_environment ON logs(environment);
+```
 
-3. **Datadog** (Optional, if scaling)
-   - Replace LogRocket/LogTail at scale
-   - Infrastructure monitoring
-   - Business metrics
-   - Expensive ($150+/month minimum)
+**Table 2: Error Logs** (errors only, for faster querying)
+```sql
+CREATE TABLE error_logs (
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  level TEXT NOT NULL,
+  message TEXT NOT NULL,
+  context JSONB,
+  user_id TEXT,
+  request_id TEXT,
+  source TEXT,
+  environment TEXT,
+  stack_trace TEXT
+);
 
-### 2.3 Recommended Setup for Phase 6
+CREATE INDEX idx_error_logs_created_at ON error_logs(created_at DESC);
+```
 
-**Use: Sentry + LogTail**
-- Sentry: Error tracking and performance (already configured)
-- LogTail: Centralized log aggregation via HTTP API
-- Cost: $0 (Sentry) + $100/month (LogTail) = $100/month
-- Complexity: Low
-- Time to implement: 2-3 hours
+### 2.3 Implementation: Zero Additional Cost
+
+All logs go directly to Supabase tables - no external services needed.
 
 ---
 
-## 3. LogTail Integration (Recommended)
+## 3. Log Storage in Supabase (Free - Included)
 
-### 3.1 Setup
+### 3.1 Setup (No External Service Needed)
 
-1. Create account at https://logtail.com
-2. Create source for SSTAC Dashboard
-3. Copy source token
-4. Add to `.env.local` and GitHub Secrets:
-   ```
-   LOGTAIL_SOURCE_TOKEN=your_token_here
-   ```
+1. Create log tables in Supabase (SQL above in Section 2)
+2. Create API endpoint to store logs: `src/app/api/logs/store/route.ts`
+3. Logger sends errors to database automatically
+4. All logs searchable via SQL queries
 
-### 3.2 Implementation
+### 3.2 Implementation: API Endpoint for Log Storage
 
-Create `src/lib/logtail-client.ts`:
+Create `src/app/api/logs/store/route.ts`:
 
 ```typescript
-import { logger } from './logging';
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-const LOGTAIL_ENDPOINT = 'https://in.logtail.com';
-const sourceToken = process.env.LOGTAIL_SOURCE_TOKEN;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
-export async function sendLogToTail(entry: {
-  timestamp: string;
-  level: string;
-  message: string;
-  context: Record<string, unknown>;
-  environment: string;
-  requestId?: string;
-  userId?: string;
-  source: string;
-}): Promise<void> {
-  if (!sourceToken) return; // Skip if not configured
-
+export async function POST(request: NextRequest) {
   try {
-    await fetch(`${LOGTAIL_ENDPOINT}/`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${sourceToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        dt: entry.timestamp,
-        level: entry.level,
-        message: entry.message,
-        meta: {
-          ...entry.context,
-          environment: entry.environment,
-          requestId: entry.requestId,
-          userId: entry.userId,
-          source: entry.source,
-        },
-      }),
-    });
+    const entry = await request.json();
+
+    // Store in appropriate table based on level
+    const table = entry.level === 'ERROR' ? 'error_logs' : 'logs';
+
+    const { error } = await supabase.from(table).insert([{
+      level: entry.level,
+      message: entry.message,
+      context: entry.context,
+      environment: entry.environment,
+      request_id: entry.requestId,
+      user_id: entry.userId,
+      source: entry.source,
+      version: entry.version,
+    }]);
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true });
   } catch (error) {
-    // Silently fail - don't let logging errors break the app
-    console.error('Failed to send log to LogTail:', error);
+    // Log to console but don't fail the request
+    console.error('Failed to store log:', error);
+    return NextResponse.json({ success: false }, { status: 500 });
   }
 }
 ```
 
-### 3.3 Using LogTail Dashboard
+### 3.3 Searching Logs in Supabase
 
-**Access:** https://logtail.com/dashboard
+**Via Supabase SQL Editor:**
 
-**Key Features:**
-- Full-text log search
-- Filtering by field (level, environment, userId, etc.)
-- Log tailing (real-time)
-- Log statistics (error rates, response times)
-- Alerts on patterns
+```sql
+-- All errors in production
+SELECT * FROM error_logs
+WHERE environment = 'production'
+  AND created_at > NOW() - INTERVAL '24 hours'
+ORDER BY created_at DESC;
 
-**Example Queries:**
+-- Errors for specific user
+SELECT * FROM error_logs
+WHERE user_id = 'user-123'
+ORDER BY created_at DESC;
+
+-- Count errors by hour
+SELECT
+  DATE_TRUNC('hour', created_at) as hour,
+  COUNT(*) as error_count,
+  level
+FROM logs
+WHERE created_at > NOW() - INTERVAL '48 hours'
+GROUP BY DATE_TRUNC('hour', created_at), level
+ORDER BY hour DESC;
+
+-- Search by message
+SELECT * FROM logs
+WHERE message ILIKE '%database%'
+  AND created_at > NOW() - INTERVAL '24 hours'
+ORDER BY created_at DESC;
 ```
-level:ERROR                          # All errors
-level:ERROR environment:production   # Errors in production only
-message:"database" duration:>1000    # Slow database queries
-userId:user-123                      # Logs for specific user
-source:api method:POST               # All POST API requests
+
+### 3.4 Query Logs via API
+
+Create `src/app/api/logs/query/route.ts` for programmatic access:
+
+```typescript
+// GET /api/logs/query?level=ERROR&limit=100&hours=24
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const level = searchParams.get('level') || 'ERROR';
+  const limit = parseInt(searchParams.get('limit') || '100');
+  const hours = parseInt(searchParams.get('hours') || '24');
+
+  const { data } = await supabase
+    .from('error_logs')
+    .select('*')
+    .eq('level', level)
+    .gt('created_at', new Date(Date.now() - hours * 60 * 60 * 1000).toISOString())
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  return NextResponse.json(data);
+}
 ```
 
 ---
