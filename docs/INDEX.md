@@ -72,6 +72,17 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 - `docs/operations/VERCEL_SETUP.md`
 - `docs/operations/MONITORING_GUIDE.md`
 
+### Developer Experience & Operations (Phase 5 - NEW)
+**Critical documentation for development, deployment, and maintenance**
+- `docs/DEVELOPER_QUICKSTART.md` - 30-minute onboarding guide for new developers
+- `docs/API_REFERENCE.md` - Complete API documentation with examples for all 28 endpoints
+- `docs/OPERATIONS_RUNBOOK.md` - Deployment procedures, incident response, monitoring checklist
+- `docs/DATABASE_SCHEMA.md` - Database structure, relationships, query optimization, migration procedures
+- `docs/ARCHITECTURE_DECISIONS.md` - 10 ADRs explaining why key technologies/patterns were chosen
+- `docs/SECURITY_BEST_PRACTICES.md` - Secure coding guidelines, authentication, file uploads, dependency security
+- `docs/PERFORMANCE_TUNING_GUIDE.md` - Core Web Vitals targets, bundle analysis, profiling tools, optimization
+- `docs/TROUBLESHOOTING_GUIDE.md` - Common issues and fixes for development, production, tests
+
 ### Lessons & Patterns (reference; updated via /update-docs skill)
 - `docs/LESSONS.md` - Reusable patterns, architectural decisions, and deployment insights
 
