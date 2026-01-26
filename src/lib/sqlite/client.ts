@@ -15,15 +15,33 @@
 import path from 'path';
 import fs from 'fs';
 
+// Database module type definition
+type DatabaseModule = new (filename: string) => Database;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface Database {
+  pragma(pragma: string): void;
+  exec(sql: string): void;
+  prepare(sql: string): Statement;
+  transaction(fn: (...args: any[]) => any): (...args: any[]) => any;
+  close(): void;
+}
+
+interface Statement {
+  all(...params: unknown[]): unknown[];
+  run(...params: unknown[]): { changes: number; lastInsertRowid: number };
+  get(...params: unknown[]): unknown;
+}
+
 // Placeholder for Database module - loaded only when needed
-let Database: any = undefined;
+let Database: DatabaseModule | null = null;
 
 /**
  * Dynamically load better-sqlite3 on first use
  * This prevents build failures in environments where native modules can't be compiled
  */
-function loadDatabase() {
-  if (Database === undefined) {
+function loadDatabase(): DatabaseModule | null {
+  if (Database === null) {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       Database = require('better-sqlite3');
@@ -40,14 +58,14 @@ const DB_PATH = path.join(process.cwd(), 'src', 'data', 'regulatory-review.db');
 const MIGRATIONS_PATH = path.join(process.cwd(), 'src', 'lib', 'sqlite', 'migrations');
 
 // Singleton database instance
-let dbInstance: any = null;
+let dbInstance: Database | null = null;
 let migrationsRun = false;
 
 /**
  * Get or create the database connection
  * Automatically runs migrations on first access
  */
-export function getDatabase(): any {
+export function getDatabase(): Database {
   const DatabaseModule = loadDatabase();
   if (!DatabaseModule) {
     throw new Error(
@@ -98,7 +116,7 @@ export function closeDatabase(): void {
 /**
  * Internal migration runner (takes db instance to avoid circular call)
  */
-function runMigrationsInternal(db: any): void {
+function runMigrationsInternal(db: Database): void {
   // Create migrations tracking table
   db.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
@@ -159,7 +177,7 @@ export function runMigrations(): void {
 /**
  * Initialize database with migrations
  */
-export function initDatabase(): any {
+export function initDatabase(): Database {
   const db = getDatabase();
   runMigrations();
   return db;
@@ -179,7 +197,7 @@ export function executeQuery<T>(sql: string, params: unknown[] = []): T[] {
 export function executeStatement(
   sql: string,
   params: unknown[] = []
-): any {
+): { changes: number; lastInsertRowid: number } {
   const db = getDatabase();
   return db.prepare(sql).run(...params);
 }
@@ -238,8 +256,20 @@ export function getDatabaseStats(): {
   };
 }
 
+// Database API type definition
+interface DatabaseAPI {
+  instance: Database;
+  init: () => Database;
+  close: () => void;
+  query: <T,>(sql: string, params?: unknown[]) => T[];
+  execute: (sql: string, params?: unknown[]) => { changes: number; lastInsertRowid: number };
+  getOne: <T,>(sql: string, params?: unknown[]) => T | undefined;
+  stats: () => { path: string; exists: boolean; initialized: boolean; sizeBytes: number | null };
+  isInitialized: () => boolean;
+}
+
 // Export the database instance getter
-export const db = {
+export const db: DatabaseAPI = {
   get instance() {
     return getDatabase();
   },

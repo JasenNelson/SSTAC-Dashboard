@@ -32,6 +32,19 @@ const DEFAULT_CONFIG: ApiClientConfig = {
 };
 
 // =============================================================================
+// Error Types
+// =============================================================================
+
+interface ApiErrorResponse {
+  status?: number;
+  statusCode?: number;
+  code?: string;
+  name?: string;
+  message?: string;
+  error_description?: string;
+}
+
+// =============================================================================
 // Error Handling
 // =============================================================================
 
@@ -71,10 +84,10 @@ export class ApiClient {
    * Execute a database query with error handling and retry logic
    */
   private async executeQuery<T>(
-    operation: () => Promise<{ data: T | null; error: any }>,
+    operation: () => Promise<{ data: T | null; error: ApiErrorResponse | null }>,
     operationName: string
-  ): Promise<{ data: T | null; error: any }> {
-    let lastError: any = null;
+  ): Promise<{ data: T | null; error: ApiErrorResponse | null }> {
+    let lastError: ApiErrorResponse | null = null;
 
     for (let attempt = 0; attempt <= (this.config.retryAttempts || 0); attempt++) {
       try {
@@ -100,9 +113,9 @@ export class ApiClient {
           return result;
         }
 
-        lastError = result.error;
-      } catch (error) {
-        lastError = error;
+        lastError = result.error as ApiErrorResponse | null;
+      } catch (error: unknown) {
+        lastError = error as ApiErrorResponse;
 
         if (attempt === (this.config.retryAttempts || 0)) {
           this.error(`✗ ${operationName} failed after ${attempt + 1} attempts`, error);
@@ -130,7 +143,7 @@ export class ApiClient {
   /**
    * Check if error is retryable
    */
-  private isRetryableError(error: any): boolean {
+  private isRetryableError(error: ApiErrorResponse): boolean {
     if (!error) return false;
 
     // Retryable status codes
@@ -154,19 +167,31 @@ export class ApiClient {
   /**
    * Extract error details
    */
-  private getErrorMessage(error: any): string {
+  private getErrorMessage(error: ApiErrorResponse | unknown): string {
     if (typeof error === 'string') return error;
-    if (error?.message) return error.message;
-    if (error?.error_description) return error.error_description;
+    if (error && typeof error === 'object' && 'message' in error) {
+      return (error.message as string) || 'Unknown error occurred';
+    }
+    if (error && typeof error === 'object' && 'error_description' in error) {
+      return (error.error_description as string) || 'Unknown error occurred';
+    }
     return 'Unknown error occurred';
   }
 
-  private getStatusCode(error: any): number {
-    return error?.status || error?.statusCode || 500;
+  private getStatusCode(error: ApiErrorResponse | unknown): number {
+    if (typeof error === 'object' && error !== null) {
+      if ('status' in error) return (error.status as number) || 500;
+      if ('statusCode' in error) return (error.statusCode as number) || 500;
+    }
+    return 500;
   }
 
-  private getErrorCode(error: any): string {
-    return error?.code || error?.name || 'UNKNOWN_ERROR';
+  private getErrorCode(error: ApiErrorResponse | unknown): string {
+    if (typeof error === 'object' && error !== null) {
+      if ('code' in error) return (error.code as string) || 'UNKNOWN_ERROR';
+      if ('name' in error) return (error.name as string) || 'UNKNOWN_ERROR';
+    }
+    return 'UNKNOWN_ERROR';
   }
 
   /**
@@ -178,7 +203,7 @@ export class ApiClient {
     }
   }
 
-  private error(message: string, error?: any): void {
+  private error(message: string, error?: unknown): void {
     if (this.config.enableLogging) {
       console.error(`[API Client] ${message}`, error);
     }
