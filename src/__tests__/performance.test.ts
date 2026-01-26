@@ -11,6 +11,7 @@
  * - CSS-in-JS performance
  */
 
+import { describe, test, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, resolve } from 'path';
 

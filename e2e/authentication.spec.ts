@@ -108,7 +108,7 @@ test.describe('Authentication Flows', () => {
     expect(inputType).toBe('password');
 
     // Check autocomplete attribute
-    const autoComplete = await passwordInput.evaluate((el: HTMLInputElement) => el.autoComplete);
+    const autoComplete = await passwordInput.evaluate((el: HTMLInputElement) => el.autocomplete);
     expect(autoComplete).toBe('current-password');
   });
 
