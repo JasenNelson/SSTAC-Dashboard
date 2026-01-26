@@ -1,6 +1,8 @@
 'use client'
 
-function Part6IndigenousKnowledge({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+import type { PartComponentProps } from '../types'
+
+function Part6IndigenousKnowledge({ data, onChange }: PartComponentProps) {
   const tier0Options = [
     'Implement Tier 0 anti-degradation provisions for sediment quality',
     'Establish baseline sediment quality conditions for reference',

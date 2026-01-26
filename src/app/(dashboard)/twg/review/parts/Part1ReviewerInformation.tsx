@@ -1,6 +1,8 @@
 'use client'
 
-function Part1ReviewerInformation({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+import type { PartComponentProps } from '../types'
+
+function Part1ReviewerInformation({ data, onChange }: PartComponentProps) {
   const expertiseOptions = [
     'Ecotoxicology',
     'Human Health Risk Assessment (HHRA)',

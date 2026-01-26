@@ -1,6 +1,8 @@
 'use client'
 
-function Part11EngagementInsights({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+import type { PartComponentProps } from '../types'
+
+function Part11EngagementInsights({ data, onChange }: PartComponentProps) {
   const prioritizedEngagementOptions = [
     'First Nations / Indigenous Rights Holders',
     'Remote and coastal communities',

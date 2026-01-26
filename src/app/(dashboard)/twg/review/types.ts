@@ -7,6 +7,7 @@ export type ReviewSection = {
   phase: PhaseKey
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ReviewSubmission {
   id: string
   user_id: string
@@ -14,4 +15,11 @@ export interface ReviewSubmission {
   form_data: any
   created_at: string
   updated_at: string
+}
+
+/** Generic Part component props - use any to allow flexible data structures per Part */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface PartComponentProps {
+  data: any
+  onChange: (data: any) => void
 }

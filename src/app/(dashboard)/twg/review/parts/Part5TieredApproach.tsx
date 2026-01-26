@@ -1,6 +1,8 @@
 'use client'
 
-function Part5TieredApproach({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+import type { PartComponentProps } from '../types'
+
+function Part5TieredApproach({ data, onChange }: PartComponentProps) {
   const bioavailabilityOptions = [
     'Equilibrium partitioning models (e.g., based on organic carbon content)',
     'Normalization using Acid-Volatile Sulfides/Simultaneously Extracted Metals (AVS/SEM)',

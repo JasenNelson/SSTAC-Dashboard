@@ -1,6 +1,8 @@
 'use client'
 
-function Part2HighLevelAssessment({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+import type { PartComponentProps } from '../types'
+
+function Part2HighLevelAssessment({ data, onChange }: PartComponentProps) {
   const ratingOptions = ['Excellent', 'Good', 'Fair', 'Poor']
 
   return (

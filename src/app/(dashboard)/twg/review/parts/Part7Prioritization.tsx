@@ -1,6 +1,8 @@
 'use client'
 
-function Part7Prioritization({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+import type { PartComponentProps } from '../types'
+
+function Part7Prioritization({ data, onChange }: PartComponentProps) {
   const modernizationOptions = [
     'Development of a Scientific Framework for Deriving Site-Specific Sediment Standards (Bioavailability Adjustment)',
     'Development of a Matrix Sediment Standards Framework - Focus on Ecological Protection',

@@ -1,6 +1,8 @@
 'use client'
 
-function Part4MatrixFramework({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+import type { PartComponentProps } from '../types'
+
+function Part4MatrixFramework({ data, onChange }: PartComponentProps) {
   const contaminantGroups = [
     'Mercury and its compounds',
     'Polychlorinated Biphenyls (PCBs)',

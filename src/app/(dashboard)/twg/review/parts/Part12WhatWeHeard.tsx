@@ -1,6 +1,8 @@
 'use client'
 
-function Part12WhatWeHeard({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+import type { PartComponentProps } from '../types'
+
+function Part12WhatWeHeard({ data, onChange }: PartComponentProps) {
   const appendixOptions = [
     { key: 'appendixD', label: 'Appendix D – Online Survey "What We Heard"' },
     { key: 'appendixG', label: 'Appendix G – CEW Session "What We Heard"' },

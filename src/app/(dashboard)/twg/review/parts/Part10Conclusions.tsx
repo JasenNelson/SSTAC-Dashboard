@@ -1,6 +1,8 @@
 'use client'
 
-function Part10Conclusions({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+import type { PartComponentProps } from '../types'
+
+function Part10Conclusions({ data, onChange }: PartComponentProps) {
   const confidenceOptions = [
     'Strongly support as written',
     'Support with minor refinements',

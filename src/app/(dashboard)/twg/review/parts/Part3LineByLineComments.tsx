@@ -1,6 +1,8 @@
 'use client'
 
-function Part3LineByLineComments({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+import type { PartComponentProps } from '../types'
+
+function Part3LineByLineComments({ data, onChange }: PartComponentProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">

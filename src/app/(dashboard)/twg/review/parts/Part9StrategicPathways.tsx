@@ -1,6 +1,8 @@
 'use client'
 
-function Part9StrategicPathways({ data, onChange }: { data: any, onChange: (data: any) => void }) {
+import type { PartComponentProps } from '../types'
+
+function Part9StrategicPathways({ data, onChange }: PartComponentProps) {
   const enablingFactors = [
     'Invest in the desktop data compilation project before regulatory work',
     'Stage implementation milestones with clear decision gates',
