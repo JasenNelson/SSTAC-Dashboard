@@ -7,6 +7,7 @@ import InteractiveBarChart from '@/components/dashboard/InteractiveBarChart'
 import InteractivePieChart from '@/components/dashboard/InteractivePieChart'
 import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface ReviewSubmission {
   id: string
   user_id: string

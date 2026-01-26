@@ -28,7 +28,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallbac
 }
 
 // Safe WordCloud Component with additional error handling
-const SafeWordCloud = ({ words, options }: { words: WordCloudData[]; options: any }) => {
+const SafeWordCloud = ({ words, options }: { words: WordCloudData[]; options?: WordCloudOptions }) => {
   try {
     // Additional validation - ensure words is an array
     if (!Array.isArray(words)) {
@@ -92,6 +92,22 @@ const SafeWordCloud = ({ words, options }: { words: WordCloudData[]; options: an
 interface WordCloudData {
   text: string;
   value: number;
+}
+
+interface WordCloudOptions {
+  colors?: string[];
+  fontFamily?: string;
+  fontWeight?: string;
+  enableTooltip?: boolean;
+  deterministic?: boolean;
+  fontSizes?: [number, number];
+  fontStyle?: string;
+  padding?: number;
+  rotations?: number;
+  rotationAngles?: [number, number];
+  scale?: string;
+  spiral?: string;
+  transitionDuration?: number;
 }
 
 interface WordCloudPollProps {

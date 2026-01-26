@@ -28,6 +28,7 @@ interface RateLimitOptions {
 }
 
 // Redis client instance (lazy-loaded)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let redisClient: any = null;
 let redisAvailable = false;
 

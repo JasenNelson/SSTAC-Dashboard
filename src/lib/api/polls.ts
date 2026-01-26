@@ -12,6 +12,18 @@ import type {
   SubmitPollResponse,
 } from '@/types';
 
+// Response types for submit operations
+interface ApiError {
+  code: string;
+  message: string;
+  statusCode?: number;
+}
+
+interface RankingSubmitResponse {
+  success: boolean;
+  error?: ApiError | string;
+}
+
 // =============================================================================
 // Poll Operations
 // =============================================================================
@@ -185,7 +197,7 @@ export async function submitRankingVote(
   pollIndex: number,
   rankings: Array<{ optionIndex: number; rank: number }>,
   userId: string | null = null
-): Promise<{ success: boolean; error?: any }> {
+): Promise<RankingSubmitResponse> {
   const client = getApiClient();
 
   try {
@@ -205,9 +217,10 @@ export async function submitRankingVote(
 
     return { success: true };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Failed to submit rankings';
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to submit rankings',
+      error: errorMessage,
     };
   }
 }

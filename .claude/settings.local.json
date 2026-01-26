@@ -44,7 +44,22 @@
       "Skill(mcp-builder)",
       "WebFetch(domain:docs.vercel.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell -Command \"Stop-Process -Id 2668 -Force\")",
+      "Bash(gh project list:*)",
+      "Bash(bash:*)",
+      "Bash(gh label create:*)",
+      "Bash(gh issue list:*)",
+      "Bash(for issue_num in 31 30 29 28 27 26 25 24 23 22 21 20 19 18 17 16 15 14)",
+      "Bash(do)",
+      "Bash(gh issue close:*)",
+      "Bash(done)",
+      "Bash(gh project view:*)"
     ]
   }
 }

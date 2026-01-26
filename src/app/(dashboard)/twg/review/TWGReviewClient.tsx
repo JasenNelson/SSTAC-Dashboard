@@ -7,13 +7,30 @@ import { TWGReviewNavigation } from './components/TWGReviewNavigation'
 import { TWGReviewFormContainer } from './components/TWGReviewFormContainer'
 import type { PhaseKey, ReviewSection, ReviewSubmission } from './types'
 
+// Form data structure for TWG review
+interface FormDataStructure {
+  [key: string]: unknown;
+  part1?: { name?: string; expertise?: string[] };
+  part2?: { clarity?: number; completeness?: number; defensibility?: number };
+  part3?: { sectionI?: string; sectionII?: string; sectionIII?: string; sectionIV?: string; sectionV?: string; appendicesCD?: string };
+  part4?: { ranking?: string; challenges?: string };
+  part5?: { bioavailability?: string; evidence?: string; guidance?: string };
+  part6?: { tier0Approaches?: string; frameworkElements?: string; studyComponents?: string };
+  part7?: { modernization?: string; research?: string };
+  part8?: { gaps?: string; suggestions?: string };
+  part9?: { option1Edits?: string; option2Edits?: string; option3Edits?: string; otherPathwayIdeas?: string; pathwayRationale?: string; implementationRisks?: string; recommendationUpdates?: string; lineByLine?: string };
+  part10?: { recommendationConfidence?: string; priorityAreas?: string[] };
+  part11?: { engagementSummaryQuality?: string; prioritizedEngagements?: string[]; prioritizedEngagementsOther?: string; engagementInterests?: string[]; engagementInterestsOther?: string; evidenceSummary?: string; lineByLine?: string };
+  part12?: { appendixStatus?: Record<string, boolean>; alignmentSummary?: string; lineByLine?: string };
+}
+
 interface TWGReviewClientProps {
   user: User
   existingSubmission?: ReviewSubmission
 }
 
 export default function TWGReviewClient({ user, existingSubmission }: TWGReviewClientProps) {
-  const [formData, setFormData] = useState<any>(existingSubmission?.form_data || {})
+  const [formData, setFormData] = useState<FormDataStructure>(existingSubmission?.form_data || {})
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
@@ -88,7 +105,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
     const completed: number[] = []
 
     // Check Part 1: Reviewer Information
-    if (formData.part1?.name && formData.part1?.expertise?.length > 0) {
+    if (formData.part1?.name && (formData.part1?.expertise?.length ?? 0) > 0) {
       completed.push(1)
     }
 
@@ -153,7 +170,7 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
     // Check Part 12: "What We Heard" Reports (Appendices D, G, J)
     if (
       formData.part12?.appendixStatus &&
-      ['appendixD', 'appendixG', 'appendixJ'].every((key) => formData.part12.appendixStatus?.[key]) &&
+      ['appendixD', 'appendixG', 'appendixJ'].every((key) => formData.part12?.appendixStatus?.[key]) &&
       (formData.part12?.alignmentSummary || formData.part12?.lineByLine)
     ) {
       completed.push(12)
@@ -244,11 +261,14 @@ export default function TWGReviewClient({ user, existingSubmission }: TWGReviewC
     }
   }
 
-  const updateFormData = (part: string, data: any) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      [part]: { ...prev[part], ...data }
-    }))
+  const updateFormData = (part: string, data: Record<string, unknown>) => {
+    setFormData((prev: FormDataStructure) => {
+      const prevPart = prev[part as keyof FormDataStructure];
+      return {
+        ...prev,
+        [part]: { ...(prevPart || {}), ...data }
+      }
+    })
   }
 
   const togglePhase = (phase: PhaseKey) => {

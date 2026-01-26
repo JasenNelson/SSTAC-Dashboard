@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let Database: any = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
