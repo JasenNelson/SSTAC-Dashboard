@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import PollWithResults from '@/components/PollWithResults';
 import RankingPoll from '@/components/dashboard/RankingPoll';
 import SurveyMatrixGraph from '@/components/graphs/SurveyMatrixGraph';
@@ -125,11 +126,13 @@ export default function HolisticProtectionClient() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 overflow-hidden">
-          <img 
-            src="/Minnekhada2.JPG" 
+          <Image
+            src="/Minnekhada2.JPG"
             alt="Minnekhada Regional Park landscape for holistic protection"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
             style={{ filter: "brightness(0.6)" }}
+            priority
           />
         </div>
         
@@ -253,14 +256,12 @@ export default function HolisticProtectionClient() {
           
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
             <div className="flex justify-center mb-8">
-              <img 
-                src="/matrix-graph.jpg" 
+              <Image
+                src="/matrix-graph.jpg"
                 alt="Matrix Sediment Standards Framework showing Direct Toxicity and Food Pathway Toxicity for Ecological and Human Health"
+                width={900}
+                height={600}
                 className="max-w-full h-auto rounded-lg shadow-lg"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                }}
               />
             </div>
             

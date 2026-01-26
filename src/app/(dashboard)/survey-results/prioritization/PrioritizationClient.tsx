@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import PollWithResults from '@/components/PollWithResults';
 import RankingPoll from '@/components/dashboard/RankingPoll';
 import WordCloudPoll from '@/components/dashboard/WordCloudPoll';
@@ -96,11 +97,13 @@ export default function PrioritizationClient() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 overflow-hidden">
-          <img 
-            src="/Lindsay.JPG" 
+          <Image
+            src="/Lindsay.JPG"
             alt="Lindsay landscape for prioritization planning"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
             style={{ filter: "brightness(0.65)" }}
+            priority
           />
         </div>
         

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import PollWithResults from '@/components/PollWithResults';
 
 interface PollData {
@@ -56,14 +57,16 @@ export default function TieredFrameworkClient() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 overflow-hidden z-0">
-          <img 
-            src="/Malcolm2.jpg" 
+          <Image
+            src="/Malcolm2.jpg"
             alt="Malcolm landscape for tiered framework assessment"
-            className="w-full h-full object-cover"
-            style={{ 
+            fill
+            className="object-cover"
+            style={{
               objectPosition: "center 30%",
-              filter: "brightness(0.6)" 
+              filter: "brightness(0.6)"
             }}
+            priority
           />
         </div>
         

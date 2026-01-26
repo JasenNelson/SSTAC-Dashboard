@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 export default function WIKSClient() {
   const [expandedBios, setExpandedBios] = useState<{ [key: string]: boolean }>({
@@ -21,11 +22,13 @@ export default function WIKSClient() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 overflow-hidden">
-          <img 
-            src="/HoweSound3.JPG?v=1" 
+          <Image
+            src="/HoweSound3.JPG"
             alt="Howe Sound landscape for Indigenous Knowledge and Science"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
             style={{ filter: "brightness(0.55)" }}
+            priority
           />
         </div>
         
