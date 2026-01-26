@@ -9,7 +9,15 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    exclude: ['node_modules', 'dist', '.next', 'e2e/**', '**/e2e/**'],
+    exclude: [
+      'node_modules',
+      'dist',
+      '.next',
+      'e2e/**',
+      '**/e2e/**',
+      // Performance tests require a build - run separately with `npm run build && npm test`
+      '**/performance.test.ts',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
