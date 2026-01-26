@@ -40,20 +40,23 @@ function createMockAssessment(
   overrides?: Partial<Assessment>
 ): Assessment {
   return {
-    id: 'test-123',
+    id: 123,
     submissionId: 'sub-123',
-    policyId: 'policy-123',
-    policyText: 'Test policy',
-    requirementText: 'Test requirement',
+    csapId: 'csap-123',
+    csapText: 'Test CSAP requirement',
+    section: 'Test Section',
+    sheet: 'Sheet1',
+    itemNumber: 1,
     discretionTier: DiscretionTier.TIER_1_BINARY,
     aiResult: AssessmentResult.PASS,
     aiConfidence: ConfidenceLevel.HIGH,
-    aiExplanation: 'Test explanation',
     evidenceCoverage: 100,
-    humanResult: null,
-    humanExplanation: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    linkedPolicies: [],
+    reviewerNotes: '',
+    actionRequired: '',
+    evidenceFound: [],
+    keywordsMatched: [],
+    sectionsSearched: 0,
     ...overrides,
   };
 }
