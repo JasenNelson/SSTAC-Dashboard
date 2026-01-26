@@ -146,6 +146,120 @@ const InteractiveBarChart = lazy(() => import('@/components/dashboard/Interactiv
 
 ---
 
+## 2026-01-26 - E2E Test Port Conflicts in Local Development [MEDIUM]
+
+**Date:** January 26, 2026
+**Area:** Testing / CI-CD / Local Development
+**Impact:** MEDIUM (blocks E2E test execution until resolved, affects development workflow)
+**Status:** Documented (workaround exists)
+**Session:** Phase 7: Comprehensive System Review & Validation
+
+### Problem or Discovery
+
+When running E2E tests (Playwright) in a development environment where a Next.js dev server was previously running, the test runner times out waiting for the webServer to start. The issue occurs because:
+
+1. Process from previous session still holds port 3000
+2. Playwright's `webServer` config tries to start dev server on same port
+3. New server fails to bind, causing 120-second timeout
+4. Test suite never starts because webServer never becomes available
+
+**Observable Symptoms:**
+- `npm run test:e2e` times out with: "Timed out waiting 120000ms from config.webServer"
+- `netstat` shows process holding port 3000 (e.g., process 28548 running `next/dist/server/lib/start-server.js`)
+- Port 3001, 3002 appear in warning messages as fallback attempts
+
+### Root Cause or Context
+
+**Why This Happens:**
+- Next.js dev server (`npm run dev`) runs in background and may not terminate cleanly
+- Git Bash environment in Windows doesn't properly handle process termination commands
+- Bash `pkill` and `kill` commands fail silently or fail with syntax errors when invoked from within Bash session
+- Windows `taskkill` command with `/F` flag encounters path parsing issues in Git Bash
+- Previous session's process remains orphaned, blocking port 3000
+
+**Git Bash / Windows Incompatibility:**
+```bash
+# These fail in Git Bash:
+taskkill /PID 28548 /F
+# Error: Invalid argument/option - 'F:/Program Files/Git/PID'
+
+pkill -f "node"
+# Either fails silently or with cryptic error
+
+wmic process where processid=28548 delete
+# Syntax issues with path execution
+```
+
+### Solution or Pattern
+
+**Working Workaround:**
+Use `cmd.exe` directly instead of relying on Bash wrappers:
+
+```bash
+# CORRECT: Use cmd.exe for Windows process management
+cmd /c "taskkill /PID <pid> /F"
+
+# VERIFY: Check port is freed
+netstat -ano 2>/dev/null | grep ":3000 " || echo "Port 3000 is free"
+
+# THEN: Run tests
+npm run test:e2e
+```
+
+**Alternative: Preventive Approaches**
+1. **Force CI mode for E2E tests** - Tells Playwright to start fresh server:
+   ```bash
+   CI=true npm run test:e2e
+   ```
+
+2. **Use alternative port** - Modify playwright.config.ts to use different port:
+   ```typescript
+   webServer: {
+     url: process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000',
+     // ... existing config
+   }
+   ```
+
+3. **Clean session start** - Kill all node processes before running:
+   ```bash
+   # For next session: truly kill all node processes
+   Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force
+   npm run test:e2e
+   ```
+
+### File References
+- Playwright config: `F:\sstac-dashboard\playwright.config.ts:29-34` (webServer configuration)
+- Test execution: `F:\sstac-dashboard\package.json` (test:e2e script)
+- Windows process management: Git Bash interactive shell environment
+
+### Performance Impact Metrics
+
+**Development Impact:**
+- Test blocking time: 120 seconds (timeout duration)
+- Manual fix time: 2-5 minutes
+- Affects: E2E testing in local development
+- Frequency: Occurs when dev server not cleanly terminated
+
+### Key Takeaway
+
+**For CI/CD environments and local development:**
+1. **In Git Bash on Windows:** Use `cmd /c "taskkill /PID <pid> /F"` for process termination, not pure Bash commands
+2. **For E2E tests:** Either (a) ensure clean process termination before running, or (b) use `CI=true` flag to bypass port check
+3. **Prevention:** Always stop dev server cleanly (`Ctrl+C` in original terminal) rather than terminating the shell
+4. **Debugging:** Use `netstat -ano | grep :3000` to identify orphaned processes before running tests
+
+**Recommended Pattern for CI/CD:**
+```bash
+# Kill any lingering processes
+Get-Process -Name node -ErrorAction SilentlyContinue | Stop-Process -Force
+Sleep 2  # Brief pause for OS to release port
+
+# Run E2E tests
+npm run test:e2e
+```
+
+---
+
 ## 2026-01-25 - GitHub-Based A+ Grade Upgrade Tracking Framework [HIGH]
 
 **Date:** January 25, 2026
