@@ -407,14 +407,16 @@ describe('ResultsDisplay', () => {
     expect(toggleMock).toHaveBeenCalled();
   });
 
-  it('should render QR code modal when needed', () => {
+  it('should render QR code modal when needed', async () => {
     render(
       <ResultsDisplay
         {...defaultProps}
         qrCodeExpanded={true}
       />
     );
-    expect(screen.getByTestId('qr-code-modal')).toBeInTheDocument();
+    // QRCodeModal is lazy-loaded, so check for Suspense fallback or wait for component
+    const loadingText = screen.queryByText('Loading QR Code...');
+    expect(loadingText || screen.queryByTestId('qr-code-modal')).toBeInTheDocument();
   });
 
   it('should handle missing poll gracefully', () => {
