@@ -10,6 +10,161 @@
 
 ---
 
+## 2026-01-25 - GitHub-Based A+ Grade Upgrade Tracking Framework [HIGH]
+
+**Date:** January 25, 2026
+**Area:** Project Management / Multi-Phase Upgrade Execution
+**Impact:** HIGH (enables parallel execution of 7-phase, 20-week upgrade with clear progress tracking)
+**Status:** Implemented & Operational
+**Session:** Phase 0 Infrastructure Update - Comprehensive GitHub Integration
+
+### Problem or Discovery
+
+Complex, multi-phase software upgrades require coordination across:
+- 7 interconnected phases (0-7 over 20 weeks)
+- 2-3 engineers working in parallel
+- Clear progress tracking and context persistence
+- Ability to resume work across multiple sessions without losing context
+- Grade/quality metric progression that's visible to stakeholders
+
+Managing this with just commit history and manual documentation creates:
+- Unclear phase dependencies
+- Lost context between sessions
+- Difficulty parallelizing work
+- No single source of truth for phase status
+- Inefficient context switching
+
+### Solution or Pattern
+
+**Five-Layer GitHub-Based Tracking System:**
+
+**Layer 1: GitHub Project Board**
+- Location: https://github.com/users/JasenNelson/projects/2/views/1
+- Columns: Backlog | Ready | In Progress | In Review | Testing | Complete | Blocked
+- Purpose: Visual workflow management per phase
+
+**Layer 2: GitHub Issues (100+ issues)**
+- Structure: One issue per task (Phase X.Y format)
+- Labels: 8 phase labels (phase-0 through phase-7) + security-critical
+- Milestones: One per phase for deadline tracking
+- Template: Each issue includes estimated hours, success criteria, related files, dependencies
+
+**Layer 3: Local Documentation (4 files)**
+1. `.github/PHASE_CHECKLIST.md` - Detailed completion criteria for all 7 phases
+2. `.github/UPGRADE_TRACKING.md` - Weekly progress reports + metrics
+3. `IMPLEMENTATION_LOG.md` - Session-by-session work log
+4. `ROADMAP.md` - 20-week visual timeline
+
+**Layer 4: Status Review Documents**
+- `STATUS_REVIEW_2026-01-25.md` - Comprehensive current state snapshot
+- Updated each session to capture progress
+
+**Layer 5: Manifest Facts (docs/_meta/docs-manifest.json)**
+- Canonical store of numeric metrics (tests, grade, commits)
+- Provenance tracking (source, last_verified dates)
+- Prevents metric drift across documentation
+
+### File References
+- GitHub Project: https://github.com/users/JasenNelson/projects/2/views/1
+- `.github/PHASE_CHECKLIST.md:all` - 7 phases with 40+ tasks total
+- `.github/UPGRADE_TRACKING.md:Weekly Reports` - Progress tracking template
+- `IMPLEMENTATION_LOG.md:Session tracking` - Session-by-session history
+- `ROADMAP.md:Executive Timeline` - Visual 20-week progression
+- `STATUS_REVIEW_2026-01-25.md:entire file` - Current state snapshot
+- `docs/_meta/docs-manifest.json:facts` - Canonical metric store
+
+### Implementation Details
+
+**Phase Completion Pattern:**
+```markdown
+## Phase X: Phase Name [Status Emoji]
+
+**Status:** [✅ Complete | ⏳ Pending | 🟡 In Progress]
+**Target Weeks:** [Week range]
+**Actual Weeks:** [Week range]
+**Team:** [Who worked on it]
+**Grade Impact:** [+N points]
+
+### Task X.1-X.6: Detailed subtasks
+- [x] Completed subtask 1
+- [x] Completed subtask 2
+  - [x] Specific deliverable
+  - [x] Specific deliverable
+
+### Success Criteria
+- ✅ Metric 1 achieved
+- ✅ Metric 2 achieved
+
+### Phase Sign-Off
+- [x] All tasks complete
+- [x] Code review approved
+- [x] Tests passing
+- [x] Ready for next phase
+```
+
+**Weekly Progress Template:**
+```markdown
+### Week N: Phase Name
+**Dates:** 2026-01-XX to 2026-01-YY
+**Status:** [✅ Complete | 🟡 In Progress]
+**Grade Impact:** Starting → Ending (Δ points)
+
+#### Planned Work
+- [x] Task 1
+- [x] Task 2
+
+#### Metrics
+- Tests: X passing, Y failing
+- Coverage: Z%
+- Commits: N
+
+#### Next Week Focus
+- [What to work on next]
+```
+
+**Issue Template (GitHub):**
+```markdown
+# Phase X.Y: Task Name
+
+**Estimated Hours:** N hours
+**Grade Impact:** +X points
+**Prerequisites:** Phase X-1 complete
+
+## Success Criteria
+- [ ] Specific deliverable 1
+- [ ] Specific deliverable 2
+- [ ] Test coverage verified
+- [ ] Documentation updated
+
+## Related Files
+- `src/file1.ts` - Primary implementation
+- `src/file2.tsx` - Secondary implementation
+- `tests/file.test.ts` - Test coverage
+
+## Dependencies
+- Blocks: Phase X+1
+- Depends on: Phase X-1 completion
+```
+
+### Key Takeaway
+
+**For any multi-phase, multi-week upgrade:**
+1. Create GitHub Project with visual workflow columns
+2. Generate issues from phase breakdown (one per task)
+3. Use local markdown docs for detailed phase specs
+4. Track metrics in manifest (single source of truth)
+5. Update status documents each session
+6. Use labels and milestones for cross-filtering and dependency tracking
+
+This approach enables:
+- Parallel work without context loss
+- Clear phase dependencies
+- Session continuity without rework
+- Stakeholder visibility into progress
+- Easy context switching between team members
+
+---
+
 ## 2026-01-25 - Comprehensive Multi-Category Testing Strategy [HIGH]
 
 **Date:** January 25, 2026
