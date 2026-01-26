@@ -23,8 +23,10 @@ import { join, resolve } from 'path';
 const projectRoot = resolve(__dirname, '../..');
 const buildOutDir = join(projectRoot, '.next');
 
-// Check if build exists - skip tests if not (e.g., in CI without build step)
-const buildExists = existsSync(buildOutDir);
+// Check if COMPLETE build exists - skip tests if not (e.g., in CI without build step)
+// We check for static/chunks which only exists after a successful build
+const chunksDir = join(buildOutDir, 'static', 'chunks');
+const buildExists = existsSync(chunksDir);
 
 /**
  * Helper function to calculate directory size recursively
