@@ -3,13 +3,13 @@
 import React, { Suspense, lazy } from 'react';
 import { PollResult, MatrixData } from '../types';
 import QRCodeDisplay from '@/components/dashboard/QRCodeDisplay';
-import QRCodeModal from './QRCodeModal';
 import RankingDisplay from './RankingDisplay';
 import SingleChoiceDisplay from './SingleChoiceDisplay';
 
 // Lazy load heavy components to reduce initial bundle size
 const MatrixGraphRenderer = lazy(() => import('./MatrixGraphRenderer'));
 const WordcloudDisplay = lazy(() => import('./WordcloudDisplay'));
+const QRCodeModal = lazy(() => import('./QRCodeModal'));
 
 interface ResultsDisplayProps {
   selectedPoll: PollResult;
@@ -374,7 +374,15 @@ function ResultsDisplay({
       </div>
 
       {/* Expanded QR Code and Join at Overlay */}
-      <QRCodeModal isOpen={qrCodeExpanded} onClose={() => setQrCodeExpanded(false)} expandedPollGroup={expandedPollGroup} />
+      {qrCodeExpanded && (
+        <Suspense fallback={
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="text-white">Loading QR Code...</div>
+          </div>
+        }>
+          <QRCodeModal isOpen={qrCodeExpanded} onClose={() => setQrCodeExpanded(false)} expandedPollGroup={expandedPollGroup} />
+        </Suspense>
+      )}
     </>
   );
 }
