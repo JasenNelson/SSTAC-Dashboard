@@ -80,7 +80,8 @@ const createMockMatrixData = (overrides?: Partial<MatrixData>): MatrixData => ({
 /**
  * Factory function to create filter sidebar props
  */
-const createFilterSidebarProps = (overrides?: Partial<ReturnType<typeof createFilterSidebarProps>>) => ({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const createFilterSidebarProps = (overrides?: any) => ({
   filterMode: 'all' as const,
   setFilterMode: vi.fn(),
   showPresentationControls: true,

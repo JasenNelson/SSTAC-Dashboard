@@ -328,7 +328,8 @@ export function createAssessmentsBulk(assessments: Omit<Assessment, 'id'>[]): nu
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  const insertMany = db.transaction((items: Omit<Assessment, 'id'>[]) => {
+  const insertMany = db.transaction((...args: unknown[]) => {
+    const items = args[0] as Omit<Assessment, 'id'>[];
     for (const item of items) {
       stmt.run(
         item.submission_id,

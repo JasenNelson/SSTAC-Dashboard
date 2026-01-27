@@ -63,7 +63,7 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
   useEffect(() => {
     fetchReplies();
     // Session type comes from Supabase and may have varying structure
-    const sessionUser = (session as { user?: { id: string } })?.user;
+    const sessionUser = (session as { user?: User })?.user;
     if (sessionUser) {
       setCurrentUser(sessionUser);
       checkAdminStatus(sessionUser.id);

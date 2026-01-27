@@ -284,7 +284,8 @@ async function importResultsToDatabase(result: EvaluationResult): Promise<{
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  const insertMany = db.transaction((assessments: AssessmentResult[]) => {
+  const insertMany = db.transaction((...args: unknown[]) => {
+    const assessments = args[0] as AssessmentResult[];
     for (const assessment of assessments) {
       insertAssessment.run(
         result.submission_id,

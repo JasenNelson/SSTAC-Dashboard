@@ -8,12 +8,15 @@ import InteractivePieChart from '@/components/dashboard/InteractivePieChart'
 import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav'
 
  
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormData = Record<string, any>
+
 interface ReviewSubmission {
   id: string
   user_id: string
   email: string
   status: 'IN_PROGRESS' | 'SUBMITTED'
-  form_data: Record<string, unknown>
+  form_data: FormData
   created_at: string
   updated_at: string
   file_count: number
