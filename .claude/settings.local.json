@@ -59,7 +59,18 @@
       "Bash(do)",
       "Bash(gh issue close:*)",
       "Bash(done)",
-      "Bash(gh project view:*)"
+      "Bash(gh project view:*)",
+      "Bash(npm run test:e2e:*)",
+      "Bash(kill:*)",
+      "Bash(lsof:*)",
+      "Bash(ss:*)",
+      "Bash(cmd /c \"taskkill /PID 28548 /F\")",
+      "Bash(tasklist:*)",
+      "Bash(pkill:*)",
+      "Bash(wmic process:*)",
+      "Bash(Get-Process -Id 28548 -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object Name, Path, CommandLine)",
+      "Bash(CI=true npm run test:e2e)"
     ]
   }
 }
