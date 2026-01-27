@@ -27,7 +27,7 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 
 export default function TagManagement() {
   const [tags, setTags] = useState<Tag[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [_isLoading, setIsLoading] = useState(true);
   const [editingTag, setEditingTag] = useState<Tag | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const { showToast } = useToast();

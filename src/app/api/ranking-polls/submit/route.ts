@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       voted_at: new Date().toISOString()
     }));
 
-    const { data: voteData, error: voteError } = await supabaseClient
+    const { error: voteError } = await supabaseClient
       .from('ranking_votes')
       .insert(voteInserts)
       .select();

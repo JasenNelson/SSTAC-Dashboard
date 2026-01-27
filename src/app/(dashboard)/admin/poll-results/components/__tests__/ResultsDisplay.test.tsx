@@ -12,9 +12,27 @@ vi.mock('@/components/dashboard/QRCodeDisplay', () => ({
   )
 }));
 
-vi.mock('../../components/QRCodeModal', () => ({
+vi.mock('../QRCodeModal', () => ({
   default: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => (
     isOpen ? <div data-testid="qr-code-modal" onClick={onClose}>QR Modal</div> : null
+  )
+}));
+
+vi.mock('../WordcloudDisplay', () => ({
+  default: ({ poll }: { poll?: { wordcloud_words?: Array<{ text: string; value: number }> } }) => (
+    <div data-testid="wordcloud-display">
+      <h3>Word Frequency</h3>
+      <div>Wordcloud: {poll?.wordcloud_words?.length || 0} words</div>
+    </div>
+  )
+}));
+
+vi.mock('../MatrixGraphRenderer', () => ({
+  default: ({ matrixData, toggleMatrixGraph }: { matrixData: Array<{ title: string }>; toggleMatrixGraph: (key: string) => void }) => (
+    <div data-testid="matrix-graph-renderer">
+      Matrix: {matrixData.length} graphs
+      <button onClick={() => toggleMatrixGraph('test-key')}>Show Matrix Graph</button>
+    </div>
   )
 }));
 
@@ -147,7 +165,7 @@ describe('ResultsDisplay', () => {
     );
     expect(screen.getByText('What are your thoughts?')).toBeInTheDocument();
     // Wait for lazy-loaded WordcloudDisplay component to load
-    const wordcloud = await screen.findByTestId('word-cloud', {}, { timeout: 5000 });
+    const wordcloud = await screen.findByTestId('wordcloud-display');
     expect(wordcloud).toBeInTheDocument();
   });
 

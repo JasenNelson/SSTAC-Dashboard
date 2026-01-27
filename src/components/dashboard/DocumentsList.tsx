@@ -21,7 +21,7 @@ export default function DocumentsList({ initialDocuments }: DocumentsListProps) 
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>(initialDocuments);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   // const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClient();
+  const _supabase = createClient();
 
   // Filter documents based on selected tags
   useEffect(() => {

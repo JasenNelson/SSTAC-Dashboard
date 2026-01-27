@@ -216,7 +216,7 @@ export function usePollData() {
       // Combine results from survey and CEW polls
       const combinedResults: PollResult[] = [];
 
-      pollGroups.forEach((group, key) => {
+      pollGroups.forEach((group, _key) => {
         const surveyPoll = group.surveyPoll;
         const cewPoll = group.cewPoll;
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import SimpleToast from '@/components/SimpleToast';
-import { getUsers, toggleAdminRole, addUserRole, type UserWithRole } from '@/app/(dashboard)/admin/users/actions';
+import { getUsers, toggleAdminRole, type UserWithRole } from '@/app/(dashboard)/admin/users/actions';
 import { Search, Filter, ChevronLeft, ChevronRight, Users, Shield, User } from 'lucide-react';
 import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
 
@@ -40,7 +40,8 @@ export default function AdminUsersManager() {
 
   useEffect(() => {
     fetchUsers();
-  }, []); // Only fetch once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only fetch once on mount - fetchUsers is stable
 
   const fetchUsers = async () => {
     try {

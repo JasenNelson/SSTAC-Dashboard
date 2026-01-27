@@ -90,7 +90,7 @@ export default function VoicesCarousel({ quotes: providedQuotes, autoRotate = tr
       
       <div className="text-center">
         <blockquote className="text-blue-700 italic text-lg leading-relaxed mb-4 border-l-4 border-blue-300 pl-6 text-center max-w-4xl mx-auto">
-          "{currentQuote.text}"
+          &quot;{currentQuote.text}&quot;
         </blockquote>
         <p className="text-blue-600 text-sm font-medium">- {currentQuote.author}</p>
         <p className="text-blue-500 text-xs text-center mt-2">{currentQuote.background}</p>

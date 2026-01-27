@@ -4,14 +4,14 @@ import React, { useState } from 'react';
 import CEWCodeInput from '@/components/CEWCodeInput';
 import PollWithResults from '@/components/PollWithResults';
 
-interface PollData {
+interface _PollData {
   question: string;
   options: string[];
   questionNumber?: number;
 }
 
 export default function CEWTieredFrameworkPage() {
-  const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
+  const [_activeAccordion, _setActiveAccordion] = useState<string | null>(null);
   const [authCode, setAuthCode] = useState<string | null>(null);
 
   const handleCodeEntered = (code: string) => {

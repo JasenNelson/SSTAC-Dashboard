@@ -92,7 +92,7 @@ export default function ReportGroupedBarChart({
   const currentTheme = resolvedTheme || theme || 'light';
   const isDark = currentTheme === 'dark';
   const textColor = isDark ? '#ffffff' : '#111827'; // text-white / text-gray-900
-  const secondaryTextColor = isDark ? '#d1d5db' : '#374151'; // text-gray-300 / text-gray-700
+  const _secondaryTextColor = isDark ? '#d1d5db' : '#374151'; // text-gray-300 / text-gray-700
   const gridColor = isDark ? '#4b5563' : '#e5e7eb'; // gray-600 / gray-200
   const tooltipBg = isDark ? 'rgba(31, 41, 55, 0.98)' : 'rgba(255, 255, 255, 0.98)';
   const tooltipBorder = isDark ? '#4b5563' : '#d1d5db';

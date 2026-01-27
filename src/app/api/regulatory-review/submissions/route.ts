@@ -17,7 +17,7 @@ import {
  * Returns all submissions ordered by import date (most recent first)
  * with overall summary statistics.
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Get all submissions
     const submissions = getSubmissions('imported_at');

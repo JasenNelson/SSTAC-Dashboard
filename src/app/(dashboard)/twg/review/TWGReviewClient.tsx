@@ -29,7 +29,7 @@ interface TWGReviewClientProps {
   existingSubmission?: ReviewSubmission
 }
 
-export default function TWGReviewClient({ user, existingSubmission }: TWGReviewClientProps) {
+export default function TWGReviewClient({ user: _user, existingSubmission }: TWGReviewClientProps) {
   const [formData, setFormData] = useState<FormDataStructure>(existingSubmission?.form_data || {})
   const [isSaving, setIsSaving] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)

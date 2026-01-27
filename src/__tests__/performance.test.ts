@@ -54,7 +54,7 @@ function calculateDirSize(dirPath: string): number {
 /**
  * Helper function to format bytes to KB
  */
-function formatBytes(bytes: number): string {
+function _formatBytes(bytes: number): string {
   return `${(bytes / 1024).toFixed(2)} KB`;
 }
 
@@ -218,7 +218,7 @@ describe.skipIf(!buildExists)('Performance Testing - SSTAC Dashboard (Phase 3.6)
 
     test('should have optimized CSS-in-JS performance', () => {
       // Verify no external CSS files (using Tailwind/inline styles)
-      const publicPath = join(projectRoot, 'public');
+      const _publicPath = join(projectRoot, 'public');
       const cssPattern = /\.css$/;
 
       // Check static directory doesn't have large CSS files

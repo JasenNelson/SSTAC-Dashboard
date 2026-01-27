@@ -3,12 +3,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-interface Poll {
-  page_path: string;
-  poll_index: number;
-  question: string;
-}
-
 // Supabase response type - polls comes as an array from the join
 interface SupabaseVote {
   poll_id: string;

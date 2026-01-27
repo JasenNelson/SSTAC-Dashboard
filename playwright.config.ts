@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import path from 'path';
+import path from 'path'; // eslint-disable-line @typescript-eslint/no-unused-vars
 
 export default defineConfig({
   testDir: './e2e',

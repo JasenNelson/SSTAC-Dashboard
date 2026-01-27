@@ -3,7 +3,7 @@ import { createAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/ap
 import { createAuthenticatedClient } from '@/lib/supabase-auth';
 import { getAuthAndRateLimit } from '../_helpers/rate-limit-wrapper';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Task 2.1.2 Security Fix: Verify authentication before fetching announcements
     const supabase = await createAuthenticatedClient();

@@ -136,7 +136,7 @@ export default function ProjectTimeline() {
         <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
         
         <div className="space-y-3">
-          {milestones.map((milestone, index) => (
+          {milestones.map((milestone, _index) => (
             <div
               key={milestone.id}
               className="relative flex items-start group cursor-pointer"

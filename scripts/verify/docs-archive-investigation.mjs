@@ -195,13 +195,13 @@ class UnionFind {
     this.rank = Array(n).fill(0)
   }
   find(x) {
-    let p = this.parent[x]
+    const p = this.parent[x]
     if (p !== x) this.parent[x] = this.find(p)
     return this.parent[x]
   }
   union(a, b) {
-    let ra = this.find(a)
-    let rb = this.find(b)
+    const ra = this.find(a)
+    const rb = this.find(b)
     if (ra === rb) return
     const rka = this.rank[ra]
     const rkb = this.rank[rb]
@@ -253,8 +253,8 @@ function main() {
       if (isExternalLink(href)) continue
 
       const [pPart, fragmentPart] = href.split('#')
-      let targetPath = normalizeRepoPath(pPart || '')
-      let fragment = fragmentPart ? String(fragmentPart).trim() : null
+      const targetPath = normalizeRepoPath(pPart || '')
+      const fragment = fragmentPart ? String(fragmentPart).trim() : null
 
       if (!targetPath) continue
       // ignore non-md files (images, PDFs, etc.) for now

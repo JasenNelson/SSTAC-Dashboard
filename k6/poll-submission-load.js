@@ -37,6 +37,7 @@ export const options = {
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default function () {
   activeUsers.set(__VU);
   const sessionId = `session-${__VU}-${Date.now()}`;

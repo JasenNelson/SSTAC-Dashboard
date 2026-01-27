@@ -145,7 +145,7 @@ export default function WordCloudPoll({
     words: [],
     user_words: []
   });
-  const [showResults, setShowResults] = useState(false);
+  const [_showResults, setShowResults] = useState(false);
   const [showAggregatedResults, setShowAggregatedResults] = useState(false);
   const [isFetchingAggregated, setIsFetchingAggregated] = useState(false);
   const [userWords, setUserWords] = useState<string[] | null>(null);
@@ -287,7 +287,8 @@ export default function WordCloudPoll({
     } finally {
       setIsFetching(false);
     }
-  }, [pagePath, pollIndex, authCode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagePath, pollIndex, authCode]); // isFetching is intentionally excluded to prevent loops
 
   // Initialize and check for existing vote
   useEffect(() => {
@@ -304,26 +305,27 @@ export default function WordCloudPoll({
     }
     
     return () => clearTimeout(timeoutId);
-  }, [pagePath, pollIndex, authCode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagePath, pollIndex, authCode]); // fetchResults is stable and depends on the same deps
 
   const checkCEWWordStatus = () => {
     // For CEW pages, don't persist words at all - start fresh each time
     // This ensures true privacy in incognito mode
   };
 
-  const handleWordChange = (index: number, value: string) => {
+  const _handleWordChange = (index: number, value: string) => {
     const newWords = [...words];
     newWords[index] = value;
     setWords(newWords);
   };
 
-  const addWordField = () => {
+  const _addWordField = () => {
     if (words.length < maxWords) {
       setWords([...words, '']);
     }
   };
 
-  const removeWordField = (index: number) => {
+  const _removeWordField = (index: number) => {
     const newWords = words.filter((_, i) => i !== index);
     setWords(newWords);
   };

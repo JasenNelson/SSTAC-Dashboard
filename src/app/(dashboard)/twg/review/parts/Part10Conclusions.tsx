@@ -28,7 +28,7 @@ function Part10Conclusions({ data, onChange }: PartComponentProps) {
       <div className="space-y-6">
         <div>
           <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
-            How well do the Conclusions &amp; Recommendations (Section VII) capture the path forward for modernizing BC's sediment standards?
+            How well do the Conclusions &amp; Recommendations (Section VII) capture the path forward for modernizing BC&apos;s sediment standards?
           </h4>
           <div className="space-y-3">
             {confidenceOptions.map((option) => (

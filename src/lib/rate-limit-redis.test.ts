@@ -456,7 +456,7 @@ describe('RATE_LIMIT_CONFIGS', () => {
   });
 
   it('all configs have required fields', () => {
-    for (const [key, config] of Object.entries(RATE_LIMIT_CONFIGS)) {
+    for (const [_key, config] of Object.entries(RATE_LIMIT_CONFIGS)) {
       expect(config.max).toBeGreaterThan(0);
       expect(config.windowMs).toBeGreaterThan(0);
       expect(config.message).toBeDefined();
@@ -466,6 +466,7 @@ describe('RATE_LIMIT_CONFIGS', () => {
   it('all configs are readonly', () => {
     // Type-level check that configs are const satisfies
     expect(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (RATE_LIMIT_CONFIGS.default as any).max = 999;
     }).not.toThrow(); // Can modify if not truly frozen, but that's OK for this test
   });

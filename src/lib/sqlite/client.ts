@@ -18,12 +18,12 @@ import fs from 'fs';
 // Database module type definition
 type DatabaseModule = new (filename: string) => Database;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 interface Database {
   pragma(pragma: string): void;
   exec(sql: string): void;
   prepare(sql: string): Statement;
-  transaction(fn: (...args: any[]) => any): (...args: any[]) => any;
+  transaction<T>(fn: (...args: unknown[]) => T): (...args: unknown[]) => T;
   close(): void;
 }
 

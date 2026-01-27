@@ -12,7 +12,7 @@ interface PollData {
 
 export default function TieredFrameworkClient() {
   // Define polls with proper structure for the Tiered Framework - 3 questions total
-  const polls = [
+  const polls: PollData[] = [
     // Question 1: Single-choice poll
     {
       question: "What is the primary regulatory advantage of using a probabilistic framework (e.g., Bayesian) to integrate EqP and BLM predictions into a scientific framework for deriving site-specific sediment standards (Tier 2)?",
@@ -98,8 +98,8 @@ export default function TieredFrameworkClient() {
           {/* Framework Description */}
           <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 max-w-4xl mx-auto">
             <p className="text-lg md:text-xl italic leading-relaxed">
-              "Expanding the tiered framework to incorporate site-specific sediment standards that reduce uncertainty 
-              and streamline remediation while improving decision-making and environmental outcomes."
+              &quot;Expanding the tiered framework to incorporate site-specific sediment standards that reduce uncertainty
+              and streamline remediation while improving decision-making and environmental outcomes.&quot;
             </p>
           </div>
         </div>

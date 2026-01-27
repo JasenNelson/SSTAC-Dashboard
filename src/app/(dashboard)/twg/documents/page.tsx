@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import DocumentsList from '@/components/dashboard/DocumentsList';
 
-type Document = {
+type _Document = {
   id: number;
   title: string | null;
   created_at: string;
@@ -61,7 +61,7 @@ export default async function TwgDocumentsPage() {
     id: doc.id,
     title: doc.title,
     created_at: doc.created_at,
-    tags: doc.document_tags?.map((dt: unknown) => (dt as any).tags).filter(Boolean) || []
+    tags: doc.document_tags?.map((dt: unknown) => (dt as { tags: { id: number; name: string; color: string } }).tags).filter(Boolean) || []
   })) || [];
 
   if (error) {

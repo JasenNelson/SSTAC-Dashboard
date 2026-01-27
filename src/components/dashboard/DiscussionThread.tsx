@@ -62,9 +62,11 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
 
   useEffect(() => {
     fetchReplies();
-    if ((session as any)?.user) {
-      setCurrentUser((session as any).user);
-      checkAdminStatus((session as any).user.id);
+    // Session type comes from Supabase and may have varying structure
+    const sessionUser = (session as { user?: { id: string } })?.user;
+    if (sessionUser) {
+      setCurrentUser(sessionUser);
+      checkAdminStatus(sessionUser.id);
     } else {
       // Fallback: try to get user independently if session not passed
       const getCurrentUser = async () => {
@@ -80,7 +82,8 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
       };
       getCurrentUser();
     }
-  }, [discussion.id, session]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [discussion.id, session]); // fetchReplies, checkAdminStatus, supabase.auth are stable
 
 
 

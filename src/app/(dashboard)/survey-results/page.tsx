@@ -39,13 +39,13 @@ export default async function SurveyResultsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <h1 className="text-5xl font-bold mb-6">
-              Modernizing BC's Sediment Standards
+              Modernizing BC&apos;s Sediment Standards
             </h1>
             <p className="text-xl text-blue-100 max-w-4xl mx-auto leading-relaxed">
-              A Summary of Expert Feedback from the "What We Heard" Report
+              A Summary of Expert Feedback from the &quot;What We Heard&quot; Report
             </p>
             <p className="text-lg text-blue-200 mt-4">
-              Interactive dashboard showcasing the strong mandate for modernizing British Columbia's sediment standards
+              Interactive dashboard showcasing the strong mandate for modernizing British Columbia&apos;s sediment standards
             </p>
             
             {/* Share Button */}

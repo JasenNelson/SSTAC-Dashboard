@@ -72,7 +72,7 @@ describe('usePollData', () => {
 
     expect(result.current.pollResults).toBeDefined();
     // Initially loading is true until first fetch completes
-    const initialLoading = result.current.loading;
+    const _initialLoading = result.current.loading;
 
     // Re-render should not cause errors
     rerender();

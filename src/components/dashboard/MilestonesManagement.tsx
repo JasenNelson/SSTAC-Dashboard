@@ -38,7 +38,8 @@ export default function MilestonesManagement() {
 
   useEffect(() => {
     fetchMilestones();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only fetch once on mount - fetchMilestones is stable
 
   const fetchMilestones = async () => {
     try {

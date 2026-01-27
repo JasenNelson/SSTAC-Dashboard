@@ -30,7 +30,7 @@ test.describe('Admin Dashboard Workflows', () => {
     // If authenticated, check for admin dashboard content
     const heading = page.locator('h1, h2');
     const visibleText = await heading.allTextContents();
-    const hasAdminContent = visibleText.some(text =>
+    const _hasAdminContent = visibleText.some(text =>
       text.toLowerCase().includes('admin') ||
       text.toLowerCase().includes('dashboard') ||
       text.toLowerCase().includes('metric')
@@ -143,7 +143,7 @@ test.describe('Admin Dashboard Workflows', () => {
     if (linkCount > 0) {
       // Click first admin link
       const firstLink = adminLinks.first();
-      const href = await firstLink.getAttribute('href');
+      const _href = await firstLink.getAttribute('href');
 
       await firstLink.click();
 
@@ -164,7 +164,7 @@ test.describe('Admin Dashboard Workflows', () => {
     }
 
     // Look for announcement-related UI
-    const announcements = page.locator(
+    const _announcements = page.locator(
       'h1, h2, h3',
       { has: page.locator('text=/announcement/i') }
     );
@@ -187,7 +187,7 @@ test.describe('Admin Dashboard Workflows', () => {
     await expect(body).toBeVisible();
 
     // Look for user-related elements
-    const userElements = page.locator(
+    const _userElements = page.locator(
       '[class*="user"], [class*="member"], [data-testid*="user"]'
     );
 

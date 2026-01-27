@@ -17,6 +17,15 @@ type DiscussionSummary = {
   last_reply_at: string | null;
 };
 
+// Raw discussion data from Supabase before transformation
+type RawDiscussion = {
+  id: number;
+  title: string;
+  user_email?: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export default function TwgDiscussionsPage() {
   const [discussions, setDiscussions] = useState<DiscussionSummary[]>([]);
   const [session, setSession] = useState<Session | null>(null);
@@ -28,7 +37,7 @@ export default function TwgDiscussionsPage() {
   const fetchDiscussions = useCallback(async () => {
     try {
       // First, let's test if the table exists with a simple count query
-      const { count, error: countError } = await supabase
+      const { count: _count, error: countError } = await supabase
         .from('discussions')
         .select('*', { count: 'exact', head: true });
       
@@ -48,7 +57,7 @@ export default function TwgDiscussionsPage() {
         setTimeout(() => reject(new Error('Database query timeout')), 5000)
       );
       
-      const result = await Promise.race([queryPromise, timeoutPromise]) as any;
+      const result = await Promise.race([queryPromise, timeoutPromise]) as { error?: { message: string }; data?: RawDiscussion[] };
 
       if (result.error) {
         console.error('❌ Error fetching discussions:', result.error);
@@ -63,27 +72,27 @@ export default function TwgDiscussionsPage() {
 
       // Process discussions and get reply stats
       const discussionsWithStats = await Promise.all(
-        result.data.map(async (discussion: unknown) => {
+        result.data.map(async (discussion: RawDiscussion) => {
           // Get reply count and last reply for this discussion
           const { count: replyCount } = await supabase
             .from('discussion_replies')
             .select('*', { count: 'exact', head: true })
-            .eq('discussion_id', (discussion as any).id);
+            .eq('discussion_id', discussion.id);
 
           const { data: lastReply } = await supabase
             .from('discussion_replies')
             .select('created_at')
-            .eq('discussion_id', (discussion as any).id)
+            .eq('discussion_id', discussion.id)
             .order('created_at', { ascending: false })
             .limit(1)
             .single();
 
           return {
-            id: (discussion as any).id,
-            title: (discussion as any).title,
-            author: (discussion as any).user_email || 'Unknown User',
-            created_at: (discussion as any).created_at,
-            updated_at: (discussion as any).updated_at,
+            id: discussion.id,
+            title: discussion.title,
+            author: discussion.user_email || 'Unknown User',
+            created_at: discussion.created_at,
+            updated_at: discussion.updated_at,
             reply_count: replyCount || 0,
             last_reply_at: lastReply?.created_at || null
           };
@@ -95,6 +104,7 @@ export default function TwgDiscussionsPage() {
       console.error('❌ Exception fetching discussions:', error);
       setDiscussions([]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // No dependencies since supabase is now stable
 
   // Store the function in a ref to avoid dependency issues
@@ -105,7 +115,7 @@ export default function TwgDiscussionsPage() {
       const initializePage = async () => {
       try {
         // First, check if we already have a session
-        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
         
         if (currentSession) {
           setSession(currentSession);
@@ -151,6 +161,7 @@ export default function TwgDiscussionsPage() {
     } catch (error) {
       console.error('❌ useEffect error:', error);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Remove fetchDiscussions dependency to prevent infinite loops
 
   const handleDiscussionCreated = useCallback(() => {
@@ -181,7 +192,7 @@ export default function TwgDiscussionsPage() {
   };
 
   const getActivityIndicator = (discussion: DiscussionSummary) => {
-    const lastActivity = discussion.last_reply_at || (discussion as any).updated_at;
+    const lastActivity = discussion.last_reply_at || discussion.updated_at;
     const lastActivityDate = new Date(lastActivity);
     const now = new Date();
     const diffInHours = (now.getTime() - lastActivityDate.getTime()) / (1000 * 60 * 60);
@@ -254,23 +265,23 @@ export default function TwgDiscussionsPage() {
           <div className="divide-y divide-gray-200">
             {discussions.map((discussion) => (
               <Link
-                key={(discussion as any).id}
-                href={`/twg/discussions/${(discussion as any).id}`}
+                key={discussion.id}
+                href={`/twg/discussions/${discussion.id}`}
                 className="block p-6 hover:bg-gray-50 transition-colors duration-150"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-3 mb-2">
                       <h3 className="text-lg font-semibold text-gray-900 hover:text-indigo-600 transition-colors truncate">
-                        {(discussion as any).title}
+                        {discussion.title}
                       </h3>
-                      {(discussion as any).updated_at !== (discussion as any).created_at && (
+                      {discussion.updated_at !== discussion.created_at && (
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           Edited
                         </span>
                       )}
                     </div>
-                    
+
                     <div className="flex items-center text-sm text-gray-500 space-x-4 mb-3">
                       <span className="flex items-center">
                         <span className="mr-1">👤</span>
@@ -278,7 +289,7 @@ export default function TwgDiscussionsPage() {
                       </span>
                       <span className="flex items-center">
                         <span className="mr-1">📅</span>
-                        {formatDate((discussion as any).created_at)}
+                        {formatDate(discussion.created_at)}
                       </span>
                       <span className="flex items-center">
                         <span className="mr-1">💬</span>

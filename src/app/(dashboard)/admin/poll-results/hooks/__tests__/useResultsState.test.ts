@@ -184,7 +184,7 @@ describe('useResultsState', () => {
   it('should update lastRefresh timestamp', () => {
     const { result } = renderHook(() => useResultsState());
 
-    const originalDate = result.current.lastRefresh;
+    const _originalDate = result.current.lastRefresh;
 
     // Wait a bit and update
     act(() => {

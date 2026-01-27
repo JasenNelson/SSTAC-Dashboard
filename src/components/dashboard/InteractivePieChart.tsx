@@ -72,7 +72,7 @@ export default function InteractivePieChart({
     lg: { radius: 160, strokeWidth: 40, fontSize: 'text-lg' },
   };
 
-  const { radius, strokeWidth, fontSize } = sizeConfig[size];
+  const { radius, strokeWidth: _strokeWidth, fontSize } = sizeConfig[size];
   const centerX = radius + 20;
   const centerY = radius + 20;
 

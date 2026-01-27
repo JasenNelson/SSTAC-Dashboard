@@ -47,7 +47,7 @@ export function TWGReviewNavigation({
             TWG Review
           </h1>
           <p className="text-gray-600 dark:text-gray-300 mb-6">
-            Modernizing BC's Sediment Standards
+            Modernizing BC&apos;s Sediment Standards
           </p>
 
           <nav className="space-y-4">

@@ -14,7 +14,7 @@ import ResultsDisplay from '../ResultsDisplay';
 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: vi.fn(() => ({
-    from: vi.fn((table: string) => ({
+    from: vi.fn((_table: string) => ({
       select: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       data: null,
@@ -80,7 +80,7 @@ const createMockMatrixData = (overrides?: Partial<MatrixData>): MatrixData => ({
 /**
  * Factory function to create filter sidebar props
  */
-const createFilterSidebarProps = (overrides?: any) => ({
+const createFilterSidebarProps = (overrides?: Partial<ReturnType<typeof createFilterSidebarProps>>) => ({
   filterMode: 'all' as const,
   setFilterMode: vi.fn(),
   showPresentationControls: true,
@@ -115,6 +115,7 @@ const createFilterSidebarProps = (overrides?: any) => ({
 /**
  * Factory function to create results display props
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const createResultsDisplayProps = (overrides?: any) => ({
   selectedPoll: createMockPoll(),
   isExpanded: false,
@@ -138,8 +139,8 @@ const createResultsDisplayProps = (overrides?: any) => ({
   exportRankingPoll: vi.fn(),
   exportWordcloudPoll: vi.fn(),
   exportMatrixGraph: vi.fn(),
-  getPageTitle: (pagePath: string) => 'Test Page',
-  getPollGroup: (pagePath: string) => 'holistic-protection' as const,
+  getPageTitle: (_pagePath: string) => 'Test Page',
+  getPollGroup: (_pagePath: string) => 'holistic-protection' as const,
   ...overrides
 });
 
@@ -150,6 +151,7 @@ const createResultsDisplayProps = (overrides?: any) => ({
 describe('Integration Tests: usePollData Hook with Components', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global.fetch as any).mockClear();
   });
 
@@ -177,7 +179,7 @@ describe('Integration Tests: usePollData Hook with Components', () => {
     it('should maintain poll results data across multiple renders', () => {
       const { result, rerender } = renderHook(() => usePollData());
 
-      const initialPollResults = result.current.pollResults;
+      const _initialPollResults = result.current.pollResults;
       rerender();
 
       expect(result.current.pollResults).toBeDefined();
@@ -250,6 +252,7 @@ describe('Integration Tests: usePollData Hook with Components', () => {
 describe('Integration Tests: useMatrixDataCache with Components', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global.fetch as any).mockClear();
   });
 
@@ -269,6 +272,7 @@ describe('Integration Tests: useMatrixDataCache with Components', () => {
     it('should provide fetchMatrixData for different filter modes', async () => {
       const mockData = [createMockMatrixData()];
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => mockData
@@ -284,6 +288,7 @@ describe('Integration Tests: useMatrixDataCache with Components', () => {
     it('should support filter mode transitions with cache management', async () => {
       const mockData = [createMockMatrixData()];
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global.fetch as any).mockResolvedValue({
         ok: true,
         json: async () => mockData
@@ -306,6 +311,7 @@ describe('Integration Tests: useMatrixDataCache with Components', () => {
       expect(data3).toEqual(mockData);
 
       // Verify fetch was called multiple times
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((global.fetch as any).mock.calls.length).toBeGreaterThan(0);
     });
 
@@ -322,6 +328,7 @@ describe('Integration Tests: useMatrixDataCache with Components', () => {
     it('should cache matrix data and reuse across renders', async () => {
       const mockData = [createMockMatrixData()];
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
         json: async () => mockData
@@ -336,12 +343,14 @@ describe('Integration Tests: useMatrixDataCache with Components', () => {
       rerender();
 
       // Fetch count should be 1 (cached on rerender)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((global.fetch as any).mock.calls.length).toBe(1);
     });
 
     it('should provide refreshData function for data refresh', async () => {
       const mockData = [createMockMatrixData()];
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (global.fetch as any).mockResolvedValue({
         ok: true,
         json: async () => mockData
@@ -351,6 +360,7 @@ describe('Integration Tests: useMatrixDataCache with Components', () => {
 
       // Initial fetch
       await result.current.fetchMatrixData('all');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const initialCallCount = (global.fetch as any).mock.calls.length;
 
       // Refresh data returns a promise
@@ -359,6 +369,7 @@ describe('Integration Tests: useMatrixDataCache with Components', () => {
 
       await waitFor(() => {
         // refreshData should trigger a fetch
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         expect((global.fetch as any).mock.calls.length).toBeGreaterThanOrEqual(initialCallCount);
       });
     });
@@ -378,16 +389,16 @@ describe('Integration Tests: FilterSidebar Component Interactions', () => {
     });
 
     it('should highlight active filter mode button', () => {
-      const setFilterMode = vi.fn();
+      const _setFilterMode = vi.fn();
       const props = createFilterSidebarProps({
         filterMode: 'twg',
-        setFilterMode
+        setFilterMode: _setFilterMode
       });
 
       const { container } = render(<FilterSidebar {...props} />);
 
-      const twoButtons = container.querySelectorAll('button');
-      const activeButton = Array.from(twoButtons).find(btn =>
+      const _twoButtons = container.querySelectorAll('button');
+      const activeButton = Array.from(_twoButtons).find(btn =>
         btn.textContent?.includes('SSTAC & TWG Only')
       );
 
@@ -667,7 +678,7 @@ describe('Integration Tests: ResultsDisplay Component Interactions', () => {
         navigateToNextQuestion
       });
 
-      const { container } = render(<ResultsDisplay {...props} />);
+      const { container: _container } = render(<ResultsDisplay {...props} />);
 
       // Verify navigation callback is available and can be called
       expect(typeof props.navigateToNextQuestion).toBe('function');
@@ -708,9 +719,9 @@ describe('Integration Tests: ResultsDisplay Component Interactions', () => {
 
   describe('Expand/collapse functionality', () => {
     it('should render expand button for fullscreen view', () => {
-      const setExpandedPoll = vi.fn();
+      const _setExpandedPoll = vi.fn();
       const props = createResultsDisplayProps({
-        setExpandedPoll,
+        setExpandedPoll: _setExpandedPoll,
         isExpanded: false
       });
 
@@ -733,7 +744,7 @@ describe('Integration Tests: ResultsDisplay Component Interactions', () => {
 
       const buttons = container.querySelectorAll('button');
       // Find the expand button (last navigation button)
-      const expandButton = Array.from(buttons).find((btn, idx) => {
+      const expandButton = Array.from(buttons).find((btn, _idx) => {
         const svg = btn.querySelector('svg');
         return svg && btn.getAttribute('title')?.includes('Expand');
       });
@@ -864,7 +875,7 @@ describe('Integration Tests: Hook-to-Component Data Flow', () => {
         selectedPoll: poll
       });
 
-      const { container: sidebarContainer } = render(
+      const { container: _sidebarContainer } = render(
         <FilterSidebar {...sidebarProps} />
       );
 

@@ -26,7 +26,7 @@ function Part7Prioritization({ data, onChange }: PartComponentProps) {
       <div className="space-y-8">
         <div>
           <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Based on your experience, please rank these four areas for modernization priority in BC's sediment
+            Based on your experience, please rank these four areas for modernization priority in BC&apos;s sediment
             standards (1 = highest):
           </h4>
 

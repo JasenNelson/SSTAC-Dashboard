@@ -62,16 +62,16 @@ export function TWGReviewFormContainer({
             </div>
           )}
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            Expert Review Form: Modernizing British Columbia's Sediment Standards
+            Expert Review Form: Modernizing British Columbia&apos;s Sediment Standards
           </h2>
           <div className={`rounded-lg p-4 mb-6 border ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-sky-100 border-sky-200'}`}>
             <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
               Thank you for contributing your expertise to the Technical Working Group (TWG) review.
             </p>
             <ul className={`mt-3 space-y-2 text-sm list-disc list-inside ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              <li>The "Save Progress" buttons let you capture everything you've entered without submitting.</li>
+              <li>The &quot;Save Progress&quot; buttons let you capture everything you&apos;ve entered without submitting.</li>
               <li>You can be anywhere in the form and still switch parts using the navigation panel or mobile drawer—your notes stay in place.</li>
-              <li>Use the "Submit Review" button in Part 12 to let us know your review is ready.</li>
+              <li>Use the &quot;Submit Review&quot; button in Part 12 to let us know your review is ready.</li>
             </ul>
           </div>
         </div>

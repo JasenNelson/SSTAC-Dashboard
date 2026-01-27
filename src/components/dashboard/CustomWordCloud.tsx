@@ -110,7 +110,7 @@ export default function CustomWordCloud({
     const spatialGrid = new Map<string, number[]>();
 
     // Helper function to get cell coordinates for a position
-    const getCellCoords = (x: number, y: number) => {
+    const _getCellCoords = (x: number, y: number) => {
       return `${Math.floor(x / cellSize)},${Math.floor(y / cellSize)}`;
     };
 
@@ -166,7 +166,7 @@ export default function CustomWordCloud({
     // Helper function to find a good position for a word
     const findPosition = (textWidth: number, textHeight: number) => {
       const padding = 25;
-      const maxAttempts = 100;
+      const _maxAttempts = 100;
       
       // Try positions in expanding squares around center
       for (let radius = 0; radius < Math.min(displayWidth, displayHeight) / 2; radius += 20) {
@@ -202,7 +202,7 @@ export default function CustomWordCloud({
       };
     };
     
-    sortedWords.forEach((word, index) => {
+    sortedWords.forEach((word, _index) => {
       // Calculate font size based on value
       const normalizedValue = valueRange === 0 ? 0.5 : (word.value - minValue) / valueRange;
       const fontSize = minSize + (normalizedValue * (maxSize - minSize));

@@ -192,7 +192,7 @@ function isOptionAllowed(option: HumanResult, constraints: TierConstraints): boo
 // Helper Components
 // ============================================================================
 
-function EvidenceCoverageBar({ coverage }: { coverage: number }) {
+function _EvidenceCoverageBar({ coverage }: { coverage: number }) {
   const getColorClass = (pct: number) => {
     if (pct >= 80) return 'bg-green-500 dark:bg-green-400';
     if (pct >= 50) return 'bg-yellow-500 dark:bg-yellow-400';

@@ -18,7 +18,7 @@ interface FilterSidebarProps {
   onExportAll: () => void;
   onHidePanel: () => void;
   groupPollsByTheme: (polls: PollResult[]) => Record<string, { name: string; polls: PollResult[] }>;
-  getFilteredPollResults: (poll: PollResult) => any[];
+  getFilteredPollResults: (poll: PollResult) => { votes: number }[];
 }
 
 const FilterSidebar: React.FC<FilterSidebarProps> = ({

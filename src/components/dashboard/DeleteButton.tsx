@@ -74,7 +74,7 @@ export default function DeleteButton({ documentId, documentTitle }: DeleteButton
   return (
     <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
       <p className="text-sm text-red-800 mb-3">
-        Are you sure you want to delete "{documentTitle}"? This action cannot be undone.
+        Are you sure you want to delete &quot;{documentTitle}&quot;? This action cannot be undone.
       </p>
       <div className="flex gap-2">
         <button

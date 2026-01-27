@@ -51,7 +51,7 @@ test.describe('Authentication Flows', () => {
     await page.locator('input[id="password"]').fill('somepassword');
 
     // Try to submit
-    const submitButton = page.locator('button[type="submit"]');
+    const _submitButton = page.locator('button[type="submit"]');
 
     // Check if HTML5 validation prevents submission
     const isValid = await page.locator('input[id="email"]').evaluate((el: HTMLInputElement) => el.validity.valid);

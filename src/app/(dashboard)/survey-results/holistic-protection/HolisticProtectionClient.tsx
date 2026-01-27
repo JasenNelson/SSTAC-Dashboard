@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import PollWithResults from '@/components/PollWithResults';
-import RankingPoll from '@/components/dashboard/RankingPoll';
 import SurveyMatrixGraph from '@/components/graphs/SurveyMatrixGraph';
 
 interface PollData {
@@ -13,8 +12,8 @@ interface PollData {
 }
 
 export default function HolisticProtectionClient() {
-  const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
-  const [polls, setPolls] = useState<PollData[]>([
+  const [_activeAccordion, _setActiveAccordion] = useState<string | null>(null);
+  const [polls, _setPolls] = useState<PollData[]>([
     {
       question: "Rank the importance of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs). (1 = very important to 5 = not important)",
       questionNumber: 1,
@@ -105,8 +104,8 @@ export default function HolisticProtectionClient() {
     }
   ]);
 
-  const toggleAccordion = (id: string) => {
-    setActiveAccordion(activeAccordion === id ? null : id);
+  const _toggleAccordion = (id: string) => {
+    _setActiveAccordion(_activeAccordion === id ? null : id);
   };
 
   // Helper function to generate matrix titles based on question index
@@ -164,9 +163,9 @@ export default function HolisticProtectionClient() {
           {/* Framework Description */}
           <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 max-w-4xl mx-auto">
             <p className="text-lg md:text-xl italic leading-relaxed">
-              "A comprehensive approach to sediment quality protection that ensures the ecological health of 
-              bottom-dwelling and pelagic organisms, while addressing food pathway toxicity that affects 
-              fish, birds, wildlife and people."
+              &quot;A comprehensive approach to sediment quality protection that ensures the ecological health of
+              bottom-dwelling and pelagic organisms, while addressing food pathway toxicity that affects
+              fish, birds, wildlife and people.&quot;
             </p>
           </div>
         </div>

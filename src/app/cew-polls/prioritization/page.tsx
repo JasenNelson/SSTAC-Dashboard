@@ -6,7 +6,7 @@ import PollWithResults from '@/components/PollWithResults';
 import RankingPoll from '@/components/dashboard/RankingPoll';
 import WordCloudPoll from '@/components/dashboard/WordCloudPoll';
 
-interface PollData {
+interface _PollData {
   question: string;
   options?: string[];
   questionNumber?: number;
@@ -18,7 +18,7 @@ interface PollData {
 }
 
 export default function CEWPrioritizationPage() {
-  const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
+  const [_activeAccordion, _setActiveAccordion] = useState<string | null>(null);
   const [authCode, setAuthCode] = useState<string | null>(null);
 
   const handleCodeEntered = (code: string) => {

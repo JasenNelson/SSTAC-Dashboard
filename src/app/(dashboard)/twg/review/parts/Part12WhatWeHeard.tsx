@@ -19,7 +19,7 @@ function Part12WhatWeHeard({ data, onChange }: PartComponentProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
       <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-        Part 12: "What We Heard" Reports (Appendices D, G, J)
+        Part 12: &quot;What We Heard&quot; Reports (Appendices D, G, J)
       </h3>
 
       <div className="space-y-6">
@@ -71,7 +71,7 @@ function Part12WhatWeHeard({ data, onChange }: PartComponentProps) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            What additional documentation, polling, or qualitative analysis would strengthen the "What We Heard" narrative?
+            What additional documentation, polling, or qualitative analysis would strengthen the &quot;What We Heard&quot; narrative?
           </label>
           <div className="relative">
             <textarea
@@ -90,7 +90,7 @@ function Part12WhatWeHeard({ data, onChange }: PartComponentProps) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Line-by-line feedback for Appendices D, G, and J – "What We Heard" Reports (5,000 characters max):
+            Line-by-line feedback for Appendices D, G, and J – &quot;What We Heard&quot; Reports (5,000 characters max):
           </label>
           <div className="relative">
             <textarea

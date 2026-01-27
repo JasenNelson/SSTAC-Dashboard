@@ -139,7 +139,7 @@ function PolicyResultCard({ policy, isExpanded, onToggle }: {
 // Main Component
 // ============================================================================
 
-export default function PolicySearch({ initialQuery = '', csapId }: PolicySearchProps) {
+export default function PolicySearch({ initialQuery = '', csapId: _csapId }: PolicySearchProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState(initialQuery);
   const [tierFilter, setTierFilter] = useState<string>('all');

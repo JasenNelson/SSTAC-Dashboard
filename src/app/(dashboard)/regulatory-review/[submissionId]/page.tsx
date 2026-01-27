@@ -7,7 +7,6 @@ import ReviewDashboardClient from './ReviewDashboardClient';
 import {
   getSubmissionById,
   getAssessments,
-  type Submission as DbSubmission,
   type Assessment as DbAssessment,
 } from '@/lib/sqlite/queries';
 

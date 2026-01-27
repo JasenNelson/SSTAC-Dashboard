@@ -45,7 +45,7 @@ export default async function EffectivenessPage() {
       <header className="mb-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">Effectiveness of Current Standards</h1>
         <p className="text-xl text-gray-600 max-w-3xl">
-          Analysis of current BC CSR Schedule 3.4 sediment standards' effectiveness for protecting benthic organisms and preventing harmful bioaccumulation.
+          Analysis of current BC CSR Schedule 3.4 sediment standards&apos; effectiveness for protecting benthic organisms and preventing harmful bioaccumulation.
         </p>
       </header>
 
@@ -65,8 +65,8 @@ export default async function EffectivenessPage() {
           </div>
         </div>
         <p className="text-red-800 text-lg mt-6 leading-relaxed">
-          There is a stark contrast in how respondents view the standards' ability to protect different parts of the ecosystem. 
-          While over 60% believe the standards are at least "moderately effective" at protecting benthic organisms, 
+          There is a stark contrast in how respondents view the standards&apos; ability to protect different parts of the ecosystem.
+          While over 60% believe the standards are at least &quot;moderately effective&quot; at protecting benthic organisms,
           this confidence plummets when considering the broader food web.
         </p>
       </div>
@@ -82,7 +82,7 @@ export default async function EffectivenessPage() {
               <ul className="space-y-3 text-gray-600">
                 <li className="flex items-start">
                   <span className="text-green-500 mr-3 mt-1">✓</span>
-                  Over 60% rate standards as at least "moderately effective"
+                  Over 60% rate standards as at least &quot;moderately effective&quot;
                 </li>
                 <li className="flex items-start">
                   <span className="text-yellow-500 mr-3 mt-1">⚠</span>
@@ -123,7 +123,7 @@ export default async function EffectivenessPage() {
               <ul className="space-y-3 text-gray-600">
                 <li className="flex items-start">
                   <span className="text-red-500 mr-3 mt-1">🔴</span>
-                  73% rate standards as "Not Effective" or "Slightly Effective"
+                  73% rate standards as &quot;Not Effective&quot; or &quot;Slightly Effective&quot;
                 </li>
                 <li className="flex items-start">
                   <span className="text-red-500 mr-3 mt-1">🔴</span>
@@ -139,13 +139,13 @@ export default async function EffectivenessPage() {
               <h4 className="text-lg font-medium text-gray-700 mb-4">Stakeholder Quotes</h4>
               <div className="space-y-3 text-gray-600 italic">
                 <blockquote className="border-l-4 border-red-200 pl-4">
-                  "The BC CSR sediment standards are not appropriate or adequate to protect upper trophic level organisms, 
-                  apex predators and humans at the top of foodwebs, as these sediment standards were or are designed for 
-                  the protection of low tropic level species and benthic organisms."
+                  &quot;The BC CSR sediment standards are not appropriate or adequate to protect upper trophic level organisms,
+                  apex predators and humans at the top of foodwebs, as these sediment standards were or are designed for
+                  the protection of low tropic level species and benthic organisms.&quot;
                 </blockquote>
                 <blockquote className="border-l-4 border-red-200 pl-4">
-                  "No bioaccumulation protection is also a scary consideration, resulting in the need to clean up to levels 
-                  below standards but having a challenging time making a convincing argument."
+                  &quot;No bioaccumulation protection is also a scary consideration, resulting in the need to clean up to levels
+                  below standards but having a challenging time making a convincing argument.&quot;
                 </blockquote>
               </div>
             </div>

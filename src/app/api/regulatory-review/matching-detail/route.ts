@@ -13,7 +13,6 @@ import { getAssessmentById } from '@/lib/sqlite/queries';
 import {
   getBaselineValidation,
   upsertBaselineValidation,
-  getBaselineValidationStats,
   type BaselineValidationData,
 } from '@/lib/sqlite/queries/validation';
 import type {

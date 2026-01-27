@@ -24,6 +24,20 @@ interface RankingSubmitResponse {
   error?: ApiError | string;
 }
 
+// Poll data types from database
+interface PollData {
+  id: string;
+  page_path: string;
+  poll_index: number;
+  question: string;
+  options: string[];
+}
+
+interface UserVoteData {
+  option_index: number;
+  other_text: string | null;
+}
+
 // =============================================================================
 // Poll Operations
 // =============================================================================
@@ -71,12 +85,12 @@ export async function getPollWithUserVote(
 
     if (userId) {
       const { data: userVoteData } = await client.getUserPollVote(
-        (pollData as any).id,
+        (pollData as PollData).id,
         userId
       );
       if (userVoteData) {
-        userVote = (userVoteData as any).option_index;
-        userOtherText = (userVoteData as any).other_text;
+        userVote = (userVoteData as UserVoteData).option_index;
+        userOtherText = (userVoteData as UserVoteData).other_text;
       }
     }
 
@@ -115,7 +129,7 @@ export async function submitPollVote(
 
     // Submit vote
     const { error: submitError } = await client.submitPollVote(
-      (pollData as any).id,
+      (pollData as PollData).id,
       userId,
       optionIndex,
       otherText
@@ -125,7 +139,7 @@ export async function submitPollVote(
       throw new Error(`Failed to submit vote: ${submitError.message}`);
     }
 
-    return { success: true, data: { pollId: (pollData as any).id } };
+    return { success: true, data: { pollId: (pollData as PollData).id } };
   } catch (error) {
     return {
       success: false,
@@ -148,7 +162,7 @@ export async function submitPollVote(
 export async function getRankingPollWithUserVote(
   pagePath: string,
   pollIndex: number,
-  userId?: string
+  _userId?: string
 ): Promise<{
   results: RankingResults | null;
   userRankings?: Array<{ optionIndex: number; rank: number }> | null;
@@ -209,7 +223,7 @@ export async function submitRankingVote(
     }
 
     // Submit rankings
-    const { error: submitError } = await client.submitRankingVote((pollData as any).id, userId, rankings);
+    const { error: submitError } = await client.submitRankingVote((pollData as PollData).id, userId, rankings);
 
     if (submitError) {
       throw new Error(`Failed to submit rankings: ${submitError.message}`);
@@ -303,7 +317,7 @@ export async function submitWordcloudWord(
     }
 
     // Submit word
-    const { error: submitError } = await client.submitWordcloudVote((pollData as any).id, userId, word.trim());
+    const { error: submitError } = await client.submitWordcloudVote((pollData as PollData).id, userId, word.trim());
 
     if (submitError) {
       throw new Error(`Failed to submit word: ${submitError.message}`);

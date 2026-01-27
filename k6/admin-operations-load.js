@@ -39,6 +39,7 @@ export const options = {
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
 const ADMIN_TOKEN = __ENV.ADMIN_TOKEN || 'test-admin-token'; // Should be set via environment variable
 
+// eslint-disable-next-line import/no-anonymous-default-export
 export default function () {
   activeAdminUsers.set(__VU);
 

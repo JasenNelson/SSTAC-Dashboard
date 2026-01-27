@@ -9,9 +9,12 @@
 
 import { createAuthenticatedClient } from '@/lib/supabase-auth';
 import type {
-  ApiResponse,
+  ApiResponse as _ApiResponse,
   ApiError,
 } from '@/types';
+
+// Re-export to suppress unused import warning (type is used by consumers)
+export type { _ApiResponse as ApiResponse };
 
 // =============================================================================
 // Client Configuration

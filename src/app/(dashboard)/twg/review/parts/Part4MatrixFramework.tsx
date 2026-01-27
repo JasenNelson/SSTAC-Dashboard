@@ -24,7 +24,7 @@ function Part4MatrixFramework({ data, onChange }: PartComponentProps) {
             This section focuses on the <strong>Matrix Sediment Standards Framework</strong> (see Section V.B of the report),
             which proposes separate standards for direct exposure (SedS-direct) and food pathway exposure (SedS-food)
             to protect both ecological and human health. The initial public survey showed 83% of respondents found
-            this 'Dual Standard' approach necessary.
+            this &apos;Dual Standard&apos; approach necessary.
           </p>
         </div>
 

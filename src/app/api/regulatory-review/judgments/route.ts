@@ -70,7 +70,8 @@ const bulkJudgmentsSchema = z.object({
     .max(100, 'Cannot process more than 100 judgments at once'),
 });
 
-type BulkJudgmentItem = z.infer<typeof bulkJudgmentItemSchema>;
+// Type used for validation - may be used in future expansion
+type _BulkJudgmentItem = z.infer<typeof bulkJudgmentItemSchema>;
 
 /**
  * Validate judgment against tier constraints

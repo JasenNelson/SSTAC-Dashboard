@@ -157,7 +157,7 @@ async function runEvaluationEngine(
 /**
  * Find output files from engine run
  */
-async function findOutputFiles(outputDir: string, submissionId: string): Promise<string[]> {
+async function findOutputFiles(outputDir: string, _submissionId: string): Promise<string[]> {
   const { readdir, stat } = await import('fs/promises');
 
   try {

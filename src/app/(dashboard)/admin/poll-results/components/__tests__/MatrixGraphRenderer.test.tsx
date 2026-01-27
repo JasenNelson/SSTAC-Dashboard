@@ -207,7 +207,7 @@ describe('MatrixGraphRenderer', () => {
   it('should toggle matrix graph visibility when toggle button is clicked', () => {
     const showGraphs = { 'prioritization-q1-q2': false };
 
-    const { rerender } = render(
+    const { rerender: _rerender } = render(
       <MatrixGraphRenderer
         selectedPoll={mockPrioritizationPoll}
         matrixData={mockMatrixData}

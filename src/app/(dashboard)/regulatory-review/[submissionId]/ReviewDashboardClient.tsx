@@ -165,7 +165,7 @@ export default function ReviewDashboardClient({
   const [isEditingReviewer, setIsEditingReviewer] = useState(false);
 
   // Group assessments by normalized section
-  const sectionGroups = useMemo(() => {
+  const _sectionGroups = useMemo(() => {
     const groups = new Map<string, Assessment[]>();
     submission.assessments.forEach((assessment) => {
       const section = normalizeSection(assessment.section);

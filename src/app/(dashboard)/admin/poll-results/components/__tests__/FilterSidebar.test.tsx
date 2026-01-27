@@ -43,7 +43,7 @@ describe('FilterSidebar', () => {
   });
 
   // Mock getFilteredPollResults
-  const mockGetFilteredPollResults = (poll: PollResult) => [
+  const mockGetFilteredPollResults = (_poll: PollResult) => [
     { option_index: 0, option_text: 'Option A', votes: 60 },
     { option_index: 1, option_text: 'Option B', votes: 40 }
   ];
@@ -433,7 +433,7 @@ describe('FilterSidebar', () => {
     const setExpandedGroup = vi.fn();
     const setSelectedQuestion = vi.fn();
 
-    const getFilteredPollResults = (poll: PollResult) => [
+    const getFilteredPollResults = (_poll: PollResult) => [
       { option_index: 0, option_text: 'Option A', votes: 75 },
       { option_index: 1, option_text: 'Option B', votes: 25 }
     ];

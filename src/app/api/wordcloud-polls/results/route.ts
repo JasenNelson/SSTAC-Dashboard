@@ -20,7 +20,8 @@ interface ProcessedWordItem {
   value: number;
 }
 
-interface WordcloudResponse {
+// Response type for documentation - actual response is inline
+interface _WordcloudResponse {
   results: {
     total_votes: number;
     words: ProcessedWordItem[];

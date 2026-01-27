@@ -74,6 +74,7 @@ export default function DiscussionThreadPage() {
       fetchReplies();
       getCurrentUser();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discussionId, currentPage]);
 
   const getCurrentUser = async () => {

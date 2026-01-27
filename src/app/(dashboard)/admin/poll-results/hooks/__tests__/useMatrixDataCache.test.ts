@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor as _waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useMatrixDataCache } from '../useMatrixDataCache';
 import type { MatrixData } from '../../types';
@@ -9,6 +9,7 @@ global.fetch = vi.fn();
 describe('useMatrixDataCache', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global.fetch as any).mockClear();
   });
 
@@ -45,6 +46,7 @@ describe('useMatrixDataCache', () => {
       }
     ];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => mockData
@@ -69,6 +71,7 @@ describe('useMatrixDataCache', () => {
       }
     ];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global.fetch as any).mockResolvedValue({
       ok: true,
       json: async () => mockData
@@ -103,6 +106,7 @@ describe('useMatrixDataCache', () => {
   it('should call fetch API endpoint', async () => {
     const mockData: MatrixData[] = [];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => mockData

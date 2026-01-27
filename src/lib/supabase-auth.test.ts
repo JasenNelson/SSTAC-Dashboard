@@ -23,7 +23,7 @@ vi.mock('next/headers', () => ({
 // Mock environment variables
 const originalEnv = process.env;
 beforeEach(() => {
-  vi.resetModules();
+  // Note: Don't use vi.resetModules() as it corrupts static imports
   process.env = {
     ...originalEnv,
     NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
@@ -195,8 +195,9 @@ describe('supabase-auth', () => {
         },
       };
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await getAuthenticatedUser(mockSupabaseClient as any);
-      
+
       expect(user).toEqual(mockUser);
       expect(mockSupabaseClient.auth.getUser).toHaveBeenCalled();
     });
@@ -211,8 +212,9 @@ describe('supabase-auth', () => {
         },
       };
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await getAuthenticatedUser(mockSupabaseClient as any);
-      
+
       expect(user).toBeNull();
     });
 
@@ -226,8 +228,9 @@ describe('supabase-auth', () => {
         },
       };
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await getAuthenticatedUser(mockSupabaseClient as any);
-      
+
       expect(user).toBeNull();
     });
   });
@@ -244,8 +247,9 @@ describe('supabase-auth', () => {
         },
       };
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await requireAuthenticatedUser(mockSupabaseClient as any);
-      
+
       expect(user).toEqual(mockUser);
     });
 
@@ -260,6 +264,7 @@ describe('supabase-auth', () => {
       };
       
       await expect(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         requireAuthenticatedUser(mockSupabaseClient as any)
       ).rejects.toThrow('Unauthorized');
     });
@@ -352,8 +357,9 @@ describe('supabase-auth', () => {
       mockCreateServerClient.mockReturnValue(mockSupabaseClient);
       
       const supabase = await createAuthenticatedClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await getAuthenticatedUser(supabase as any);
-      
+
       expect(user).toEqual(mockUser);
     });
 
