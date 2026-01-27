@@ -46,7 +46,6 @@ export default function PollResultsClient() {
   const [leftPanelVisible, setLeftPanelVisible] = useState(true);
   const [qrCodeExpanded, setQrCodeExpanded] = useState(false);
   const [expandedPollGroup, setExpandedPollGroup] = useState<string | null>(null);
-  const [, setCurrentQuestionIndex] = useState(0);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [showMatrixGraphs, setShowMatrixGraphs] = useState<{[key: string]: boolean}>({});
   const [showPresentationControls, setShowPresentationControls] = useState(true);
@@ -899,8 +898,7 @@ export default function PollResultsClient() {
     if (nextPoll) {
       const nextPollKey = nextPoll.poll_id || nextPoll.ranking_poll_id || `poll-${nextPoll.page_path}-${nextPoll.poll_index}`;
       setSelectedQuestion(nextPollKey);
-      setCurrentQuestionIndex(nextIndex);
-      
+
       // If currently expanded, keep the new question expanded
       if (expandedPoll) {
         setExpandedPoll(nextPollKey);
@@ -925,8 +923,7 @@ export default function PollResultsClient() {
     if (prevPoll) {
       const prevPollKey = prevPoll.poll_id || prevPoll.ranking_poll_id || `poll-${prevPoll.page_path}-${prevPoll.poll_index}`;
       setSelectedQuestion(prevPollKey);
-      setCurrentQuestionIndex(prevIndex);
-      
+
       // If currently expanded, keep the new question expanded
       if (expandedPoll) {
         setExpandedPoll(prevPollKey);
@@ -1133,7 +1130,7 @@ export default function PollResultsClient() {
                             className={`flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ${isExpanded ? 'w-8 h-8' : 'w-6 h-6'}`}
                             title="Previous question in group"
                           >
-                            <svg className={`fill="none" stroke="currentColor" viewBox="0 0 24 24" ${isExpanded ? 'w-5 h-5' : 'w-4 h-4'}`}>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className={`${isExpanded ? 'w-5 h-5' : 'w-4 h-4'}`}>
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                           </button>
@@ -1142,7 +1139,7 @@ export default function PollResultsClient() {
                             className={`flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ${isExpanded ? 'w-8 h-8' : 'w-6 h-6'}`}
                             title="Next question in group"
                           >
-                            <svg className={`fill="none" stroke="currentColor" viewBox="0 0 24 24" ${isExpanded ? 'w-5 h-5' : 'w-4 h-4'}`}>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className={`${isExpanded ? 'w-5 h-5' : 'w-4 h-4'}`}>
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                           </button>

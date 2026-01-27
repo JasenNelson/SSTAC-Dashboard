@@ -64,6 +64,13 @@ export function usePollData() {
       const rankingData = rankingResult.data || [];
       const wordcloudData = wordcloudResult.data || [];
 
+      // Debug logging
+      console.log('📊 Poll Data Fetch Results:', {
+        singleChoice: singleChoiceData.length,
+        ranking: rankingData.length,
+        wordcloud: wordcloudData.length
+      });
+
       // Define current active polls to filter out old/test data
       const currentPollQuestions = [
         "Rank the importance of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs). (1 = very important to 5 = not important)",
@@ -289,6 +296,9 @@ export function usePollData() {
         }
         return a.poll_index - b.poll_index;
       });
+
+      // Debug: Log combined results count
+      console.log('📊 Combined Results after filtering:', combinedResults.length);
 
       // If no combined results, fallback to showing raw data
       let finalResults: PollResult[];
