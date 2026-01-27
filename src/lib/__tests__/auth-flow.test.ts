@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   createAuthenticatedClient,
-  createAnonymousClient,
+  createAnonymousClient as _createAnonymousClient,
   getAuthenticatedUser,
   createClientForPagePath,
   generateCEWUserId,
@@ -67,6 +67,7 @@ describe('Authentication Flow Tests', () => {
       const supabase = await createAuthenticatedClient();
       
       // Step 2: Get authenticated user
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await getAuthenticatedUser(supabase as any);
       
       // Step 3: Verify user is authenticated
@@ -101,8 +102,9 @@ describe('Authentication Flow Tests', () => {
       mockCreateServerClient.mockReturnValue(mockSupabaseClient);
       
       const supabase = await createAuthenticatedClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await getAuthenticatedUser(supabase as any);
-      
+
       expect(user).toBeNull();
     });
 
@@ -117,10 +119,11 @@ describe('Authentication Flow Tests', () => {
       };
       
       mockCreateServerClient.mockReturnValue(mockSupabaseClient);
-      
+
       const supabase = await createAuthenticatedClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await getAuthenticatedUser(supabase as any);
-      
+
       expect(user).toBeNull();
     });
   });
@@ -145,7 +148,7 @@ describe('Authentication Flow Tests', () => {
       mockCreateServerClient.mockReturnValue(mockSupabaseClient);
       
       // Step 1: Create anonymous client for CEW page
-      const { supabase, isCEWPage } = await createClientForPagePath('/cew-polls/holistic-protection');
+      const { supabase: _supabase, isCEWPage } = await createClientForPagePath('/cew-polls/holistic-protection');
       
       expect(isCEWPage).toBe(true);
       
@@ -176,11 +179,12 @@ describe('Authentication Flow Tests', () => {
     it('should generate fallback IDs when no session ID provided', () => {
       const userId1 = generateCEWUserId('CEW2025', null);
       const userId2 = generateCEWUserId('CEW2025', null);
-      
-      // Should be different due to timestamp/random
-      // Format: CEW2025_session_{timestamp}_{randomSuffix}
-      expect(userId1).toMatch(/^CEW2025_session_\d+_[a-z0-9]+$/);
-      expect(userId2).toMatch(/^CEW2025_session_\d+_[a-z0-9]+$/);
+
+      // Should be different due to cryptographic randomness
+      // Format: CEW2025_{32-char-hex} from crypto.randomBytes(16)
+      expect(userId1).toMatch(/^CEW2025_[a-f0-9]{32}$/);
+      expect(userId2).toMatch(/^CEW2025_[a-f0-9]{32}$/);
+      expect(userId1).not.toBe(userId2); // Should be cryptographically different
     });
   });
 
@@ -215,20 +219,20 @@ describe('Authentication Flow Tests', () => {
 
     it('should create appropriate client type based on path', async () => {
       // Test CEW path
-      const { supabase: cewClient, isCEWPage: isCEW } = await createClientForPagePath('/cew-polls/test');
+      const { supabase: _cewClient, isCEWPage: isCEW } = await createClientForPagePath('/cew-polls/test');
       expect(isCEW).toBe(true);
-      
+
       // Verify anonymous client pattern
       const cewCallArgs = mockCreateServerClient.mock.calls[0][2];
       expect(cewCallArgs.cookies.get()).toBeNull();
-      
+
       // Test authenticated path
       mockCookies.mockResolvedValue({
         get: vi.fn((name: string) => ({ value: `cookie-${name}` })),
         set: vi.fn(),
       });
-      
-      const { supabase: authClient, isCEWPage: isAuth } = await createClientForPagePath('/survey-results/test');
+
+      const { supabase: _authClient, isCEWPage: isAuth } = await createClientForPagePath('/survey-results/test');
       expect(isAuth).toBe(false);
       
       // Verify authenticated client pattern

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import PollWithResults from '@/components/PollWithResults';
 import RankingPoll from '@/components/dashboard/RankingPoll';
 import WordCloudPoll from '@/components/dashboard/WordCloudPoll';
@@ -18,11 +19,11 @@ interface PollData {
 }
 
 export default function PrioritizationClient() {
-  const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
+  const [_activeAccordion, _setActiveAccordion] = useState<string | null>(null);
   
   // Define polls with proper structure for the new poll system
   // Updated structure: Q1-Q2 single-choice, Q3-Q4 ranking, Q5 wordcloud
-  const polls = [
+  const polls: PollData[] = [
     // Questions 1-2: Single-Choice Polls (kept from original Q1-Q2)
     {
       question: "Rank the importance of incorporating bioavailability adjustments into sediment standards. (1 = very important to 5 = not important)",
@@ -86,8 +87,8 @@ export default function PrioritizationClient() {
     }
   ];
 
-  const toggleAccordion = (id: string) => {
-    setActiveAccordion(activeAccordion === id ? null : id);
+  const _toggleAccordion = (id: string) => {
+    _setActiveAccordion(_activeAccordion === id ? null : id);
   };
 
   return (
@@ -96,11 +97,13 @@ export default function PrioritizationClient() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 overflow-hidden">
-          <img 
-            src="/Lindsay.JPG" 
+          <Image
+            src="/Lindsay.JPG"
             alt="Lindsay landscape for prioritization planning"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
             style={{ filter: "brightness(0.65)" }}
+            priority
           />
         </div>
         

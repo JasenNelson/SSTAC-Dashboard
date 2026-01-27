@@ -9,6 +9,14 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts'],
   },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  webpack: (config: any) => {
+    // Mark better-sqlite3 as external to prevent webpack from trying to bundle it
+    // This is a native module that only works in local development, not in serverless
+    config.externals = config.externals || [];
+    config.externals.push('better-sqlite3');
+    return config;
+  },
 };
 
 // Wrap the Next.js config with Sentry configuration

@@ -24,14 +24,6 @@ interface AdminContextValue {
 
 const AdminContext = createContext<AdminContextValue | undefined>(undefined);
 
-function restoreAdminStatusFromStorage(userId: string): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  return localStorage.getItem(`admin_status_${userId}`) === 'true';
-}
-
 export function AdminProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -45,13 +37,8 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      if (!force && restoreAdminStatusFromStorage(session.user.id)) {
-        setIsAdmin(true);
-        setIsChecking(false);
-        return true;
-      }
-
       setIsChecking(true);
+      // SECURITY: Always verify admin status server-side, never use localStorage as source of truth
       const status = await refreshGlobalAdminStatus(force);
       setIsAdmin(status);
       setIsChecking(false);

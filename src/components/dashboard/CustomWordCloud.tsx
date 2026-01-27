@@ -101,24 +101,72 @@ export default function CustomWordCloud({
     // Sort words by value (largest first)
     const sortedWords = [...words].sort((a, b) => b.value - a.value);
     
-    // Grid-based layout with collision detection for better readability
+    // Grid-based layout with spatial hash collision detection for better readability
     const placedWords: Array<{x: number, y: number, width: number, height: number}> = [];
     const gridSize = 20; // Grid cell size for collision detection
-    
-    // Helper function to check if a position collides with existing words
+    const cellSize = 50; // Size of spatial hash cells (tuned for typical wordcloud sizes)
+
+    // Spatial hash grid: maps cell coordinates to word indices
+    const spatialGrid = new Map<string, number[]>();
+
+    // Helper function to get cell coordinates for a position
+    const _getCellCoords = (x: number, y: number) => {
+      return `${Math.floor(x / cellSize)},${Math.floor(y / cellSize)}`;
+    };
+
+    // Helper function to get all cells that overlap with a bounding box
+    const getCellsForBounds = (x: number, y: number, width: number, height: number, padding: number = 25) => {
+      const cells = new Set<string>();
+      const minCellX = Math.floor((x - padding) / cellSize);
+      const maxCellX = Math.floor((x + width + padding) / cellSize);
+      const minCellY = Math.floor((y - padding) / cellSize);
+      const maxCellY = Math.floor((y + height + padding) / cellSize);
+
+      for (let cx = minCellX; cx <= maxCellX; cx++) {
+        for (let cy = minCellY; cy <= maxCellY; cy++) {
+          cells.add(`${cx},${cy}`);
+        }
+      }
+      return cells;
+    };
+
+    // Helper function to check if a position collides with existing words (spatial hash optimized)
     const hasCollision = (x: number, y: number, width: number, height: number, padding: number = 25) => {
-      return placedWords.some(placed => 
-        x < placed.x + placed.width + padding &&
-        x + width + padding > placed.x &&
-        y < placed.y + placed.height + padding &&
-        y + height + padding > placed.y
-      );
+      const cellsToCheck = getCellsForBounds(x, y, width, height, padding);
+
+      for (const cellKey of cellsToCheck) {
+        const wordIndices = spatialGrid.get(cellKey);
+        if (wordIndices) {
+          for (const idx of wordIndices) {
+            const placed = placedWords[idx];
+            // Actual collision check only against words in nearby cells
+            if (x < placed.x + placed.width + padding &&
+                x + width + padding > placed.x &&
+                y < placed.y + placed.height + padding &&
+                y + height + padding > placed.y) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    };
+
+    // Helper function to add a word to the spatial grid
+    const addToSpatialGrid = (x: number, y: number, width: number, height: number, wordIndex: number) => {
+      const cellsForWord = getCellsForBounds(x, y, width, height, 0);
+      for (const cellKey of cellsForWord) {
+        if (!spatialGrid.has(cellKey)) {
+          spatialGrid.set(cellKey, []);
+        }
+        spatialGrid.get(cellKey)!.push(wordIndex);
+      }
     };
     
     // Helper function to find a good position for a word
     const findPosition = (textWidth: number, textHeight: number) => {
       const padding = 25;
-      const maxAttempts = 100;
+      const _maxAttempts = 100;
       
       // Try positions in expanding squares around center
       for (let radius = 0; radius < Math.min(displayWidth, displayHeight) / 2; radius += 20) {
@@ -154,7 +202,7 @@ export default function CustomWordCloud({
       };
     };
     
-    sortedWords.forEach((word, index) => {
+    sortedWords.forEach((word, _index) => {
       // Calculate font size based on value
       const normalizedValue = valueRange === 0 ? 0.5 : (word.value - minValue) / valueRange;
       const fontSize = minSize + (normalizedValue * (maxSize - minSize));
@@ -168,9 +216,13 @@ export default function CustomWordCloud({
       const position = findPosition(textWidth, textHeight);
       const x = position.x;
       const y = position.y;
-      
+
       // Store this word's position for collision detection
+      const wordIndex = placedWords.length;
       placedWords.push({ x, y, width: textWidth, height: textHeight });
+
+      // Add to spatial grid for O(1) collision lookup instead of O(n)
+      addToSpatialGrid(x, y, textWidth, textHeight, wordIndex);
 
       // Choose color based on word value and theme
       const colorIndex = Math.floor((1 - normalizedValue) * (colors.length - 1));
@@ -212,6 +264,7 @@ export default function CustomWordCloud({
         height={height}
         className="max-w-full max-h-full"
         style={{ width: '100%', height: '100%' }}
+        data-testid="word-cloud"
       />
     </div>
   );

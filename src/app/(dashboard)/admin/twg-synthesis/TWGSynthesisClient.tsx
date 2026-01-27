@@ -7,12 +7,16 @@ import InteractiveBarChart from '@/components/dashboard/InteractiveBarChart'
 import InteractivePieChart from '@/components/dashboard/InteractivePieChart'
 import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav'
 
+ 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FormData = Record<string, any>
+
 interface ReviewSubmission {
   id: string
   user_id: string
   email: string
   status: 'IN_PROGRESS' | 'SUBMITTED'
-  form_data: any
+  form_data: FormData
   created_at: string
   updated_at: string
   file_count: number
@@ -34,7 +38,7 @@ interface TWGSynthesisClientProps {
   files: ReviewFile[]
 }
 
-export default function TWGSynthesisClient({ user, submissions, files }: TWGSynthesisClientProps) {
+export default function TWGSynthesisClient({ user: _user, submissions, files }: TWGSynthesisClientProps) {
   const formatDate = (dateStr: string) => {
     try {
       return new Date(dateStr).toISOString().slice(0, 10)
@@ -46,7 +50,7 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_PROGRESS' | 'SUBMITTED'>('ALL')
   const [expertiseFilter, setExpertiseFilter] = useState<string>('ALL')
-  const [selectedSubmission, setSelectedSubmission] = useState<ReviewSubmission | null>(null)
+  const [_selectedSubmission, _setSelectedSubmission] = useState<ReviewSubmission | null>(null)
 
   // Refresh admin status on mount
   useEffect(() => {
@@ -173,11 +177,11 @@ export default function TWGSynthesisClient({ user, submissions, files }: TWGSynt
       const p12 = sub.form_data?.part12 || {}
 
       // Format rankings as readable strings
-      const formatRanking = (ranking: Record<string, number> | null | undefined, options: string[]): string => {
+      const formatRanking = (ranking: Record<string, number> | null | undefined, _options: string[]): string => {
         if (!ranking) return ''
         const entries = Object.entries(ranking)
-          .filter(([_, rank]) => rank)
-          .sort(([_, a], [__, b]) => a - b)
+          .filter(([, rank]) => rank)
+          .sort(([, a], [, b]) => a - b)
           .map(([key, rank]) => `${rank}. ${key}`)
         return entries.join('; ')
       }

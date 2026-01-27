@@ -19,6 +19,9 @@
 .DS_Store
 *.pem
 
+# Exception for Next.js component parts directory
+!src/app/**/parts/
+
 # Log files
 npm-debug.log*
 yarn-debug.log*

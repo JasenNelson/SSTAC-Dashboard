@@ -25,7 +25,7 @@ export default function ProjectPhases() {
                     onClick={() => setExpandedWhitePaper(!expandedWhitePaper)}
                     className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                   >
-                    <span>SABCS White Paper ('High-Level Summary')</span>
+                    <span>SABCS White Paper (&apos;High-Level Summary&apos;)</span>
                     <span className={`transform transition-transform ${expandedWhitePaper ? 'rotate-180' : ''}`}>
                       ▼
                     </span>

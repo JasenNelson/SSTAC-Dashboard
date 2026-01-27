@@ -2,12 +2,56 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+/**
+ * Task 2.2: Add Security Headers
+ * Comprehensive security headers for production-grade protection
+ */
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   })
+
+  // Content Security Policy: Restrict resource loading to same-origin + trusted CDNs
+  response.headers.set(
+    'Content-Security-Policy',
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com; " +
+    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.tailwindcss.com; " +
+    "img-src 'self' data: https:; " +
+    "font-src 'self' data:; " +
+    "connect-src 'self' https://*.supabase.co; " +
+    "frame-ancestors 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self'"
+  )
+
+  // X-Content-Type-Options: Prevent MIME sniffing
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+
+  // X-Frame-Options: Prevent clickjacking attacks
+  response.headers.set('X-Frame-Options', 'DENY')
+
+  // X-XSS-Protection: Enable browser XSS protection
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+
+  // Referrer-Policy: Control referrer information
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+
+  // Permissions-Policy: Disable unnecessary browser features
+  response.headers.set(
+    'Permissions-Policy',
+    'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()'
+  )
+
+  // Strict-Transport-Security: Force HTTPS (only for production)
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set(
+      'Strict-Transport-Security',
+      'max-age=31536000; includeSubDomains; preload'
+    )
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

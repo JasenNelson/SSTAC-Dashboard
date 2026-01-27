@@ -1,7 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createClient } from '@supabase/supabase-js';
+
+// Supabase response type - polls comes as an array from the join
+interface SupabaseVote {
+  poll_id: string;
+  user_id: string;
+  option_index: number;
+  voted_at: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  polls: any;
+}
 
 interface VoteStats {
   totalVotes: number;
@@ -19,16 +29,12 @@ interface VoteStats {
 export default function CEWStatsClient() {
   const [stats, setStats] = useState<VoteStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient(
+  const supabase = useMemo(() => createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  ), []);
 
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       // Get all votes
       const { data: votes, error: votesError } = await supabase
@@ -49,19 +55,21 @@ export default function CEWStatsClient() {
 
       // Calculate stats
       const totalVotes = votes.length;
-      const anonymousVotes = votes.filter(v => v.user_id.startsWith('anon_')).length;
+      const anonymousVotes = votes.filter(v => v.user_id.startsWith('CEW2025_')).length;
       const authenticatedVotes = totalVotes - anonymousVotes;
 
       // Group by page and poll
       const pageStatsMap = new Map();
-      votes.forEach((vote: any) => {
-        const polls = vote.polls as any;
-        const key = `${polls.page_path}_${polls.poll_index}`;
+      (votes as SupabaseVote[]).forEach((vote: SupabaseVote) => {
+        // Handle polls as array or single object
+        const pollData = Array.isArray(vote.polls) ? vote.polls[0] : vote.polls;
+        if (!pollData) return;
+        const key = `${pollData.page_path}_${pollData.poll_index}`;
         if (!pageStatsMap.has(key)) {
           pageStatsMap.set(key, {
-            pagePath: polls.page_path,
-            pollIndex: polls.poll_index,
-            question: polls.question,
+            pagePath: pollData.page_path,
+            pollIndex: pollData.poll_index,
+            question: pollData.question,
             totalVotes: 0,
             anonymousVotes: 0
           });
@@ -69,7 +77,7 @@ export default function CEWStatsClient() {
         
         const stat = pageStatsMap.get(key);
         stat.totalVotes++;
-        if (vote.user_id.startsWith('anon_')) {
+        if (vote.user_id.startsWith('CEW2025_')) {
           stat.anonymousVotes++;
         }
       });
@@ -87,7 +95,11 @@ export default function CEWStatsClient() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   if (loading) {
     return (

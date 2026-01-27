@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BarChart3, ChevronDown, ChevronUp } from 'lucide-react';
 import PrioritizationMatrixGraph from './PrioritizationMatrixGraph';
 
@@ -30,36 +30,36 @@ interface SurveyMatrixGraphProps {
   feasibilityIndex: number;
 }
 
-export default function SurveyMatrixGraph({ 
-  questionPair, 
-  pagePath, 
-  importanceIndex, 
-  feasibilityIndex 
+export default function SurveyMatrixGraph({
+  questionPair,
+  pagePath,
+  importanceIndex: _importanceIndex,
+  feasibilityIndex: _feasibilityIndex
 }: SurveyMatrixGraphProps) {
   const [matrixData, setMatrixData] = useState<MatrixData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const fetchMatrixData = async () => {
+  const fetchMatrixData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch('/api/graphs/prioritization-matrix?filter=all');
       if (!response.ok) {
         throw new Error('Failed to fetch matrix data');
       }
-      
+
       const data: MatrixData[] = await response.json();
-      
+
       // Find the matrix data for this specific question pair
-      const relevantData = data.find(item => 
-        item.title.includes(questionPair.title) || 
+      const relevantData = data.find(item =>
+        item.title.includes(questionPair.title) ||
         (pagePath === 'holistic-protection' && item.title.includes('Matrix Standards')) ||
         (pagePath === 'prioritization' && item.title.includes('Site-Specific Standards'))
       );
-      
+
       if (relevantData) {
         setMatrixData(relevantData);
       } else {
@@ -72,13 +72,13 @@ export default function SurveyMatrixGraph({
     } finally {
       setLoading(false);
     }
-  };
+  }, [questionPair.title, pagePath]);
 
   useEffect(() => {
     if (isExpanded && !matrixData) {
       fetchMatrixData();
     }
-  }, [isExpanded, matrixData]);
+  }, [isExpanded, matrixData, fetchMatrixData]);
 
   const handleToggle = () => {
     setIsExpanded(!isExpanded);

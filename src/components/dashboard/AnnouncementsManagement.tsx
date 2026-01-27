@@ -38,7 +38,8 @@ export default function AnnouncementsManagement() {
 
   useEffect(() => {
     fetchAnnouncements();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only fetch once on mount - fetchAnnouncements is stable
 
   const fetchAnnouncements = async () => {
     try {

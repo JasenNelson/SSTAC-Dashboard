@@ -41,7 +41,7 @@ export default function PollResultsChart({
   showVoteCount = true,
   showPercentages = true,
   interactive = true,
-  options = [],
+  options: _options = [],
 }: PollResultsChartProps) {
   // Safety check for no results
   if (!results || results.total_votes === 0) {
@@ -193,9 +193,9 @@ export default function PollResultsChart({
       {pollType === 'ranking' ? (
         <div className="space-y-3">
           {chartData.map((item, index) => {
-            const rankValue = (item as any).originalValue;
-            const isHovered = false; // We'll add hover state if needed
-            
+            const rankValue = (item as { originalValue?: number }).originalValue ?? 0;
+            const _isHovered = false; // Reserved for future hover state
+
             return (
               <div key={index} className="group relative">
                 <div className="flex items-center space-x-3">
@@ -203,7 +203,7 @@ export default function PollResultsChart({
                   <div className="w-64 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">
                     {item.label}
                   </div>
-                  
+
                   {/* Bar Container */}
                   <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-8 overflow-hidden relative">
                     {/* Bar - sized based on inverse rank (lower rank = longer bar) */}
@@ -214,7 +214,7 @@ export default function PollResultsChart({
                         width: `${(item.value / Math.max(...chartData.map(d => d.value))) * 100}%`,
                       }}
                     />
-                    
+
                     {/* Rank Value on Bar */}
                     <div className="absolute inset-0 flex items-center justify-center">
                       <span className="text-sm font-bold text-white drop-shadow-sm">
@@ -222,7 +222,7 @@ export default function PollResultsChart({
                       </span>
                     </div>
                   </div>
-                  
+
                   {/* Rank Label */}
                   <div className="w-20 text-sm font-semibold text-gray-600 dark:text-gray-400 text-right">
                     Rank {rankValue.toFixed(1)}

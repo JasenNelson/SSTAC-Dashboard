@@ -2,7 +2,7 @@
 'use client';
 
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer
 } from 'recharts';
 import { useEffect, useState } from 'react';
 
@@ -67,9 +67,9 @@ export default function SurveyResultsChart() {
   // Theme-aware colors
   const textColor = isDarkMode ? '#f3f4f6' : '#6b7280';
   const gridColor = isDarkMode ? '#4b5563' : '#e5e7eb';
-  const tooltipBg = isDarkMode ? 'rgba(31, 41, 55, 0.98)' : 'rgba(255, 255, 255, 0.98)';
-  const tooltipBorder = isDarkMode ? '#4b5563' : '#d1d5db';
-  const tooltipText = isDarkMode ? '#f3f4f6' : '#1f2937';
+  const _tooltipBg = isDarkMode ? 'rgba(31, 41, 55, 0.98)' : 'rgba(255, 255, 255, 0.98)';
+  const _tooltipBorder = isDarkMode ? '#4b5563' : '#d1d5db';
+  const _tooltipText = isDarkMode ? '#f3f4f6' : '#1f2937';
   const legendText = isDarkMode ? '#d1d5db' : '#374151';
 
   return (

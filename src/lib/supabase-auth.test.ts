@@ -23,7 +23,7 @@ vi.mock('next/headers', () => ({
 // Mock environment variables
 const originalEnv = process.env;
 beforeEach(() => {
-  vi.resetModules();
+  // Note: Don't use vi.resetModules() as it corrupts static imports
   process.env = {
     ...originalEnv,
     NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
@@ -195,8 +195,9 @@ describe('supabase-auth', () => {
         },
       };
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await getAuthenticatedUser(mockSupabaseClient as any);
-      
+
       expect(user).toEqual(mockUser);
       expect(mockSupabaseClient.auth.getUser).toHaveBeenCalled();
     });
@@ -211,8 +212,9 @@ describe('supabase-auth', () => {
         },
       };
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await getAuthenticatedUser(mockSupabaseClient as any);
-      
+
       expect(user).toBeNull();
     });
 
@@ -226,8 +228,9 @@ describe('supabase-auth', () => {
         },
       };
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await getAuthenticatedUser(mockSupabaseClient as any);
-      
+
       expect(user).toBeNull();
     });
   });
@@ -244,8 +247,9 @@ describe('supabase-auth', () => {
         },
       };
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await requireAuthenticatedUser(mockSupabaseClient as any);
-      
+
       expect(user).toEqual(mockUser);
     });
 
@@ -260,6 +264,7 @@ describe('supabase-auth', () => {
       };
       
       await expect(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         requireAuthenticatedUser(mockSupabaseClient as any)
       ).rejects.toThrow('Unauthorized');
     });
@@ -308,17 +313,16 @@ describe('supabase-auth', () => {
 
     it('should generate user ID without session ID', () => {
       const userId = generateCEWUserId('CEW2025', null);
-      
-      // Format: CEW2025_session_{timestamp}_{randomSuffix}
-      expect(userId).toMatch(/^CEW2025_session_\d+_[a-z0-9]+$/);
-      expect(userId).toContain('CEW2025_session_');
+
+      // Format: CEW2025_{32-char-hex} using crypto.randomBytes
+      expect(userId).toMatch(/^CEW2025_[a-f0-9]{32}$/);
     });
 
     it('should use default auth code when not provided', () => {
       const userId = generateCEWUserId(undefined, null);
-      
-      // Format: CEW2025_session_{timestamp}_{randomSuffix}
-      expect(userId).toMatch(/^CEW2025_session_\d+_[a-z0-9]+$/);
+
+      // Format: CEW2025_{32-char-hex} using crypto.randomBytes (default auth code)
+      expect(userId).toMatch(/^CEW2025_[a-f0-9]{32}$/);
     });
 
     it('should generate unique IDs for multiple calls', () => {
@@ -329,16 +333,13 @@ describe('supabase-auth', () => {
       expect(userId1).not.toBe(userId2);
     });
 
-    it('should include timestamp and random suffix when no session ID', () => {
+    it('should use cryptographically secure randomBytes when no session ID', () => {
       const userId = generateCEWUserId('TEST', null);
-      const parts = userId.split('_');
-      
-      // Format: TEST_session_{timestamp}_{randomSuffix} = 4 parts
-      expect(parts).toHaveLength(4);
-      expect(parts[0]).toBe('TEST');
-      expect(parts[1]).toBe('session');
-      expect(parts[2]).toMatch(/^\d+$/); // timestamp
-      expect(parts[3]).toMatch(/^[a-z0-9]+$/); // random suffix
+
+      // Format: TEST_{32-char-hex} from crypto.randomBytes(16).toString('hex')
+      expect(userId).toMatch(/^TEST_[a-f0-9]{32}$/);
+      // Verify it's 4 + 1 (underscore) + 32 = 37 characters total
+      expect(userId).toHaveLength(37);
     });
   });
 
@@ -356,8 +357,9 @@ describe('supabase-auth', () => {
       mockCreateServerClient.mockReturnValue(mockSupabaseClient);
       
       const supabase = await createAuthenticatedClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const user = await getAuthenticatedUser(supabase as any);
-      
+
       expect(user).toEqual(mockUser);
     });
 

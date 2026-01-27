@@ -81,7 +81,8 @@ export default async function TWGSynthesisPage() {
     user_id: s.user_id,
     email: emailMap[s.user_id] || `User ${String(s.user_id).slice(0, 8)}...`,
     status: s.status,
-    form_data: s.form_data,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    form_data: (s.form_data || {}) as Record<string, any>,
     created_at: s.created_at,
     updated_at: s.updated_at,
     file_count: 0, // not used for filtering; files listed separately

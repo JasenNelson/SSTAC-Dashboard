@@ -1,7 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClientForPagePath, getAuthenticatedUser } from '@/lib/supabase-auth';
 
-export async function GET(request: NextRequest) {
+// Type definitions for wordcloud API
+interface WordcloudResult {
+  poll_id: string;
+  page_path: string;
+  poll_index: number;
+  question: string;
+  max_words: number;
+  word_limit: number;
+  total_responses: number;
+  word: string;
+  frequency: number;
+  percentage: number;
+}
+
+interface ProcessedWordItem {
+  text: string;
+  value: number;
+}
+
+// Response type for documentation - actual response is inline
+interface _WordcloudResponse {
+  results: {
+    total_votes: number;
+    words: ProcessedWordItem[];
+    user_words: string[] | null;
+  };
+}
+
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const pagePath = searchParams.get('pagePath');
@@ -87,20 +115,20 @@ export async function GET(request: NextRequest) {
     // Combine results from both paths
     // Group by word and sum frequencies (same as admin panel logic)
     const wordMap = new Map<string, number>();
-    const allResults: any[] = [];
-    
+    const allResults: WordcloudResult[] = [];
+
     // Add survey results
     if (surveyData.data) {
-      allResults.push(...surveyData.data);
+      allResults.push(...(surveyData.data as WordcloudResult[]));
     }
-    
+
     // Add CEW results
     if (cewData.data) {
-      allResults.push(...cewData.data);
+      allResults.push(...(cewData.data as WordcloudResult[]));
     }
-    
+
     // Aggregate words by summing frequencies
-    allResults.forEach((item: any) => {
+    allResults.forEach((item: WordcloudResult) => {
       if (item.word) {
         wordMap.set(item.word, (wordMap.get(item.word) || 0) + (item.frequency || 0));
       }
@@ -174,9 +202,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Process words from view (already aggregated and sorted)
-    const words = resultsData
-      .filter((item: any) => item.word !== null && item.word !== undefined)
-      .map((item: any) => ({
+    const words: ProcessedWordItem[] = resultsData
+      .filter((item: WordcloudResult) => item.word !== null && item.word !== undefined)
+      .map((item: WordcloudResult) => ({
         text: item.word,
         value: item.frequency
       }));

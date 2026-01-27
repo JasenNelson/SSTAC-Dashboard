@@ -34,7 +34,7 @@ Sentry.init({
   replaysSessionSampleRate: 0.1,
   
   // Suppress console noise from Sentry
-  beforeSend(event, hint) {
+  beforeSend(event, _hint) {
     // Filter out noisy console messages that don't provide value
     if (event.message && (
       event.message.includes('>=116') ||

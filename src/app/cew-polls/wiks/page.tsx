@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import CEWCodeInput from '@/components/CEWCodeInput';
 
 export default function CEWWIKSPage() {
-  const [activeAccordion, setActiveAccordion] = useState<string | null>(null);
+  const [_activeAccordion, _setActiveAccordion] = useState<string | null>(null);
   const [authCode, setAuthCode] = useState<string | null>(null);
 
   const handleCodeEntered = (code: string) => {

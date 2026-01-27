@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getUsers, toggleAdminRole, addUserRole, type UserWithRole } from '../actions';
+import { getUsers, toggleAdminRole, addUserRole, type UserWithRole as _UserWithRole } from '../actions';
 
 // Mock Next.js server-side functions
 const mockRedirect = vi.fn();
@@ -12,6 +12,7 @@ vi.mock('next/navigation', () => ({
     mockRedirect(path);
     // Throw an error to simulate Next.js redirect behavior
     const error = new Error('NEXT_REDIRECT');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (error as any).digest = `NEXT_REDIRECT;${path}`;
     throw error;
   },

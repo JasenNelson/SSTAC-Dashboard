@@ -127,17 +127,149 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run npm audit
         run: npm audit --audit-level=moderate || true
         continue-on-error: true
+
+  performance-analysis:
+    name: Performance & Bundle Analysis
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for analysis
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Analyze bundle size
+        run: |
+          echo "## Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f .next/static/chunks/main*.js ]; then
+            SHARED_SIZE=$(du -b .next/static/chunks/main*.js | awk '{sum += $1} END {printf "%.0f", sum/1024}')
+            echo "**Shared JS Bundle:** ${SHARED_SIZE}KB" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -f .next/BUILD_ID ]; then
+            echo "**Build ID:** $(cat .next/BUILD_ID)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          TOTAL_SIZE=$(du -sb .next | awk '{printf "%.1f", $1/1024/1024}')
+          echo "**Total Build Size:** ${TOTAL_SIZE}MB" >> $GITHUB_STEP_SUMMARY
+        continue-on-error: true
+
+      - name: Check for performance regressions
+        run: |
+          # Check if shared bundle is under 250KB target
+          SHARED_KB=$(du -b .next/static/chunks/main*.js 2>/dev/null | awk '{sum += $1} END {printf "%.0f", sum/1024}')
+          TARGET_KB=250
+
+          if [ "$SHARED_KB" -gt "$TARGET_KB" ]; then
+            echo "⚠️ Performance Warning: Shared bundle is ${SHARED_KB}KB (target: ${TARGET_KB}KB)"
+          else
+            echo "✓ Performance OK: Shared bundle is ${SHARED_KB}KB (target: ${TARGET_KB}KB)"
+          fi
+        continue-on-error: true
+
+  load-test:
+    name: Load Testing (K6)
+    runs-on: ubuntu-latest
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check for K6 tests
+        id: check_k6
+        run: |
+          if [ -f "tests/load/main.k6.js" ]; then
+            echo "k6_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "k6_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install K6
+        if: steps.check_k6.outputs.k6_exists == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnupg software-properties-common
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/grafana.gpg --keyserver keyserver.ubuntu.com --recv-keys 963FA27A28213892
+          echo "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+          sudo apt-get update
+          sudo apt-get install -y k6
+        continue-on-error: true
+
+      - name: Run K6 load tests
+        if: steps.check_k6.outputs.k6_exists == 'true'
+        run: npm run test:k6
+        continue-on-error: true
+        env:
+          K6_VUS: 10
+          K6_DURATION: 30s
+
+  status-check:
+    name: CI Status Check
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, unit-tests, build, e2e-tests, performance-analysis]
+    if: always()
+    steps:
+      - name: Check build status
+        run: |
+          if [ "${{ needs.lint-and-typecheck.result }}" = "failure" ] || \
+             [ "${{ needs.unit-tests.result }}" = "failure" ] || \
+             [ "${{ needs.build.result }}" = "failure" ] || \
+             [ "${{ needs.e2e-tests.result }}" = "failure" ]; then
+            echo "❌ CI Pipeline Failed"
+            exit 1
+          else
+            echo "✅ CI Pipeline Passed"
+          fi
+
+      - name: Report status to job summary
+        if: always()
+        run: |
+          echo "## CI/CD Pipeline Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint & TypeScript | ${{ needs.lint-and-typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ${{ needs.unit-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| E2E Tests | ${{ needs.e2e-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance Analysis | ${{ needs.performance-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
 

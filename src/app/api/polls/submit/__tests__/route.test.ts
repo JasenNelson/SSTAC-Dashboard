@@ -147,9 +147,9 @@ describe('POST /api/polls/submit', () => {
       
       await POST(request);
       
-      // Should generate fallback session ID
+      // Should generate fallback session ID with crypto.randomBytes format
       const insertCall = mockSupabaseClient.from().insert.mock.calls[0][0];
-      expect(insertCall.user_id).toMatch(/^CEW2025_session_\d+_[a-z0-9]+$/);
+      expect(insertCall.user_id).toMatch(/^CEW2025_[a-f0-9]{32}$/);
     });
   });
 

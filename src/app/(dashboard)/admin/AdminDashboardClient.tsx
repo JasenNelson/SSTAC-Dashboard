@@ -2,17 +2,17 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { 
-  Users, 
-  Tags, 
-  Bell, 
-  Calendar, 
-  FileText, 
+import {
+  Users,
+  Tags,
+  Bell,
+  Calendar,
+  FileText,
   MessageSquare,
   BarChart3,
   Vote,
   FileSearch,
-  Eye
+  ClipboardCheck
 } from 'lucide-react';
 
 
@@ -219,21 +219,6 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
               </div>
             </Link>
 
-            {/* Matrix Graph Demo */}
-            <Link href="/demo-matrix-graph" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-blue-300">
-                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-200 transition-colors">
-                  <Eye className="w-8 h-8 text-blue-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-2">
-                  Matrix Graph Demo
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  See overlapping data points visualization
-                </p>
-              </div>
-            </Link>
-
             {/* TWG White Paper Synthesis */}
             <Link href="/admin/twg-synthesis" className="group">
               <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-purple-300">
@@ -245,6 +230,21 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                 </h3>
                 <p className="text-gray-600 text-sm">
                   Analyze and synthesize TWG review feedback
+                </p>
+              </div>
+            </Link>
+
+            {/* Regulatory Review */}
+            <Link href="/regulatory-review" className="group">
+              <div className="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-teal-300">
+                <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-teal-200 transition-colors">
+                  <ClipboardCheck className="w-8 h-8 text-teal-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-teal-600 transition-colors mb-2">
+                  Regulatory Review
+                </h3>
+                <p className="text-gray-600 text-sm">
+                  Review and analyze regulatory frameworks
                 </p>
               </div>
             </Link>

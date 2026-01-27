@@ -3,8 +3,50 @@
 import { NextResponse } from 'next/server';
 import { createAnonymousClient } from '@/lib/supabase-auth';
 
+// Type definitions for API responses
+interface VotingResult {
+  option_index: number;
+  votes: number;
+}
+
+interface PollResult {
+  id?: string;
+  poll_id?: string;
+  page_path: string;
+  poll_index: number;
+  total_votes: number;
+  results: VotingResult[];
+}
+
+interface EnrichedVote {
+  user_id: string;
+  option_index: number;
+  voted_at: string;
+  poll_id: string;
+  poll?: PollMetadata;
+}
+
+interface PollMetadata {
+  id: string;
+  poll_index: number;
+  page_path: string;
+}
+
+interface CachedMatrixData {
+  data: EnhancedMatrixData[];
+  timestamp: number;
+}
+
+interface UserVoteData {
+  userType: 'authenticated' | 'cew';
+  importance?: number;
+  feasibility?: number;
+  importanceVotes: Array<{ score: number; voted_at: string }>;
+  feasibilityVotes: Array<{ score: number; voted_at: string }>;
+}
+
 // Helper function to combine results from CEW and survey-results paths
-function combineResults(existingResults: any[], newResults: any[]): any[] {
+function combineResults(existingResults: VotingResult[], newResults: VotingResult[]): VotingResult[] {
   const combined = [...existingResults];
   
   for (const newResult of newResults) {
@@ -50,14 +92,36 @@ const QUESTION_PAIRS = [
   { title: "Matrix Standards (Human Health - Food-Related)", importanceIndex: 6, feasibilityIndex: 7, pagePath: 'holistic-protection' },
 ];
 
+// Cache storage with TTL (10 minutes for matrix data)
+const MATRIX_CACHE_TTL_MS = 10 * 60 * 1000;
+const matrixDataCache = new Map<string, CachedMatrixData>();
+
 export async function GET(request: Request) {
   console.log('🚀 MATRIX API CALLED - Starting prioritization matrix API');
   const supabase = await createAnonymousClient();
-  
+
   // Get filter parameter from URL
   const { searchParams } = new URL(request.url);
   const filter = searchParams.get('filter') || 'all';
+  const cacheKey = `matrix_${filter}`;
   console.log(`🚀 MATRIX API - Filter mode: ${filter}`);
+
+  // Check cache
+  if (matrixDataCache.has(cacheKey)) {
+    const cachedEntry = matrixDataCache.get(cacheKey)!;
+    const cacheAge = Date.now() - cachedEntry.timestamp;
+
+    if (cacheAge < MATRIX_CACHE_TTL_MS) {
+      console.log(`✅ MATRIX API - Cache hit for filter: ${filter}, age: ${cacheAge}ms`);
+      return NextResponse.json(cachedEntry.data, {
+        headers: {
+          'Cache-Control': 'public, max-age=600, s-maxage=600',
+          'X-Cache': 'HIT',
+          'X-Cache-Age': `${cacheAge}ms`
+        }
+      });
+    }
+  }
 
   try {
     // 1. Fetch poll results from BOTH survey and CEW paths
@@ -99,7 +163,7 @@ export async function GET(request: Request) {
     });
 
     // 3. Group poll results by page path and poll index, combining CEW and survey data
-    const pollsByPathAndIndex = new Map<string, Map<number, any>>();
+    const pollsByPathAndIndex = new Map<string, Map<number, PollResult>>();
     for (const poll of filteredPollResults) {
       const pagePath = poll.page_path.includes('prioritization') ? 'prioritization' : 'holistic-protection';
       
@@ -262,17 +326,11 @@ export async function GET(request: Request) {
 
         // Group votes by user_id - for CEW polls, allow multiple votes per user
         // For authenticated users, use last vote per user per question
-        const userVotes = new Map<string, { 
-          userType: string; 
-          importance?: number; 
-          feasibility?: number;
-          importanceVotes: Array<{score: number, voted_at: string}>; // Track all votes for CEW
-          feasibilityVotes: Array<{score: number, voted_at: string}>; // Track all votes for CEW
-        }>();
+        const userVotes = new Map<string, UserVoteData>();
         
-        enrichedVotes?.forEach((vote: any) => {
+        enrichedVotes?.forEach((vote: EnrichedVote) => {
           const userId = vote.user_id;
-          const pollIndex = vote.poll.poll_index; // Now using the enriched poll data
+          const pollIndex = vote.poll?.poll_index; // Now using the enriched poll data
           const score = vote.option_index + 1; // Convert 0-based to 1-based
           const userType = vote.user_id.startsWith('CEW2025') ? 'cew' : 'authenticated';
           
@@ -446,9 +504,9 @@ export async function GET(request: Request) {
       // Calculate average importance score (1-5 scale, raw scores for frontend)
       let avgImportance = 0;
       if (importancePoll.results && importancePoll.results.length > 0) {
-        const totalVotes = importancePoll.results.reduce((sum: number, result: any) => sum + result.votes, 0);
+        const totalVotes = importancePoll.results.reduce((sum: number, result: VotingResult) => sum + result.votes, 0);
         if (totalVotes > 0) {
-          const weightedSum = importancePoll.results.reduce((sum: number, result: any) => 
+          const weightedSum = importancePoll.results.reduce((sum: number, result: VotingResult) =>
             sum + (result.votes * (result.option_index + 1)), 0);
           avgImportance = weightedSum / totalVotes; // Raw score (1-5 scale)
         }
@@ -457,9 +515,9 @@ export async function GET(request: Request) {
       // Calculate average feasibility score (1-5 scale, raw scores for frontend)
       let avgFeasibility = 0;
       if (feasibilityPoll.results && feasibilityPoll.results.length > 0) {
-        const totalVotes = feasibilityPoll.results.reduce((sum: number, result: any) => sum + result.votes, 0);
+        const totalVotes = feasibilityPoll.results.reduce((sum: number, result: VotingResult) => sum + result.votes, 0);
         if (totalVotes > 0) {
-          const weightedSum = feasibilityPoll.results.reduce((sum: number, result: any) => 
+          const weightedSum = feasibilityPoll.results.reduce((sum: number, result: VotingResult) =>
             sum + (result.votes * (result.option_index + 1)), 0);
           avgFeasibility = weightedSum / totalVotes; // Raw score (1-5 scale)
         }
@@ -481,7 +539,18 @@ export async function GET(request: Request) {
       };
     });
 
-    return NextResponse.json(matrixData);
+    // Store in cache
+    matrixDataCache.set(cacheKey, {
+      data: matrixData,
+      timestamp: Date.now()
+    });
+
+    return NextResponse.json(matrixData, {
+      headers: {
+        'Cache-Control': 'public, max-age=600, s-maxage=600',
+        'X-Cache': 'MISS'
+      }
+    });
 
   } catch (error) {
     console.error('Graph data API error:', error);

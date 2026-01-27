@@ -94,7 +94,8 @@ export default function RankingPoll({
     } catch (error) {
       console.error(`[RankingPoll ${pollIndex}] Error fetching results:`, error);
     }
-  }, [pagePath, pollIndex, options]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagePath, pollIndex, options]); // authCode and showChangeOption are stable
 
   // Initialize ranking options and check for existing vote
   useEffect(() => {
@@ -112,7 +113,8 @@ export default function RankingPoll({
     if (pagePath.startsWith('/cew-polls/')) {
       checkCEWRankingStatus();
     }
-  }, [fetchResults]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchResults]); // options and pagePath are dependencies of fetchResults
 
   const checkCEWRankingStatus = () => {
     // For CEW pages, don't persist rankings at all - start fresh each time
@@ -165,7 +167,7 @@ export default function RankingPoll({
       // Convert rankings to array format (rank 1 = index 0, etc.)
       const rankings = rankingOptions
         .sort((a, b) => (a.rank || 0) - (b.rank || 0))
-        .map((opt, index) => {
+        .map((opt, _index) => {
           const originalIndex = options.findIndex(option => option === opt.text);
           return originalIndex;
         });

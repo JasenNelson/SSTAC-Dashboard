@@ -4,23 +4,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { createClient } from './supabase-client';
-import type { Session } from '@supabase/supabase-js';
-import { refreshGlobalAdminStatus, clearAdminStatusBackup } from '@/lib/admin-utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAdmin } from '@/contexts/AdminContext';
 import ThemeToggle from './ThemeToggle';
 import { MENU_LINKS, MENU_CATEGORIES } from './header/menuConfig';
 
-
-
 export default function Header() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { session, isLoading: authLoading, signOut } = useAuth();
+  const { isAdmin, clearAdminStatus } = useAdmin();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClient();
 
   // Close desktop menu when clicking outside
   useEffect(() => {
@@ -39,356 +34,69 @@ export default function Header() {
     };
   }, [isDesktopMenuOpen]);
 
-  // Memoize the admin role check to prevent unnecessary re-runs
-  const checkAdminRole = useCallback(async (userId: string, retryCount = 0) => {
-    try {
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Role check timeout')), 10000)
-      );
-      
-      // Check if user has any role in user_roles table first
-      const roleCheckPromise = supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-      
-      const result = await Promise.race([
-        roleCheckPromise,
-        timeoutPromise
-      ]) as { data: unknown; error: unknown };
-      
-      const { data: userRoles, error: userRolesError } = result;
-      
-      if (userRolesError) {
-        // Handle specific error cases
-        if ((userRolesError as any).code === 'PGRST116') {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('⚠️ user_roles table does not exist (PGRST116)');
-          }
-        } else if ((userRolesError as any).code === '42P17') {
-          console.error('❌ Infinite recursion detected in RLS policies');
-          // Try localStorage backup for infinite recursion
-          const backupAdminStatus = localStorage.getItem(`admin_status_${userId}`);
-          if (backupAdminStatus === 'true') {
-            setIsAdmin(true);
-            return true;
-          }
-        } else if ((userRolesError as any).code === '406') {
-          // 406 error means RLS policies are blocking access - user is likely not admin
-          if (process.env.NODE_ENV === 'development') {
-            console.log('ℹ️ User access blocked by RLS - likely not admin');
-          }
-          setIsAdmin(false);
-          localStorage.removeItem(`admin_status_${userId}`);
-          return false;
-        } else {
-          console.error('❌ Role check error:', userRolesError);
-        }
-        
-        // Check localStorage backup for other errors
-        const backupAdminStatus = localStorage.getItem(`admin_status_${userId}`);
-        if (backupAdminStatus === 'true') {
-          setIsAdmin(true);
-          return true;
-        }
-        
-        setIsAdmin(false);
-        return false;
-      }
-      
-      // Check if user has admin role
-      const hasAdminRole = (userRoles as any).some((role: unknown) => (role as any).role === 'admin');
-      
-      if (hasAdminRole) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('✅ User is admin via user_roles table');
-        }
-        setIsAdmin(true);
-        localStorage.setItem(`admin_status_${userId}`, 'true');
-        return true;
-      } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('ℹ️ User is not admin - roles found:', (userRoles as any).map((r: unknown) => (r as any).role));
-        }
-        setIsAdmin(false);
-        localStorage.removeItem(`admin_status_${userId}`);
-        return false;
-      }
-      
-    } catch (error) {
-      console.error('❌ Role check exception:', error);
-      
-      // Check localStorage backup before clearing admin status
-      const backupAdminStatus = localStorage.getItem(`admin_status_${userId}`);
-      if (backupAdminStatus === 'true') {
-        setIsAdmin(true);
-        return true;
-      }
-      
-      setIsAdmin(false);
-      return false;
-    }
-  }, [supabase]);
-
-
-
-  // Function to restore admin status from localStorage
-  const restoreAdminStatusFromStorage = useCallback((userId: string) => {
-    const backupAdminStatus = localStorage.getItem(`admin_status_${userId}`);
-    if (backupAdminStatus === 'true') {
-      setIsAdmin(true);
-      return true;
-    }
-    return false;
-  }, []);
-
-
-
+  // Handle protected route redirects when session is lost
   useEffect(() => {
-    const getSession = async () => {
+    const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025'];
+    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+
+    if (!isProtectedRoute) return; // Not a protected route, no action needed
+
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    // If auth is still loading, set a timeout fallback to prevent indefinite waiting
+    // This ensures we don't wait forever if auth loading gets stuck
+    if (authLoading) {
+      // Set a 5-second timeout fallback
+      timeoutId = setTimeout(() => {
+        // After 5 seconds, if still loading and no session, redirect to login
+        // This handles edge cases where auth loading might hang
+        if (!session) {
+          const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
+          router.push(loginUrl);
+        }
+      }, 5000);
+
+      return () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
+      };
+    }
+
+    // Auth loading is complete - add a small delay to ensure session state is stable
+    // This prevents race conditions where authLoading becomes false before session is set
+    const checkDelay = setTimeout(() => {
+      if (!session) {
+        const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
+        router.push(loginUrl);
+      }
+    }, 100); // Small delay to allow session state to stabilize
+
+    return () => {
+      clearTimeout(checkDelay);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [session, authLoading, pathname, router]);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      // Clear admin status backup before signing out
+      await clearAdminStatus();
+      await signOut();
+      router.push('/login');
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+      // Even if logout fails, try to clear admin status and redirect to login
       try {
-        // Check if we're on a protected route
-        const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025'];
-        const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-        
-        // Use getUser() instead of getSession() to properly validate and refresh tokens
-        // getSession() can return stale sessions that fail on refresh
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
-        if (userError) {
-          console.error('[Header] Auth error:', userError);
-          
-          // Check if it's a refresh token error
-          const isRefreshTokenError = userError.message?.includes('Refresh Token') || 
-                                      userError.message?.includes('Invalid refresh token') ||
-                                      userError.message?.includes('JWT') ||
-                                      userError.status === 401;
-          
-          setSession(null);
-          setIsAdmin(false);
-          
-          // If we're on a protected route and there's an auth error, redirect to login
-          if (isProtectedRoute && isRefreshTokenError) {
-            console.warn('[Header] Invalid session on protected route, redirecting to login');
-            // Clear any stale auth data
-            await supabase.auth.signOut();
-            // Redirect to login with current path as redirect param
-            const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
-            router.push(loginUrl);
-            return;
-          }
-          
-          setIsLoading(false);
-          return;
-        }
-        
-        // If getUser() succeeded, get the full session
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        
-        if (session?.user) {
-          // Check if user has admin role (only log for admins to reduce noise)
-          const restoredFromStorage = restoreAdminStatusFromStorage(session.user.id);
-          if (restoredFromStorage) {
-            if (process.env.NODE_ENV === 'development') {
-              console.log('✅ Admin status restored from localStorage');
-            }
-          }
-          
-          const isUserAdmin = await refreshGlobalAdminStatus();
-          setIsAdmin(isUserAdmin);
-        } else {
-          setIsAdmin(false);
-          // If no session and we're on a protected route, redirect to login
-          if (isProtectedRoute) {
-            console.warn('[Header] No session on protected route, redirecting to login');
-            const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
-            router.push(loginUrl);
-            return;
-          }
-        }
-      } catch (error) {
-        console.error('[Header] Session error exception:', error);
-        setSession(null);
-        setIsAdmin(false);
-        
-        // If we're on a protected route and there's an error, redirect to login
-        const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025'];
-        const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-        if (isProtectedRoute) {
-          console.warn('[Header] Auth error on protected route, redirecting to login');
-          const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
-          router.push(loginUrl);
-          return;
-        }
-      } finally {
-        setIsLoading(false);
+        await clearAdminStatus();
+      } catch (clearError) {
+        console.error('❌ Error clearing admin status:', clearError);
       }
-    };
-
-    const timeoutId = setTimeout(() => {
-      setIsLoading(false);
-    }, 5000); // Increased timeout to 5 seconds
-
-    getSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Check if we're on a protected route
-      const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025'];
-      const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-      
-      // Handle sign out or token refresh errors
-      if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
-        setSession(null);
-        setIsAdmin(false);
-        setIsLoading(false);
-        
-        // If we're on a protected route, redirect to login
-        if (isProtectedRoute && event === 'SIGNED_OUT') {
-          console.warn('[Header] Signed out on protected route, redirecting to login');
-          const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
-          router.push(loginUrl);
-          return;
-        }
-        return;
-      }
-      
-      setSession(session);
-      setIsLoading(false);
-      
-      if (session?.user) {
-        // Check admin role (only log for admins to reduce noise)
-        const restoredFromStorage = restoreAdminStatusFromStorage(session.user.id);
-        if (restoredFromStorage) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log('✅ Admin status restored from localStorage during auth change');
-          }
-        }
-        
-        // Use .then() instead of await in useEffect
-        refreshGlobalAdminStatus().then((isUserAdmin) => {
-          setIsAdmin(isUserAdmin);
-        });
-      } else {
-        setIsAdmin(false);
-        // If no session and we're on a protected route, redirect to login
-        if (isProtectedRoute) {
-          console.warn('[Header] No session after auth state change on protected route, redirecting to login');
-          const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
-          router.push(loginUrl);
-        }
-      }
-    });
-
-    // Also check admin role on initial load if we have a session
-    if (session?.user) {
-      // First try to restore from localStorage
-      const restoredFromStorage = restoreAdminStatusFromStorage(session.user.id);
-      if (restoredFromStorage) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('✅ Admin status restored from localStorage during initial load');
-        }
-      }
-      
-      // Use .then() instead of await in useEffect
-      refreshGlobalAdminStatus().then((isUserAdmin) => {
-        setIsAdmin(isUserAdmin);
-      });
+      router.push('/login');
     }
-
-    return () => {
-      clearTimeout(timeoutId);
-      subscription.unsubscribe();
-    };
-  }, [router, supabase, checkAdminRole, pathname, restoreAdminStatusFromStorage]);
-
-  // Listen for route changes to refresh admin status
-  useEffect(() => {
-    if (session?.user) {
-      // Always refresh admin status when navigating to admin pages
-      if (pathname.startsWith('/admin')) {
-        refreshGlobalAdminStatus(true).then((isStillAdmin) => {
-          setIsAdmin(isStillAdmin);
-        });
-      }
-    }
-  }, [pathname, session?.user]);
-
-  // Listen for navigation events to refresh admin status
-  useEffect(() => {
-    const handleRouteChange = () => {
-      if (session?.user && pathname.startsWith('/admin')) {
-        refreshGlobalAdminStatus(true).then((isStillAdmin) => {
-          setIsAdmin(isStillAdmin);
-        });
-      }
-    };
-
-    // Listen for popstate events (browser back/forward)
-    window.addEventListener('popstate', handleRouteChange);
-    
-    // Listen for pushstate/replacestate events
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
-    
-    history.pushState = function(...args) {
-      originalPushState.apply(history, args);
-      handleRouteChange();
-    };
-    
-    history.replaceState = function(...args) {
-      originalReplaceState.apply(history, args);
-      handleRouteChange();
-    };
-
-    return () => {
-      window.removeEventListener('popstate', handleRouteChange);
-      history.pushState = originalPushState;
-      history.replaceState = originalReplaceState;
-    };
-  }, [session?.user, isAdmin, pathname]);
-
-  // Periodic admin status check to ensure badge persists
-  useEffect(() => {
-    if (session?.user) {
-      const intervalId = setInterval(async () => {
-        if (session?.user) {
-          const isStillAdmin = await refreshGlobalAdminStatus();
-          setIsAdmin(isStillAdmin);
-        }
-      }, 30000); // Check every 30 seconds (more frequent)
-
-      return () => clearInterval(intervalId);
-    }
-  }, [session?.user]);
-
-  const handleLogout = async () => {
-    try {
-      // Clear admin status backup using utility function
-      await clearAdminStatusBackup();
-      
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('❌ Logout error:', error);
-        // Even if Supabase logout fails, clear local state and redirect
-        setSession(null);
-        setIsAdmin(false);
-        router.push('/login');
-      } else {
-        setSession(null);
-        setIsAdmin(false);
-        router.push('/login');
-      }
-    } catch (error) {
-      console.error('❌ Logout exception:', error);
-      // Even if there's an exception, clear local state and redirect
-      setSession(null);
-        setIsAdmin(false);
-        router.push('/login');
-    }
-  };
+  }, [signOut, clearAdminStatus, router]);
 
   // Navigation links for authenticated users - removed direct links, now handled by menu
   // This array is kept for potential future use but is currently unused
@@ -414,7 +122,7 @@ export default function Header() {
   };
 
   // Don't block the entire UI during loading - always show logout option
-  if (isLoading && !session) {
+  if (authLoading && !session) {
     return (
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -507,7 +215,7 @@ export default function Header() {
                                 href={link.href}
                                 onClick={() => setIsDesktopMenuOpen(false)}
                                 className={`block px-4 py-2 text-sm transition-colors ${
-                                  (link as any).parent 
+                                  (link as { parent?: boolean }).parent 
                                     ? 'pl-8 text-gray-600 dark:text-gray-400' 
                                     : ''
                                 } ${
@@ -603,7 +311,7 @@ export default function Header() {
                         href={link.href}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                          (link as any).parent 
+                          (link as { parent?: boolean }).parent 
                             ? 'pl-8 text-gray-600 dark:text-gray-400' 
                             : ''
                         } ${

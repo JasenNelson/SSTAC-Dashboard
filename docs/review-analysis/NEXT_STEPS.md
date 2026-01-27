@@ -3,21 +3,21 @@
 > **Canonical docs entrypoint:** `docs/INDEX.md`  
 > **Note:** This file is a planning snapshot; canonical volatile metrics live in `docs/_meta/docs-manifest.json` (`facts`).
 
-**Date:** November 2025 (Comprehensive review completed last weekend)  
+**Date:** December 2025  
 **Project:** SSTAC Dashboard  
 **Project Start:** August 2025  
-**Status:** ✅ Review Complete | ✅ Phase 3 Complete | ✅ Target Grade Achieved
-**Starting Grade:** See manifest `facts`
-**Current Grade:** See manifest `facts`
-**Target Grade:** See manifest `facts`
+**Status:** ✅ Review Complete | ✅ Phase 3 Complete | ✅ Sprint 4 Docs Polish Complete | ✅ Target Grade Achieved
+**Starting Grade:** See manifest `facts.grades.starting_grade`
+**Current Grade:** See manifest `facts.grades.current_grade`
+**Target Grade:** See manifest `facts.grades.target_grade`
 
 ---
 
 ## 🎯 Current Status
 
-**Starting Grade:** See manifest `facts`
-**Current Grade:** See manifest `facts`
-**Target Grade:** See manifest `facts`
+**Starting Grade:** See manifest `facts.grades.starting_grade`
+**Current Grade:** See manifest `facts.grades.current_grade`
+**Target Grade:** See manifest `facts.grades.target_grade`
 
 **Approach:** Production-safe improvements prioritizing safety over speed. All work completed with zero production incidents.
 
@@ -33,8 +33,8 @@
 - **Load Testing**: k6 load tests exist (see `docs/testing/` and `docs/_meta/docs-manifest.json` → `facts.testing`)
 
 ### 🔴 Remaining Issues
-1. ⚠️ **God Components**: PollResultsClient.tsx (2,079 lines) - planning done, refactoring deferred
-2. ⚠️ **Type Safety**: Some `any` types remain in poll components (intentionally untouched)
+1. ⚠️ **God Components**: `PollResultsClient.tsx` (~1,900 lines) - Decomposition in progress (3 subcomponents extracted).
+2. ⚠️ **Type Safety**: Some `any` types remain in poll components (intentionally untouched).
 
 **Note:** Critical security, testing, and validation issues have been addressed in Phase 3.
 
@@ -66,6 +66,49 @@
 - ✅ **Successfully deployed to production** - Pages live and operational
 - **Commits:** `7d96435` (main recovery), `ee30235` (header integration), `a1268b2` (verification & lint fixes), `ff779ac` (next-themes dependency)
 - **Status:** ✅ Complete - All pages live in production
+
+### **Sprint 4: Documentation & Architecture Polish** ✅ COMPLETE (December 2025)
+- ✅ **Documentation Archive Pass**: 15+ historical files moved to `archive/` to reduce root clutter.
+- ✅ **Operations Directory Created**: Moved `VERCEL_SETUP.md` and `MONITORING_GUIDE.md` to `docs/operations/`.
+- ✅ **CEW Data Flow Documented**: Created `docs/poll-system/CEW_DATA_FLOW.md` explaining anonymous vs authenticated paths.
+- ✅ **PollResultsClient Decomposition**: Extracted `QRCodeModal.tsx`, `FilterSidebar.tsx`, and `usePollExport.ts` hook (reduced ~600 lines).
+- ✅ **K6 Test Suite Maintenance**: 20+ redundant/validation scripts moved to `tests/archive/`.
+- ✅ **Manifest Lifecycle Polish**: Categorized 20+ documents as `HISTORICAL` or `REFERENCE` in `docs-manifest.json`.
+- ✅ **CI Integration**: Wired `docs:gate` and `docs:archive:investigate` into GitHub Actions.
+- **Status:** ✅ Complete - Documentation system is now organized and maintainable.
+
+### **Documentation System & Deployment Pattern** ✅ COMPLETE (January 24, 2026)
+- ✅ **Adapted /update-docs skill** from Regulatory-Review project to SSTAC-Dashboard's manifest-based system
+- ✅ **Created docs/LESSONS.md** with reusable patterns and architectural decisions
+- ✅ **Documented native module pattern**: lazy loading + webpack externals for multi-environment support
+- ✅ **Captured deployment insights**: Vercel serverless compatibility for regulatory-review feature
+- ✅ **Updated manifest facts** with session progress and multi-environment approach
+- **Key deliverables:** LESSONS.md, /update-docs skill, deployment pattern documentation
+- **Status:** ✅ Complete - Documentation system ready for capturing future insights
+
+### **PollResultsClient Refactoring - Phase 1-2** ✅ COMPLETE (January 24, 2026)
+- ✅ **Phase 1: Foundation & Instrumentation** - Setup test infrastructure, baseline established (142 tests passing)
+- ✅ **Phase 2: Data Fetching Extraction** - Created `usePollData.ts` hook
+  - Extracted 720 lines from PollResultsClient (1,898 → 1,178 lines, 38% reduction)
+  - Added 6 new tests (142 → 148 total tests passing)
+  - Removed Supabase client logic, data processing, poll combining logic to dedicated hook
+  - No functional changes, fully backward compatible
+  - POLLING_GATE verified: No API changes
+  - Build successful, all tests passing
+- ✅ **Captured Lesson**: Incremental Component Extraction Pattern (test-first, 6-phase approach)
+- **Remaining Phases**: Phase 3-6 planned for subsequent work
+  - Phase 3: Extract Results Display → `ResultsDisplay.tsx` (~400-500 lines)
+  - Phase 4: Extract Chart Rendering → `ChartRenderer.tsx` (~300-400 lines)
+  - Phase 5: Extract UI State → `useResultsState.ts` hook (~100 lines)
+  - Phase 6: Final Integration & Verification
+- **Expected Final Grade Impact**: +2-3 points total (A- → A at 90%+)
+- **Key Resources**:
+  - Comprehensive planning: `.claude/REFACTORING_STRATEGY.md`
+  - Checklists: `.claude/REFACTORING_CHECKLIST.md`
+  - Skills guide: `.claude/REFACTORING_SKILLS_GUIDE.md`
+  - Roadmap: `.claude/REFACTORING_ROADMAP.md`
+  - Quick start: `.claude/REFACTORING_START_HERE.md`
+- **Status:** ✅ Phase 2 Complete - Ready for Phase 3
 
 ### **Security Update & Test Fixes** ✅ COMPLETE (December 7, 2025)
 - ✅ **Next.js Security Update**: Updated from 15.4.6 → 15.4.8 to fix CVE-2025-66478 (critical security vulnerability)
@@ -109,11 +152,10 @@
 **See:** `POLL_SAFE_IMPROVEMENTS.md` for complete list of poll-safe improvements ready for implementation.
 
 **Quick Priority List:**
-1. **Database Security Fixes** - Scripts ready, low risk, +2-3 points
-2. **Code Cleanup** - Zero risk, +0.5 point  
-3. **Documentation Improvements** - Zero risk, +0.5-1 point
-4. **Enhanced Unit Tests** - Zero risk, +1 point
-5. **Security Testing** - Zero risk, +1 point
+1. **PollResultsClient Refactoring (Phase 4)** - Extract remaining subcomponents (Results Card, etc.)
+2. **Database Security Fixes** - Scripts ready, low risk, +2-3 points
+3. **Enhanced Unit Tests** - Zero risk, +1 point
+4. **Security Testing** - Zero risk, +1 point
 
 **Before starting any work:** Review `CODE_CHANGE_VERIFICATION_PROCESS.md` for verification process.
 
@@ -135,7 +177,7 @@
    - ✅ Integrated into all non-poll API routes (tags, announcements, milestones, discussions, documents)
    - ✅ Rate limit headers added to all responses
    - ✅ Helper function created for consistent integration
-   - ✅ See: `PHASE3_COMPLETION_SUMMARY.md`
+   - ✅ See: `archive/PHASE3_COMPLETION_SUMMARY.md`
 
 3. ✅ **Fix Inconsistent Authorization** (COMPLETE - Phase 3)
    - ✅ Complete authorization review documented
@@ -197,16 +239,13 @@
 
 ### Sprint 4: Improve Maintainability
 
-**Status:** ⏸️ **PLANNING COMPLETE** - Implementation deferred
+**Status:** 🟡 **IN PROGRESS** - Decomposition started
 
-**Planning Completed (Weeks 13-16):**
-- ✅ Component decomposition plans created
-- ✅ Service layer design documented
-- ✅ Refactoring strategy defined
-
-1. ⏸️ **Begin PollResultsClient Refactoring** (DEFERRED - planning complete)
-   - ✅ Phase 1: Service layer design complete
-   - ⏸️ Implementation deferred to maintenance window
+1. 🟡 **PollResultsClient Refactoring** (IN PROGRESS)
+   - ✅ Extracted: `QRCodeModal.tsx`
+   - ✅ Extracted: `FilterSidebar.tsx`
+   - ✅ Extracted: `usePollExport.ts` (hook)
+   - ⏸️ Remaining: Results Card, individual chart sections
 
 2. ⏸️ **Split Header Component** (DEFERRED)
    - Planning ready, implementation deferred

@@ -1,11 +1,13 @@
 // src/app/(dashboard)/survey-results/detailed-findings/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import Link from 'next/link';
-import InteractivePieChart from '@/components/dashboard/InteractivePieChart';
-import InteractiveBarChart from '@/components/dashboard/InteractiveBarChart';
 import VoicesCarousel from '@/components/dashboard/VoicesCarousel';
+
+// Lazy load chart components to reduce initial bundle size
+const InteractivePieChart = lazy(() => import('@/components/dashboard/InteractivePieChart'));
+const InteractiveBarChart = lazy(() => import('@/components/dashboard/InteractiveBarChart'));
 
 export default function DetailedFindingsPage() {
   const [activeTab, setActiveTab] = useState('demographics');
@@ -150,6 +152,12 @@ export default function DetailedFindingsPage() {
               </div>
 
               {/* Interactive Charts */}
+              <Suspense fallback={
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 animate-pulse h-96"></div>
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 animate-pulse h-96"></div>
+                </div>
+              }>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6">
                   <InteractivePieChart
@@ -169,6 +177,7 @@ export default function DetailedFindingsPage() {
                   />
                 </div>
               </div>
+              </Suspense>
 
               {/* Supporting Text */}
               <div className="bg-gray-50 rounded-xl p-6">
@@ -181,8 +190,8 @@ export default function DetailedFindingsPage() {
                 </p>
                 <p className="text-gray-700 leading-relaxed mt-4">
                   The strong consensus on key issues that emerges from this diverse group underscores the validity of their 
-                  shared concerns and recommendations. Over 70% of respondents described themselves as "Very Familiar" or 
-                  "Familiar" with the current BC CSR Schedule 3.4 numerical sediment standards, ensuring that the critiques 
+                  shared concerns and recommendations. Over 70% of respondents described themselves as &quot;Very Familiar&quot; or
+                  &quot;Familiar&quot; with the current BC CSR Schedule 3.4 numerical sediment standards, ensuring that the critiques 
                   and suggestions provided are based on years of practical application rather than speculation.
                 </p>
               </div>
@@ -200,6 +209,12 @@ export default function DetailedFindingsPage() {
               </div>
 
               {/* Interactive Side-by-Side Comparison Charts */}
+              <Suspense fallback={
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 animate-pulse h-96"></div>
+                  <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl p-6 animate-pulse h-96"></div>
+                </div>
+              }>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6">
                   <InteractiveBarChart
@@ -223,13 +238,14 @@ export default function DetailedFindingsPage() {
                   />
                 </div>
               </div>
+              </Suspense>
 
               {/* Key Takeaway Box */}
               <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl p-6 border-l-4 border-red-500">
                 <h3 className="text-xl font-semibold text-red-800 mb-3">Key Takeaway</h3>
                 <p className="text-red-700 text-lg leading-relaxed">
-                  While over 60% of experts believe the standards are at least 'moderately effective' for benthic organisms, 
-                  a striking 73% find them 'Not Effective' or 'Slightly Effective' for preventing harmful bioaccumulation. 
+                  While over 60% of experts believe the standards are at least &apos;moderately effective&apos; for benthic organisms,
+                  a striking 73% find them &apos;Not Effective&apos; or &apos;Slightly Effective&apos; for preventing harmful bioaccumulation. 
                   This direct comparison powerfully highlights the stark contrast in expert confidence between the two protective goals.
                 </p>
               </div>
@@ -265,8 +281,9 @@ export default function DetailedFindingsPage() {
               </div>
 
               {/* Central Interactive Visualization */}
+              <Suspense fallback={<div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 animate-pulse h-96"></div>}>
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-6">Respondents' Most Recommended Approaches</h3>
+                <h3 className="text-xl font-semibold text-gray-800 mb-6">Respondents&apos; Most Recommended Approaches</h3>
                 <InteractiveBarChart
                   data={recommendedApproachesData}
                   title=""
@@ -279,8 +296,15 @@ export default function DetailedFindingsPage() {
                   Based on Figure 8 and supporting text from the survey data
                 </p>
               </div>
+              </Suspense>
 
               {/* Supporting Interactive Visualizations */}
+              <Suspense fallback={
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 animate-pulse h-96"></div>
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 animate-pulse h-96"></div>
+                </div>
+              }>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6">
                   <InteractivePieChart
@@ -300,6 +324,7 @@ export default function DetailedFindingsPage() {
                   />
                 </div>
               </div>
+              </Suspense>
 
               {/* Additional Voices from the Field */}
               <div className="bg-white border border-gray-200 rounded-xl p-6">
@@ -327,7 +352,7 @@ export default function DetailedFindingsPage() {
           <div className="bg-white rounded-2xl shadow-lg p-6 inline-block">
             <h3 className="text-lg font-semibold text-gray-800 mb-3">Access the Full Report</h3>
             <p className="text-gray-600 mb-4">
-              Download the complete "Draft Sediment Standards Review: What We Heard" report for detailed analysis
+              Download the complete &quot;Draft Sediment Standards Review: What We Heard&quot; report for detailed analysis
             </p>
             <a
               href="https://docs.google.com/document/d/1ZVgujJykXr0rflcd5yck5OYmpEzpLIX7UYDz9SUfibc/edit?usp=sharing"

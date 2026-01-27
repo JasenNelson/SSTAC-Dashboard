@@ -15,6 +15,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { randomBytes } from 'crypto';
 
 /**
  * Create an authenticated Supabase client for API routes
@@ -202,30 +203,41 @@ export async function createClientForPagePath(pagePath: string): Promise<{
 
 /**
  * Generate a unique user ID for CEW submissions
- * 
+ * Task 2.5 Security Fix - Uses cryptographically secure random generation
+ *
  * Creates a unique identifier for anonymous CEW poll submissions.
- * Format: {authCode}_{timestamp}_{randomSuffix}
- * 
+ * Format: {authCode}_{randomHex}
+ *
+ * SECURITY: Uses crypto.randomBytes for unpredictable IDs
+ * Previous timestamp-based generation was guessable (predictable pattern)
+ *
  * @param authCode - CEW authentication code (default: 'CEW2025')
  * @param sessionId - Optional session ID from headers (x-session-id)
- * @returns Unique user ID string
- * 
+ * @returns Unique user ID string with cryptographically random component
+ *
  * @example
  * ```typescript
  * const userId = generateCEWUserId('CEW2025', request.headers.get('x-session-id'));
- * // Returns: 'CEW2025_session_1234567890_abc123' or 'CEW2025_1234567890_xyz789'
+ * // Returns: 'CEW2025_a1b2c3d4e5f6g7h8' (32 bytes hex) or from sessionId
  * ```
  */
 export function generateCEWUserId(authCode: string = 'CEW2025', sessionId?: string | null): string {
   if (sessionId) {
     return `${authCode}_${sessionId}`;
   }
-  
-  // Fallback: generate timestamp-based ID matching old behavior
-  // Old format: session_${Date.now()}_${random}
-  const timestamp = Date.now();
-  const randomSuffix = Math.random().toString(36).substring(2, 8);
-  const generatedSessionId = `session_${timestamp}_${randomSuffix}`;
-  return `${authCode}_${generatedSessionId}`;
+
+  // Task 2.5 Security Fix: Use cryptographically secure random generation
+  // No longer using timestamp-based IDs which are guessable
+  try {
+    const randomHex = randomBytes(16).toString('hex');
+    return `${authCode}_${randomHex}`;
+  } catch {
+    // Fallback for environments where crypto isn't available
+    // (should never happen in production)
+    const fallbackRandom = Array.from({ length: 32 }, () =>
+      Math.floor(Math.random() * 16).toString(16)
+    ).join('');
+    return `${authCode}_${fallbackRandom}`;
+  }
 }
 

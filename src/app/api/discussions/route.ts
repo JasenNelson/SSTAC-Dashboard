@@ -1,6 +1,5 @@
 // src/app/api/discussions/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth';
 import { getAuthAndRateLimit } from '../_helpers/rate-limit-wrapper';
 
 export async function GET(request: NextRequest) {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 
 export default function WIKSClient() {
   const [expandedBios, setExpandedBios] = useState<{ [key: string]: boolean }>({
@@ -21,11 +22,13 @@ export default function WIKSClient() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0 overflow-hidden">
-          <img 
-            src="/HoweSound3.JPG?v=1" 
+          <Image
+            src="/HoweSound3.JPG"
             alt="Howe Sound landscape for Indigenous Knowledge and Science"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
             style={{ filter: "brightness(0.55)" }}
+            priority
           />
         </div>
         
@@ -38,15 +41,15 @@ export default function WIKSClient() {
             Weaving Indigenous Knowledges & Science
           </h1>
           <p className="text-xl md:text-2xl lg:text-3xl mb-8 font-['Lato'] font-light">
-            A Practical Discussion on Modernizing BC's Sediment Protection Framework
+            A Practical Discussion on Modernizing BC&apos;s Sediment Protection Framework
           </p>
           
           {/* Land Acknowledgement */}
           <div className="bg-black/30 backdrop-blur-sm rounded-2xl p-6 max-w-4xl mx-auto">
             <p className="text-lg md:text-xl italic leading-relaxed">
-              "We acknowledge and respect the lək̓ʷəŋən (Lekwungen) Peoples (Songhees and Esquimalt Nations), 
-              on whose traditional territories we gather, and whose historical relationships with this land 
-              continue to this day." (Oct. 7, 2025 meeting at Canadian Ecotoxicity Workshop in Victoria)
+              &quot;We acknowledge and respect the lək̓ʷəŋən (Lekwungen) Peoples (Songhees and Esquimalt Nations),
+              on whose traditional territories we gather, and whose historical relationships with this land
+              continue to this day.&quot; (Oct. 7, 2025 meeting at Canadian Ecotoxicity Workshop in Victoria)
             </p>
           </div>
         </div>
@@ -64,9 +67,9 @@ export default function WIKSClient() {
             <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
               <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-8 rounded-2xl shadow-2xl h-full">
                 <div className="text-4xl mb-4">🌊</div>
-                <h3 className="text-2xl font-bold mb-4">The 'Why' - Foundational Vision</h3>
+                <h3 className="text-2xl font-bold mb-4">The &apos;Why&apos; - Foundational Vision</h3>
                 <p className="text-blue-100 leading-relaxed">
-                  Embrace 'Two-Eyed Seeing' to move beyond conventional environmental management by braiding the deep, relational wisdom of Indigenous Knowledge and Science with Western science. This approach seeks to develop more holistic, place-based standards that are not only scientifically robust but also culturally relevant and respectful.
+                  Embrace &apos;Two-Eyed Seeing&apos; to move beyond conventional environmental management by braiding the deep, relational wisdom of Indigenous Knowledge and Science with Western science. This approach seeks to develop more holistic, place-based standards that are not only scientifically robust but also culturally relevant and respectful.
                 </p>
               </div>
             </div>
@@ -75,9 +78,9 @@ export default function WIKSClient() {
             <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
               <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-8 rounded-2xl shadow-2xl h-full">
                 <div className="text-4xl mb-4">🏛️</div>
-                <h3 className="text-2xl font-bold mb-4">The 'How' - A Tangible Example</h3>
+                <h3 className="text-2xl font-bold mb-4">The &apos;How&apos; - A Tangible Example</h3>
                 <p className="text-green-100 leading-relaxed">
-                  The Tsleil-Waututh Nation's work on the Burrard Inlet Water Quality Objectives 
+                  The Tsleil-Waututh Nation&apos;s work on the Burrard Inlet Water Quality Objectives 
                   is a precedent-setting, Nation-led initiative. It demonstrates a successful 
                   government-to-government process that weaves knowledges to create numerical 
                   values that protect cultural practices.
@@ -254,10 +257,10 @@ export default function WIKSClient() {
                 <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-3">Final Thoughts: Landscape = Kin</h3>
                 <div className="mt-4 text-gray-900 dark:text-gray-300 space-y-3">
                   <p>
-                    The panel&apos;s final thoughts centered on the foundational concept that in many First Nations languages, <strong>&quot;Landscape = Kin&quot;</strong>. This perspective reframes environmental protection: &quot;How we care about the environment should be how we care about our family&quot;.
+                    The panel&apos;s final thoughts centered on the foundational concept that in many First Nations languages, including in Dr. Water&apos;s ancestral Coast Salish language Hul&apos;qumi&apos;num, <strong>&quot;Landscape = Kin&quot;</strong>. This perspective reframes environmental protection: &quot;How we care about the environment should be how we care about our family&quot;.
                   </p>
                   <p>
-                    Speakers reinforced this by comparing care for the land and water to caring for an ill family member. They also highlighted the role of language as a framing tool, noting that land is language – not an analogy but a lived reality. The existence of dozens of words for land, water, and invertebrates reflects this continuum, and even the sounds of words (like the sound of a river running low) can teach us how to relate to the environment.
+                    Speakers reinforced this by comparing care for the land and water to caring for an ill family member. They also highlighted the role of language as a framing tool, noting that land is language – not an analogy but a lived reality. The existence of dozens of words for land, water, and invertebrate animals reflects this continuum, and even the sounds of words (like the sound of a river running low) can teach us how to relate to the environment.
                   </p>
                 </div>
               </div>
@@ -278,7 +281,7 @@ export default function WIKSClient() {
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-blue-300">Continuing the Dialogue</h3>
               <p className="text-gray-200 leading-relaxed">
-                This conversation extends beyond today's session. We welcome your ongoing perspectives 
+                This conversation extends beyond today&apos;s session. We welcome your ongoing perspectives 
                 as we develop this framework together.
               </p>
             </div>

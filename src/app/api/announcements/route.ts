@@ -3,9 +3,18 @@ import { createAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/ap
 import { createAuthenticatedClient } from '@/lib/supabase-auth';
 import { getAuthAndRateLimit } from '../_helpers/rate-limit-wrapper';
 
-export async function GET() {
+export async function GET(_request: NextRequest) {
   try {
+    // Task 2.1.2 Security Fix: Verify authentication before fetching announcements
     const supabase = await createAuthenticatedClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Authentication required' },
+        { status: 401 }
+      );
+    }
 
     const { data: announcements, error } = await supabase
       .from('announcements')

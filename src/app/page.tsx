@@ -1,6 +1,5 @@
 'use client';
 
-import Image from "next/image";
 import ThemeToggle from "@/components/ThemeToggle";
 import ProjectPhases from "@/components/dashboard/ProjectPhases";
 
@@ -25,7 +24,7 @@ export default function Home() {
               Sediment Standards Project
             </h1>
             <p className="text-xl text-blue-100 max-w-4xl mx-auto leading-relaxed mb-8">
-              Developing a modern, robust scientific framework for updating BC's Contaminated Sites Regulation sediment standards
+              Developing a modern, robust scientific framework for updating BC&apos;s Contaminated Sites Regulation sediment standards
             </p>
             <div className="inline-flex items-center px-6 py-3 bg-gray-200/90 dark:bg-gray-300/90 backdrop-blur-sm rounded-full border border-white/30 dark:border-gray-600/30 shadow-lg">
               <span className="text-blue-900 text-sm font-semibold phase-1-text">
@@ -125,7 +124,7 @@ export default function Home() {
             Get Involved
           </h3>
           <p className="text-gray-700 dark:text-gray-300 mb-6">
-            Join the conversation and contribute to modernizing BC's sediment standards
+            Join the conversation and contribute to modernizing BC&apos;s sediment standards
           </p>
           <div className="flex gap-4 justify-center">
             <a
