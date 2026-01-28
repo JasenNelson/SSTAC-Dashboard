@@ -7,8 +7,11 @@ import ReviewDashboardClient from './ReviewDashboardClient';
 import {
   getSubmissionById,
   getAssessments,
+  getJudgmentsForSubmission,
   type Assessment as DbAssessment,
+  type Judgment as DbJudgment,
 } from '@/lib/sqlite/queries';
+import { getCitationLabels } from '@/lib/regulatory-review/taxonomy-mapping';
 
 // Structured evidence item for detailed display
 export interface StructuredEvidenceItem {
@@ -25,7 +28,9 @@ export interface StructuredEvidenceItem {
 // Types for the regulatory review data (UI format)
 export interface Assessment {
   id: string;
+  dbId: number;
   policyId: string;
+  citationLabel?: string;
   policyTitle: string;
   section: string;
   sheet: string;  // Excel tab name (Stg1, Stg2, DSI, RA, RP, etc.)
@@ -41,6 +46,25 @@ export interface Assessment {
   evidenceCoverage?: number;
 }
 
+export interface Judgment {
+  id?: number;
+  assessmentId?: number;
+  humanResult?: string;
+  humanConfidence?: string;
+  judgmentNotes?: string;
+  overrideReason?: string;
+  evidenceSufficiency?: string;
+  includeInFinal?: boolean;
+  finalMemoSummary?: string;
+  followUpNeeded?: boolean;
+  routedTo?: string;
+  routingReason?: string;
+  reviewerId?: string;
+  reviewerName?: string;
+  reviewedAt?: string;
+  reviewStatus?: string;
+}
+
 export interface Submission {
   id: string;
   siteId: string;
@@ -49,6 +73,7 @@ export interface Submission {
   submittedAt: string;
   submittedBy: string;
   assessments: Assessment[];
+  judgments?: Judgment[];
 }
 
 // Evidence item from the database JSON
@@ -64,7 +89,10 @@ interface EvidenceItem {
 }
 
 // Transform database assessment to UI format
-function transformAssessment(dbAssessment: DbAssessment): Assessment {
+function transformAssessment(
+  dbAssessment: DbAssessment,
+  citationLabels: Map<string, string>
+): Assessment {
   // Map AI result to UI status
   const statusMap: Record<string, 'pass' | 'fail' | 'pending' | 'flagged'> = {
     'PASS': 'pass',
@@ -124,7 +152,9 @@ function transformAssessment(dbAssessment: DbAssessment): Assessment {
 
   return {
     id: `ASM-${dbAssessment.id}`,
+    dbId: dbAssessment.id,
     policyId: dbAssessment.csap_id,
+    citationLabel: citationLabels.get(dbAssessment.csap_id),
     policyTitle: dbAssessment.csap_text,
     section: dbAssessment.section || 'General',
     sheet: dbAssessment.sheet || 'Other',  // Excel tab name for hierarchical grouping
@@ -141,6 +171,27 @@ function transformAssessment(dbAssessment: DbAssessment): Assessment {
   };
 }
 
+function transformJudgment(dbJudgment: DbJudgment): Judgment {
+  return {
+    id: dbJudgment.id,
+    assessmentId: dbJudgment.assessment_id,
+    humanResult: dbJudgment.human_result || undefined,
+    humanConfidence: dbJudgment.human_confidence || undefined,
+    judgmentNotes: dbJudgment.judgment_notes || undefined,
+    overrideReason: dbJudgment.override_reason || undefined,
+    evidenceSufficiency: dbJudgment.evidence_sufficiency || undefined,
+    includeInFinal: dbJudgment.include_in_final === 1,
+    finalMemoSummary: dbJudgment.final_memo_summary || undefined,
+    followUpNeeded: dbJudgment.follow_up_needed === 1,
+    routedTo: dbJudgment.routed_to || undefined,
+    routingReason: dbJudgment.routing_reason || undefined,
+    reviewerId: dbJudgment.reviewer_id || undefined,
+    reviewerName: dbJudgment.reviewer_name || undefined,
+    reviewedAt: dbJudgment.reviewed_at || undefined,
+    reviewStatus: dbJudgment.review_status || undefined,
+  };
+}
+
 // Fetch submission with assessments from SQLite
 function getSubmissionWithAssessments(submissionId: string): Submission | null {
   try {
@@ -148,6 +199,8 @@ function getSubmissionWithAssessments(submissionId: string): Submission | null {
     if (!dbSubmission) return null;
 
     const dbAssessments = getAssessments(submissionId);
+    const dbJudgments = getJudgmentsForSubmission(submissionId);
+    const citationLabels = getCitationLabels(dbAssessments.map((assessment) => assessment.csap_id));
 
     // Determine status
     let status: 'pending' | 'in_progress' | 'complete' = 'pending';
@@ -166,7 +219,8 @@ function getSubmissionWithAssessments(submissionId: string): Submission | null {
       status,
       submittedAt: dbSubmission.evaluation_started || dbSubmission.imported_at,
       submittedBy: 'AI Evaluation',
-      assessments: dbAssessments.map(transformAssessment),
+      assessments: dbAssessments.map((assessment) => transformAssessment(assessment, citationLabels)),
+      judgments: dbJudgments.map(transformJudgment),
     };
   } catch (error) {
     console.error('Error fetching submission:', error);

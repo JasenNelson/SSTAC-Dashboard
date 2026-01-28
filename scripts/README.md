@@ -9,6 +9,7 @@ scripts/
 ├── verify/                   # Ongoing verification scripts (NEW)
 ├── debug/                    # Active SQL debugging tools
 ├── cleanup/                  # Safe data cleanup scripts
+├── regulatory-review/        # Regulatory review data scripts (policy sources + taxonomy)
 ├── archive/                  # Historical scripts (reference only)
 │   ├── fixes/               # Applied fix scripts
 │   ├── debug/               # Historical debug scripts
@@ -20,6 +21,14 @@ scripts/
 ```
 
 **For archived scripts:** See `scripts/archive/README.md` for details and warnings.
+
+---
+
+## 📚 **Regulatory Review Data Scripts** (`scripts/regulatory-review/`)
+
+Utilities for policy source inventory and taxonomy mapping exports, plus a loader for the dashboard SQLite DB.
+
+**See:** `scripts/regulatory-review/README.md` for usage.
 
 ---
 
