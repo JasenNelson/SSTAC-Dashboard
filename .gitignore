@@ -90,6 +90,7 @@ coverage.xml
 cover/
 tests/test-results/
 tests/*.log
+playwright-report/
 
 # Other Python-specific ignores
 local_settings.py
