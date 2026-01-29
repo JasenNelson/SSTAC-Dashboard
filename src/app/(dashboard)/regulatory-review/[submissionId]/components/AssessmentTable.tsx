@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   ChevronUp,
   ChevronDown,
@@ -16,13 +16,16 @@ import {
   ChevronRightIcon,
 } from 'lucide-react';
 import StatusBadge, { type StatusType } from '@/components/regulatory-review/StatusBadge';
+import SufficiencyBadge, { type SufficiencyStatus } from '@/components/regulatory-review/SufficiencyBadge';
 import TierBadge, { type TierType } from '@/components/regulatory-review/TierBadge';
 import ConfidenceMeter, { type ConfidenceLevel } from '@/components/regulatory-review/ConfidenceMeter';
+import type { Judgment } from './JudgmentPanel';
 
 // Assessment type matching the page.tsx definition with additional fields
 export interface Assessment {
   id: string;
   policyId: string;
+  citationLabel?: string;
   policyTitle: string;
   section: string;
   tier: TierType;
@@ -31,7 +34,7 @@ export interface Assessment {
   notes: string;
   reviewedAt: string | null;
   reviewedBy: string | null;
-  confidence?: ConfidenceLevel;
+  aiConfidence?: ConfidenceLevel;
 }
 
 // Map internal status to StatusBadge type
@@ -47,6 +50,7 @@ export type SortOrder = 'asc' | 'desc';
 
 export interface AssessmentTableProps {
   assessments: Assessment[];
+  judgments: Map<string, Judgment>;
   selectedId: string | null;
   onSelect: (id: string) => void;
   onQuickPass?: (id: string) => void;
@@ -54,6 +58,10 @@ export interface AssessmentTableProps {
   sortOrder: SortOrder;
   onSort: (field: SortField) => void;
   onClearFilters?: () => void;
+  currentPage: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
 }
 
 // Page size options
@@ -61,17 +69,18 @@ const PAGE_SIZE_OPTIONS = [25, 50, 100] as const;
 
 export default function AssessmentTable({
   assessments,
+  judgments,
   selectedId,
   onSelect,
   onQuickPass,
   sortField,
   sortOrder,
   onSort,
+  currentPage,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
 }: AssessmentTableProps) {
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<number>(25);
-
   // Selection state for bulk actions
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -83,12 +92,18 @@ export default function AssessmentTable({
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalItems);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      onPageChange(totalPages);
+    }
+  }, [currentPage, totalPages, onPageChange]);
   const paginatedAssessments = assessments.slice(startIndex, endIndex);
 
   // Reset to page 1 when assessments change
   React.useEffect(() => {
-    setCurrentPage(1);
-  }, [assessments.length]);
+    onPageChange(1);
+  }, [assessments.length, onPageChange]);
 
   // Selection handlers
   const isAllSelected = paginatedAssessments.length > 0 &&
@@ -126,6 +141,13 @@ export default function AssessmentTable({
     // Only one row can be expanded at a time - replace any existing expanded rows
     setExpandedRows(new Set([id]));
   }, [onSelect]);
+
+  const handleRowKeyDown = useCallback((event: React.KeyboardEvent, id: string) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleRowClick(id);
+    }
+  }, [handleRowClick]);
 
   // Expand/collapse row
   const toggleRowExpand = useCallback((id: string, event: React.MouseEvent) => {
@@ -274,15 +296,18 @@ export default function AssessmentTable({
                 <span className="sr-only">Expand</span>
               </th>
               <SortableHeader field="policyId">
-                <span className="hidden sm:inline">CSAP ID</span>
-                <span className="sm:hidden">ID</span>
+                <span className="hidden sm:inline">Citation</span>
+                <span className="sm:hidden">Citation</span>
               </SortableHeader>
               <SortableHeader field="section" className="hidden md:table-cell">
                 Section
               </SortableHeader>
               <SortableHeader field="status">
-                AI Result
+                AI Status
               </SortableHeader>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+                Reviewer Sufficiency
+              </th>
               <SortableHeader field="tier">
                 Tier
               </SortableHeader>
@@ -293,7 +318,10 @@ export default function AssessmentTable({
                 Evidence
               </SortableHeader>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden xl:table-cell sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
-                Review Status
+                Notes
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden xl:table-cell sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+                Final
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
                 Actions
@@ -306,13 +334,20 @@ export default function AssessmentTable({
               const isChecked = selectedIds.has(assessment.id);
               const isExpanded = expandedRows.has(assessment.id);
               const isEven = index % 2 === 0;
+              const judgment = judgments.get(assessment.id);
+              const sufficiencyStatus = (judgment?.evidenceSufficiency || 'UNREVIEWED') as SufficiencyStatus;
+              const hasNotes = Boolean(judgment?.judgmentNotes);
+              const includeInFinal = Boolean(judgment?.includeInFinal);
 
               return (
                 <React.Fragment key={assessment.id}>
                   <tr
                     onClick={() => handleRowClick(assessment.id)}
+                    onKeyDown={(event) => handleRowKeyDown(event, assessment.id)}
+                    role="button"
+                    tabIndex={0}
                     className={`
-                      cursor-pointer transition-colors
+                      cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2
                       ${isSelected
                         ? 'bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-l-indigo-500'
                         : isEven
@@ -325,7 +360,9 @@ export default function AssessmentTable({
                     <td className="w-12 px-4 py-3">
                       <button
                         onClick={(e) => handleSelectRow(assessment.id, e)}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                        aria-label={isChecked ? 'Deselect row' : 'Select row'}
+                        aria-pressed={isChecked}
                       >
                         {isChecked ? (
                           <CheckSquare className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
@@ -339,8 +376,10 @@ export default function AssessmentTable({
                     <td className="w-10 px-2 py-3">
                       <button
                         onClick={(e) => toggleRowExpand(assessment.id, e)}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                         title={isExpanded ? 'Collapse' : 'Expand evidence'}
+                        aria-label={isExpanded ? 'Collapse evidence' : 'Expand evidence'}
+                        aria-expanded={isExpanded}
                       >
                         {isExpanded ? (
                           <ChevronDownIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -350,19 +389,37 @@ export default function AssessmentTable({
                       </button>
                     </td>
 
-                    {/* CSAP ID */}
-                    <td className="px-4 py-3 text-sm font-mono text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                      {assessment.policyId}
+                    {/* Citation / Internal ID */}
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                      <div className="font-medium">
+                        {assessment.citationLabel || assessment.policyId}
+                      </div>
+                      {assessment.citationLabel && assessment.citationLabel !== assessment.policyId && (
+                        <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">
+                          ID: {assessment.policyId}
+                        </div>
+                      )}
                     </td>
 
-                    {/* Section - truncated with tooltip */}
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 max-w-[200px] truncate hidden md:table-cell" title={assessment.section}>
-                      {assessment.section}
+                    {/* Section - truncated with focus reveal */}
+                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 max-w-[200px] hidden md:table-cell">
+                      <span
+                        tabIndex={0}
+                        title={assessment.section}
+                        className="block truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:whitespace-normal focus-visible:break-words focus-visible:overflow-visible"
+                      >
+                        {assessment.section}
+                      </span>
                     </td>
 
                     {/* AI Result */}
                     <td className="px-4 py-3">
                       <StatusBadge status={statusMap[assessment.status]} />
+                    </td>
+
+                    {/* Reviewer Sufficiency */}
+                    <td className="px-4 py-3">
+                      <SufficiencyBadge status={sufficiencyStatus} />
                     </td>
 
                     {/* Tier */}
@@ -373,7 +430,7 @@ export default function AssessmentTable({
                     {/* Confidence */}
                     <td className="px-4 py-3 hidden lg:table-cell">
                       <ConfidenceMeter
-                        confidence={assessment.confidence || 'MEDIUM'}
+                        confidence={assessment.aiConfidence || 'MEDIUM'}
                         showLabel={false}
                       />
                     </td>
@@ -385,16 +442,25 @@ export default function AssessmentTable({
                       </span>
                     </td>
 
-                    {/* Review Status */}
+                    {/* Notes */}
                     <td className="px-4 py-3 hidden xl:table-cell">
-                      {assessment.reviewedAt ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">
-                          Reviewed
+                      {hasNotes ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200">
+                          Notes
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
-                          Pending
+                        <span className="text-xs text-gray-400">-</span>
+                      )}
+                    </td>
+
+                    {/* Final */}
+                    <td className="px-4 py-3 hidden xl:table-cell">
+                      {includeInFinal ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">
+                          Included
                         </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">-</span>
                       )}
                     </td>
 
@@ -408,12 +474,13 @@ export default function AssessmentTable({
                             onQuickPass(assessment.id);
                           }}
                           disabled={assessment.reviewedAt !== null}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
                             assessment.reviewedAt !== null
                               ? 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500 cursor-not-allowed'
                               : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-900/50'
                           }`}
                           title={assessment.reviewedAt !== null ? 'Already reviewed' : 'Accept AI result as PASS'}
+                          aria-disabled={assessment.reviewedAt !== null}
                         >
                           <Check className="w-3.5 h-3.5" />
                           <span className="hidden sm:inline">PASS</span>
@@ -423,7 +490,7 @@ export default function AssessmentTable({
                           className="inline-flex items-center px-2.5 py-1.5 text-xs text-gray-400 dark:text-gray-500"
                           title={`${assessment.tier === 'TIER_2_PROFESSIONAL' ? 'Requires professional judgment' : 'Requires SDM review'}`}
                         >
-                          —
+                          -
                         </span>
                       )}
                     </td>
@@ -432,7 +499,7 @@ export default function AssessmentTable({
                   {/* Expanded evidence row */}
                   {isExpanded && (
                     <tr className="bg-gray-50 dark:bg-gray-800/70">
-                      <td colSpan={10} className="px-8 py-4">
+                      <td colSpan={12} className="px-8 py-4">
                         <div className="text-sm space-y-4">
                           {/* CSAP Question - Full text, never truncated */}
                           <div>
@@ -453,7 +520,7 @@ export default function AssessmentTable({
                               <ul className="space-y-2 text-gray-600 dark:text-gray-400">
                                 {assessment.evidence.map((item, idx) => (
                                   <li key={idx} className="flex items-start gap-2">
-                                    <span className="text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0">•</span>
+                                    <span className="text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0">-</span>
                                     <span className="whitespace-pre-wrap">{item}</span>
                                   </li>
                                 ))}
@@ -468,6 +535,27 @@ export default function AssessmentTable({
                             <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
                               <div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</div>
                               <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{assessment.notes}</p>
+                            </div>
+                          )}
+
+                          {judgment?.evidenceSufficiency && (
+                            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                              <div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Reviewer Evidence Sufficiency</div>
+                              <SufficiencyBadge status={sufficiencyStatus} />
+                            </div>
+                          )}
+
+                          {judgment?.judgmentNotes && (
+                            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                              <div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Reviewer Notes</div>
+                              <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{judgment.judgmentNotes}</p>
+                            </div>
+                          )}
+
+                          {judgment?.finalMemoSummary && (
+                            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                              <div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Final Memo Summary</div>
+                              <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{judgment.finalMemoSummary}</p>
                             </div>
                           )}
                         </div>
@@ -493,10 +581,10 @@ export default function AssessmentTable({
               id="page-size"
               value={pageSize}
               onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setCurrentPage(1);
+                onPageSizeChange(Number(e.target.value));
+                onPageChange(1);
               }}
-              className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
             >
               {PAGE_SIZE_OPTIONS.map((size) => (
                 <option key={size} value={size}>
@@ -515,9 +603,9 @@ export default function AssessmentTable({
           </span>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               aria-label="Previous page"
             >
               <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -526,9 +614,9 @@ export default function AssessmentTable({
               Page {currentPage} of {totalPages}
             </span>
             <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               aria-label="Next page"
             >
               <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
