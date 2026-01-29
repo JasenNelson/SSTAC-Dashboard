@@ -29,6 +29,7 @@ export interface ExportPanelProps {
   judgments: Map<string, LocalJudgment>;
   onClose: () => void;
   isOpen: boolean;
+  initialMemoType?: 'interim' | 'final';
 }
 
 type ExportFormat = 'markdown' | 'html' | 'csv' | 'word';
@@ -44,6 +45,7 @@ function convertAssessment(assessment: Assessment): LocalAssessment {
   return {
     id: assessment.id,
     policyId: assessment.policyId,
+    citationLabel: assessment.citationLabel,
     policyTitle: assessment.policyTitle,
     section: assessment.section,
     tier: assessment.tier,
@@ -66,9 +68,11 @@ export default function ExportPanel({
   judgments,
   onClose,
   isOpen,
+  initialMemoType,
 }: ExportPanelProps) {
   // Export options state
   const [format, setFormat] = useState<ExportFormat>('csv');
+  const [memoType, setMemoType] = useState<'interim' | 'final'>('interim');
   const [includePending, setIncludePending] = useState(true);
   const [twoColumnFormat, setTwoColumnFormat] = useState(true);
   const [includeEvidence, setIncludeEvidence] = useState(true);
@@ -80,6 +84,8 @@ export default function ExportPanel({
   const [copySuccess, setCopySuccess] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
+  const memoTitle = memoType === 'final' ? 'Final' : 'Interim';
+
   // Convert assessments to local format
   const localAssessments = useMemo(
     () => assessments.map(convertAssessment),
@@ -90,6 +96,7 @@ export default function ExportPanel({
   const exportOptions: ExportOptions = useMemo(
     () => ({
       format,
+      memoType,
       includePending,
       twoColumnFormat,
       includeEvidence,
@@ -97,7 +104,7 @@ export default function ExportPanel({
       dateFrom: dateFrom ? new Date(dateFrom) : undefined,
       dateTo: dateTo ? new Date(dateTo) : undefined,
     }),
-    [format, includePending, twoColumnFormat, includeEvidence, onlyNeedsAttention, dateFrom, dateTo]
+    [format, memoType, includePending, twoColumnFormat, includeEvidence, onlyNeedsAttention, dateFrom, dateTo]
   );
 
   // Build memo data object
@@ -140,12 +147,13 @@ export default function ExportPanel({
         content = generateMarkdown(memoData, exportOptions);
     }
 
-    const filename = `interim-memo-${submissionId}-${new Date().toISOString().split('T')[0]}`;
+    const memoLabel = memoType === 'final' ? 'final' : 'interim';
+    const filename = `${memoLabel}-memo-${submissionId}-${new Date().toISOString().split('T')[0]}`;
     downloadContent(content, filename, format);
 
     setDownloadSuccess(true);
     setTimeout(() => setDownloadSuccess(false), 2000);
-  }, [format, memoData, exportOptions, submissionId]);
+  }, [format, memoData, exportOptions, submissionId, memoType]);
 
   // Handle copy to clipboard
   const handleCopy = useCallback(async () => {
@@ -205,6 +213,12 @@ export default function ExportPanel({
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen && initialMemoType) {
+      setMemoType(initialMemoType);
+    }
+  }, [isOpen, initialMemoType]);
+
   if (!isOpen) return null;
 
   return (
@@ -212,15 +226,20 @@ export default function ExportPanel({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-[600px] max-h-[90vh] flex flex-col overflow-hidden">
+      <div
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-[600px] max-h-[90vh] flex flex-col overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="export-panel-title"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Export Interim Tech Memo
+          <h2 id="export-panel-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Export {memoTitle} Tech Memo
           </h2>
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -229,6 +248,38 @@ export default function ExportPanel({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
+          {/* Memo Type Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Memo Type
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setMemoType('interim')}
+                className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                  memoType === 'interim'
+                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                Interim Memo
+              </button>
+              <button
+                onClick={() => setMemoType('final')}
+                className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                  memoType === 'final'
+                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                }`}
+              >
+                Final Memo
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Final Memo includes only items marked Include-in-Final.
+            </p>
+          </div>
+
           {/* Format Selection */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -237,7 +288,7 @@ export default function ExportPanel({
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setFormat('csv')}
-                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors ${
+                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                   format === 'csv'
                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
                     : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -249,7 +300,7 @@ export default function ExportPanel({
               </button>
               <button
                 onClick={() => setFormat('word')}
-                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors ${
+                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                   format === 'word'
                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
                     : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -261,7 +312,7 @@ export default function ExportPanel({
               </button>
               <button
                 onClick={() => setFormat('markdown')}
-                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors ${
+                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                   format === 'markdown'
                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
                     : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -273,7 +324,7 @@ export default function ExportPanel({
               </button>
               <button
                 onClick={() => setFormat('html')}
-                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors ${
+                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                   format === 'html'
                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
                     : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -297,7 +348,7 @@ export default function ExportPanel({
                 type="checkbox"
                 checked={includePending}
                 onChange={(e) => setIncludePending(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 Include pending items (not yet reviewed)
@@ -309,7 +360,7 @@ export default function ExportPanel({
                 type="checkbox"
                 checked={twoColumnFormat}
                 onChange={(e) => setTwoColumnFormat(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 Two-column format (AI | Human side-by-side)
@@ -321,7 +372,7 @@ export default function ExportPanel({
                 type="checkbox"
                 checked={includeEvidence}
                 onChange={(e) => setIncludeEvidence(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 Include evidence excerpts
@@ -333,7 +384,7 @@ export default function ExportPanel({
                 type="checkbox"
                 checked={onlyNeedsAttention}
                 onChange={(e) => setOnlyNeedsAttention(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 Include only items needing attention (FAIL, REQUIRES_JUDGMENT)
@@ -355,7 +406,7 @@ export default function ExportPanel({
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
                 />
               </div>
               <div className="flex-1">
@@ -366,7 +417,7 @@ export default function ExportPanel({
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
                 />
               </div>
             </div>
@@ -394,19 +445,22 @@ export default function ExportPanel({
                 <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                   {stats.pending}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Pending</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Unreviewed</div>
               </div>
             </div>
             <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
               <div className="flex justify-around text-sm">
                 <span className="text-gray-600 dark:text-gray-400">
-                  <span className="font-medium text-green-600 dark:text-green-400">{stats.pass}</span> Pass
+                  <span className="font-medium text-green-600 dark:text-green-400">{stats.sufficient}</span> Sufficient
                 </span>
                 <span className="text-gray-600 dark:text-gray-400">
-                  <span className="font-medium text-red-600 dark:text-red-400">{stats.fail}</span> Fail
+                  <span className="font-medium text-amber-600 dark:text-amber-400">{stats.needsMoreEvidence}</span> Needs More Evidence
                 </span>
                 <span className="text-gray-600 dark:text-gray-400">
-                  <span className="font-medium text-yellow-600 dark:text-yellow-400">{stats.requiresJudgment}</span> Requires Judgment
+                  <span className="font-medium text-red-600 dark:text-red-400">{stats.insufficient}</span> Insufficient
+                </span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  <span className="font-medium text-gray-600 dark:text-gray-300">{stats.unreviewed}</span> Unreviewed
                 </span>
               </div>
             </div>
@@ -446,14 +500,14 @@ export default function ExportPanel({
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
           >
             Cancel
           </button>
           <div className="flex gap-3">
             <button
               onClick={handleCopy}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                 copySuccess
                   ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                   : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
@@ -473,7 +527,7 @@ export default function ExportPanel({
             </button>
             <button
               onClick={handleDownload}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                 downloadSuccess
                   ? 'bg-green-600 text-white'
                   : 'bg-indigo-600 hover:bg-indigo-700 text-white'
