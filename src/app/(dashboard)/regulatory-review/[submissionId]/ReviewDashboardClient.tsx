@@ -279,6 +279,7 @@ export default function ReviewDashboardClient({
   const skipNextPageResetRef = useRef(false);
   const hasHydratedRef = useRef(false);
   const lastQueryRef = useRef<string>('');
+  const ignoreReqIdRef = useRef(false);
 
   // State management
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
@@ -460,7 +461,13 @@ export default function ReviewDashboardClient({
     }
 
     const reqIdParam = params.get('reqId');
+    if (!reqIdParam && ignoreReqIdRef.current) {
+      ignoreReqIdRef.current = false;
+    }
     if (reqIdParam) {
+      if (ignoreReqIdRef.current) {
+        return;
+      }
       const match = submission.assessments.find((assessment) => assessment.policyId === reqIdParam);
       if (match && match.id !== selectedAssessmentId) {
         setSelectedAssessmentId(match.id);
@@ -1063,9 +1070,18 @@ export default function ReviewDashboardClient({
 
   // Select assessment and show search panel
   const handleSelectAssessment = useCallback((id: string) => {
+    ignoreReqIdRef.current = false;
     setSelectedAssessmentId(id);
     setShowSearchPanel(true);
   }, []);
+
+  const handleBackToList = useCallback(() => {
+    ignoreReqIdRef.current = true;
+    setSelectedAssessmentId(null);
+    const params = new URLSearchParams(searchParams);
+    params.delete('reqId');
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [pathname, router, searchParams]);
 
   // Get judgment for selected assessment
   const selectedJudgment = selectedAssessmentId ? judgments.get(selectedAssessmentId) : undefined;
@@ -1535,7 +1551,7 @@ export default function ReviewDashboardClient({
                 judgment={selectedJudgment}
                 onSave={handleSaveJudgment}
                 onSkip={handleSkip}
-                onBack={() => setSelectedAssessmentId(null)}
+                onBack={handleBackToList}
                 isLoading={isLoading}
                 submissionId={submission.id}
               />
