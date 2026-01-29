@@ -286,6 +286,7 @@ export default function ReviewDashboardClient({
   const [tierFilter, setTierFilter] = useState<TierFilter>('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pass' | 'fail' | 'pending' | 'flagged'>('all');
   const [sufficiencyFilter, setSufficiencyFilter] = useState<'all' | 'SUFFICIENT' | 'INSUFFICIENT' | 'NEEDS_MORE_EVIDENCE' | 'UNREVIEWED'>('all');
+  const [policyScope, setPolicyScope] = useState<'csap_core' | 'all'>('csap_core');
   const [unresolvedOnly, setUnresolvedOnly] = useState(false);
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
   const [selectedStageGroup, setSelectedStageGroup] = useState<string | null>(null);
@@ -510,6 +511,11 @@ export default function ReviewDashboardClient({
       }
     }
 
+    const policyParam = params.get('policy') || getPref('rr_policy');
+    if (policyParam === 'all' || policyParam === 'csap_core') {
+      setPolicyScope(policyParam);
+    }
+
     const suffParam = params.get('suff') || getPref('rr_suff');
     if (suffParam) {
       const normalizedSuff = suffParam.toUpperCase().replace(/-/g, '_');
@@ -588,6 +594,7 @@ export default function ReviewDashboardClient({
       window.localStorage.setItem('rr_tier', tierFilter);
       window.localStorage.setItem('rr_status', statusFilter);
       window.localStorage.setItem('rr_suff', sufficiencyFilter);
+      window.localStorage.setItem('rr_policy', policyScope);
       window.localStorage.setItem('rr_unresolved', unresolvedOnly ? 'true' : 'false');
       window.localStorage.setItem('rr_sort', `${sortField}_${sortOrder}`);
       window.localStorage.setItem('rr_page', `${tablePage}`);
@@ -600,6 +607,7 @@ export default function ReviewDashboardClient({
     tierFilter,
     statusFilter,
     sufficiencyFilter,
+    policyScope,
     unresolvedOnly,
     sortField,
     sortOrder,
@@ -617,6 +625,7 @@ export default function ReviewDashboardClient({
     tierFilter,
     statusFilter,
     sufficiencyFilter,
+    policyScope,
     unresolvedOnly,
     selectedSection,
     selectedStageGroup,
@@ -665,6 +674,7 @@ export default function ReviewDashboardClient({
     }
 
     params.set('tier', tierFilter);
+    params.set('policy', policyScope);
     const suffParam = sufficiencyFilter === 'NEEDS_MORE_EVIDENCE'
       ? 'needs_more_evidence'
       : sufficiencyFilter.toLowerCase();
@@ -688,6 +698,7 @@ export default function ReviewDashboardClient({
     tierFilter,
     sufficiencyFilter,
     statusFilter,
+    policyScope,
     unresolvedOnly,
     sortField,
     sortOrder,
@@ -704,6 +715,15 @@ export default function ReviewDashboardClient({
   const filteredAssessments = useMemo(() => {
     // First filter
     const filtered = submission.assessments.filter((assessment) => {
+      const policyIdUpper = assessment.policyId.toUpperCase();
+      const sheetUpper = (assessment.sheet || '').toUpperCase();
+      const isCsapCore =
+        policyIdUpper.startsWith('CSAP-NPG')
+        || policyIdUpper.startsWith('CSAP-RAPG')
+        || sheetUpper === 'NPG'
+        || sheetUpper === 'RAPG';
+      const policyScopeMatch = policyScope === 'all' || isCsapCore;
+
       const statusMatch = statusFilter === 'all' || assessment.status === statusFilter;
       const tierMatch = tierFilter === 'all' || assessment.tier === tierFilter;
       const sectionLabel = getSectionLabel(assessment);
@@ -728,7 +748,7 @@ export default function ReviewDashboardClient({
           (assessment.notes || '').toLowerCase().includes(query);
       }
 
-      return statusMatch && tierMatch && sectionMatch && stageGroupMatch && sufficiencyMatch && unresolvedMatch && searchMatch;
+      return policyScopeMatch && statusMatch && tierMatch && sectionMatch && stageGroupMatch && sufficiencyMatch && unresolvedMatch && searchMatch;
     });
 
     // Then sort
@@ -790,6 +810,7 @@ export default function ReviewDashboardClient({
     selectedSection,
     selectedStageGroup,
     sufficiencyFilter,
+    policyScope,
     unresolvedOnly,
     searchQuery,
     sortField,
@@ -972,6 +993,7 @@ export default function ReviewDashboardClient({
     setTierFilter('all');
     setStatusFilter('all');
     setSufficiencyFilter('all');
+    setPolicyScope('csap_core');
     setUnresolvedOnly(false);
     setSelectedSection(null);
     setSelectedStageGroup(null);
@@ -1161,6 +1183,7 @@ export default function ReviewDashboardClient({
             {(tierFilter !== 'all'
               || statusFilter !== 'all'
               || sufficiencyFilter !== 'all'
+              || policyScope !== 'csap_core'
               || unresolvedOnly
               || selectedSection
               || selectedStageGroup
@@ -1218,6 +1241,15 @@ export default function ReviewDashboardClient({
               <option value="fail">Fail</option>
               <option value="pending">Requires Judgment</option>
               <option value="flagged">Partial</option>
+            </select>
+            <select
+              value={policyScope}
+              onChange={(e) => setPolicyScope(e.target.value as typeof policyScope)}
+              aria-label="Filter by policy scope"
+              className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+            >
+              <option value="csap_core">CSAP NPG + RAPG</option>
+              <option value="all">All Policies</option>
             </select>
             <select
               value={sufficiencyFilter}
