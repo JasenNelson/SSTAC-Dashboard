@@ -18,6 +18,9 @@ export type {
 export { default as AssessmentCard } from './AssessmentCard';
 export type { AssessmentCardProps } from './AssessmentCard';
 
+export { default as ExecutiveSummaryView } from './ExecutiveSummaryView';
+export type { ExecutiveSummaryViewProps } from './ExecutiveSummaryView';
+
 export { default as ExportPanel } from './ExportPanel';
 export type { ExportPanelProps } from './ExportPanel';
 
@@ -32,6 +35,9 @@ export type {
 
 export { default as AssessmentDetail } from './AssessmentDetail';
 export type { AssessmentDetailProps } from './AssessmentDetail';
+
+export { default as MemoPreviewPanel } from './MemoPreviewPanel';
+export type { MemoPreviewPanelProps } from './MemoPreviewPanel';
 
 export { default as SearchPanel } from './SearchPanel';
 export type { SearchPanelProps } from './SearchPanel';

@@ -7,6 +7,9 @@ export type { TierBadgeProps, TierType } from './TierBadge';
 export { default as StatusBadge } from './StatusBadge';
 export type { StatusBadgeProps, StatusType } from './StatusBadge';
 
+export { default as SufficiencyBadge } from './SufficiencyBadge';
+export type { SufficiencyBadgeProps, SufficiencyStatus } from './SufficiencyBadge';
+
 export { default as ConfidenceMeter } from './ConfidenceMeter';
 export type { ConfidenceMeterProps, ConfidenceLevel } from './ConfidenceMeter';
 
