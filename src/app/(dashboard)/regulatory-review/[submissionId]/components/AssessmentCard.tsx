@@ -104,8 +104,8 @@ const DECISION_OPTIONS: DecisionOption[] = [
  * Determine which human decision options are allowed based on discretion tier
  *
  * TIER_1_BINARY: All options allowed
- * TIER_2_PROFESSIONAL: Cannot Accept or Override PASS (AI cannot determine adequacy)
- * TIER_3_STATUTORY: Only Defer allowed (AI observes only)
+ * TIER_2_PROFESSIONAL: Reviewer judgment required (AI should not auto-pass)
+ * TIER_3_STATUTORY: Reviewer judgment required (AI should not auto-pass)
  */
 function getAllowedDecisions(tier: DiscretionTier): Set<HumanResult> {
   switch (tier) {
@@ -119,12 +119,22 @@ function getAllowedDecisions(tier: DiscretionTier): Set<HumanResult> {
       ]);
 
     case DiscretionTier.TIER_2_PROFESSIONAL:
-      // Cannot accept AI result or override to PASS (AI cannot return ADEQUATE)
-      return new Set([HumanResult.OVERRIDE_FAIL, HumanResult.DEFER]);
+      // Professional judgment required - reviewer retains full authority
+      return new Set([
+        HumanResult.ACCEPT,
+        HumanResult.OVERRIDE_PASS,
+        HumanResult.OVERRIDE_FAIL,
+        HumanResult.DEFER,
+      ]);
 
     case DiscretionTier.TIER_3_STATUTORY:
-      // AI observes only - must defer to SDM
-      return new Set([HumanResult.DEFER]);
+      // Statutory decision required - reviewer retains full authority
+      return new Set([
+        HumanResult.ACCEPT,
+        HumanResult.OVERRIDE_PASS,
+        HumanResult.OVERRIDE_FAIL,
+        HumanResult.DEFER,
+      ]);
 
     default:
       return new Set([HumanResult.DEFER]);
@@ -135,21 +145,8 @@ function getAllowedDecisions(tier: DiscretionTier): Set<HumanResult> {
  * Get tooltip explanation for why an option is disabled
  */
 function getDisabledTooltip(option: HumanResult, tier: DiscretionTier): string | null {
-  if (tier === DiscretionTier.TIER_2_PROFESSIONAL) {
-    if (option === HumanResult.ACCEPT) {
-      return 'TIER_2 items require professional judgment - AI cannot determine adequacy';
-    }
-    if (option === HumanResult.OVERRIDE_PASS) {
-      return 'Cannot mark as PASS - requires QP professional judgment';
-    }
-  }
-
-  if (tier === DiscretionTier.TIER_3_STATUTORY) {
-    if (option !== HumanResult.DEFER) {
-      return 'TIER_3 statutory matters must be deferred to Statutory Decision Maker';
-    }
-  }
-
+  void option;
+  void tier;
   return null;
 }
 

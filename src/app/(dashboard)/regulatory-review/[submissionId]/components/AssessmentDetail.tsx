@@ -173,22 +173,22 @@ function getTierConstraints(tier: TierType): TierConstraints {
 
     case 'TIER_2_PROFESSIONAL':
       return {
-        allowAccept: false,
-        allowOverridePass: false,
+        allowAccept: true,
+        allowOverridePass: true,
         allowOverrideFail: true,
         allowDefer: true,
         tooltipMessage:
-          'TIER_2 items require professional judgment. Cannot accept AI result or override to PASS.',
+          'TIER_2 items require professional judgment. AI should not auto-pass; reviewer decisions are authoritative.',
       };
 
     case 'TIER_3_STATUTORY':
       return {
-        allowAccept: false,
-        allowOverridePass: false,
-        allowOverrideFail: false,
+        allowAccept: true,
+        allowOverridePass: true,
+        allowOverrideFail: true,
         allowDefer: true,
         tooltipMessage:
-          'TIER_3 items require Statutory Decision Maker determination. Only DEFER is allowed.',
+          'TIER_3 items require statutory decision-making. AI should not auto-pass; reviewer decisions are authoritative.',
       };
 
     default:
