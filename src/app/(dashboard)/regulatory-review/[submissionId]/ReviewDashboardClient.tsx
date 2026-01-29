@@ -278,6 +278,7 @@ export default function ReviewDashboardClient({
   const searchParams = useSearchParams();
   const skipNextPageResetRef = useRef(false);
   const hasHydratedRef = useRef(false);
+  const lastQueryRef = useRef<string>('');
 
   // State management
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
@@ -409,6 +410,12 @@ export default function ReviewDashboardClient({
   }, [sectionSlugMap]);
 
   useEffect(() => {
+    const queryString = searchParams.toString();
+    if (hasHydratedRef.current && lastQueryRef.current === queryString) {
+      return;
+    }
+    lastQueryRef.current = queryString;
+
     const params = new URLSearchParams(searchParams);
     const hasParams = params.toString().length > 0;
 
