@@ -21,7 +21,7 @@ CSAP_COPC_SCREENING,document_url,https://csapsociety.bc.ca/wp-content/uploads/CS
 CSAP_COPC_SCREENING,landing_page_url,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,403,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,HTTPError 403
 CSAP_IRON_MANGANESE,document_url,https://csapsociety.bc.ca/wp-content/uploads/Golder-CSAP-Modeling-Iron-Manganese-in-Groundwater-2013.pdf,403,https://csapsociety.bc.ca/wp-content/uploads/Golder-CSAP-Modeling-Iron-Manganese-in-Groundwater-2013.pdf,HTTPError 403
 CSAP_IRON_MANGANESE,landing_page_url,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,403,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,HTTPError 403
-CSAP_NPG,document_url,,,,EMPTY
+CSAP_NPG,document_url,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Numeric-Practice-Guidelines-FINAL-June-2022-v2.xlsx,403,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Numeric-Practice-Guidelines-FINAL-June-2022-v2.xlsx,HTTPError 403
 CSAP_NPG,landing_page_url,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,403,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,HTTPError 403
 CSAP_PCOC,document_url,https://csapsociety.bc.ca/wp-content/uploads/Legacy_Thurber-PCOCGuidanceFinal-Jan2023.pdf,403,https://csapsociety.bc.ca/wp-content/uploads/Legacy_Thurber-PCOCGuidanceFinal-Jan2023.pdf,HTTPError 403
 CSAP_PCOC,landing_page_url,https://csapsociety.bc.ca/for-members/resources/research-technical-studies/,403,https://csapsociety.bc.ca/for-members/resources/research-technical-studies/,HTTPError 403
@@ -31,9 +31,9 @@ CSAP_PHC_PCOC,document_url,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Pet
 CSAP_PHC_PCOC,landing_page_url,https://csapsociety.bc.ca/for-members/resources/research-technical-studies/,403,https://csapsociety.bc.ca/for-members/resources/research-technical-studies/,HTTPError 403
 CSAP_PROFJ,document_url,https://csapsociety.bc.ca/wp-content/uploads/ATT-3_-CSAP-Professional-Judgement-May2nd.pdf,403,https://csapsociety.bc.ca/wp-content/uploads/ATT-3_-CSAP-Professional-Judgement-May2nd.pdf,HTTPError 403
 CSAP_PROFJ,landing_page_url,https://csapsociety.bc.ca/for-members/resources/research-technical-studies/,403,https://csapsociety.bc.ca/for-members/resources/research-technical-studies/,HTTPError 403
-CSAP_RAPG,document_url,,,,EMPTY
+CSAP_RAPG,document_url,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Risk-Assessment-Practice-Guidelines-FINAL-June2022_v2.xlsx,403,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Risk-Assessment-Practice-Guidelines-FINAL-June2022_v2.xlsx,HTTPError 403
 CSAP_RAPG,landing_page_url,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,403,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,HTTPError 403
-CSAP_ROC_BIOASSAY,document_url,,,,EMPTY
+CSAP_ROC_BIOASSAY,document_url,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Technical-Guidance-ROC-bioassay-site-char-July-2013-Final.pdf,403,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Technical-Guidance-ROC-bioassay-site-char-July-2013-Final.pdf,HTTPError 403
 CSAP_ROC_BIOASSAY,landing_page_url,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,403,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,HTTPError 403
 CSAP_SOIL_SAMPLING_DEPTH,document_url,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Technical-Guidance-Soil-sampling-depth_Azimuth-July-2013-Final.pdf,403,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Technical-Guidance-Soil-sampling-depth_Azimuth-July-2013-Final.pdf,HTTPError 403
 CSAP_SOIL_SAMPLING_DEPTH,landing_page_url,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,403,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,HTTPError 403
@@ -43,7 +43,7 @@ CSAP_SOIL_VAPOUR_RELOCATION,document_url,https://csapsociety.bc.ca/wp-content/up
 CSAP_SOIL_VAPOUR_RELOCATION,landing_page_url,https://csapsociety.bc.ca/for-members/resources/research-technical-studies/,403,https://csapsociety.bc.ca/for-members/resources/research-technical-studies/,HTTPError 403
 CSAP_TRENCH_VAPOUR,document_url,https://csapsociety.bc.ca/wp-content/uploads/Trench-Vapour-Attenuation-Factors-Dec-2012.pdf,403,https://csapsociety.bc.ca/wp-content/uploads/Trench-Vapour-Attenuation-Factors-Dec-2012.pdf,HTTPError 403
 CSAP_TRENCH_VAPOUR,landing_page_url,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,403,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,HTTPError 403
-CSAP_UNCERTAINTY_FACTORS,document_url,,,,EMPTY
+CSAP_UNCERTAINTY_FACTORS,document_url,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Technical-Guidance-UFs-in-TRVs-July-2013-Final.pdf,403,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Technical-Guidance-UFs-in-TRVs-July-2013-Final.pdf,HTTPError 403
 CSAP_UNCERTAINTY_FACTORS,landing_page_url,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,403,https://csapsociety.bc.ca/for-members/resources/guidelines/practice/,HTTPError 403
 CSAP_VAPOUR_GUIDANCE_UPDATE,document_url,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Vapour-Guidance-Update-Sept-10-2022.pdf,403,https://csapsociety.bc.ca/wp-content/uploads/CSAP-Vapour-Guidance-Update-Sept-10-2022.pdf,HTTPError 403
 CSAP_VAPOUR_GUIDANCE_UPDATE,landing_page_url,https://csapsociety.bc.ca/for-members/resources/research-technical-studies/,403,https://csapsociety.bc.ca/for-members/resources/research-technical-studies/,HTTPError 403
@@ -62,7 +62,7 @@ EMA_2003_C53,landing_page_url,https://www.bclaws.gov.bc.ca/civix/document/id/com
 ENV_WEB_CONTENT,document_url,https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation,,https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation,ERROR RemoteDisconnected
 ENV_WEB_CONTENT,landing_page_url,https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation,,https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation,ERROR RemoteDisconnected
 EXT_APIRI_TABLES,document_url,https://atlanticrbca.com/wp-content/uploads/2022/07/ARBCA_V4_Tier_I_RBSL_and_Tier_II_PSSL_Tables_July_21_2021.pdf,200,https://atlanticrbca.com/wp-content/uploads/2022/07/ARBCA_V4_Tier_I_RBSL_and_Tier_II_PSSL_Tables_July_21_2021.pdf,
-EXT_APIRI_TABLES,landing_page_url,https://atlanticrbca.com/reference-documentation/,500,https://atlanticrbca.com/reference-documentation/,HTTPError 500
+EXT_APIRI_TABLES,landing_page_url,https://atlanticrbca.com/reference-documentation/,,https://atlanticrbca.com/reference-documentation/,ERROR TimeoutError
 P1,document_url,https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_1_final_jan_2021.pdf,,https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_1_final_jan_2021.pdf,ERROR RemoteDisconnected
 P1,landing_page_url,https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols,,https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols,ERROR RemoteDisconnected
 P2,document_url,https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_2_final_nov_2017.pdf,,https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_2_final_nov_2017.pdf,ERROR RemoteDisconnected
