@@ -1,320 +1,382 @@
 {
-  "EMA": {
-    "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03053_00",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03053_00",
-    "citation_label": "EMA"
-  },
-  "EMA_2003_C53": {
-    "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03053_00",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03053_00",
-    "citation_label": "EMA"
-  },
-  "CSR_375_96": {
-    "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "citation_label": "CSR"
-  },
-  "CSR_SCH1": {
-    "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule1",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "citation_label": "CSR Sch 1"
-  },
-  "CSR_SCH8": {
-    "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule8",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "citation_label": "CSR Sch 8"
-  },
-  "CSR_SCH8.1": {
-    "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule8.1",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "citation_label": "CSR Sch 8.1"
-  },
   "BC_CSR_SCHEDULE_2": {
+    "citation_label": "CSR Sch 2",
     "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule2",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "citation_label": "CSR Sch 2"
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01"
   },
   "BC_CSR_SCHEDULE_2.1": {
+    "citation_label": "CSR Sch 2.1",
     "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule2.1",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "citation_label": "CSR Sch 2.1"
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01"
   },
   "BC_CSR_SCHEDULE_3": {
+    "citation_label": "CSR Sch 3",
     "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule3",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "citation_label": "CSR Sch 3"
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01"
   },
   "BC_CSR_SCHEDULE_3.1": {
+    "citation_label": "CSR Sch 3.1",
     "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule3.1",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "citation_label": "CSR Sch 3.1"
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01"
   },
   "BC_CSR_SCHEDULE_3.1_PART2": {
+    "citation_label": "CSR Sch 3.1",
     "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule3.1",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "citation_label": "CSR Sch 3.1"
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01"
   },
   "BC_CSR_SCHEDULE_3.2": {
+    "citation_label": "CSR Sch 3.2",
     "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule3.2",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "citation_label": "CSR Sch 3.2"
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01"
   },
   "BC_CSR_SCHEDULE_3.3": {
+    "citation_label": "CSR Sch 3.3",
     "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule3.3",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "citation_label": "CSR Sch 3.3"
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01"
   },
   "BC_CSR_SCHEDULE_3.4": {
+    "citation_label": "CSR Sch 3.4",
     "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule3.4",
-    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
-    "citation_label": "CSR Sch 3.4"
-  },
-  "ENV_WEB_CONTENT": {
-    "document_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation",
-    "citation_label": "BC ENV Site Remediation"
-  },
-  "EXT_APIRI_TABLES": {
-    "document_url": "https://atlanticrbca.com/wp-content/uploads/2022/07/ARBCA_V4_Tier_I_RBSL_and_Tier_II_PSSL_Tables_July_21_2021.pdf",
-    "landing_page_url": "https://atlanticrbca.com/reference-documentation/",
-    "citation_label": "Atlantic RBCA v4"
-  },
-  "PROTOCOL_1": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_1_final_jan_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 1"
-  },
-  "PROTOCOL_2": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_2_final_nov_2017.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 2"
-  },
-  "PROTOCOL_3": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_3_feb_2002.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 3"
-  },
-  "PROTOCOL_4": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_4_final_jan_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 4"
-  },
-  "PROTOCOL_6": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/p6__jan_2021_revisions_final_signed.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 6"
-  },
-  "PROTOCOL_8": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_8_feb_2002.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 8"
-  },
-  "PROTOCOL_9": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_9_final_jan_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 9"
-  },
-  "PROTOCOL_10": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_10_nov_2005.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 10"
-  },
-  "PROTOCOL_11": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_11_final_jan_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 11"
-  },
-  "PROTOCOL_12": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_12_final_jan_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 12"
-  },
-  "PROTOCOL_13": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_13_with_figures.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 13"
-  },
-  "PROTOCOL_14": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_14_nov_2008.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 14"
-  },
-  "PROTOCOL_15": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_15_apr_2013.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 15"
-  },
-  "PROTOCOL_16": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_16_final_jan_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 16"
-  },
-  "PROTOCOL_17": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_17_final_jan_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 17"
-  },
-  "PROTOCOL_18": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_18_final_nov_2017.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 18"
-  },
-  "PROTOCOL_19": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_19_feb_2024_final.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 19"
-  },
-  "PROTOCOL_20": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_20_final_nov_2017.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 20"
-  },
-  "PROTOCOL_21": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_21_final_nov_2017.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 21"
-  },
-  "PROTOCOL_22": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_22_final_nov_2017.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 22"
-  },
-  "PROTOCOL_27": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_27_final_nov_2017.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 27"
-  },
-  "PROTOCOL_28": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_28_final_jan_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 28"
-  },
-  "P1": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_1_final_jan_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 1"
-  },
-  "P2": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_2_final_nov_2017.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 2"
-  },
-  "P3": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_3_feb_2002.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 3"
-  },
-  "P4": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_4_final_jan_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 4"
-  },
-  "P6": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/p6__jan_2021_revisions_final_signed.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 6"
-  },
-  "P9": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_9_final_jan_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols",
-    "citation_label": "Protocol 9"
-  },
-  "TG01": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg01_aug_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources",
-    "citation_label": "TG 1"
-  },
-  "TG02": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg02_aug_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources",
-    "citation_label": "TG 2"
-  },
-  "TG03": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg03.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources",
-    "citation_label": "TG 3"
-  },
-  "TG04": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg04_dec_2017.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources",
-    "citation_label": "TG 4"
-  },
-  "TG05": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg05_jan_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources",
-    "citation_label": "TG 5"
-  },
-  "TG06": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg06_jul_2020.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources",
-    "citation_label": "TG 6"
-  },
-  "TG11": {
-    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg11_aug_2021.pdf",
-    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources",
-    "citation_label": "TG 11"
-  },
-  "CSAP_NPG": {
-    "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
-    "citation_label": "CSAP NPG"
-  },
-  "CSAP_RAPG": {
-    "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
-    "citation_label": "CSAP RAPG"
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01"
   },
   "CSAP_BIOACCUMULATION": {
-    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP-Bioaccumulation-Report-August-2015.pdf",
+    "citation_label": "CSAP Bioaccumulation",
+    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP-Bioaccummulation-Report..pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/research-technical-studies/",
-    "citation_label": "CSAP Bioaccumulation"
+    "notes": "Found direct PDF. URL contains double dot but is functional.",
+    "status": "FOUND",
+    "title": "CSAP Bioaccummulation Report (August 2015)"
   },
   "CSAP_COPC_SCREENING": {
-    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP%20Technical%20Review%20%2310%20-%20COPC%20Screening%20-%20%202012FEB17.pdf",
-    "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/research-technical-studies/",
-    "citation_label": "CSAP COPC"
+    "citation_label": "CSAP COPC",
+    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP-Technical-Review-10-COPC-Screening-2012FEB17.pdf",
+    "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
+    "notes": "Identified as 'CSAP Technical Review #10' which matches the 2012 request.",
+    "status": "FOUND",
+    "title": "CSAP Technical Guidance for Risk Assessment COPC Screening (February 2012)"
+  },
+  "CSAP_IRON_MANGANESE": {
+    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/Golder-CSAP-Modeling-Iron-Manganese-in-Groundwater-2013.pdf",
+    "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
+    "notes": "Found under Practice Guidelines resources.",
+    "status": "FOUND",
+    "title": "Modelling Study of Iron and Manganese in Groundwater (October 2013)"
+  },
+  "CSAP_NPG": {
+    "citation_label": "CSAP NPG",
+    "document_url": null,
+    "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
+    "notes": "Documents appear as individual 'Sheets' (3-7) on the practice guidelines page; no single compiled PDF was found.",
+    "status": "NOT_FOUND",
+    "title": "CSAP Numerical Practice Guidelines"
   },
   "CSAP_PCOC": {
+    "citation_label": "CSAP PCOC",
     "document_url": "https://csapsociety.bc.ca/wp-content/uploads/Legacy_Thurber-PCOCGuidanceFinal-Jan2023.pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/research-technical-studies/",
-    "citation_label": "CSAP PCOC"
+    "notes": "Matches the 2023 request.",
+    "status": "FOUND",
+    "title": "CSAP PCOC List (January 2023)"
   },
   "CSAP_PFAS": {
+    "citation_label": "CSAP PFAS",
     "document_url": "https://csapsociety.bc.ca/wp-content/uploads/Final-PFAS-Guidance-Document-dated-2019-05-28.pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/research-technical-studies/",
-    "citation_label": "CSAP PFAS"
+    "notes": "Found May 2019 version. A January 2020 version is listed in page summaries but no direct PDF was found.",
+    "status": "FOUND",
+    "title": "Guidance for the Assessment and Remediation of Per- and Polyfluoroalkyl Substances in British Columbia (May 2019)"
   },
   "CSAP_PHC_PCOC": {
-    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP-Petroleum-Hydrocarbon-PCOC-Review-Aug-2020.pdf",
+    "citation_label": "CSAP PHC PCOC",
+    "document_url": "http://csapsociety.bc.ca/wp-content/uploads/CSAP-Petroleum-Hydrocarbon-PCOC-Review-v2-Final-2020-06-10.pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/research-technical-studies/",
-    "citation_label": "CSAP PHC PCOC"
+    "notes": "Found June 2020 version (v2 Final). Summary mentioned August 2020.",
+    "status": "FOUND",
+    "title": "CSAP Petroleum Hydrocarbon PCOC Review (June 2020)"
   },
   "CSAP_PROFJ": {
+    "citation_label": "CSAP Professional Judgement",
     "document_url": "https://csapsociety.bc.ca/wp-content/uploads/ATT-3_-CSAP-Professional-Judgement-May2nd.pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/research-technical-studies/",
-    "citation_label": "CSAP Professional Judgement"
+    "notes": "Matches title.",
+    "status": "FOUND",
+    "title": "Outline for the Use of Professional Judgement as a CSAP"
+  },
+  "CSAP_RAPG": {
+    "citation_label": "CSAP RAPG",
+    "document_url": null,
+    "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
+    "notes": "Listed as 'Sheet 1' on the practice guidelines page; no direct PDF found.",
+    "status": "NOT_FOUND",
+    "title": "CSAP Risk Assessment Practice Guidelines"
+  },
+  "CSAP_ROC_BIOASSAY": {
+    "document_url": null,
+    "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
+    "notes": "Listed as a text item under Practice Guidelines, possibly part of a 'Detailed Ecological Risk Assessment Policy Summary' which also lacks a direct PDF link.",
+    "status": "NOT_FOUND",
+    "title": "ROC, Bioassay & Site Characterization"
   },
   "CSAP_SOIL_SAMPLING_DEPTH": {
+    "citation_label": "CSAP Soil Sampling Depth",
     "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP-Technical-Guidance-Soil-sampling-depth_Azimuth-July-2013-Final.pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
-    "citation_label": "CSAP Soil Sampling Depth"
-  },
-  "CSAP_SOIL_VAPOUR_RELOCATION": {
-    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/2024-Review-of-Soil-Vapour-Issues-for-Soil-Relocation-in-British-Columbia-May-2024.pdf",
-    "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/research-technical-studies/",
-    "citation_label": "CSAP Soil Vapour Relocation"
+    "notes": "Matches request.",
+    "status": "FOUND",
+    "title": "CSAP Technical Guidance for Soil Sampling Depth to Characterize Ecological Exposure (July 2013)"
   },
   "CSAP_SOIL_VAPOUR_2009": {
-    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/Soil-Vapour-Advice-and-Practice-Guidelines-2009.pdf",
+    "citation_label": "CSAP Soil Vapour 2009",
+    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/Soil-Vapour-Panel-Stage-1-FINAL-Oct-09.pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/research-technical-studies/",
-    "citation_label": "CSAP Soil Vapour 2009"
+    "notes": "Matches request.",
+    "status": "FOUND",
+    "title": "Soil Vapour Advice and Practice Guidelines Development Panel - Stage 1 (October 2009)"
+  },
+  "CSAP_SOIL_VAPOUR_RELOCATION": {
+    "citation_label": "CSAP Soil Vapour Relocation",
+    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/MEMS-Review-of-Soil-Vapour-Issues-Report-May-2024.pdf",
+    "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/research-technical-studies/",
+    "notes": "Found May 2024 version; user requested 2023 (likely the year work started or draft).",
+    "status": "FOUND",
+    "title": "Review of Soil Vapour Issues for Soil Relocation in British Columbia (May 2024)"
   },
   "CSAP_TRENCH_VAPOUR": {
+    "citation_label": "CSAP Trench Vapour",
     "document_url": "https://csapsociety.bc.ca/wp-content/uploads/Trench-Vapour-Attenuation-Factors-Dec-2012.pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
-    "citation_label": "CSAP Trench Vapour"
+    "notes": "Matches request.",
+    "status": "FOUND",
+    "title": "Soil Vapour Attenuation Factors for Trench Worker Exposure (December 2012)"
+  },
+  "CSAP_UNCERTAINTY_FACTORS": {
+    "document_url": null,
+    "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
+    "notes": "Listed as a text item under Practice Guidelines; likely part of a missing Policy Summary document.",
+    "status": "NOT_FOUND",
+    "title": "UFs in TRVs"
   },
   "CSAP_VAPOUR_GUIDANCE_UPDATE": {
+    "citation_label": "CSAP Vapour 2022",
     "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP-Vapour-Guidance-Update-Sept-10-2022.pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/research-technical-studies/",
-    "citation_label": "CSAP Vapour 2022"
+    "notes": "Matches request.",
+    "status": "FOUND",
+    "title": "CSAP Guidance for Assessment of Soil Vapour and Ambient Air ? Update (September 2022)"
+  },
+  "CSR_375_96": {
+    "citation_label": "CSR",
+    "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01",
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01"
+  },
+  "CSR_SCH1": {
+    "citation_label": "CSR Sch 1",
+    "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule1",
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01"
+  },
+  "CSR_SCH8": {
+    "citation_label": "CSR Sch 8",
+    "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule8",
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01"
+  },
+  "CSR_SCH8.1": {
+    "citation_label": "CSR Sch 8.1",
+    "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01#Schedule8.1",
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/375_96_01"
+  },
+  "EMA": {
+    "citation_label": "EMA",
+    "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03053_00",
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03053_00"
+  },
+  "EMA_2003_C53": {
+    "citation_label": "EMA",
+    "document_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03053_00",
+    "landing_page_url": "https://www.bclaws.gov.bc.ca/civix/document/id/complete/statreg/03053_00"
+  },
+  "ENV_WEB_CONTENT": {
+    "citation_label": "BC ENV Site Remediation",
+    "document_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation"
+  },
+  "EXT_APIRI_TABLES": {
+    "citation_label": "Atlantic RBCA v4",
+    "document_url": "https://atlanticrbca.com/wp-content/uploads/2022/07/ARBCA_V4_Tier_I_RBSL_and_Tier_II_PSSL_Tables_July_21_2021.pdf",
+    "landing_page_url": "https://atlanticrbca.com/reference-documentation/"
+  },
+  "P1": {
+    "citation_label": "Protocol 1",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_1_final_jan_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "P2": {
+    "citation_label": "Protocol 2",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_2_final_nov_2017.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "P3": {
+    "citation_label": "Protocol 3",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_3_feb_2002.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "P4": {
+    "citation_label": "Protocol 4",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_4_final_jan_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "P6": {
+    "citation_label": "Protocol 6",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/p6__jan_2021_revisions_final_signed.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "P9": {
+    "citation_label": "Protocol 9",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_9_final_jan_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_1": {
+    "citation_label": "Protocol 1",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_1_final_jan_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_10": {
+    "citation_label": "Protocol 10",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_10_nov_2005.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_11": {
+    "citation_label": "Protocol 11",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_11_final_jan_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_12": {
+    "citation_label": "Protocol 12",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_12_final_jan_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_13": {
+    "citation_label": "Protocol 13",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_13_with_figures.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_14": {
+    "citation_label": "Protocol 14",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_14_nov_2008.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_15": {
+    "citation_label": "Protocol 15",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_15_apr_2013.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_16": {
+    "citation_label": "Protocol 16",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_16_final_jan_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_17": {
+    "citation_label": "Protocol 17",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_17_final_jan_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_18": {
+    "citation_label": "Protocol 18",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_18_final_nov_2017.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_19": {
+    "citation_label": "Protocol 19",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_19_feb_2024_final.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_2": {
+    "citation_label": "Protocol 2",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_2_final_nov_2017.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_20": {
+    "citation_label": "Protocol 20",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_20_final_nov_2017.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_21": {
+    "citation_label": "Protocol 21",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_21_final_nov_2017.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_22": {
+    "citation_label": "Protocol 22",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_22_final_nov_2017.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_27": {
+    "citation_label": "Protocol 27",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_27_final_nov_2017.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_28": {
+    "citation_label": "Protocol 28",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_28_final_jan_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_3": {
+    "citation_label": "Protocol 3",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_3_feb_2002.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_4": {
+    "citation_label": "Protocol 4",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_4_final_jan_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_6": {
+    "citation_label": "Protocol 6",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/p6__jan_2021_revisions_final_signed.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_8": {
+    "citation_label": "Protocol 8",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_8_feb_2002.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "PROTOCOL_9": {
+    "citation_label": "Protocol 9",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/protocol_9_final_jan_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/legislation-and-protocols"
+  },
+  "TG01": {
+    "citation_label": "TG 1",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg01_aug_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources"
+  },
+  "TG02": {
+    "citation_label": "TG 2",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg02_aug_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources"
+  },
+  "TG03": {
+    "citation_label": "TG 3",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg03.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources"
+  },
+  "TG04": {
+    "citation_label": "TG 4",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg04_dec_2017.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources"
+  },
+  "TG05": {
+    "citation_label": "TG 5",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg05_jan_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources"
+  },
+  "TG06": {
+    "citation_label": "TG 6",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg06_jul_2020.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources"
+  },
+  "TG11": {
+    "citation_label": "TG 11",
+    "document_url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/technical-guidance/tg11_aug_2021.pdf",
+    "landing_page_url": "https://www2.gov.bc.ca/gov/content/environment/air-land-water/site-remediation/guidance-resources"
   }
 }
