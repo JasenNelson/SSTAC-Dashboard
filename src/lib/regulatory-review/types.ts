@@ -68,6 +68,16 @@ export enum ReviewStatus {
 }
 
 /**
+ * Reviewer evidence sufficiency status
+ */
+export enum EvidenceSufficiency {
+  SUFFICIENT = 'SUFFICIENT',
+  INSUFFICIENT = 'INSUFFICIENT',
+  NEEDS_MORE_EVIDENCE = 'NEEDS_MORE_EVIDENCE',
+  UNREVIEWED = 'UNREVIEWED',
+}
+
+/**
  * Evidence types from the regulatory knowledge base
  * Comprehensive list of 33 evidence specification types from data analysis
  */
@@ -224,6 +234,16 @@ export interface Judgment {
   judgmentNotes?: string;
   /** Required explanation if overriding AI result */
   overrideReason?: string;
+
+  // Evidence sufficiency + memo curation
+  /** Reviewer evidence sufficiency label */
+  evidenceSufficiency?: EvidenceSufficiency;
+  /** Include this item in Final Memo */
+  includeInFinal?: boolean;
+  /** Final Memo summary text (1-3 paragraphs) */
+  finalMemoSummary?: string;
+  /** Follow-up needed to request more engine evaluation */
+  followUpNeeded?: boolean;
 
   // Routing
   /** Role/person item was routed to */
@@ -405,6 +425,10 @@ export type CreateJudgment = Pick<
   | 'overrideReason'
   | 'routedTo'
   | 'routingReason'
+  | 'evidenceSufficiency'
+  | 'includeInFinal'
+  | 'finalMemoSummary'
+  | 'followUpNeeded'
 >;
 
 /**
@@ -419,6 +443,10 @@ export type UpdateJudgment = Partial<
     | 'overrideReason'
     | 'routedTo'
     | 'routingReason'
+    | 'evidenceSufficiency'
+    | 'includeInFinal'
+    | 'finalMemoSummary'
+    | 'followUpNeeded'
     | 'reviewStatus'
   >
 >;
