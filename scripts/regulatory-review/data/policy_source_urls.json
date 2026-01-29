@@ -43,7 +43,7 @@
     "citation_label": "CSAP Bioaccumulation",
     "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP-Bioaccummulation-Report..pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/research-technical-studies/",
-    "notes": "Found direct PDF. URL contains double dot but is functional.",
+    "notes": "Found direct PDF. URL contains double dot but is functional. Automated URL check returned 403 (likely blocks non-browser requests); needs manual confirmation.",
     "status": "FOUND",
     "title": "CSAP Bioaccummulation Report (August 2015)"
   },
@@ -88,9 +88,9 @@
   },
   "CSAP_PHC_PCOC": {
     "citation_label": "CSAP PHC PCOC",
-    "document_url": "http://csapsociety.bc.ca/wp-content/uploads/CSAP-Petroleum-Hydrocarbon-PCOC-Review-v2-Final-2020-06-10.pdf",
+    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP-Petroleum-Hydrocarbon-PCOC-Review-v2-Final-2020-06-10.pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/research-technical-studies/",
-    "notes": "Found June 2020 version (v2 Final). Summary mentioned August 2020.",
+    "notes": "Found June 2020 version (v2 Final). Summary mentioned August 2020. Automated URL check returned 403 (likely blocks non-browser requests); needs manual confirmation.",
     "status": "FOUND",
     "title": "CSAP Petroleum Hydrocarbon PCOC Review (June 2020)"
   },
