@@ -166,6 +166,10 @@ export async function GET(
             humanConfidence: assessment.judgment.human_confidence,
             judgmentNotes: assessment.judgment.judgment_notes,
             overrideReason: assessment.judgment.override_reason,
+            evidenceSufficiency: assessment.judgment.evidence_sufficiency,
+            includeInFinal: assessment.judgment.include_in_final === 1,
+            finalMemoSummary: assessment.judgment.final_memo_summary,
+            followUpNeeded: assessment.judgment.follow_up_needed === 1,
             routedTo: assessment.judgment.routed_to,
             routingReason: assessment.judgment.routing_reason,
             reviewerId: assessment.judgment.reviewer_id,
@@ -197,6 +201,10 @@ export async function GET(
  *   humanConfidence?: "HIGH" | "MEDIUM" | "LOW" | "NONE"
  *   judgmentNotes?: string
  *   overrideReason?: string (required if humanResult is OVERRIDE_*)
+ *   evidenceSufficiency?: "SUFFICIENT" | "INSUFFICIENT" | "NEEDS_MORE_EVIDENCE" | "UNREVIEWED"
+ *   includeInFinal?: boolean
+ *   finalMemoSummary?: string
+ *   followUpNeeded?: boolean
  *   routedTo?: string
  *   routingReason?: string (required if routedTo is set)
  *   reviewStatus?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "DEFERRED"
@@ -289,6 +297,10 @@ export async function PATCH(
       human_confidence: judgmentData.humanConfidence,
       judgment_notes: judgmentData.judgmentNotes,
       override_reason: judgmentData.overrideReason,
+      evidence_sufficiency: judgmentData.evidenceSufficiency,
+      include_in_final: judgmentData.includeInFinal,
+      final_memo_summary: judgmentData.finalMemoSummary,
+      follow_up_needed: judgmentData.followUpNeeded,
       routed_to: judgmentData.routedTo,
       routing_reason: judgmentData.routingReason,
       review_status: judgmentData.reviewStatus,
@@ -330,6 +342,10 @@ export async function PATCH(
         humanConfidence: updatedJudgment.human_confidence,
         judgmentNotes: updatedJudgment.judgment_notes,
         overrideReason: updatedJudgment.override_reason,
+        evidenceSufficiency: updatedJudgment.evidence_sufficiency,
+        includeInFinal: updatedJudgment.include_in_final === 1,
+        finalMemoSummary: updatedJudgment.final_memo_summary,
+        followUpNeeded: updatedJudgment.follow_up_needed === 1,
         routedTo: updatedJudgment.routed_to,
         routingReason: updatedJudgment.routing_reason,
         reviewerId: updatedJudgment.reviewer_id,

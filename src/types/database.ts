@@ -295,6 +295,10 @@ export interface RegulatoryJudgment {
   human_confidence: number; // 0-1
   judgment_notes: string;
   override_reason: string | null;
+  evidence_sufficiency?: 'SUFFICIENT' | 'INSUFFICIENT' | 'NEEDS_MORE_EVIDENCE' | 'UNREVIEWED';
+  include_in_final?: boolean;
+  final_memo_summary?: string | null;
+  follow_up_needed?: boolean;
   routed_to: string | null;
   routing_reason: string | null;
   reviewer_id: string;

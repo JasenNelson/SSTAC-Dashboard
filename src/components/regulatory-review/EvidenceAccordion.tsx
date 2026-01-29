@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ExternalLink, Flag } from 'lucide-react';
 import ConfidenceMeter, { ConfidenceLevel } from './ConfidenceMeter';
 
 export interface EvidenceItem {
@@ -19,18 +19,28 @@ export interface EvidenceItem {
 export interface EvidenceAccordionProps {
   evidenceItems: EvidenceItem[];
   className?: string;
+  onOpenSource?: (item: EvidenceItem) => void;
+  onFlagEvidence?: (item: EvidenceItem) => void;
 }
 
 interface AccordionItemProps {
   item: EvidenceItem;
   isOpen: boolean;
   onToggle: () => void;
+  onOpenSource?: (item: EvidenceItem) => void;
+  onFlagEvidence?: (item: EvidenceItem) => void;
 }
 
-function AccordionItem({ item, isOpen, onToggle }: AccordionItemProps) {
+function AccordionItem({ item, isOpen, onToggle, onOpenSource, onFlagEvidence }: AccordionItemProps) {
   // Build the reference string (location + page if available)
-  const referenceInfo = item.pageReference
-    ? `${item.location} (${item.pageReference})`
+  const pageLabel = item.pageReference
+    ? item.pageReference.toString()
+    : '';
+  const pageReference = pageLabel
+    ? (pageLabel.toLowerCase().includes('p') ? pageLabel : `p. ${pageLabel}`)
+    : '';
+  const referenceInfo = pageReference
+    ? `${item.location} (${pageReference})`
     : item.location;
 
   // Generate a brief summary for the collapsed header
@@ -41,12 +51,18 @@ function AccordionItem({ item, isOpen, onToggle }: AccordionItemProps) {
       ? item.excerpt.slice(0, 80).trim() + '...'
       : item.excerpt;
 
+  const methodLabel = item.evidenceType || 'Unknown method';
+  const canOpenSource = Boolean(onOpenSource);
+  const canFlagEvidence = Boolean(onFlagEvidence);
+
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       {/* Header - High-level summary with reference info */}
       <button
         onClick={onToggle}
-        className="w-full flex flex-col gap-2 p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
+        className="w-full flex flex-col gap-2 p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500"
+        type="button"
+        aria-expanded={isOpen}
       >
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -69,8 +85,10 @@ function AccordionItem({ item, isOpen, onToggle }: AccordionItemProps) {
           </div>
         </div>
         {/* Reference info row */}
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          {referenceInfo}
+        <div className="text-xs text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-2">
+          <span>{referenceInfo}</span>
+          <span className="text-gray-300 dark:text-gray-600">|</span>
+          <span>Method: {methodLabel}</span>
         </div>
         {/* Brief summary - only shown when collapsed */}
         {!isOpen && (
@@ -119,6 +137,14 @@ function AccordionItem({ item, isOpen, onToggle }: AccordionItemProps) {
             <ConfidenceMeter confidence={item.confidence} showLabel={true} />
           </div>
 
+          {/* Method */}
+          <div className="mb-4">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+              Extraction Method
+            </h4>
+            <p className="text-sm text-gray-700 dark:text-gray-300">{methodLabel}</p>
+          </div>
+
           {/* Match Reasons */}
           {item.matchReasons.length > 0 && (
             <div>
@@ -137,6 +163,28 @@ function AccordionItem({ item, isOpen, onToggle }: AccordionItemProps) {
               </div>
             </div>
           )}
+
+          {/* Actions */}
+          {(canOpenSource || canFlagEvidence) && (
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onOpenSource?.(item)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Open Source ({referenceInfo})
+              </button>
+              <button
+                type="button"
+                onClick={() => onFlagEvidence?.(item)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+              >
+                <Flag className="w-3.5 h-3.5" />
+                Flag as Weak/Irrelevant
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -146,6 +194,8 @@ function AccordionItem({ item, isOpen, onToggle }: AccordionItemProps) {
 export default function EvidenceAccordion({
   evidenceItems,
   className = '',
+  onOpenSource,
+  onFlagEvidence,
 }: EvidenceAccordionProps) {
   const [openItems, setOpenItems] = useState<Set<string>>(new Set());
 
@@ -209,6 +259,8 @@ export default function EvidenceAccordion({
             item={item}
             isOpen={openItems.has(item.specId)}
             onToggle={() => toggleItem(item.specId)}
+            onOpenSource={onOpenSource}
+            onFlagEvidence={onFlagEvidence}
           />
         ))}
       </div>

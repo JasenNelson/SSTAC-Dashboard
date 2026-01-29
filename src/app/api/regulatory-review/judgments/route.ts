@@ -27,6 +27,14 @@ const bulkJudgmentItemSchema = z
     assessmentId: z.number().int().positive('Assessment ID must be a positive integer'),
     humanResult: humanResultSchema.optional(),
     humanConfidence: confidenceLevelSchema.optional(),
+    evidenceSufficiency: z.enum(['SUFFICIENT', 'INSUFFICIENT', 'NEEDS_MORE_EVIDENCE', 'UNREVIEWED']).optional(),
+    includeInFinal: z.boolean().optional(),
+    finalMemoSummary: z
+      .string()
+      .max(5000, 'Final memo summary must be 5000 characters or less')
+      .trim()
+      .optional(),
+    followUpNeeded: z.boolean().optional(),
     judgmentNotes: z
       .string()
       .max(5000, 'Judgment notes must be 5000 characters or less')
@@ -231,6 +239,10 @@ export async function POST(request: NextRequest) {
         const updatedJudgment = updateJudgment(existingJudgment.id, {
           human_result: item.humanResult,
           human_confidence: item.humanConfidence,
+          evidence_sufficiency: item.evidenceSufficiency,
+          include_in_final: item.includeInFinal,
+          final_memo_summary: item.finalMemoSummary,
+          follow_up_needed: item.followUpNeeded,
           judgment_notes: item.judgmentNotes,
           override_reason: item.overrideReason,
           review_status: item.humanResult ? 'COMPLETED' : undefined,
