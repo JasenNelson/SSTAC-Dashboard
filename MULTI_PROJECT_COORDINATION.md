@@ -1,7 +1,8 @@
 # Multi-Project Coordination: SSTAC Dashboard + Regulatory Review + Database Cleanup
 
-**Version:** 1.0
+**Version:** 1.3
 **Created:** January 25, 2026
+**Last Updated:** January 27, 2026 (v1.3 - UI/UX corrections complete, ready for approval)
 **Purpose:** Unified session continuity for three concurrent development initiatives
 
 ---
@@ -12,119 +13,180 @@ Three development projects are running concurrently with shared database and fro
 
 | Project | Status | Phase | Next Action |
 |---------|--------|-------|-------------|
-| **SSTAC Dashboard** | Phase 2 COMPLETE | Security Hardening | Verify Vercel, begin Phase 3 |
-| **Regulatory-Review** | Tier 2 COMPLETE | Frontend Sync Done | Human review of AI statuses |
-| **Database Cleanup** | Planning | Phase 1 Design | Define scope for deletion |
+| **SSTAC Dashboard** | ✅ 7 PHASES COMPLETE + ✅ UI/UX CORRECTIONS | Regulatory Review Redesign | Get user approval, implement Phase 1 |
+| **Regulatory-Review** | ⏳ Tier 2 Rerun 78% COMPLETE | 467/598 batches | Complete remaining 131 batches (Sessions A/B/C) |
+| **Database Cleanup** | ⏸️ ON HOLD | Crash Recovery | Resume after Tier 2 rerun complete |
 
 ---
 
 ## Task 1: SSTAC Dashboard Upgrading
 
-### Status: Phase 2 COMPLETE ✅
-- **Grade:** A (90/100)
+### Status: ✅ ALL 7 PHASES COMPLETE
+- **Grade:** A+ (95+/100) - TARGET ACHIEVED
 - **Branch:** `docs/archive-and-lint-fix`
-- **Tests:** 246/246 passing (0 failures)
+- **Tests:** 536/536 passing (up from 246)
 - **CI/CD:** All gates passing (Lint, TypeScript, Tests, Build)
+- **Latest Commit:** `afc0eff` - Poll-results type safety improvements
 - **Checkpoint:** `F:\sstac-dashboard\.claude\SESSION_CHECKPOINT_2026-01-25-PHASE2-COMPLETE.md`
 
-### Phase 2 Accomplishments
-✅ Task 2.1: Fix 3 critical vulnerabilities
-- Removed localStorage admin bypass
-- Added auth to `/api/announcements`
-- Updated tar package (0 HIGH/CRITICAL vulnerabilities now)
+### Completed Phases Summary
+✅ **Phase 0:** Infrastructure Setup (GitHub Project, Issues, Documentation)
+✅ **Phase 1:** Architecture & Type Safety (+1 point to 88/100)
+✅ **Phase 2:** Security Hardening (+2 points to 90/100)
+✅ **Phase 3:** Comprehensive Testing (+3 points to 93/100)
+✅ **Phase 4:** Performance Optimization
+✅ **Phase 5:** Documentation & Examples
+✅ **Phase 6:** Accessibility & UX Polish
+✅ **Phase 7:** Final Review & Deployment
 
-✅ Task 2.2: Add 6 security headers
-- Content-Security-Policy
-- X-Content-Type-Options, X-Frame-Options
-- X-XSS-Protection, Referrer-Policy
-- Permissions-Policy
+### Recent Work (January 27, 2026)
+- Poll-results page: Broken during refactoring, reverted to previous version
+- Type safety improvements: Committed (afc0eff) - replaced `any` with proper types
+- Working tree: Clean, all changes committed and pushed
+- Deployment: Page restored and working in production
+- **NEW:** Regulatory-review UI/UX redesign proposal created
 
-✅ Task 2.3: File upload validation
-- Type: PDF/DOCX/TXT only
-- Size: 10MB max
-- Extension validation
+### UI/UX Improvement Initiative (NEW - January 27, 2026)
 
-✅ Task 2.4: Redis-based rate limiting
-- Production: Upstash Redis
-- Development: In-memory fallback
-- Multi-instance support
+**Problem Identified:**
+- Current regulatory-review interface too technical for executive presentations
+- Database-style layout overwhelming for non-technical users
+- Left panel uses confusing acronyms (STG1PSI, STG2PSIDSI, RAPG)
+- Dense table view efficient for developers but not demo-friendly
 
-✅ Task 2.5: CEW user ID cryptography
-- Format: `crypto.randomBytes(16).toString('hex')`
-- Unguessable timestamp-proof IDs
+**Solution Designed:**
+- **Proposal Document:** `F:\sstac-dashboard\docs\REGULATORY_REVIEW_UX_PROPOSAL.md` (5,700+ words)
+- **Visual Mockups:** `F:\sstac-dashboard\docs\REGULATORY_REVIEW_MOCKUPS.md` (2,500+ words)
 
-### Next Steps: Phase 3 (Comprehensive Testing)
-1. Verify Vercel deployment is stable
-2. Monitor security headers in production
-3. Check rate limiting metrics
-4. Expand test coverage (150+ tests)
-5. Add integration tests
+**Key Features:**
+1. **Pyramid Topic Hierarchy** - Replace technical sheet codes with workflow stages:
+   - Stage 1: Preliminary Investigation (not "STG1PSI")
+   - Stage 2: Detailed Investigation (not "STG2PSIDSI")
+   - Stage 3: Risk Assessment (not "RAPG")
+   - Stage 4: Remediation Planning (not "REMPLAN")
 
-**Blocker:** None - awaiting Vercel deployment verification
+2. **Two-Mode Interface:**
+   - Executive Summary View: Card-based, visual, generous spacing (default for demos)
+   - Database Power View: Current dense table (retained for technical users)
+   - Toggle button to switch modes, preference persisted
+
+3. **WCAG 2.1 AA Compliance:** Meeting April 2026 government accessibility requirements
+   - Keyboard navigation
+   - Screen reader support
+   - Proper color contrast
+   - Semantic HTML
+
+**Research Foundation:**
+- Industry best practices for compliance dashboards
+- Hierarchical navigation patterns for complex systems
+- Government accessibility standards (mandatory by April 2026)
+
+**Implementation Roadmap:**
+- Phase 1: Pyramid navigation (1-2 weeks)
+- Phase 2: Executive card view (2-3 weeks)
+- Phase 3: Accessibility & polish (1-2 weeks)
+- Phase 4: Testing & refinement (1-2 weeks)
+
+**Current Status:** ✅ **CORRECTIONS COMPLETE - READY FOR APPROVAL**
+- Codex and ChatGPT review complete (4 specialized agents)
+- All 24 terminology/capitalization corrections applied
+- 1 missing URL parameter added
+- Documents archived: `docs/regulatory-review/archive/REGULATORY_REVIEW_UX_PROPOSAL_PRE_CORRECTIONS.md`, `docs/regulatory-review/archive/REGULATORY_REVIEW_MOCKUPS_PRE_CORRECTIONS.md`
+- Corrections summary: `docs/REGULATORY_REVIEW_UX_PROPOSAL_CORRECTIONS_APPLIED.md`
+
+### Known Issues
+⚠️ **Poll-Results Revert:** Some frontend improvements may have been lost when page was reverted after refactoring broke it. Type safety work preserved.
+
+### Next Steps
+1. ✅ ~~Review and incorporate Codex/ChatGPT feedback on UI/UX proposal~~ **COMPLETE**
+2. ⏸️ Get user approval on refined proposal
+3. ⏸️ Begin Phase 1 implementation (pyramid navigation refactor)
+4. ⏸️ Integrate Tier 2 rerun evaluation data into frontend
+5. ⏸️ Load submission content into regulatory review frontend (currently empty)
+6. ⏸️ Monitor production deployment for any regressions
+
+**Blocker:** Waiting for user approval of refined proposal. Tier 2 rerun also in progress (78% done, 131 batches remaining)
 
 ---
 
 ## Task 2: Regulatory-Review Development
 
-### Status: Tier 2 COMPLETE ✅
-- **Version:** 129.0
+### Status: ⏳ Tier 2 Rerun 78% COMPLETE (In Progress)
+- **Version:** 131.0
 - **Architecture:** v2.0 (Direct API, Ralph Loop IPC deprecated)
+- **Rerun Progress:** 467/598 batches complete (78%)
+- **Previous Simulation:** 5,979 policies across 355 batch files (synced to dashboard)
+
+### Tier 2 Rerun Status (Updated January 27, 2026 11:10 AM)
+**4 Parallel Claude Code Sessions:**
+- **Session A:** 104/149 batches (70%) - Working on batch 105
+- **Session B:** 111/150 batches (74%) - Working on batch 261
+- **Session C:** 102/149 batches (68%) - Working on batch 401
+- **Session D:** ✅ 150/150 batches (100%) - COMPLETE
+
+**Remaining Work:** 131 batches (22%) across Sessions A, B, and C
+
+### Previous Tier 2 Simulation (Complete)
 - **Policies Evaluated:** 5,979 across 355 batch files
-- **Semantic Matches:** 5,825 loaded
-- **Evaluation Records:** 5,810 synced to dashboard
+- **Semantic Matches:** 5,825 loaded to engine database
+- **Evaluation Records:** 5,810 synced to dashboard databases
+- **Method:** External Claude Opus prompts (24x faster than Ralph Loop IPC)
 
-### Recent Work
-**Tier 2 Simulation (External Prompts):**
-- Gates 10 & 11 FAILED due to Ralph Loop bottleneck
-- Pivoted to Claude Opus AI with external prompts
-- Direct API approach: 24x faster (5 min vs 2+ hours)
-- All policies evaluated, results in database
-
-**Frontend Sync:**
-- Development DB synced: `SSTAC-Dashboard/server/regulatory-review.db`
-- Production DB synced: `SSTAC-Dashboard/dist/server/regulatory-review.db`
+### Frontend Sync Status
+- Development DB: `SSTAC-Dashboard/server/regulatory-review.db` (synced)
+- Production DB: `SSTAC-Dashboard/dist/server/regulatory-review.db` (synced)
 - Sync script: `engine/scripts/sync_tier2_to_dashboard.py`
-
-### Key Architecture Decision
-**Why External Prompts:** The Tier 2 simulation uses Claude Opus AI with prompts EXTERNAL to the engine because:
-1. File-based IPC (Ralph Loop) created bottleneck blocking Gates 10 & 11
-2. Direct API validation: ~24x performance improvement
-3. Opus 4.5: 24% PASS rate, best calibration for policy matching
+- **Issue:** Dashboard frontend currently has no submission loaded (needs integration work)
 
 ### Next Steps
-1. Human review of AI-proposed PASS/FAIL/NOT_FOUND/ESCALATE statuses
-2. Continue Protocol semantic upgrade (9.3% complete)
-3. Optionally refactor evaluation runner to use API client
+1. ⏳ Complete Tier 2 rerun (131 batches remaining)
+2. Load new evaluation data to engine database (`rraa_v3_2.db`)
+3. Sync new data to dashboard databases
+4. Integrate submission content into dashboard frontend
+5. Human review of AI-proposed statuses
 
-**Blockers:** None - all data synced and ready for review
+**Blockers:** None - sessions progressing steadily, ~22% remaining
 
 ---
 
 ## Task 3: Database Cleanup
 
-### Status: Phase 1 PLANNING
+### Status: ⏸️ ON HOLD (Crash Recovery)
 - **Database:** `F:\Regulatory-Review\engine\data\rraa_v3_2.db`
-- **Total Policies:** 14,614 (6,036 + 8,578 standards)
-- **Scope:** Delete non-policy items (not yet defined)
+- **Total Policies:** 14,614 (6,036 policies + 8,578 standards)
+- **Reason for Pause:** Windows 11 Pro crash/corruption caused by Claude Code memory issues
 
-### Context
-Database cleanup runs concurrently because:
-1. Tier 2 results now in database - must preserve these
-2. Phase 1 defines what's "non-policy"
-3. Phase 2 refines metadata on remaining items
+### Incident Summary (January 27, 2026)
+**What Happened:**
+- Claude Code memory/cache issues caused Windows 11 crash
+- System corruption occurred
+- User recovered from corruption
+- Database cleanup work paused to prevent further instability
 
-### Phase 1: Needs Scope Definition
+**Data Protection Status:**
+- Tier 2 simulation data (5,979 policies, 5,825 semantic_matches) - PRESERVED
+- Tier 2 rerun data (467/598 batches) - IN PROGRESS, must protect
+- Engine database appears intact post-recovery
+
+### Phase 1: Scope Definition (Still Needed)
 **User must specify:** What constitutes "non-policy items"?
 - Orphaned records without associations?
 - Test/sample data from development?
 - Superseded metadata versions?
 - Temporary processing artifacts?
 
-### Next Steps
-1. **BLOCKED on scope definition** - User approval needed
-2. Create database backup before any deletions
-3. Identify and protect Tier 2 evaluation data
-4. Execute deletions with rollback procedure documented
+### Next Steps (After Tier 2 Rerun Complete)
+1. ⏸️ **WAIT** for Tier 2 rerun completion (131 batches remaining)
+2. ⏸️ **WAIT** for system stability confirmation
+3. Create comprehensive database backup before any work
+4. Define cleanup scope with user approval
+5. Identify and explicitly protect all evaluation data
+6. Execute deletions with rollback procedure documented
+
+**Blockers:**
+- System stability (Windows crash recovery)
+- Tier 2 rerun completion (78% done)
+- Scope definition needed
 
 ---
 
@@ -290,17 +352,35 @@ copy "MULTI_PROJECT_COORDINATION.md" "archive\MULTI_PROJECT_COORDINATION_v1.0_AR
 
 **Three concurrent initiatives, one integrated workflow:**
 
-1. **SSTAC Dashboard**: A grade achieved, Phase 2 complete, Phase 3 testing ready
-2. **Regulatory-Review**: Tier 2 complete, 5,979 policies evaluated, results synced
-3. **Database Cleanup**: Scope definition pending, then safe deletion with Tier 2 protection
+1. **SSTAC Dashboard**: ✅ ALL 7 PHASES COMPLETE, A+ grade achieved (95+/100), 536 tests passing. ✅ Regulatory-review UI/UX redesign: 4-agent review complete, 24 corrections applied (pyramid navigation, executive-friendly cards, WCAG 2.1 AA). Ready for user approval.
+2. **Regulatory-Review**: ⏳ Tier 2 rerun 78% complete (467/598 batches), Session D done, Sessions A/B/C active, ~131 batches remaining
+3. **Database Cleanup**: ⏸️ ON HOLD due to Windows 11 crash/corruption recovery, awaiting Tier 2 completion and stability
 
 **Key Principle:** Regulatory-Review owns database writes. Dashboard reads. Cleanup must preserve evaluation data.
 
-**Next Session:** Ask user which task to focus on, then load appropriate handoff documents.
+**Current Priority:**
+- Complete Tier 2 rerun (22% remaining)
+- Review and refine UI/UX proposal based on AI feedback
+- Implement Phase 1 (pyramid navigation) after approval
+- Integrate evaluation data into Dashboard frontend
+
+**Known Issues:**
+- Dashboard poll-results: Some improvements lost in revert after refactoring broke page
+- Dashboard frontend: No submission currently loaded, needs integration work
+- System stability: Recent Windows crash, monitoring for memory issues
+
+**New Work - UI/UX Redesign:**
+- **Goal:** Transform regulatory-review interface from "database dump" to executive-friendly presentation
+- **Documents:** `REGULATORY_REVIEW_UX_PROPOSAL.md` + `REGULATORY_REVIEW_MOCKUPS.md`
+- **Features:** Pyramid topic hierarchy, two-mode interface (Executive/Database), accessibility compliance
+- **Review:** 4-agent review complete, 24 corrections applied
+- **Status:** ✅ Corrections complete, ready for user approval before Phase 1 implementation
+
+**Next Session:** Await user approval of refined proposal, then begin Phase 1 (pyramid navigation). Monitor Tier 2 rerun progress.
 
 ---
 
-**Coordination Document Version:** 1.0
+**Coordination Document Version:** 1.3
 **Created:** January 25, 2026
-**Last Updated:** January 25, 2026
-**Status:** READY FOR NEXT SESSION
+**Last Updated:** January 27, 2026 (v1.3 - UI/UX corrections complete, ready for approval)
+**Status:** UPDATED - TIER 2 RERUN 78% + UI/UX CORRECTIONS COMPLETE
