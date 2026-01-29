@@ -64,11 +64,11 @@
   },
   "CSAP_NPG": {
     "citation_label": "CSAP NPG",
-    "document_url": null,
+    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP-Numeric-Practice-Guidelines-FINAL-June-2022-v2.xlsx",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
-    "notes": "Documents appear as individual 'Sheets' (3-7) on the practice guidelines page; no single compiled PDF was found.",
-    "status": "NOT_FOUND",
-    "title": "CSAP Numerical Practice Guidelines"
+    "notes": "Manual URL provided by user; XLSX file.",
+    "status": "FOUND",
+    "title": "CSAP Numeric Practice Guidelines (June 2022 v2)"
   },
   "CSAP_PCOC": {
     "citation_label": "CSAP PCOC",
@@ -104,18 +104,18 @@
   },
   "CSAP_RAPG": {
     "citation_label": "CSAP RAPG",
-    "document_url": null,
+    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP-Risk-Assessment-Practice-Guidelines-FINAL-June2022_v2.xlsx",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
-    "notes": "Listed as 'Sheet 1' on the practice guidelines page; no direct PDF found.",
-    "status": "NOT_FOUND",
-    "title": "CSAP Risk Assessment Practice Guidelines"
+    "notes": "Manual URL provided by user; XLSX file.",
+    "status": "FOUND",
+    "title": "CSAP Risk Assessment Practice Guidelines (June 2022 v2)"
   },
   "CSAP_ROC_BIOASSAY": {
-    "document_url": null,
+    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP-Technical-Guidance-ROC-bioassay-site-char-July-2013-Final.pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
-    "notes": "Listed as a text item under Practice Guidelines, possibly part of a 'Detailed Ecological Risk Assessment Policy Summary' which also lacks a direct PDF link.",
-    "status": "NOT_FOUND",
-    "title": "ROC, Bioassay & Site Characterization"
+    "notes": "Manual URL provided by user.",
+    "status": "FOUND",
+    "title": "CSAP Technical Guidance: ROC, Bioassay & Site Characterization (July 2013)"
   },
   "CSAP_SOIL_SAMPLING_DEPTH": {
     "citation_label": "CSAP Soil Sampling Depth",
@@ -150,11 +150,11 @@
     "title": "Soil Vapour Attenuation Factors for Trench Worker Exposure (December 2012)"
   },
   "CSAP_UNCERTAINTY_FACTORS": {
-    "document_url": null,
+    "document_url": "https://csapsociety.bc.ca/wp-content/uploads/CSAP-Technical-Guidance-UFs-in-TRVs-July-2013-Final.pdf",
     "landing_page_url": "https://csapsociety.bc.ca/for-members/resources/guidelines/practice/",
-    "notes": "Listed as a text item under Practice Guidelines; likely part of a missing Policy Summary document.",
-    "status": "NOT_FOUND",
-    "title": "UFs in TRVs"
+    "notes": "Manual URL provided by user.",
+    "status": "FOUND",
+    "title": "CSAP Technical Guidance: UFs in TRVs (July 2013)"
   },
   "CSAP_VAPOUR_GUIDANCE_UPDATE": {
     "citation_label": "CSAP Vapour 2022",
