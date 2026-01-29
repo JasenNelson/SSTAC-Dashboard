@@ -53,7 +53,6 @@ export interface AssessmentTableProps {
   judgments: Map<string, Judgment>;
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onQuickPass?: (id: string) => void;
   sortField: SortField;
   sortOrder: SortOrder;
   onSort: (field: SortField) => void;
@@ -72,7 +71,6 @@ export default function AssessmentTable({
   judgments,
   selectedId,
   onSelect,
-  onQuickPass,
   sortField,
   sortOrder,
   onSort,
@@ -161,26 +159,6 @@ export default function AssessmentTable({
     setExpandedRows(newExpanded);
   }, [expandedRows]);
 
-  // Bulk action handlers
-  const tier1PassCount = useMemo(() => {
-    return paginatedAssessments.filter(
-      a => a.tier === 'TIER_1_BINARY' && a.status === 'pass' && !a.reviewedAt
-    ).length;
-  }, [paginatedAssessments]);
-
-  const handleAcceptAllTier1Pass = useCallback(() => {
-    // This would trigger an API call in production
-    console.log('Accept all TIER_1 PASS assessments');
-    // For now, just log - actual implementation would call backend
-  }, []);
-
-  const handleMarkSelectedReviewed = useCallback(() => {
-    // This would trigger an API call in production
-    console.log('Mark selected as reviewed:', Array.from(selectedIds));
-    // For now, just log - actual implementation would call backend
-    setSelectedIds(new Set());
-  }, [selectedIds]);
-
   // Sort indicator component
   const SortIndicator = ({ field }: { field: SortField }) => {
     if (sortField !== field) {
@@ -256,24 +234,6 @@ export default function AssessmentTable({
               {selectedIds.size} selected
             </span>
           )}
-
-          {/* Bulk action buttons */}
-          <div className="flex items-center gap-2 ml-4">
-            <button
-              onClick={handleAcceptAllTier1Pass}
-              disabled={tier1PassCount === 0}
-              className="px-3 py-1.5 text-xs font-medium rounded-md bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Accept All TIER_1 PASS ({tier1PassCount})
-            </button>
-            <button
-              onClick={handleMarkSelectedReviewed}
-              disabled={selectedIds.size === 0}
-              className="px-3 py-1.5 text-xs font-medium rounded-md bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-200 hover:bg-indigo-200 dark:hover:bg-indigo-900/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Mark Selected as Reviewed
-            </button>
-          </div>
         </div>
 
         {/* Results count */}
@@ -466,33 +426,17 @@ export default function AssessmentTable({
 
                     {/* Actions */}
                     <td className="px-4 py-3 text-right">
-                      {/* Quick PASS button - only for TIER_1 items */}
-                      {assessment.tier === 'TIER_1_BINARY' && onQuickPass ? (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onQuickPass(assessment.id);
-                          }}
-                          disabled={assessment.reviewedAt !== null}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${
-                            assessment.reviewedAt !== null
-                              ? 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500 cursor-not-allowed'
-                              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-900/50'
-                          }`}
-                          title={assessment.reviewedAt !== null ? 'Already reviewed' : 'Accept AI result as PASS'}
-                          aria-disabled={assessment.reviewedAt !== null}
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline">PASS</span>
-                        </button>
-                      ) : (
-                        <span
-                          className="inline-flex items-center px-2.5 py-1.5 text-xs text-gray-400 dark:text-gray-500"
-                          title={`${assessment.tier === 'TIER_2_PROFESSIONAL' ? 'Requires professional judgment' : 'Requires SDM review'}`}
-                        >
-                          -
-                        </span>
-                      )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRowClick(assessment.id);
+                        }}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-200 dark:hover:bg-indigo-900/50"
+                        title="Review this item"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Review</span>
+                      </button>
                     </td>
                   </tr>
 

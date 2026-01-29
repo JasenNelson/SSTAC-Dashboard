@@ -837,6 +837,32 @@ export default function ReviewDashboardClient({
     return { total, sufficient, insufficient, needsMoreEvidence, unreviewed, reviewed };
   }, [submission.assessments, judgments]);
 
+  const aiStats = useMemo(() => {
+    let pass = 0;
+    let fail = 0;
+    let pending = 0;
+    let partial = 0;
+
+    submission.assessments.forEach((assessment) => {
+      switch (assessment.status) {
+        case 'pass':
+          pass++;
+          break;
+        case 'fail':
+          fail++;
+          break;
+        case 'flagged':
+          partial++;
+          break;
+        default:
+          pending++;
+          break;
+      }
+    });
+
+    return { pass, fail, partial, pending };
+  }, [submission.assessments]);
+
   // Handle sort change
   const handleSort = useCallback((field: SortField) => {
     if (field === sortField) {
@@ -900,41 +926,6 @@ export default function ReviewDashboardClient({
     }
   }, [filteredAssessments, selectedAssessmentId]);
 
-  // Handle quick pass from table (TIER_1 only)
-  const handleQuickPass = useCallback(async (assessmentId: string) => {
-    const assessment = submission.assessments.find(a => a.id === assessmentId);
-    if (!assessment || assessment.tier !== 'TIER_1_BINARY') return;
-
-    const newJudgment: Judgment = {
-      humanResult: 'ACCEPT',
-      evidenceSufficiency: 'SUFFICIENT',
-      reviewerId: user.id,
-      reviewerName: user.email,
-      reviewedAt: new Date().toISOString(),
-      reviewStatus: 'COMPLETED',
-    };
-
-    // Update local state
-    setJudgments(prev => {
-      const updated = new Map(prev);
-      updated.set(assessmentId, newJudgment);
-      return updated;
-    });
-
-    // Call API to persist
-    try {
-      const url = typeof assessment.dbId === 'number'
-        ? `/api/regulatory-review/assessments/${assessment.dbId}`
-        : `/api/regulatory-review/assessments/${assessment.policyId}?submissionId=${submission.id}`;
-      await fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newJudgment),
-      });
-    } catch (error) {
-      console.error('Failed to save quick pass:', error);
-    }
-  }, [submission.assessments, submission.id, user]);
 
   // Toggle stage group expansion
   const toggleStageGroup = useCallback((stageGroup: string) => {
@@ -1436,28 +1427,41 @@ export default function ReviewDashboardClient({
               </span>
             </div>
 
-            {/* Center: Stats */}
-            <div className="flex items-center gap-3 text-xs">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-green-500" />
-                {stats.sufficient}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                {stats.needsMoreEvidence}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-red-500" />
-                {stats.insufficient}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-gray-400" />
-                {stats.unreviewed}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
-                {stats.reviewed}/{stats.total}
-              </span>
+            {/* Center: Review Progress + AI Status */}
+            <div className="flex flex-col items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Reviewed {stats.reviewed}/{stats.total}
+                </span>
+                <div className="h-1.5 w-28 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                  <div
+                    className="h-full bg-indigo-500"
+                    style={{ width: `${stats.total ? Math.round((stats.reviewed / stats.total) * 100) : 0}%` }}
+                  />
+                </div>
+                <span className="text-[10px] text-gray-400">
+                  {stats.total ? Math.round((stats.reviewed / stats.total) * 100) : 0}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="uppercase tracking-wide text-[10px] text-gray-400">AI</span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-green-500" />
+                  {aiStats.pass}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  {aiStats.partial}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-red-500" />
+                  {aiStats.fail}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-gray-400" />
+                  {aiStats.pending}
+                </span>
+              </div>
             </div>
 
             {/* Right: Meta + View + Panels + Export */}
@@ -1570,7 +1574,6 @@ export default function ReviewDashboardClient({
                   judgments={judgments}
                   selectedId={selectedAssessmentId}
                   onSelect={handleSelectAssessment}
-                  onQuickPass={handleQuickPass}
                   sortField={sortField}
                   sortOrder={sortOrder}
                   onSort={handleSort}
