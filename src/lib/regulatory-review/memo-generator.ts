@@ -529,6 +529,7 @@ export function generateHTML(
   for (const assessment of filteredAssessments) {
     const judgment = data.judgments.get(assessment.id);
     const citation = getCitationDisplay(assessment);
+    const sufficiencyLabel = formatSufficiencyDisplay(judgment?.evidenceSufficiency);
 
     const statusBadgeClass = {
       pass: 'badge-pass',
