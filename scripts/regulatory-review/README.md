@@ -27,3 +27,14 @@ python scripts/regulatory-review/load_policy_data.py --db "F:\sstac-dashboard\sr
 Notes:
 - If URLs are missing, update `data/policy_source_urls.json` and re-run the export.
 - `load_policy_data.py` will truncate and reload taxonomy mappings by default.
+## URL Validation
+
+- `validate_policy_urls.py`:
+  - Checks `document_url` and `landing_page_url` in `data/policy_sources.csv`.
+  - Writes `data/policy_url_checks.csv` with status and final URL.
+  - Some hosts (e.g., CSAP) may return 403 to automated requests; confirm manually if needed.
+
+Usage:
+```powershell
+python scripts/regulatory-review/validate_policy_urls.py
+```

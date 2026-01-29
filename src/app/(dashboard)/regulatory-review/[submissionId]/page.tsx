@@ -11,7 +11,7 @@ import {
   type Assessment as DbAssessment,
   type Judgment as DbJudgment,
 } from '@/lib/sqlite/queries';
-import { getCitationLabels } from '@/lib/regulatory-review/taxonomy-mapping';
+import { getTaxonomySummaries, type TaxonomySummary } from '@/lib/regulatory-review/taxonomy-mapping';
 
 // Structured evidence item for detailed display
 export interface StructuredEvidenceItem {
@@ -31,6 +31,12 @@ export interface Assessment {
   dbId: number;
   policyId: string;
   citationLabel?: string;
+  stageId?: string;
+  stageLabel?: string;
+  topicId?: string;
+  topicLabel?: string;
+  subtopicId?: string;
+  subtopicLabel?: string;
   policyTitle: string;
   section: string;
   sheet: string;  // Excel tab name (Stg1, Stg2, DSI, RA, RP, etc.)
@@ -91,7 +97,7 @@ interface EvidenceItem {
 // Transform database assessment to UI format
 function transformAssessment(
   dbAssessment: DbAssessment,
-  citationLabels: Map<string, string>
+  taxonomySummaries: Map<string, TaxonomySummary>
 ): Assessment {
   // Map AI result to UI status
   const statusMap: Record<string, 'pass' | 'fail' | 'pending' | 'flagged'> = {
@@ -150,11 +156,19 @@ function transformAssessment(
     'NONE': 'NONE',
   };
 
+  const taxonomy = taxonomySummaries.get(dbAssessment.csap_id);
+
   return {
     id: `ASM-${dbAssessment.id}`,
     dbId: dbAssessment.id,
     policyId: dbAssessment.csap_id,
-    citationLabel: citationLabels.get(dbAssessment.csap_id),
+    citationLabel: taxonomy?.citationLabel,
+    stageId: taxonomy?.stageId,
+    stageLabel: taxonomy?.stageLabel,
+    topicId: taxonomy?.topicId,
+    topicLabel: taxonomy?.topicLabel,
+    subtopicId: taxonomy?.subtopicId,
+    subtopicLabel: taxonomy?.subtopicLabel,
     policyTitle: dbAssessment.csap_text,
     section: dbAssessment.section || 'General',
     sheet: dbAssessment.sheet || 'Other',  // Excel tab name for hierarchical grouping
@@ -200,7 +214,7 @@ function getSubmissionWithAssessments(submissionId: string): Submission | null {
 
     const dbAssessments = getAssessments(submissionId);
     const dbJudgments = getJudgmentsForSubmission(submissionId);
-    const citationLabels = getCitationLabels(dbAssessments.map((assessment) => assessment.csap_id));
+    const taxonomySummaries = getTaxonomySummaries(dbAssessments.map((assessment) => assessment.csap_id));
 
     // Determine status
     let status: 'pending' | 'in_progress' | 'complete' = 'pending';
@@ -219,7 +233,7 @@ function getSubmissionWithAssessments(submissionId: string): Submission | null {
       status,
       submittedAt: dbSubmission.evaluation_started || dbSubmission.imported_at,
       submittedBy: 'AI Evaluation',
-      assessments: dbAssessments.map((assessment) => transformAssessment(assessment, citationLabels)),
+      assessments: dbAssessments.map((assessment) => transformAssessment(assessment, taxonomySummaries)),
       judgments: dbJudgments.map(transformJudgment),
     };
   } catch (error) {
