@@ -828,15 +828,15 @@ export default function ReviewDashboardClient({
     return selectedAssessment ? adaptAssessmentForJudgment(selectedAssessment) : null;
   }, [selectedAssessment]);
 
-  // Calculate stats
+  // Calculate stats (respect current filters)
   const stats = useMemo(() => {
-    const total = submission.assessments.length;
+    const total = filteredAssessments.length;
     let sufficient = 0;
     let insufficient = 0;
     let needsMoreEvidence = 0;
     let unreviewed = 0;
 
-    submission.assessments.forEach((assessment) => {
+    filteredAssessments.forEach((assessment) => {
       const sufficiency = judgments.get(assessment.id)?.evidenceSufficiency || 'UNREVIEWED';
       switch (sufficiency) {
         case 'SUFFICIENT':
@@ -856,7 +856,7 @@ export default function ReviewDashboardClient({
 
     const reviewed = total - unreviewed;
     return { total, sufficient, insufficient, needsMoreEvidence, unreviewed, reviewed };
-  }, [submission.assessments, judgments]);
+  }, [filteredAssessments, judgments]);
 
   const aiStats = useMemo(() => {
     let pass = 0;
@@ -864,7 +864,7 @@ export default function ReviewDashboardClient({
     let pending = 0;
     let partial = 0;
 
-    submission.assessments.forEach((assessment) => {
+    filteredAssessments.forEach((assessment) => {
       switch (assessment.status) {
         case 'pass':
           pass++;
@@ -882,7 +882,7 @@ export default function ReviewDashboardClient({
     });
 
     return { pass, fail, partial, pending };
-  }, [submission.assessments]);
+  }, [filteredAssessments]);
 
   // Handle sort change
   const handleSort = useCallback((field: SortField) => {
