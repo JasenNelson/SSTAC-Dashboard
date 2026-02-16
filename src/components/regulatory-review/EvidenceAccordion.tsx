@@ -14,6 +14,15 @@ export interface EvidenceItem {
   pageReference?: string;
   specDescription?: string;
   evidenceType?: string;
+  // Phase 4 (PIV-EVIDENCE-FIDELITY-001): Fidelity and ranking fields
+  excerptFidelity?: string;
+  confidenceScope?: string;
+  fidelityReason?: string;
+  sourcePath?: string;
+  evidenceTextRaw?: string;
+  evidenceTextDisplay?: string;
+  rankScore?: number;
+  rankReason?: string[];
 }
 
 export interface EvidenceAccordionProps {
@@ -31,7 +40,46 @@ interface AccordionItemProps {
   onFlagEvidence?: (item: EvidenceItem) => void;
 }
 
+/**
+ * Check if an evidence item is AI-generated reasoning (not a verbatim submission excerpt)
+ */
+function isAiReasoningItem(item: EvidenceItem): boolean {
+  return (
+    item.specId.includes('AI-REASONING') ||
+    item.evidenceType === 'AI_REASONING'
+  );
+}
+
+/**
+ * Phase 4 (PIV-EVIDENCE-FIDELITY-001): Get truthful fidelity label.
+ * Maps excerpt_fidelity to UI label. Falls back to legacy binary check for old sessions.
+ */
+function getFidelityLabel(item: EvidenceItem): { label: string; isAi: boolean } {
+  const fidelity = item.excerptFidelity;
+  if (fidelity === 'verbatim') return { label: 'Verbatim Excerpt', isAi: false };
+  if (fidelity === 'normalized') return { label: 'Extracted Excerpt', isAi: false };
+  if (fidelity === 'structured') return { label: 'Structured Data', isAi: false };
+  if (fidelity === 'ai') return { label: 'AI Analysis', isAi: true };
+  // Legacy fallback: use binary AI check, but label non-AI honestly
+  const isAi = isAiReasoningItem(item);
+  return { label: isAi ? 'AI Analysis' : 'Extracted Excerpt', isAi };
+}
+
+/** Fidelity badge color classes */
+function getFidelityBadgeClass(fidelity: string | undefined): string {
+  switch (fidelity) {
+    case 'verbatim': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300';
+    case 'normalized': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300';
+    case 'structured': return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300';
+    case 'ai': return 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300';
+    default: return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300';
+  }
+}
+
 function AccordionItem({ item, isOpen, onToggle, onOpenSource, onFlagEvidence }: AccordionItemProps) {
+  const { label: fidelityLabel, isAi: isAiItem } = getFidelityLabel(item);
+  const displayText = item.evidenceTextDisplay || item.excerpt;
+
   // Build the reference string (location + page if available)
   const pageLabel = item.pageReference
     ? item.pageReference.toString()
@@ -44,23 +92,28 @@ function AccordionItem({ item, isOpen, onToggle, onOpenSource, onFlagEvidence }:
     : item.location;
 
   // Generate a brief summary for the collapsed header
-  // Use specDescription if available, otherwise generate from excerpt
+  // Use specDescription if available, otherwise generate from display text
   const headerSummary = item.specDescription
     ? item.specDescription
-    : item.excerpt.length > 80
-      ? item.excerpt.slice(0, 80).trim() + '...'
-      : item.excerpt;
+    : displayText.length > 80
+      ? displayText.slice(0, 80).trim() + '...'
+      : displayText;
 
   const methodLabel = item.evidenceType || 'Unknown method';
   const canOpenSource = Boolean(onOpenSource);
   const canFlagEvidence = Boolean(onFlagEvidence);
 
+  // Styling varies for AI reasoning items vs verbatim evidence
+  const headerBgClass = isAiItem
+    ? 'bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-800/30'
+    : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700';
+
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className={`border rounded-lg overflow-hidden ${isAiItem ? 'border-purple-200 dark:border-purple-700' : 'border-gray-200 dark:border-gray-700'}`}>
       {/* Header - High-level summary with reference info */}
       <button
         onClick={onToggle}
-        className="w-full flex flex-col gap-2 p-4 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500"
+        className={`w-full flex flex-col gap-2 p-4 ${headerBgClass} transition-colors text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500`}
         type="button"
         aria-expanded={isOpen}
       >
@@ -69,9 +122,12 @@ function AccordionItem({ item, isOpen, onToggle, onOpenSource, onFlagEvidence }:
             <span className="font-mono text-xs font-semibold text-indigo-600 dark:text-indigo-400 shrink-0">
               {item.specId}
             </span>
-            {item.evidenceType && (
-              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded shrink-0">
-                {item.evidenceType}
+            <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded shrink-0 ${getFidelityBadgeClass(item.excerptFidelity)}`}>
+              {fidelityLabel}
+            </span>
+            {item.confidenceScope === 'policy' && (
+              <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded shrink-0" title="Confidence derived from policy-level score, not excerpt-level relevance">
+                Policy conf.
               </span>
             )}
             <ConfidenceMeter confidence={item.confidence} showLabel={false} />
@@ -98,17 +154,37 @@ function AccordionItem({ item, isOpen, onToggle, onOpenSource, onFlagEvidence }:
         )}
       </button>
 
-      {/* Expanded Content - Full verbatim excerpt (NEVER truncated) */}
+      {/* Expanded Content - Full excerpt (NEVER truncated) */}
       {isOpen && (
         <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-          {/* Full Verbatim Excerpt */}
+          {/* Full Excerpt */}
           <div className="mb-4">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-              Verbatim Excerpt
+              {fidelityLabel}
             </h4>
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap bg-gray-50 dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
-              {item.excerpt}
+            {isAiItem && (
+              <p className="text-xs italic text-purple-600 dark:text-purple-400 mb-2">
+                This content was generated by Claude AI reasoning, not extracted verbatim from the submission.
+              </p>
+            )}
+            <p className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap p-3 rounded-lg border ${
+              isAiItem
+                ? 'bg-purple-50 dark:bg-purple-900/10 border-purple-200 dark:border-purple-800'
+                : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+            }`}>
+              {displayText}
             </p>
+            {/* Raw text detail — shown when raw differs from display */}
+            {item.evidenceTextRaw && item.evidenceTextRaw !== displayText && (
+              <details className="mt-2">
+                <summary className="text-xs text-gray-400 dark:text-gray-500 cursor-pointer hover:text-gray-600 dark:hover:text-gray-300">
+                  Raw source text
+                </summary>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 whitespace-pre-wrap">
+                  {item.evidenceTextRaw}
+                </p>
+              </details>
+            )}
           </div>
 
           {/* Reference Details */}
@@ -132,7 +208,7 @@ function AccordionItem({ item, isOpen, onToggle, onOpenSource, onFlagEvidence }:
           {/* Confidence */}
           <div className="mb-4">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
-              Confidence
+              Confidence{item.confidenceScope ? ` (${item.confidenceScope}-level)` : ''}
             </h4>
             <ConfidenceMeter confidence={item.confidence} showLabel={true} />
           </div>

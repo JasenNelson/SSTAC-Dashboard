@@ -152,6 +152,23 @@ export interface EvidenceItem {
   confidence: ConfidenceLevel;
   /** Reasons why this evidence was matched */
   matchReasons: string[];
+  // Phase 4 (PIV-EVIDENCE-FIDELITY-001): Fidelity and ranking fields
+  /** Evidence text fidelity: verbatim | normalized | structured | ai */
+  excerptFidelity?: string;
+  /** Whether confidence is excerpt-level or policy-level */
+  confidenceScope?: string;
+  /** Reason for fidelity classification */
+  fidelityReason?: string;
+  /** Source dict key path for provenance */
+  sourcePath?: string;
+  /** Pre-sanitization evidence text */
+  evidenceTextRaw?: string;
+  /** Post-sanitization evidence text for display */
+  evidenceTextDisplay?: string;
+  /** Ranking score for evidence ordering */
+  rankScore?: number;
+  /** Ranking factors applied */
+  rankReason?: string[];
 }
 
 // ============================================================================
@@ -482,12 +499,17 @@ export type AssessmentSummary = Pick<
 // ============================================================================
 
 export interface MatchingRationale {
-  method: 'hybrid' | 'keyword' | 'ai_fallback';
+  method: 'hybrid' | 'keyword' | 'ai_fallback' | 'ai_reasoning';
+  evaluationType?: 'ai_reasoning' | 'pipeline';
   scores: {
     keyword: number;
     semantic: number;
     structural: number;
     combined: number;
+    // AI reasoning scores (when evaluationType === 'ai_reasoning')
+    similarity?: number;
+    relevance?: number;
+    completeness?: number;
   };
   scoreBreakdown: string[];
   policyKeywords: string[];

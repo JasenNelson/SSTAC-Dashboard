@@ -33,6 +33,38 @@ interface RawEvidenceItem {
   excerpt?: string;
   confidence?: string;
   match_reasons?: string[];
+  // Phase 4 (PIV-EVIDENCE-FIDELITY-001): Fidelity and ranking fields
+  excerpt_fidelity?: string;
+  confidence_scope?: string;
+  fidelity_reason?: string;
+  source_path?: string;
+  evidence_text_raw?: string;
+  evidence_text_display?: string;
+  rank_score?: number;
+  rank_reason?: string[];
+}
+
+/**
+ * Clean ingestion artifacts from location strings.
+ * Strips chunk references that are artifacts of document ingestion/chunking.
+ * Examples:
+ *   "WARP, Section Chunk 01 - Signature Page / QP Summary, p.2"
+ *     → "WARP, Signature Page / QP Summary, p.2"
+ *   "WARP Chunk 01 Front Matter (p.2) - QP Summary"
+ *     → "WARP Front Matter (p.2) - QP Summary"
+ */
+function cleanLocation(location: string): string {
+  if (!location) return '';
+  return location
+    // "Section Chunk 01 - " → strip entirely (keep text after dash)
+    .replace(/Section Chunk \d+\s*-\s*/gi, '')
+    // "Chunk 01 - " → strip entirely (keep text after dash)
+    .replace(/\bChunk \d+\s*-\s*/gi, '')
+    // "Chunk 01 " (no dash, e.g. "Chunk 01 Front Matter") → strip "Chunk 01 "
+    .replace(/\bChunk \d+\s+/gi, '')
+    // Clean up any resulting double commas or leading/trailing whitespace
+    .replace(/,\s*,/g, ',')
+    .trim();
 }
 
 /**
@@ -47,6 +79,14 @@ function transformEvidenceItems(raw: RawEvidenceItem[] | null): {
   excerpt: string;
   confidence: string;
   matchReasons: string[];
+  excerptFidelity?: string;
+  confidenceScope?: string;
+  fidelityReason?: string;
+  sourcePath?: string;
+  evidenceTextRaw?: string;
+  evidenceTextDisplay?: string;
+  rankScore?: number;
+  rankReason?: string[];
 }[] {
   if (!raw || !Array.isArray(raw)) return [];
 
@@ -54,11 +94,20 @@ function transformEvidenceItems(raw: RawEvidenceItem[] | null): {
     specId: item.spec_id || '',
     specDescription: item.spec_description,
     evidenceType: item.evidence_type,
-    location: item.location || '',
+    location: cleanLocation(item.location || ''),
     pageReference: item.page_reference,
     excerpt: item.excerpt || '',
     confidence: item.confidence || 'MEDIUM',
     matchReasons: item.match_reasons || [],
+    // Phase 4 (PIV-EVIDENCE-FIDELITY-001): Fidelity and ranking passthrough
+    excerptFidelity: item.excerpt_fidelity,
+    confidenceScope: item.confidence_scope,
+    fidelityReason: item.fidelity_reason,
+    sourcePath: item.source_path,
+    evidenceTextRaw: item.evidence_text_raw,
+    evidenceTextDisplay: item.evidence_text_display,
+    rankScore: item.rank_score,
+    rankReason: item.rank_reason,
   }));
 }
 
