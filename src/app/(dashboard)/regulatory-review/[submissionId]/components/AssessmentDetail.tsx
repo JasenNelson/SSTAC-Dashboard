@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Loader2, AlertTriangle, Search, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertTriangle, Search, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import StatusBadge, { type StatusType } from '@/components/regulatory-review/StatusBadge';
 import TierBadge, { type TierType } from '@/components/regulatory-review/TierBadge';
 import { type ConfidenceLevel } from '@/components/regulatory-review/ConfidenceMeter';
@@ -231,8 +231,14 @@ function EvidenceCoverageBar({ coverage }: { coverage: number }) {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-          Evidence Coverage
+        <span className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1">
+          AI Completeness Score
+          <span className="group relative">
+            <Info className="w-3 h-3 text-gray-400 cursor-help" />
+            <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 w-52 p-2 bg-gray-900 dark:bg-gray-700 text-white text-[10px] rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none">
+              AI model&apos;s assessment of how completely the submission addresses this policy requirement
+            </span>
+          </span>
         </span>
         <span className="text-xs font-semibold text-gray-900 dark:text-gray-100">
           {pct}%
@@ -277,7 +283,7 @@ export default function AssessmentDetail({
   const [includeInFinal, setIncludeInFinal] = useState(Boolean(judgment?.includeInFinal));
   const [finalMemoSummary, setFinalMemoSummary] = useState(judgment?.finalMemoSummary || '');
   const [followUpNeeded, setFollowUpNeeded] = useState(Boolean(judgment?.followUpNeeded));
-  const [showAllEvidence, setShowAllEvidence] = useState(false);
+  const [showAllEvidence, setShowAllEvidence] = useState(true);
 
   // UI state
   const [isSaving, setIsSaving] = useState(false);
@@ -327,7 +333,7 @@ export default function AssessmentDetail({
     setIncludeInFinal(Boolean(judgment?.includeInFinal));
     setFinalMemoSummary(judgment?.finalMemoSummary || '');
     setFollowUpNeeded(Boolean(judgment?.followUpNeeded));
-    setShowAllEvidence(false);
+    setShowAllEvidence(true);
     setValidationErrors({});
     // Reset baseline validation state
     setIsBaselineExpanded(false);
@@ -638,7 +644,7 @@ export default function AssessmentDetail({
                     onClick={() => setShowAllEvidence((prev) => !prev)}
                     className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 rounded"
                   >
-                    {showAllEvidence ? 'Show Top 3' : `Show All (${evidenceCandidates.length})`}
+                    {showAllEvidence ? `Show Top 3 of ${evidenceCandidates.length}` : `Show All (${evidenceCandidates.length})`}
                   </button>
                 )}
               </div>

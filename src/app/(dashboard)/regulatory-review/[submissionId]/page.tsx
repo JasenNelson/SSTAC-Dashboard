@@ -94,6 +94,20 @@ interface EvidenceItem {
   match_reasons: string[];
 }
 
+/**
+ * Clean ingestion artifacts from location strings.
+ * Strips chunk references that are artifacts of document ingestion/chunking.
+ */
+function cleanLocation(location: string): string {
+  if (!location) return '';
+  return location
+    .replace(/Section Chunk \d+\s*-\s*/gi, '')
+    .replace(/\bChunk \d+\s*-\s*/gi, '')
+    .replace(/\bChunk \d+\s+/gi, '')
+    .replace(/,\s*,/g, ',')
+    .trim();
+}
+
 // Transform database assessment to UI format
 function transformAssessment(
   dbAssessment: DbAssessment,
@@ -120,7 +134,7 @@ function transformAssessment(
         specId: e.spec_id || '',
         specDescription: e.spec_description,
         evidenceType: e.evidence_type,
-        location: e.location || 'Unknown location',
+        location: cleanLocation(e.location || '') || 'Unknown location',
         pageReference: e.page_reference,
         excerpt: e.excerpt || '',
         confidence: (e.confidence || 'MEDIUM') as StructuredEvidenceItem['confidence'],
@@ -129,7 +143,7 @@ function transformAssessment(
 
       // Create summary strings for backward compatibility
       evidence = rawItems.map((e) => {
-        const location = e.location || 'Unknown location';
+        const location = cleanLocation(e.location || '') || 'Unknown location';
         const pageRef = e.page_reference ? ` (p. ${e.page_reference})` : '';
         const excerpt = e.excerpt || e.spec_description;
         return `[${location}${pageRef}] ${excerpt}`;

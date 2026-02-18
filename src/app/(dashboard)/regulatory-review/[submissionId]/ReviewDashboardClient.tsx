@@ -284,7 +284,7 @@ export default function ReviewDashboardClient({
   // State management
   const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(null);
   const [tierFilter, setTierFilter] = useState<TierFilter>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pass' | 'fail' | 'pending' | 'flagged'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pass' | 'fail' | 'pending' | 'flagged'>('pass');
   const [sufficiencyFilter, setSufficiencyFilter] = useState<'all' | 'SUFFICIENT' | 'INSUFFICIENT' | 'NEEDS_MORE_EVIDENCE' | 'UNREVIEWED'>('all');
   const [policyScope, setPolicyScope] = useState<'csap_core' | 'all'>('csap_core');
   const [unresolvedOnly, setUnresolvedOnly] = useState(false);
@@ -991,7 +991,7 @@ export default function ReviewDashboardClient({
   // Clear all filters
   const clearFilters = useCallback(() => {
     setTierFilter('all');
-    setStatusFilter('all');
+    setStatusFilter('pass');
     setSufficiencyFilter('all');
     setPolicyScope('csap_core');
     setUnresolvedOnly(false);
