@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { PollResult, MatrixData } from './types';
+import { PollResult, MatrixData, PollGroupEntry, PollResultItem, WordcloudItem } from './types';
 import QRCodeDisplay from '@/components/dashboard/QRCodeDisplay';
 import QRCodeModal from './components/QRCodeModal';
 import FilterSidebar from './components/FilterSidebar';
@@ -46,7 +46,6 @@ export default function PollResultsClient() {
   const [leftPanelVisible, setLeftPanelVisible] = useState(true);
   const [qrCodeExpanded, setQrCodeExpanded] = useState(false);
   const [expandedPollGroup, setExpandedPollGroup] = useState<string | null>(null);
-  const [, setCurrentQuestionIndex] = useState(0);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [showMatrixGraphs, setShowMatrixGraphs] = useState<{[key: string]: boolean}>({});
   const [showPresentationControls, setShowPresentationControls] = useState(true);
@@ -131,15 +130,7 @@ export default function PollResultsClient() {
       ];
 
       // Group polls by question to combine survey-results and cew-polls data
-      const pollGroups = new Map<string, {
-        surveyPoll?: any;
-        cewPoll?: any;
-        isRanking: boolean;
-        isWordcloud?: boolean;
-        question: string;
-        poll_index: number;
-        options: string[];
-      }>();
+      const pollGroups = new Map<string, PollGroupEntry>();
 
       // Process single-choice polls
       singleChoiceData.forEach(poll => {
@@ -416,29 +407,33 @@ export default function PollResultsClient() {
           group.surveyPoll = {
             ...pollData,
             words: pollData.surveyWords,
+            results: [], // Wordcloud polls use words, not results
             total_votes: pollData.total_votes // Use database total_responses, not word frequency sum
           };
         }
-        
+
         if (pollData.cewWords.length > 0) {
           group.cewPoll = {
             ...pollData,
             words: pollData.cewWords,
+            results: [], // Wordcloud polls use words, not results
             total_votes: pollData.total_votes // Use database total_responses, not word frequency sum
           };
         }
-        
+
         // Also create poll objects even if no words yet, but with correct total_votes
         if (pollData.surveyWords.length === 0 && pollData.cewWords.length === 0) {
           // No words yet, but we still need to create the poll structure
           group.surveyPoll = {
             ...pollData,
             words: [],
+            results: [], // Wordcloud polls use words, not results
             total_votes: pollData.total_votes // Use database total_responses
           };
           group.cewPoll = {
             ...pollData,
             words: [],
+            results: [], // Wordcloud polls use words, not results
             total_votes: pollData.total_votes // Use database total_responses
           };
         }
@@ -469,9 +464,9 @@ export default function PollResultsClient() {
         let totalVotes = 0;
         let surveyVotes = 0;
         let cewVotes = 0;
-        let pollResults: any[] = [];
-        let surveyResults: any[] = [];
-        let cewResults: any[] = [];
+        let pollResults: PollResultItem[] = [];
+        let surveyResults: PollResultItem[] = [];
+        let cewResults: PollResultItem[] = [];
         let wordcloudWords: Array<{ text: string; value: number }> = [];
 
         // Calculate vote counts based on poll type
@@ -498,12 +493,12 @@ export default function PollResultsClient() {
               surveyPoll: surveyPoll ? { 
                 total_votes: surveyPoll.total_votes, 
                 words: surveyPoll.words?.length,
-                wordValues: surveyPoll.words?.map((w: any) => w.value) || []
+                wordValues: surveyPoll.words?.map((w: WordcloudItem) => w.value) || []
               } : null,
               cewPoll: cewPoll ? { 
                 total_votes: cewPoll.total_votes, 
                 words: cewPoll.words?.length,
-                wordValues: cewPoll.words?.map((w: any) => w.value) || []
+                wordValues: cewPoll.words?.map((w: WordcloudItem) => w.value) || []
               } : null
             });
           }
@@ -511,8 +506,8 @@ export default function PollResultsClient() {
           // For single-choice polls, sum up all votes in the results
           // Each user selects ONE option, so sum of votes = total responses
           // But we need to check the page_path to ensure proper separation
-          surveyVotes = surveyPoll && surveyPoll.page_path?.includes('/survey-results') ? (surveyPoll.results || []).reduce((sum: number, result: any) => sum + (result.votes || 0), 0) : 0;
-          cewVotes = cewPoll && cewPoll.page_path?.includes('/cew-polls') ? (cewPoll.results || []).reduce((sum: number, result: any) => sum + (result.votes || 0), 0) : 0;
+          surveyVotes = surveyPoll && surveyPoll.page_path?.includes('/survey-results') ? (surveyPoll.results || []).reduce((sum: number, result: PollResultItem) => sum + (result.votes || 0), 0) : 0;
+          cewVotes = cewPoll && cewPoll.page_path?.includes('/cew-polls') ? (cewPoll.results || []).reduce((sum: number, result: PollResultItem) => sum + (result.votes || 0), 0) : 0;
         }
         totalVotes = surveyVotes + cewVotes;
 
@@ -537,19 +532,19 @@ export default function PollResultsClient() {
           
           if (surveyPoll && cewPoll) {
             // Store original results separately
-            surveyResults = (surveyPoll.results || []).map((result: any) => ({
+            surveyResults = (surveyPoll.results || []).map((result: PollResultItem) => ({
               option_index: result.option_index,
               option_text: result.option_text,
               votes: surveyVotes, // Use participant count for ranking polls
               averageRank: result.averageRank || 0
-            })).sort((a: any, b: any) => a.averageRank - b.averageRank);
-            
-            cewResults = (cewPoll.results || []).map((result: any) => ({
+            })).sort((a: PollResultItem, b: PollResultItem) => (a.averageRank || 0) - (b.averageRank || 0));
+
+            cewResults = (cewPoll.results || []).map((result: PollResultItem) => ({
               option_index: result.option_index,
               option_text: result.option_text,
               votes: cewVotes, // Use participant count for ranking polls
               averageRank: result.averageRank || 0
-            })).sort((a: any, b: any) => a.averageRank - b.averageRank);
+            })).sort((a: PollResultItem, b: PollResultItem) => (a.averageRank || 0) - (b.averageRank || 0));
             
             // Combine them for "all" mode
             const allResults = [...(surveyPoll.results || []), ...(cewPoll.results || [])];
@@ -578,24 +573,24 @@ export default function PollResultsClient() {
               option_text: data.option_text,
               votes: totalVotes, // For ranking polls, votes should represent total participants
               averageRank: data.count > 0 ? data.totalRank / data.count : 0
-            })).sort((a: any, b: any) => a.averageRank - b.averageRank);
+            })).sort((a: PollResultItem, b: PollResultItem) => (a.averageRank || 0) - (b.averageRank || 0));
           } else if (surveyPoll) {
             // Only survey data
-            surveyResults = (surveyPoll.results || []).map((result: any) => ({
+            surveyResults = (surveyPoll.results || []).map((result: PollResultItem) => ({
               option_index: result.option_index,
               option_text: result.option_text,
               votes: surveyVotes, // Use participant count for ranking polls
               averageRank: result.averageRank || 0
-            })).sort((a: any, b: any) => a.averageRank - b.averageRank);
+            })).sort((a: PollResultItem, b: PollResultItem) => (a.averageRank || 0) - (b.averageRank || 0));
             pollResults = surveyResults;
           } else if (cewPoll) {
             // Only CEW data
-            cewResults = (cewPoll.results || []).map((result: any) => ({
+            cewResults = (cewPoll.results || []).map((result: PollResultItem) => ({
               option_index: result.option_index,
               option_text: result.option_text,
               votes: cewVotes, // Use participant count for ranking polls
               averageRank: result.averageRank || 0
-            })).sort((a: any, b: any) => a.averageRank - b.averageRank);
+            })).sort((a: PollResultItem, b: PollResultItem) => (a.averageRank || 0) - (b.averageRank || 0));
             pollResults = cewResults;
           } else {
             pollResults = [];
@@ -610,7 +605,7 @@ export default function PollResultsClient() {
             
             // Process survey words
             if (surveyPoll.words) {
-              surveyPoll.words.forEach((word: any) => {
+              surveyPoll.words.forEach((word: WordcloudItem) => {
                 const key = word.text;
                 const value = word.value || 0;
                 if (key) {
@@ -618,10 +613,10 @@ export default function PollResultsClient() {
                 }
               });
             }
-            
+
             // Process CEW words
             if (cewPoll.words) {
-              cewPoll.words.forEach((word: any) => {
+              cewPoll.words.forEach((word: WordcloudItem) => {
                 const key = word.text;
                 const value = word.value || 0;
                 if (key) {
@@ -648,17 +643,17 @@ export default function PollResultsClient() {
           // Create separate results for survey and CEW polls
           if (surveyPoll && cewPoll) {
             // Store original results separately
-            surveyResults = (surveyPoll.results || []).map((result: any) => ({
+            surveyResults = (surveyPoll.results || []).map((result: PollResultItem) => ({
               option_index: result.option_index,
               option_text: result.option_text,
               votes: result.votes || 0
-            })).sort((a: any, b: any) => b.votes - a.votes);
-            
-            cewResults = (cewPoll.results || []).map((result: any) => ({
+            })).sort((a: PollResultItem, b: PollResultItem) => b.votes - a.votes);
+
+            cewResults = (cewPoll.results || []).map((result: PollResultItem) => ({
               option_index: result.option_index,
               option_text: result.option_text,
               votes: result.votes || 0
-            })).sort((a: any, b: any) => b.votes - a.votes);
+            })).sort((a: PollResultItem, b: PollResultItem) => b.votes - a.votes);
             
             // Combine single-choice poll results
             const optionMap = new Map<number, { votes: number, option_text: string }>();
@@ -677,22 +672,22 @@ export default function PollResultsClient() {
               option_index: optionIndex,
               option_text: data.option_text,
               votes: data.votes
-            })).sort((a: any, b: any) => b.votes - a.votes);
+            })).sort((a: PollResultItem, b: PollResultItem) => b.votes - a.votes);
           } else if (surveyPoll) {
             // Only survey data
-            surveyResults = (surveyPoll.results || []).map((result: any) => ({
+            surveyResults = (surveyPoll.results || []).map((result: PollResultItem) => ({
               option_index: result.option_index,
               option_text: result.option_text,
               votes: result.votes || 0
-            })).sort((a: any, b: any) => b.votes - a.votes);
+            })).sort((a: PollResultItem, b: PollResultItem) => b.votes - a.votes);
             pollResults = surveyResults;
           } else if (cewPoll) {
             // Only CEW data
-            cewResults = (cewPoll.results || []).map((result: any) => ({
+            cewResults = (cewPoll.results || []).map((result: PollResultItem) => ({
               option_index: result.option_index,
               option_text: result.option_text,
               votes: result.votes || 0
-            })).sort((a: any, b: any) => b.votes - a.votes);
+            })).sort((a: PollResultItem, b: PollResultItem) => b.votes - a.votes);
             pollResults = cewResults;
           } else {
             pollResults = [];
@@ -701,8 +696,10 @@ export default function PollResultsClient() {
 
         // Create combined poll result
         const basePoll = surveyPoll || cewPoll;
-        const combinedPoll = {
+        const combinedPoll: PollResult = {
           ...basePoll,
+          poll_index: group.poll_index,
+          question: group.question,
           total_votes: totalVotes, // Use calculated total instead of database total_votes
           results: pollResults,
           combined_survey_votes: surveyVotes, // Use calculated survey votes
@@ -899,8 +896,7 @@ export default function PollResultsClient() {
     if (nextPoll) {
       const nextPollKey = nextPoll.poll_id || nextPoll.ranking_poll_id || `poll-${nextPoll.page_path}-${nextPoll.poll_index}`;
       setSelectedQuestion(nextPollKey);
-      setCurrentQuestionIndex(nextIndex);
-      
+
       // If currently expanded, keep the new question expanded
       if (expandedPoll) {
         setExpandedPoll(nextPollKey);
@@ -925,8 +921,7 @@ export default function PollResultsClient() {
     if (prevPoll) {
       const prevPollKey = prevPoll.poll_id || prevPoll.ranking_poll_id || `poll-${prevPoll.page_path}-${prevPoll.poll_index}`;
       setSelectedQuestion(prevPollKey);
-      setCurrentQuestionIndex(prevIndex);
-      
+
       // If currently expanded, keep the new question expanded
       if (expandedPoll) {
         setExpandedPoll(prevPollKey);
@@ -1133,7 +1128,7 @@ export default function PollResultsClient() {
                             className={`flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ${isExpanded ? 'w-8 h-8' : 'w-6 h-6'}`}
                             title="Previous question in group"
                           >
-                            <svg className={`fill="none" stroke="currentColor" viewBox="0 0 24 24" ${isExpanded ? 'w-5 h-5' : 'w-4 h-4'}`}>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className={`${isExpanded ? 'w-5 h-5' : 'w-4 h-4'}`}>
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                           </button>
@@ -1142,7 +1137,7 @@ export default function PollResultsClient() {
                             className={`flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ${isExpanded ? 'w-8 h-8' : 'w-6 h-6'}`}
                             title="Next question in group"
                           >
-                            <svg className={`fill="none" stroke="currentColor" viewBox="0 0 24 24" ${isExpanded ? 'w-5 h-5' : 'w-4 h-4'}`}>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className={`${isExpanded ? 'w-5 h-5' : 'w-4 h-4'}`}>
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                           </button>

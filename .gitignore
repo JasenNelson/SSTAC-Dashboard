@@ -31,6 +31,7 @@ yarn-error.log*
 
 # Environment variables
 .env*
+!.env.example
 
 # Vercel
 .vercel
@@ -90,6 +91,7 @@ coverage.xml
 cover/
 tests/test-results/
 tests/*.log
+playwright-report/
 
 # Other Python-specific ignores
 local_settings.py

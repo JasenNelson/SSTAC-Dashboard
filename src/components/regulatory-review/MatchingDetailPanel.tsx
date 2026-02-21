@@ -121,11 +121,14 @@ export default function MatchingDetailPanel({
 }: MatchingDetailPanelProps) {
   const { matchingRationale, policyContext } = detail;
 
-  const methodLabels = {
+  const methodLabels: Record<string, string> = {
     hybrid: 'Hybrid Search',
     keyword: 'Keyword Only',
     ai_fallback: 'AI Fallback',
+    ai_reasoning: 'AI Reasoning',
   };
+
+  const isAiReasoning = matchingRationale.evaluationType === 'ai_reasoning';
 
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900">
@@ -141,14 +144,16 @@ export default function MatchingDetailPanel({
           </span>
           <span
             className={`px-2 py-0.5 rounded text-xs font-medium ${
-              matchingRationale.method === 'ai_fallback'
+              matchingRationale.method === 'ai_reasoning'
+                ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200'
+                : matchingRationale.method === 'ai_fallback'
                 ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200'
                 : matchingRationale.method === 'hybrid'
                 ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
             }`}
           >
-            {methodLabels[matchingRationale.method]}
+            {methodLabels[matchingRationale.method] || matchingRationale.method}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -168,39 +173,73 @@ export default function MatchingDetailPanel({
         <div className="divide-y divide-gray-200 dark:divide-gray-700">
           {/* Score Breakdown */}
           <Section title="Score Breakdown" icon={BarChart3}>
-            <div className="space-y-2">
-              <ScoreBar
-                label="Keyword"
-                score={matchingRationale.scores.keyword}
-                weight={0.4}
-                color="bg-blue-500"
-              />
-              <ScoreBar
-                label="Semantic"
-                score={matchingRationale.scores.semantic}
-                weight={0.4}
-                color="bg-purple-500"
-              />
-              <ScoreBar
-                label="Structural"
-                score={matchingRationale.scores.structural}
-                weight={0.2}
-                color="bg-amber-500"
-              />
-              <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                <ScoreBar
-                  label="Combined"
-                  score={matchingRationale.scores.combined}
-                  color="bg-green-500"
-                />
-              </div>
-            </div>
-            {matchingRationale.scoreBreakdown.length > 0 && (
-              <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
-                {matchingRationale.scoreBreakdown.map((line, i) => (
-                  <div key={i}>{line}</div>
-                ))}
-              </div>
+            {isAiReasoning ? (
+              <>
+                <div className="space-y-2">
+                  <ScoreBar
+                    label="Similarity"
+                    score={matchingRationale.scores.similarity ?? 0}
+                    color="bg-blue-500"
+                  />
+                  <ScoreBar
+                    label="Relevance"
+                    score={matchingRationale.scores.relevance ?? 0}
+                    color="bg-purple-500"
+                  />
+                  <ScoreBar
+                    label="Completeness"
+                    score={matchingRationale.scores.completeness ?? 0}
+                    color="bg-green-500"
+                  />
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <ScoreBar
+                      label="Combined"
+                      score={matchingRationale.scores.combined}
+                      color="bg-emerald-500"
+                    />
+                  </div>
+                </div>
+                <div className="mt-3 p-2 bg-purple-50 dark:bg-purple-900/20 rounded text-xs text-purple-700 dark:text-purple-300">
+                  Evaluated by Claude AI reasoning (Tier 2)
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <ScoreBar
+                    label="Keyword"
+                    score={matchingRationale.scores.keyword}
+                    weight={0.4}
+                    color="bg-blue-500"
+                  />
+                  <ScoreBar
+                    label="Semantic"
+                    score={matchingRationale.scores.semantic}
+                    weight={0.4}
+                    color="bg-purple-500"
+                  />
+                  <ScoreBar
+                    label="Structural"
+                    score={matchingRationale.scores.structural}
+                    weight={0.2}
+                    color="bg-amber-500"
+                  />
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <ScoreBar
+                      label="Combined"
+                      score={matchingRationale.scores.combined}
+                      color="bg-green-500"
+                    />
+                  </div>
+                </div>
+                {matchingRationale.scoreBreakdown.length > 0 && (
+                  <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
+                    {matchingRationale.scoreBreakdown.map((line, i) => (
+                      <div key={i}>{line}</div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </Section>
 

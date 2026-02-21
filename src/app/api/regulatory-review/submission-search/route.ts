@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/api-guards';
 import path from 'path';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,6 +49,9 @@ interface SearchResult {
 }
 
 export async function GET(request: NextRequest) {
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   if (!Database) {
     return NextResponse.json(
       { error: 'Submission search is only available in local development' },

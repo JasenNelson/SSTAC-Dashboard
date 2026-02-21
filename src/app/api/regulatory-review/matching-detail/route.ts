@@ -9,6 +9,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/api-guards';
+import path from 'path';
 import { getAssessmentById } from '@/lib/sqlite/queries';
 import {
   getBaselineValidation,
@@ -21,6 +23,66 @@ import type {
   PolicyContext,
   BaselineValidationRecord,
 } from '@/lib/regulatory-review/types';
+
+// ============================================================================
+// Engine DB connection (read-only) for policy metadata
+// ============================================================================
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let Database: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Database = require('better-sqlite3');
+} catch {
+  // better-sqlite3 not available
+}
+
+const ENGINE_DB_PATH = path.join(process.cwd(), '..', 'Regulatory-Review', 'engine', 'data', 'rraa_v3_2.db');
+
+interface EngineDbPolicyRow {
+  topic_category: string | null;
+  semantic_sentences: string | null;
+}
+
+/**
+ * Get policy context from the engine DB (semantic sentences + topic category)
+ */
+function getPolicyContextFromEngineDb(csapId: string): { topicCategory: string; semanticSentences: { intent: string; purpose: string; function: string; evidence: string; deficiency: string } } | null {
+  if (!Database) return null;
+  try {
+    const db = new Database(ENGINE_DB_PATH, { readonly: true });
+    const row = db.prepare(
+      'SELECT topic_category, semantic_sentences FROM policy_statements WHERE id = ? AND is_active = 1'
+    ).get(csapId) as EngineDbPolicyRow | undefined;
+    db.close();
+
+    if (!row) return null;
+
+    const sentenceLabels = ['intent', 'purpose', 'function', 'evidence', 'deficiency'] as const;
+    const sentences: Record<string, string> = { intent: '', purpose: '', function: '', evidence: '', deficiency: '' };
+
+    if (row.semantic_sentences) {
+      try {
+        const parsed = JSON.parse(row.semantic_sentences);
+        if (Array.isArray(parsed)) {
+          sentenceLabels.forEach((label, i) => {
+            sentences[label] = parsed[i] || '';
+          });
+        }
+      } catch {
+        // leave defaults
+      }
+    }
+
+    return {
+      topicCategory: row.topic_category || 'General',
+      semanticSentences: sentences as { intent: string; purpose: string; function: string; evidence: string; deficiency: string },
+    };
+  } catch (err) {
+    console.warn('Failed to query engine DB for policy context:', err);
+    return null;
+  }
+}
 
 /**
  * Parse JSON field safely
@@ -35,6 +97,55 @@ function safeParseJson<T>(value: string | null | undefined): T | null {
 }
 
 /**
+ * Extract AI reasoning scores from evidence_found items or reviewer_notes.
+ * Returns { similarity, relevance, completeness } or null if not found.
+ */
+function extractAiReasoningScores(
+  evidenceFound: Array<Record<string, unknown>>,
+  reviewerNotes: string | null
+): { similarity: number; relevance: number; completeness: number } | null {
+  // Strategy 1: Find AI-REASONING item in evidence_found and parse match_reasons
+  for (const item of evidenceFound) {
+    const specId = String(item.spec_id || item.specId || '');
+    if (specId.includes('AI-REASONING') || item.evidence_type === 'AI_REASONING') {
+      const matchReasons = (item.match_reasons || item.matchReasons) as string[] | undefined;
+      if (Array.isArray(matchReasons)) {
+        const scores: Record<string, number> = {};
+        for (const reason of matchReasons) {
+          const match = String(reason).match(/^(similarity|relevance|completeness):(\d+\.?\d*)/);
+          if (match) {
+            scores[match[1]] = parseFloat(match[2]);
+          }
+        }
+        if (scores.similarity !== undefined || scores.relevance !== undefined || scores.completeness !== undefined) {
+          return {
+            similarity: scores.similarity ?? 0,
+            relevance: scores.relevance ?? 0,
+            completeness: scores.completeness ?? 0,
+          };
+        }
+      }
+    }
+  }
+
+  // Strategy 2: Parse from reviewer_notes text
+  if (reviewerNotes) {
+    const simMatch = reviewerNotes.match(/similarity[=:](\d+\.?\d*)/);
+    const relMatch = reviewerNotes.match(/relevance[=:](\d+\.?\d*)/);
+    const compMatch = reviewerNotes.match(/completeness[=:](\d+\.?\d*)/);
+    if (simMatch || relMatch || compMatch) {
+      return {
+        similarity: simMatch ? parseFloat(simMatch[1]) : 0,
+        relevance: relMatch ? parseFloat(relMatch[1]) : 0,
+        completeness: compMatch ? parseFloat(compMatch[1]) : 0,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
  * Reconstruct matching rationale from assessment data
  */
 function buildMatchingRationale(assessment: {
@@ -43,31 +154,63 @@ function buildMatchingRationale(assessment: {
   sections_searched: number;
   evidence_coverage: number;
   ai_confidence: string | null;
+  reviewer_notes: string | null;
 }): MatchingRationale {
   const keywordsMatched = safeParseJson<string[]>(assessment.keywords_matched) || [];
-  const evidenceFound = safeParseJson<Array<{
-    score?: number;
-    keyword_score?: number;
-    semantic_score?: number;
-    structural_score?: number;
-    section_id?: string;
-    ai_triggered?: boolean;
-    ai_reasoning?: string;
-    cross_ref_boost?: number;
-  }>>(assessment.evidence_found) || [];
+  const evidenceFound = safeParseJson<Array<Record<string, unknown>>>(assessment.evidence_found) || [];
 
-  // Calculate scores from evidence found (use first evidence item if available)
-  const firstEvidence = evidenceFound[0] || {};
-  const keywordScore = firstEvidence.keyword_score ?? (assessment.evidence_coverage / 100) * 0.7;
-  const semanticScore = firstEvidence.semantic_score ?? (assessment.evidence_coverage / 100) * 0.8;
-  const structuralScore = firstEvidence.structural_score ?? 0.5;
-  const combinedScore = firstEvidence.score ?? (keywordScore * 0.4 + semanticScore * 0.4 + structuralScore * 0.2);
+  // Try to extract AI reasoning scores
+  const aiScores = extractAiReasoningScores(evidenceFound, assessment.reviewer_notes);
 
-  // Determine if AI was triggered
-  const aiTriggered = firstEvidence.ai_triggered || keywordsMatched.length < 4;
+  if (aiScores) {
+    // AI Reasoning evaluation — show real scores
+    const combined = (aiScores.similarity + aiScores.relevance + aiScores.completeness) / 3;
+    return {
+      method: 'ai_reasoning',
+      evaluationType: 'ai_reasoning',
+      scores: {
+        keyword: 0,
+        semantic: 0,
+        structural: 0,
+        combined,
+        similarity: aiScores.similarity,
+        relevance: aiScores.relevance,
+        completeness: aiScores.completeness,
+      },
+      scoreBreakdown: [
+        `Similarity: ${Math.round(aiScores.similarity * 100)}%`,
+        `Relevance: ${Math.round(aiScores.relevance * 100)}%`,
+        `Completeness: ${Math.round(aiScores.completeness * 100)}%`,
+      ],
+      policyKeywords: keywordsMatched,
+      keywordsFound: keywordsMatched,
+      keywordsMissing: [],
+      keywordsSource: 'extracted_from_policy',
+      aiDetails: {
+        triggered: true,
+        triggerReason: 'Tier 2 AI Reasoning evaluation',
+        confidence: assessment.ai_confidence === 'HIGH' ? 0.9 : assessment.ai_confidence === 'MEDIUM' ? 0.7 : 0.5,
+      },
+      searchStats: {
+        sectionsSearched: assessment.sections_searched,
+        bestSection: 'AI Reasoning',
+        bestScore: combined,
+      },
+    };
+  }
+
+  // Fallback: traditional pipeline scores
+  const firstEvidence = (evidenceFound[0] || {}) as Record<string, unknown>;
+  const keywordScore = (firstEvidence.keyword_score as number) ?? (assessment.evidence_coverage / 100) * 0.7;
+  const semanticScore = (firstEvidence.semantic_score as number) ?? (assessment.evidence_coverage / 100) * 0.8;
+  const structuralScore = (firstEvidence.structural_score as number) ?? 0.5;
+  const combinedScore = (firstEvidence.score as number) ?? (keywordScore * 0.4 + semanticScore * 0.4 + structuralScore * 0.2);
+
+  const aiTriggered = (firstEvidence.ai_triggered as boolean) || keywordsMatched.length < 4;
 
   return {
     method: aiTriggered ? 'ai_fallback' : (keywordsMatched.length > 0 ? 'hybrid' : 'keyword'),
+    evaluationType: 'pipeline',
     scores: {
       keyword: keywordScore,
       semantic: semanticScore,
@@ -81,29 +224,30 @@ function buildMatchingRationale(assessment: {
     ],
     policyKeywords: keywordsMatched,
     keywordsFound: keywordsMatched,
-    keywordsMissing: [], // We don't have this data stored, would need policy keywords
+    keywordsMissing: [],
     keywordsSource: 'extracted_from_policy',
     aiDetails: aiTriggered ? {
       triggered: true,
       triggerReason: keywordsMatched.length < 4 ? 'Sparse keywords (<4 matched)' : 'Low keyword score',
-      reasoning: firstEvidence.ai_reasoning,
+      reasoning: firstEvidence.ai_reasoning as string | undefined,
       confidence: assessment.ai_confidence === 'HIGH' ? 0.9 : assessment.ai_confidence === 'MEDIUM' ? 0.7 : 0.5,
     } : undefined,
-    crossRefDetails: firstEvidence.cross_ref_boost ? {
+    crossRefDetails: (firstEvidence.cross_ref_boost as number) ? {
       boostApplied: true,
-      boostAmount: firstEvidence.cross_ref_boost,
+      boostAmount: firstEvidence.cross_ref_boost as number,
       relatedPolicies: [],
     } : undefined,
     searchStats: {
       sectionsSearched: assessment.sections_searched,
-      bestSection: firstEvidence.section_id || 'Unknown',
+      bestSection: (firstEvidence.section_id as string) || 'Unknown',
       bestScore: combinedScore,
     },
   };
 }
 
 /**
- * Build policy context from assessment and linked policies
+ * Build policy context from assessment and linked policies.
+ * Queries engine DB for semantic sentences and topic category.
  */
 function buildPolicyContext(assessment: {
   csap_id: string;
@@ -113,13 +257,16 @@ function buildPolicyContext(assessment: {
 }): PolicyContext {
   const linkedPolicies = safeParseJson<string[]>(assessment.linked_policies) || [];
 
+  // Query engine DB for semantic sentences and topic category
+  const engineData = getPolicyContextFromEngineDb(assessment.csap_id);
+
   return {
     policyId: assessment.csap_id,
     verbatimText: assessment.csap_text,
     discretionTier: assessment.discretion_tier as PolicyContext['discretionTier'],
-    topicCategory: 'General', // Would need to be stored or derived
-    semanticSentences: {
-      intent: '', // These would come from the policy database
+    topicCategory: engineData?.topicCategory || 'General',
+    semanticSentences: engineData?.semanticSentences || {
+      intent: '',
       purpose: '',
       function: '',
       evidence: '',
@@ -153,6 +300,9 @@ function parseAssessmentId(idParam: string): number | null {
  */
 export async function GET(request: NextRequest) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+
     const { searchParams } = new URL(request.url);
     const assessmentIdParam = searchParams.get('assessmentId');
 
@@ -245,6 +395,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+
     const body = await request.json();
 
     const { assessmentId: rawAssessmentId, validation } = body as {

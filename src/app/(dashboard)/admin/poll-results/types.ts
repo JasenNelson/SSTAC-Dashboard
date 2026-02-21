@@ -31,16 +31,21 @@ export interface PollResult {
   page_path: string;
   poll_index: number;
   question: string;
-  options: string[];
+  options?: string[];
   total_votes: number;
   results: PollResultItem[];
   is_ranking?: boolean;
   is_wordcloud?: boolean;
+  words?: WordcloudItem[];
   wordcloud_words?: WordcloudItem[];
   combined_survey_votes?: number;
   combined_cew_votes?: number;
   survey_results?: PollResultItem[];
   cew_results?: PollResultItem[];
+  max_words?: number;
+  word_limit?: number;
+  surveyWords?: WordcloudItem[];
+  cewWords?: WordcloudItem[];
 }
 
 // =============================================================================

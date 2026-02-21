@@ -36,6 +36,14 @@ vi.mock('../MatrixGraphRenderer', () => ({
   )
 }));
 
+vi.mock('../RankingDisplay', () => ({
+  default: () => <div data-testid="ranking-display">Ranking Display</div>
+}));
+
+vi.mock('../SingleChoiceDisplay', () => ({
+  default: () => <div data-testid="single-choice-display">Single Choice Display</div>
+}));
+
 vi.mock('@/components/dashboard/CustomWordCloud', () => ({
   default: ({ words }: { words: Array<{ text: string; value: number }> }) => (
     <div data-testid="word-cloud">Word Cloud: {words.length} words</div>

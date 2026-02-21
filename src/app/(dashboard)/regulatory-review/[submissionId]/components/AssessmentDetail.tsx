@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Loader2, AlertTriangle, Search, ChevronDown, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertTriangle, Search, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import StatusBadge, { type StatusType } from '@/components/regulatory-review/StatusBadge';
 import TierBadge, { type TierType } from '@/components/regulatory-review/TierBadge';
 import { type ConfidenceLevel } from '@/components/regulatory-review/ConfidenceMeter';
@@ -17,10 +17,13 @@ import type { MatchingDetail, AssessmentResult } from '@/lib/regulatory-review/t
 
 export type HumanResult = 'ACCEPT' | 'OVERRIDE_PASS' | 'OVERRIDE_FAIL' | 'DEFER' | 'NOT_APPLICABLE';
 export type ReviewStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'DEFERRED';
+export type EvidenceSufficiency = 'SUFFICIENT' | 'INSUFFICIENT' | 'NEEDS_MORE_EVIDENCE' | 'UNREVIEWED';
 
 export interface Assessment {
   id: string;
+  dbId?: number;
   csapId: string;
+  citationLabel?: string;
   csapText: string;
   section: string;
   sheet?: string;
@@ -42,6 +45,10 @@ export interface Judgment {
   humanConfidence?: ConfidenceLevel;
   judgmentNotes?: string;
   overrideReason?: string;
+  evidenceSufficiency?: EvidenceSufficiency;
+  includeInFinal?: boolean;
+  finalMemoSummary?: string;
+  followUpNeeded?: boolean;
   routedTo?: string;
   routingReason?: string;
   reviewerId?: string;
@@ -101,6 +108,43 @@ const DECISION_OPTIONS: {
   },
 ];
 
+const SUFFICIENCY_OPTIONS: {
+  value: EvidenceSufficiency;
+  label: string;
+  description: string;
+  colorClass: string;
+  bgClass: string;
+}[] = [
+  {
+    value: 'SUFFICIENT',
+    label: 'Sufficient',
+    description: 'Evidence addresses the meta-question and policy',
+    colorClass: 'text-green-700 dark:text-green-300',
+    bgClass: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700',
+  },
+  {
+    value: 'NEEDS_MORE_EVIDENCE',
+    label: 'Needs More Evidence',
+    description: 'Partial coverage or missing citations',
+    colorClass: 'text-amber-700 dark:text-amber-300',
+    bgClass: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700',
+  },
+  {
+    value: 'INSUFFICIENT',
+    label: 'Insufficient',
+    description: 'Evidence does not support the requirement',
+    colorClass: 'text-red-700 dark:text-red-300',
+    bgClass: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700',
+  },
+  {
+    value: 'UNREVIEWED',
+    label: 'Unreviewed',
+    description: 'No reviewer sufficiency set yet',
+    colorClass: 'text-gray-700 dark:text-gray-300',
+    bgClass: 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700',
+  },
+];
+
 const CONFIDENCE_OPTIONS: ConfidenceLevel[] = ['HIGH', 'MEDIUM', 'LOW'];
 
 const MIN_OVERRIDE_REASON_LENGTH = 10;
@@ -129,22 +173,22 @@ function getTierConstraints(tier: TierType): TierConstraints {
 
     case 'TIER_2_PROFESSIONAL':
       return {
-        allowAccept: false,
-        allowOverridePass: false,
+        allowAccept: true,
+        allowOverridePass: true,
         allowOverrideFail: true,
         allowDefer: true,
         tooltipMessage:
-          'TIER_2 items require professional judgment. Cannot accept AI result or override to PASS.',
+          'TIER_2 items require professional judgment. AI should not auto-pass; reviewer decisions are authoritative.',
       };
 
     case 'TIER_3_STATUTORY':
       return {
-        allowAccept: false,
-        allowOverridePass: false,
-        allowOverrideFail: false,
+        allowAccept: true,
+        allowOverridePass: true,
+        allowOverrideFail: true,
         allowDefer: true,
         tooltipMessage:
-          'TIER_3 items require Statutory Decision Maker determination. Only DEFER is allowed.',
+          'TIER_3 items require statutory decision-making. AI should not auto-pass; reviewer decisions are authoritative.',
       };
 
     default:
@@ -187,8 +231,14 @@ function EvidenceCoverageBar({ coverage }: { coverage: number }) {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-          Evidence Coverage
+        <span className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1">
+          AI Completeness Score
+          <span className="group relative">
+            <Info className="w-3 h-3 text-gray-400 cursor-help" />
+            <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 w-52 p-2 bg-gray-900 dark:bg-gray-700 text-white text-[10px] rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none">
+              AI model&apos;s assessment of how completely the submission addresses this policy requirement
+            </span>
+          </span>
         </span>
         <span className="text-xs font-semibold text-gray-900 dark:text-gray-100">
           {pct}%
@@ -217,6 +267,7 @@ export default function AssessmentDetail({
   isLoading = false,
   submissionId,
 }: AssessmentDetailProps) {
+  const baselinePanelId = `baseline-panel-${assessment.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
   // Form state
   const [selectedDecision, setSelectedDecision] = useState<HumanResult | null>(
     judgment?.humanResult || null
@@ -226,6 +277,13 @@ export default function AssessmentDetail({
   );
   const [notes, setNotes] = useState(judgment?.judgmentNotes || '');
   const [overrideReason, setOverrideReason] = useState(judgment?.overrideReason || '');
+  const [evidenceSufficiency, setEvidenceSufficiency] = useState<EvidenceSufficiency>(
+    judgment?.evidenceSufficiency || 'UNREVIEWED'
+  );
+  const [includeInFinal, setIncludeInFinal] = useState(Boolean(judgment?.includeInFinal));
+  const [finalMemoSummary, setFinalMemoSummary] = useState(judgment?.finalMemoSummary || '');
+  const [followUpNeeded, setFollowUpNeeded] = useState(Boolean(judgment?.followUpNeeded));
+  const [showAllEvidence, setShowAllEvidence] = useState(true);
 
   // UI state
   const [isSaving, setIsSaving] = useState(false);
@@ -250,12 +308,32 @@ export default function AssessmentDetail({
     PARTIAL: 'PARTIAL',
   };
 
+  const evidenceCandidates = React.useMemo(() => {
+    const confidenceOrder: Record<EvidenceItem['confidence'], number> = {
+      HIGH: 0,
+      MEDIUM: 1,
+      LOW: 2,
+      NONE: 3,
+    };
+    return [...assessment.evidenceFound].sort(
+      (a, b) => confidenceOrder[a.confidence] - confidenceOrder[b.confidence]
+    );
+  }, [assessment.evidenceFound]);
+
+  const displayedEvidence = showAllEvidence ? evidenceCandidates : evidenceCandidates.slice(0, 3);
+  const hasMoreEvidence = evidenceCandidates.length > 3;
+
   // Reset form when assessment changes
   useEffect(() => {
     setSelectedDecision(judgment?.humanResult || null);
     setConfidence(judgment?.humanConfidence || 'MEDIUM');
     setNotes(judgment?.judgmentNotes || '');
     setOverrideReason(judgment?.overrideReason || '');
+    setEvidenceSufficiency(judgment?.evidenceSufficiency || 'UNREVIEWED');
+    setIncludeInFinal(Boolean(judgment?.includeInFinal));
+    setFinalMemoSummary(judgment?.finalMemoSummary || '');
+    setFollowUpNeeded(Boolean(judgment?.followUpNeeded));
+    setShowAllEvidence(true);
     setValidationErrors({});
     // Reset baseline validation state
     setIsBaselineExpanded(false);
@@ -367,28 +445,38 @@ export default function AssessmentDetail({
 
     setIsSaving(true);
     try {
-      // Determine review status based on whether a decision was made
+      const hasSufficiency = evidenceSufficiency && evidenceSufficiency !== 'UNREVIEWED';
+
+      // Determine review status based on whether a decision or sufficiency was set
       let reviewStatus: ReviewStatus = 'IN_PROGRESS';
-      if (selectedDecision) {
+      if (selectedDecision === 'DEFER') {
         reviewStatus = selectedDecision === 'DEFER' ? 'DEFERRED' : 'COMPLETED';
+      } else if (selectedDecision || hasSufficiency) {
+        reviewStatus = 'COMPLETED';
       }
 
-      const judgmentPayload: Partial<Judgment> = {
+      const localPayload: Partial<Judgment> = {
         humanResult: selectedDecision || undefined,
         humanConfidence: isOverrideSelected ? confidence : undefined,
         judgmentNotes: notes || undefined,
         overrideReason: isOverrideSelected ? overrideReason : undefined,
+        evidenceSufficiency,
+        includeInFinal,
+        finalMemoSummary: includeInFinal ? (finalMemoSummary || undefined) : undefined,
+        followUpNeeded,
         reviewStatus,
       };
 
-      const url = submissionId
-        ? `/api/regulatory-review/assessments/${assessment.csapId}?submissionId=${submissionId}`
-        : `/api/regulatory-review/assessments/${assessment.id}`;
+      const url = typeof assessment.dbId === 'number'
+        ? `/api/regulatory-review/assessments/${assessment.dbId}`
+        : submissionId
+          ? `/api/regulatory-review/assessments/${assessment.csapId}?submissionId=${submissionId}`
+          : `/api/regulatory-review/assessments/${assessment.id}`;
 
       const response = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(judgmentPayload),
+        body: JSON.stringify(localPayload),
       });
 
       const data = await response.json();
@@ -406,7 +494,7 @@ export default function AssessmentDetail({
       }
 
       setToast({ message: 'Judgment saved successfully', type: 'success' });
-      onSave(judgmentPayload);
+      onSave(localPayload);
     } catch (error) {
       console.error('Error saving judgment:', error);
       setToast({
@@ -423,11 +511,31 @@ export default function AssessmentDetail({
     confidence,
     notes,
     overrideReason,
+    evidenceSufficiency,
+    includeInFinal,
+    finalMemoSummary,
+    followUpNeeded,
     assessment.csapId,
     assessment.id,
+    assessment.dbId,
     submissionId,
     onSave,
   ]);
+
+  const handleOpenSource = useCallback((item: EvidenceItem) => {
+    const pageLabel = item.pageReference ? ` p. ${item.pageReference}` : '';
+    setToast({
+      message: `Open source is not configured yet. ${item.location}${pageLabel}`,
+      type: 'info',
+    });
+  }, []);
+
+  const handleFlagEvidence = useCallback((item: EvidenceItem) => {
+    setToast({
+      message: `Flagged evidence ${item.specId} for QA review.`,
+      type: 'info',
+    });
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -468,14 +576,22 @@ export default function AssessmentDetail({
           <div className="flex items-center gap-3 mb-3">
             <button
               onClick={onBack}
-              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              aria-label="Back to list"
+              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               title="Back to list (Esc)"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {assessment.csapId}
-            </h2>
+            <div className="flex flex-col">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                {assessment.citationLabel || assessment.csapId}
+              </h2>
+              {assessment.citationLabel && assessment.citationLabel !== assessment.csapId && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                  ID: {assessment.csapId}
+                </span>
+              )}
+            </div>
             <TierBadge tier={assessment.tier} />
             {tierConstraints.tooltipMessage && (
               <div className="group relative">
@@ -501,7 +617,7 @@ export default function AssessmentDetail({
               </h3>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Result</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">AI Proposed Status</span>
                   <StatusBadge status={statusMap[assessment.aiResult]} />
                 </div>
                 <div>
@@ -518,19 +634,98 @@ export default function AssessmentDetail({
 
             {/* Evidence Found */}
             <section>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                Evidence Found
-              </h3>
-              <EvidenceAccordion evidenceItems={assessment.evidenceFound} />
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  Evidence Candidates
+                </h3>
+                {hasMoreEvidence && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllEvidence((prev) => !prev)}
+                    className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 rounded"
+                  >
+                    {showAllEvidence ? `Show Top 3 of ${evidenceCandidates.length}` : `Show All (${evidenceCandidates.length})`}
+                  </button>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                Showing {displayedEvidence.length} of {evidenceCandidates.length} ranked evidence candidates.
+              </p>
+              <EvidenceAccordion
+                evidenceItems={displayedEvidence}
+                onOpenSource={handleOpenSource}
+                onFlagEvidence={handleFlagEvidence}
+              />
             </section>
 
             {/* Judgment Form */}
             <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                Your Judgment
+                Reviewer Assessment & Memo
               </h3>
 
+              {/* Evidence Sufficiency */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Evidence Sufficiency (Reviewer)
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {SUFFICIENCY_OPTIONS.map((option) => {
+                    const isSelected = evidenceSufficiency === option.value;
+                    return (
+                      <label
+                        key={option.value}
+                        className={`relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-gray-900 ${
+                          isSelected
+                            ? `${option.bgClass} border-current`
+                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="evidenceSufficiency"
+                          value={option.value}
+                          checked={isSelected}
+                          onChange={() => setEvidenceSufficiency(option.value)}
+                          className="sr-only"
+                        />
+                        <div
+                          className={`flex-shrink-0 w-4 h-4 mt-0.5 rounded-full border-2 mr-3 ${
+                            isSelected
+                              ? 'border-current bg-current'
+                              : 'border-gray-300 dark:border-gray-600'
+                          }`}
+                        >
+                          {isSelected && (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className={`text-sm font-medium ${
+                            isSelected ? option.colorClass : 'text-gray-900 dark:text-gray-100'
+                          }`}>
+                            {option.label}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            {option.description}
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Decision Radio Group */}
+              <div>
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                  AI Override (Optional)
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                  Keep AI Proposed Status as a traceability badge. Use override only when needed.
+                </p>
               <div className="grid grid-cols-2 gap-3">
                 {DECISION_OPTIONS.map((option) => {
                   const isAllowed = isOptionAllowed(option.value, tierConstraints);
@@ -540,7 +735,7 @@ export default function AssessmentDetail({
                     <label
                       key={option.value}
                       className={`
-                        relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all
+                        relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-gray-900
                         ${
                           isAllowed
                             ? isSelected
@@ -597,6 +792,7 @@ export default function AssessmentDetail({
                   {validationErrors.decision}
                 </p>
               )}
+              </div>
 
               {/* Confidence Select (shown when overriding) */}
               {isOverrideSelected && (
@@ -611,7 +807,7 @@ export default function AssessmentDetail({
                     id="confidence"
                     value={confidence}
                     onChange={(e) => setConfidence(e.target.value as ConfidenceLevel)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
                   >
                     {CONFIDENCE_OPTIONS.map((level) => (
                       <option key={level} value={level}>
@@ -646,7 +842,7 @@ export default function AssessmentDetail({
                     }}
                     rows={2}
                     placeholder="Explain why you are overriding the AI result..."
-                    className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none ${
+                    className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none ${
                       validationErrors.overrideReason
                         ? 'border-red-300 dark:border-red-600'
                         : 'border-gray-300 dark:border-gray-600'
@@ -663,30 +859,73 @@ export default function AssessmentDetail({
                 </div>
               )}
 
-              {/* Notes */}
+              {/* Reviewer Notes */}
               <div>
                 <label
                   htmlFor="notes"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
-                  Notes <span className="text-gray-400">(optional)</span>
+                  Reviewer Notes (Memo-ready)
                 </label>
                 <textarea
                   id="notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
-                  placeholder="Add any additional notes or observations..."
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  placeholder="Capture reviewer notes with citations as needed..."
+                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none"
                 />
+              </div>
+
+              {/* Final Memo Curation */}
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    checked={includeInFinal}
+                    onChange={(e) => setIncludeInFinal(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                  />
+                  Include-in-Final
+                </label>
+                {includeInFinal && (
+                  <div>
+                    <label
+                      htmlFor="finalMemoSummary"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
+                      Final Memo Summary (1-3 paragraphs)
+                    </label>
+                    <textarea
+                      id="finalMemoSummary"
+                      value={finalMemoSummary}
+                      onChange={(e) => setFinalMemoSummary(e.target.value)}
+                      rows={4}
+                      placeholder="Write the executive-facing summary for the Final Memo..."
+                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none"
+                    />
+                  </div>
+                )}
+                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    checked={followUpNeeded}
+                    onChange={(e) => setFollowUpNeeded(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                  />
+                  Follow-up needed (request more engine evaluation)
+                </label>
               </div>
             </section>
 
             {/* HITL Baseline Validation Section */}
             <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
               <button
+                type="button"
                 onClick={() => setIsBaselineExpanded(!isBaselineExpanded)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                aria-expanded={isBaselineExpanded}
+                aria-controls={baselinePanelId}
               >
                 <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
                   <Search className="w-4 h-4 text-gray-500" />
@@ -705,7 +944,10 @@ export default function AssessmentDetail({
               </button>
 
               {isBaselineExpanded && (
-                <div className="border-t border-gray-200 dark:border-gray-700">
+                <div
+                  id={baselinePanelId}
+                  className="border-t border-gray-200 dark:border-gray-700"
+                >
                   {isLoadingBaseline ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
@@ -782,7 +1024,7 @@ export default function AssessmentDetail({
                 type="button"
                 onClick={onSkip}
                 disabled={isSaving || isLoading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               >
                 Skip
               </button>
@@ -790,7 +1032,7 @@ export default function AssessmentDetail({
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving || isLoading}
-                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               >
                 {(isSaving || isLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
                 {selectedDecision ? 'Save Judgment' : 'Save Notes'}

@@ -9,6 +9,7 @@
 export interface LocalAssessment {
   id: string;
   policyId: string;
+  citationLabel?: string;
   policyTitle: string;
   section: string;
   tier: 'TIER_1_BINARY' | 'TIER_2_PROFESSIONAL' | 'TIER_3_STATUTORY';
@@ -24,6 +25,10 @@ export interface LocalJudgment {
   humanConfidence?: 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE';
   judgmentNotes?: string;
   overrideReason?: string;
+  evidenceSufficiency?: 'SUFFICIENT' | 'INSUFFICIENT' | 'NEEDS_MORE_EVIDENCE' | 'UNREVIEWED';
+  includeInFinal?: boolean;
+  finalMemoSummary?: string;
+  followUpNeeded?: boolean;
   reviewedAt?: string;
   reviewerName?: string;
   reviewStatus?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'DEFERRED';
@@ -31,6 +36,7 @@ export interface LocalJudgment {
 
 export interface ExportOptions {
   format: 'markdown' | 'html' | 'csv' | 'word';
+  memoType: 'interim' | 'final';
   includePending: boolean;
   twoColumnFormat: boolean;
   includeEvidence: boolean;
@@ -51,9 +57,10 @@ export interface MemoStats {
   reviewed: number;
   pending: number;
   deferred: number;
-  pass: number;
-  fail: number;
-  requiresJudgment: number;
+  sufficient: number;
+  insufficient: number;
+  needsMoreEvidence: number;
+  unreviewed: number;
 }
 
 // ============================================================================
@@ -86,14 +93,6 @@ function formatStatusDisplay(status: LocalAssessment['status']): string {
 }
 
 /**
- * Format confidence level for display
- */
-function formatConfidenceDisplay(confidence?: LocalJudgment['humanConfidence']): string {
-  if (!confidence) return 'N/A';
-  return confidence;
-}
-
-/**
  * Format human result for display
  */
 function formatHumanResultDisplay(result?: LocalJudgment['humanResult']): string {
@@ -106,6 +105,39 @@ function formatHumanResultDisplay(result?: LocalJudgment['humanResult']): string
     NOT_APPLICABLE: 'Not Applicable',
   };
   return resultMap[result];
+}
+
+/**
+ * Format evidence sufficiency for display
+ */
+function formatSufficiencyDisplay(status?: LocalJudgment['evidenceSufficiency']): string {
+  const normalized = status || 'UNREVIEWED';
+  const map: Record<NonNullable<LocalJudgment['evidenceSufficiency']>, string> = {
+    SUFFICIENT: 'Sufficient',
+    INSUFFICIENT: 'Insufficient',
+    NEEDS_MORE_EVIDENCE: 'Needs More Evidence',
+    UNREVIEWED: 'Unreviewed',
+  };
+  return map[normalized];
+}
+
+function getCitationDisplay(assessment: LocalAssessment): {
+  label: string;
+  internalId: string;
+  showInternalId: boolean;
+} {
+  const label = assessment.citationLabel || assessment.policyId;
+  return {
+    label,
+    internalId: assessment.policyId,
+    showInternalId: Boolean(
+      assessment.citationLabel && assessment.citationLabel !== assessment.policyId
+    ),
+  };
+}
+
+function getMemoTitle(memoType: ExportOptions['memoType']): string {
+  return memoType === 'final' ? 'Final Technical Memo' : 'Interim Technical Memo';
 }
 
 /**
@@ -151,34 +183,36 @@ export function calculateStats(
   let reviewed = 0;
   let pending = 0;
   let deferred = 0;
-  let pass = 0;
-  let fail = 0;
-  let requiresJudgment = 0;
+  let sufficient = 0;
+  let insufficient = 0;
+  let needsMoreEvidence = 0;
+  let unreviewed = 0;
 
   for (const assessment of assessments) {
     const judgment = judgments.get(assessment.id);
+    const sufficiency = judgment?.evidenceSufficiency || 'UNREVIEWED';
 
     // Count by review status
-    if (judgment?.reviewStatus === 'COMPLETED') {
-      reviewed++;
-    } else if (judgment?.reviewStatus === 'DEFERRED' || judgment?.humanResult === 'DEFER') {
+    if (judgment?.reviewStatus === 'DEFERRED' || judgment?.humanResult === 'DEFER') {
       deferred++;
-    } else {
-      pending++;
     }
 
-    // Count by AI result
-    switch (assessment.status) {
-      case 'pass':
-        pass++;
-        break;
-      case 'fail':
-        fail++;
-        break;
-      case 'pending':
-      case 'flagged':
-        requiresJudgment++;
-        break;
+    if (sufficiency === 'UNREVIEWED') {
+      pending++;
+      unreviewed++;
+    } else {
+      reviewed++;
+      switch (sufficiency) {
+        case 'SUFFICIENT':
+          sufficient++;
+          break;
+        case 'INSUFFICIENT':
+          insufficient++;
+          break;
+        case 'NEEDS_MORE_EVIDENCE':
+          needsMoreEvidence++;
+          break;
+      }
     }
   }
 
@@ -187,9 +221,10 @@ export function calculateStats(
     reviewed,
     pending,
     deferred,
-    pass,
-    fail,
-    requiresJudgment,
+    sufficient,
+    insufficient,
+    needsMoreEvidence,
+    unreviewed,
   };
 }
 
@@ -207,6 +242,10 @@ export function filterAssessments(
 ): LocalAssessment[] {
   return assessments.filter((assessment) => {
     const judgment = judgments.get(assessment.id);
+
+    if (options.memoType === 'final' && !judgment?.includeInFinal) {
+      return false;
+    }
 
     // Filter: include pending items
     if (!options.includePending) {
@@ -261,11 +300,12 @@ export function generateMarkdown(
     options
   );
   const stats = calculateStats(filteredAssessments, data.judgments);
+  const memoTitle = getMemoTitle(options.memoType);
 
   const lines: string[] = [];
 
   // Header
-  lines.push(`# Interim Technical Memo - ${data.submissionId}`);
+  lines.push(`# ${memoTitle} - ${data.submissionId}`);
   lines.push('');
   if (data.siteId) {
     lines.push(`**Site:** ${data.siteId}`);
@@ -282,11 +322,12 @@ export function generateMarkdown(
   lines.push(`- Pending: ${stats.pending}`);
   lines.push(`- Deferred: ${stats.deferred}`);
   lines.push('');
-  lines.push('### Results Distribution');
+  lines.push('### Evidence Sufficiency Distribution');
   lines.push('');
-  lines.push(`- Pass: ${stats.pass}`);
-  lines.push(`- Fail: ${stats.fail}`);
-  lines.push(`- Requires Judgment: ${stats.requiresJudgment}`);
+  lines.push(`- Sufficient: ${stats.sufficient}`);
+  lines.push(`- Needs More Evidence: ${stats.needsMoreEvidence}`);
+  lines.push(`- Insufficient: ${stats.insufficient}`);
+  lines.push(`- Unreviewed: ${stats.unreviewed}`);
   lines.push('');
 
   // Assessments section header
@@ -300,19 +341,36 @@ export function generateMarkdown(
   // Individual assessments
   for (const assessment of filteredAssessments) {
     const judgment = data.judgments.get(assessment.id);
+    const sufficiencyLabel = formatSufficiencyDisplay(judgment?.evidenceSufficiency);
+    const citation = getCitationDisplay(assessment);
 
-    lines.push(`### ${assessment.policyId} - ${assessment.section}`);
-    lines.push(`**AI Result:** ${formatStatusDisplay(assessment.status)} | **Tier:** ${formatTierDisplay(assessment.tier)}`);
+    lines.push(`### ${citation.label} - ${assessment.section}`);
+    if (citation.showInternalId) {
+      lines.push(`**Internal ID:** ${citation.internalId}`);
+    }
+    lines.push(`**AI Proposed Status:** ${formatStatusDisplay(assessment.status)} | **Tier:** ${formatTierDisplay(assessment.tier)}`);
     lines.push('');
     lines.push(`**Policy:** ${assessment.policyTitle}`);
     lines.push('');
 
-    if (options.twoColumnFormat) {
-      // Two-column format (AI | Human side-by-side)
-      lines.push('| AI Assessment | Human Judgment |');
-      lines.push('|---------------|----------------|');
-      lines.push(`| Result: ${formatStatusDisplay(assessment.status)} | Decision: ${formatHumanResultDisplay(judgment?.humanResult)} |`);
+    if (options.memoType === 'final') {
+      lines.push('**Reviewer Summary (Final Memo):**');
+      lines.push(judgment?.finalMemoSummary || judgment?.judgmentNotes || 'Summary not provided.');
+      lines.push('');
+      lines.push(`**Evidence Sufficiency (Reviewer):** ${sufficiencyLabel}`);
+      if (judgment?.reviewerName) {
+        lines.push(`**Reviewer:** ${judgment.reviewerName}`);
+      }
+      lines.push('');
+    } else if (options.twoColumnFormat) {
+      // Two-column format (AI | Reviewer)
+      lines.push('| AI Assessment | Reviewer Assessment |');
+      lines.push('|---------------|---------------------|');
+      lines.push(`| Status: ${formatStatusDisplay(assessment.status)} | Evidence Sufficiency: ${sufficiencyLabel} |`);
       lines.push(`| Evidence: ${assessment.evidence.length} items found | Notes: ${escapeMarkdown(judgment?.judgmentNotes || 'N/A')} |`);
+      if (judgment?.finalMemoSummary) {
+        lines.push(`| - | Final Memo Summary: ${escapeMarkdown(judgment.finalMemoSummary)} |`);
+      }
       if (judgment?.overrideReason) {
         lines.push(`| - | Override Reason: ${escapeMarkdown(judgment.overrideReason)} |`);
       }
@@ -320,36 +378,34 @@ export function generateMarkdown(
     } else {
       // Single column format
       lines.push('**AI Assessment:**');
-      lines.push(`- Result: ${formatStatusDisplay(assessment.status)}`);
+      lines.push(`- Status: ${formatStatusDisplay(assessment.status)}`);
       lines.push(`- Evidence Items: ${assessment.evidence.length}`);
       if (assessment.notes) {
         lines.push(`- Notes: ${assessment.notes}`);
       }
       lines.push('');
 
-      if (judgment) {
-        lines.push('**Human Judgment:**');
-        lines.push(`- Decision: ${formatHumanResultDisplay(judgment.humanResult)}`);
-        if (judgment.humanConfidence) {
-          lines.push(`- Confidence: ${formatConfidenceDisplay(judgment.humanConfidence)}`);
-        }
-        if (judgment.judgmentNotes) {
-          lines.push(`- Notes: ${judgment.judgmentNotes}`);
-        }
-        if (judgment.overrideReason) {
-          lines.push(`- Override Reason: ${judgment.overrideReason}`);
-        }
-        if (judgment.reviewerName) {
-          lines.push(`- Reviewer: ${judgment.reviewerName}`);
-        }
-        if (judgment.reviewedAt) {
-          lines.push(`- Reviewed: ${new Date(judgment.reviewedAt).toLocaleDateString()}`);
-        }
-        lines.push('');
-      } else {
-        lines.push('**Human Judgment:** Pending Review');
-        lines.push('');
+      lines.push('**Reviewer Assessment:**');
+      lines.push(`- Evidence Sufficiency: ${formatSufficiencyDisplay(judgment?.evidenceSufficiency)}`);
+      if (judgment?.judgmentNotes) {
+        lines.push(`- Notes: ${judgment.judgmentNotes}`);
       }
+      if (judgment?.finalMemoSummary) {
+        lines.push(`- Final Memo Summary: ${judgment.finalMemoSummary}`);
+      }
+      if (judgment?.includeInFinal !== undefined) {
+        lines.push(`- Include-in-Final: ${judgment.includeInFinal ? 'Yes' : 'No'}`);
+      }
+      if (judgment?.followUpNeeded !== undefined) {
+        lines.push(`- Follow-up Needed: ${judgment.followUpNeeded ? 'Yes' : 'No'}`);
+      }
+      if (judgment?.reviewerName) {
+        lines.push(`- Reviewer: ${judgment.reviewerName}`);
+      }
+      if (judgment?.reviewedAt) {
+        lines.push(`- Reviewed: ${new Date(judgment.reviewedAt).toLocaleDateString()}`);
+      }
+      lines.push('');
     }
 
     // Evidence section
@@ -391,6 +447,7 @@ export function generateHTML(
     options
   );
   const stats = calculateStats(filteredAssessments, data.judgments);
+  const memoTitle = getMemoTitle(options.memoType);
 
   const html: string[] = [];
 
@@ -400,7 +457,7 @@ export function generateHTML(
   html.push('<head>');
   html.push('  <meta charset="UTF-8">');
   html.push('  <meta name="viewport" content="width=device-width, initial-scale=1.0">');
-  html.push(`  <title>Interim Technical Memo - ${escapeHtml(data.submissionId)}</title>`);
+  html.push(`  <title>${escapeHtml(memoTitle)} - ${escapeHtml(data.submissionId)}</title>`);
   html.push('  <style>');
   html.push('    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; max-width: 900px; margin: 0 auto; padding: 2rem; color: #333; }');
   html.push('    h1 { color: #1a365d; border-bottom: 2px solid #3182ce; padding-bottom: 0.5rem; }');
@@ -436,7 +493,7 @@ export function generateHTML(
   html.push('<body>');
 
   // Header
-  html.push(`  <h1>Interim Technical Memo - ${escapeHtml(data.submissionId)}</h1>`);
+  html.push(`  <h1>${escapeHtml(memoTitle)} - ${escapeHtml(data.submissionId)}</h1>`);
   if (data.siteId) {
     html.push(`  <p class="meta"><strong>Site:</strong> ${escapeHtml(data.siteId)}</p>`);
   }
@@ -452,11 +509,12 @@ export function generateHTML(
   html.push(`      <div class="stat-item"><div class="stat-value">${stats.pending}</div><div class="stat-label">Pending</div></div>`);
   html.push(`      <div class="stat-item"><div class="stat-value">${stats.deferred}</div><div class="stat-label">Deferred</div></div>`);
   html.push('    </div>');
-  html.push('    <h3 style="margin-top: 1rem;">Results Distribution</h3>');
+  html.push('    <h3 style="margin-top: 1rem;">Evidence Sufficiency Distribution</h3>');
   html.push('    <div class="stats-grid">');
-  html.push(`      <div class="stat-item"><div class="stat-value" style="color: #22543d;">${stats.pass}</div><div class="stat-label">Pass</div></div>`);
-  html.push(`      <div class="stat-item"><div class="stat-value" style="color: #822727;">${stats.fail}</div><div class="stat-label">Fail</div></div>`);
-  html.push(`      <div class="stat-item"><div class="stat-value" style="color: #92400e;">${stats.requiresJudgment}</div><div class="stat-label">Requires Judgment</div></div>`);
+  html.push(`      <div class="stat-item"><div class="stat-value" style="color: #22543d;">${stats.sufficient}</div><div class="stat-label">Sufficient</div></div>`);
+  html.push(`      <div class="stat-item"><div class="stat-value" style="color: #92400e;">${stats.needsMoreEvidence}</div><div class="stat-label">Needs More Evidence</div></div>`);
+  html.push(`      <div class="stat-item"><div class="stat-value" style="color: #822727;">${stats.insufficient}</div><div class="stat-label">Insufficient</div></div>`);
+  html.push(`      <div class="stat-item"><div class="stat-value" style="color: #4a5568;">${stats.unreviewed}</div><div class="stat-label">Unreviewed</div></div>`);
   html.push('    </div>');
   html.push('  </div>');
 
@@ -470,6 +528,8 @@ export function generateHTML(
   // Individual assessments
   for (const assessment of filteredAssessments) {
     const judgment = data.judgments.get(assessment.id);
+    const citation = getCitationDisplay(assessment);
+    const sufficiencyLabel = formatSufficiencyDisplay(judgment?.evidenceSufficiency);
 
     const statusBadgeClass = {
       pass: 'badge-pass',
@@ -486,22 +546,37 @@ export function generateHTML(
 
     html.push('  <div class="assessment-card">');
     html.push('    <div class="assessment-header">');
-    html.push(`      <strong>${escapeHtml(assessment.policyId)}</strong> - ${escapeHtml(assessment.section)}`);
+    html.push(`      <strong>${escapeHtml(citation.label)}</strong> - ${escapeHtml(assessment.section)}`);
     html.push(`      <span class="badge ${statusBadgeClass}">${formatStatusDisplay(assessment.status)}</span>`);
     html.push(`      <span class="badge ${tierBadgeClass}">${formatTierDisplay(assessment.tier)}</span>`);
     html.push('    </div>');
     html.push('    <div class="assessment-body">');
+    if (citation.showInternalId) {
+      html.push(`      <p><strong>Internal ID:</strong> ${escapeHtml(citation.internalId)}</p>`);
+    }
     html.push(`      <p><strong>Policy:</strong> ${escapeHtml(assessment.policyTitle)}</p>`);
 
-    if (options.twoColumnFormat) {
+    if (options.memoType === 'final') {
+      html.push('      <h4>Reviewer Summary (Final Memo)</h4>');
+      html.push(`      <p>${escapeHtml(judgment?.finalMemoSummary || judgment?.judgmentNotes || 'Summary not provided.')}</p>`);
+      html.push('      <ul>');
+      html.push(`        <li>Evidence Sufficiency: ${escapeHtml(sufficiencyLabel)}</li>`);
+      if (judgment?.reviewerName) {
+        html.push(`        <li>Reviewer: ${escapeHtml(judgment.reviewerName)}</li>`);
+      }
+      html.push('      </ul>');
+    } else if (options.twoColumnFormat) {
       // Two-column table format
       html.push('      <table>');
       html.push('        <thead>');
-      html.push('          <tr><th>AI Assessment</th><th>Human Judgment</th></tr>');
+      html.push('          <tr><th>AI Assessment</th><th>Reviewer Assessment</th></tr>');
       html.push('        </thead>');
       html.push('        <tbody>');
-      html.push(`          <tr><td>Result: ${formatStatusDisplay(assessment.status)}</td><td>Decision: ${formatHumanResultDisplay(judgment?.humanResult)}</td></tr>`);
+      html.push(`          <tr><td>Status: ${formatStatusDisplay(assessment.status)}</td><td>Evidence Sufficiency: ${escapeHtml(sufficiencyLabel)}</td></tr>`);
       html.push(`          <tr><td>Evidence: ${assessment.evidence.length} items found</td><td>Notes: ${escapeHtml(judgment?.judgmentNotes || 'N/A')}</td></tr>`);
+      if (judgment?.finalMemoSummary) {
+        html.push(`          <tr><td>-</td><td>Final Memo Summary: ${escapeHtml(judgment.finalMemoSummary)}</td></tr>`);
+      }
       if (judgment?.overrideReason) {
         html.push(`          <tr><td>-</td><td>Override Reason: ${escapeHtml(judgment.overrideReason)}</td></tr>`);
       }
@@ -511,37 +586,35 @@ export function generateHTML(
       // Single column format
       html.push('      <h4>AI Assessment</h4>');
       html.push('      <ul>');
-      html.push(`        <li>Result: ${formatStatusDisplay(assessment.status)}</li>`);
+      html.push(`        <li>Status: ${formatStatusDisplay(assessment.status)}</li>`);
       html.push(`        <li>Evidence Items: ${assessment.evidence.length}</li>`);
       if (assessment.notes) {
         html.push(`        <li>Notes: ${escapeHtml(assessment.notes)}</li>`);
       }
       html.push('      </ul>');
 
-      if (judgment) {
-        html.push('      <h4>Human Judgment</h4>');
-        html.push('      <ul>');
-        html.push(`        <li>Decision: ${formatHumanResultDisplay(judgment.humanResult)}</li>`);
-        if (judgment.humanConfidence) {
-          html.push(`        <li>Confidence: ${formatConfidenceDisplay(judgment.humanConfidence)}</li>`);
-        }
-        if (judgment.judgmentNotes) {
-          html.push(`        <li>Notes: ${escapeHtml(judgment.judgmentNotes)}</li>`);
-        }
-        if (judgment.overrideReason) {
-          html.push(`        <li>Override Reason: ${escapeHtml(judgment.overrideReason)}</li>`);
-        }
-        if (judgment.reviewerName) {
-          html.push(`        <li>Reviewer: ${escapeHtml(judgment.reviewerName)}</li>`);
-        }
-        if (judgment.reviewedAt) {
-          html.push(`        <li>Reviewed: ${new Date(judgment.reviewedAt).toLocaleDateString()}</li>`);
-        }
-        html.push('      </ul>');
-      } else {
-        html.push('      <h4>Human Judgment</h4>');
-        html.push('      <p><em>Pending Review</em></p>');
+      html.push('      <h4>Reviewer Assessment</h4>');
+      html.push('      <ul>');
+      html.push(`        <li>Evidence Sufficiency: ${escapeHtml(sufficiencyLabel)}</li>`);
+      if (judgment?.judgmentNotes) {
+        html.push(`        <li>Notes: ${escapeHtml(judgment.judgmentNotes)}</li>`);
       }
+      if (judgment?.finalMemoSummary) {
+        html.push(`        <li>Final Memo Summary: ${escapeHtml(judgment.finalMemoSummary)}</li>`);
+      }
+      if (judgment?.includeInFinal !== undefined) {
+        html.push(`        <li>Include-in-Final: ${judgment.includeInFinal ? 'Yes' : 'No'}</li>`);
+      }
+      if (judgment?.followUpNeeded !== undefined) {
+        html.push(`        <li>Follow-up Needed: ${judgment.followUpNeeded ? 'Yes' : 'No'}</li>`);
+      }
+      if (judgment?.reviewerName) {
+        html.push(`        <li>Reviewer: ${escapeHtml(judgment.reviewerName)}</li>`);
+      }
+      if (judgment?.reviewedAt) {
+        html.push(`        <li>Reviewed: ${new Date(judgment.reviewedAt).toLocaleDateString()}</li>`);
+      }
+      html.push('      </ul>');
     }
 
     // Evidence section
@@ -604,14 +677,19 @@ export function generateCSV(
   // Header row
   const headers = [
     'CSAP ID',
+    'Citation Label',
     'Section',
     'Tier',
     'AI Result',
+    'Evidence Sufficiency',
     'Human Decision',
     'Human Confidence',
     'Policy Question',
     'Evidence Count',
     'Judgment Notes',
+    'Final Memo Summary',
+    'Include-in-Final',
+    'Follow-up Needed',
     'Override Reason',
     'Reviewer',
     'Review Date',
@@ -624,14 +702,19 @@ export function generateCSV(
 
     const row = [
       escapeCSV(assessment.policyId),
+      escapeCSV(assessment.citationLabel || ''),
       escapeCSV(assessment.section),
       escapeCSV(formatTierDisplay(assessment.tier)),
       escapeCSV(formatStatusDisplay(assessment.status)),
+      escapeCSV(formatSufficiencyDisplay(judgment?.evidenceSufficiency)),
       escapeCSV(formatHumanResultDisplay(judgment?.humanResult)),
       escapeCSV(judgment?.humanConfidence || ''),
       escapeCSV(assessment.policyTitle),
       String(assessment.evidence.length),
       escapeCSV(judgment?.judgmentNotes || ''),
+      escapeCSV(judgment?.finalMemoSummary || ''),
+      judgment?.includeInFinal === undefined ? '' : (judgment.includeInFinal ? 'Yes' : 'No'),
+      judgment?.followUpNeeded === undefined ? '' : (judgment.followUpNeeded ? 'Yes' : 'No'),
       escapeCSV(judgment?.overrideReason || ''),
       escapeCSV(judgment?.reviewerName || ''),
       judgment?.reviewedAt ? new Date(judgment.reviewedAt).toLocaleDateString() : '',
@@ -660,6 +743,7 @@ export function generateWordHTML(
     options
   );
   const stats = calculateStats(filteredAssessments, data.judgments);
+  const memoTitle = getMemoTitle(options.memoType);
 
   const html: string[] = [];
 
@@ -667,7 +751,7 @@ export function generateWordHTML(
   html.push('<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">');
   html.push('<head>');
   html.push('<meta charset="UTF-8">');
-  html.push(`<title>Interim Technical Memo - ${escapeHtml(data.submissionId)}</title>`);
+  html.push(`<title>${escapeHtml(memoTitle)} - ${escapeHtml(data.submissionId)}</title>`);
   html.push('<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->');
   html.push('<style>');
   html.push('  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.5; margin: 1in; }');
@@ -689,7 +773,7 @@ export function generateWordHTML(
   html.push('<body>');
 
   // Header
-  html.push(`<h1>Interim Technical Memo</h1>`);
+  html.push(`<h1>${escapeHtml(memoTitle)}</h1>`);
   html.push(`<p class="meta"><strong>Submission:</strong> ${escapeHtml(data.submissionId)}</p>`);
   if (data.siteId) {
     html.push(`<p class="meta"><strong>Site:</strong> ${escapeHtml(data.siteId)}</p>`);
@@ -707,12 +791,13 @@ export function generateWordHTML(
   html.push(`<tr><td>Deferred</td><td>${stats.deferred}</td><td>${stats.total > 0 ? Math.round((stats.deferred / stats.total) * 100) : 0}%</td></tr>`);
   html.push('</table>');
 
-  html.push('<h3>Results Distribution</h3>');
+  html.push('<h3>Evidence Sufficiency Distribution</h3>');
   html.push('<table>');
   html.push('<tr><th>Result</th><th>Count</th></tr>');
-  html.push(`<tr><td><span class="pass">PASS</span></td><td>${stats.pass}</td></tr>`);
-  html.push(`<tr><td><span class="fail">FAIL</span></td><td>${stats.fail}</td></tr>`);
-  html.push(`<tr><td><span class="pending">REQUIRES JUDGMENT</span></td><td>${stats.requiresJudgment}</td></tr>`);
+  html.push(`<tr><td><span class="pass">SUFFICIENT</span></td><td>${stats.sufficient}</td></tr>`);
+  html.push(`<tr><td><span class="pending">NEEDS MORE EVIDENCE</span></td><td>${stats.needsMoreEvidence}</td></tr>`);
+  html.push(`<tr><td><span class="fail">INSUFFICIENT</span></td><td>${stats.insufficient}</td></tr>`);
+  html.push(`<tr><td>UNREVIEWED</td><td>${stats.unreviewed}</td></tr>`);
   html.push('</table>');
 
   // Assessments
@@ -721,16 +806,24 @@ export function generateWordHTML(
   for (const assessment of filteredAssessments) {
     const judgment = data.judgments.get(assessment.id);
     const statusClass = assessment.status === 'pass' ? 'pass' : assessment.status === 'fail' ? 'fail' : 'pending';
+    const sufficiencyLabel = formatSufficiencyDisplay(judgment?.evidenceSufficiency);
+    const citation = getCitationDisplay(assessment);
 
-    html.push(`<h3>${escapeHtml(assessment.policyId)} - ${escapeHtml(assessment.section)}</h3>`);
-    html.push(`<p><strong>AI Result:</strong> <span class="${statusClass}">${formatStatusDisplay(assessment.status)}</span> | <strong>Tier:</strong> ${formatTierDisplay(assessment.tier)}</p>`);
+    html.push(`<h3>${escapeHtml(citation.label)} - ${escapeHtml(assessment.section)}</h3>`);
+    if (citation.showInternalId) {
+      html.push(`<p><strong>Internal ID:</strong> ${escapeHtml(citation.internalId)}</p>`);
+    }
+    html.push(`<p><strong>AI Proposed Status:</strong> <span class="${statusClass}">${formatStatusDisplay(assessment.status)}</span> | <strong>Tier:</strong> ${formatTierDisplay(assessment.tier)}</p>`);
     html.push(`<p><strong>Policy:</strong> ${escapeHtml(assessment.policyTitle)}</p>`);
 
     // Comparison table
     html.push('<table>');
-    html.push('<tr><th style="width:50%">AI Assessment</th><th style="width:50%">Human Judgment</th></tr>');
-    html.push(`<tr><td>Result: <span class="${statusClass}">${formatStatusDisplay(assessment.status)}</span></td><td>Decision: ${formatHumanResultDisplay(judgment?.humanResult)}</td></tr>`);
+    html.push('<tr><th style="width:50%">AI Assessment</th><th style="width:50%">Reviewer Assessment</th></tr>');
+    html.push(`<tr><td>Status: <span class="${statusClass}">${formatStatusDisplay(assessment.status)}</span></td><td>Evidence Sufficiency: ${escapeHtml(sufficiencyLabel)}</td></tr>`);
     html.push(`<tr><td>Evidence: ${assessment.evidence.length} items found</td><td>Notes: ${escapeHtml(judgment?.judgmentNotes || 'N/A')}</td></tr>`);
+    if (judgment?.finalMemoSummary) {
+      html.push(`<tr><td>&nbsp;</td><td>Final Memo Summary: ${escapeHtml(judgment.finalMemoSummary)}</td></tr>`);
+    }
     if (judgment?.overrideReason) {
       html.push(`<tr><td>&nbsp;</td><td>Override Reason: ${escapeHtml(judgment.overrideReason)}</td></tr>`);
     }

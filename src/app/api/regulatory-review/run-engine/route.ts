@@ -10,16 +10,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin, requireLocalEngine } from '@/lib/api-guards';
 import { spawn } from 'child_process';
 import { writeFile, mkdir, readFile, unlink } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 
-// Base paths for the regulatory review engine
-const ENGINE_BASE_PATH = 'F:/Regulatory-Review/engine';
-const EXTRACTIONS_PATH = 'F:/Regulatory-Review/1_Active_Reviews/Teck_Trail-WARP/1_Extractions/2025_AIP_Application';
-const OUTPUT_PATH = 'F:/Regulatory-Review/1_Active_Reviews/Teck_Trail-WARP/2_Evaluation_Output';
-const TEMP_UPLOAD_PATH = 'F:/Regulatory-Review/engine/data/temp_uploads';
+// Base paths for the regulatory review engine (env-driven for local portability)
+const ENGINE_BASE_PATH = process.env.REG_REVIEW_ENGINE_BASE_PATH || 'C:/Projects/Regulatory-Review/engine';
+const EXTRACTIONS_PATH = process.env.REG_REVIEW_EXTRACTIONS_PATH || 'C:/Projects/Regulatory-Review/1_Active_Reviews/Teck_Trail-WARP/1_Extractions/2025_AIP_Application';
+const OUTPUT_PATH = process.env.REG_REVIEW_OUTPUT_PATH || 'C:/Projects/Regulatory-Review/1_Active_Reviews/Teck_Trail-WARP/2_Evaluation_Output';
+const TEMP_UPLOAD_PATH = process.env.REG_REVIEW_TEMP_UPLOAD_PATH || 'C:/Projects/Regulatory-Review/engine/data/temp_uploads';
 
 // Types matching the engine output
 interface EvidenceItem {
@@ -332,6 +333,11 @@ async function importFromExistingOutput(): Promise<EvaluationResult> {
 
 export async function POST(request: NextRequest) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+    const engineError = requireLocalEngine()
+    if (engineError) return engineError
+
     const formData = await request.formData();
     const submissionId = formData.get('submissionId') as string;
     const siteId = formData.get('siteId') as string;

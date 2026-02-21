@@ -48,6 +48,7 @@ export {
   getAssessments,
   getAssessmentById,
   getAssessmentWithJudgment,
+  getJudgmentsForSubmission,
   createAssessment,
   createAssessmentsBulk,
   // Judgment queries

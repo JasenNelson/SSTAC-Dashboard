@@ -30,6 +30,14 @@ export interface ReviewSidebarProps {
   onToggleCollapse?: () => void;
 }
 
+function formatTopicId(topicId: string): string {
+  return topicId
+    .split('_')
+    .map((word) => (word.length > 0 ? word[0].toUpperCase() + word.slice(1).toLowerCase() : ''))
+    .join(' ')
+    .trim();
+}
+
 // Map sections to CSAP sheet groups
 function getSheetGroup(section: string): string {
   const sectionLower = section.toLowerCase();
@@ -62,6 +70,19 @@ function getSheetGroup(section: string): string {
   }
 
   return 'Other';
+}
+
+function getGroupLabel(assessment: Assessment): string {
+  if (assessment.subtopicLabel && assessment.subtopicLabel.trim().length > 0) {
+    return assessment.subtopicLabel.trim();
+  }
+  if (assessment.topicLabel && assessment.topicLabel.trim().length > 0) {
+    return assessment.topicLabel.trim();
+  }
+  if (assessment.topicId && assessment.topicId.trim().length > 0) {
+    return formatTopicId(assessment.topicId.trim());
+  }
+  return getSheetGroup(assessment.section || '');
 }
 
 // Status indicator dot component
@@ -124,16 +145,19 @@ function SheetSection({
   }, [assessments]);
 
   const pendingCount = statusCounts.pending + statusCounts.flagged;
+  const sectionId = `sheet-${sheetName.toLowerCase().replace(/[^a-z0-9_-]+/g, '-')}`;
 
   return (
     <div className="border-b border-gray-100 dark:border-gray-700 last:border-b-0">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+        aria-expanded={isExpanded}
+        aria-controls={sectionId}
       >
         <div className="flex items-center gap-2 min-w-0">
           <FileText className="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-focus-within:whitespace-normal group-focus-within:break-words" title={sheetName}>
             {sheetName}
           </span>
           <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -159,33 +183,39 @@ function SheetSection({
           isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="py-1 px-2 space-y-1">
-          {assessments.map((assessment) => (
-            <button
-              key={assessment.id}
-              onClick={() => onSelect(assessment.id)}
-              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors ${
-                selectedId === assessment.id
-                  ? 'bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-300 dark:border-indigo-600'
-                  : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-transparent'
-              }`}
-            >
-              <StatusDot status={assessment.status} />
-              <span
-                className={`flex-1 text-xs truncate ${
+        <div id={sectionId} className="py-1 px-2 space-y-1">
+          {assessments.map((assessment) => {
+            const displayLabel = assessment.citationLabel || assessment.policyId;
+            const title = displayLabel === assessment.policyId
+              ? assessment.policyId
+              : `${displayLabel} (${assessment.policyId})`;
+            return (
+              <button
+                key={assessment.id}
+                onClick={() => onSelect(assessment.id)}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                   selectedId === assessment.id
-                    ? 'text-indigo-900 dark:text-indigo-100 font-medium'
-                    : 'text-gray-700 dark:text-gray-300'
+                    ? 'bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-300 dark:border-indigo-600'
+                    : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-transparent'
                 }`}
-                title={assessment.policyId}
               >
-                {assessment.policyId.length > 18
-                  ? `${assessment.policyId.slice(0, 18)}...`
-                  : assessment.policyId}
-              </span>
-              <TierBadgeCompact tier={assessment.tier} />
-            </button>
-          ))}
+                <StatusDot status={assessment.status} />
+                <span
+                  className={`flex-1 text-xs truncate group-focus-within:whitespace-normal group-focus-within:break-words ${
+                    selectedId === assessment.id
+                      ? 'text-indigo-900 dark:text-indigo-100 font-medium'
+                      : 'text-gray-700 dark:text-gray-300'
+                  }`}
+                  title={title}
+                >
+                  {displayLabel.length > 18
+                    ? `${displayLabel.slice(0, 18)}...`
+                    : displayLabel}
+                </span>
+                <TierBadgeCompact tier={assessment.tier} />
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -204,16 +234,16 @@ export default function ReviewSidebar({
   // Track expanded sections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['CSR', 'Protocols']));
 
-  // Group assessments by CSAP sheet
+  // Group assessments by taxonomy labels (fallback to sheet/section)
   const groupedAssessments = useMemo(() => {
     const groups: Record<string, Assessment[]> = {};
 
     assessments.forEach((assessment) => {
-      const sheet = getSheetGroup(assessment.section);
-      if (!groups[sheet]) {
-        groups[sheet] = [];
+      const groupLabel = getGroupLabel(assessment);
+      if (!groups[groupLabel]) {
+        groups[groupLabel] = [];
       }
-      groups[sheet].push(assessment);
+      groups[groupLabel].push(assessment);
     });
 
     // Sort groups by name
@@ -257,7 +287,8 @@ export default function ReviewSidebar({
       <div className="w-10 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center transition-all duration-200">
         <button
           onClick={onToggleCollapse}
-          className="w-full h-full flex flex-col items-center justify-center gap-2 py-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="w-full h-full flex flex-col items-center justify-center gap-2 py-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          aria-label="Show filters"
           title="Show filters"
         >
           <ChevronRight className="h-4 w-4" />
@@ -278,7 +309,8 @@ export default function ReviewSidebar({
           {onToggleCollapse && (
             <button
               onClick={onToggleCollapse}
-              className="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              className="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              aria-label="Collapse sidebar"
               title="Collapse sidebar"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -296,7 +328,7 @@ export default function ReviewSidebar({
               <button
                 key={status}
                 onClick={() => onFilterChange({ ...filters, status })}
-                className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                className={`px-2 py-1 text-xs font-medium rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                   isActive
                     ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -310,10 +342,12 @@ export default function ReviewSidebar({
         </div>
 
         {/* Tier Filter Dropdown */}
+        <label htmlFor="tierFilter" className="sr-only">Tier filter</label>
         <select
+          id="tierFilter"
           value={filters.tier}
           onChange={(e) => onFilterChange({ ...filters, tier: e.target.value as TierFilter })}
-          className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors"
+          className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 transition-colors"
         >
           <option value="all">All Tiers</option>
           <option value="TIER_1_BINARY">Tier 1 - Binary</option>
@@ -369,7 +403,7 @@ export default function ReviewSidebar({
         <button
           type="button"
           disabled
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
           title="Export results (coming soon)"
         >
           <Download className="h-4 w-4" />

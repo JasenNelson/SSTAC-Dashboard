@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/api-guards';
 import { getProgress, getSubmissionById } from '@/lib/sqlite/queries';
 import type { ReviewProgress } from '@/lib/regulatory-review/types';
 
@@ -19,6 +20,9 @@ import type { ReviewProgress } from '@/lib/regulatory-review/types';
  */
 export async function GET(request: NextRequest) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+
     const { searchParams } = new URL(request.url);
 
     const submissionId = searchParams.get('submissionId');

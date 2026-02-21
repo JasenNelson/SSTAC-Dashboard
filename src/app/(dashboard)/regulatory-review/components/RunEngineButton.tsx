@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Play, Loader2, CheckCircle2, AlertCircle, Upload, X, Download } from 'lucide-react';
+import { isLocalEngineClient } from '@/lib/feature-flags';
+import UnderConstruction from '@/components/ui/UnderConstruction';
 
 interface RunEngineButtonProps {
   submissionId: string;
@@ -43,6 +45,11 @@ export default function RunEngineButton({
   const [showModal, setShowModal] = useState(false);
   const [runMode, setRunMode] = useState<RunMode>('import');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const engineEnabled = isLocalEngineClient();
+
+  if (!engineEnabled) {
+    return <UnderConstruction feature="Evaluation Engine" />;
+  }
 
   const handleRunEngine = async () => {
     setStatus('running');
@@ -151,7 +158,7 @@ export default function RunEngineButton({
       <button
         onClick={() => setShowModal(true)}
         disabled={disabled || status === 'running'}
-        className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 ${getButtonClass()}`}
+        className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${getButtonClass()}`}
       >
         {buttonContent()}
       </button>
@@ -159,15 +166,16 @@ export default function RunEngineButton({
       {/* Modal for Run Engine options */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4" role="dialog" aria-modal="true" aria-labelledby="run-engine-title">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 id="run-engine-title" className="text-lg font-semibold text-gray-900">
                 Run Evaluation Engine
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded"
+                className="p-1 text-gray-400 hover:text-gray-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                aria-label="Close"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -195,7 +203,7 @@ export default function RunEngineButton({
                     name="mode"
                     checked={runMode === 'import'}
                     onChange={() => setRunMode('import')}
-                    className="text-emerald-600 focus:ring-emerald-500"
+                    className="text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                   />
                   <div className="flex items-center gap-2">
                     <Download className="w-4 h-4 text-emerald-600" />
@@ -212,7 +220,7 @@ export default function RunEngineButton({
                     name="mode"
                     checked={runMode === 'existing'}
                     onChange={() => setRunMode('existing')}
-                    className="text-emerald-600 focus:ring-emerald-500"
+                    className="text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                   />
                   <div className="flex items-center gap-2">
                     <Play className="w-4 h-4 text-blue-600" />
@@ -229,7 +237,7 @@ export default function RunEngineButton({
                     name="mode"
                     checked={runMode === 'upload'}
                     onChange={() => setRunMode('upload')}
-                    className="text-emerald-600 focus:ring-emerald-500"
+                    className="text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                   />
                   <div className="flex items-center gap-2">
                     <Upload className="w-4 h-4 text-purple-600" />
@@ -273,7 +281,8 @@ export default function RunEngineButton({
                           <span className="text-sm text-gray-700 truncate">{file.name}</span>
                           <button
                             onClick={() => removeFile(index)}
-                            className="p-1 text-gray-400 hover:text-red-500"
+                            className="p-1 text-gray-400 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                            aria-label={`Remove ${file.name}`}
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -335,14 +344,14 @@ export default function RunEngineButton({
                     window.location.reload();
                   }
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
               >
                 {result?.success ? 'Close & Refresh' : 'Cancel'}
               </button>
               <button
                 onClick={handleRunEngine}
                 disabled={status === 'running' || (runMode === 'upload' && selectedFiles.length === 0)}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
               >
                 {status === 'running' ? (
                   <>

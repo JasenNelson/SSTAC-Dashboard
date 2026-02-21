@@ -47,7 +47,9 @@ export default function ConfidenceMeter({
   className = '',
   showLabel = true
 }: ConfidenceMeterProps) {
-  const config = confidenceConfig[confidence];
+  // Defensive fallback for invalid/undefined confidence values
+  const validConfidence = confidence && confidenceConfig[confidence] ? confidence : 'MEDIUM';
+  const config = confidenceConfig[validConfidence];
   const totalSegments = 3;
 
   return (

@@ -11,6 +11,7 @@ import {
   AssessmentResult,
   ConfidenceLevel,
   DiscretionTier,
+  EvidenceSufficiency,
   HumanResult,
   ReviewStatus,
 } from './types';
@@ -43,6 +44,11 @@ export const humanResultSchema = z.nativeEnum(HumanResult);
  * Zod schema for ReviewStatus enum
  */
 export const reviewStatusSchema = z.nativeEnum(ReviewStatus);
+
+/**
+ * Zod schema for EvidenceSufficiency enum
+ */
+export const evidenceSufficiencySchema = z.nativeEnum(EvidenceSufficiency);
 
 // ============================================================================
 // Judgment Schemas
@@ -79,6 +85,18 @@ export const createJudgmentSchema = z
       .max(2000, 'Override reason must be 2000 characters or less')
       .trim()
       .optional(),
+
+    evidenceSufficiency: evidenceSufficiencySchema.optional(),
+
+    includeInFinal: z.boolean().optional(),
+
+    finalMemoSummary: z
+      .string()
+      .max(5000, 'Final memo summary must be 5000 characters or less')
+      .trim()
+      .optional(),
+
+    followUpNeeded: z.boolean().optional(),
 
     routedTo: z
       .string()
@@ -151,6 +169,18 @@ export const updateJudgmentSchema = z
       .max(2000, 'Override reason must be 2000 characters or less')
       .trim()
       .optional(),
+
+    evidenceSufficiency: evidenceSufficiencySchema.optional(),
+
+    includeInFinal: z.boolean().optional(),
+
+    finalMemoSummary: z
+      .string()
+      .max(5000, 'Final memo summary must be 5000 characters or less')
+      .trim()
+      .optional(),
+
+    followUpNeeded: z.boolean().optional(),
 
     routedTo: z
       .string()

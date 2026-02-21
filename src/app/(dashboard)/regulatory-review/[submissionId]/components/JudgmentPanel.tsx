@@ -16,10 +16,13 @@ import SimpleToast from '@/components/SimpleToast';
 
 export type HumanResult = 'ACCEPT' | 'OVERRIDE_PASS' | 'OVERRIDE_FAIL' | 'DEFER' | 'NOT_APPLICABLE';
 export type ReviewStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'DEFERRED';
+export type EvidenceSufficiency = 'SUFFICIENT' | 'INSUFFICIENT' | 'NEEDS_MORE_EVIDENCE' | 'UNREVIEWED';
 
 export interface Assessment {
   id: string;
+  dbId?: number;
   csapId: string;
+  citationLabel?: string;
   csapText: string;
   section: string;
   sheet?: string;
@@ -41,6 +44,10 @@ export interface Judgment {
   humanConfidence?: ConfidenceLevel;
   judgmentNotes?: string;
   overrideReason?: string;
+  evidenceSufficiency?: EvidenceSufficiency;
+  includeInFinal?: boolean;
+  finalMemoSummary?: string;
+  followUpNeeded?: boolean;
   routedTo?: string;
   routingReason?: string;
   reviewerId?: string;
@@ -137,27 +144,27 @@ function getTierConstraints(tier: TierType): TierConstraints {
       };
 
     case 'TIER_2_PROFESSIONAL':
-      // Cannot accept or override to pass - only flag deficiencies or defer
+      // Professional judgment required - reviewer retains full authority
       return {
-        allowAccept: false,
-        allowOverridePass: false,
+        allowAccept: true,
+        allowOverridePass: true,
         allowOverrideFail: true,
         allowDefer: true,
         allowNotApplicable: true,
         tooltipMessage:
-          'TIER_2 items require professional judgment. Cannot accept AI result or override to PASS - only flag deficiencies or defer.',
+          'TIER_2 items require professional judgment. AI should not auto-pass; reviewer decisions are authoritative.',
       };
 
     case 'TIER_3_STATUTORY':
-      // Observation only - only defer is allowed
+      // Statutory decision required - reviewer retains full authority
       return {
-        allowAccept: false,
-        allowOverridePass: false,
-        allowOverrideFail: false,
+        allowAccept: true,
+        allowOverridePass: true,
+        allowOverrideFail: true,
         allowDefer: true,
         allowNotApplicable: true,
         tooltipMessage:
-          'TIER_3 items require Statutory Decision Maker determination. Only DEFER is allowed.',
+          'TIER_3 items require statutory decision-making. AI should not auto-pass; reviewer decisions are authoritative.',
       };
 
     default:
@@ -246,6 +253,8 @@ export default function JudgmentPanel({
   const [isSaving, setIsSaving] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const displayLabel = assessment.citationLabel || assessment.csapId;
+  const showInternalId = assessment.citationLabel && assessment.citationLabel !== assessment.csapId;
 
   // Refs for keyboard navigation
   const panelRef = useRef<HTMLDivElement>(null);
@@ -406,12 +415,20 @@ export default function JudgmentPanel({
         {/* Header - Sticky */}
         <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 pr-2">
-              {assessment.csapId}
-            </h3>
+            <div className="pr-2">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                {displayLabel}
+              </h3>
+              {showInternalId && (
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">
+                  ID: {assessment.csapId}
+                </div>
+              )}
+            </div>
             <button
               onClick={onClose}
-              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              aria-label="Close panel"
+              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               title="Close panel (Esc)"
             >
               <X className="w-5 h-5" />
@@ -465,7 +482,7 @@ export default function JudgmentPanel({
                   <label
                     key={option.value}
                     className={`
-                      relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all
+                      relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-gray-900
                       ${
                         isAllowed
                           ? isSelected
@@ -532,12 +549,12 @@ export default function JudgmentPanel({
                 >
                   Override Confidence
                 </label>
-                <select
-                  id="confidence"
-                  value={confidence}
-                  onChange={(e) => setConfidence(e.target.value as ConfidenceLevel)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-                >
+                  <select
+                    id="confidence"
+                    value={confidence}
+                    onChange={(e) => setConfidence(e.target.value as ConfidenceLevel)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                  >
                   {CONFIDENCE_OPTIONS.map((level) => (
                     <option key={level} value={level}>
                       {level}
@@ -572,7 +589,7 @@ export default function JudgmentPanel({
                   }}
                   rows={3}
                   placeholder="Explain why you are overriding the AI result..."
-                  className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 resize-none ${
+                  className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none ${
                     validationErrors.overrideReason
                       ? 'border-red-300 dark:border-red-600'
                       : 'border-gray-300 dark:border-gray-600'
@@ -603,7 +620,7 @@ export default function JudgmentPanel({
                 onChange={(e) => setNotes(e.target.value)}
                 rows={4}
                 placeholder="Add any additional notes or observations..."
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 resize-none"
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none"
               />
             </div>
           </section>
@@ -619,7 +636,7 @@ export default function JudgmentPanel({
               type="button"
               onClick={onSkip}
               disabled={isSaving || isLoading}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
             >
               Skip
             </button>
@@ -627,7 +644,7 @@ export default function JudgmentPanel({
               type="button"
               onClick={handleSave}
               disabled={isSaving || isLoading || !selectedDecision}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
             >
               {(isSaving || isLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
               Save

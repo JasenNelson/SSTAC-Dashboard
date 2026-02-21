@@ -12,6 +12,7 @@ export {
   ConfidenceLevel,
   DiscretionTier,
   EvidenceType,
+  EvidenceSufficiency,
   HumanResult,
   ReviewStatus,
   // Interfaces
@@ -37,6 +38,7 @@ export {
   confidenceLevelSchema,
   discretionTierSchema,
   humanResultSchema,
+  evidenceSufficiencySchema,
   reviewStatusSchema,
   // Main schemas
   assessmentFilterSchema,

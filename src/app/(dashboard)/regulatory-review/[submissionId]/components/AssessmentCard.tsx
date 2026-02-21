@@ -104,8 +104,8 @@ const DECISION_OPTIONS: DecisionOption[] = [
  * Determine which human decision options are allowed based on discretion tier
  *
  * TIER_1_BINARY: All options allowed
- * TIER_2_PROFESSIONAL: Cannot Accept or Override PASS (AI cannot determine adequacy)
- * TIER_3_STATUTORY: Only Defer allowed (AI observes only)
+ * TIER_2_PROFESSIONAL: Reviewer judgment required (AI should not auto-pass)
+ * TIER_3_STATUTORY: Reviewer judgment required (AI should not auto-pass)
  */
 function getAllowedDecisions(tier: DiscretionTier): Set<HumanResult> {
   switch (tier) {
@@ -119,12 +119,22 @@ function getAllowedDecisions(tier: DiscretionTier): Set<HumanResult> {
       ]);
 
     case DiscretionTier.TIER_2_PROFESSIONAL:
-      // Cannot accept AI result or override to PASS (AI cannot return ADEQUATE)
-      return new Set([HumanResult.OVERRIDE_FAIL, HumanResult.DEFER]);
+      // Professional judgment required - reviewer retains full authority
+      return new Set([
+        HumanResult.ACCEPT,
+        HumanResult.OVERRIDE_PASS,
+        HumanResult.OVERRIDE_FAIL,
+        HumanResult.DEFER,
+      ]);
 
     case DiscretionTier.TIER_3_STATUTORY:
-      // AI observes only - must defer to SDM
-      return new Set([HumanResult.DEFER]);
+      // Statutory decision required - reviewer retains full authority
+      return new Set([
+        HumanResult.ACCEPT,
+        HumanResult.OVERRIDE_PASS,
+        HumanResult.OVERRIDE_FAIL,
+        HumanResult.DEFER,
+      ]);
 
     default:
       return new Set([HumanResult.DEFER]);
@@ -135,21 +145,8 @@ function getAllowedDecisions(tier: DiscretionTier): Set<HumanResult> {
  * Get tooltip explanation for why an option is disabled
  */
 function getDisabledTooltip(option: HumanResult, tier: DiscretionTier): string | null {
-  if (tier === DiscretionTier.TIER_2_PROFESSIONAL) {
-    if (option === HumanResult.ACCEPT) {
-      return 'TIER_2 items require professional judgment - AI cannot determine adequacy';
-    }
-    if (option === HumanResult.OVERRIDE_PASS) {
-      return 'Cannot mark as PASS - requires QP professional judgment';
-    }
-  }
-
-  if (tier === DiscretionTier.TIER_3_STATUTORY) {
-    if (option !== HumanResult.DEFER) {
-      return 'TIER_3 statutory matters must be deferred to Statutory Decision Maker';
-    }
-  }
-
+  void option;
+  void tier;
   return null;
 }
 
@@ -324,7 +321,8 @@ export default function AssessmentCard({
         specId: item.specId,
         location: item.location,
         excerpt: item.excerpt,
-        confidence: confidenceLevelMap[item.confidence],
+        // Fallback to 'MEDIUM' if confidence is not a valid enum value
+        confidence: confidenceLevelMap[item.confidence] || 'MEDIUM',
         matchReasons: item.matchReasons,
       })),
     [assessment.evidenceFound]
@@ -458,7 +456,7 @@ export default function AssessmentCard({
                 AI Confidence
               </label>
               <ConfidenceMeter
-                confidence={confidenceLevelMap[assessment.aiConfidence]}
+                confidence={confidenceLevelMap[assessment.aiConfidence] || 'MEDIUM'}
                 showLabel={true}
               />
             </div>
@@ -564,7 +562,7 @@ export default function AssessmentCard({
                       checked={isSelected}
                       disabled={!isAllowed || readOnly}
                       onChange={() => handleDecisionChange(option.value)}
-                      className="mt-0.5 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                      className="mt-0.5 h-4 w-4 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 border-gray-300 dark:border-gray-600 disabled:opacity-50"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
@@ -604,7 +602,7 @@ export default function AssessmentCard({
                 value={localConfidence || ''}
                 onChange={(e) => handleConfidenceChange(e.target.value as ConfidenceLevelEnum)}
                 disabled={readOnly}
-                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50"
               >
                 <option value="">Select confidence...</option>
                 <option value="HIGH">High</option>
@@ -625,7 +623,7 @@ export default function AssessmentCard({
               disabled={readOnly}
               placeholder="Add notes about your review..."
               rows={3}
-              className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 resize-none"
+              className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50 resize-none"
             />
           </div>
 
@@ -635,15 +633,15 @@ export default function AssessmentCard({
               <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                 Override Reason <span className="text-red-500">*</span>
               </label>
-              <textarea
-                value={localOverrideReason}
-                onChange={(e) => handleOverrideReasonChange(e.target.value)}
-                disabled={readOnly}
-                placeholder="Required: Explain why you are overriding the AI result..."
-                rows={3}
-                className={`w-full text-sm border rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 resize-none ${
+            <textarea
+              value={localOverrideReason}
+              onChange={(e) => handleOverrideReasonChange(e.target.value)}
+              disabled={readOnly}
+              placeholder="Required: Explain why you are overriding the AI result..."
+              rows={3}
+                className={`w-full text-sm border rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50 resize-none ${
                   needsOverrideReason
-                    ? 'border-red-300 dark:border-red-600 focus:ring-red-500'
+                    ? 'border-red-300 dark:border-red-600 focus-visible:ring-red-500'
                     : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
@@ -661,14 +659,14 @@ export default function AssessmentCard({
               <button
                 onClick={handleSave}
                 disabled={!localDecision || needsOverrideReason}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Save className="w-4 h-4" />
                 Save
               </button>
               <button
                 onClick={handleSkip}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 transition-colors"
               >
                 <SkipForward className="w-4 h-4" />
                 Skip
@@ -676,7 +674,7 @@ export default function AssessmentCard({
               <button
                 onClick={handleClear}
                 disabled={!isDirty && !localDecision}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
                 Clear

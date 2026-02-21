@@ -60,6 +60,10 @@ export interface Judgment {
   human_confidence: string | null;
   judgment_notes: string | null;
   override_reason: string | null;
+  evidence_sufficiency: string | null;
+  include_in_final: number | null;
+  final_memo_summary: string | null;
+  follow_up_needed: number | null;
   routed_to: string | null;
   routing_reason: string | null;
   reviewer_id: string | null;
@@ -109,6 +113,10 @@ export interface CreateJudgmentData {
   human_confidence?: string;
   judgment_notes?: string;
   override_reason?: string;
+  evidence_sufficiency?: string;
+  include_in_final?: boolean;
+  final_memo_summary?: string;
+  follow_up_needed?: boolean;
   routed_to?: string;
   routing_reason?: string;
   reviewer_id?: string;
@@ -276,6 +284,19 @@ export function getAssessmentWithJudgment(id: number): (Assessment & { judgment:
 }
 
 /**
+ * Get all judgments for a submission (joins via assessments)
+ */
+export function getJudgmentsForSubmission(submissionId: string): Judgment[] {
+  const db = getDatabase();
+  return db.prepare(`
+    SELECT j.*
+    FROM judgments j
+    JOIN assessments a ON a.id = j.assessment_id
+    WHERE a.submission_id = ?
+  `).all(submissionId) as Judgment[];
+}
+
+/**
  * Insert a new assessment
  */
 export function createAssessment(assessment: Omit<Assessment, 'id'>): Assessment {
@@ -370,9 +391,10 @@ export function createJudgment(assessmentId: number, data: CreateJudgmentData): 
   const stmt = db.prepare(`
     INSERT INTO judgments (
       assessment_id, human_result, human_confidence, judgment_notes,
-      override_reason, routed_to, routing_reason, reviewer_id,
-      reviewer_name, review_status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      override_reason, evidence_sufficiency, include_in_final,
+      final_memo_summary, follow_up_needed, routed_to, routing_reason,
+      reviewer_id, reviewer_name, review_status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = stmt.run(
@@ -381,6 +403,10 @@ export function createJudgment(assessmentId: number, data: CreateJudgmentData): 
     data.human_confidence || null,
     data.judgment_notes || null,
     data.override_reason || null,
+    data.evidence_sufficiency || 'UNREVIEWED',
+    data.include_in_final ? 1 : 0,
+    data.final_memo_summary || null,
+    data.follow_up_needed ? 1 : 0,
     data.routed_to || null,
     data.routing_reason || null,
     data.reviewer_id || null,
@@ -415,6 +441,22 @@ export function updateJudgment(id: number, data: UpdateJudgmentData): Judgment |
   if (data.override_reason !== undefined) {
     updates.push('override_reason = ?');
     params.push(data.override_reason);
+  }
+  if (data.evidence_sufficiency !== undefined) {
+    updates.push('evidence_sufficiency = ?');
+    params.push(data.evidence_sufficiency);
+  }
+  if (data.include_in_final !== undefined) {
+    updates.push('include_in_final = ?');
+    params.push(data.include_in_final ? 1 : 0);
+  }
+  if (data.final_memo_summary !== undefined) {
+    updates.push('final_memo_summary = ?');
+    params.push(data.final_memo_summary);
+  }
+  if (data.follow_up_needed !== undefined) {
+    updates.push('follow_up_needed = ?');
+    params.push(data.follow_up_needed ? 1 : 0);
   }
   if (data.routed_to !== undefined) {
     updates.push('routed_to = ?');

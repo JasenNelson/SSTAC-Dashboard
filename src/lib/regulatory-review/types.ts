@@ -68,6 +68,16 @@ export enum ReviewStatus {
 }
 
 /**
+ * Reviewer evidence sufficiency status
+ */
+export enum EvidenceSufficiency {
+  SUFFICIENT = 'SUFFICIENT',
+  INSUFFICIENT = 'INSUFFICIENT',
+  NEEDS_MORE_EVIDENCE = 'NEEDS_MORE_EVIDENCE',
+  UNREVIEWED = 'UNREVIEWED',
+}
+
+/**
  * Evidence types from the regulatory knowledge base
  * Comprehensive list of 33 evidence specification types from data analysis
  */
@@ -142,6 +152,23 @@ export interface EvidenceItem {
   confidence: ConfidenceLevel;
   /** Reasons why this evidence was matched */
   matchReasons: string[];
+  // Phase 4 (PIV-EVIDENCE-FIDELITY-001): Fidelity and ranking fields
+  /** Evidence text fidelity: verbatim | normalized | structured | ai */
+  excerptFidelity?: string;
+  /** Whether confidence is excerpt-level or policy-level */
+  confidenceScope?: string;
+  /** Reason for fidelity classification */
+  fidelityReason?: string;
+  /** Source dict key path for provenance */
+  sourcePath?: string;
+  /** Pre-sanitization evidence text */
+  evidenceTextRaw?: string;
+  /** Post-sanitization evidence text for display */
+  evidenceTextDisplay?: string;
+  /** Ranking score for evidence ordering */
+  rankScore?: number;
+  /** Ranking factors applied */
+  rankReason?: string[];
 }
 
 // ============================================================================
@@ -224,6 +251,16 @@ export interface Judgment {
   judgmentNotes?: string;
   /** Required explanation if overriding AI result */
   overrideReason?: string;
+
+  // Evidence sufficiency + memo curation
+  /** Reviewer evidence sufficiency label */
+  evidenceSufficiency?: EvidenceSufficiency;
+  /** Include this item in Final Memo */
+  includeInFinal?: boolean;
+  /** Final Memo summary text (1-3 paragraphs) */
+  finalMemoSummary?: string;
+  /** Follow-up needed to request more engine evaluation */
+  followUpNeeded?: boolean;
 
   // Routing
   /** Role/person item was routed to */
@@ -405,6 +442,10 @@ export type CreateJudgment = Pick<
   | 'overrideReason'
   | 'routedTo'
   | 'routingReason'
+  | 'evidenceSufficiency'
+  | 'includeInFinal'
+  | 'finalMemoSummary'
+  | 'followUpNeeded'
 >;
 
 /**
@@ -419,6 +460,10 @@ export type UpdateJudgment = Partial<
     | 'overrideReason'
     | 'routedTo'
     | 'routingReason'
+    | 'evidenceSufficiency'
+    | 'includeInFinal'
+    | 'finalMemoSummary'
+    | 'followUpNeeded'
     | 'reviewStatus'
   >
 >;
@@ -454,12 +499,17 @@ export type AssessmentSummary = Pick<
 // ============================================================================
 
 export interface MatchingRationale {
-  method: 'hybrid' | 'keyword' | 'ai_fallback';
+  method: 'hybrid' | 'keyword' | 'ai_fallback' | 'ai_reasoning';
+  evaluationType?: 'ai_reasoning' | 'pipeline';
   scores: {
     keyword: number;
     semantic: number;
     structural: number;
     combined: number;
+    // AI reasoning scores (when evaluationType === 'ai_reasoning')
+    similarity?: number;
+    relevance?: number;
+    completeness?: number;
   };
   scoreBreakdown: string[];
   policyKeywords: string[];

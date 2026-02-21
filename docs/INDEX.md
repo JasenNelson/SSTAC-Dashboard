@@ -48,6 +48,10 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 ### Core safety + operational rules (authoritative)
 - `docs/AGENTS.md`
 
+### Documentation archive policy (authoritative)
+- `docs/ARCHIVE_POLICY.md`
+- Archive location: `docs/archive/YYYY-MM-DD_<topic>/`
+
 ### Poll system (authoritative)
 - `docs/poll-system/README.md`
 - `docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md`
@@ -97,12 +101,26 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 - `IMPLEMENTATION_LOG.md` - Session-by-session tracking
 - GitHub Project: https://github.com/users/JasenNelson/projects/2/views/1
 
+
+### Regulatory Review UX (SSTAC)
+**Regulatory Review UX doc hygiene:**
+- Store all Regulatory Review UX docs under `docs/regulatory-review/`
+- Archive snapshots under `docs/regulatory-review/archive/` only after running `npm run docs:archive:investigate`
+- Avoid adding ad-hoc docs at repo root to prevent drift
+
+- `docs/regulatory-review/REGULATORY_REVIEW_UX_PROPOSAL.md` - UX proposal and workflow specifications
+- `docs/regulatory-review/REGULATORY_REVIEW_MOCKUPS.md` - ASCII mockups and UX behavior examples
+- `docs/regulatory-review/REGULATORY_REVIEW_UX_PROPOSAL_REVIEW.md` - Review notes and validation checklist (historical)
+- `docs/regulatory-review/REGULATORY_REVIEW_UX_PROPOSAL_CORRECTIONS_APPLIED.md` - Corrections log (historical)
+- Archived pre-correction copies live under `docs/regulatory-review/archive/`
+
 ### Multi-Project Coordination (reference)
 - `MULTI_PROJECT_COORDINATION.md` - Unified coordination for three concurrent development projects:
   - **SSTAC Dashboard** (this project) - Phase 3 testing complete, Phase 4 optimization ready, Grade A (93/100)
   - **Regulatory-Review** - Tier 2 evaluation complete, 5,809 policies evaluated, results synced to Dashboard
   - **Database Cleanup** - Phase 1 planning, scope definition needed
   - Includes: data ownership rules, synchronization points, session resumption instructions, risk assessment
+- Archived snapshots: `docs/archive/2026-01-27_multi-project-coordination/`
 
 ## Legacy index
 
