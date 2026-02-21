@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/api-guards';
 import path from 'path';
 import { getAssessmentById } from '@/lib/sqlite/queries';
 import {
@@ -299,6 +300,9 @@ function parseAssessmentId(idParam: string): number | null {
  */
 export async function GET(request: NextRequest) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+
     const { searchParams } = new URL(request.url);
     const assessmentIdParam = searchParams.get('assessmentId');
 
@@ -391,6 +395,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+
     const body = await request.json();
 
     const { assessmentId: rawAssessmentId, validation } = body as {

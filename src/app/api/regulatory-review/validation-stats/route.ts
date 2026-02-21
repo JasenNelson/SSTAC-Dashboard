@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/api-guards';
 import { getSubmissionById } from '@/lib/sqlite/queries';
 import { getBaselineValidationStats } from '@/lib/sqlite/queries/validation';
 
@@ -17,6 +18,9 @@ import { getBaselineValidationStats } from '@/lib/sqlite/queries/validation';
  */
 export async function GET(request: NextRequest) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+
     const { searchParams } = new URL(request.url);
     const submissionId = searchParams.get('submissionId');
 

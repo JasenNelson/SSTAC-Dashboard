@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/api-guards';
 import {
   getSubmissions,
   getSubmissionsSummary,
@@ -19,6 +20,9 @@ import {
  */
 export async function GET(_request: NextRequest) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+
     // Get all submissions
     const submissions = getSubmissions('imported_at');
 

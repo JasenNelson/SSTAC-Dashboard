@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/api-guards';
 import {
   getAssessmentWithJudgment,
   getOrCreateJudgment,
@@ -98,6 +99,9 @@ export async function GET(
   { params }: { params: Promise<{ csapId: string }> }
 ) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+
     const { csapId } = await params;
     const { searchParams } = new URL(request.url);
     const submissionId = searchParams.get('submissionId');
@@ -215,6 +219,9 @@ export async function PATCH(
   { params }: { params: Promise<{ csapId: string }> }
 ) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+
     const { csapId } = await params;
     const { searchParams } = new URL(request.url);
     const submissionId = searchParams.get('submissionId');

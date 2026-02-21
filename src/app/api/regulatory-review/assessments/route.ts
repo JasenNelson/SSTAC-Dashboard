@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/api-guards';
 import { getAssessments, getAssessmentWithJudgment } from '@/lib/sqlite/queries';
 import type { AssessmentFilters } from '@/lib/sqlite/queries';
 
@@ -125,6 +126,9 @@ function transformEvidenceItems(raw: RawEvidenceItem[] | null): {
  */
 export async function GET(request: NextRequest) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+
     const { searchParams } = new URL(request.url);
 
     // Required parameter

@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/api-guards';
 import { z } from 'zod';
 import {
   getAssessmentById,
@@ -158,6 +159,9 @@ interface ProcessedResult {
  */
 export async function POST(request: NextRequest) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+
     const body = await request.json();
 
     // Validate request body

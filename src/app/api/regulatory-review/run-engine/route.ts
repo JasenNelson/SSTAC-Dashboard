@@ -10,6 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin, requireLocalEngine } from '@/lib/api-guards';
 import { spawn } from 'child_process';
 import { writeFile, mkdir, readFile, unlink } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -332,6 +333,11 @@ async function importFromExistingOutput(): Promise<EvaluationResult> {
 
 export async function POST(request: NextRequest) {
   try {
+    const authError = await requireAdmin()
+    if (authError) return authError
+    const engineError = requireLocalEngine()
+    if (engineError) return engineError
+
     const formData = await request.formData();
     const submissionId = formData.get('submissionId') as string;
     const siteId = formData.get('siteId') as string;
