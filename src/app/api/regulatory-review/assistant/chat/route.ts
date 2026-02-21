@@ -20,16 +20,8 @@ import {
   buildSystemPrompt,
   buildContextPrompt,
 } from '@/lib/ollama/prompts';
+import { Database } from '@/lib/sqlite/require-database';
 import path from 'path';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let Database: any = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  Database = require('better-sqlite3');
-} catch {
-  // better-sqlite3 not available (Vercel deployment)
-}
 
 // DB paths — same as existing search routes
 const RRAA_DB_PATH = path.join(
