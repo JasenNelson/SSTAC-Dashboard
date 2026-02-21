@@ -11,6 +11,7 @@ interface SearchResult {
   assessmentId: number;
   csapId: string;
   location: string;
+  sourcePath: string | null;
   pageReference: string | null;
   excerpt: string;
   evidenceType: string;
@@ -95,6 +96,11 @@ function ResultCard({ result, query, isExpanded, onToggle }: {
             <span className={`text-[10px] px-1.5 py-0.5 rounded ${confidenceColors[result.confidence] || confidenceColors.MEDIUM}`}>
               {result.confidence}
             </span>
+            {result.sourcePath && (
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 truncate max-w-[200px]" title={result.sourcePath}>
+                {result.sourcePath}
+              </span>
+            )}
           </div>
           <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
             {highlightText(result.excerpt.substring(0, 200), query)}
