@@ -40,6 +40,7 @@ interface SearchResult {
   assessmentId: number;
   csapId: string;
   location: string;
+  sourcePath: string | null;
   pageReference: string | null;
   excerpt: string;
   evidenceType: string;
@@ -120,10 +121,15 @@ export async function GET(request: NextRequest) {
           const matches = queryTerms.some(term => searchableText.includes(term));
 
           if (matches) {
+            // Extract source document name from location (before first comma or chunk reference)
+            const loc = item.location || '';
+            const sourcePath = loc.split(/[,]/)[ 0]?.replace(/\s*(?:Section\s+)?Chunk\s+\d+.*/i, '').trim() || null;
+
             results.push({
               assessmentId: assessment.id,
               csapId: assessment.csap_id,
               location: item.location || 'Unknown',
+              sourcePath,
               pageReference: item.page_reference || null,
               excerpt: item.excerpt || '',
               evidenceType: item.evidence_type || 'UNKNOWN',

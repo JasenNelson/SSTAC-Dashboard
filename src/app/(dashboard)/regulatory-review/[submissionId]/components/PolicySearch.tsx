@@ -20,6 +20,7 @@ interface PolicyResult {
   sourcePage: string | null;
   keywords: string | null;
   reviewQuestion: string | null;
+  matchExplanation: string | null;
 }
 
 interface SearchResponse {
@@ -68,6 +69,17 @@ function PolicyResultCard({ policy, isExpanded, onToggle }: {
             </span>
             {policy.discretionTier && tierMap[policy.discretionTier] && (
               <TierBadge tier={tierMap[policy.discretionTier]} />
+            )}
+            {policy.matchExplanation && (
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                policy.matchExplanation === 'High'
+                  ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                  : policy.matchExplanation === 'Medium'
+                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+              }`}>
+                {policy.matchExplanation}
+              </span>
             )}
           </div>
           <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">

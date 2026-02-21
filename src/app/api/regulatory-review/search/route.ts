@@ -37,6 +37,7 @@ interface PolicyResult {
   sourcePage: string | null;
   keywords: string | null;
   reviewQuestion: string | null;
+  matchExplanation: string | null;
 }
 
 export async function GET(request: NextRequest) {
@@ -93,7 +94,12 @@ export async function GET(request: NextRequest) {
             p.source_section_reference as sourceSection,
             p.source_page_reference as sourcePage,
             p.keywords,
-            p.review_question as reviewQuestion
+            p.review_question as reviewQuestion,
+            CASE
+              WHEN rank < -10 THEN 'High'
+              WHEN rank < -2 THEN 'Medium'
+              ELSE 'Low'
+            END as matchExplanation
           FROM policy_statements p
           INNER JOIN policy_statements_fts fts ON p.id = fts.id
           WHERE policy_statements_fts MATCH ?
@@ -133,7 +139,8 @@ export async function GET(request: NextRequest) {
           source_section_reference as sourceSection,
           source_page_reference as sourcePage,
           keywords,
-          review_question as reviewQuestion
+          review_question as reviewQuestion,
+          NULL as matchExplanation
         FROM policy_statements
         WHERE is_active = 1
           AND (
