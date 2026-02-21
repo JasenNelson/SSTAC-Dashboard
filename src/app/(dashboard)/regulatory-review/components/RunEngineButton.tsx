@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { Play, Loader2, CheckCircle2, AlertCircle, Upload, X, Download } from 'lucide-react';
+import { isLocalEngineClient } from '@/lib/feature-flags';
+import UnderConstruction from '@/components/ui/UnderConstruction';
 
 interface RunEngineButtonProps {
   submissionId: string;
@@ -43,6 +45,11 @@ export default function RunEngineButton({
   const [showModal, setShowModal] = useState(false);
   const [runMode, setRunMode] = useState<RunMode>('import');
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const engineEnabled = isLocalEngineClient();
+
+  if (!engineEnabled) {
+    return <UnderConstruction feature="Evaluation Engine" />;
+  }
 
   const handleRunEngine = async () => {
     setStatus('running');
