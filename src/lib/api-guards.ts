@@ -35,8 +35,14 @@ export async function requireAdmin() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const isAdmin = user.app_metadata?.role === 'admin'
-  if (!isAdmin) {
+  const { data: roleData } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .maybeSingle()
+
+  if (!roleData) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

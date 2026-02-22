@@ -115,14 +115,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Admin role enforcement for regulatory-review pages
-  if (request.nextUrl.pathname.startsWith('/regulatory-review')) {
-    const isAdmin = user.app_metadata?.role === 'admin'
-    if (!isAdmin) {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-  }
-
   return response
 }
 
