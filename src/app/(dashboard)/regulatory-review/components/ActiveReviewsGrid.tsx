@@ -145,13 +145,13 @@ function ProjectCard({
       {/* Details */}
       <div className="space-y-2 mb-4">
         {project.applicantName && (
-          <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-            <span className="text-slate-400 dark:text-slate-500 mr-2 font-medium">Applicant:</span>
+          <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
+            <span className="text-slate-600 dark:text-slate-400 mr-2 font-medium">Applicant:</span>
             {project.applicantName}
           </div>
         )}
-        <div className="flex items-center text-sm text-slate-500 dark:text-slate-400 flex-wrap gap-1">
-          <span className="text-slate-400 dark:text-slate-500 mr-1 font-medium">Type:</span>
+        <div className="flex items-center text-sm text-slate-600 dark:text-slate-400 flex-wrap gap-1">
+          <span className="text-slate-600 dark:text-slate-400 mr-1 font-medium">Type:</span>
           {project.applicationTypes.map((t) => (
             <span
               key={t}
@@ -161,12 +161,12 @@ function ProjectCard({
             </span>
           ))}
         </div>
-        <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-          <FileText className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2 flex-shrink-0" />
+        <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
+          <FileText className="h-4 w-4 text-slate-500 dark:text-slate-400 mr-2 flex-shrink-0" />
           {project.fileCount} file{project.fileCount !== 1 ? 's' : ''}
         </div>
-        <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
-          <Calendar className="h-4 w-4 text-slate-400 dark:text-slate-500 mr-2 flex-shrink-0" />
+        <div className="flex items-center text-sm text-slate-600 dark:text-slate-400">
+          <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400 mr-2 flex-shrink-0" />
           {formattedDate}
         </div>
       </div>
