@@ -259,7 +259,7 @@ export default function MilestonesManagement() {
     return (
       <div className="text-center py-8">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading milestones...</p>
+        <p className="mt-4 text-slate-500">Loading milestones...</p>
       </div>
     );
   }
@@ -269,8 +269,8 @@ export default function MilestonesManagement() {
       {/* Header with Create Button */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Project Milestones</h2>
-          <p className="text-gray-600 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900">Project Milestones</h2>
+          <p className="text-slate-500 mt-1">
             Manage project timeline and track progress
           </p>
         </div>
@@ -285,8 +285,8 @@ export default function MilestonesManagement() {
 
       {/* Create/Edit Form */}
       {(showCreateForm || editingMilestone) && (
-        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">
             {editingMilestone ? 'Edit Milestone' : 'Create New Milestone'}
           </h3>
           
@@ -304,7 +304,7 @@ export default function MilestonesManagement() {
             )}
             
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="title" className="block text-sm font-medium text-slate-600 mb-1">
                 Title *
               </label>
               <input
@@ -313,13 +313,13 @@ export default function MilestonesManagement() {
                 name="title"
                 required
                 defaultValue={editingMilestone?.title || ''}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Enter milestone title"
               />
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="description" className="block text-sm font-medium text-slate-600 mb-1">
                 Description *
               </label>
               <textarea
@@ -328,14 +328,14 @@ export default function MilestonesManagement() {
                 required
                 rows={3}
                 defaultValue={editingMilestone?.description || ''}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Enter milestone description"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label htmlFor="target_date" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="target_date" className="block text-sm font-medium text-slate-600 mb-1">
                   Target Date *
                 </label>
                 <input
@@ -344,19 +344,19 @@ export default function MilestonesManagement() {
                   name="target_date"
                   required
                   defaultValue={editingMilestone?.target_date || ''}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="status" className="block text-sm font-medium text-slate-600 mb-1">
                   Status
                 </label>
                 <select
                   id="status"
                   name="status"
                   defaultValue={editingMilestone?.status || 'pending'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="pending">Pending</option>
                   <option value="in_progress">In Progress</option>
@@ -366,14 +366,14 @@ export default function MilestonesManagement() {
               </div>
 
               <div>
-                <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="priority" className="block text-sm font-medium text-slate-600 mb-1">
                   Priority
                 </label>
                 <select
                   id="priority"
                   name="priority"
                   defaultValue={editingMilestone?.priority || 'medium'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -389,7 +389,7 @@ export default function MilestonesManagement() {
                   setShowCreateForm(false);
                   setEditingMilestone(null);
                 }}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
               >
                 Cancel
               </button>
@@ -402,27 +402,27 @@ export default function MilestonesManagement() {
       )}
 
       {/* Milestones List */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
+      <div className="bg-white rounded-lg shadow-md border border-slate-200">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <h3 className="text-lg font-semibold text-slate-900">
             Project Timeline ({milestones.length} milestones)
           </h3>
         </div>
         
         {milestones.length === 0 ? (
-          <div className="px-6 py-12 text-center text-gray-500">
+          <div className="px-6 py-12 text-center text-slate-500">
             <div className="text-4xl mb-4">🎯</div>
             <p className="text-lg font-medium mb-2">No milestones yet</p>
             <p className="text-sm">Create your first milestone to get started</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-slate-200">
             {milestones.map((milestone) => (
-              <div key={milestone.id} className="p-6 hover:bg-gray-50 transition-colors">
+              <div key={milestone.id} className="p-6 hover:bg-slate-50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h4 className="text-lg font-semibold text-gray-900">
+                      <h4 className="text-lg font-semibold text-slate-900">
                         {milestone.title}
                       </h4>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(milestone.status)}`}>
@@ -433,9 +433,9 @@ export default function MilestonesManagement() {
                       </span>
                     </div>
                     
-                    <p className="text-gray-700 mb-3">{milestone.description}</p>
+                    <p className="text-slate-600 mb-3">{milestone.description}</p>
                     
-                    <div className="text-sm text-gray-600 mb-3">
+                    <div className="text-sm text-slate-500 mb-3">
                       <div className="flex items-center space-x-4">
                         <span className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
@@ -444,12 +444,12 @@ export default function MilestonesManagement() {
                         <span className={`font-medium ${
                           milestone.status === 'completed' ? 'text-green-600' :
                           milestone.status === 'delayed' ? 'text-red-600' :
-                          'text-blue-600'
+                          'text-sky-700'
                         }`}>
                           {getDaysUntil(milestone.target_date)}
                         </span>
                         {milestone.created_by && (
-                          <span className="text-gray-500">
+                          <span className="text-slate-500">
                             Created by {milestone.created_by}
                           </span>
                         )}
@@ -460,14 +460,14 @@ export default function MilestonesManagement() {
                   <div className="flex items-center space-x-2 ml-4">
                     <button
                       onClick={() => setEditingMilestone(milestone)}
-                      className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
+                      className="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
                       title="Edit milestone"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteMilestone(milestone.id)}
-                      className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                       title="Delete milestone"
                     >
                       <Trash2 className="w-4 h-4" />

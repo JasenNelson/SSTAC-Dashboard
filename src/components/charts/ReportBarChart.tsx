@@ -91,12 +91,12 @@ export default function ReportBarChart({
     <figure
       role="figure"
       aria-label={ariaLabel}
-      className="w-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
+      className="w-full bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-6"
     >
       {/* Figure Number */}
       {figureNumber && (
         <div className="mb-2">
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
             {figureNumber}
           </span>
         </div>
@@ -104,7 +104,7 @@ export default function ReportBarChart({
 
       {/* Title */}
       {title && (
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
           {title}
         </h3>
       )}
@@ -162,7 +162,7 @@ export default function ReportBarChart({
 
       {/* Caption */}
       {caption && (
-        <figcaption className="mt-4 text-sm text-gray-700 dark:text-gray-300">
+        <figcaption className="mt-4 text-sm text-slate-600 dark:text-slate-300">
           {caption}
         </figcaption>
       )}

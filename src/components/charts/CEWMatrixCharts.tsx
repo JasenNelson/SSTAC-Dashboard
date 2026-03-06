@@ -82,13 +82,13 @@ export default function CEWMatrixCharts() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-6">
         {MATRIX_CHARTS.map((chart) => (
-          <div key={chart.figureNumber} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div key={chart.figureNumber} className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
             <div className="mb-2">
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
                 Figure {chart.figureNumber}
               </span>
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Loading...</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">Loading...</div>
           </div>
         ))}
       </div>
@@ -99,9 +99,9 @@ export default function CEWMatrixCharts() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 my-6">
         {MATRIX_CHARTS.map((chart) => (
-          <div key={chart.figureNumber} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div key={chart.figureNumber} className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
             <div className="mb-2">
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
                 Figure {chart.figureNumber}
               </span>
             </div>
@@ -122,16 +122,16 @@ export default function CEWMatrixCharts() {
 
         if (!data || data.individualPairs.length === 0) {
           return (
-            <div key={chart.figureNumber} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+            <div key={chart.figureNumber} className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
               <div className="mb-2">
-                <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
                   Figure {chart.figureNumber}
                 </span>
               </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300 italic">
+              <p className="text-sm text-slate-600 dark:text-slate-300 italic">
                 Matrix visualization chart will be displayed here. This shows importance vs. feasibility scatter plot for {chart.title}.
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                 (No data available yet)
               </p>
             </div>
@@ -139,9 +139,9 @@ export default function CEWMatrixCharts() {
         }
 
         return (
-          <div key={chart.figureNumber} className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div key={chart.figureNumber} className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
             <div className="mb-2">
-              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
                 Figure {chart.figureNumber}
               </span>
             </div>

@@ -52,7 +52,7 @@ export default function TieredFrameworkClient() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-slate-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Hero/Header Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
@@ -106,29 +106,29 @@ export default function TieredFrameworkClient() {
       </section>
 
       {/* What We Heard: Survey Insights Section */}
-      <section className="py-12 px-6 bg-white dark:bg-gray-800">
+      <section className="py-12 px-6 bg-white dark:bg-slate-800">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-slate-800 dark:text-white font-['Merriweather']">
             What We Heard: Survey Insights
           </h2>
           
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8">
             <div className="grid md:grid-cols-2 gap-8">
               <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">Tiered Framework Beneficial</h3>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 text-center">Tiered Framework Beneficial</h3>
                 <div className="text-center mb-4">
                   <div className="text-5xl font-bold text-green-800 dark:text-green-400 mb-2">86.4%</div>
-                  <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  <p className="text-slate-600 dark:text-slate-300 text-lg">
                     of respondents found a tiered framework would be beneficial for the future sediment standards framework
                   </p>
                 </div>
               </div>
               
               <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">Bioavailability Adjustments Important</h3>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 text-center">Bioavailability Adjustments Important</h3>
                 <div className="text-center mb-4">
                   <div className="text-5xl font-bold text-blue-900 dark:text-blue-400 mb-2">88.1%</div>
-                  <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  <p className="text-slate-600 dark:text-slate-300 text-lg">
                     felt that incorporating bioavailability adjustments is important or essential for the future sediment standards framework
                   </p>
                 </div>
@@ -139,17 +139,17 @@ export default function TieredFrameworkClient() {
       </section>
 
       {/* Why Expand the Tiered Framework? Section */}
-      <section className="py-12 px-6 bg-white dark:bg-gray-800">
+      <section className="py-12 px-6 bg-white dark:bg-slate-800">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-slate-800 dark:text-white font-['Merriweather']">
             Why Expand the Tiered Framework with Site-Specific Sediment Standards?
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8">
             {/* Current Limitations */}
             <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-6">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">Current Limitations of Generic Sediment Standards</h3>
-              <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-lg">
+              <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 text-center">Current Limitations of Generic Sediment Standards</h3>
+              <ul className="space-y-4 text-slate-600 dark:text-slate-300 text-lg">
                 <li className="flex items-start">
                   <span className="text-red-600 dark:text-red-400 mr-3 mt-1">•</span>
                   <span>High uncertainty</span>
@@ -163,8 +163,8 @@ export default function TieredFrameworkClient() {
 
             {/* Proposed Benefits */}
             <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">Proposed Site-Specific Sediment Standards</h3>
-              <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-lg">
+              <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 text-center">Proposed Site-Specific Sediment Standards</h3>
+              <ul className="space-y-4 text-slate-600 dark:text-slate-300 text-lg">
                 <li className="flex items-start">
                   <span className="text-green-600 dark:text-green-400 mr-3 mt-1">•</span>
                   <span>Reduced uncertainty</span>
@@ -178,8 +178,8 @@ export default function TieredFrameworkClient() {
 
             {/* Enhanced Protection */}
             <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
-              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">Enhanced Protection</h3>
-              <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-lg">
+              <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 text-center">Enhanced Protection</h3>
+              <ul className="space-y-4 text-slate-600 dark:text-slate-300 text-lg">
                 <li className="flex items-start">
                   <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">•</span>
                   <span>Improved decision-making and environmental outcomes</span>
@@ -195,34 +195,34 @@ export default function TieredFrameworkClient() {
       </section>
 
       {/* Three-Tier Framework Section */}
-      <section className="py-12 px-6 bg-white dark:bg-gray-800">
+      <section className="py-12 px-6 bg-white dark:bg-slate-800">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-slate-800 dark:text-white font-['Merriweather']">
             Three-Tier Framework
           </h2>
           
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8">
             <div className="grid md:grid-cols-3 gap-6">
               {/* Tier 1 */}
               <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-6">
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Tier 1: Matrix Sediment Standards</h3>
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Tier 1: Matrix Sediment Standards</h3>
+                <p className="text-slate-600 dark:text-slate-300 text-lg">
                   Assumes generic site conditions
                 </p>
               </div>
 
               {/* Tier 2 */}
               <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Tier 2: Site-Specific Sediment Standards</h3>
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Tier 2: Site-Specific Sediment Standards</h3>
+                <p className="text-slate-600 dark:text-slate-300 text-lg">
                   Bioavailability-adjusted using Equilibrium Partitioning (EqP) and/or Biotic Ligand Model (BLM)
                 </p>
               </div>
 
               {/* Tier 3 */}
               <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-6">
-                <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Tier 3: Risk-Based Standards</h3>
-                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Tier 3: Risk-Based Standards</h3>
+                <p className="text-slate-600 dark:text-slate-300 text-lg">
                   Site-specific risk assessment
                 </p>
               </div>
@@ -232,12 +232,12 @@ export default function TieredFrameworkClient() {
       </section>
 
       {/* Interactive Polls Section */}
-      <section className="py-12 px-6 bg-white dark:bg-gray-800">
+      <section className="py-12 px-6 bg-white dark:bg-slate-800">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-8 text-gray-800 dark:text-white font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-8 text-slate-800 dark:text-white font-['Merriweather']">
             Your Input on Tiered Assessment
           </h2>
-          <p className="text-xl text-center text-gray-600 dark:text-gray-300 mb-16 max-w-4xl mx-auto">
+          <p className="text-xl text-center text-slate-500 dark:text-slate-300 mb-16 max-w-4xl mx-auto">
             This leads us to the core questions for our discussion today. Your insights will help inform this collaborative process.
           </p>
           
@@ -306,7 +306,7 @@ export default function TieredFrameworkClient() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8">
         <div className="container mx-auto px-6 text-center">
-          <p className="text-gray-400">
+          <p className="text-slate-400">
             &copy; 2024 SSTAC & TWG Dashboard | Tiered Assessment Framework
           </p>
         </div>

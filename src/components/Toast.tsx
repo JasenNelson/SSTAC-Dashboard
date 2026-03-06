@@ -148,7 +148,7 @@ function ToastContainer({ toasts, onHide }: ToastContainerProps) {
             </div>
             <button
               onClick={() => onHide(toast.id)}
-              className="flex-shrink-0 ml-2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="flex-shrink-0 ml-2 text-slate-400 hover:text-slate-500 transition-colors"
               aria-label="Close notification"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

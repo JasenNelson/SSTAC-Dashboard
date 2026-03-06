@@ -99,12 +99,12 @@ export default function DetailedFindingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-sky-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="mb-6">
-            <Link href="/survey-results" className="inline-flex items-center text-indigo-100 hover:text-white transition-colors">
+            <Link href="/survey-results" className="inline-flex items-center text-sky-200 hover:text-white transition-colors">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
@@ -112,7 +112,7 @@ export default function DetailedFindingsPage() {
             </Link>
           </div>
           <h1 className="text-4xl font-bold mb-4">Detailed Findings</h1>
-          <p className="text-xl text-indigo-100 max-w-3xl">
+          <p className="text-xl text-sky-200 max-w-3xl">
             Explore the comprehensive expert feedback through interactive visualizations and detailed analysis
           </p>
         </div>
@@ -128,8 +128,8 @@ export default function DetailedFindingsPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
                   activeTab === tab.id
-                    ? 'bg-indigo-600 text-white shadow-lg transform scale-105'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-102'
+                    ? 'bg-sky-700 text-white shadow-lg transform scale-105'
+                    : 'bg-slate-100 text-slate-600 hover:bg-gray-200 hover:scale-102'
                 }`}
               >
                 <span className="mr-2 text-lg">{tab.icon}</span>
@@ -145,8 +145,8 @@ export default function DetailedFindingsPage() {
           {activeTab === 'demographics' && (
             <div className="space-y-8">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-800 mb-4">Who We Heard</h2>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                <h2 className="text-3xl font-bold text-slate-700 mb-4">Who We Heard</h2>
+                <p className="text-xl text-slate-500 max-w-3xl mx-auto">
                   Establish the credibility and deep expertise of the survey respondents
                 </p>
               </div>
@@ -154,12 +154,12 @@ export default function DetailedFindingsPage() {
               {/* Interactive Charts */}
               <Suspense fallback={
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 animate-pulse h-96"></div>
+                  <div className="bg-gradient-to-br from-sky-50 to-slate-50 rounded-xl p-6 animate-pulse h-96"></div>
                   <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 animate-pulse h-96"></div>
                 </div>
               }>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6">
+                <div className="bg-gradient-to-br from-sky-50 to-slate-50 rounded-xl p-6">
                   <InteractivePieChart
                     data={professionalInvolvementData}
                     title="Professional Involvement in Sediment Quality"
@@ -180,15 +180,15 @@ export default function DetailedFindingsPage() {
               </Suspense>
 
               {/* Supporting Text */}
-              <div className="bg-gray-50 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Diverse Professional Backgrounds</h3>
-                <p className="text-gray-700 leading-relaxed">
+              <div className="bg-slate-50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-slate-700 mb-4">Diverse Professional Backgrounds</h3>
+                <p className="text-slate-600 leading-relaxed">
                   The survey successfully reached a targeted audience of highly experienced professionals who work directly 
                   with the BC CSR sediment standards. Respondents included environmental consultants, industry representatives, 
                   academics, non-government organizations, and government regulators from various levels. This mix of perspectives 
                   provides a balanced and comprehensive overview of how the standards are used and perceived across different sectors.
                 </p>
-                <p className="text-gray-700 leading-relaxed mt-4">
+                <p className="text-slate-600 leading-relaxed mt-4">
                   The strong consensus on key issues that emerges from this diverse group underscores the validity of their 
                   shared concerns and recommendations. Over 70% of respondents described themselves as &quot;Very Familiar&quot; or
                   &quot;Familiar&quot; with the current BC CSR Schedule 3.4 numerical sediment standards, ensuring that the critiques 
@@ -202,8 +202,8 @@ export default function DetailedFindingsPage() {
           {activeTab === 'effectiveness' && (
             <div className="space-y-8">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-800 mb-4">Effectiveness of Current Standards</h2>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                <h2 className="text-3xl font-bold text-slate-700 mb-4">Effectiveness of Current Standards</h2>
+                <p className="text-xl text-slate-500 max-w-3xl mx-auto">
                   Visually illustrate the perceived gap between protecting benthic organisms and preventing food web bioaccumulation
                 </p>
               </div>
@@ -251,7 +251,7 @@ export default function DetailedFindingsPage() {
               </div>
 
               {/* Voices from the Field Section */}
-              <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <div className="bg-white border border-slate-200 rounded-xl p-6">
                 <VoicesCarousel
                   quotes={stakeholderQuotes
                     .filter(q => q.category === 'effectiveness' || q.category === 'challenges')
@@ -274,16 +274,16 @@ export default function DetailedFindingsPage() {
           {activeTab === 'solutions' && (
             <div className="space-y-8">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-800 mb-4">Recommended Solutions & Modernization</h2>
-                <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                <h2 className="text-3xl font-bold text-slate-700 mb-4">Recommended Solutions & Modernization</h2>
+                <p className="text-xl text-slate-500 max-w-3xl mx-auto">
                   Clearly present the strong expert consensus on the preferred path forward
                 </p>
               </div>
 
               {/* Central Interactive Visualization */}
-              <Suspense fallback={<div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 animate-pulse h-96"></div>}>
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-6">Respondents&apos; Most Recommended Approaches</h3>
+              <Suspense fallback={<div className="bg-gradient-to-br from-sky-50 to-slate-50 rounded-xl p-6 animate-pulse h-96"></div>}>
+              <div className="bg-gradient-to-br from-sky-50 to-slate-50 rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-slate-700 mb-6">Respondents&apos; Most Recommended Approaches</h3>
                 <InteractiveBarChart
                   data={recommendedApproachesData}
                   title=""
@@ -292,7 +292,7 @@ export default function DetailedFindingsPage() {
                   showPercentages={true}
                   interactive={true}
                 />
-                <p className="text-sm text-gray-600 mt-4 italic text-center">
+                <p className="text-sm text-slate-500 mt-4 italic text-center">
                   Based on Figure 8 and supporting text from the survey data
                 </p>
               </div>
@@ -327,7 +327,7 @@ export default function DetailedFindingsPage() {
               </Suspense>
 
               {/* Additional Voices from the Field */}
-              <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <div className="bg-white border border-slate-200 rounded-xl p-6">
                 <VoicesCarousel
                   quotes={stakeholderQuotes
                     .filter(q => q.category === 'solutions' || q.category === 'recommendations')
@@ -350,15 +350,15 @@ export default function DetailedFindingsPage() {
         {/* Report Link */}
         <div className="mt-8 text-center">
           <div className="bg-white rounded-2xl shadow-lg p-6 inline-block">
-            <h3 className="text-lg font-semibold text-gray-800 mb-3">Access the Full Report</h3>
-            <p className="text-gray-600 mb-4">
+            <h3 className="text-lg font-semibold text-slate-700 mb-3">Access the Full Report</h3>
+            <p className="text-slate-500 mb-4">
               Download the complete &quot;Draft Sediment Standards Review: What We Heard&quot; report for detailed analysis
             </p>
             <a
               href="https://docs.google.com/document/d/1ZVgujJykXr0rflcd5yck5OYmpEzpLIX7UYDz9SUfibc/edit?usp=sharing"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg hover:shadow-xl"
+              className="inline-flex items-center px-6 py-3 bg-sky-700 text-white font-semibold rounded-xl hover:bg-sky-800 transition-colors shadow-lg hover:shadow-xl"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

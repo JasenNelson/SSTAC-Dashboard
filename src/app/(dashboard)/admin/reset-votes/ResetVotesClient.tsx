@@ -71,7 +71,7 @@ export default function ResetVotesClient() {
               <button
                 onClick={() => resetVotes(true)}
                 disabled={loading}
-                className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-semibold transition-colors disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-3 bg-sky-700 hover:bg-sky-800 disabled:bg-sky-400 text-white rounded-lg font-semibold transition-colors disabled:cursor-not-allowed"
               >
                 {loading ? 'Resetting...' : 'Reset with Backup'}
               </button>

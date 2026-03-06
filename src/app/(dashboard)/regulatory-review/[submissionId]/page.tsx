@@ -4,6 +4,7 @@ import { redirect, notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import ReviewDashboardClient from './ReviewDashboardClient';
+import ProjectDetailClient from './ProjectDetailClient';
 import {
   getSubmissionById,
   getAssessments,
@@ -12,6 +13,10 @@ import {
   type Judgment as DbJudgment,
 } from '@/lib/sqlite/queries';
 import { getTaxonomySummaries, type TaxonomySummary } from '@/lib/regulatory-review/taxonomy-mapping';
+import {
+  getReviewProjectById,
+  getProjectFiles,
+} from '@/lib/sqlite/queries/review-projects';
 
 // Structured evidence item for detailed display
 export interface StructuredEvidenceItem {
@@ -297,22 +302,70 @@ export default async function SubmissionReviewPage({ params }: PageProps) {
     redirect(`/login?redirect=/regulatory-review/${submissionId}`);
   }
 
-  // Fetch submission from SQLite
+  // Try legacy submission first
   const submission = getSubmissionWithAssessments(submissionId);
 
-  if (!submission) {
-    notFound();
+  if (submission) {
+    return (
+      <ErrorBoundary>
+        <ReviewDashboardClient
+          submission={submission}
+          user={{
+            id: user.id,
+            email: user.email || '',
+          }}
+        />
+      </ErrorBoundary>
+    );
   }
 
-  return (
-    <ErrorBoundary>
-      <ReviewDashboardClient
-        submission={submission}
-        user={{
-          id: user.id,
-          email: user.email || '',
-        }}
-      />
-    </ErrorBoundary>
-  );
+  // Try new review project (wrapped in try/catch for SQLite unavailability on Vercel)
+  try {
+    const project = getReviewProjectById(submissionId);
+
+    if (project) {
+      const files = getProjectFiles(submissionId);
+      let applicationTypes: string[] = [];
+      let selectedServices: string[] = [];
+      try { applicationTypes = JSON.parse(project.application_type); } catch { applicationTypes = [project.application_type]; }
+      try { selectedServices = JSON.parse(project.selected_services); } catch { selectedServices = []; }
+
+      return (
+        <ErrorBoundary>
+          <ProjectDetailClient
+            project={{
+              id: project.id,
+              siteId: project.site_id,
+              siteName: project.site_name,
+              applicantName: project.applicant_name,
+              applicantCompany: project.applicant_company,
+              applicationTypes,
+              selectedServices,
+              submissionDate: project.submission_date,
+              siteAddress: project.site_address,
+              siteRegion: project.site_region,
+              folderPath: project.folder_path,
+              notes: project.notes,
+              status: project.status,
+              createdAt: project.created_at,
+              updatedAt: project.updated_at,
+            }}
+            files={files.map((f) => ({
+              id: f.id,
+              filename: f.filename,
+              fileSize: f.file_size,
+              fileType: f.file_type,
+              processed: f.processed === 1,
+              uploadedAt: f.uploaded_at,
+              processedAt: f.processed_at,
+            }))}
+          />
+        </ErrorBoundary>
+      );
+    }
+  } catch (error) {
+    console.error('Error loading review project (SQLite may be unavailable):', error);
+  }
+
+  notFound();
 }

@@ -78,12 +78,12 @@ export default function ProjectTimeline() {
     return (
       <div className="bg-white rounded-xl shadow-md p-6">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="h-6 bg-slate-200 rounded w-1/3 mb-4"></div>
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="flex items-center space-x-3">
-                <div className="w-3 h-3 bg-gray-200 rounded-full"></div>
-                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                <div className="w-3 h-3 bg-slate-200 rounded-full"></div>
+                <div className="h-4 bg-slate-200 rounded w-2/3"></div>
               </div>
             ))}
           </div>
@@ -111,11 +111,11 @@ export default function ProjectTimeline() {
   if (milestones.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="text-center text-gray-500">
+        <div className="text-center text-slate-500">
           <p>No milestones found</p>
           <button
             onClick={fetchMilestones}
-            className="mt-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+            className="mt-2 px-4 py-2 bg-gray-100 text-slate-600 rounded-md hover:bg-slate-200 transition-colors"
           >
             Refresh
           </button>
@@ -126,14 +126,14 @@ export default function ProjectTimeline() {
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+      <h2 className="text-xl font-semibold text-slate-800 mb-6 flex items-center">
         <span className="text-2xl mr-3">📅</span>
         Project Timeline
       </h2>
       
       <div className="relative">
         {/* Timeline Line */}
-        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-slate-200"></div>
         
         <div className="space-y-3">
           {milestones.map((milestone, _index) => (
@@ -145,7 +145,7 @@ export default function ProjectTimeline() {
               onClick={() => toggleMilestone(milestone.id)}
             >
               {/* Timeline Dot */}
-              <div className="relative z-10 flex-shrink-0 w-12 h-12 bg-white rounded-full border-4 border-gray-200 flex items-center justify-center">
+              <div className="relative z-10 flex-shrink-0 w-12 h-12 bg-white rounded-full border-4 border-slate-200 flex items-center justify-center">
                 <div className={`w-3 h-3 rounded-full ${getStatusColor(milestone)} transition-all duration-300 ${
                   hoveredMilestone === milestone.id ? 'scale-150' : 'scale-100'
                 }`}></div>
@@ -155,31 +155,31 @@ export default function ProjectTimeline() {
               <div className="ml-6 flex-1 min-w-0">
                 <div className={`p-3 rounded-lg border transition-all duration-300 ${
                   hoveredMilestone === milestone.id
-                    ? 'border-blue-300 bg-blue-50'
-                    : 'border-gray-200 bg-gray-50'
+                    ? 'border-sky-300 bg-sky-50'
+                    : 'border-slate-200 bg-gray-50'
                 } ${expandedMilestone === milestone.id ? 'bg-blue-50 border-blue-300' : ''}`}>
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-gray-800 text-base">{milestone.title}</h3>
+                    <h3 className="font-semibold text-slate-800 text-base">{milestone.title}</h3>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       milestone.status === 'completed'
                         ? 'bg-green-100 text-green-800'
                         : isFutureDate(milestone.target_date)
                         ? 'bg-blue-100 text-blue-800'
-                        : 'bg-gray-100 text-gray-800'
+                        : 'bg-gray-100 text-slate-800'
                     }`}>
                       {getStatusText(milestone)}
                     </span>
                   </div>
                   
                   {/* Date always visible */}
-                  <div className="text-xs text-gray-500 mb-2">
+                  <div className="text-xs text-slate-500 mb-2">
                     {formatDate(milestone.target_date)}
                   </div>
                   
                   {/* Description - only visible when expanded */}
                   {expandedMilestone === milestone.id && milestone.description && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-gray-600 text-sm leading-relaxed">
+                    <div className="mt-3 pt-3 border-t border-slate-200">
+                      <p className="text-slate-500 text-sm leading-relaxed">
                         {milestone.description}
                       </p>
                     </div>
@@ -208,8 +208,8 @@ export default function ProjectTimeline() {
         </div>
       </div>
       
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <div className="flex items-center justify-between text-sm text-gray-600">
+      <div className="mt-6 pt-4 border-t border-slate-200">
+        <div className="flex items-center justify-between text-sm text-slate-500">
           <div className="flex items-center space-x-4">
             <div className="flex items-center">
               <div className="w-3 h-3 rounded-full bg-green-500 mr-2"></div>
@@ -227,7 +227,7 @@ export default function ProjectTimeline() {
           
           <button
             onClick={fetchMilestones}
-            className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+            className="text-sky-700 hover:text-sky-800 font-medium transition-colors"
           >
             Refresh Timeline
           </button>

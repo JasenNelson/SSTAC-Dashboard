@@ -122,8 +122,8 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
               onClick={() => setShowPresentationControls((prev) => !prev)}
               className={`w-full px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-between ${
                 showPresentationControls
-                  ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  ? 'bg-sky-700 text-white hover:bg-sky-800'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
               }`}
             >
               <span>{showPresentationControls ? 'Hide Presentation Controls' : 'Show Presentation Controls'}</span>

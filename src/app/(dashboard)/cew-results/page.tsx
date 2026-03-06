@@ -37,9 +37,9 @@ export default async function CewResultsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
       {/* Hero Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-sky-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
             <h1 className="text-5xl font-bold mb-6">
@@ -52,65 +52,65 @@ export default async function CewResultsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Key Metrics (KPIs) - Interactive Cards */}
         <section className="mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-8 text-center">
             Key Findings at a Glance
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* KPI Card 1 */}
-            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-green-500">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-green-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-green-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   5/5
                 </div>
-                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
+                <div className="text-slate-900 dark:text-slate-200 font-semibold text-lg mb-2">
                   High Priority Near-Term
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-sm">
+                <div className="text-slate-500 dark:text-slate-400 text-sm">
                   All key topics categorized as high priority
                 </div>
               </div>
             </div>
 
             {/* KPI Card 2 */}
-            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-blue-500">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-blue-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   1.6
                 </div>
-                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
+                <div className="text-slate-900 dark:text-slate-200 font-semibold text-lg mb-2">
                   Top Priority Ranking
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-sm">
+                <div className="text-slate-500 dark:text-slate-400 text-sm">
                   Distinguish pathways (avg. rank)
                 </div>
               </div>
             </div>
 
             {/* KPI Card 3 */}
-            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-purple-500">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-purple-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-purple-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   2.0
                 </div>
-                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
+                <div className="text-slate-900 dark:text-slate-200 font-semibold text-lg mb-2">
                   Top Focus Ranking
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-sm">
+                <div className="text-slate-500 dark:text-slate-400 text-sm">
                   Site-Specific Tools (avg. rank)
                 </div>
               </div>
             </div>
 
             {/* KPI Card 4 */}
-            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-orange-500">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-orange-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-orange-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   Split
                 </div>
-                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
+                <div className="text-slate-900 dark:text-slate-200 font-semibold text-lg mb-2">
                   Bioavailability Opinion
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-sm">
+                <div className="text-slate-500 dark:text-slate-400 text-sm">
                   Divided on feasibility
                 </div>
               </div>
@@ -120,11 +120,11 @@ export default async function CewResultsPage() {
 
         {/* 1.0 Executive Summary */}
         <section className="mb-16">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-600">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
               1.0 Executive Summary
             </h2>
-            <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-4">
+            <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 space-y-4">
               <p>
                 This report summarizes feedback from the CEW technical session (October 7, 2025) on modernizing sediment quality assessment. Feedback was collected through real-time polling and a panel discussion. Key findings:
               </p>
@@ -140,16 +140,16 @@ export default async function CewResultsPage() {
 
         {/* 2.0 Introduction & Context */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">
             2.0 Introduction & Context
           </h2>
           
           {/* 2.1 Session Methodology */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600 mb-8">
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-600 mb-8">
+            <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-4">
               2.1 Session Methodology
             </h3>
-            <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-4">
+            <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 space-y-4">
               <p>
                 The session presented the proposed scientific framework and gathered insights from the technical community. Structured around four key themes: Holistic Protection (matrix sediment standards), Tiered Framework (site-specific standards), Prioritization Framework, and Weaving Indigenous Knowledges.
               </p>
@@ -161,85 +161,85 @@ export default async function CewResultsPage() {
 
           {/* Section 2.2 Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-blue-500">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-blue-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   88%
                 </div>
-                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
+                <div className="text-slate-900 dark:text-slate-200 font-semibold text-lg mb-2">
                   Support Modernization
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-sm">
+                <div className="text-slate-500 dark:text-slate-400 text-sm">
                   Respondents supporting modernization
                 </div>
               </div>
             </div>
 
-            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-red-500">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-red-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-red-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   73%
                 </div>
-                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
+                <div className="text-slate-900 dark:text-slate-200 font-semibold text-lg mb-2">
                   Standards Ineffective
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-sm">
+                <div className="text-slate-500 dark:text-slate-400 text-sm">
                   Find standards ineffective for bioaccumulation
                 </div>
               </div>
             </div>
 
-            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-green-500">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-green-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-green-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   95%
                 </div>
-                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
+                <div className="text-slate-900 dark:text-slate-200 font-semibold text-lg mb-2">
                   Expand Contaminant List
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-sm">
+                <div className="text-slate-500 dark:text-slate-400 text-sm">
                   Support expanding contaminant list
                 </div>
               </div>
             </div>
 
-            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-purple-500">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-purple-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-purple-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   91%
                 </div>
-                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
+                <div className="text-slate-900 dark:text-slate-200 font-semibold text-lg mb-2">
                   Bioavailability Essential
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-sm">
+                <div className="text-slate-500 dark:text-slate-400 text-sm">
                   See bioavailability as essential
                 </div>
               </div>
             </div>
 
-            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-orange-500">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-orange-500">
               <div className="text-center">
                 <div className="text-4xl font-bold text-orange-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   86%
                 </div>
-                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
+                <div className="text-slate-900 dark:text-slate-200 font-semibold text-lg mb-2">
                   Tiered Framework
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-sm">
+                <div className="text-slate-500 dark:text-slate-400 text-sm">
                   See tiered framework as beneficial
                 </div>
               </div>
             </div>
 
-            <div className="group relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-indigo-500">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-sky-500">
               <div className="text-center">
-                <div className="text-4xl font-bold text-indigo-600 mb-2 group-hover:scale-110 transition-transform duration-300">
+                <div className="text-4xl font-bold text-sky-700 dark:text-sky-300 mb-2 group-hover:scale-110 transition-transform duration-300">
                   83%
                 </div>
-                <div className="text-gray-900 dark:text-gray-200 font-semibold text-lg mb-2">
+                <div className="text-slate-900 dark:text-slate-200 font-semibold text-lg mb-2">
                   Dual Standard Approach
                 </div>
-                <div className="text-gray-600 dark:text-gray-400 text-sm">
+                <div className="text-slate-500 dark:text-slate-400 text-sm">
                   Support dual standard approach
                 </div>
               </div>
@@ -247,11 +247,11 @@ export default async function CewResultsPage() {
           </div>
 
           {/* 2.2 Building on the Public Survey */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600">
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-600">
+            <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-4">
               2.2 Building on the Public Survey
             </h3>
-            <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-4">
+            <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 space-y-4">
               <p>
                 This technical engagement built on the public survey (May-July 2025), which showed 88% support for modernization and 73% finding current standards ineffective for bioaccumulation. Strong support for: expanding contaminant list (95%), incorporating bioavailability (91%), tiered framework (86%), and dual standard approach (83%).
               </p>
@@ -264,16 +264,16 @@ export default async function CewResultsPage() {
 
         {/* 3.0 Key Findings: Expert Poll Responses */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">
             3.0 Key Findings: Expert Poll Responses
           </h2>
           
           {/* 3.1 Holistic Protection */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600 mb-8">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-600 mb-8">
+              <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-4">
                 3.1 Holistic Protection
               </h3>
-              <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-4">
+              <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 space-y-4">
                 <p>
                   This theme focused on defining the components of a &ldquo;Matrix Sediment Standards (SedS) Framework&rdquo; to provide holistic protection. Experts were polled on the importance and feasibility of developing standards for the four quadrants of this matrix.
                 </p>
@@ -282,7 +282,7 @@ export default async function CewResultsPage() {
                 </p>
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
                       Direct Toxicity to Ecological Receptors (SedS-contactECO)
                     </h4>
                     <p>
@@ -290,14 +290,14 @@ export default async function CewResultsPage() {
                     </p>
                     {/* Charts G-1 and G-2 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6">
+                      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6">
                         <ReportBarChart
                           data={g1Data}
                           figureNumber="Figure G-1"
                           caption="Rank the importance of updating CSR sediment standards for direct toxicity to ecological receptors (matrix standards, possibly based on SSDs)."
                         />
                       </div>
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6">
+                      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6">
                         <ReportBarChart
                           data={g2Data}
                           figureNumber="Figure G-2"
@@ -307,7 +307,7 @@ export default async function CewResultsPage() {
                     </div>
                     {/* Matrix Chart G-20 */}
                     <div className="my-6">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
                         <strong>Matrix Analysis:</strong> Matrix Standards (Ecosystem Health - Direct Toxicity) showed very strong consensus in the dominant quadrant.
                       </p>
                       <CEWMatrixChart
@@ -318,7 +318,7 @@ export default async function CewResultsPage() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
                       Direct Toxicity to Human Receptors (SedS-contactHH)
                     </h4>
                     <p>
@@ -326,14 +326,14 @@ export default async function CewResultsPage() {
                     </p>
                     {/* Charts G-3 and G-4 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6">
+                      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6">
                         <ReportBarChart
                           data={g3Data}
                           figureNumber="Figure G-3"
                           caption="Rank the importance of developing CSR sediment standards for direct toxicity to human receptors (matrix standards)."
                         />
                       </div>
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6">
+                      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6">
                         <ReportBarChart
                           data={g4Data}
                           figureNumber="Figure G-4"
@@ -343,7 +343,7 @@ export default async function CewResultsPage() {
                     </div>
                     {/* Matrix Chart G-21 */}
                     <div className="my-6">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
                         <strong>Matrix Analysis:</strong> Matrix Standards (Human Health - Direct Toxicity) showed a strong majority in the &ldquo;High Priority Near-Term&rdquo; quadrant. However, a notable number of responses also appeared in the &ldquo;High Priority Longer-Term&rdquo; (Top-Left) quadrant, suggesting disagreement on current feasibility.
                       </p>
                       <CEWMatrixChart
@@ -354,7 +354,7 @@ export default async function CewResultsPage() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
                       Food-Related Toxicity to Ecological Receptors (SedS-foodECO)
                     </h4>
                     <p>
@@ -362,14 +362,14 @@ export default async function CewResultsPage() {
                     </p>
                     {/* Charts G-5 and G-6 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6">
+                      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6">
                         <ReportBarChart
                           data={g5Data}
                           figureNumber="Figure G-5"
                           caption="Rank the importance of developing new CSR sediment standards for food-related toxicity to ecological receptors."
                         />
                       </div>
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6">
+                      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6">
                         <ReportBarChart
                           data={g6Data}
                           figureNumber="Figure G-6"
@@ -379,7 +379,7 @@ export default async function CewResultsPage() {
                     </div>
                     {/* Matrix Chart G-19 */}
                     <div className="my-6">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
                         <strong>Matrix Analysis:</strong> Matrix Standards (Ecosystem Health - Food-Related) showed the tightest clustering, with the vast majority of experts agreeing on both high importance and high feasibility.
                       </p>
                       <CEWMatrixChart
@@ -390,7 +390,7 @@ export default async function CewResultsPage() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
                       Food-Related Toxicity to Human Receptors (SedS-foodHH)
                     </h4>
                     <p>
@@ -398,14 +398,14 @@ export default async function CewResultsPage() {
                     </p>
                     {/* Charts G-7 and G-8 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6">
+                      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6">
                         <ReportBarChart
                           data={g7Data}
                           figureNumber="Figure G-7"
                           caption="Rank the importance of developing CSR sediment standards for food-related toxicity to human receptors."
                         />
                       </div>
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6">
+                      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6">
                         <ReportBarChart
                           data={g8Data}
                           figureNumber="Figure G-8"
@@ -415,7 +415,7 @@ export default async function CewResultsPage() {
                     </div>
                     {/* Matrix Chart G-22 */}
                     <div className="my-6">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
                         <strong>Matrix Analysis:</strong> Matrix Standards (Human Health - Food-Related) showed consensus in top-right, with a notable cluster in top-left &ldquo;LONGER-TERM&rdquo; quadrant.
                       </p>
                       <CEWMatrixChart
@@ -430,24 +430,24 @@ export default async function CewResultsPage() {
           </div>
 
           {/* 3.2 Tiered Framework */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600 mb-8">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-600 mb-8">
+              <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-4">
                 3.2 Tiered Framework
               </h3>
-              <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-4">
+              <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 space-y-4">
                 <p>
                   This theme explored expanding the &ldquo;Three-Tier Framework&rdquo; (Tier 1: Matrix, Tier 2: Site-Specific, Tier 3: Risk-Based) and the role of probabilistic (e.g., Bayesian) models.
                 </p>
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
                       Primary Advantage of a Probabilistic Framework
                     </h4>
                     <p>
                       The top-voted advantage (19 votes) was that &ldquo;It produces a full risk distribution rather than a single point value...&rdquo;
                     </p>
                     {/* Chart G-9 */}
-                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6 my-6">
+                    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6 my-6">
                       <ReportBarChart
                         data={g9Data}
                         figureNumber="Figure G-9"
@@ -456,14 +456,14 @@ export default async function CewResultsPage() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
                       Most Critical Data Type
                     </h4>
                     <p>
                       When asked what data is most critical for narrowing uncertainty, the clear winner (29 votes) was &ldquo;Site-specific toxicity testing data to develop more relevant priors...&rdquo;
                     </p>
                     {/* Chart G-10 */}
-                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6 my-6">
+                    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6 my-6">
                       <ReportBarChart
                         data={g10Data}
                         figureNumber="Figure G-10"
@@ -472,14 +472,14 @@ export default async function CewResultsPage() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
                       Biggest Practical Hurdle
                     </h4>
                     <p>
                       The most significant hurdle (26 votes) was identified as &ldquo;Defining appropriate priors, especially when site-specific information is sparse...&rdquo;
                     </p>
                     {/* Chart G-11 */}
-                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6 my-6">
+                    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6 my-6">
                       <ReportBarChart
                         data={g11Data}
                         figureNumber="Figure G-11"
@@ -492,17 +492,17 @@ export default async function CewResultsPage() {
           </div>
 
           {/* 3.3 Prioritization Framework */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-600">
+              <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-4">
                 3.3 Prioritization Framework
               </h3>
-              <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-4">
+              <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 space-y-4">
                 <p>
                   The final set of polls focused on prioritizing specific actions to guide the modernization effort.
                 </p>
                 <div className="space-y-4">
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
                       Incorporating Bioavailability
                     </h4>
                     <p>
@@ -510,14 +510,14 @@ export default async function CewResultsPage() {
                     </p>
                     {/* Charts G-12 and G-13 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6">
+                      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6">
                         <ReportBarChart
                           data={g12Data}
                           figureNumber="Figure G-12"
                           caption="Rank the importance of incorporating bioavailability adjustments into sediment standards."
                         />
                       </div>
-                      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6">
+                      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6">
                         <ReportBarChart
                           data={g13Data}
                           figureNumber="Figure G-13"
@@ -527,7 +527,7 @@ export default async function CewResultsPage() {
                     </div>
                     {/* Matrix Chart G-23 */}
                     <div className="my-6">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
                         <strong>Matrix Analysis:</strong> Site-Specific Standards (Bioavailability) showed the most division. While importance was universally high, responses were split almost evenly between the &ldquo;High Priority Near-Term&rdquo; (Top-Right) and &ldquo;High Priority Longer-Term&rdquo; (Top-Left) quadrants. This indicates significant expert debate on the current feasibility of implementing bioavailability adjustments.
                       </p>
                       <CEWMatrixChart
@@ -538,14 +538,14 @@ export default async function CewResultsPage() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
                       Top Priority for Improving Matrix Standards (Ranking)
                     </h4>
                     <p>
                       The clear top priority (1.6 avg. rank) was to &ldquo;Distinguish &apos;direct toxicity&apos; and &apos;food pathway toxicity&apos; pathways explicitly.&rdquo;
                     </p>
                     {/* Chart G-14 */}
-                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6 my-6">
+                    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6 my-6">
                       <ReportBarChart
                         data={g14Data}
                         figureNumber="Figure G-14"
@@ -554,14 +554,14 @@ export default async function CewResultsPage() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
                       Top Focus for Holistic Management (Ranking)
                     </h4>
                     <p>
                       The top-ranked focus (2.0 avg. rank) was to &ldquo;Push guidance beyond generic numerical standards. Apply models and other technical tools to help develop Site-Specific Sediment Standards (Tier 2)...&rdquo;
                     </p>
                     {/* Chart G-15 */}
-                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6 my-6">
+                    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6 my-6">
                       <ReportBarChart
                         data={g15Data}
                         figureNumber="Figure G-15"
@@ -570,29 +570,29 @@ export default async function CewResultsPage() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                    <h4 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">
                       Greatest Barrier to Advancing Protection
                     </h4>
                     <p>
                       A word cloud poll (45 responses) identified the greatest constraint to advancing holistic sediment protection. The most common response by a large margin was &ldquo;resourcing&rdquo; (26 responses), followed by &ldquo;agreement&rdquo; (8 responses) and &ldquo;prescription&rdquo; (4 responses).
                     </p>
                     {/* Informational Note: Word Cloud Poll Methodology */}
-                    <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4 my-6">
+                    <div className="bg-sky-50 dark:bg-sky-900/20 rounded-lg border border-sky-200 dark:border-sky-800 p-4 my-6">
                       <div className="flex items-start">
                         <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                          <svg className="h-5 w-5 text-sky-600 dark:text-sky-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                           </svg>
                         </div>
                         <div className="ml-3">
-                          <p className="text-sm text-gray-900 dark:text-blue-200">
+                          <p className="text-sm text-slate-900 dark:text-sky-200">
                             <strong>Note:</strong> Participants were asked to identify the greatest constraint to advancing holistic sediment protection in BC through a word cloud poll. The word cloud visualization (where word size corresponds to frequency) showed &ldquo;resourcing&rdquo; as the most common response. See Figure G-18 below for exact word frequencies.
                           </p>
                         </div>
                       </div>
                     </div>
                     {/* Chart G-18: Word frequency bar chart */}
-                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6 my-6">
+                    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6 my-6">
                       <ReportWordCloudChart
                         data={g18Data}
                         figureNumber="Figure G-18"
@@ -607,13 +607,13 @@ export default async function CewResultsPage() {
 
         {/* 5.0 Panel Discussion: Weaving Indigenous Knowledges */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">
             5.0 Panel Discussion: Weaving Indigenous Knowledges
           </h2>
           
           {/* Introduction/Context */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600 mb-8">
-            <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-600 mb-8">
+            <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 space-y-4">
               <p>
                 This session explored the &ldquo;how&rdquo; and &ldquo;why&rdquo; of braiding Indigenous wisdom with Western science. The session was framed by two key presentations:
               </p>
@@ -628,11 +628,11 @@ export default async function CewResultsPage() {
           </div>
 
           {/* On the Legal Status of Water Quality Objectives */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600 mb-8">
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-600 mb-8">
+            <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-4">
               On the Legal Status of Water Quality Objectives
             </h3>
-            <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-4">
+            <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 space-y-4">
               <p>
                 <strong>Audience Question:</strong> What are your concerns regarding the fact that the Burrard Inlet Water Quality Objectives are not legally binding?
               </p>
@@ -643,11 +643,11 @@ export default async function CewResultsPage() {
           </div>
 
           {/* On Reflecting Indigenous Values in Standards */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600 mb-8">
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-600 mb-8">
+            <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-4">
               On Reflecting Indigenous Values in Standards
             </h3>
-            <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-4">
+            <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 space-y-4">
               <p>
                 <strong>Moderator Question:</strong> What&apos;s one key way sediment standards could better reflect Indigenous values, cultural uses, or community health needs?
               </p>
@@ -658,11 +658,11 @@ export default async function CewResultsPage() {
           </div>
 
           {/* On Challenges of Braiding Knowledge */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600 mb-8">
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-600 mb-8">
+            <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-4">
               On Challenges of Braiding Knowledge
             </h3>
-            <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-4">
+            <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 space-y-4">
               <p>
                 <strong>Moderator Question:</strong> From your experience, what&apos;s a key lesson—or challenge—you&apos;ve faced when bringing Indigenous knowledge into Western scientific processes?
               </p>
@@ -673,11 +673,11 @@ export default async function CewResultsPage() {
           </div>
 
           {/* Final Thoughts */}
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600">
-            <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-600">
+            <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-4">
               Final Thoughts
             </h3>
-            <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-4">
+            <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 space-y-4">
               <p>
                 The panel&apos;s final thoughts centered on the foundational concept that in many First Nations languages, &ldquo;Landscape = Kin&rdquo;. This perspective reframes environmental protection: &ldquo;How we care about the environment should be how we care about our family&rdquo;.
               </p>
@@ -687,11 +687,11 @@ export default async function CewResultsPage() {
 
         {/* 6.0 Conclusion and Next Steps */}
         <section className="mb-16">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-600">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-600">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
               6.0 Conclusion and Next Steps
             </h2>
-            <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-4">
+            <div className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 space-y-4">
               <p>
                 The CEW session validated the proposed direction with strong expert consensus: modernize standards to be holistic, protecting both human and ecological health, including direct and food-pathway toxicity.
               </p>

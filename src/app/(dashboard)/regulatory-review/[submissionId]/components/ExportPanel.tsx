@@ -227,19 +227,19 @@ export default function ExportPanel({
       onClick={handleBackdropClick}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-[600px] max-h-[90vh] flex flex-col overflow-hidden"
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-[600px] max-h-[90vh] flex flex-col overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-labelledby="export-panel-title"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h2 id="export-panel-title" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+          <h2 id="export-panel-title" className="text-lg font-semibold text-slate-900 dark:text-slate-100">
             Export {memoTitle} Tech Memo
           </h2>
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+            className="p-1 text-slate-400 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
             aria-label="Close"
           >
             <X className="h-5 w-5" />
@@ -250,96 +250,96 @@ export default function ExportPanel({
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {/* Memo Type Selection */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
               Memo Type
             </label>
             <div className="flex gap-2">
               <button
                 onClick={() => setMemoType('interim')}
-                className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                   memoType === 'interim'
-                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300'
+                    : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}
               >
                 Interim Memo
               </button>
               <button
                 onClick={() => setMemoType('final')}
-                className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                className={`flex-1 px-4 py-2 rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                   memoType === 'final'
-                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300'
+                    : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}
               >
                 Final Memo
               </button>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               Final Memo includes only items marked Include-in-Final.
             </p>
           </div>
 
           {/* Format Selection */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
               Export Format
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => setFormat('csv')}
-                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                   format === 'csv'
-                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300'
+                    : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}
               >
                 <FileSpreadsheet className="h-5 w-5" />
                 <span className="font-medium">Excel (CSV)</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">Opens in Excel</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Opens in Excel</span>
               </button>
               <button
                 onClick={() => setFormat('word')}
-                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                   format === 'word'
-                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300'
+                    : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}
               >
                 <File className="h-5 w-5" />
                 <span className="font-medium">Word (.doc)</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">Formatted memo</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Formatted memo</span>
               </button>
               <button
                 onClick={() => setFormat('markdown')}
-                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                   format === 'markdown'
-                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300'
+                    : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}
               >
                 <FileText className="h-5 w-5" />
                 <span className="font-medium">Markdown</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">Plain text</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Plain text</span>
               </button>
               <button
                 onClick={() => setFormat('html')}
-                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                className={`flex flex-col items-center gap-1 px-4 py-3 rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                   format === 'html'
-                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300'
+                    : 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
                 }`}
               >
                 <FileCode className="h-5 w-5" />
                 <span className="font-medium">HTML</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">Web page</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400">Web page</span>
               </button>
             </div>
           </div>
 
           {/* Options */}
           <div className="mb-6 space-y-3">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
               Content Options
             </label>
 
@@ -348,9 +348,9 @@ export default function ExportPanel({
                 type="checkbox"
                 checked={includePending}
                 onChange={(e) => setIncludePending(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                className="w-4 h-4 rounded border-slate-300 text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="text-sm text-slate-600 dark:text-slate-300">
                 Include pending items (not yet reviewed)
               </span>
             </label>
@@ -360,9 +360,9 @@ export default function ExportPanel({
                 type="checkbox"
                 checked={twoColumnFormat}
                 onChange={(e) => setTwoColumnFormat(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                className="w-4 h-4 rounded border-slate-300 text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="text-sm text-slate-600 dark:text-slate-300">
                 Two-column format (AI | Human side-by-side)
               </span>
             </label>
@@ -372,9 +372,9 @@ export default function ExportPanel({
                 type="checkbox"
                 checked={includeEvidence}
                 onChange={(e) => setIncludeEvidence(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                className="w-4 h-4 rounded border-slate-300 text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="text-sm text-slate-600 dark:text-slate-300">
                 Include evidence excerpts
               </span>
             </label>
@@ -384,9 +384,9 @@ export default function ExportPanel({
                 type="checkbox"
                 checked={onlyNeedsAttention}
                 onChange={(e) => setOnlyNeedsAttention(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                className="w-4 h-4 rounded border-slate-300 text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="text-sm text-slate-600 dark:text-slate-300">
                 Include only items needing attention (FAIL, REQUIRES_JUDGMENT)
               </span>
             </label>
@@ -394,73 +394,73 @@ export default function ExportPanel({
 
           {/* Date Range Filter */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
               Date Range Filter (optional)
             </label>
             <div className="flex gap-3">
               <div className="flex-1">
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
                   From
                 </label>
                 <input
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
                   To
                 </label>
                 <input
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
                 />
               </div>
             </div>
           </div>
 
           {/* Summary Stats */}
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+          <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+            <h3 className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
               Export Summary
             </h3>
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                   {stats.total}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Total Items</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Total Items</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {stats.reviewed}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Reviewed</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Reviewed</div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                   {stats.pending}
                 </div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">Unreviewed</div>
+                <div className="text-xs text-slate-500 dark:text-slate-400">Unreviewed</div>
               </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+            <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
               <div className="flex justify-around text-sm">
-                <span className="text-gray-600 dark:text-gray-400">
+                <span className="text-slate-500 dark:text-slate-400">
                   <span className="font-medium text-green-600 dark:text-green-400">{stats.sufficient}</span> Sufficient
                 </span>
-                <span className="text-gray-600 dark:text-gray-400">
+                <span className="text-slate-500 dark:text-slate-400">
                   <span className="font-medium text-amber-600 dark:text-amber-400">{stats.needsMoreEvidence}</span> Needs More Evidence
                 </span>
-                <span className="text-gray-600 dark:text-gray-400">
+                <span className="text-slate-500 dark:text-slate-400">
                   <span className="font-medium text-red-600 dark:text-red-400">{stats.insufficient}</span> Insufficient
                 </span>
-                <span className="text-gray-600 dark:text-gray-400">
-                  <span className="font-medium text-gray-600 dark:text-gray-300">{stats.unreviewed}</span> Unreviewed
+                <span className="text-slate-500 dark:text-slate-400">
+                  <span className="font-medium text-slate-500 dark:text-slate-300">{stats.unreviewed}</span> Unreviewed
                 </span>
               </div>
             </div>
@@ -469,17 +469,17 @@ export default function ExportPanel({
           {/* Preview */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <h3 className="text-sm font-medium text-slate-600 dark:text-slate-300">
                 Preview (First 3 Items)
               </h3>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 {format === 'csv' && 'CSV Preview'}
                 {format === 'word' && 'Word Preview'}
                 {format === 'html' && 'HTML Preview'}
                 {format === 'markdown' && 'Markdown Preview'}
               </span>
             </div>
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
               {(format === 'html' || format === 'word') ? (
                 <iframe
                   srcDoc={previewContent}
@@ -488,7 +488,7 @@ export default function ExportPanel({
                   sandbox="allow-same-origin"
                 />
               ) : (
-                <pre className="p-4 bg-gray-50 dark:bg-gray-900 text-xs text-gray-700 dark:text-gray-300 overflow-auto max-h-[200px] whitespace-pre-wrap font-mono">
+                <pre className="p-4 bg-slate-50 dark:bg-slate-900 text-xs text-slate-600 dark:text-slate-300 overflow-auto max-h-[200px] whitespace-pre-wrap font-mono">
                   {previewContent}
                 </pre>
               )}
@@ -497,20 +497,20 @@ export default function ExportPanel({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
           >
             Cancel
           </button>
           <div className="flex gap-3">
             <button
               onClick={handleCopy}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                 copySuccess
                   ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                  : 'bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                  : 'bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600'
               }`}
             >
               {copySuccess ? (
@@ -527,10 +527,10 @@ export default function ExportPanel({
             </button>
             <button
               onClick={handleDownload}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
                 downloadSuccess
                   ? 'bg-green-600 text-white'
-                  : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                  : 'bg-sky-600 hover:bg-sky-700 text-white'
               }`}
             >
               {downloadSuccess ? (

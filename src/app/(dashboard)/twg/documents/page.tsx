@@ -69,25 +69,25 @@ export default async function TwgDocumentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <header className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">TWG Documents</h1>
-            <p className="mt-1 text-lg text-gray-600">
+            <h1 className="text-3xl font-bold text-slate-900">TWG Documents</h1>
+            <p className="mt-1 text-lg text-slate-500">
               Browse and review all technical working group documents.
             </p>
           </div>
           <div className="flex space-x-3">
             <Link 
               href="/twg/discussions" 
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
             >
               Discussion Forum
             </Link>
             <Link 
               href="/twg/documents/new" 
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white bg-sky-700 rounded-md hover:bg-sky-800 transition-colors"
             >
               Create New Document
             </Link>

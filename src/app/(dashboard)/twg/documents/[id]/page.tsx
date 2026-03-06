@@ -54,12 +54,12 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
   const isAdmin = !!roleData;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Link 
             href="/twg/documents" 
-            className="text-indigo-600 hover:text-indigo-800 transition-colors"
+            className="text-sky-700 hover:text-sky-800 transition-colors"
           >
             &larr; Back to all documents
           </Link>
@@ -67,17 +67,17 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
 
         <article className="bg-white rounded-lg shadow-md p-6 md:p-8">
           <header className="border-b pb-4 mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 leading-tight">
               {document.title || 'Untitled Document'}
             </h1>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-slate-500">
               Created on: {new Date(document.created_at).toLocaleString()}
             </p>
             {isAdmin && (
               <div className="mt-4 flex gap-4 items-center">
                 <Link
                   href={`/twg/documents/${document.id}/edit`}
-                  className="text-sm text-indigo-600 hover:text-indigo-800 underline"
+                  className="text-sm text-sky-700 hover:text-sky-800 underline"
                 >
                   Edit
                 </Link>
@@ -96,7 +96,7 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
                   href={document.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-indigo-600 hover:text-indigo-800 underline"
+                  className="text-sky-700 hover:text-sky-800 underline"
                 >
                   Link to file
                 </a>
@@ -107,11 +107,11 @@ export default async function DocumentDetailPage({ params }: { params: Promise<{
 
             {document.description ? (
               <div>
-                <h2 className="text-xl font-semibold text-gray-800 mb-2">Description</h2>
-                <p className="text-gray-700 whitespace-pre-line">{document.description}</p>
+                <h2 className="text-xl font-semibold text-slate-800 mb-2">Description</h2>
+                <p className="text-slate-600 whitespace-pre-line">{document.description}</p>
               </div>
             ) : (
-              <p className="text-gray-500">No description provided.</p>
+              <p className="text-slate-500">No description provided.</p>
             )}
           </div>
         </article>

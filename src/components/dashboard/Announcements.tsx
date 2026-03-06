@@ -70,12 +70,12 @@ export default function Announcements() {
     return (
       <div className="bg-white rounded-xl shadow-md p-6">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
+          <div className="h-6 bg-slate-200 rounded w-1/2 mb-4"></div>
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="p-3 border border-gray-200 rounded-lg">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div key={i} className="p-3 border border-slate-200 rounded-lg">
+                <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-slate-200 rounded w-1/2"></div>
               </div>
             ))}
           </div>
@@ -103,11 +103,11 @@ export default function Announcements() {
   if (announcements.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="text-center text-gray-500">
+        <div className="text-center text-slate-500">
           <p>No announcements available</p>
           <button
             onClick={fetchAnnouncements}
-            className="mt-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+            className="mt-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-md hover:bg-slate-200 transition-colors"
           >
             Refresh
           </button>
@@ -118,7 +118,7 @@ export default function Announcements() {
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+      <h2 className="text-xl font-semibold text-slate-800 mb-4 flex items-center">
         <span className="text-2xl mr-3">📢</span>
         Recent Announcements
       </h2>
@@ -129,7 +129,7 @@ export default function Announcements() {
              key={announcement.id}
              className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
                priorityColors[announcement.priority as keyof typeof priorityColors]
-             } ${expandedAnnouncement === announcement.id ? 'shadow-lg ring-2 ring-blue-300' : ''}`}
+             } ${expandedAnnouncement === announcement.id ? 'shadow-lg ring-2 ring-sky-300' : ''}`}
              onClick={() => toggleAnnouncement(announcement.id)}
            >
             <div className="flex items-start justify-between mb-2">
@@ -146,21 +146,21 @@ export default function Announcements() {
             </div>
             
                          {/* Date always visible */}
-             <div className="text-sm text-gray-700 font-medium mb-3">
+             <div className="text-sm text-slate-600 font-medium mb-3">
                📅 Published: {formatDate(announcement.created_at)}
              </div>
             
                          {/* Content - only visible when expanded */}
              {expandedAnnouncement === announcement.id && (
-               <div className="mt-3 pt-3 border-t border-gray-300">
-                 <p className="text-base leading-relaxed text-gray-800 font-medium">
+               <div className="mt-3 pt-3 border-t border-slate-300">
+                 <p className="text-base leading-relaxed text-slate-800 font-medium">
                    {announcement.content}
                  </p>
                </div>
              )}
             
                          {/* Expand/Collapse indicator */}
-             <div className="text-sm text-gray-600 mt-3 flex items-center font-medium">
+             <div className="text-sm text-slate-500 mt-3 flex items-center font-medium">
                <span className="mr-2">
                  {expandedAnnouncement === announcement.id ? '📖 Click to collapse' : '📖 Click to expand'}
                </span>
@@ -180,10 +180,10 @@ export default function Announcements() {
       </div>
       
              {announcements.length > 0 && (
-         <div className="mt-4 pt-4 border-t border-gray-200">
+         <div className="mt-4 pt-4 border-t border-slate-200">
            <button
              onClick={fetchAnnouncements}
-             className="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 text-sm font-semibold transition-colors border border-blue-300"
+             className="px-4 py-2 bg-sky-100 text-sky-800 rounded-lg hover:bg-sky-200 text-sm font-semibold transition-colors border border-sky-300"
            >
              🔄 Refresh Announcements
            </button>

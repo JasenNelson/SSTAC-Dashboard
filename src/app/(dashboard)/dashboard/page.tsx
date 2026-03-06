@@ -33,9 +33,9 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Hero Header with Aquatic Theme */}
-      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-sky-900 text-white shadow-2xl relative overflow-hidden">
         {/* Aquatic Texture Overlay */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 left-0 w-full h-full">
@@ -51,14 +51,14 @@ export default async function DashboardPage() {
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 relative z-10">
           <div className="text-center">
-                         <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+                         <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-white to-sky-200 bg-clip-text text-transparent">
                Sediment Standards Project
              </h1>
-            <p className="text-xl text-blue-100 max-w-4xl mx-auto leading-relaxed mb-8">
+            <p className="text-xl text-sky-200 max-w-4xl mx-auto leading-relaxed mb-8">
               Developing a modern, robust scientific framework for updating BC&apos;s Contaminated Sites Regulation sediment standards
             </p>
             <div className="inline-flex items-center px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full border border-white/30 shadow-lg">
-              <span className="text-blue-900 text-sm font-semibold">
+              <span className="text-slate-900 text-sm font-semibold">
                 🎯 Phase 1: Scientific Framework Development
               </span>
             </div>
@@ -68,9 +68,9 @@ export default async function DashboardPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative z-10">
         {/* Project Context Section */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-12 border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 mb-12 border border-slate-200 dark:border-slate-700">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-8 text-center">
               About the Sediment Standards Project
             </h2>
             
@@ -78,15 +78,15 @@ export default async function DashboardPage() {
               {/* Project Overview */}
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <div className="flex-shrink-0 w-12 h-12 bg-sky-100 dark:bg-sky-900/40 rounded-xl flex items-center justify-center">
                     <span className="text-2xl">🏛️</span>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Project Overview</h3>
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+                    <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-3">Project Overview</h3>
+                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
                       The Science Advisory Board for Contaminated Sites (SABCS) has partnered with the BC Ministry of Environment & Parks to collaboratively develop a scientific framework for modernizing the CSR standards.
                     </p>
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
                       The Science & Standards Technical Advisory Committee (SSTAC) is leading the Sediment Standards Project, which integrates best-available science to protect aquatic ecosystems and the communities that depend on them.
                     </p>
                   </div>
@@ -98,10 +98,10 @@ export default async function DashboardPage() {
             </div>
             
             {/* Elevator Pitch */}
-            <div className="mt-10 p-6 bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900 dark:to-indigo-900 rounded-xl border border-blue-200 dark:border-blue-700">
+            <div className="mt-10 p-6 bg-gradient-to-r from-sky-50 to-slate-50 dark:from-sky-900/40 dark:to-slate-900 rounded-xl border border-sky-200 dark:border-sky-700">
               <div className="text-center">
-                <h4 className="text-xl font-semibold text-blue-950 dark:text-blue-100 mb-3">Project Mission</h4>
-                <p className="text-blue-900 dark:text-blue-200 italic text-lg leading-relaxed max-w-4xl mx-auto">
+                <h4 className="text-xl font-semibold text-slate-900 dark:text-sky-100 mb-3">Project Mission</h4>
+                <p className="text-slate-800 dark:text-sky-200 italic text-lg leading-relaxed max-w-4xl mx-auto">
                   &quot;The Sediment Standards Project is developing a modern, robust scientific framework for updating BC&apos;s Contaminated Sites Regulation sediment standards, integrating best-available science to protect aquatic ecosystems and the communities that depend on them.&quot;
                 </p>
               </div>
@@ -124,20 +124,20 @@ export default async function DashboardPage() {
 
         {/* Quick Navigation */}
         <section className="mb-16">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-8 mx-auto max-w-md">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white text-center">Quick Navigation</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-4 mb-8 mx-auto max-w-md">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white text-center">Quick Navigation</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Survey Results */}
             <Link href="/survey-results" className="group">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-500">
-                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-200 transition-colors">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-sky-300 dark:hover:border-sky-500">
+                <div className="w-16 h-16 bg-sky-100 dark:bg-sky-900/40 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-sky-200 transition-colors">
                   <span className="text-3xl">📊</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-400 transition-colors mb-3">
                   Survey
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-slate-500 dark:text-slate-300 leading-relaxed">
                   Explore comprehensive stakeholder feedback and expert insights on modernizing BC sediment standards.
                 </p>
               </div>
@@ -145,14 +145,14 @@ export default async function DashboardPage() {
 
             {/* CEW 2025 */}
             <Link href="/cew-2025" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-green-300">
+              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 hover:border-green-300">
                 <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-200 transition-colors">
                   <span className="text-3xl">🌊</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors mb-3">
                   CEW 2025
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-slate-500 dark:text-slate-300 leading-relaxed">
                   Session details and conference information for the Canadian Ecotoxicity Workshop 2025 in Victoria.
                 </p>
               </div>
@@ -160,14 +160,14 @@ export default async function DashboardPage() {
 
             {/* TWG Documents */}
             <Link href="/twg/documents" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-purple-300">
+              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 hover:border-purple-300">
                 <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-200 transition-colors">
                   <span className="text-3xl">📋</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors mb-3">
                   Documents
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-slate-500 dark:text-slate-300 leading-relaxed">
                   Access and manage Technical Working Group documents, reports, and technical materials.
                 </p>
               </div>
@@ -175,14 +175,14 @@ export default async function DashboardPage() {
 
             {/* Discussion Forum */}
             <Link href="/twg/discussions" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-orange-300">
+              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 hover:border-orange-300">
                 <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-200 transition-colors">
                   <span className="text-3xl">💬</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors mb-3">
                   Forum
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-slate-500 dark:text-slate-300 leading-relaxed">
                   Engage in technical discussions and collaborate with stakeholders on sediment standards.
                 </p>
               </div>
@@ -190,14 +190,14 @@ export default async function DashboardPage() {
 
             {/* WIKS - Weaving Indigenous Knowledge & Science */}
             <Link href="/wiks" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-amber-300">
+              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 hover:border-amber-300">
                 <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-amber-200 transition-colors">
                   <span className="text-3xl">🌿</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors mb-3">
                   WIKS
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-slate-500 dark:text-slate-300 leading-relaxed">
                   Explore the strategic plan to integrate Indigenous-led WQCIU framework into BC&apos;s modernized sediment standards.
                 </p>
               </div>
@@ -205,14 +205,14 @@ export default async function DashboardPage() {
 
             {/* Admin Panel */}
             <Link href="/admin" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 hover:border-red-300">
+              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 hover:border-red-300">
                 <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-red-200 transition-colors">
                   <span className="text-3xl">⚙️</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors mb-3">
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors mb-3">
                   Admin
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                <p className="text-slate-500 dark:text-slate-300 leading-relaxed">
                   Access the admin dashboard to manage users, announcements, milestones, and system settings (Admin access required).
                 </p>
               </div>
@@ -253,15 +253,15 @@ export default async function DashboardPage() {
                 </h3>
                 <ul className="space-y-4 text-green-100">
                   <li className="flex items-start">
-                    <span className="text-blue-200 mr-3 mt-1">📋</span>
+                    <span className="text-sky-200 mr-3 mt-1">📋</span>
                     <span>TWG review of &ldquo;What We Heard&rdquo; report begins mid-August 2025</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-blue-200 mr-3 mt-1">📋</span>
+                    <span className="text-sky-200 mr-3 mt-1">📋</span>
                     <span>CEW 2025 session presentation and stakeholder feedback collection (Oct 7)</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-blue-200 mr-3 mt-1">📋</span>
+                    <span className="text-sky-200 mr-3 mt-1">📋</span>
                     <span>Collaboratively refine interim scientific framework (Phase 1 completion by Dec 2025)</span>
                   </li>
                 </ul>
@@ -272,29 +272,29 @@ export default async function DashboardPage() {
 
         {/* Contact Information */}
         <section className="mb-12">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-10 border border-gray-100 dark:border-gray-700">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">Get in Touch</h2>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-10 border border-slate-200 dark:border-slate-700">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-8 text-center">Get in Touch</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
               <div>
-                <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-sky-100 dark:bg-sky-900/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">📧</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Email Support</h3>
-                <div className="text-gray-600 dark:text-gray-300 space-y-3">
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Email Support</h3>
+                <div className="text-slate-500 dark:text-slate-300 space-y-3">
                   <div>
-                    <strong className="text-gray-800 dark:text-gray-200">SABCS:</strong>{' '}
+                    <strong className="text-slate-700 dark:text-slate-200">SABCS:</strong>{' '}
                     <a 
                       href="mailto:info@sabcs.ca" 
-                      className="text-blue-600 hover:text-blue-800 underline font-medium"
+                      className="text-sky-700 hover:text-sky-800 underline font-medium"
                     >
                       info@sabcs.ca
                     </a>
                   </div>
                   <div>
-                    <strong className="text-gray-800">Ministry of Environment and Parks:</strong>{' '}
+                    <strong className="text-slate-700">Ministry of Environment and Parks:</strong>{' '}
                     <a 
                       href="mailto:jasen.nelson@gov.bc.ca" 
-                      className="text-blue-600 hover:text-blue-800 underline font-medium"
+                      className="text-sky-700 hover:text-sky-800 underline font-medium"
                     >
                       jasen.nelson@gov.bc.ca
                     </a>
@@ -305,8 +305,8 @@ export default async function DashboardPage() {
                 <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">📋</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Project Updates</h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Project Updates</h3>
+                <p className="text-slate-500 dark:text-slate-300 leading-relaxed">
                   Stay informed about project progress and milestones
                 </p>
               </div>
@@ -314,8 +314,8 @@ export default async function DashboardPage() {
                 <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">🤝</span>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Stakeholder Engagement</h3>
-                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Stakeholder Engagement</h3>
+                <p className="text-slate-500 dark:text-slate-300 leading-relaxed">
                   Participate in discussions and provide feedback
                 </p>
               </div>

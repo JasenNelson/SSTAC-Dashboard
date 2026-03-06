@@ -53,8 +53,8 @@ function FileTypeIcon({ type }: { type: string | null }) {
   if (type?.includes('spreadsheet') || type?.includes('excel'))
     return <FileSpreadsheet className="h-5 w-5 text-green-600" />;
   if (type?.includes('image'))
-    return <FileImage className="h-5 w-5 text-blue-500" />;
-  return <FileText className="h-5 w-5 text-gray-400" />;
+    return <FileImage className="h-5 w-5 text-sky-600" />;
+  return <FileText className="h-5 w-5 text-slate-400" />;
 }
 
 // =============================================================================
@@ -186,22 +186,22 @@ export default function FileManagementModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div
-        className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col"
+        className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col"
         role="dialog"
         aria-modal="true"
         aria-labelledby="file-mgmt-title"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
           <h3
             id="file-mgmt-title"
-            className="text-lg font-semibold text-gray-900 dark:text-white"
+            className="text-lg font-semibold text-slate-900 dark:text-white"
           >
             Manage Files
           </h3>
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded"
+            className="p-1 text-slate-400 hover:text-slate-500 dark:hover:text-slate-300 rounded"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -225,29 +225,29 @@ export default function FileManagementModal({
             onDrop={handleDrop}
             className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
               dragOver
-                ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                ? 'border-sky-400 dark:border-sky-500 bg-sky-50 dark:bg-sky-900/20'
+                : 'border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500'
             }`}
           >
             {uploading ? (
-              <div className="flex items-center justify-center gap-2 text-indigo-600 dark:text-indigo-400">
+              <div className="flex items-center justify-center gap-2 text-sky-600 dark:text-sky-400">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 <span className="text-sm font-medium">Uploading...</span>
               </div>
             ) : (
               <>
-                <Upload className="w-8 h-8 mx-auto text-gray-400 dark:text-gray-500 mb-2" />
+                <Upload className="w-8 h-8 mx-auto text-slate-400 dark:text-slate-500 mb-2" />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
+                  className="text-sm text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 font-medium"
                 >
                   Choose files
                 </button>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-sm text-slate-500 dark:text-slate-400">
                   {' '}
                   or drag and drop
                 </span>
-                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                   PDF, DOCX, XLSX, images
                 </p>
                 <input
@@ -264,12 +264,12 @@ export default function FileManagementModal({
 
           {/* File List */}
           {loading ? (
-            <div className="flex items-center justify-center py-8 text-gray-400 dark:text-gray-500">
+            <div className="flex items-center justify-center py-8 text-slate-400 dark:text-slate-500">
               <Loader2 className="h-5 w-5 animate-spin mr-2" />
               Loading files...
             </div>
           ) : files.length > 0 ? (
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {files.map((file) => (
                 <div
                   key={file.id}
@@ -277,10 +277,10 @@ export default function FileManagementModal({
                 >
                   <FileTypeIcon type={file.file_type} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
                       {file.filename}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       {formatFileSize(file.file_size)}
                       {' -- '}
                       {new Date(file.uploaded_at).toLocaleDateString('en-CA')}
@@ -299,7 +299,7 @@ export default function FileManagementModal({
                   )}
                   <button
                     onClick={() => deleteFile(file.id)}
-                    className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 rounded"
+                    className="p-1 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 rounded"
                     title="Delete file"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -308,7 +308,7 @@ export default function FileManagementModal({
               ))}
             </div>
           ) : (
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-6">
+            <p className="text-center text-sm text-slate-500 dark:text-slate-400 py-6">
               No files uploaded yet.
             </p>
           )}
@@ -322,7 +322,7 @@ export default function FileManagementModal({
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-lg flex-shrink-0">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-b-lg flex-shrink-0">
           <div>
             {isLocalEngineClient() && hasUnprocessed && (
               <button
@@ -341,7 +341,7 @@ export default function FileManagementModal({
           </div>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
           >
             Close
           </button>

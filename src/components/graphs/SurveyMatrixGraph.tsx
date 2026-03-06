@@ -85,30 +85,30 @@ export default function SurveyMatrixGraph({
   };
 
   return (
-    <div className="mt-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+    <div className="mt-4 border rounded-lg bg-slate-50 dark:bg-slate-800">
       <button
         onClick={handleToggle}
-        className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        className="w-full flex items-center justify-between p-4 text-left hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          <span className="font-medium text-gray-900 dark:text-white">
+          <BarChart3 className="w-5 h-5 text-sky-700 dark:text-sky-300" />
+          <span className="font-medium text-slate-900 dark:text-white">
             View Matrix Graph: {questionPair.title}
           </span>
         </div>
         {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-gray-500" />
+          <ChevronUp className="w-5 h-5 text-slate-500" />
         ) : (
-          <ChevronDown className="w-5 h-5 text-gray-500" />
+          <ChevronDown className="w-5 h-5 text-slate-500" />
         )}
       </button>
       
       {isExpanded && (
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700">
           {loading && (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-gray-600 dark:text-gray-400">Loading matrix graph...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-700"></div>
+              <span className="ml-2 text-slate-500 dark:text-slate-400">Loading matrix graph...</span>
             </div>
           )}
           
@@ -117,7 +117,7 @@ export default function SurveyMatrixGraph({
               <p className="text-red-600 dark:text-red-400 mb-2">{error}</p>
               <button
                 onClick={fetchMatrixData}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                className="px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-sky-800 transition-colors"
               >
                 Retry
               </button>
@@ -126,7 +126,7 @@ export default function SurveyMatrixGraph({
           
           {matrixData && !loading && !error && (
             <div className="space-y-4">
-              <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="text-sm text-slate-500 dark:text-slate-400">
                 <p><strong>Importance Question:</strong> {questionPair.importanceQuestion}</p>
                 <p><strong>Feasibility Question:</strong> {questionPair.feasibilityQuestion}</p>
               </div>
@@ -142,7 +142,7 @@ export default function SurveyMatrixGraph({
           )}
           
           {!matrixData && !loading && !error && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="text-center py-8 text-slate-500 dark:text-slate-400">
               <p>No matrix graph data available for this question pair.</p>
             </div>
           )}

@@ -51,7 +51,7 @@ function adaptAssessmentForJudgment(assessment: Assessment): JudgmentAssessment 
     dbId: assessment.dbId,
     csapId: assessment.policyId,
     citationLabel: assessment.citationLabel,
-    csapText: assessment.policyTitle + (assessment.notes ? `\n\n${assessment.notes}` : ''),
+    csapText: assessment.policyTitle,
     section: assessment.section,
     sheet: assessment.sheet || 'Other',
     tier: assessment.tier,
@@ -173,7 +173,7 @@ const STAGE_GROUPS: StageGroup[] = [
     stageIds: ['SITE_DISCOVERY', 'PSI'],
     topicIds: ['SITE_IDENTIFICATION', 'SITE_INVESTIGATION'],
     sheets: ['STG1PSI', 'PCOC'],
-    chipClass: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200',
+    chipClass: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-200',
   },
   {
     id: 'STAGE_2',
@@ -203,7 +203,7 @@ const STAGE_GROUPS: StageGroup[] = [
     label: 'Cross-Cutting: Standards & Guidance',
     topicIds: ['STANDARDS_AND_CRITERIA'],
     sheets: ['CSAP', 'PROFJ', 'UNKNOWN', 'Other'],
-    chipClass: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    chipClass: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
   },
 ];
 
@@ -222,6 +222,8 @@ const STAGE_GROUP_BY_SHEET = new Map(
 const CROSS_CUTTING_GROUP = STAGE_GROUP_BY_ID.get('CROSS_CUTTING')!;
 const STAGE_1_GROUP = STAGE_GROUP_BY_ID.get('STAGE_1')!;
 const STAGE_2_GROUP = STAGE_GROUP_BY_ID.get('STAGE_2')!;
+const STAGE_3_GROUP = STAGE_GROUP_BY_ID.get('STAGE_3')!;
+const STAGE_4_GROUP = STAGE_GROUP_BY_ID.get('STAGE_4')!;
 
 function getStageGroupForAssessment(assessment: Assessment): StageGroup {
   const sheet = assessment.sheet || 'Other';
@@ -251,13 +253,19 @@ function getStageGroupForAssessment(assessment: Assessment): StageGroup {
     }
   }
 
-  // TIER2_SIM_20260125: NPG mixes Stage 1 & Stage 2 sections in a single sheet.
+  // NPG mixes multiple stages in a single sheet — route by section keywords.
   if (sheet === 'NPG') {
     if (section.includes('STAGE 2') || section.includes('DSI')) {
       return STAGE_2_GROUP;
     }
     if (section.includes('STAGE 1') || section.includes('PSI')) {
       return STAGE_1_GROUP;
+    }
+    if (section.includes('SCREENING LEVEL RISK') || section.includes('SLRA')) {
+      return STAGE_3_GROUP;
+    }
+    if (section.includes('REMEDIATION PLAN') || section.includes('CONFIRMATION OF REMEDIATION')) {
+      return STAGE_4_GROUP;
     }
     return CROSS_CUTTING_GROUP;
   }
@@ -1172,11 +1180,11 @@ export default function ReviewDashboardClient({
   return (
     <div className="h-screen flex">
       {/* Left Panel: Filters + Section Navigation */}
-      <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+      <div className="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col">
         {/* Filters Section */}
-        <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-3 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
               <Filter className="w-3 h-3" />
               Filters
             </span>
@@ -1190,7 +1198,7 @@ export default function ReviewDashboardClient({
               || searchQuery) && (
               <button
                 onClick={clearFilters}
-                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
+                className="text-xs text-sky-600 dark:text-sky-400 hover:underline"
               >
                 Clear
               </button>
@@ -1199,7 +1207,7 @@ export default function ReviewDashboardClient({
           <div className="space-y-2">
             {/* Search Input */}
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
               <label htmlFor="rr-search" className="sr-only">Search CSAP items</label>
               <input
                 id="rr-search"
@@ -1207,12 +1215,12 @@ export default function ReviewDashboardClient({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search CSAP items..."
-                className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded pl-7 pr-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                className="w-full text-xs border border-slate-300 dark:border-slate-600 rounded pl-7 pr-2 py-1.5 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                   aria-label="Clear search"
                 >
                   x
@@ -1223,7 +1231,7 @@ export default function ReviewDashboardClient({
               value={tierFilter}
               onChange={(e) => setTierFilter(e.target.value as TierFilter)}
               aria-label="Filter by tier"
-              className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+              className="w-full text-xs border border-slate-300 dark:border-slate-600 rounded px-2 py-1.5 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
             >
               <option value="all">All Tiers</option>
               <option value="TIER_1_BINARY">Tier 1 - Binary</option>
@@ -1234,7 +1242,7 @@ export default function ReviewDashboardClient({
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
               aria-label="Filter by AI status"
-              className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+              className="w-full text-xs border border-slate-300 dark:border-slate-600 rounded px-2 py-1.5 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
             >
               <option value="all">All AI Status</option>
               <option value="pass">Pass</option>
@@ -1246,7 +1254,7 @@ export default function ReviewDashboardClient({
               value={policyScope}
               onChange={(e) => setPolicyScope(e.target.value as typeof policyScope)}
               aria-label="Filter by policy scope"
-              className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+              className="w-full text-xs border border-slate-300 dark:border-slate-600 rounded px-2 py-1.5 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
             >
               <option value="csap_core">CSAP NPG + RAPG</option>
               <option value="all">All Policies</option>
@@ -1255,7 +1263,7 @@ export default function ReviewDashboardClient({
               value={sufficiencyFilter}
               onChange={(e) => setSufficiencyFilter(e.target.value as typeof sufficiencyFilter)}
               aria-label="Filter by evidence sufficiency"
-              className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+              className="w-full text-xs border border-slate-300 dark:border-slate-600 rounded px-2 py-1.5 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
             >
               <option value="all">All Evidence Sufficiency</option>
               <option value="SUFFICIENT">Sufficient</option>
@@ -1263,12 +1271,12 @@ export default function ReviewDashboardClient({
               <option value="INSUFFICIENT">Insufficient</option>
               <option value="UNREVIEWED">Unreviewed</option>
             </select>
-            <label className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+            <label className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-300">
                 <input
                   type="checkbox"
                   checked={unresolvedOnly}
                   onChange={(e) => setUnresolvedOnly(e.target.checked)}
-                  className="h-3 w-3 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                  className="h-3 w-3 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                 />
               Unresolved Only
             </label>
@@ -1278,7 +1286,7 @@ export default function ReviewDashboardClient({
         {/* Hierarchical Navigation: Stage Groups -> Sections -> Items */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-2">
-            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider px-2">
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider px-2">
               Topics ({stageGroupHierarchy.size})
             </span>
           </div>
@@ -1304,10 +1312,10 @@ export default function ReviewDashboardClient({
                     }}
                     role="button"
                     tabIndex={0}
-                    className={`w-full flex items-center justify-between px-2 py-2 text-xs rounded-md transition-colors cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 group ${
+                    className={`w-full flex items-center justify-between px-2 py-2 text-xs rounded-md transition-colors cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 group ${
                       isStageSelected
-                        ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
-                        : 'bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200'
+                        ? 'bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300'
+                        : 'bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200'
                     }`}
                   >
                     <div className="flex items-center gap-1.5 min-w-0">
@@ -1316,7 +1324,7 @@ export default function ReviewDashboardClient({
                           e.stopPropagation();
                           toggleStageGroup(stageId);
                         }}
-                        className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                        className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                         aria-label={isStageExpanded ? 'Collapse group' : 'Expand group'}
                       >
                         {isStageExpanded ? (
@@ -1338,13 +1346,13 @@ export default function ReviewDashboardClient({
                       {counts.insufficient > 0 && (
                         <span className="text-[10px] px-1.5 py-0.5 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 rounded">{counts.insufficient}</span>
                       )}
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400">{counts.reviewed}/{counts.total}</span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400">{counts.reviewed}/{counts.total}</span>
                     </div>
                   </div>
 
                   {/* Sections within Stage */}
                   {isStageExpanded && (
-                    <div className="ml-3 mt-1 space-y-0.5 border-l-2 border-gray-200 dark:border-gray-600 pl-2">
+                    <div className="ml-3 mt-1 space-y-0.5 border-l-2 border-slate-200 dark:border-slate-600 pl-2">
                       {Array.from(sections.entries()).map(([section, items]) => {
                         const isSectionExpanded = expandedSections.has(section);
                         const isSectionSelected = selectedSection === section;
@@ -1362,10 +1370,10 @@ export default function ReviewDashboardClient({
                               }}
                               role="button"
                               tabIndex={0}
-                              className={`w-full flex items-center justify-between px-2 py-1.5 text-[11px] rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 group ${
+                              className={`w-full flex items-center justify-between px-2 py-1.5 text-[11px] rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 group ${
                                 isSectionSelected
-                                  ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400'
-                                  : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 text-gray-600 dark:text-gray-400'
+                                  ? 'bg-sky-50 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400'
+                                  : 'hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-500 dark:text-slate-400'
                               }`}
                             >
                               <div className="flex items-center gap-1 min-w-0">
@@ -1374,7 +1382,7 @@ export default function ReviewDashboardClient({
                                     e.stopPropagation();
                                     toggleSection(section);
                                   }}
-                                  className="p-0.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                                  className="p-0.5 hover:bg-slate-200 dark:hover:bg-slate-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                                   aria-label={isSectionExpanded ? 'Collapse section' : 'Expand section'}
                                 >
                                   {isSectionExpanded ? (
@@ -1395,7 +1403,7 @@ export default function ReviewDashboardClient({
                                 {sectionCounts.insufficient > 0 && (
                                   <span className="text-[9px] px-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded">{sectionCounts.insufficient}</span>
                                 )}
-                                <span className="text-[9px] text-gray-400">{sectionCounts.reviewed}/{sectionCounts.total}</span>
+                                <span className="text-[9px] text-slate-400">{sectionCounts.reviewed}/{sectionCounts.total}</span>
                               </div>
                             </div>
 
@@ -1407,17 +1415,17 @@ export default function ReviewDashboardClient({
                                     key={item.id}
                                     onClick={() => handleSelectAssessment(item.id)}
                                     title={item.policyId}
-                                    className={`w-full text-left px-2 py-1 text-[10px] rounded truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:whitespace-normal ${
+                                    className={`w-full text-left px-2 py-1 text-[10px] rounded truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:whitespace-normal ${
                                       selectedAssessmentId === item.id
-                                        ? 'bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 font-medium'
-                                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                        ? 'bg-sky-50 dark:bg-sky-900/50 text-sky-600 dark:text-sky-400 font-medium'
+                                        : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
                                     }`}
                                   >
                                     {getPolicyLabel(item)}
                                   </button>
                                 ))}
                                 {items.length > 5 && (
-                                  <span className="block px-2 py-1 text-[10px] text-gray-400 italic">
+                                  <span className="block px-2 py-1 text-[10px] text-slate-400 italic">
                                     +{items.length - 5} more items
                                   </span>
                                 )}
@@ -1438,45 +1446,45 @@ export default function ReviewDashboardClient({
       {/* Right Side: Header + Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header Bar */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2">
+        <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2">
           <div className="flex items-center justify-between">
             {/* Left: Back + Title */}
             <div className="flex items-center gap-3">
               <Link
                 href="/regulatory-review"
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                className="text-slate-400 hover:text-slate-500 dark:hover:text-slate-200"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </Link>
-              <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 {submission.type} for {submission.siteId}
               </div>
-              <span className="text-gray-300 dark:text-gray-600">|</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-slate-300 dark:text-slate-500">|</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 Regulatory Review Dashboard
               </span>
             </div>
 
             {/* Center: Review Progress + AI Status */}
-            <div className="flex flex-col items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300">
+            <div className="flex flex-col items-center gap-1 text-[11px] text-slate-500 dark:text-slate-300">
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-slate-500 dark:text-slate-400">
                   Reviewed {stats.reviewed}/{stats.total}
                 </span>
-                <div className="h-1.5 w-28 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                <div className="h-1.5 w-28 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                   <div
-                    className="h-full bg-indigo-500"
+                    className="h-full bg-sky-500"
                     style={{ width: `${stats.total ? Math.round((stats.reviewed / stats.total) * 100) : 0}%` }}
                   />
                 </div>
-                <span className="text-[10px] text-gray-400">
+                <span className="text-[10px] text-slate-400">
                   {stats.total ? Math.round((stats.reviewed / stats.total) * 100) : 0}%
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="uppercase tracking-wide text-[10px] text-gray-400">AI</span>
+                <span className="uppercase tracking-wide text-[10px] text-slate-400">AI</span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-green-500" />
                   {aiStats.pass}
@@ -1490,14 +1498,14 @@ export default function ReviewDashboardClient({
                   {aiStats.fail}
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-gray-400" />
+                  <span className="w-2 h-2 rounded-full bg-slate-400" />
                   {aiStats.pending}
                 </span>
               </div>
             </div>
 
             {/* Right: Meta + View + Panels + Export */}
-            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
               <span>Received: {new Date(submission.submittedAt).toLocaleDateString()}</span>
               <span className="flex items-center gap-1">
                 Reviewer:
@@ -1509,25 +1517,25 @@ export default function ReviewDashboardClient({
                     onBlur={() => setIsEditingReviewer(false)}
                     onKeyDown={(e) => e.key === 'Enter' && setIsEditingReviewer(false)}
                     autoFocus
-                    className="px-1 py-0.5 border border-gray-300 dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 w-32"
+                    className="px-1 py-0.5 border border-slate-300 dark:border-slate-600 rounded text-xs bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 w-32"
                   />
                 ) : (
                   <button
                     onClick={() => setIsEditingReviewer(true)}
-                    className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                    className="text-sky-600 dark:text-sky-400 hover:underline"
                   >
                     {reviewerName}
                   </button>
                 )}
               </span>
-              <div className="flex items-center gap-1 rounded bg-gray-100 dark:bg-gray-700 p-0.5">
+              <div className="flex items-center gap-1 rounded bg-slate-100 dark:bg-slate-700 p-0.5">
                 <button
                   onClick={() => setViewMode('exec')}
                   className={`px-2 py-1 rounded text-[11px] font-medium ${
                     viewMode === 'exec'
-                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
-                      : 'text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
-                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2`}
+                      ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
+                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2`}
                   aria-pressed={viewMode === 'exec'}
                 >
                   Executive
@@ -1536,9 +1544,9 @@ export default function ReviewDashboardClient({
                   onClick={() => setViewMode('db')}
                   className={`px-2 py-1 rounded text-[11px] font-medium ${
                     viewMode === 'db'
-                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
-                      : 'text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
-                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2`}
+                      ? 'bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm'
+                      : 'text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
+                  } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2`}
                   aria-pressed={viewMode === 'db'}
                 >
                   Database
@@ -1548,9 +1556,9 @@ export default function ReviewDashboardClient({
                 onClick={toggleSearchPanel}
                 className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
                   showSearchPanel
-                    ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
-                    : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
-                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2`}
+                    ? 'bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300'
+                    : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2`}
               >
                 <Search className="w-3 h-3" />
                 Search
@@ -1559,16 +1567,16 @@ export default function ReviewDashboardClient({
                 onClick={toggleMemoPanel}
                 className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
                   showMemoPanel
-                    ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
-                    : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
-                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2`}
+                    ? 'bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300'
+                    : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'
+                } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2`}
               >
                 <FileText className="w-3 h-3" />
                 Memo
               </button>
               <button
                 onClick={() => setShowExportPanel(true)}
-                className="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                className="flex items-center gap-1 px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded hover:bg-slate-200 dark:hover:bg-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
               >
                 <Download className="w-3 h-3" />
                 Export

@@ -18,14 +18,14 @@ function Part7Prioritization({ data, onChange }: PartComponentProps) {
   ]
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8">
+      <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
         Part 7: Prioritization and Strategic Direction
       </h3>
 
       <div className="space-y-8">
         <div>
-          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <h4 className="text-lg font-medium text-slate-900 dark:text-white mb-4">
             Based on your experience, please rank these four areas for modernization priority in BC&apos;s sediment
             standards (1 = highest):
           </h4>
@@ -33,7 +33,7 @@ function Part7Prioritization({ data, onChange }: PartComponentProps) {
           <div className="space-y-3">
             {modernizationOptions.map((option, index) => (
               <div key={option} className="flex items-center space-x-4">
-                <label className="w-8 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="w-8 text-sm font-medium text-slate-600 dark:text-slate-300">
                   Rank {index + 1}:
                 </label>
                 <select
@@ -42,7 +42,7 @@ function Part7Prioritization({ data, onChange }: PartComponentProps) {
                     const newModernization = { ...data.modernization, [option]: e.target.value }
                     onChange({ ...data, modernization: newModernization })
                   }}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                 >
                   <option value="">Select rank</option>
                   {modernizationOptions.map((_, rankIndex) => (
@@ -51,14 +51,14 @@ function Part7Prioritization({ data, onChange }: PartComponentProps) {
                     </option>
                   ))}
                 </select>
-                <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{option}</span>
               </div>
             ))}
           </div>
         </div>
 
         <div>
-          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <h4 className="text-lg font-medium text-slate-900 dark:text-white mb-4">
             To support long-term (5+ years) strategic goals, please rank the following foundational research areas
             in order of importance for creating a more adaptive and forward-looking regulatory framework (1 = highest importance):
           </h4>
@@ -66,7 +66,7 @@ function Part7Prioritization({ data, onChange }: PartComponentProps) {
           <div className="space-y-3">
             {researchOptions.map((option, index) => (
               <div key={option} className="flex items-center space-x-4">
-                <label className="w-8 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="w-8 text-sm font-medium text-slate-600 dark:text-slate-300">
                   Rank {index + 1}:
                 </label>
                 <select
@@ -75,7 +75,7 @@ function Part7Prioritization({ data, onChange }: PartComponentProps) {
                     const newResearch = { ...data.research, [option]: e.target.value }
                     onChange({ ...data, research: newResearch })
                   }}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                 >
                   <option value="">Select rank</option>
                   {researchOptions.map((_, rankIndex) => (
@@ -84,18 +84,18 @@ function Part7Prioritization({ data, onChange }: PartComponentProps) {
                     </option>
                   ))}
                 </select>
-                <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{option}</span>
               </div>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             Strategic Planning and Implementation: Based on your rankings above, please provide your recommendations for
             strategic planning and implementation priorities. Consider factors such as:
           </label>
-          <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 mb-4 ml-4">
+          <ul className="list-disc list-inside text-sm text-slate-500 dark:text-slate-400 mb-4 ml-4">
             <li>Feasibility and resource requirements for each priority area</li>
             <li>Timeline considerations and dependencies between different modernization efforts</li>
             <li>Potential impact and benefits of each priority</li>
@@ -109,17 +109,17 @@ function Part7Prioritization({ data, onChange }: PartComponentProps) {
               onChange={(e) => onChange({ ...data, strategicPlanning: e.target.value })}
               rows={8}
               maxLength={3000}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               placeholder="Please provide your strategic planning recommendations and implementation priorities..."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-slate-500 dark:text-slate-400">
               {(data.strategicPlanning || '').length}/3000 characters
             </div>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             Additional comments or feedback related to Prioritization and Strategic Direction:
           </label>
           <div className="relative">
@@ -128,10 +128,10 @@ function Part7Prioritization({ data, onChange }: PartComponentProps) {
               onChange={(e) => onChange({ ...data, additionalComments: e.target.value })}
               rows={4}
               maxLength={1500}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               placeholder="Enter any additional comments or feedback here..."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-slate-500 dark:text-slate-400">
               {(data.additionalComments || '').length}/1500 characters
             </div>
           </div>

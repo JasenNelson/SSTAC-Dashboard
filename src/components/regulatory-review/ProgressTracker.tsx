@@ -52,8 +52,8 @@ export default function ProgressTracker({
       label: 'Reviewed',
       count: reviewed,
       percentage: reviewedPct,
-      bgClass: 'bg-blue-500 dark:bg-blue-400',
-      textClass: 'text-blue-600 dark:text-blue-400',
+      bgClass: 'bg-sky-500 dark:bg-sky-400',
+      textClass: 'text-sky-700 dark:text-sky-400',
     },
     {
       key: 'pending',
@@ -77,16 +77,16 @@ export default function ProgressTracker({
     <div className={`w-full ${className}`}>
       {/* Header with completion percentage */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
           Review Progress
         </span>
-        <span className="text-sm font-semibold text-gray-900 dark:text-white">
+        <span className="text-sm font-semibold text-slate-900 dark:text-white">
           {completionPct}% Complete
         </span>
       </div>
 
       {/* Progress bar */}
-      <div className="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden flex">
+      <div className="w-full h-4 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden flex">
         {segments.map((segment) => {
           if (segment.percentage === 0) return null;
           return (
@@ -107,7 +107,7 @@ export default function ProgressTracker({
             <div key={segment.key} className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-sm ${segment.bgClass}`} />
               <div className="flex flex-col">
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-slate-500 dark:text-slate-400">
                   {segment.label}
                 </span>
                 <span className={`text-sm font-medium ${segment.textClass}`}>
@@ -121,7 +121,7 @@ export default function ProgressTracker({
 
       {/* Total items */}
       {showCounts && (
-        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 text-right">
+        <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 text-right">
           Total: {totalItems} items
         </div>
       )}

@@ -124,16 +124,16 @@ export default function Header() {
   // Don't block the entire UI during loading - always show logout option
   if (authLoading && !session) {
     return (
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
+            <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
               <div className="text-center">
                 <div className="leading-tight">SSTAC & TWG</div>
                 <div className="text-sm sm:text-lg leading-tight">Dashboard</div>
               </div>
             </div>
-            <div className="text-gray-500">Loading...</div>
+            <div className="text-slate-500">Loading...</div>
           </div>
         </div>
       </header>
@@ -141,12 +141,12 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm">
+    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo/Brand */}
           <div className="flex items-center">
-            <Link href="/dashboard" className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+            <Link href="/dashboard" className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white hover:text-sky-700 dark:hover:text-sky-400 transition-colors">
               <div className="text-center">
                 <div className="leading-tight">SSTAC & TWG</div>
                 <div className="text-sm sm:text-lg leading-tight">Dashboard</div>
@@ -163,8 +163,8 @@ export default function Header() {
                   href={link.href}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActiveLink(link.href)
-                      ? 'bg-indigo-100 text-indigo-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      ? 'bg-sky-100 text-sky-700'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                   }`}
                 >
                   <span className="mr-2">{link.icon}</span>
@@ -174,13 +174,13 @@ export default function Header() {
               
               {/* Admin Link */}
               {isAdmin && (
-                <div className="ml-4 pl-4 border-l border-gray-300">
+                <div className="ml-4 pl-4 border-l border-slate-300">
                   <Link
                     href="/admin"
                     className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                       isActiveLink('/admin')
                         ? 'bg-green-100 text-green-700'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
                     Admin
@@ -192,7 +192,7 @@ export default function Header() {
               <div className="relative ml-4" data-desktop-menu>
                 <button
                   onClick={() => setIsDesktopMenuOpen(!isDesktopMenuOpen)}
-                  className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  className="flex items-center px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
                 >
                   <span className="mr-2">☰</span>
                   Menu
@@ -200,11 +200,11 @@ export default function Header() {
 
                 {/* Desktop Dropdown Menu */}
                 {isDesktopMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-gray-600 z-50">
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-slate-600 z-50">
                     <div className="py-1 max-h-96 overflow-y-auto">
                       {MENU_CATEGORIES.map((category) => (
                         <div key={category}>
-                          <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700">
+                          <div className="px-4 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-slate-700">
                             {category}
                           </div>
                           {allMenuLinks
@@ -215,13 +215,13 @@ export default function Header() {
                                 href={link.href}
                                 onClick={() => setIsDesktopMenuOpen(false)}
                                 className={`block px-4 py-2 text-sm transition-colors ${
-                                  (link as { parent?: boolean }).parent 
-                                    ? 'pl-8 text-gray-600 dark:text-gray-400' 
+                                  (link as { parent?: boolean }).parent
+                                    ? 'pl-8 text-slate-500 dark:text-slate-400'
                                     : ''
                                 } ${
                                   isActiveLink(link.href)
-                                    ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300'
-                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                    ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300'
+                                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                                 }`}
                               >
                                 <span className="mr-3">{link.icon}</span>
@@ -255,7 +255,7 @@ export default function Header() {
                   {/* Logout Button */}
                   <button
                     onClick={handleLogout}
-                    className="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                    className="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
                   >
                     Logout
                   </button>
@@ -264,7 +264,7 @@ export default function Header() {
                 {/* Mobile Menu Button */}
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="md:hidden p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  className="md:hidden p-2 rounded-md text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     {isMobileMenuOpen ? (
@@ -279,13 +279,13 @@ export default function Header() {
               <div className="flex items-center space-x-3">
                 <Link
                   href="/signup"
-                  className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white border border-indigo-600 rounded-md hover:bg-indigo-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  className="px-4 py-2 text-sm font-medium text-sky-700 bg-white border border-sky-700 rounded-md hover:bg-sky-50 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
                 >
                   Sign Up
                 </Link>
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  className="px-4 py-2 text-sm font-medium text-white bg-sky-700 rounded-md hover:bg-sky-800 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
                 >
                   Login
                 </Link>
@@ -296,11 +296,11 @@ export default function Header() {
 
         {/* Mobile Navigation Menu */}
         {session && isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 dark:border-gray-700 py-4">
+          <div className="md:hidden border-t border-slate-200 dark:border-slate-700 py-4">
             <nav className="space-y-1">
               {MENU_CATEGORIES.map((category) => (
                 <div key={category}>
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-700">
+                  <div className="px-3 py-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider bg-slate-50 dark:bg-slate-700">
                     {category}
                   </div>
                   {allMenuLinks
@@ -311,13 +311,13 @@ export default function Header() {
                         href={link.href}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                          (link as { parent?: boolean }).parent 
-                            ? 'pl-8 text-gray-600 dark:text-gray-400' 
+                          (link as { parent?: boolean }).parent
+                            ? 'pl-8 text-slate-500 dark:text-slate-400'
                             : ''
                         } ${
                           isActiveLink(link.href)
-                            ? 'bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300'
-                            : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                            ? 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300'
+                            : 'text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
                         }`}
                       >
                         <span className="mr-3">{link.icon}</span>
@@ -329,14 +329,14 @@ export default function Header() {
               
               {/* Admin Link */}
               {isAdmin && (
-                <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
                   <Link
                     href="/admin"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
                       isActiveLink('/admin')
                         ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
-                        : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
+                        : 'text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
                   >
                     Admin
@@ -345,7 +345,7 @@ export default function Header() {
               )}
               
               {/* User Info & Logout for All Users */}
-              <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
                 {isAdmin && (
                   <div className="px-3 py-2">
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
@@ -357,7 +357,7 @@ export default function Header() {
                 {/* Theme Toggle for Mobile */}
                 <div className="px-3 py-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Theme</span>
+                    <span className="text-sm text-slate-600 dark:text-slate-300">Theme</span>
                     <ThemeToggle />
                   </div>
                 </div>
@@ -367,7 +367,7 @@ export default function Header() {
                     handleLogout();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full mt-2 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                  className="w-full mt-2 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
                 >
                   Logout
                 </button>

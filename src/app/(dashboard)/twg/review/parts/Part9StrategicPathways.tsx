@@ -13,14 +13,14 @@ function Part9StrategicPathways({ data, onChange }: PartComponentProps) {
   ]
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8">
+      <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
         Part 9: Strategic Pathways &amp; Options Analysis
       </h3>
 
       <div className="space-y-6">
         <div>
-          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+          <h4 className="text-lg font-medium text-slate-900 dark:text-white mb-3">
             Suggest edits or clarifications to each implementation pathway so the description accurately reflects what you would endorse:
           </h4>
           <div className="space-y-4">
@@ -42,7 +42,7 @@ function Part9StrategicPathways({ data, onChange }: PartComponentProps) {
               }
             ].map(({ key, label, placeholder }) => (
               <div key={key}>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                   {label}
                 </label>
                 <div className="relative">
@@ -51,10 +51,10 @@ function Part9StrategicPathways({ data, onChange }: PartComponentProps) {
                     onChange={(e) => onChange({ ...data, [key]: e.target.value })}
                     rows={4}
                     maxLength={2000}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                     placeholder={placeholder}
                   />
-                  <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+                  <div className="absolute bottom-2 right-2 text-xs text-slate-500 dark:text-slate-400">
                     {(data[key] || '').length}/2000 characters
                   </div>
                 </div>
@@ -64,7 +64,7 @@ function Part9StrategicPathways({ data, onChange }: PartComponentProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             If you would recommend an alternate pathway or hybrid approach, describe it here:
           </label>
           <div className="relative">
@@ -73,17 +73,17 @@ function Part9StrategicPathways({ data, onChange }: PartComponentProps) {
               onChange={(e) => onChange({ ...data, otherPathwayIdeas: e.target.value })}
               rows={4}
               maxLength={2000}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               placeholder="Outline any alternative approach or hybridization of the pathways you believe is necessary."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-slate-500 dark:text-slate-400">
               {(data.otherPathwayIdeas || '').length}/2000 characters
             </div>
           </div>
         </div>
 
         <div>
-          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+          <h4 className="text-lg font-medium text-slate-900 dark:text-white mb-3">
             Which enabling factors are essential to implement your recommended edits or new ideas? (Select all that apply)
           </h4>
           <div className="space-y-3">
@@ -99,9 +99,9 @@ function Part9StrategicPathways({ data, onChange }: PartComponentProps) {
                       : currentFactors.filter((item: string) => item !== factor)
                     onChange({ ...data, supportingFactors: updated })
                   }}
-                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="mt-1 h-4 w-4 text-sky-700 focus:ring-sky-500 border-slate-300 rounded"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{factor}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{factor}</span>
               </label>
             ))}
           </div>
@@ -113,14 +113,14 @@ function Part9StrategicPathways({ data, onChange }: PartComponentProps) {
                 value={data.supportingFactorsOther || ''}
                 onChange={(e) => onChange({ ...data, supportingFactorsOther: e.target.value })}
                 placeholder="Please describe additional enabling factors..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               />
             </div>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             Summarize the most important changes you recommend across the pathways, referencing Section VI where helpful:
           </label>
           <div className="relative">
@@ -129,17 +129,17 @@ function Part9StrategicPathways({ data, onChange }: PartComponentProps) {
               onChange={(e) => onChange({ ...data, pathwayRationale: e.target.value })}
               rows={6}
               maxLength={2500}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               placeholder="Summarize the key edits or clarifications you would make across the pathways, noting any references to Section VI."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-slate-500 dark:text-slate-400">
               {(data.pathwayRationale || '').length}/2500 characters
             </div>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             What updates to the recommendations—including revised timeline estimates—would strengthen Phase 2 planning?
           </label>
           <div className="relative">
@@ -148,17 +148,17 @@ function Part9StrategicPathways({ data, onChange }: PartComponentProps) {
               onChange={(e) => onChange({ ...data, recommendationUpdates: e.target.value })}
               rows={4}
               maxLength={1800}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               placeholder="Describe specific refinements to the recommendations, including approximate timelines or sequencing adjustments."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-slate-500 dark:text-slate-400">
               {(data.recommendationUpdates || '').length}/1800 characters
             </div>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             What are the most significant risks or dependencies that must be managed for your recommended adjustments to succeed?
           </label>
           <div className="relative">
@@ -167,17 +167,17 @@ function Part9StrategicPathways({ data, onChange }: PartComponentProps) {
               onChange={(e) => onChange({ ...data, implementationRisks: e.target.value })}
               rows={4}
               maxLength={1500}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               placeholder="Identify the major risks, bottlenecks, or prerequisites (e.g., funding, staffing, policy changes)..."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-slate-500 dark:text-slate-400">
               {(data.implementationRisks || '').length}/1500 characters
             </div>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             Line-by-line feedback for Section VI – Strategic Pathways &amp; Options Analysis (5,000 characters max):
           </label>
           <div className="relative">
@@ -186,10 +186,10 @@ function Part9StrategicPathways({ data, onChange }: PartComponentProps) {
               onChange={(e) => onChange({ ...data, lineByLine: e.target.value })}
               rows={8}
               maxLength={5000}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               placeholder="Reference specific pages/lines in Section VI where edits or clarifications are required..."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-slate-500 dark:text-slate-400">
               {(data.lineByLine || '').length}/5000 characters
             </div>
           </div>

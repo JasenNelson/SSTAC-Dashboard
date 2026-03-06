@@ -65,7 +65,7 @@ export default function DeleteConfirmDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div
-        className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md mx-4"
+        className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-md mx-4"
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="delete-title"
@@ -79,7 +79,7 @@ export default function DeleteConfirmDialog({
             </div>
             <h3
               id="delete-title"
-              className="text-lg font-semibold text-gray-900 dark:text-white"
+              className="text-lg font-semibold text-slate-900 dark:text-white"
             >
               Delete Project
             </h3>
@@ -88,24 +88,24 @@ export default function DeleteConfirmDialog({
 
         {/* Content */}
         <div className="px-6 py-4 space-y-4">
-          <p id="delete-description" className="text-sm text-gray-600 dark:text-gray-400">
+          <p id="delete-description" className="text-sm text-slate-500 dark:text-slate-400">
             Are you sure you want to delete project{' '}
-            <span className="font-semibold text-gray-900 dark:text-white">{displayName}</span>?
+            <span className="font-semibold text-slate-900 dark:text-white">{displayName}</span>?
             This action cannot be undone.
           </p>
 
-          <label className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer">
+          <label className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg cursor-pointer">
             <input
               type="checkbox"
               checked={deleteFiles}
               onChange={(e) => setDeleteFiles(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-red-600 focus:ring-red-500 dark:bg-gray-800"
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-red-600 focus:ring-red-500 dark:bg-slate-800"
             />
             <div>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
+              <span className="text-sm font-medium text-slate-900 dark:text-white">
                 Also delete source files and extractions from disk
               </span>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Uploaded PDFs and extraction output will be permanently removed.
               </p>
             </div>
@@ -119,11 +119,11 @@ export default function DeleteConfirmDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-b-lg">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-b-lg">
           <button
             onClick={onClose}
             disabled={deleting}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
           >
             Cancel
           </button>

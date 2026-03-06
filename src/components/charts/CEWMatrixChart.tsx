@@ -62,22 +62,22 @@ export default function CEWMatrixChart({ figureNumber, titleMatch, title }: CEWM
 
   if (loading) {
     return (
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6 my-6 w-full">
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6 my-6 w-full">
         <div className="mb-2">
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
             Figure {figureNumber}
           </span>
         </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">Loading...</div>
+        <div className="text-sm text-slate-500 dark:text-slate-400">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6 my-6 w-full">
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6 my-6 w-full">
         <div className="mb-2">
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
             Figure {figureNumber}
           </span>
         </div>
@@ -88,16 +88,16 @@ export default function CEWMatrixChart({ figureNumber, titleMatch, title }: CEWM
 
   if (!matrixData || matrixData.individualPairs.length === 0) {
     return (
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6 my-6 w-full">
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6 my-6 w-full">
         <div className="mb-2">
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
             Figure {figureNumber}
           </span>
         </div>
-        <p className="text-sm text-gray-700 dark:text-gray-300 italic">
+        <p className="text-sm text-slate-600 dark:text-slate-300 italic">
           Matrix visualization chart will be displayed here. This shows importance vs. feasibility scatter plot for {title}.
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
           (No data available yet)
         </p>
       </div>
@@ -105,9 +105,9 @@ export default function CEWMatrixChart({ figureNumber, titleMatch, title }: CEWM
   }
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg shadow p-6 my-6 w-full">
+    <div className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow p-6 my-6 w-full">
       <div className="mb-2">
-        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+        <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">
           Figure {figureNumber}
         </span>
       </div>

@@ -479,8 +479,8 @@ export default function DiscussionThreadPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading discussion...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-700 mx-auto mb-4"></div>
+          <p className="text-slate-500">Loading discussion...</p>
         </div>
       </div>
     );
@@ -490,8 +490,8 @@ export default function DiscussionThreadPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center">
-          <p className="text-gray-600">Discussion not found.</p>
-          <Link href="/twg/discussions" className="text-indigo-600 hover:text-indigo-800">
+          <p className="text-slate-500">Discussion not found.</p>
+          <Link href="/twg/discussions" className="text-sky-700 hover:text-sky-800">
             ← Back to Discussions
           </Link>
         </div>
@@ -504,10 +504,10 @@ export default function DiscussionThreadPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-xl shadow-md p-8">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Edit Discussion</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Edit Discussion</h1>
             <Link 
               href={`/twg/discussions/${discussionId}`}
-              className="text-indigo-600 hover:text-indigo-800"
+              className="text-sky-700 hover:text-sky-800"
             >
               ← Back to Discussion
             </Link>
@@ -515,7 +515,7 @@ export default function DiscussionThreadPage() {
           
           <form onSubmit={handleEditDiscussion} className="space-y-6">
             <div>
-              <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="edit-title" className="block text-sm font-medium text-slate-600 mb-2">
                 Discussion Title
               </label>
               <input
@@ -523,13 +523,13 @@ export default function DiscussionThreadPage() {
                 id="edit-title"
                 value={editDiscussionTitle}
                 onChange={(e) => setEditDiscussionTitle(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="edit-content" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="edit-content" className="block text-sm font-medium text-slate-600 mb-2">
                 Discussion Content
               </label>
               <textarea
@@ -537,7 +537,7 @@ export default function DiscussionThreadPage() {
                 value={editDiscussionContent}
                 onChange={(e) => setEditDiscussionContent(e.target.value)}
                 rows={8}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                 required
               />
             </div>
@@ -546,13 +546,13 @@ export default function DiscussionThreadPage() {
               <button
                 type="button"
                 onClick={() => setEditingDiscussion(false)}
-                className="px-6 py-3 text-base font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-6 py-3 text-base font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-3 text-base font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                className="px-6 py-3 text-base font-medium text-white bg-sky-700 rounded-lg hover:bg-sky-800 transition-colors"
               >
                 Update Discussion
               </button>
@@ -569,7 +569,7 @@ export default function DiscussionThreadPage() {
       <div className="mb-6">
         <Link 
           href="/twg/discussions"
-          className="inline-flex items-center text-indigo-600 hover:text-indigo-800 transition-colors"
+          className="inline-flex items-center text-sky-700 hover:text-sky-800 transition-colors"
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -581,12 +581,12 @@ export default function DiscussionThreadPage() {
       {/* Discussion Header */}
       <div className="bg-white rounded-xl shadow-md p-8 mb-8">
         <div className="flex items-start justify-between mb-4">
-          <h1 className="text-3xl font-bold text-gray-900">{discussion.title}</h1>
+          <h1 className="text-3xl font-bold text-slate-900">{discussion.title}</h1>
           <div className="flex items-center space-x-3">
             {canEditDiscussion && (
               <button
                 onClick={() => setEditingDiscussion(true)}
-                className="px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-sky-700 hover:text-sky-800 bg-sky-50 hover:bg-sky-100 rounded-lg transition-colors"
               >
                 Edit
               </button>
@@ -602,7 +602,7 @@ export default function DiscussionThreadPage() {
           </div>
         </div>
         
-        <div className="flex items-center text-sm text-gray-500 mb-6 space-x-4">
+        <div className="flex items-center text-sm text-slate-500 mb-6 space-x-4">
           <span className="flex items-center">
             <span className="mr-2">👤</span>
             {discussion.user_email}
@@ -619,12 +619,12 @@ export default function DiscussionThreadPage() {
           )}
         </div>
         
-        <div className="text-gray-700 whitespace-pre-wrap text-lg leading-relaxed mb-6">
+        <div className="text-slate-600 whitespace-pre-wrap text-lg leading-relaxed mb-6">
           {discussion.content}
         </div>
         
         {/* Discussion Like Button */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-between pt-4 border-t border-slate-200">
           <LikeButton
             targetId={discussion.id}
             targetType="discussion"
@@ -641,12 +641,12 @@ export default function DiscussionThreadPage() {
       {/* Replies Section */}
       <div className="bg-white rounded-xl shadow-md p-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-slate-900">
             Replies ({totalReplies})
           </h2>
           <button
             onClick={() => setShowReplyForm(!showReplyForm)}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-sky-700 rounded-lg hover:bg-sky-800 transition-colors"
           >
             <span className="mr-2">💬</span>
             {showReplyForm ? 'Cancel Reply' : 'Add Reply'}
@@ -655,12 +655,12 @@ export default function DiscussionThreadPage() {
 
         {/* Reply Form */}
         {showReplyForm && (
-          <form onSubmit={handleSubmitReply} className="mb-8 p-6 bg-gray-50 rounded-lg">
+          <form onSubmit={handleSubmitReply} className="mb-8 p-6 bg-slate-50 rounded-lg">
             <textarea
               value={newReply}
               onChange={(e) => setNewReply(e.target.value)}
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mb-4"
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 mb-4"
               placeholder="Write your reply..."
               required
             />
@@ -668,14 +668,14 @@ export default function DiscussionThreadPage() {
               <button
                 type="button"
                 onClick={() => setShowReplyForm(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
+                className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-800"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                className="px-6 py-2 text-sm font-medium text-white bg-sky-700 rounded-lg hover:bg-sky-800 disabled:opacity-50 transition-colors"
               >
                 {isSubmitting ? 'Posting...' : 'Post Reply'}
               </button>
@@ -687,14 +687,14 @@ export default function DiscussionThreadPage() {
         <div className="space-y-4">
           {replies.length > 0 ? (
             replies.map((reply) => (
-              <div key={reply.id} className="border border-gray-200 rounded-lg overflow-hidden">
+              <div key={reply.id} className="border border-slate-200 rounded-lg overflow-hidden">
                 {/* Reply Header */}
-                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <button
                         onClick={() => toggleReplyCollapse(reply.id)}
-                        className="text-gray-500 hover:text-gray-700 transition-colors"
+                        className="text-slate-500 hover:text-slate-600 transition-colors"
                         title={collapsedReplies.has(reply.id) ? 'Expand reply' : 'Collapse reply'}
                       >
                         <svg 
@@ -706,13 +706,13 @@ export default function DiscussionThreadPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>
-                      <span className="font-medium text-gray-900">{reply.user_email}</span>
-                      <span className="text-gray-500">•</span>
-                      <span className="text-gray-500">{formatDate(reply.created_at)}</span>
+                      <span className="font-medium text-slate-900">{reply.user_email}</span>
+                      <span className="text-slate-500">•</span>
+                      <span className="text-slate-500">{formatDate(reply.created_at)}</span>
                       {reply.updated_at && reply.updated_at !== reply.created_at && (
                         <>
-                          <span className="text-gray-500">•</span>
-                          <span className="text-gray-500">Edited {formatDate(reply.updated_at)}</span>
+                          <span className="text-slate-500">•</span>
+                          <span className="text-slate-500">Edited {formatDate(reply.updated_at)}</span>
                         </>
                       )}
                     </div>
@@ -724,7 +724,7 @@ export default function DiscussionThreadPage() {
                             setEditingReply(reply.id);
                             setEditReplyContent(reply.content);
                           }}
-                          className="text-xs text-indigo-600 hover:text-indigo-800 px-2 py-1 rounded hover:bg-indigo-100 transition-colors"
+                          className="text-xs text-sky-700 hover:text-sky-800 px-2 py-1 rounded hover:bg-sky-100 transition-colors"
                         >
                           Edit
                         </button>
@@ -748,32 +748,32 @@ export default function DiscussionThreadPage() {
                           value={editReplyContent}
                           onChange={(e) => setEditReplyContent(e.target.value)}
                           rows={4}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mb-3"
+                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 mb-3"
                           required
                         />
                         <div className="flex justify-end space-x-2">
                           <button
                             onClick={() => setEditingReply(null)}
-                            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 rounded hover:bg-gray-100 transition-colors"
+                            className="px-3 py-1 text-sm text-slate-500 hover:text-slate-800 rounded hover:bg-slate-100 transition-colors"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={() => handleEditReply(reply.id)}
-                            className="px-3 py-1 text-sm text-white bg-indigo-600 hover:bg-indigo-700 rounded transition-colors"
+                            className="px-3 py-1 text-sm text-white bg-sky-700 hover:bg-sky-800 rounded transition-colors"
                           >
                             Update
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                      <div className="text-slate-600 whitespace-pre-wrap leading-relaxed">
                         {reply.content}
                       </div>
                     )}
                     
                     {/* Reply Like Button */}
-                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-gray-100">
+                    <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
                       <LikeButton
                         targetId={reply.id}
                         targetType="reply"
@@ -791,9 +791,9 @@ export default function DiscussionThreadPage() {
             ))
           ) : (
             <div className="text-center py-12">
-              <div className="text-gray-400 text-4xl mb-4">💬</div>
-              <p className="text-gray-500 text-lg mb-2">No replies yet.</p>
-              <p className="text-gray-400 text-sm">Be the first to respond to this discussion!</p>
+              <div className="text-slate-400 text-4xl mb-4">💬</div>
+              <p className="text-slate-500 text-lg mb-2">No replies yet.</p>
+              <p className="text-slate-400 text-sm">Be the first to respond to this discussion!</p>
             </div>
           )}
         </div>
@@ -805,7 +805,7 @@ export default function DiscussionThreadPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-2 text-sm font-medium text-slate-500 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Previous
               </button>
@@ -817,8 +817,8 @@ export default function DiscussionThreadPage() {
                     onClick={() => setCurrentPage(page)}
                     className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       currentPage === page
-                        ? 'bg-indigo-600 text-white'
-                        : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                        ? 'bg-sky-700 text-white'
+                        : 'text-slate-500 bg-white border border-slate-300 hover:bg-slate-50'
                     }`}
                   >
                     {page}
@@ -829,7 +829,7 @@ export default function DiscussionThreadPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-2 text-sm font-medium text-slate-500 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Next
               </button>
@@ -842,14 +842,14 @@ export default function DiscussionThreadPage() {
       {showDeleteDiscussionConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Delete Discussion</h3>
-            <p className="text-gray-600 mb-6">
+            <h3 className="text-lg font-medium text-slate-900 mb-4">Delete Discussion</h3>
+            <p className="text-slate-500 mb-6">
               Are you sure you want to delete this discussion? This action cannot be undone and will also delete all replies.
             </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteDiscussionConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
               >
                 Cancel
               </button>
@@ -867,14 +867,14 @@ export default function DiscussionThreadPage() {
       {showDeleteReplyConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Delete Reply</h3>
-            <p className="text-gray-600 mb-6">
+            <h3 className="text-lg font-medium text-slate-900 mb-4">Delete Reply</h3>
+            <p className="text-slate-500 mb-6">
               Are you sure you want to delete this reply? This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteReplyConfirm(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
               >
                 Cancel
               </button>

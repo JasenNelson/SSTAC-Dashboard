@@ -162,12 +162,12 @@ export default function AssessmentTable({
   // Sort indicator component
   const SortIndicator = ({ field }: { field: SortField }) => {
     if (sortField !== field) {
-      return <ChevronsUpDown className="w-4 h-4 text-gray-400" />;
+      return <ChevronsUpDown className="w-4 h-4 text-slate-400" />;
     }
     return sortOrder === 'asc' ? (
-      <ChevronUp className="w-4 h-4 text-indigo-600" />
+      <ChevronUp className="w-4 h-4 text-sky-600" />
     ) : (
-      <ChevronDown className="w-4 h-4 text-indigo-600" />
+      <ChevronDown className="w-4 h-4 text-sky-600" />
     );
   };
 
@@ -182,7 +182,7 @@ export default function AssessmentTable({
     className?: string;
   }) => (
     <th
-      className={`px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 select-none sticky top-0 bg-gray-50 dark:bg-gray-800 z-10 ${className}`}
+      className={`px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 select-none sticky top-0 bg-slate-50 dark:bg-slate-800 z-10 ${className}`}
       onClick={() => onSort(field)}
     >
       <div className="flex items-center gap-1">
@@ -195,12 +195,12 @@ export default function AssessmentTable({
   // Empty state
   if (assessments.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-12 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-        <FileText className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+      <div className="flex-1 flex flex-col items-center justify-center p-12 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+        <FileText className="w-16 h-16 text-slate-300 dark:text-slate-500 mb-4" />
+        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">
           No assessments found
         </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 text-center max-w-md mb-4">
+        <p className="text-sm text-slate-500 dark:text-slate-400 text-center max-w-md mb-4">
           No assessments match your current filters. Try adjusting your filter criteria or clearing all filters.
         </p>
         {/* Clear filters button would be passed as prop */}
@@ -211,48 +211,48 @@ export default function AssessmentTable({
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Bulk Actions Toolbar */}
-      <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
+      <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-4">
           {/* Select All Checkbox */}
           <button
             onClick={handleSelectAll}
-            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             title={isAllSelected ? 'Deselect all' : 'Select all visible'}
           >
             {isAllSelected ? (
-              <CheckSquare className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <CheckSquare className="w-5 h-5 text-sky-600 dark:text-sky-400" />
             ) : isSomeSelected ? (
-              <MinusSquare className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              <MinusSquare className="w-5 h-5 text-sky-600 dark:text-sky-400" />
             ) : (
-              <Square className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+              <Square className="w-5 h-5 text-slate-400 dark:text-slate-500" />
             )}
           </button>
 
           {/* Selection count */}
           {selectedIds.size > 0 && (
-            <span className="text-sm text-gray-600 dark:text-gray-300">
+            <span className="text-sm text-slate-500 dark:text-slate-300">
               {selectedIds.size} selected
             </span>
           )}
         </div>
 
         {/* Results count */}
-        <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="text-sm text-slate-500 dark:text-slate-400">
           {totalItems} assessment{totalItems !== 1 ? 's' : ''}
         </div>
       </div>
 
       {/* Table Container with sticky header and horizontal scroll */}
       <div className="flex-1 overflow-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-800">
+        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+          <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>
               {/* Checkbox column */}
-              <th className="w-12 px-4 py-3 sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+              <th className="w-12 px-4 py-3 sticky top-0 bg-slate-50 dark:bg-slate-800 z-10">
                 <span className="sr-only">Select</span>
               </th>
               {/* Expand column */}
-              <th className="w-10 px-2 py-3 sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+              <th className="w-10 px-2 py-3 sticky top-0 bg-slate-50 dark:bg-slate-800 z-10">
                 <span className="sr-only">Expand</span>
               </th>
               <SortableHeader field="policyId">
@@ -265,7 +265,7 @@ export default function AssessmentTable({
               <SortableHeader field="status">
                 AI Status
               </SortableHeader>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider sticky top-0 bg-slate-50 dark:bg-slate-800 z-10">
                 Reviewer Sufficiency
               </th>
               <SortableHeader field="tier">
@@ -277,18 +277,18 @@ export default function AssessmentTable({
               <SortableHeader field="evidence" className="hidden lg:table-cell">
                 Evidence
               </SortableHeader>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden xl:table-cell sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden xl:table-cell sticky top-0 bg-slate-50 dark:bg-slate-800 z-10">
                 Notes
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden xl:table-cell sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden xl:table-cell sticky top-0 bg-slate-50 dark:bg-slate-800 z-10">
                 Final
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky top-0 bg-gray-50 dark:bg-gray-800 z-10">
+              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider sticky top-0 bg-slate-50 dark:bg-slate-800 z-10">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+          <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-700">
             {paginatedAssessments.map((assessment, index) => {
               const isSelected = selectedId === assessment.id;
               const isChecked = selectedIds.has(assessment.id);
@@ -307,12 +307,12 @@ export default function AssessmentTable({
                     role="button"
                     tabIndex={0}
                     className={`
-                      cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2
+                      cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2
                       ${isSelected
-                        ? 'bg-indigo-50 dark:bg-indigo-900/20 border-l-4 border-l-indigo-500'
+                        ? 'bg-sky-50 dark:bg-sky-900/20 border-l-4 border-l-indigo-500'
                         : isEven
-                          ? 'bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800'
-                          : 'bg-gray-50/50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700'
+                          ? 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800'
+                          : 'bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }
                     `}
                   >
@@ -320,14 +320,14 @@ export default function AssessmentTable({
                     <td className="w-12 px-4 py-3">
                       <button
                         onClick={(e) => handleSelectRow(assessment.id, e)}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                        className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                         aria-label={isChecked ? 'Deselect row' : 'Select row'}
                         aria-pressed={isChecked}
                       >
                         {isChecked ? (
-                          <CheckSquare className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                          <CheckSquare className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                         ) : (
-                          <Square className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                          <Square className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                         )}
                       </button>
                     </td>
@@ -336,37 +336,37 @@ export default function AssessmentTable({
                     <td className="w-10 px-2 py-3">
                       <button
                         onClick={(e) => toggleRowExpand(assessment.id, e)}
-                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                        className="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                         title={isExpanded ? 'Collapse' : 'Expand evidence'}
                         aria-label={isExpanded ? 'Collapse evidence' : 'Expand evidence'}
                         aria-expanded={isExpanded}
                       >
                         {isExpanded ? (
-                          <ChevronDownIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          <ChevronDownIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                         ) : (
-                          <ChevronRightIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                          <ChevronRightIcon className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                         )}
                       </button>
                     </td>
 
                     {/* Citation / Internal ID */}
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-slate-900 dark:text-slate-100 whitespace-nowrap">
                       <div className="font-medium">
                         {assessment.citationLabel || assessment.policyId}
                       </div>
                       {assessment.citationLabel && assessment.citationLabel !== assessment.policyId && (
-                        <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                           ID: {assessment.policyId}
                         </div>
                       )}
                     </td>
 
                     {/* Section - truncated with focus reveal */}
-                    <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300 max-w-[200px] hidden md:table-cell">
+                    <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-300 max-w-[200px] hidden md:table-cell">
                       <span
                         tabIndex={0}
                         title={assessment.section}
-                        className="block truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:whitespace-normal focus-visible:break-words focus-visible:overflow-visible"
+                        className="block truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 focus-visible:whitespace-normal focus-visible:break-words focus-visible:overflow-visible"
                       >
                         {assessment.section}
                       </span>
@@ -397,7 +397,7 @@ export default function AssessmentTable({
 
                     {/* Evidence count */}
                     <td className="px-4 py-3 hidden lg:table-cell">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200">
                         {assessment.evidence.length}
                       </span>
                     </td>
@@ -405,11 +405,11 @@ export default function AssessmentTable({
                     {/* Notes */}
                     <td className="px-4 py-3 hidden xl:table-cell">
                       {hasNotes ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-200">
                           Notes
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400">-</span>
+                        <span className="text-xs text-slate-400">-</span>
                       )}
                     </td>
 
@@ -420,7 +420,7 @@ export default function AssessmentTable({
                           Included
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400">-</span>
+                        <span className="text-xs text-slate-400">-</span>
                       )}
                     </td>
 
@@ -431,7 +431,7 @@ export default function AssessmentTable({
                           e.stopPropagation();
                           handleRowClick(assessment.id);
                         }}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-200 dark:hover:bg-indigo-900/50"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:bg-sky-900/30 dark:text-sky-200 dark:hover:bg-sky-900/50"
                         title="Review this item"
                       >
                         <Check className="w-3.5 h-3.5" />
@@ -442,64 +442,64 @@ export default function AssessmentTable({
 
                   {/* Expanded evidence row */}
                   {isExpanded && (
-                    <tr className="bg-gray-50 dark:bg-gray-800/70">
+                    <tr className="bg-slate-50 dark:bg-slate-800/70">
                       <td colSpan={12} className="px-8 py-4">
                         <div className="text-sm space-y-4">
                           {/* CSAP Question - Full text, never truncated */}
                           <div>
-                            <div className="font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <div className="font-medium text-slate-600 dark:text-slate-300 mb-2">
                               CSAP Question
                             </div>
-                            <p className="text-base text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
+                            <p className="text-base text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">
                               {assessment.policyTitle}
                             </p>
                           </div>
 
                           {/* Evidence */}
                           <div>
-                            <div className="font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <div className="font-medium text-slate-600 dark:text-slate-300 mb-2">
                               Evidence ({assessment.evidence.length})
                             </div>
                             {assessment.evidence.length > 0 ? (
-                              <ul className="space-y-2 text-gray-600 dark:text-gray-400">
+                              <ul className="space-y-2 text-slate-500 dark:text-slate-400">
                                 {assessment.evidence.map((item, idx) => (
                                   <li key={idx} className="flex items-start gap-2">
-                                    <span className="text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0">-</span>
+                                    <span className="text-slate-400 dark:text-slate-500 mt-0.5 flex-shrink-0">-</span>
                                     <span className="whitespace-pre-wrap">{item}</span>
                                   </li>
                                 ))}
                               </ul>
                             ) : (
-                              <p className="text-gray-500 dark:text-gray-500 italic">No evidence recorded</p>
+                              <p className="text-slate-500 dark:text-slate-500 italic">No evidence recorded</p>
                             )}
                           </div>
 
                           {/* Notes */}
                           {assessment.notes && (
-                            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                              <div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</div>
-                              <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{assessment.notes}</p>
+                            <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                              <div className="font-medium text-slate-600 dark:text-slate-300 mb-1">Notes</div>
+                              <p className="text-slate-500 dark:text-slate-400 whitespace-pre-wrap">{assessment.notes}</p>
                             </div>
                           )}
 
                           {judgment?.evidenceSufficiency && (
-                            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                              <div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Reviewer Evidence Sufficiency</div>
+                            <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                              <div className="font-medium text-slate-600 dark:text-slate-300 mb-1">Reviewer Evidence Sufficiency</div>
                               <SufficiencyBadge status={sufficiencyStatus} />
                             </div>
                           )}
 
                           {judgment?.judgmentNotes && (
-                            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                              <div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Reviewer Notes</div>
-                              <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{judgment.judgmentNotes}</p>
+                            <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                              <div className="font-medium text-slate-600 dark:text-slate-300 mb-1">Reviewer Notes</div>
+                              <p className="text-slate-500 dark:text-slate-400 whitespace-pre-wrap">{judgment.judgmentNotes}</p>
                             </div>
                           )}
 
                           {judgment?.finalMemoSummary && (
-                            <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                              <div className="font-medium text-gray-700 dark:text-gray-300 mb-1">Final Memo Summary</div>
-                              <p className="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{judgment.finalMemoSummary}</p>
+                            <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                              <div className="font-medium text-slate-600 dark:text-slate-300 mb-1">Final Memo Summary</div>
+                              <p className="text-slate-500 dark:text-slate-400 whitespace-pre-wrap">{judgment.finalMemoSummary}</p>
                             </div>
                           )}
                         </div>
@@ -514,11 +514,11 @@ export default function AssessmentTable({
       </div>
 
       {/* Pagination */}
-      <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
+      <div className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-4">
           {/* Page size selector */}
           <div className="flex items-center gap-2">
-            <label htmlFor="page-size" className="text-sm text-gray-600 dark:text-gray-400">
+            <label htmlFor="page-size" className="text-sm text-slate-500 dark:text-slate-400">
               Show
             </label>
             <select
@@ -528,7 +528,7 @@ export default function AssessmentTable({
                 onPageSizeChange(Number(e.target.value));
                 onPageChange(1);
               }}
-              className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              className="text-sm border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
             >
               {PAGE_SIZE_OPTIONS.map((size) => (
                 <option key={size} value={size}>
@@ -536,34 +536,34 @@ export default function AssessmentTable({
                 </option>
               ))}
             </select>
-            <span className="text-sm text-gray-600 dark:text-gray-400">per page</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">per page</span>
           </div>
         </div>
 
         {/* Page info and navigation */}
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
+          <span className="text-sm text-slate-500 dark:text-slate-400">
             {startIndex + 1}-{endIndex} of {totalItems}
           </span>
           <div className="flex items-center gap-1">
             <button
               onClick={() => onPageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               aria-label="Previous page"
             >
-              <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <ChevronLeft className="w-4 h-4 text-slate-500 dark:text-slate-400" />
             </button>
-            <span className="px-3 text-sm text-gray-600 dark:text-gray-400">
+            <span className="px-3 text-sm text-slate-500 dark:text-slate-400">
               Page {currentPage} of {totalPages}
             </span>
             <button
               onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               aria-label="Next page"
             >
-              <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <ChevronRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />
             </button>
           </div>
         </div>

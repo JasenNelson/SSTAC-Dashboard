@@ -53,17 +53,17 @@ export default function DocumentsList({ initialDocuments }: DocumentsListProps) 
 
       {/* Documents List */}
       <div className="bg-white rounded-lg shadow-md">
-        <ul className="divide-y divide-gray-200">
+        <ul className="divide-y divide-slate-200">
           {filteredDocuments && filteredDocuments.length > 0 ? (
             filteredDocuments.map((doc: Document) => (
               <li key={doc.id}>
                 <Link
                   href={`/twg/documents/${doc.id}`}
-                  className="block px-6 py-4 hover:bg-gray-50 transition-colors"
+                  className="block px-6 py-4 hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex justify-between items-center">
                     <div className="flex-1 min-w-0">
-                      <p className="text-md font-medium text-indigo-700 truncate">
+                      <p className="text-md font-medium text-sky-700 truncate">
                         {doc.title || 'Untitled Document'}
                       </p>
                       {doc.tags && doc.tags.length > 0 && (
@@ -80,7 +80,7 @@ export default function DocumentsList({ initialDocuments }: DocumentsListProps) 
                         </div>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 ml-4 flex-shrink-0">
+                    <p className="text-sm text-slate-500 ml-4 flex-shrink-0">
                       {new Date(doc.created_at).toISOString().split('T')[0]}
                     </p>
                   </div>
@@ -89,7 +89,7 @@ export default function DocumentsList({ initialDocuments }: DocumentsListProps) 
             ))
           ) : (
             <li className="px-6 py-4">
-              <p className="text-md text-gray-500">
+              <p className="text-md text-slate-500">
                 {selectedTags.length > 0 
                   ? 'No documents found with the selected tags.' 
                   : 'No documents found.'
@@ -102,7 +102,7 @@ export default function DocumentsList({ initialDocuments }: DocumentsListProps) 
 
       {/* Results Summary */}
       {selectedTags.length > 0 && (
-        <div className="text-sm text-gray-600 text-center">
+        <div className="text-sm text-slate-500 text-center">
           Showing {filteredDocuments.length} of {documents.length} documents
         </div>
       )}

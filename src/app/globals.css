@@ -1,31 +1,31 @@
 @import "tailwindcss";
 
-/* Cache buster - updated theme fixes */
+/* Government/Public Service palette — design-tokens.ts is the source of truth */
 
 :root {
-  --background: #f8fafc; /* Tailwind's gray-50 */
-  --foreground: #171717;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
   --card: #ffffff;
-  --card-foreground: #171717;
+  --card-foreground: #0F172A;
   --popover: #ffffff;
-  --debug-bg: #f8fafc;
-  --text-primary: #111827;
-  --popover-foreground: #171717;
-  --primary: #3b82f6;
+  --debug-bg: #F8FAFC;
+  --text-primary: #0F172A;
+  --popover-foreground: #0F172A;
+  --primary: #0369A1;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
+  --secondary: #F1F5F9;
+  --secondary-foreground: #0F172A;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #F1F5F9;
+  --accent-foreground: #0F172A;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #3b82f6;
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #0369A1;
   --radius: 0.5rem;
-  --light-bg: #f8fafc;
+  --light-bg: #F8FAFC;
 }
 
 @theme inline {
@@ -54,327 +54,114 @@
 
 /* Light mode (default) */
 .light {
-  --background: #f8fafc; /* Tailwind's gray-50 */
-  --foreground: #171717;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
   --card: #ffffff;
-  --card-foreground: #171717;
+  --card-foreground: #0F172A;
   --popover: #ffffff;
-  --popover-foreground: #171717;
-  --primary: #3b82f6;
+  --popover-foreground: #0F172A;
+  --primary: #0369A1;
   --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
+  --secondary: #F1F5F9;
+  --secondary-foreground: #0F172A;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #F1F5F9;
+  --accent-foreground: #0F172A;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #3b82f6;
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #0369A1;
 }
 
 /* Dark mode */
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --card: #1a1a1a;
-  --card-foreground: #ededed;
-  --popover: #1a1a1a;
-  --popover-foreground: #ededed;
-  --primary: #3b82f6;
-  --primary-foreground: #ffffff;
-  --secondary: #262626;
-  --secondary-foreground: #ededed;
-  --muted: #262626;
-  --muted-foreground: #a3a3a3;
-  --accent: #262626;
-  --accent-foreground: #ededed;
+  --background: #0F172A;
+  --foreground: #F1F5F9;
+  --card: #1E293B;
+  --card-foreground: #F1F5F9;
+  --popover: #1E293B;
+  --popover-foreground: #F1F5F9;
+  --primary: #38BDF8;
+  --primary-foreground: #0F172A;
+  --secondary: #334155;
+  --secondary-foreground: #F1F5F9;
+  --muted: #334155;
+  --muted-foreground: #94A3B8;
+  --accent: #334155;
+  --accent-foreground: #F1F5F9;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #404040;
-  --input: #404040;
-  --ring: #3b82f6;
+  --border: #475569;
+  --input: #475569;
+  --ring: #38BDF8;
 }
 
-/* Theme-based background colors with high specificity */
-html.light,
-html.light body,
-html.light #__next,
-html.light .min-h-screen {
-  background-color: #f8fafc !important; /* Light gray-blue for light mode */
-  background: #f8fafc !important;
-}
+/* ========================================
+   DARK MODE CATCH-ALL OVERRIDES
+   Minimal set for pages not yet using
+   Tailwind dark: variants directly.
+   ======================================== */
 
+/* Root background */
 html.dark,
-html.dark body,
-html.dark #__next,
-html.dark .min-h-screen {
-  background-color: #0a0a0a !important; /* Dark background for dark mode */
-  background: #0a0a0a !important;
+html.dark body {
+  background-color: #0F172A !important;
 }
 
-/* ========================================
-   SYSTEMATIC THEME SYSTEM
-   ======================================== */
-
-/* Base container backgrounds */
-.light .bg-white {
-  background-color: #ffffff !important;
-}
-
-.dark .bg-white {
-  background-color: #1f2937 !important;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* Header backgrounds */
-.light header.bg-white {
-  background-color: #ffffff !important;
-}
-
-.dark header.bg-gray-800 {
-  background-color: #1f2937 !important;
-}
-
-/* Text colors - systematic approach */
-.light .text-gray-900 {
-  color: #111827 !important;
-}
-
-.dark .text-gray-900 {
-  color: #f9fafb !important;
-}
-
-.light .text-gray-700 {
-  color: #374151 !important;
-}
-
-.dark .text-gray-700 {
-  color: #d1d5db !important;
-}
-
-.light .text-gray-600 {
-  color: #4b5563 !important;
-}
-
-.dark .text-gray-600 {
-  color: #9ca3af !important;
-}
-
-.light .text-gray-500 {
-  color: #6b7280 !important;
-}
-
-.dark .text-gray-500 {
-  color: #6b7280 !important;
-}
-
-/* Border colors */
-.light .border-gray-200 {
-  border-color: #e5e7eb !important;
-}
-
-.dark .border-gray-200 {
-  border-color: #374151 !important;
-}
-
-/* High-specificity border rules for theme system */
-html.light .border-gray-100 {
-  border-color: #f3f4f6 !important;
-}
-
-html.dark .border-gray-100 {
-  border-color: #374151 !important;
-}
-
-/* ========================================
-   COMPREHENSIVE THEME FIXES
-   ======================================== */
-
-/* Fix white background sections in dark mode */
+/* Catch-all: white containers → slate-800 in dark mode */
 html.dark .bg-white {
-  background-color: #1f2937 !important; /* Dark gray instead of white */
+  background-color: #1E293B !important;
 }
 
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+/* Text color catch-alls for un-migrated pages */
+html.dark .text-gray-900 { color: #F1F5F9 !important; }
+html.dark .text-gray-800 { color: #E2E8F0 !important; }
+html.dark .text-gray-700 { color: #CBD5E1 !important; }
+html.dark .text-gray-600 { color: #94A3B8 !important; }
+html.dark .text-gray-500 { color: #94A3B8 !important; }
+
+/* Border catch-alls */
+html.dark .border-gray-200 { border-color: #475569 !important; }
+html.dark .border-gray-100 { border-color: #334155 !important; }
+
+/* Background catch-alls */
+html.dark .bg-gray-50  { background-color: #334155 !important; }
+html.dark .bg-gray-100 { background-color: #334155 !important; }
+
+/* Hover states */
+html.dark .hover\:bg-gray-50:hover  { background-color: #334155 !important; }
+html.dark .hover\:bg-gray-100:hover { background-color: #475569 !important; }
+html.dark .hover\:bg-white:hover    { background-color: #334155 !important; }
+
+/* ========================================
+   GRADIENT DARK MODE OVERRIDES
+   For un-migrated survey/poll pages that
+   use light-only gradients.
+   ======================================== */
+
+html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50,
+html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50,
+html.dark .bg-gradient-to-br.from-green-50.to-blue-50,
+html.dark .bg-gradient-to-br.from-blue-50.to-green-50,
+html.dark .bg-gradient-to-br.from-green-50.to-emerald-50,
+html.dark .bg-gradient-to-br.from-green-50.via-blue-50.to-emerald-50,
+html.dark .bg-gradient-to-br.from-gray-50.to-indigo-50,
+html.dark .bg-gradient-to-br.from-red-50.to-pink-50,
+html.dark .bg-gradient-to-br.from-purple-50.to-pink-50,
+html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50,
+html.dark .bg-gradient-to-br.from-yellow-50.to-orange-50 {
+  background: linear-gradient(to bottom right, #1E293B, #334155) !important;
 }
 
-html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
+html.dark .bg-gradient-to-r.from-blue-50.to-indigo-50,
+html.dark .bg-gradient-to-r.from-gray-50.to-blue-50,
+html.dark .bg-gradient-to-r.from-red-50.to-orange-50 {
+  background: linear-gradient(to right, #1E293B, #334155) !important;
 }
 
-html.dark .bg-gradient-to-br.from-gray-50.to-indigo-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
-}
-
-html.dark .bg-gradient-to-br.from-green-50.to-blue-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
-}
-
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
-}
-
-/* Fix all remaining white background sections */
-html.dark .bg-white.rounded-2xl {
-  background-color: #1f2937 !important;
-}
-
-html.dark .bg-white.rounded-xl {
-  background-color: #1f2937 !important;
-}
-
-html.dark .bg-white.rounded-lg {
-  background-color: #1f2937 !important;
-}
-
-html.dark .bg-white.shadow-lg {
-  background-color: #1f2937 !important;
-}
-
-html.dark .bg-white.shadow-xl {
-  background-color: #1f2937 !important;
-}
-
-/* Fix text colors in dark mode */
-html.dark .text-gray-800 {
-  color: #f3f4f6 !important; /* Light text on dark backgrounds */
-}
-
-html.dark .text-gray-700 {
-  color: #e5e7eb !important;
-}
-
-html.dark .text-gray-600 {
-  color: #d1d5db !important;
-}
-
-/* Fix hover states that hide text */
-html.light .hover\:bg-gray-100:hover {
-  background-color: #f3f4f6 !important;
-  color: #111827 !important; /* Ensure text remains dark */
-}
-
-html.dark .hover\:bg-gray-100:hover {
-  background-color: #374151 !important;
-  color: #f3f4f6 !important; /* Ensure text remains light */
-}
-
-html.dark .hover\:bg-gray-700:hover {
-  background-color: #4b5563 !important;
-  color: #f3f4f6 !important;
-}
-
-/* Fix poll question text colors */
-html.light .text-yellow-600 {
-  color: #d97706 !important; /* Darker yellow for better contrast */
-}
-
-html.dark .text-yellow-600 {
-  color: #fbbf24 !important; /* Lighter yellow for dark mode */
-}
-
-/* Fix poll component text visibility */
-html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-800 {
-  color: #111827 !important; /* Dark text on light background */
-}
-
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-800 {
-  color: #f3f4f6 !important; /* Light text on dark background */
-}
-
-html.light .bg-gradient-to-br.from-indigo-50.to-blue-50 .text-gray-800 {
-  color: #111827 !important; /* Dark text on light background */
-}
-
-html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 .text-gray-800 {
-  color: #f3f4f6 !important; /* Light text on dark background */
-}
-
-/* Fix poll option text in light mode */
-html.light .bg-white .text-gray-800 {
-  color: #111827 !important;
-}
-
-html.light .bg-white .text-gray-600 {
-  color: #374151 !important;
-}
-
-/* Fix poll option text in dark mode */
-html.dark .bg-gray-700 .text-gray-800 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-gray-700 .text-gray-600 {
-  color: #d1d5db !important;
-}
-
-/* Fix tiered framework page sections */
-html.light .bg-gradient-to-br.from-green-50.to-blue-50 {
-  background: linear-gradient(to bottom right, #dcfce7, #dbeafe) !important; /* Light green to light blue gradient for light mode */
-}
-
-html.dark .bg-gradient-to-br.from-green-50.to-blue-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
-}
-
-html.light .bg-gradient-to-br.from-blue-50.to-green-50 {
-  background: linear-gradient(to bottom right, #dbeafe, #dcfce7) !important; /* Light blue to light green gradient for light mode */
-}
-
-html.dark .bg-gradient-to-br.from-blue-50.to-green-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
-}
-
-html.light .bg-gradient-to-br.from-green-50.via-blue-50.to-emerald-50 {
-  background: linear-gradient(to bottom right, #dcfce7, #dbeafe, #d1fae5) !important; /* Light green to light blue to light emerald gradient for light mode */
-}
-
-html.light .bg-gradient-to-br.from-green-50.to-blue-50.rounded-2xl {
-  background: linear-gradient(to bottom right, #dcfce7, #dbeafe) !important; /* Light green to light blue gradient for poll containers in light mode */
-}
-
-html.dark .bg-gradient-to-br.from-green-50.to-blue-50.rounded-2xl {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
-}
-
-html.dark .bg-gradient-to-br.from-green-50.via-blue-50.to-emerald-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151, #1f2937) !important;
-}
-
-/* Force white text for colored container headings in tiered framework page */
-.bg-gradient-to-br.from-red-500.to-red-600 h3,
-.bg-gradient-to-br.from-orange-500.to-orange-600 h3,
-.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3,
-.bg-gradient-to-br.from-blue-500.to-blue-600 h3,
-.bg-gradient-to-br.from-green-500.to-green-600 h3 {
-  color: #ffffff !important;
-}
-
-/* Force white text for colored container paragraphs in tiered framework page */
-.bg-gradient-to-br.from-red-500.to-red-600 p,
-.bg-gradient-to-br.from-orange-500.to-orange-600 p,
-.bg-gradient-to-br.from-yellow-500.to-yellow-600 p,
-.bg-gradient-to-br.from-blue-500.to-blue-600 p,
-.bg-gradient-to-br.from-green-500.to-green-600 p {
-  color: #ffffff !important;
-}
-
-/* Force white text for all text elements in gradient containers */
+/* Colored gradient containers — white text stays white */
 .bg-gradient-to-br.from-red-500.to-red-600 *,
 .bg-gradient-to-br.from-orange-500.to-orange-600 *,
 .bg-gradient-to-br.from-yellow-500.to-yellow-600 *,
@@ -383,1116 +170,116 @@ html.dark .bg-gradient-to-br.from-green-50.via-blue-50.to-emerald-50 {
   color: #ffffff !important;
 }
 
-/* Ultra-specific rules for tiered framework colored containers - using high specificity approach */
-html.light div.bg-gradient-to-br.from-red-500.to-red-600 h3,
-html.light div.bg-gradient-to-br.from-orange-500.to-orange-600 h3,
-html.light div.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3,
-html.light div.bg-gradient-to-br.from-blue-500.to-blue-600 h3,
-html.light div.bg-gradient-to-br.from-green-500.to-green-600 h3,
-html.dark div.bg-gradient-to-br.from-red-500.to-red-600 h3,
-html.dark div.bg-gradient-to-br.from-orange-500.to-orange-600 h3,
-html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3,
-html.dark div.bg-gradient-to-br.from-blue-500.to-blue-600 h3,
-html.dark div.bg-gradient-to-br.from-green-500.to-green-600 h3 {
-  color: #ffffff !important;
-}
-
-html.light div.bg-gradient-to-br.from-red-500.to-red-600 p,
-html.light div.bg-gradient-to-br.from-orange-500.to-orange-600 p,
-html.light div.bg-gradient-to-br.from-yellow-500.to-yellow-600 p,
-html.light div.bg-gradient-to-br.from-blue-500.to-blue-600 p,
-html.light div.bg-gradient-to-br.from-green-500.to-green-600 p,
-html.dark div.bg-gradient-to-br.from-red-500.to-red-600 p,
-html.dark div.bg-gradient-to-br.from-orange-500.to-orange-600 p,
-html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 p,
-html.dark div.bg-gradient-to-br.from-blue-500.to-blue-600 p,
-html.dark div.bg-gradient-to-br.from-green-500.to-green-600 p {
-  color: #ffffff !important;
-}
-
-/* Ultra-specific rules for all text in gradient containers - holistic protection page */
-html.light div.bg-gradient-to-br.from-red-500.to-red-600 *,
-html.light div.bg-gradient-to-br.from-orange-500.to-orange-600 *,
-html.light div.bg-gradient-to-br.from-yellow-500.to-yellow-600 *,
-html.light div.bg-gradient-to-br.from-blue-500.to-blue-600 *,
-html.light div.bg-gradient-to-br.from-green-500.to-green-600 *,
-html.dark div.bg-gradient-to-br.from-red-500.to-red-600 *,
-html.dark div.bg-gradient-to-br.from-orange-500.to-orange-600 *,
-html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 *,
-html.dark div.bg-gradient-to-br.from-blue-500.to-blue-600 *,
-html.dark div.bg-gradient-to-br.from-green-500.to-green-600 * {
-  color: #ffffff !important;
-}
-
-/* Ultra-specific rules for prioritization page colored containers - using high specificity approach */
-html.light div.bg-gradient-to-br.from-red-500.to-red-600 h3,
-html.light div.bg-gradient-to-br.from-orange-500.to-orange-600 h3,
-html.light div.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3,
-html.dark div.bg-gradient-to-br.from-red-500.to-red-600 h3,
-html.dark div.bg-gradient-to-br.from-orange-500.to-orange-600 h3,
-html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 h3 {
-  color: #ffffff !important;
-}
-
-html.light div.bg-gradient-to-br.from-red-500.to-red-600 p,
-html.light div.bg-gradient-to-br.from-orange-500.to-orange-600 p,
-html.light div.bg-gradient-to-br.from-yellow-500.to-yellow-600 p,
-html.dark div.bg-gradient-to-br.from-red-500.to-red-600 p,
-html.dark div.bg-gradient-to-br.from-orange-500.to-orange-600 p,
-html.dark div.bg-gradient-to-br.from-yellow-500.to-yellow-600 p {
-  color: #ffffff !important;
-}
-
-/* Fix poll component backgrounds in dark mode */
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 {
-  background: linear-gradient(to bottom right, #1e3a8a, #1e40af) !important;
-}
-
-/* Fix all white containers in dark mode with high specificity */
-html.dark div.bg-white {
-  background-color: #1f2937 !important;
-}
-
-html.dark section.bg-white {
-  background-color: #1f2937 !important;
-}
-
-html.dark .bg-white.dark\:bg-gray-800 {
-  background-color: #1f2937 !important;
-}
-
-/* Fix text in white containers that should be dark in dark mode */
-html.dark .bg-white h2,
-html.dark .bg-white h3,
-html.dark .bg-white h4,
-html.dark .bg-white .text-gray-800,
-html.dark .bg-white .text-gray-700 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-white .text-gray-600,
-html.dark .bg-white .text-gray-500 {
-  color: #d1d5db !important;
-}
-
-/* Nuclear option - fix ALL white backgrounds in dark mode */
-html.dark *[class*="bg-white"] {
-  background-color: #1f2937 !important;
-}
-
-/* Fix specific sections that are still showing white backgrounds */
-html.dark .py-20.px-6.bg-white {
-  background-color: #1f2937 !important;
-}
-
-html.dark .max-w-6xl.mx-auto .bg-white {
-  background-color: #1f2937 !important;
-}
-
-html.dark .max-w-7xl.mx-auto .bg-white {
-  background-color: #1f2937 !important;
-}
-
-/* Fix poll question sections specifically */
-html.dark .space-y-16 .bg-gradient-to-br {
-  background: linear-gradient(to bottom right, #1e3a8a, #1e40af) !important;
-}
-
-/* Fix accordion sections in tiered framework */
-html.dark .bg-white.rounded-2xl.shadow-lg {
-  background-color: #1f2937 !important;
-}
-
-html.dark .bg-white.rounded-2xl.shadow-lg h2,
-html.dark .bg-white.rounded-2xl.shadow-lg h3,
-html.dark .bg-white.rounded-2xl.shadow-lg h4 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-white.rounded-2xl.shadow-lg .text-gray-800,
-html.dark .bg-white.rounded-2xl.shadow-lg .text-gray-700 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-white.rounded-2xl.shadow-lg .text-gray-600 {
-  color: #d1d5db !important;
-}
-
-/* Fix prioritization page specific sections */
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
-}
-
-/* Fix prioritization page poll sections */
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-gradient-to-br {
-  background: linear-gradient(to bottom right, #1e3a8a, #1e40af) !important;
-}
-
-/* Fix prioritization page text in dark mode */
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 h2,
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 h3,
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .text-gray-800 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .text-gray-600,
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .text-gray-700 {
-  color: #d1d5db !important;
-}
-
-/* Fix prioritization page white containers in dark mode */
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-white {
-  background-color: #1f2937 !important;
-}
-
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-white h2,
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-white h3,
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-white .text-gray-800 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-white .text-gray-600,
-html.dark .bg-gradient-to-br.from-amber-50.to-yellow-50 .bg-white .text-gray-700 {
-  color: #d1d5db !important;
-}
-
-/* Fix survey-results page dark mode issues */
-html.dark .bg-white\/50 {
-  background-color: rgba(31, 41, 55, 0.5) !important; /* Dark background with transparency */
-}
-
-html.dark .bg-white\/50 .text-blue-700 {
-  color: #93c5fd !important; /* Light blue text for dark mode */
-}
-
-html.dark .bg-white\/50 .text-blue-600 {
-  color: #60a5fa !important; /* Lighter blue text for dark mode */
-}
-
-/* Fix survey-results gradient containers in dark mode */
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 {
-  background: linear-gradient(to bottom right, #064e3b, #065f46) !important;
-}
-
-html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 {
-  background: linear-gradient(to bottom right, #581c87, #be185d) !important;
-}
-
-html.dark .bg-gradient-to-r.from-gray-50.to-blue-50 {
-  background: linear-gradient(to right, #374151, #1e3a8a) !important;
-}
-
-html.dark .bg-gradient-to-r.from-blue-50.to-indigo-50 {
-  background: linear-gradient(to right, #1e3a8a, #312e81) !important;
-}
-
-/* Fix survey-results text colors in dark mode */
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-green-800,
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-green-700 {
-  color: #d1fae5 !important; /* Light green text for dark mode */
-}
-
-html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 .text-purple-800,
-html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 .text-purple-700 {
-  color: #e9d5ff !important; /* Light purple text for dark mode */
-}
-
-html.dark .bg-gradient-to-r.from-gray-50.to-blue-50 .text-gray-800 {
-  color: #f3f4f6 !important; /* Light text for dark mode */
-}
-
-html.dark .bg-gradient-to-r.from-blue-50.to-indigo-50 .text-gray-800 {
-  color: #f3f4f6 !important; /* Light text for dark mode */
-}
-
-/* Fix survey-results white containers in dark mode */
-html.dark .bg-white.rounded-lg {
-  background-color: #1f2937 !important;
-}
-
-html.dark .bg-white.rounded-lg .text-gray-800 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-white.rounded-lg .text-gray-600 {
-  color: #d1d5db !important;
-}
-
-/* Fix survey-results colored backgrounds in dark mode */
-html.dark .bg-red-50 {
-  background-color: #7f1d1d !important;
-}
-
-html.dark .bg-green-50 {
-  background-color: #064e3b !important;
-}
-
-html.dark .bg-blue-50 {
-  background-color: #1e3a8a !important;
-}
-
-html.dark .bg-purple-50 {
-  background-color: #581c87 !important;
-}
-
-/* Fix survey-results colored text in dark mode */
-html.dark .bg-red-50 .text-red-600,
-html.dark .bg-red-50 .text-red-700 {
-  color: #fca5a5 !important;
-}
-
-html.dark .bg-green-50 .text-green-600,
-html.dark .bg-green-50 .text-green-700 {
-  color: #6ee7b7 !important;
-}
-
-html.dark .bg-blue-50 .text-blue-600,
-html.dark .bg-blue-50 .text-blue-700 {
-  color: #93c5fd !important;
-}
-
-html.dark .bg-purple-50 .text-purple-600,
-html.dark .bg-purple-50 .text-purple-700 {
-  color: #c4b5fd !important;
-}
-
-/* Fix poll component text visibility with high specificity */
-html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 .bg-white .text-gray-800 {
-  color: #111827 !important;
-}
-
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .bg-gray-700 .text-gray-800 {
-  color: #f3f4f6 !important;
-}
-
-html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 .bg-white .text-gray-600 {
-  color: #374151 !important;
-}
-
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .bg-gray-700 .text-gray-600 {
-  color: #d1d5db !important;
-}
-
-/* Fix poll button text specifically */
-html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 button .text-gray-800 {
-  color: #111827 !important;
-}
-
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 button .text-gray-800 {
-  color: #f3f4f6 !important;
-}
-
-html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 button .text-gray-600 {
-  color: #374151 !important;
-}
-
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 button .text-gray-600 {
-  color: #d1d5db !important;
-}
-
-/* Fix stakeholder perspectives section */
-html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 {
-  background: linear-gradient(to bottom right, #dbeafe, #e0e7ff) !important; /* Light blue gradient for light mode */
-}
-
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 {
-  background: linear-gradient(to bottom right, #1e3a8a, #312e81) !important;
-}
-
-html.light .bg-gradient-to-br.from-green-50.to-emerald-50 {
-  background: linear-gradient(to bottom right, #dcfce7, #d1fae5) !important; /* Light green gradient for light mode */
-}
-
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 {
-  background: linear-gradient(to bottom right, #064e3b, #065f46) !important;
-}
-
-/* Fix text colors in stakeholder sections for both modes */
-html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 h3,
-html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-800 {
-  color: #111827 !important; /* Dark text on light background */
-}
-
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 h3,
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-800 {
-  color: #f3f4f6 !important; /* Light text on dark background */
-}
-
-html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-700,
-html.light .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-300 {
-  color: #374151 !important; /* Dark text on light background */
-}
-
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-700,
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-300 {
-  color: #d1d5db !important; /* Light text on dark background */
-}
-
-html.light .bg-gradient-to-br.from-green-50.to-emerald-50 h3,
-html.light .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-800 {
-  color: #111827 !important; /* Dark text on light background */
-}
-
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 h3,
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-800 {
-  color: #f3f4f6 !important; /* Light text on dark background */
-}
-
-html.light .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-700,
-html.light .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-300 {
-  color: #374151 !important; /* Dark text on light background */
-}
-
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-700,
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-300 {
-  color: #d1d5db !important; /* Light text on dark background */
-}
-
-/* Fix poll section backgrounds */
-html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 {
-  background: linear-gradient(to bottom right, #1e3a8a, #1e40af) !important;
-}
-
-/* Fix Project Mission container in dashboard - high specificity */
-html.light .bg-gradient-to-r.from-blue-50.to-indigo-50 {
-  background: linear-gradient(to right, #dbeafe, #e0e7ff) !important; /* Light blue gradient for light mode */
-}
-
-html.dark .bg-gradient-to-r.from-blue-50.to-indigo-50 {
-  background: linear-gradient(to right, #1e3a8a, #312e81) !important; /* Dark blue gradient for dark mode */
-}
-
-/* Even more specific - target the exact Project Mission container */
-html.light .mt-10.p-6.bg-gradient-to-r.from-blue-50.to-indigo-50 {
-  background: linear-gradient(to right, #dbeafe, #e0e7ff) !important; /* Force light gradient in light mode */
-}
-
-html.dark .mt-10.p-6.bg-gradient-to-r.from-blue-50.to-indigo-50 {
-  background: linear-gradient(to right, #1e3a8a, #312e81) !important; /* Force dark gradient in dark mode */
-}
-
-/* Fix poll section text colors specifically */
-html.light .bg-gradient-to-br.from-indigo-50.to-blue-50 h2 {
-  color: #111827 !important; /* Dark text on light background */
-}
-
-html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 h2 {
-  color: #f3f4f6 !important; /* Light text on dark background */
-}
-
-html.light .bg-gradient-to-br.from-indigo-50.to-blue-50 p {
-  color: #374151 !important; /* Dark text on light background */
-}
-
-html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 p {
-  color: #d1d5db !important; /* Light text on dark background */
-}
-
-/* Fix poll component text in poll sections */
-html.light .bg-gradient-to-br.from-indigo-50.to-blue-50 .text-gray-800 {
-  color: #111827 !important;
-}
-
-html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 .text-gray-800 {
-  color: #f3f4f6 !important;
-}
-
-html.light .bg-gradient-to-br.from-indigo-50.to-blue-50 .text-gray-600 {
-  color: #374151 !important;
-}
-
-html.dark .bg-gradient-to-br.from-indigo-50.to-blue-50 .text-gray-600 {
-  color: #d1d5db !important;
-}
-
-/* Prioritization page - simple white background */
-html.light .min-h-screen.bg-white {
-  background-color: #ffffff !important;
-}
-
-html.light .min-h-screen.bg-white section {
-  background-color: #ffffff !important;
-}
-
-/* Fix prioritization page stakeholder concerns box */
-html.light .bg-gradient-to-br.from-yellow-50.to-orange-50 {
-  background: linear-gradient(to bottom right, #fef3c7, #fed7aa) !important; /* Lighter yellow-orange */
-}
-
-html.dark .bg-gradient-to-br.from-yellow-50.to-orange-50 {
-  background: linear-gradient(to bottom right, #451a03, #78350f) !important;
-}
-
-/* Fix text colors in prioritization stakeholder concerns */
-html.light .bg-gradient-to-br.from-yellow-50.to-orange-50 h3,
-html.light .bg-gradient-to-br.from-yellow-50.to-orange-50 .text-gray-800 {
-  color: #111827 !important; /* Dark text on light background */
-}
-
-html.dark .bg-gradient-to-br.from-yellow-50.to-orange-50 h3,
-html.dark .bg-gradient-to-br.from-yellow-50.to-orange-50 .text-gray-800 {
-  color: #f3f4f6 !important; /* Light text on dark background */
-}
-
-html.light .bg-gradient-to-br.from-yellow-50.to-orange-50 .text-gray-700,
-html.light .bg-gradient-to-br.from-yellow-50.to-orange-50 .text-gray-300 {
-  color: #374151 !important; /* Dark text on light background */
-}
-
-html.dark .bg-gradient-to-br.from-yellow-50.to-orange-50 .text-gray-700,
-html.dark .bg-gradient-to-br.from-yellow-50.to-orange-50 .text-gray-300 {
-  color: #d1d5db !important; /* Light text on dark background */
-}
-
-/* Fix documents page dark mode */
-html.dark .text-gray-900 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .text-gray-800 {
-  color: #e5e7eb !important;
-}
-
-/* Fix documents page text colors */
-html.dark .text-indigo-700 {
-  color: #93c5fd !important; /* Light blue for dark mode */
-}
-
-html.dark .text-indigo-600 {
-  color: #93c5fd !important; /* Light blue for dark mode */
-}
-
-html.dark .text-indigo-500 {
-  color: #60a5fa !important; /* Lighter blue for dark mode */
-}
-
-/* Fix documents page backgrounds */
-html.dark .bg-white.rounded-lg {
-  background-color: #1f2937 !important;
-}
-
-html.dark .bg-white.p-4 {
-  background-color: #1f2937 !important;
-}
-
-html.dark .bg-white.shadow-sm {
-  background-color: #1f2937 !important;
-}
-
-html.dark .bg-white.shadow-md {
-  background-color: #1f2937 !important;
-}
-
-/* Fix documents page hover states */
-html.dark .hover\:bg-gray-50:hover {
-  background-color: #374151 !important;
-}
-
-/* Fix documents page text in white containers */
-html.dark .bg-white .text-gray-500 {
-  color: #9ca3af !important;
-}
-
-html.dark .bg-white .text-gray-600 {
-  color: #d1d5db !important;
-}
-
-html.dark .bg-white .text-gray-700 {
-  color: #e5e7eb !important;
-}
-
-/* Fix pie chart text visibility in dark mode */
+/* ========================================
+   THIRD-PARTY / SVG OVERRIDES
+   Genuine specificity needs.
+   ======================================== */
+
+/* Recharts SVG text in dark mode */
 html.dark svg text {
-  fill: #f3f4f6 !important; /* Light text in dark mode */
+  fill: #CBD5E1 !important;
 }
 
-html.dark .text-gray-700 {
-  color: #f3f4f6 !important; /* Light text in dark mode */
-}
-
-html.dark .text-gray-600 {
-  color: #d1d5db !important; /* Light text in dark mode */
-}
-
-html.dark .text-gray-500 {
-  color: #9ca3af !important; /* Light text in dark mode */
-}
-
-/* Fix pie chart legend text in dark mode */
-html.dark .bg-gray-100 {
-  background-color: #374151 !important;
-}
-
-html.dark .bg-blue-50 {
-  background-color: #1e3a8a !important;
-}
-
-html.dark .border-blue-200 {
-  border-color: #3b82f6 !important;
-}
-
-/* Fix pie chart center text */
-html.dark .absolute.inset-0 .text-gray-700 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .absolute.inset-0 .text-gray-500 {
-  color: #d1d5db !important;
-}
-
-/* Fix detailed findings page sections in dark mode */
-html.dark .bg-gradient-to-br.from-red-50.to-pink-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
-}
-
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
-}
-
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
-}
-
-html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 {
-  background: linear-gradient(to bottom right, #1f2937, #374151) !important;
-}
-
-html.dark .bg-gradient-to-r.from-red-50.to-orange-50 {
-  background: linear-gradient(to right, #1f2937, #374151) !important;
-}
-
-/* Fix text colors in detailed findings sections */
-html.dark .bg-gradient-to-br.from-red-50.to-pink-50 h3,
-html.dark .bg-gradient-to-br.from-red-50.to-pink-50 .text-gray-800 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 h3,
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-800 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 h3,
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-800 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 h3,
-html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 .text-gray-800 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-gradient-to-r.from-red-50.to-orange-50 h3,
-html.dark .bg-gradient-to-r.from-red-50.to-orange-50 .text-red-800 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-gradient-to-r.from-red-50.to-orange-50 .text-red-700 {
-  color: #d1d5db !important;
-}
-
-/* Fix detailed findings page text in all gradient sections */
-html.dark .bg-gradient-to-br.from-red-50.to-pink-50 .text-gray-600,
-html.dark .bg-gradient-to-br.from-red-50.to-pink-50 .text-gray-700 {
-  color: #d1d5db !important;
-}
-
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-600,
-html.dark .bg-gradient-to-br.from-green-50.to-emerald-50 .text-gray-700 {
-  color: #d1d5db !important;
-}
-
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-600,
-html.dark .bg-gradient-to-br.from-blue-50.to-indigo-50 .text-gray-700 {
-  color: #d1d5db !important;
-}
-
-html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 .text-gray-600,
-html.dark .bg-gradient-to-br.from-purple-50.to-pink-50 .text-gray-700 {
-  color: #d1d5db !important;
-}
-
-/* Fix detailed findings page white containers */
-html.dark .bg-white.border.border-gray-200 {
-  background-color: #1f2937 !important;
-  border-color: #374151 !important;
-}
-
-html.dark .bg-white.border.border-gray-200 h2,
-html.dark .bg-white.border.border-gray-200 h3,
-html.dark .bg-white.border.border-gray-200 .text-gray-800 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .bg-white.border.border-gray-200 .text-gray-600 {
-  color: #d1d5db !important;
-}
-
-/* Fix pie chart text visibility in dark mode */
-html.dark .text-gray-700 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .text-gray-600 {
-  color: #d1d5db !important;
-}
-
-html.dark .text-gray-500 {
-  color: #9ca3af !important;
-}
-
-/* Fix pie chart center text specifically */
-html.dark .absolute.inset-0 .text-gray-700 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .absolute.inset-0 .text-gray-500 {
-  color: #d1d5db !important;
-}
-
-/* Fix pie chart legend text */
-html.dark .space-y-2 .text-gray-700 {
-  color: #f3f4f6 !important;
-}
-
-html.dark .space-y-2 .text-gray-600 {
-  color: #d1d5db !important;
-}
-
-html.dark .space-y-2 .text-gray-500 {
-  color: #9ca3af !important;
-}
-
-/* Fix pie chart legend hover states */
-html.dark .space-y-2 .hover\:bg-gray-100:hover {
-  background-color: #374151 !important;
-  color: #f3f4f6 !important;
-}
-
-html.dark .space-y-2 .bg-blue-50 {
-  background-color: #1e3a8a !important;
-  border-color: #3b82f6 !important;
-}
-
-html.dark .space-y-2 .bg-blue-50 .text-gray-700,
-html.dark .space-y-2 .bg-blue-50 .text-gray-600 {
-  color: #f3f4f6 !important;
-}
-
-/* Fix pie chart center "Total Responses" text for better contrast */
+/* Pie chart center text contrast */
 html.dark .absolute.inset-0 .text-gray-700 {
   color: #ffffff !important;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8) !important;
+  text-shadow: 0 0 4px rgba(0,0,0,0.8) !important;
   font-weight: 700 !important;
 }
-
 html.dark .absolute.inset-0 .text-gray-500 {
   color: #ffffff !important;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8) !important;
+  text-shadow: 0 0 4px rgba(0,0,0,0.8) !important;
   font-weight: 600 !important;
 }
-
-/* Also fix for light mode to ensure good contrast */
 .light .absolute.inset-0 .text-gray-700 {
-  color: #1f2937 !important;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.8) !important;
+  color: #1E293B !important;
+  text-shadow: 0 0 4px rgba(255,255,255,0.8) !important;
   font-weight: 700 !important;
 }
-
 .light .absolute.inset-0 .text-gray-500 {
-  color: #374151 !important;
-  text-shadow: 0 0 4px rgba(255, 255, 255, 0.8) !important;
+  color: #334155 !important;
+  text-shadow: 0 0 4px rgba(255,255,255,0.8) !important;
   font-weight: 600 !important;
 }
 
-/* Fix forum hover states */
-html.dark .hover\:bg-white:hover {
-  background-color: #374151 !important;
-  color: #f3f4f6 !important;
-}
+/* ========================================
+   FORM INPUT DARK MODE
+   ======================================== */
 
-/* Fix tiered framework hover states */
-html.dark .hover\:text-gray-900:hover {
-  color: #f3f4f6 !important;
-}
-
-html.dark .hover\:bg-gray-50:hover {
-  background-color: #374151 !important;
-  color: #f3f4f6 !important;
-}
-
-/* Card and container backgrounds */
-.light .bg-white.rounded-2xl {
-  background-color: #ffffff !important;
-}
-
-.dark .bg-white.rounded-2xl {
-  background-color: #1f2937 !important;
-}
-
-/* Status indicators - fix bright green */
-.light .bg-green-100 {
-  background-color: #dcfce7 !important;
-}
-
-.dark .bg-green-100 {
-  background-color: #064e3b !important; /* Dark green instead of bright */
-}
-
-.light .text-green-800 {
-  color: #166534 !important;
-}
-
-.dark .text-green-800 {
-  color: #6ee7b7 !important; /* Light green text for dark mode */
+html.dark input[type="text"],
+html.dark input[type="email"],
+html.dark input[type="password"],
+html.dark textarea,
+html.dark select {
+  color: #F1F5F9 !important;
 }
 
 /* ========================================
-   COMPONENT-SPECIFIC FIXES
+   SEMANTIC COLOR DARK MODE ADJUSTMENTS
    ======================================== */
 
-/* Fix white backgrounds in dark mode - but not on landing page hero section */
-.dark .bg-white:not(.bg-gradient-to-r) {
-  background-color: #1f2937 !important;
+/* Status badges — keep semantic colors visible */
+html.dark .bg-green-100 { background-color: #064e3b !important; }
+html.dark .bg-red-50    { background-color: #450a0a !important; }
+html.dark .bg-blue-50   { background-color: #0c4a6e !important; }
+html.dark .bg-purple-50 { background-color: #3b0764 !important; }
+
+html.dark .text-green-800 { color: #6ee7b7 !important; }
+html.dark .text-purple-800 { color: #e9d5ff !important; }
+html.dark .text-purple-700 { color: #c4b5fd !important; }
+html.dark .text-purple-600 { color: #a78bfa !important; }
+
+/* Status badge text in dark mode */
+html.dark .bg-green-100.text-green-800 { color: #6ee7b7 !important; }
+html.dark .bg-blue-100.text-blue-800 {
+  background-color: #0c4a6e !important;
+  color: #7dd3fc !important;
 }
 
-.dark .bg-white:not(.bg-gradient-to-r) .text-gray-800,
-.dark .bg-white:not(.bg-gradient-to-r) .text-gray-900 {
-  color: #f9fafb !important;
-}
+/* Indigo → sky migration for dark mode */
+html.dark .text-indigo-700 { color: #7dd3fc !important; }
+html.dark .text-indigo-600 { color: #7dd3fc !important; }
+html.dark .text-indigo-500 { color: #38bdf8 !important; }
 
-.dark .bg-white:not(.bg-gradient-to-r) .text-gray-700 {
-  color: #d1d5db !important;
-}
+/* ========================================
+   LANDING PAGE PHASE BADGE
+   ======================================== */
 
-.dark .bg-white:not(.bg-gradient-to-r) .text-gray-600 {
-  color: #9ca3af !important;
-}
-
-/* Project Phases containers - fix dark text on dark blue background */
-.light .bg-gray-50:not(.min-h-screen) {
-  background-color: #f9fafb !important;
-}
-
-.light .bg-gray-50 .text-gray-700 {
-  color: #374151 !important;
-}
-
-.light .bg-gray-50 .text-gray-600 {
-  color: #4b5563 !important;
-}
-
-.dark .bg-gray-50 {
-  background-color: #374151 !important;
-}
-
-.dark .bg-gray-50 .text-gray-700 {
-  color: #d1d5db !important;
-}
-
-.dark .bg-gray-50 .text-gray-600 {
-  color: #9ca3af !important;
-}
-
-/* Icon backgrounds - make them neutral for both modes */
-.light .bg-blue-100 {
-  background-color: #f3f4f6 !important; /* Neutral gray */
-}
-
-.dark .bg-blue-100 {
-  background-color: #374151 !important; /* Neutral dark gray */
-}
-
-.light .bg-green-100 {
-  background-color: #f3f4f6 !important; /* Neutral gray */
-}
-
-.dark .bg-green-100 {
-  background-color: #374151 !important; /* Neutral dark gray */
-}
-
-.light .bg-red-100 {
-  background-color: #f3f4f6 !important; /* Neutral gray */
-}
-
-.dark .bg-red-100 {
-  background-color: #374151 !important; /* Neutral dark gray */
-}
-
-/* Make all colored icon backgrounds neutral */
-.light .bg-blue-100,
-.light .bg-green-100,
-.light .bg-red-100,
-.light .bg-yellow-100,
-.light .bg-purple-100,
-.light .bg-indigo-100 {
-  background-color: #f3f4f6 !important; /* Neutral gray */
-}
-
-.dark .bg-blue-100,
-.dark .bg-green-100,
-.dark .bg-red-100,
-.dark .bg-yellow-100,
-.dark .bg-purple-100,
-.dark .bg-indigo-100 {
-  background-color: #374151 !important; /* Neutral dark gray */
-}
-
-/* Priority colors for announcements - neutral dark mode versions like project timeline */
-.dark .bg-red-100 {
-  background-color: #374151 !important; /* Same as project timeline containers */
-  border-color: #4b5563 !important;
-}
-
-.dark .bg-orange-100 {
-  background-color: #374151 !important; /* Same as project timeline containers */
-  border-color: #4b5563 !important;
-}
-
-.dark .bg-yellow-100 {
-  background-color: #374151 !important; /* Same as project timeline containers */
-  border-color: #4b5563 !important;
-}
-
-.dark .text-red-900 {
-  color: #d1d5db !important; /* Same as project timeline text */
-}
-
-.dark .text-orange-900 {
-  color: #d1d5db !important; /* Same as project timeline text */
-}
-
-.dark .text-yellow-900 {
-  color: #d1d5db !important; /* Same as project timeline text */
-}
-
-/* Make announcement priority badges more neutral in dark mode */
-.dark .bg-red-200 {
-  background-color: #4b5563 !important;
-}
-
-.dark .bg-orange-200 {
-  background-color: #4b5563 !important;
-}
-
-.dark .bg-yellow-200 {
-  background-color: #4b5563 !important;
-}
-
-/* Survey engagement section - fix dark mode */
-.dark .bg-gradient-to-br.from-purple-50.to-pink-50 {
-  background: linear-gradient(135deg, #581c87, #be185d) !important;
-}
-
-.dark .text-purple-800 {
-  color: #e9d5ff !important;
-}
-
-.dark .text-purple-700 {
-  color: #c4b5fd !important;
-}
-
-.dark .text-purple-600 {
-  color: #a78bfa !important;
+.phase-1-text {
+  color: #0F172A !important;
 }
 
 /* ========================================
-   TIMELINE AND STATUS FEATURE FIXES
+   SYSTEM PREFERENCE FALLBACK
    ======================================== */
 
-/* Fix timeline hover states in dark mode */
-.dark .border-blue-300.bg-blue-50 {
-  background-color: #1f2937 !important;
-  border-color: #4b5563 !important;
-}
-
-.dark .border-blue-300.bg-blue-50 .text-gray-800 {
-  color: #f9fafb !important;
-}
-
-.dark .border-blue-300.bg-blue-50 .text-gray-500 {
-  color: #9ca3af !important;
-}
-
-.dark .border-blue-300.bg-blue-50 .text-gray-600 {
-  color: #d1d5db !important;
-}
-
-/* Fix status feature text visibility in dark mode */
-.dark .text-green-100 {
-  color: #ffffff !important;
-}
-
-.dark .text-green-600 {
-  color: #ffffff !important;
-}
-
-.dark .text-orange-600 {
-  color: #ffffff !important;
-}
-
-.dark .text-purple-600 {
-  color: #ffffff !important;
-}
-
-/* Fix status feature backgrounds in dark mode */
-.dark .bg-purple-100 {
-  background-color: #1f2937 !important;
-}
-
-.dark .bg-orange-100 {
-  background-color: #1f2937 !important;
-}
-
-/* Fix refresh announcements button in dark mode */
-.dark .bg-blue-100.text-blue-800 {
-  background-color: #1e3a8a !important;
-  color: #ffffff !important;
-  border-color: #3b82f6 !important;
-}
-
-.dark .bg-blue-100.text-blue-800:hover {
-  background-color: #1e40af !important;
-}
-
-/* Fix yellow text on white background in dark mode */
-.dark .text-yellow-600 {
-  color: #ffffff !important;
-}
-
-.dark .text-yellow-500 {
-  color: #ffffff !important;
-}
-
-.dark .text-yellow-800 {
-  color: #ffffff !important;
-}
-
-.dark .text-yellow-900 {
-  color: #ffffff !important;
-}
-
-/* Fix light text on white backgrounds in dark mode */
-.dark .text-green-100 {
-  color: #ffffff !important;
-}
-
-.dark .text-blue-100 {
-  color: #ffffff !important;
-}
-
-.dark .text-blue-200 {
-  color: #ffffff !important;
-}
-
-/* Fix status feature backgrounds that might be white */
-.dark .bg-white\/20 {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-}
-
-/* Fix timeline status labels - "Overdue" text visibility */
-.dark .bg-gray-100.text-gray-800 {
-  background-color: #374151 !important;
-  color: #ffffff !important;
-}
-
-.dark .bg-green-100.text-green-800 {
-  background-color: #064e3b !important;
-  color: #ffffff !important;
-}
-
-.dark .bg-blue-100.text-blue-800 {
-  background-color: #1e3a8a !important;
-  color: #ffffff !important;
-}
-
-/* Fix all status badge text in dark mode */
-.dark .px-2.py-1.rounded-full.text-xs.font-medium {
-  color: #ffffff !important;
-}
-
-/* Specific fix for timeline status badges */
-.dark .bg-gray-100 {
-  background-color: #374151 !important;
-}
-
-.dark .bg-green-100 {
-  background-color: #064e3b !important;
-}
-
-.dark .bg-blue-100 {
-  background-color: #1e3a8a !important;
-}
-
-/* Key insights section - fix dark mode */
-.dark .bg-gradient-to-r.from-gray-50.to-blue-50 {
-  background: linear-gradient(90deg, #374151, #1e3a8a) !important;
-}
-
-.dark .bg-white.rounded-lg.shadow-sm {
-  background-color: #1f2937 !important;
-}
-
-
-.dark .text-green-100 {
-  color: #d1fae5 !important;
-}
-
-/* ========================================
-   THEME TOGGLE BUTTON FIXES
-   ======================================== */
-
-/* Ensure theme toggle button has proper contrast */
-.light .text-gray-900 {
-  color: #111827 !important;
-}
-
-.dark .text-gray-100 {
-  color: #f3f4f6 !important;
-}
-
-/* Theme toggle button specific styling */
-.light button.text-gray-900 {
-  color: #111827 !important;
-}
-
-.dark button.text-gray-100 {
-  color: #f3f4f6 !important;
-}
-
-/* Ensure the button background and text work together */
-.light .bg-gray-100 {
-  background-color: #f3f4f6 !important;
-}
-
-.dark .bg-gray-800 {
-  background-color: #1f2937 !important;
-}
-
-/* System preference fallback */
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #1a1a1a;
-    --card-foreground: #ededed;
-    --popover: #1a1a1a;
-    --popover-foreground: #ededed;
-    --primary: #3b82f6;
-    --primary-foreground: #ffffff;
-    --secondary: #262626;
-    --secondary-foreground: #ededed;
-    --muted: #262626;
-    --muted-foreground: #a3a3a3;
-    --accent: #262626;
-    --accent-foreground: #ededed;
+    --background: #0F172A;
+    --foreground: #F1F5F9;
+    --card: #1E293B;
+    --card-foreground: #F1F5F9;
+    --popover: #1E293B;
+    --popover-foreground: #F1F5F9;
+    --primary: #38BDF8;
+    --primary-foreground: #0F172A;
+    --secondary: #334155;
+    --secondary-foreground: #F1F5F9;
+    --muted: #334155;
+    --muted-foreground: #94A3B8;
+    --accent: #334155;
+    --accent-foreground: #F1F5F9;
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
-    --border: #404040;
-    --input: #404040;
-    --ring: #3b82f6;
+    --border: #475569;
+    --input: #475569;
+    --ring: #38BDF8;
   }
 }
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
 
 body {
   background: var(--background);
@@ -1501,183 +288,26 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* ========================================
+   ANIMATIONS
+   ======================================== */
 
-/* Toast animations */
 @keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
 }
 
 @keyframes slideOutRight {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(100%);
-    opacity: 0;
-  }
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(100%); opacity: 0; }
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0);     }
 }
 
 @keyframes fadeOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-}
-
-
-/* Fix landing page Phase 1 text - nuclear option with maximum specificity */
-html.dark .phase-1-text,
-html.light .phase-1-text,
-.phase-1-text {
-  color: #1e40af !important;
-  background-color: transparent !important;
-}
-
-/* Even more specific - target the exact structure */
-html.dark .inline-flex.items-center.px-6.py-3.bg-gray-200\/90.dark\:bg-gray-300\/90 span.phase-1-text,
-html.light .inline-flex.items-center.px-6.py-3.bg-gray-200\/90.dark\:bg-gray-300\/90 span.phase-1-text {
-  color: #1e40af !important;
-}
-
-/* Fix Panel Questions heading in WIKS page - maximum specificity */
-html.light section.bg-gradient-to-br.from-green-50.to-blue-50 h2.text-blue-900,
-html.light .bg-gradient-to-br.from-green-50.to-blue-50 h2.text-blue-900,
-html.light .bg-gradient-to-br.from-green-50.to-blue-50 h2.font-bold.text-center.mb-16,
-html.light section.py-12.px-6.bg-gradient-to-br.from-green-50.to-blue-50 h2,
-html.light section.py-12.px-6.bg-gradient-to-br.from-green-50.to-blue-50 .max-w-6xl h2,
-html.light .max-w-6xl.mx-auto h2.text-blue-900,
-html.light section.bg-gradient-to-br.from-green-50.to-blue-50 .max-w-6xl.mx-auto h2 {
-  color: #1e3a8a !important; /* Dark blue for Panel Questions */
-}
-
-/* Override any white text rules for this specific heading */
-html.light section.bg-gradient-to-br.from-green-50.to-blue-50 h2,
-html.light section.py-12.px-6.bg-gradient-to-br.from-green-50.to-blue-50 .max-w-6xl h2,
-html.light section.py-12.px-6.bg-gradient-to-br.from-green-50.to-blue-50 .max-w-6xl.mx-auto h2 {
-  color: #1e3a8a !important; /* Force dark blue */
-}
-
-/* Nuclear option - target Panel Questions specifically by class */
-html.light .panel-questions-heading,
-html.light h2.panel-questions-heading {
-  color: #1e3a8a !important;
-}
-
-html.dark .panel-questions-heading,
-html.dark h2.panel-questions-heading {
-  color: #f3f4f6 !important;
-}
-
-html.dark section.bg-gradient-to-br.from-green-50.to-blue-50 h2,
-html.dark .bg-gradient-to-br.from-green-50.to-blue-50 h2 {
-  color: #f3f4f6 !important; /* White text for dark mode */
-}
-
-/* Nuclear option - target everything */
-* .phase-1-text {
-  color: #1e40af !important;
-}
-
-/* Target the specific page */
-body .phase-1-text {
-  color: #1e40af !important;
-}
-
-/* FINAL NUCLEAR OPTION - MUST BE LAST */
-/* Target the actual classes present in the element with theme-specific colors */
-html.dark .inline-flex.items-center.px-6.py-3.bg-white\/90 span.text-blue-900 {
-  color: #ffffff !important; /* White text for dark mode */
-  background: transparent !important;
-}
-
-html.light .inline-flex.items-center.px-6.py-3.bg-white\/90 span.text-blue-900 {
-  color: #1e40af !important; /* Dark blue text for light mode */
-  background: transparent !important;
-}
-
-.inline-flex.items-center.px-6.py-3.bg-white\/90 span.text-blue-900 {
-  color: #1e40af !important; /* Default to dark blue */
-  background: transparent !important;
-}
-
-/* Fix form input text colors with high specificity */
-/* Light mode - dark text on light backgrounds */
-html.light input[type="text"],
-html.light input[type="email"],
-html.light input[type="password"],
-html.light textarea,
-html.light select {
-  color: #111827 !important; /* Dark text for light mode */
-}
-
-/* Dark mode - light text on dark backgrounds */
-html.dark input[type="text"],
-html.dark input[type="email"],
-html.dark input[type="password"],
-html.dark textarea,
-html.dark select {
-  color: #f9fafb !important; /* Light text for dark mode */
-}
-
-/* Fix status badge text colors - override the global input rule */
-.light .bg-yellow-100 .text-black,
-.light .bg-green-100 .text-black,
-.light span.text-black {
-  color: #000000 !important;
-}
-
-.dark .bg-yellow-100 .text-yellow-200,
-.dark .bg-green-100 .text-green-200,
-.dark span.text-yellow-200,
-.dark span.text-green-200 {
-  color: #fde047 !important; /* Light yellow for dark mode */
-}
-
-/* Additional specificity for form elements in containers */
-html.light .bg-white input[type="text"],
-html.light .bg-white input[type="email"],
-html.light .bg-white textarea,
-html.light .bg-white select {
-  color: #111827 !important; /* Dark text on white backgrounds */
-}
-
-html.dark .bg-white input[type="text"],
-html.dark .bg-white input[type="email"],
-html.dark .bg-white textarea,
-html.dark .bg-white select {
-  color: #f9fafb !important; /* Light text on dark backgrounds */
-}
-
-/* Fix TWG Review form specifically */
-html.light .bg-white.dark\:bg-gray-800 input[type="text"],
-html.light .bg-white.dark\:bg-gray-800 textarea {
-  color: #111827 !important; /* Dark text for light mode */
-}
-
-html.dark .bg-white.dark\:bg-gray-800 input[type="text"],
-html.dark .bg-white.dark\:bg-gray-800 textarea {
-  color: #f9fafb !important; /* Light text for dark mode */
+  from { opacity: 1; transform: translateY(0);     }
+  to   { opacity: 0; transform: translateY(-10px); }
 }

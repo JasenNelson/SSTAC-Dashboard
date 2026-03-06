@@ -16,7 +16,7 @@ function SubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="w-full px-4 py-2 font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:bg-indigo-300 disabled:cursor-not-allowed transition-colors"
+      className="w-full px-4 py-2 font-medium text-white bg-sky-700 rounded-md hover:bg-sky-800 disabled:bg-sky-300 disabled:cursor-not-allowed transition-colors"
     >
       {pending ? 'Saving Document...' : 'Save Document'}
     </button>
@@ -50,7 +50,7 @@ export default function NewDocumentForm() {
         </div>
       )}
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="title" className="block text-sm font-medium text-slate-600">
           Title
         </label>
         <input
@@ -58,12 +58,12 @@ export default function NewDocumentForm() {
           id="title"
           name="title" // The 'name' attribute is crucial for FormData
           required
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500"
         />
       </div>
 
       <div>
-        <label htmlFor="file_url" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="file_url" className="block text-sm font-medium text-slate-600">
           File URL
         </label>
         <input
@@ -72,12 +72,12 @@ export default function NewDocumentForm() {
           name="file_url"
           required
           placeholder="https://..."
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500"
         />
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="description" className="block text-sm font-medium text-slate-600">
           Description (optional)
         </label>
         <textarea
@@ -85,7 +85,7 @@ export default function NewDocumentForm() {
           name="description"
           rows={6}
           placeholder="Add context or notes about this document..."
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500"
         />
       </div>
 

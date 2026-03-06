@@ -53,12 +53,12 @@ export default async function EditDocumentPage({ params }: { params: Promise<{ i
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <Link 
             href={`/twg/documents/${document.id}`} 
-            className="text-indigo-600 hover:text-indigo-800 transition-colors"
+            className="text-sky-700 hover:text-sky-800 transition-colors"
           >
             &larr; Back to document
           </Link>
@@ -66,7 +66,7 @@ export default async function EditDocumentPage({ params }: { params: Promise<{ i
 
         <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
           <header className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Edit Document</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Edit Document</h1>
           </header>
 
           <EditDocumentForm document={document} />

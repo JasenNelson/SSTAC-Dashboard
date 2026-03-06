@@ -73,7 +73,7 @@ export default function ShareButton({
       {/* Main Share Button */}
       <button
         onClick={handleNativeShare}
-        className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        className="inline-flex items-center px-4 py-2 bg-sky-700 text-white font-medium rounded-lg hover:bg-sky-800 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
       >
         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
@@ -91,9 +91,9 @@ export default function ShareButton({
           />
           
           {/* Menu */}
-          <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+          <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50">
             <div className="p-2">
-              <div className="px-3 py-2 text-sm font-medium text-gray-700 border-b border-gray-100">
+              <div className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 border-b border-slate-100 dark:border-slate-700">
                 Share via
               </div>
               

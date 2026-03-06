@@ -168,13 +168,13 @@ export default function RunEngineButton({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4" role="dialog" aria-modal="true" aria-labelledby="run-engine-title">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 id="run-engine-title" className="text-lg font-semibold text-gray-900">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h3 id="run-engine-title" className="text-lg font-semibold text-slate-900">
                 Run Evaluation Engine
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                className="p-1 text-slate-400 hover:text-slate-500 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                 aria-label="Close"
               >
                 <X className="w-5 h-5" />
@@ -184,20 +184,20 @@ export default function RunEngineButton({
             {/* Content */}
             <div className="px-6 py-4 space-y-4">
               {/* Submission Info */}
-              <div className="bg-gray-50 rounded-lg p-4">
+              <div className="bg-slate-50 rounded-lg p-4">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Submission ID:</span>
-                  <span className="font-medium text-gray-900">{submissionId}</span>
+                  <span className="text-slate-500">Submission ID:</span>
+                  <span className="font-medium text-slate-900">{submissionId}</span>
                 </div>
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-500">Site:</span>
-                  <span className="font-medium text-gray-900">{siteId}</span>
+                  <span className="text-slate-500">Site:</span>
+                  <span className="font-medium text-slate-900">{siteId}</span>
                 </div>
               </div>
 
               {/* Mode Selection */}
               <div className="space-y-3">
-                <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                <label className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
                   <input
                     type="radio"
                     name="mode"
@@ -208,13 +208,13 @@ export default function RunEngineButton({
                   <div className="flex items-center gap-2">
                     <Download className="w-4 h-4 text-emerald-600" />
                     <div>
-                      <span className="font-medium text-gray-900">Import Latest Results</span>
-                      <p className="text-sm text-gray-500">Import from most recent evaluation output file (recommended)</p>
+                      <span className="font-medium text-slate-900">Import Latest Results</span>
+                      <p className="text-sm text-slate-500">Import from most recent evaluation output file (recommended)</p>
                     </div>
                   </div>
                 </label>
 
-                <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                <label className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
                   <input
                     type="radio"
                     name="mode"
@@ -223,15 +223,15 @@ export default function RunEngineButton({
                     className="text-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                   />
                   <div className="flex items-center gap-2">
-                    <Play className="w-4 h-4 text-blue-600" />
+                    <Play className="w-4 h-4 text-sky-700" />
                     <div>
-                      <span className="font-medium text-gray-900">Run Engine (Existing Extractions)</span>
-                      <p className="text-sm text-gray-500">Re-run evaluation on extraction files in the system</p>
+                      <span className="font-medium text-slate-900">Run Engine (Existing Extractions)</span>
+                      <p className="text-sm text-slate-500">Re-run evaluation on extraction files in the system</p>
                     </div>
                   </div>
                 </label>
 
-                <label className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                <label className="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
                   <input
                     type="radio"
                     name="mode"
@@ -242,8 +242,8 @@ export default function RunEngineButton({
                   <div className="flex items-center gap-2">
                     <Upload className="w-4 h-4 text-purple-600" />
                     <div>
-                      <span className="font-medium text-gray-900">Upload New Documents</span>
-                      <p className="text-sm text-gray-500">Upload extraction JSON files to process</p>
+                      <span className="font-medium text-slate-900">Upload New Documents</span>
+                      <p className="text-sm text-slate-500">Upload extraction JSON files to process</p>
                     </div>
                   </div>
                 </label>
@@ -252,13 +252,13 @@ export default function RunEngineButton({
               {/* File Upload (when upload mode is selected) */}
               {runMode === 'upload' && (
                 <div className="space-y-3">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-emerald-400 transition-colors">
-                    <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                  <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center hover:border-emerald-400 transition-colors">
+                    <Upload className="w-8 h-8 mx-auto text-slate-400 mb-2" />
                     <label className="cursor-pointer">
                       <span className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
                         Choose files
                       </span>
-                      <span className="text-sm text-gray-500"> or drag and drop</span>
+                      <span className="text-sm text-slate-500"> or drag and drop</span>
                       <input
                         type="file"
                         multiple
@@ -267,7 +267,7 @@ export default function RunEngineButton({
                         className="hidden"
                       />
                     </label>
-                    <p className="text-xs text-gray-400 mt-1">JSON or PDF files</p>
+                    <p className="text-xs text-slate-400 mt-1">JSON or PDF files</p>
                   </div>
 
                   {/* Selected Files */}
@@ -276,12 +276,12 @@ export default function RunEngineButton({
                       {selectedFiles.map((file, index) => (
                         <div
                           key={index}
-                          className="flex items-center justify-between bg-gray-50 rounded px-3 py-2"
+                          className="flex items-center justify-between bg-slate-50 rounded px-3 py-2"
                         >
-                          <span className="text-sm text-gray-700 truncate">{file.name}</span>
+                          <span className="text-sm text-slate-600 truncate">{file.name}</span>
                           <button
                             onClick={() => removeFile(index)}
-                            className="p-1 text-gray-400 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                            className="p-1 text-slate-400 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
                             aria-label={`Remove ${file.name}`}
                           >
                             <X className="w-4 h-4" />
@@ -336,7 +336,7 @@ export default function RunEngineButton({
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-lg">
               <button
                 onClick={() => {
                   setShowModal(false);
@@ -344,7 +344,7 @@ export default function RunEngineButton({
                     window.location.reload();
                   }
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
               >
                 {result?.success ? 'Close & Refresh' : 'Cancel'}
               </button>

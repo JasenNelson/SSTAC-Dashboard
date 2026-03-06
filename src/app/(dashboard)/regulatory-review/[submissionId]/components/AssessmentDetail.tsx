@@ -89,8 +89,8 @@ const DECISION_OPTIONS: {
     value: 'OVERRIDE_PASS',
     label: 'Override: PASS',
     description: 'Override AI result to PASS',
-    colorClass: 'text-blue-700 dark:text-blue-300',
-    bgClass: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700',
+    colorClass: 'text-sky-700 dark:text-sky-300',
+    bgClass: 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-700',
   },
   {
     value: 'OVERRIDE_FAIL',
@@ -140,8 +140,8 @@ const SUFFICIENCY_OPTIONS: {
     value: 'UNREVIEWED',
     label: 'Unreviewed',
     description: 'No reviewer sufficiency set yet',
-    colorClass: 'text-gray-700 dark:text-gray-300',
-    bgClass: 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700',
+    colorClass: 'text-slate-600 dark:text-slate-300',
+    bgClass: 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700',
   },
 ];
 
@@ -231,20 +231,20 @@ function EvidenceCoverageBar({ coverage }: { coverage: number }) {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-medium text-gray-600 dark:text-gray-400 flex items-center gap-1">
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
           AI Completeness Score
           <span className="group relative">
-            <Info className="w-3 h-3 text-gray-400 cursor-help" />
-            <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 w-52 p-2 bg-gray-900 dark:bg-gray-700 text-white text-[10px] rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none">
+            <Info className="w-3 h-3 text-slate-400 cursor-help" />
+            <span className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 w-52 p-2 bg-slate-900 dark:bg-slate-700 text-white text-[10px] rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none">
               AI model&apos;s assessment of how completely the submission addresses this policy requirement
             </span>
           </span>
         </span>
-        <span className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+        <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
           {pct}%
         </span>
       </div>
-      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-300 ${getColorClass(pct)}`}
           style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
@@ -284,6 +284,7 @@ export default function AssessmentDetail({
   const [finalMemoSummary, setFinalMemoSummary] = useState(judgment?.finalMemoSummary || '');
   const [followUpNeeded, setFollowUpNeeded] = useState(Boolean(judgment?.followUpNeeded));
   const [showAllEvidence, setShowAllEvidence] = useState(true);
+  const [showAnalysis, setShowAnalysis] = useState(false);
 
   // UI state
   const [isSaving, setIsSaving] = useState(false);
@@ -334,6 +335,7 @@ export default function AssessmentDetail({
     setFinalMemoSummary(judgment?.finalMemoSummary || '');
     setFollowUpNeeded(Boolean(judgment?.followUpNeeded));
     setShowAllEvidence(true);
+    setShowAnalysis(false);
     setValidationErrors({});
     // Reset baseline validation state
     setIsBaselineExpanded(false);
@@ -570,24 +572,24 @@ export default function AssessmentDetail({
 
   return (
     <>
-      <div className="h-full flex flex-col bg-white dark:bg-gray-900">
+      <div className="h-full flex flex-col bg-white dark:bg-slate-900">
         {/* Header */}
-        <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex-shrink-0 p-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-3 mb-3">
             <button
               onClick={onBack}
               aria-label="Back to list"
-              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              className="p-1.5 text-slate-400 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               title="Back to list (Esc)"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex flex-col">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                 {assessment.citationLabel || assessment.csapId}
               </h2>
               {assessment.citationLabel && assessment.citationLabel !== assessment.csapId && (
-                <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                   ID: {assessment.csapId}
                 </span>
               )}
@@ -596,13 +598,13 @@ export default function AssessmentDetail({
             {tierConstraints.tooltipMessage && (
               <div className="group relative">
                 <AlertTriangle className="w-4 h-4 text-amber-500" />
-                <div className="absolute left-0 top-full mt-1 w-64 p-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <div className="absolute left-0 top-full mt-1 w-64 p-2 bg-slate-900 dark:bg-slate-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                   {tierConstraints.tooltipMessage}
                 </div>
               </div>
             )}
           </div>
-          <p className="text-base text-gray-600 dark:text-gray-400 leading-relaxed">
+          <p className="text-base text-slate-500 dark:text-slate-400 leading-relaxed">
             {assessment.csapText}
           </p>
         </div>
@@ -611,18 +613,18 @@ export default function AssessmentDetail({
         <div className="flex-1 overflow-y-auto p-4">
           <div className="space-y-6">
             {/* AI Assessment Summary */}
-            <section className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <section className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 space-y-4">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 AI Assessment
               </h3>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">AI Proposed Status</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">AI Proposed Status</span>
                   <StatusBadge status={statusMap[assessment.aiResult]} />
                 </div>
                 <div>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">Confidence</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">Confidence</span>
+                  <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
                     {assessment.aiConfidence}
                   </span>
                 </div>
@@ -632,23 +634,61 @@ export default function AssessmentDetail({
               </div>
             </section>
 
+            {/* AI Analysis (from reviewer_notes) */}
+            {assessment.reviewerNotes && (() => {
+              const analysisText = assessment.reviewerNotes!.replace(/^\[AUTO:[^\]]*\]\s*/, '');
+              if (!analysisText.trim()) return null;
+              const previewLen = 300;
+              const needsExpand = analysisText.length > previewLen;
+              return (
+                <section className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      AI Analysis
+                    </h3>
+                    {needsExpand && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAnalysis(!showAnalysis)}
+                        className="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 rounded"
+                      >
+                        {showAnalysis ? 'Collapse' : 'Expand'}
+                      </button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <div
+                      className={`text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed ${
+                        !showAnalysis && needsExpand ? 'max-h-24 overflow-hidden' : ''
+                      }`}
+                    >
+                      {showAnalysis || !needsExpand ? analysisText : analysisText.slice(0, previewLen) + '...'}
+                    </div>
+                    {!showAnalysis && needsExpand && (
+                      <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-slate-50 dark:from-slate-800 to-transparent pointer-events-none" />
+                    )}
+                  </div>
+                </section>
+              );
+            })()}
+
             {/* Evidence Found */}
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                   Evidence Candidates
                 </h3>
                 {hasMoreEvidence && (
                   <button
                     type="button"
                     onClick={() => setShowAllEvidence((prev) => !prev)}
-                    className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 rounded"
+                    className="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 rounded"
                   >
                     {showAllEvidence ? `Show Top 3 of ${evidenceCandidates.length}` : `Show All (${evidenceCandidates.length})`}
                   </button>
                 )}
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
                 Showing {displayedEvidence.length} of {evidenceCandidates.length} ranked evidence candidates.
               </p>
               <EvidenceAccordion
@@ -659,14 +699,14 @@ export default function AssessmentDetail({
             </section>
 
             {/* Judgment Form */}
-            <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-4">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 Reviewer Assessment & Memo
               </h3>
 
               {/* Evidence Sufficiency */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                   Evidence Sufficiency (Reviewer)
                 </label>
                 <div className="grid grid-cols-2 gap-3">
@@ -675,10 +715,10 @@ export default function AssessmentDetail({
                     return (
                       <label
                         key={option.value}
-                        className={`relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-gray-900 ${
+                        className={`relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-gray-900 ${
                           isSelected
                             ? `${option.bgClass} border-current`
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                         }`}
                       >
                         <input
@@ -693,7 +733,7 @@ export default function AssessmentDetail({
                           className={`flex-shrink-0 w-4 h-4 mt-0.5 rounded-full border-2 mr-3 ${
                             isSelected
                               ? 'border-current bg-current'
-                              : 'border-gray-300 dark:border-gray-600'
+                              : 'border-slate-300 dark:border-slate-600'
                           }`}
                         >
                           {isSelected && (
@@ -704,11 +744,11 @@ export default function AssessmentDetail({
                         </div>
                         <div className="flex-1">
                           <div className={`text-sm font-medium ${
-                            isSelected ? option.colorClass : 'text-gray-900 dark:text-gray-100'
+                            isSelected ? option.colorClass : 'text-slate-900 dark:text-slate-100'
                           }`}>
                             {option.label}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                             {option.description}
                           </div>
                         </div>
@@ -720,10 +760,10 @@ export default function AssessmentDetail({
 
               {/* Decision Radio Group */}
               <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
                   AI Override (Optional)
                 </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
                   Keep AI Proposed Status as a traceability badge. Use override only when needed.
                 </p>
               <div className="grid grid-cols-2 gap-3">
@@ -735,13 +775,13 @@ export default function AssessmentDetail({
                     <label
                       key={option.value}
                       className={`
-                        relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-gray-900
+                        relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-gray-900
                         ${
                           isAllowed
                             ? isSelected
                               ? `${option.bgClass} border-current`
-                              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                            : 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                              : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                            : 'opacity-50 cursor-not-allowed bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
                         }
                       `}
                       title={!isAllowed ? tierConstraints.tooltipMessage : undefined}
@@ -761,7 +801,7 @@ export default function AssessmentDetail({
                           ${
                             isSelected
                               ? 'border-current bg-current'
-                              : 'border-gray-300 dark:border-gray-600'
+                              : 'border-slate-300 dark:border-slate-600'
                           }
                         `}
                       >
@@ -774,12 +814,12 @@ export default function AssessmentDetail({
                       <div className="flex-1">
                         <div
                           className={`text-sm font-medium ${
-                            isSelected ? option.colorClass : 'text-gray-900 dark:text-gray-100'
+                            isSelected ? option.colorClass : 'text-slate-900 dark:text-slate-100'
                           }`}
                         >
                           {option.label}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                           {option.description}
                         </div>
                       </div>
@@ -799,7 +839,7 @@ export default function AssessmentDetail({
                 <div>
                   <label
                     htmlFor="confidence"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1"
                   >
                     Override Confidence
                   </label>
@@ -807,7 +847,7 @@ export default function AssessmentDetail({
                     id="confidence"
                     value={confidence}
                     onChange={(e) => setConfidence(e.target.value as ConfidenceLevel)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
                   >
                     {CONFIDENCE_OPTIONS.map((level) => (
                       <option key={level} value={level}>
@@ -823,7 +863,7 @@ export default function AssessmentDetail({
                 <div>
                   <label
                     htmlFor="overrideReason"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1"
                   >
                     Override Reason <span className="text-red-500">*</span>
                   </label>
@@ -842,10 +882,10 @@ export default function AssessmentDetail({
                     }}
                     rows={2}
                     placeholder="Explain why you are overriding the AI result..."
-                    className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none ${
+                    className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none ${
                       validationErrors.overrideReason
                         ? 'border-red-300 dark:border-red-600'
-                        : 'border-gray-300 dark:border-gray-600'
+                        : 'border-slate-300 dark:border-slate-600'
                     }`}
                   />
                   {validationErrors.overrideReason && (
@@ -853,7 +893,7 @@ export default function AssessmentDetail({
                       {validationErrors.overrideReason}
                     </p>
                   )}
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                     {overrideReason.length}/{MIN_OVERRIDE_REASON_LENGTH} min characters
                   </p>
                 </div>
@@ -863,7 +903,7 @@ export default function AssessmentDetail({
               <div>
                 <label
                   htmlFor="notes"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1"
                 >
                   Reviewer Notes (Memo-ready)
                 </label>
@@ -873,18 +913,18 @@ export default function AssessmentDetail({
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
                   placeholder="Capture reviewer notes with citations as needed..."
-                  className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none"
+                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none"
                 />
               </div>
 
               {/* Final Memo Curation */}
               <div className="space-y-3">
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <input
                     type="checkbox"
                     checked={includeInFinal}
                     onChange={(e) => setIncludeInFinal(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                    className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
                   />
                   Include-in-Final
                 </label>
@@ -892,7 +932,7 @@ export default function AssessmentDetail({
                   <div>
                     <label
                       htmlFor="finalMemoSummary"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                      className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1"
                     >
                       Final Memo Summary (1-3 paragraphs)
                     </label>
@@ -902,16 +942,16 @@ export default function AssessmentDetail({
                       onChange={(e) => setFinalMemoSummary(e.target.value)}
                       rows={4}
                       placeholder="Write the executive-facing summary for the Final Memo..."
-                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none"
+                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none"
                     />
                   </div>
                 )}
-                <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <input
                     type="checkbox"
                     checked={followUpNeeded}
                     onChange={(e) => setFollowUpNeeded(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                    className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
                   />
                   Follow-up needed (request more engine evaluation)
                 </label>
@@ -919,46 +959,46 @@ export default function AssessmentDetail({
             </section>
 
             {/* HITL Baseline Validation Section */}
-            <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
               <button
                 type="button"
                 onClick={() => setIsBaselineExpanded(!isBaselineExpanded)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
                 aria-expanded={isBaselineExpanded}
                 aria-controls={baselinePanelId}
               >
-                <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  <Search className="w-4 h-4 text-gray-500" />
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  <Search className="w-4 h-4 text-slate-500" />
                   <span>Matching Details & Baseline Validation</span>
                   {matchingDetail?.validation && (
-                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-200">
+                    <span className="px-2 py-0.5 rounded text-xs font-medium bg-sky-100 dark:bg-sky-900/30 text-sky-800 dark:text-sky-200">
                       Validated
                     </span>
                   )}
                 </div>
                 {isBaselineExpanded ? (
-                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
                 ) : (
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
                 )}
               </button>
 
               {isBaselineExpanded && (
                 <div
                   id={baselinePanelId}
-                  className="border-t border-gray-200 dark:border-gray-700"
+                  className="border-t border-slate-200 dark:border-slate-700"
                 >
                   {isLoadingBaseline ? (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-                      <span className="ml-2 text-sm text-gray-500">Loading matching details...</span>
+                      <Loader2 className="w-6 h-6 animate-spin text-sky-600" />
+                      <span className="ml-2 text-sm text-slate-500">Loading matching details...</span>
                     </div>
                   ) : baselineError ? (
                     <div className="p-4 text-sm text-red-600 dark:text-red-400">
                       Error: {baselineError}
                     </div>
                   ) : matchingDetail ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200 dark:divide-gray-700">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-700">
                       {/* Left: Matching Detail Panel */}
                       <div className="p-4">
                         <MatchingDetailPanel
@@ -969,11 +1009,11 @@ export default function AssessmentDetail({
                       </div>
 
                       {/* Right: Validation Form */}
-                      <div className="p-4 bg-gray-50/50 dark:bg-gray-800/50">
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                      <div className="p-4 bg-slate-50/50 dark:bg-slate-800/50">
+                        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-3">
                           Baseline Validation
                         </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
                           Was the engine&apos;s matching correct? This data establishes baseline accuracy metrics.
                         </p>
                         <ValidationForm
@@ -992,11 +1032,11 @@ export default function AssessmentDetail({
                         />
 
                         {/* Guidance box */}
-                        <div className="mt-4 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-3">
-                          <h5 className="text-xs font-medium text-indigo-900 dark:text-indigo-200 mb-2">
+                        <div className="mt-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg p-3">
+                          <h5 className="text-xs font-medium text-sky-900 dark:text-sky-200 mb-2">
                             Validation Guide
                           </h5>
-                          <ul className="text-xs text-indigo-700 dark:text-indigo-300 space-y-1">
+                          <ul className="text-xs text-sky-700 dark:text-sky-300 space-y-1">
                             <li><strong>True Positive:</strong> Engine correctly flagged a deficiency</li>
                             <li><strong>False Positive:</strong> Engine incorrectly flagged (no real issue)</li>
                             <li><strong>True Negative:</strong> Engine correctly passed (satisfied)</li>
@@ -1013,18 +1053,18 @@ export default function AssessmentDetail({
         </div>
 
         {/* Footer */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <div className="flex-shrink-0 p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Press <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs">Enter</kbd> to save,{' '}
-              <kbd className="px-1.5 py-0.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs">Esc</kbd> to go back
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Press <kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-xs">Enter</kbd> to save,{' '}
+              <kbd className="px-1.5 py-0.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-xs">Esc</kbd> to go back
             </p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onSkip}
                 disabled={isSaving || isLoading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               >
                 Skip
               </button>
@@ -1032,7 +1072,7 @@ export default function AssessmentDetail({
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving || isLoading}
-                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
               >
                 {(isSaving || isLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
                 {selectedDecision ? 'Save Judgment' : 'Save Notes'}

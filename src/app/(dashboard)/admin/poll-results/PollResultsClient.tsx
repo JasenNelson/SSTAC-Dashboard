@@ -980,7 +980,7 @@ export default function PollResultsClient() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-700 dark:border-sky-300 mx-auto mb-4"></div>
           <p className="text-gray-600 dark:text-gray-400">Loading poll results...</p>
         </div>
       </div>
@@ -996,7 +996,7 @@ export default function PollResultsClient() {
           <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
           <button
             onClick={fetchPollResults}
-            className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 bg-sky-700 dark:bg-sky-600 text-white rounded-lg hover:bg-sky-800 dark:hover:bg-sky-700 transition-colors"
           >
             Try Again
           </button>
@@ -1036,7 +1036,7 @@ export default function PollResultsClient() {
         <div className="fixed left-4 top-20 z-50">
           <button
             onClick={() => setLeftPanelVisible(true)}
-            className="flex items-center justify-center w-12 h-12 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-xl border-2 border-white dark:border-gray-800"
+            className="flex items-center justify-center w-12 h-12 bg-sky-700 dark:bg-sky-600 text-white rounded-lg hover:bg-sky-800 dark:hover:bg-sky-700 transition-colors shadow-xl border-2 border-white dark:border-slate-800"
             title="Show filter panel"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1173,7 +1173,7 @@ export default function PollResultsClient() {
                                 exportSingleChoicePoll(selectedPoll);
                               }
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200"
+                            className="flex items-center gap-2 px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white font-medium rounded-lg shadow-md transition-colors duration-200"
                             title="Export this question to CSV"
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1770,7 +1770,7 @@ export default function PollResultsClient() {
                             const q2Text = q2Poll?.question || 'Question 2';
                             exportMatrixGraph(specificGraph, q1Text, q2Text, 'Prioritization Q1-Q2');
                           }}
-                          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+                          className="px-6 py-3 bg-sky-700 hover:bg-sky-800 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
                           title="Export matrix graph data to CSV"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1779,10 +1779,10 @@ export default function PollResultsClient() {
                           Export CSV
                         </button>
                       </div>
-                      
+
                       {/* Matrix Graph - Conditionally Rendered */}
                       {isVisible && (
-                        <div 
+                        <div
                           className="p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
                         >
                           <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">
@@ -1845,7 +1845,7 @@ export default function PollResultsClient() {
                             const q2Text = feasibilityPoll?.question || `Question ${selectedPoll.poll_index + 1}`;
                             exportMatrixGraph(specificGraph, q1Text, q2Text, `Holistic Protection Q${selectedPoll.poll_index}-Q${selectedPoll.poll_index + 1}`);
                           }}
-                          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+                          className="px-6 py-3 bg-sky-700 hover:bg-sky-800 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
                           title="Export matrix graph data to CSV"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

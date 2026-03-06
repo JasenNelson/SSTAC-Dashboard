@@ -61,8 +61,8 @@ export default function ToastDemo() {
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Toast Notification Demo</h2>
-      <p className="text-gray-600 mb-6">
+      <h2 className="text-2xl font-bold text-slate-900 mb-6">Toast Notification Demo</h2>
+      <p className="text-slate-500 mb-6">
         Click the buttons below to test different types of toast notifications. 
         Each toast will appear in the top-right corner of the screen.
       </p>
@@ -91,7 +91,7 @@ export default function ToastDemo() {
         
         <button
           onClick={showInfoToast}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-sky-800 transition-colors"
         >
           Info Toast
         </button>
@@ -111,9 +111,9 @@ export default function ToastDemo() {
         </button>
       </div>
       
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Features:</h3>
-        <ul className="text-sm text-gray-600 space-y-1">
+      <div className="mt-8 p-4 bg-slate-50 rounded-lg">
+        <h3 className="text-lg font-medium text-slate-900 mb-2">Features:</h3>
+        <ul className="text-sm text-slate-500 space-y-1">
           <li>• Different types: Success, Error, Warning, Info</li>
           <li>• Customizable duration (auto-hide)</li>
           <li>• Manual close button</li>

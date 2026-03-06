@@ -161,27 +161,27 @@ export default function ProcessLauncher({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Review Summary</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Review Summary</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Confirm your selections and start document processing.
         </p>
       </div>
 
       {/* Summary */}
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 divide-y divide-slate-200 dark:divide-slate-700">
         {/* Application types */}
         <div className="p-4">
-          <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          <dt className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
             Application {appTypeServices.length === 1 ? 'Type' : 'Types'}
           </dt>
           <dd className="mt-1 flex flex-wrap gap-1.5">
             {appTypeServices.length === 0 ? (
-              <span className="text-sm text-gray-400 dark:text-gray-500">Not selected</span>
+              <span className="text-sm text-slate-400 dark:text-slate-500">Not selected</span>
             ) : (
               appTypeServices.map((s) => (
                 <span
                   key={s!.id}
-                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300"
+                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300"
                 >
                   {s!.name}
                 </span>
@@ -192,17 +192,17 @@ export default function ProcessLauncher({
 
         {/* Additional services */}
         <div className="p-4">
-          <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          <dt className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
             Additional Services
           </dt>
           <dd className="mt-1 flex flex-wrap gap-1.5">
             {additionalServices.length === 0 ? (
-              <span className="text-sm text-gray-400 dark:text-gray-500">None</span>
+              <span className="text-sm text-slate-400 dark:text-slate-500">None</span>
             ) : (
               additionalServices.map((s) => (
                 <span
                   key={s!.id}
-                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300"
+                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300"
                 >
                   {s!.name}
                 </span>
@@ -213,19 +213,19 @@ export default function ProcessLauncher({
 
         {/* Site info */}
         <div className="p-4">
-          <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          <dt className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
             Site Information
           </dt>
-          <dd className="mt-1 text-sm text-gray-900 dark:text-white space-y-0.5">
+          <dd className="mt-1 text-sm text-slate-900 dark:text-white space-y-0.5">
             <div>
               <span className="font-medium">{wizardState.siteInfo.siteName}</span>
               {' '}(ID: {wizardState.siteInfo.siteId})
             </div>
-            <div className="text-gray-600 dark:text-gray-400">
+            <div className="text-slate-500 dark:text-slate-400">
               Applicant: {wizardState.siteInfo.applicantName}
               {wizardState.siteInfo.applicantCompany && ` - ${wizardState.siteInfo.applicantCompany}`}
             </div>
-            <div className="text-gray-500 dark:text-gray-400">
+            <div className="text-slate-500 dark:text-slate-400">
               Submitted: {wizardState.siteInfo.submissionDate}
               {wizardState.siteInfo.siteRegion && ` | ${wizardState.siteInfo.siteRegion}`}
             </div>
@@ -234,10 +234,10 @@ export default function ProcessLauncher({
 
         {/* Files */}
         <div className="p-4">
-          <dt className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+          <dt className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
             Files
           </dt>
-          <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+          <dd className="mt-1 text-sm text-slate-900 dark:text-white">
             {wizardState.files.length} {wizardState.files.length === 1 ? 'file' : 'files'}
             {' '}({formatFileSize(totalFileSize)})
           </dd>
@@ -256,8 +256,8 @@ export default function ProcessLauncher({
       )}
 
       {isProcessing && (
-        <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400">
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-sky-600 dark:text-sky-400">
             <Loader2 className="w-4 h-4 animate-spin" />
             {phase === 'creating' && 'Creating project...'}
             {phase === 'uploading' && 'Uploading files...'}
@@ -265,15 +265,15 @@ export default function ProcessLauncher({
           </div>
           {extractStatus && phase === 'extracting' && (
             <>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                 <div
-                  className="bg-indigo-500 h-2 rounded-full transition-all duration-300"
+                  className="bg-sky-500 h-2 rounded-full transition-all duration-300"
                   style={{
                     width: `${extractStatus.progress}%`,
                   }}
                 />
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {extractStatus.currentFile}
                 {' '}({extractStatus.completedFiles}/{extractStatus.totalFiles})
               </p>

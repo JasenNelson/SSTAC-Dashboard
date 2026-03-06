@@ -210,7 +210,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
   };
 
   return (
-    <div className="p-3 border rounded-lg shadow-md bg-white dark:bg-gray-800">
+    <div className="p-3 border rounded-lg shadow-md bg-white dark:bg-slate-800">
       <div className="flex justify-between items-center mb-2 h-10">
         {/* Visualization Mode Selector - Top Left */}
         <div className="flex gap-1">
@@ -218,8 +218,8 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
             onClick={() => setVisualizationMode('jittered')}
             className={`p-2 rounded-md transition-all ${
               visualizationMode === 'jittered'
-                ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
             }`}
             title="Jittered clustering - spread overlapping points"
           >
@@ -229,8 +229,8 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
             onClick={() => setVisualizationMode('size-scaled')}
             className={`p-2 rounded-md transition-all ${
               visualizationMode === 'size-scaled'
-                ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
             }`}
             title="Size-scaled - larger dots for more overlapping points"
           >
@@ -240,8 +240,8 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
             onClick={() => setVisualizationMode('heatmap')}
             className={`p-2 rounded-md transition-all ${
               visualizationMode === 'heatmap'
-                ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
             }`}
             title="Heatmap - color intensity shows density"
           >
@@ -251,8 +251,8 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
             onClick={() => setVisualizationMode('concentric')}
             className={`p-2 rounded-md transition-all ${
               visualizationMode === 'concentric'
-                ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
-                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                ? 'bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300'
+                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
             }`}
             title="Concentric circles - rings show overlapping points"
           >
@@ -261,7 +261,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
         </div>
 
         {/* Title - Centered */}
-        <h3 className="text-base font-semibold text-center text-gray-900 dark:text-white flex-1">{title}</h3>
+        <h3 className="text-base font-semibold text-center text-slate-900 dark:text-white flex-1">{title}</h3>
         
         {/* Empty div for spacing */}
         <div className="w-20"></div>
@@ -482,7 +482,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
         </svg>
       </div>
       <div className="text-center mt-2">
-        <p className="text-sm text-gray-600 dark:text-gray-300">
+        <p className="text-sm text-slate-500 dark:text-slate-300">
           {individualPairs.length} votes
         </p>
         
@@ -500,11 +500,11 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
             const maxSize = Math.max(...sortedSizes);
             
             return (
-              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                 <span className="font-medium">Light = less, Dark = more</span>
                 <div className="flex justify-center items-center gap-2 mt-1">
                   <span className="text-xs">{minSize}</span>
-                  <div className="flex h-4 w-32 rounded border border-gray-300 dark:border-gray-600 overflow-hidden">
+                  <div className="flex h-4 w-32 rounded border border-slate-300 dark:border-slate-600 overflow-hidden">
                     {Array.from({ length: 20 }, (_, i) => {
                       const normalizedValue = i / 19;
                       const interpolatedSize = minSize + (maxSize - minSize) * normalizedValue;

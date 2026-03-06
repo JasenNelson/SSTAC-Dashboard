@@ -92,7 +92,7 @@ export default function PrioritizationClient() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
+    <div className="min-h-screen bg-white dark:bg-slate-900">
       {/* Hero/Header Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
@@ -143,16 +143,16 @@ export default function PrioritizationClient() {
       </section>
 
       {/* Survey Findings Section */}
-      <section className="py-12 px-6 bg-white/80 dark:bg-gray-800 backdrop-blur-sm">
+      <section className="py-12 px-6 bg-white/80 dark:bg-slate-800 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-slate-800 dark:text-white font-['Merriweather']">
             What We Heard: Survey Insights
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 dark:from-blue-900/30 dark:to-blue-800/30 rounded-2xl shadow-lg p-8 border-2 border-blue-300 dark:border-blue-700">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">Key Survey Findings</h3>
-              <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-center">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 text-center">Key Survey Findings</h3>
+              <ul className="space-y-4 text-slate-600 dark:text-slate-300 text-center">
                 <li>Strong support for comprehensive contaminant coverage</li>
                 <li>Need for systematic prioritization approach</li>
                 <li>Importance of addressing emerging contaminants</li>
@@ -161,8 +161,8 @@ export default function PrioritizationClient() {
             </div>
             
             <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 dark:from-purple-900/30 dark:to-purple-800/30 rounded-2xl shadow-lg p-8 border-2 border-purple-300 dark:border-purple-700">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 text-center">Stakeholder Concerns</h3>
-              <ul className="space-y-4 text-gray-700 dark:text-gray-300 text-center">
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 text-center">Stakeholder Concerns</h3>
+              <ul className="space-y-4 text-slate-600 dark:text-slate-300 text-center">
                 <li><strong>79%</strong> express concerns about complexity of prioritization methodology</li>
                 <li><strong>84%</strong> highlight need for clear criteria and decision frameworks</li>
                 <li><strong>71%</strong> request guidance on emerging contaminant assessment</li>
@@ -174,9 +174,9 @@ export default function PrioritizationClient() {
       </section>
 
       {/* Developing a Prioritization Framework Section */}
-      <section className="py-12 px-6 bg-white/80 dark:bg-gray-800 backdrop-blur-sm">
+      <section className="py-12 px-6 bg-white/80 dark:bg-slate-800 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-gray-800 dark:text-white font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-16 text-slate-800 dark:text-white font-['Merriweather']">
             Developing a Prioritization Framework for Strategic Planning
           </h2>
           
@@ -221,14 +221,14 @@ export default function PrioritizationClient() {
       </section>
 
       {/* Key Areas for Modernizing */}
-      <section className="py-12 px-6 bg-white/80 dark:bg-gray-800 backdrop-blur-sm">
+      <section className="py-12 px-6 bg-white/80 dark:bg-slate-800 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto">
           <div className="mb-16">
-            <h3 className="text-3xl font-bold text-center mb-12 text-gray-800 dark:text-white">Key Areas for Modernizing the Sediment Standards Framework</h3>
+            <h3 className="text-3xl font-bold text-center mb-12 text-slate-800 dark:text-white">Key Areas for Modernizing the Sediment Standards Framework</h3>
             <div className="grid md:grid-cols-2 gap-8">
               <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 dark:from-blue-900/30 dark:to-blue-800/30 rounded-2xl shadow-lg p-8 border-2 border-blue-300 dark:border-blue-700">
-                <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Matrix Sediment Standards</h4>
-                <p className="text-gray-700 dark:text-gray-300 text-lg mb-4">
+                <h4 className="text-2xl font-semibold text-slate-800 dark:text-white mb-4">Matrix Sediment Standards</h4>
+                <p className="text-slate-600 dark:text-slate-300 text-lg mb-4">
                   Holistic protection of ecological organisms and people, from direct and food-related toxicity.
                 </p>
                 <a 
@@ -239,8 +239,8 @@ export default function PrioritizationClient() {
                 </a>
               </div>
               <div className="bg-gradient-to-br from-green-500/10 to-green-600/10 dark:from-green-900/30 dark:to-green-800/30 rounded-2xl shadow-lg p-8 border-2 border-green-300 dark:border-green-700">
-                <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Tiered, Site-Specific Sediment Standards</h4>
-                <p className="text-gray-700 dark:text-gray-300 text-lg mb-4">
+                <h4 className="text-2xl font-semibold text-slate-800 dark:text-white mb-4">Tiered, Site-Specific Sediment Standards</h4>
+                <p className="text-slate-600 dark:text-slate-300 text-lg mb-4">
                   Moving beyond fixed standards to adaptable, risk-based assessments that account for local conditions.
                 </p>
                 <a 
@@ -251,21 +251,21 @@ export default function PrioritizationClient() {
                 </a>
               </div>
               <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 dark:from-purple-900/30 dark:to-purple-800/30 rounded-2xl shadow-lg p-8 border-2 border-purple-300 dark:border-purple-700">
-                <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Emerging Contaminants & Mixtures</h4>
-                <p className="text-gray-700 dark:text-gray-300 text-lg mb-3">
+                <h4 className="text-2xl font-semibold text-slate-800 dark:text-white mb-4">Emerging Contaminants & Mixtures</h4>
+                <p className="text-slate-600 dark:text-slate-300 text-lg mb-3">
                   The chemical landscape is constantly changing, requiring proactive approaches to address potential health hazards:
                 </p>
-                <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-lg list-disc list-inside ml-4">
+                <ul className="space-y-2 text-slate-600 dark:text-slate-300 text-lg list-disc list-inside ml-4">
                   <li><strong>Non-scheduled Substances:</strong> Standards for priority contaminants</li>
                   <li><strong>Complex Mixtures:</strong> Combined effects often not predicted by simple tests</li>
                 </ul>
               </div>
               <div className="bg-gradient-to-br from-orange-500/10 to-orange-600/10 dark:from-orange-900/30 dark:to-orange-800/30 rounded-2xl shadow-lg p-8 border-2 border-orange-300 dark:border-orange-700">
-                <h4 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4">Harnessing Available Knowledge</h4>
-                <p className="text-gray-700 dark:text-gray-300 text-lg mb-3">
+                <h4 className="text-2xl font-semibold text-slate-800 dark:text-white mb-4">Harnessing Available Knowledge</h4>
+                <p className="text-slate-600 dark:text-slate-300 text-lg mb-3">
                   Address prioritized data gaps such as:
                 </p>
-                <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-lg list-disc list-inside">
+                <ul className="space-y-2 text-slate-600 dark:text-slate-300 text-lg list-disc list-inside">
                   <li>Determining regional background levels</li>
                   <li>Using results from recent field studies and research</li>
                   <li>Incorporating area-based Indigenous Knowledge & Science</li>
@@ -276,15 +276,15 @@ export default function PrioritizationClient() {
 
           {/* Data Gap, Feasibility & Prioritization Framework */}
           <div>
-            <h3 className="text-3xl font-bold text-center mb-12 text-gray-800 dark:text-white">Data Gap, Feasibility & Prioritization Framework</h3>
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+            <h3 className="text-3xl font-bold text-center mb-12 text-slate-800 dark:text-white">Data Gap, Feasibility & Prioritization Framework</h3>
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8">
               <div className="space-y-6">
                 <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
-                  <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Address Information Gaps</h4>
-                  <p className="text-gray-700 dark:text-gray-300 text-lg mb-2">
+                  <h4 className="text-xl font-semibold text-slate-800 dark:text-white mb-3">Address Information Gaps</h4>
+                  <p className="text-slate-600 dark:text-slate-300 text-lg mb-2">
                     Collaborative research to address priorities such as:
                   </p>
-                  <ul className="space-y-2 text-gray-700 dark:text-gray-300 text-lg list-disc list-inside ml-4">
+                  <ul className="space-y-2 text-slate-600 dark:text-slate-300 text-lg list-disc list-inside ml-4">
                     <li>Missing substance groups</li>
                     <li>Incorporating validated models</li>
                     <li>Addressing all relevant pathways</li>
@@ -292,20 +292,20 @@ export default function PrioritizationClient() {
                   </ul>
                 </div>
                 <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-4">
-                  <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Acknowledge Feasibility</h4>
-                  <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  <h4 className="text-xl font-semibold text-slate-800 dark:text-white mb-3">Acknowledge Feasibility</h4>
+                  <p className="text-slate-600 dark:text-slate-300 text-lg">
                     Make use of existing resources where appropriate. Recognize limitations to time and expense of creating and approving new procedures.
                   </p>
                 </div>
                 <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4">
-                  <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">Prioritization</h4>
-                  <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  <h4 className="text-xl font-semibold text-slate-800 dark:text-white mb-3">Prioritization</h4>
+                  <p className="text-slate-600 dark:text-slate-300 text-lg">
                     Develop a systemic approach for introducing the most important changes and easiest improvements first.
                   </p>
                 </div>
                 <div className="bg-orange-50 dark:bg-orange-900/30 rounded-lg p-6">
-                  <h4 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">Goal</h4>
-                  <p className="text-gray-700 dark:text-gray-300 text-lg font-medium">
+                  <h4 className="text-xl font-semibold text-slate-800 dark:text-white mb-2">Goal</h4>
+                  <p className="text-slate-600 dark:text-slate-300 text-lg font-medium">
                     A framework for identifying and resolving data gaps, with short- and long-term goals for strategic research planning.
                   </p>
                 </div>
@@ -316,12 +316,12 @@ export default function PrioritizationClient() {
       </section>
 
       {/* Interactive Polls Section */}
-      <section className="py-12 px-6 bg-white/80 dark:bg-gray-800 backdrop-blur-sm">
+      <section className="py-12 px-6 bg-white/80 dark:bg-slate-800 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-bold text-center mb-8 text-gray-800 dark:text-white font-['Merriweather']">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-8 text-slate-800 dark:text-white font-['Merriweather']">
             Your Input on Prioritization Framework
           </h2>
-          <p className="text-xl text-center text-gray-600 dark:text-gray-300 mb-16 max-w-4xl mx-auto">
+          <p className="text-xl text-center text-slate-500 dark:text-slate-300 mb-16 max-w-4xl mx-auto">
             Help inform the collaborative development of strategic research plans and feasibility assessments by sharing your perspectives on these key questions.
           </p>
           
@@ -330,7 +330,7 @@ export default function PrioritizationClient() {
               // Handle different poll types
               if (poll.isWordcloud) {
                 return (
-                  <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                  <div key={pollIndex} className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
                     <WordCloudPoll
                       key={pollIndex}
                       pollIndex={pollIndex}
@@ -348,7 +348,7 @@ export default function PrioritizationClient() {
                 );
               } else if (poll.isRanking) {
                 return (
-                  <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                  <div key={pollIndex} className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
                     <RankingPoll
                       key={pollIndex}
                       pollIndex={pollIndex}
@@ -365,7 +365,7 @@ export default function PrioritizationClient() {
               } else {
                 return (
                   <div key={pollIndex}>
-                    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
                       <PollWithResults
                         key={pollIndex}
                         pollIndex={pollIndex}
@@ -401,7 +401,7 @@ export default function PrioritizationClient() {
       </section>
 
       {/* Next Steps Section */}
-      <section className="py-12 px-6 bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+      <section className="py-12 px-6 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-8 font-['Merriweather']">
             Next Steps for Implementation
@@ -410,7 +410,7 @@ export default function PrioritizationClient() {
           <div className="space-y-8 text-lg">
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-orange-600 dark:text-orange-400">Immediate Actions</h3>
-              <p className="text-gray-700 dark:text-gray-200 leading-relaxed">
+              <p className="text-slate-600 dark:text-slate-200 leading-relaxed">
                 Develop prioritization criteria, establish rolling review processes, and create 
                 phased implementation strategies for expanding contaminant coverage.
               </p>
@@ -418,7 +418,7 @@ export default function PrioritizationClient() {
             
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-orange-600 dark:text-orange-400">Long-term Development</h3>
-              <p className="text-gray-700 dark:text-gray-200 leading-relaxed">
+              <p className="text-slate-600 dark:text-slate-200 leading-relaxed">
                 Comprehensive contaminant coverage, emerging substance standards, and adaptive 
                 management frameworks to ensure continued relevance and effectiveness.
               </p>
@@ -426,7 +426,7 @@ export default function PrioritizationClient() {
             
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-orange-600 dark:text-orange-400">Your Continued Input</h3>
-              <p className="text-gray-700 dark:text-gray-200 mb-4">
+              <p className="text-slate-600 dark:text-slate-200 mb-4">
                 We welcome your ongoing perspectives as we develop this prioritization framework together. 
                 Your input is essential for creating effective, practical contaminant prioritization strategies.
               </p>
@@ -444,7 +444,7 @@ export default function PrioritizationClient() {
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-8">
         <div className="container mx-auto px-6 text-center">
-          <p className="text-gray-400">
+          <p className="text-slate-400">
             &copy; 2024 SSTAC & TWG Dashboard | Contaminant Prioritization Framework
           </p>
         </div>

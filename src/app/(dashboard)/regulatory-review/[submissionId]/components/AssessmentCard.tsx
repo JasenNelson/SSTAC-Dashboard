@@ -187,7 +187,7 @@ function ReviewStatusBadge({ status }: { status: 'pending' | 'reviewed' | 'defer
 function KeywordTags({ keywords }: { keywords: string[] }) {
   if (keywords.length === 0) {
     return (
-      <span className="text-sm text-gray-400 dark:text-gray-500 italic">
+      <span className="text-sm text-slate-400 dark:text-slate-500 italic">
         No keywords matched
       </span>
     );
@@ -198,7 +198,7 @@ function KeywordTags({ keywords }: { keywords: string[] }) {
       {keywords.map((keyword, index) => (
         <span
           key={index}
-          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
         >
           {keyword}
         </span>
@@ -217,13 +217,13 @@ function EvidenceCoverageBar({ coverage }: { coverage: number }) {
 
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
         <div
           className={`h-full ${getColorClass(coverage)} transition-all duration-300`}
           style={{ width: `${Math.min(100, Math.max(0, coverage))}%` }}
         />
       </div>
-      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 tabular-nums">
+      <span className="text-sm font-medium text-slate-600 dark:text-slate-300 tabular-nums">
         {coverage}%
       </span>
     </div>
@@ -395,12 +395,12 @@ export default function AssessmentCard({
 
   // Render
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden print:shadow-none print:border-gray-300">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm overflow-hidden print:shadow-none print:border-slate-300">
       {/* Card Header */}
-      <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 sm:px-6">
+      <div className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3 sm:px-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-3">
-            <span className="font-mono text-sm font-semibold text-gray-900 dark:text-white">
+            <span className="font-mono text-sm font-semibold text-slate-900 dark:text-white">
               {assessment.csapId}
             </span>
             <StatusBadge
@@ -411,25 +411,25 @@ export default function AssessmentCard({
           </div>
           <ReviewStatusBadge status={reviewStatus} />
         </div>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
           {assessment.section} - Sheet: {assessment.sheet}, Item #{assessment.itemNumber}
         </p>
       </div>
 
       {/* Two-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200 dark:divide-gray-700">
+      <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-700">
         {/* Left Column: AI Assessment */}
         <div className="p-4 sm:p-6 space-y-6">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             AI Assessment
           </h3>
 
           {/* Question / CSAP Text */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
               Requirement
             </label>
-            <p className="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">
+            <p className="text-sm text-slate-900 dark:text-slate-100 leading-relaxed">
               {assessment.csapText}
             </p>
           </div>
@@ -437,7 +437,7 @@ export default function AssessmentCard({
           {/* Result, Tier, Confidence Row */}
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                 AI Result
               </label>
               <StatusBadge
@@ -446,13 +446,13 @@ export default function AssessmentCard({
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                 Discretion Tier
               </label>
               <TierBadge tier={discretionTierToTierType[assessment.discretionTier]} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                 AI Confidence
               </label>
               <ConfidenceMeter
@@ -464,7 +464,7 @@ export default function AssessmentCard({
 
           {/* Evidence Coverage */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
               Evidence Coverage
             </label>
             <EvidenceCoverageBar coverage={assessment.evidenceCoverage} />
@@ -472,7 +472,7 @@ export default function AssessmentCard({
 
           {/* Evidence Found */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
               Evidence Found
             </label>
             <EvidenceAccordion evidenceItems={evidenceItems} />
@@ -481,10 +481,10 @@ export default function AssessmentCard({
           {/* Regulatory Authority */}
           {assessment.regulatoryAuthority && (
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                 Regulatory Authority
               </label>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
+              <p className="text-sm text-slate-600 dark:text-slate-300">
                 {assessment.regulatoryAuthority}
               </p>
             </div>
@@ -492,7 +492,7 @@ export default function AssessmentCard({
 
           {/* Keywords Matched */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
               Keywords Matched
             </label>
             <KeywordTags keywords={assessment.keywordsMatched} />
@@ -501,10 +501,10 @@ export default function AssessmentCard({
           {/* Reviewer Notes from AI */}
           {assessment.reviewerNotes && (
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                 AI Review Notes
               </label>
-              <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+              <p className="text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg">
                 {assessment.reviewerNotes}
               </p>
             </div>
@@ -513,7 +513,7 @@ export default function AssessmentCard({
           {/* Action Required */}
           {assessment.actionRequired && (
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
                 Action Required
               </label>
               <p className="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
@@ -524,8 +524,8 @@ export default function AssessmentCard({
         </div>
 
         {/* Right Column: Human Judgment */}
-        <div className="p-4 sm:p-6 space-y-6 bg-gray-50/50 dark:bg-gray-800/50 print:bg-white">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <div className="p-4 sm:p-6 space-y-6 bg-slate-50/50 dark:bg-slate-800/50 print:bg-white">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             Human Judgment
           </h3>
 
@@ -534,7 +534,7 @@ export default function AssessmentCard({
 
           {/* Decision Radio Buttons */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-3">
               Decision
             </label>
             <div className="space-y-2">
@@ -548,10 +548,10 @@ export default function AssessmentCard({
                     key={option.value}
                     className={`flex items-start gap-3 p-3 rounded-lg border transition-colors cursor-pointer ${
                       isSelected
-                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                        ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/20'
                         : isAllowed
-                          ? 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                          : 'border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed'
+                          ? 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                          : 'border-slate-200 dark:border-slate-700 opacity-50 cursor-not-allowed'
                     } ${readOnly ? 'pointer-events-none' : ''}`}
                     title={tooltip || undefined}
                   >
@@ -562,27 +562,27 @@ export default function AssessmentCard({
                       checked={isSelected}
                       disabled={!isAllowed || readOnly}
                       onChange={() => handleDecisionChange(option.value)}
-                      className="mt-0.5 h-4 w-4 text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 border-gray-300 dark:border-gray-600 disabled:opacity-50"
+                      className="mt-0.5 h-4 w-4 text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 border-slate-300 dark:border-slate-600 disabled:opacity-50"
                     />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className={`text-sm font-medium ${
                           isAllowed
-                            ? 'text-gray-900 dark:text-white'
-                            : 'text-gray-500 dark:text-gray-400'
+                            ? 'text-slate-900 dark:text-white'
+                            : 'text-slate-500 dark:text-slate-400'
                         }`}>
                           {option.label}
                         </span>
                         {!isAllowed && tooltip && (
                           <div className="group relative">
-                            <Info className="w-4 h-4 text-gray-400" />
-                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                            <Info className="w-4 h-4 text-slate-400" />
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                               {tooltip}
                             </div>
                           </div>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         {option.description}
                       </p>
                     </div>
@@ -595,14 +595,14 @@ export default function AssessmentCard({
           {/* Override Confidence (shown when overriding) */}
           {isOverride && (
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
                 Override Confidence
               </label>
               <select
                 value={localConfidence || ''}
                 onChange={(e) => handleConfidenceChange(e.target.value as ConfidenceLevelEnum)}
                 disabled={readOnly}
-                className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50"
+                className="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50"
               >
                 <option value="">Select confidence...</option>
                 <option value="HIGH">High</option>
@@ -614,7 +614,7 @@ export default function AssessmentCard({
 
           {/* Judgment Notes */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
               Notes
             </label>
             <textarea
@@ -623,14 +623,14 @@ export default function AssessmentCard({
               disabled={readOnly}
               placeholder="Add notes about your review..."
               rows={3}
-              className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50 resize-none"
+              className="w-full text-sm border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50 resize-none"
             />
           </div>
 
           {/* Override Reason (required for overrides) */}
           {isOverride && (
             <div>
-              <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
                 Override Reason <span className="text-red-500">*</span>
               </label>
             <textarea
@@ -639,10 +639,10 @@ export default function AssessmentCard({
               disabled={readOnly}
               placeholder="Required: Explain why you are overriding the AI result..."
               rows={3}
-                className={`w-full text-sm border rounded-lg px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50 resize-none ${
+                className={`w-full text-sm border rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50 resize-none ${
                   needsOverrideReason
                     ? 'border-red-300 dark:border-red-600 focus-visible:ring-red-500'
-                    : 'border-gray-300 dark:border-gray-600'
+                    : 'border-slate-300 dark:border-slate-600'
                 }`}
               />
               {needsOverrideReason && (
@@ -655,18 +655,18 @@ export default function AssessmentCard({
 
           {/* Action Buttons */}
           {!readOnly && (
-            <div className="flex items-center gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
               <button
                 onClick={handleSave}
                 disabled={!localDecision || needsOverrideReason}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-sky-600 text-white hover:bg-sky-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Save className="w-4 h-4" />
                 Save
               </button>
               <button
                 onClick={handleSkip}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 transition-colors"
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 transition-colors"
               >
                 <SkipForward className="w-4 h-4" />
                 Skip
@@ -674,7 +674,7 @@ export default function AssessmentCard({
               <button
                 onClick={handleClear}
                 disabled={!isDirty && !localDecision}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-200 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
                 Clear
@@ -684,8 +684,8 @@ export default function AssessmentCard({
 
           {/* Existing Judgment Display (in read-only or when saved) */}
           {judgment?.reviewedAt && (
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Reviewed by {judgment.reviewerName || 'Unknown'} on{' '}
                 {new Date(judgment.reviewedAt).toLocaleDateString('en-CA', {
                   year: 'numeric',

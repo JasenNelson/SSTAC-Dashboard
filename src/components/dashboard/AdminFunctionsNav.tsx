@@ -17,20 +17,20 @@ export default function AdminFunctionsNav() {
 
   return (
     <div className="mb-6">
-      <div className="rounded-2xl border border-indigo-100/60 dark:border-indigo-500/30 bg-white/85 backdrop-blur-sm dark:bg-slate-950/60 shadow-md">
+      <div className="rounded-2xl border border-sky-100/60 dark:border-sky-500/30 bg-white/85 backdrop-blur-sm dark:bg-slate-950/60 shadow-md">
         <div className="p-4 sm:p-5">
-          <h2 className="text-lg font-semibold text-indigo-900 dark:text-indigo-100 mb-3">
+          <h2 className="text-lg font-semibold text-sky-900 dark:text-sky-100 mb-3">
             Admin Quick Links
           </h2>
           <div className="flex flex-wrap gap-3">
             {adminNavItems.map(({ href, label }) => {
               const isActive = pathname === href
               const baseClasses =
-                'px-4 py-2 text-sm font-medium rounded-md transition-colors border focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent'
+                'px-4 py-2 text-sm font-medium rounded-md transition-colors border focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent'
               const activeClasses =
-                'text-white bg-indigo-600 hover:bg-indigo-700 border-indigo-600 focus-visible:ring-offset-indigo-700'
+                'text-white bg-sky-700 hover:bg-sky-800 border-sky-700 focus-visible:ring-offset-sky-800'
               const inactiveClasses =
-                'text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border-indigo-200/80 dark:text-indigo-100 dark:bg-slate-800/80 dark:hover:bg-slate-700/70 dark:border-indigo-500/30'
+                'text-sky-700 bg-sky-50 hover:bg-sky-100 border-sky-200/80 dark:text-sky-100 dark:bg-slate-800/80 dark:hover:bg-slate-700/70 dark:border-sky-500/30'
 
               return (
                 <Link

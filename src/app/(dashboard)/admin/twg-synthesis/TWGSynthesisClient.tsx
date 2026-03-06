@@ -360,7 +360,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Total Submissions</h3>
-          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalSubmissions}</p>
+          <p className="text-3xl font-bold text-sky-700 dark:text-sky-300">{totalSubmissions}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Submitted</h3>
@@ -389,7 +389,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by email or name..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
           <div>
@@ -399,7 +399,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as 'ALL' | 'IN_PROGRESS' | 'SUBMITTED')}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="ALL">All Status</option>
               <option value="SUBMITTED">Submitted</option>
@@ -413,7 +413,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
             <select
               value={expertiseFilter}
               onChange={(e) => setExpertiseFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="ALL">All Expertise</option>
               {expertiseAreas.map(area => (
@@ -424,7 +424,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
           <div className="flex items-end">
             <button
               onClick={exportToCSV}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              className="w-full bg-sky-700 hover:bg-sky-800 text-white font-medium py-2 px-4 rounded-lg transition-colors"
             >
               Export CSV
             </button>
@@ -999,7 +999,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                       // In a real implementation, you would download the file
                       alert('File download would be implemented here')
                     }}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    className="text-sky-700 hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-100 text-sm font-medium"
                   >
                     Download
                   </button>

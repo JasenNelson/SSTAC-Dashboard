@@ -131,7 +131,7 @@ export default function CEWStatsClient() {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               Total Votes
             </h3>
-            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            <p className="text-3xl font-bold text-sky-700 dark:text-sky-300">
               {stats?.totalVotes || 0}
             </p>
           </div>
@@ -197,7 +197,7 @@ export default function CEWStatsClient() {
         <div className="mt-6 text-center">
           <button
             onClick={fetchStats}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-lg transition-colors"
           >
             Refresh Stats
           </button>

@@ -63,3 +63,19 @@ export {
   endReviewSession,
   getReviewSessions,
 } from './queries';
+
+// Review project queries
+export {
+  type ReviewProject,
+  type ReviewProjectFile,
+  getReviewProjects,
+  getReviewProjectById,
+  createReviewProject,
+  updateReviewProject,
+  deleteReviewProject,
+  getProjectFiles,
+  getUnprocessedFiles,
+  addProjectFile,
+  removeProjectFile,
+  markFileProcessed,
+} from './queries/review-projects';

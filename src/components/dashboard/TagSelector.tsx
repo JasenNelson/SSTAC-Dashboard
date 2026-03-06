@@ -63,10 +63,10 @@ export default function TagSelector({ selectedTags, onTagsChange, className = ''
   if (isLoading) {
     return (
       <div className={`animate-pulse ${className}`}>
-        <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+        <div className="h-4 bg-slate-200 rounded w-24 mb-2"></div>
         <div className="space-y-2">
-          <div className="h-8 bg-gray-200 rounded"></div>
-          <div className="h-8 bg-gray-200 rounded"></div>
+          <div className="h-8 bg-slate-200 rounded"></div>
+          <div className="h-8 bg-slate-200 rounded"></div>
         </div>
       </div>
     );
@@ -82,7 +82,7 @@ export default function TagSelector({ selectedTags, onTagsChange, className = ''
 
   return (
     <div className={className}>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="block text-sm font-medium text-slate-600 mb-2">
         Tags
       </label>
       
@@ -116,13 +116,13 @@ export default function TagSelector({ selectedTags, onTagsChange, className = ''
         {tags.map((tag) => (
           <label
             key={tag.id}
-            className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+            className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-colors"
           >
             <input
               type="checkbox"
               checked={selectedTags.includes(tag.id)}
               onChange={() => handleTagToggle(tag.id)}
-              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              className="h-4 w-4 text-sky-700 focus:ring-sky-500 border-slate-300 rounded"
             />
             <span
               className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
@@ -135,7 +135,7 @@ export default function TagSelector({ selectedTags, onTagsChange, className = ''
       </div>
 
       {tags.length === 0 && (
-        <p className="text-sm text-gray-500 italic">
+        <p className="text-sm text-slate-500 italic">
           No tags available. Contact an administrator to create tags.
         </p>
       )}

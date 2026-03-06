@@ -62,7 +62,7 @@ export default function EditDocumentForm({ document }: EditDocumentFormProps) {
     return (
       <button
         type="submit"
-        className="w-full px-4 py-2 font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors"
+        className="w-full px-4 py-2 font-medium text-white bg-sky-700 rounded-md hover:bg-sky-800 transition-colors"
       >
         {children}
       </button>
@@ -87,7 +87,7 @@ export default function EditDocumentForm({ document }: EditDocumentFormProps) {
       )}
 
       <div>
-        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="title" className="block text-sm font-medium text-slate-600">
           Title
         </label>
         <input
@@ -97,12 +97,12 @@ export default function EditDocumentForm({ document }: EditDocumentFormProps) {
           defaultValue={document.title ?? ''}
           required
           autoComplete="off"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500"
         />
       </div>
 
       <div>
-        <label htmlFor="file_url" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="file_url" className="block text-sm font-medium text-slate-600">
           File URL
         </label>
         <input
@@ -113,12 +113,12 @@ export default function EditDocumentForm({ document }: EditDocumentFormProps) {
           required
           placeholder="https://..."
           autoComplete="url"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+          className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-sky-500 focus:border-sky-500"
         />
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="description" className="block text-sm font-medium text-slate-600">
           Description (optional)
         </label>
         <textarea
@@ -128,7 +128,7 @@ export default function EditDocumentForm({ document }: EditDocumentFormProps) {
           defaultValue={document.description ?? ''}
           placeholder="Add context or notes about this document..."
           autoComplete="off"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+          className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:border-sky-500"
         />
       </div>
 

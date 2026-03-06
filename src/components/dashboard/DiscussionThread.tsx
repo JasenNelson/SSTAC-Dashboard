@@ -463,11 +463,11 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
   if (editingDiscussion) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Edit Discussion</h3>
+        <h3 className="text-lg font-medium text-slate-900 mb-4">Edit Discussion</h3>
         
         <form onSubmit={handleEditDiscussion} className="space-y-4">
           <div>
-            <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-title" className="block text-sm font-medium text-slate-600 mb-1">
               Discussion Title
             </label>
             <input
@@ -475,13 +475,13 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
               id="edit-title"
               value={editDiscussionTitle}
               onChange={(e) => setEditDiscussionTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="edit-content" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-content" className="block text-sm font-medium text-slate-600 mb-1">
               Discussion Content
             </label>
             <textarea
@@ -489,7 +489,7 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
               value={editDiscussionContent}
               onChange={(e) => setEditDiscussionContent(e.target.value)}
               rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
               required
             />
           </div>
@@ -498,13 +498,13 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
             <button
               type="button"
               onClick={() => setEditingDiscussion(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white bg-sky-700 rounded-md hover:bg-sky-800 transition-colors"
             >
               Update Discussion
             </button>
@@ -519,12 +519,12 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
       {/* Discussion Header */}
       <div className="mb-4">
         <div className="flex items-start justify-between mb-2">
-          <h3 className="text-xl font-semibold text-gray-900">{discussion.title}</h3>
+          <h3 className="text-xl font-semibold text-slate-900">{discussion.title}</h3>
           <div className="flex items-center space-x-2">
             {canEditDiscussion && (
               <button
                 onClick={() => setEditingDiscussion(true)}
-                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium px-2 py-1 rounded hover:bg-indigo-50"
+                className="text-sm text-sky-700 hover:text-sky-800 font-medium px-2 py-1 rounded hover:bg-sky-50"
               >
                 Edit
               </button>
@@ -540,7 +540,7 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
           </div>
         </div>
         
-        <div className="flex items-center text-sm text-gray-500 mb-3">
+        <div className="flex items-center text-sm text-slate-500 mb-3">
           <span>By {discussion.user_email}</span>
           <span className="mx-2">•</span>
           <span>{formatDate(discussion.created_at)}</span>
@@ -551,7 +551,7 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
             </>
           )}
         </div>
-        <div className="text-gray-700 whitespace-pre-wrap">{discussion.content}</div>
+        <div className="text-slate-600 whitespace-pre-wrap">{discussion.content}</div>
         
         {/* Discussion Like Button */}
         <div className="mt-4 flex items-center justify-between">
@@ -569,14 +569,14 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
       </div>
 
       {/* Replies Section */}
-      <div className="border-t border-gray-200 pt-4">
+      <div className="border-t border-slate-200 pt-4">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-medium text-gray-900">
+          <h4 className="text-lg font-medium text-slate-900">
             Replies ({replies.length})
           </h4>
           <button
             onClick={() => setShowReplyForm(!showReplyForm)}
-            className="text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+            className="text-sm text-sky-700 hover:text-sky-800 font-medium"
           >
             {showReplyForm ? 'Cancel Reply' : 'Reply'}
           </button>
@@ -589,7 +589,7 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
               value={newReply}
               onChange={(e) => setNewReply(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
               placeholder="Write your reply..."
               required
             />
@@ -597,14 +597,14 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
               <button
                 type="button"
                 onClick={() => setShowReplyForm(false)}
-                className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
+                className="px-3 py-1 text-sm text-slate-500 hover:text-slate-800"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-3 py-1 text-sm font-medium text-white bg-indigo-600 rounded hover:bg-indigo-700 disabled:opacity-50"
+                className="px-3 py-1 text-sm font-medium text-white bg-sky-700 rounded hover:bg-sky-800 disabled:opacity-50"
               >
                 {isSubmitting ? 'Posting...' : 'Post Reply'}
               </button>
@@ -615,12 +615,12 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
         {/* Replies List */}
         <div className="space-y-4">
           {isLoadingReplies ? (
-            <div className="text-center py-4 text-gray-500">Loading replies...</div>
+            <div className="text-center py-4 text-slate-500">Loading replies...</div>
           ) : replies.length > 0 ? (
             replies.map((reply) => (
-              <div key={reply.id} className="bg-gray-50 rounded-lg p-4">
+              <div key={reply.id} className="bg-slate-50 rounded-lg p-4">
                 <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center text-sm text-gray-500">
+                  <div className="flex items-center text-sm text-slate-500">
                     <span className="font-medium">{reply.user_email}</span>
                     <span className="mx-2">•</span>
                     <span>{formatDate(reply.created_at)}</span>
@@ -639,7 +639,7 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
                             setEditingReply(reply.id);
                             setEditReplyContent(reply.content);
                           }}
-                          className="text-xs text-indigo-600 hover:text-indigo-800 px-1 py-0.5 rounded hover:bg-indigo-100"
+                          className="text-xs text-sky-700 hover:text-sky-800 px-1 py-0.5 rounded hover:bg-sky-100"
                         >
                           Edit
                         </button>
@@ -660,26 +660,26 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
                       value={editReplyContent}
                       onChange={(e) => setEditReplyContent(e.target.value)}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
                       required
                     />
                     <div className="mt-2 flex justify-end space-x-2">
                       <button
                         onClick={() => setEditingReply(null)}
-                        className="text-xs text-gray-600 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-100"
+                        className="text-xs text-slate-500 hover:text-slate-800 px-2 py-1 rounded hover:bg-slate-100"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={() => handleEditReply(reply.id)}
-                        className="text-xs text-white bg-indigo-600 hover:bg-indigo-700 px-2 py-1 rounded"
+                        className="text-xs text-white bg-sky-700 hover:bg-sky-800 px-2 py-1 rounded"
                       >
                         Update
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-gray-700 whitespace-pre-wrap">{reply.content}</div>
+                  <div className="text-slate-600 whitespace-pre-wrap">{reply.content}</div>
                 )}
                 
                 {/* Reply Like Button */}
@@ -698,7 +698,7 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
               </div>
             ))
           ) : (
-            <div className="text-center py-4 text-gray-500">
+            <div className="text-center py-4 text-slate-500">
               No replies yet. Be the first to respond!
             </div>
           )}
@@ -709,14 +709,14 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
       {showDeleteDiscussionConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Delete Discussion</h3>
-            <p className="text-gray-600 mb-6">
+            <h3 className="text-lg font-medium text-slate-900 mb-4">Delete Discussion</h3>
+            <p className="text-slate-500 mb-6">
               Are you sure you want to delete this discussion? This action cannot be undone and will also delete all replies.
             </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteDiscussionConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
               >
                 Cancel
               </button>
@@ -734,14 +734,14 @@ export default function DiscussionThread({ discussion, onUpdate, session }: Disc
       {showDeleteReplyConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Delete Reply</h3>
-            <p className="text-gray-600 mb-6">
+            <h3 className="text-lg font-medium text-slate-900 mb-4">Delete Reply</h3>
+            <p className="text-slate-500 mb-6">
               Are you sure you want to delete this reply? This action cannot be undone.
             </p>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowDeleteReplyConfirm(null)}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
               >
                 Cancel
               </button>

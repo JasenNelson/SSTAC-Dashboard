@@ -60,10 +60,10 @@ function CitationList({ citations }: { citations: Citation[] }) {
   if (citations.length === 0) return null;
 
   return (
-    <div className="mt-1.5 border-t border-gray-100 dark:border-gray-700 pt-1.5">
+    <div className="mt-1.5 border-t border-slate-100 dark:border-slate-700 pt-1.5">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+        className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
       >
         {expanded ? (
           <ChevronDown className="w-3 h-3" />
@@ -77,23 +77,23 @@ function CitationList({ citations }: { citations: Citation[] }) {
           {citations.map((c, i) => (
             <div
               key={`${c.id}-${i}`}
-              className="flex items-start gap-1.5 text-[10px] p-1.5 bg-gray-50 dark:bg-gray-800 rounded"
+              className="flex items-start gap-1.5 text-[10px] p-1.5 bg-slate-50 dark:bg-slate-800 rounded"
             >
               {c.type === 'policy' ? (
-                <Database className="w-3 h-3 text-indigo-500 mt-0.5 flex-shrink-0" />
+                <Database className="w-3 h-3 text-sky-500 mt-0.5 flex-shrink-0" />
               ) : (
-                <FileText className="w-3 h-3 text-blue-500 mt-0.5 flex-shrink-0" />
+                <FileText className="w-3 h-3 text-sky-600 mt-0.5 flex-shrink-0" />
               )}
               <div className="min-w-0">
-                <span className="font-medium text-gray-700 dark:text-gray-300">
+                <span className="font-medium text-slate-600 dark:text-slate-300">
                   {c.id}
                 </span>
                 {c.source && (
-                  <span className="text-gray-400 dark:text-gray-500 ml-1">
+                  <span className="text-slate-400 dark:text-slate-500 ml-1">
                     ({c.source})
                   </span>
                 )}
-                <p className="text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">
+                <p className="text-slate-500 dark:text-slate-400 line-clamp-2 mt-0.5">
                   {c.text}
                 </p>
               </div>
@@ -371,7 +371,7 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5 text-xs">
             {connectionStatus === 'checking' ? (
-              <Loader2 className="w-3 h-3 animate-spin text-gray-400" />
+              <Loader2 className="w-3 h-3 animate-spin text-slate-400" />
             ) : connectionStatus === 'connected' ? (
               <Wifi className="w-3 h-3 text-green-500" />
             ) : (
@@ -382,7 +382,7 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
                 connectionStatus === 'connected'
                   ? 'text-green-600 dark:text-green-400'
                   : connectionStatus === 'checking'
-                    ? 'text-gray-400'
+                    ? 'text-slate-400'
                     : 'text-red-600 dark:text-red-400'
               }
             >
@@ -396,7 +396,7 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
           {messages.length > 0 && (
             <button
               onClick={clearChat}
-              className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-red-500 transition-colors"
+              className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-red-500 transition-colors"
               title="Clear conversation"
             >
               <Trash2 className="w-3 h-3" />
@@ -406,13 +406,13 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
         </div>
 
         {/* Mode toggle: fast / deep */}
-        <div className="flex gap-1 p-0.5 bg-gray-100 dark:bg-gray-800 rounded-md">
+        <div className="flex gap-1 p-0.5 bg-slate-100 dark:bg-slate-800 rounded-md">
           <button
             onClick={() => setMode('fast')}
             className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded transition-colors ${
               mode === 'fast'
-                ? 'bg-white dark:bg-gray-700 text-amber-600 dark:text-amber-400 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'bg-white dark:bg-slate-700 text-amber-600 dark:text-amber-400 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
           >
             <Zap className="w-3 h-3" />
@@ -422,8 +422,8 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
             onClick={() => setMode('deep')}
             className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-medium rounded transition-colors ${
               mode === 'deep'
-                ? 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-400 shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'bg-white dark:bg-slate-700 text-purple-600 dark:text-purple-400 shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
             }`}
             title="Uses a larger model for more thorough analysis"
           >
@@ -437,7 +437,7 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
           value={scope}
           onChange={(e) => setScope(e.target.value as Scope)}
           aria-label="Search scope"
-          className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+          className="w-full text-xs border border-slate-300 dark:border-slate-600 rounded px-2 py-1.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
         >
           <option value="hybrid">Both: Policy + Submission</option>
           <option value="policy">Policy Database Only</option>
@@ -456,17 +456,17 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
       {/* Chat thread */}
       <div className="flex-1 overflow-y-auto space-y-3 min-h-0">
         {messages.length === 0 && !error && (
-          <div className="text-xs text-gray-500 dark:text-gray-400 space-y-2 py-4">
-            <p className="font-medium text-gray-600 dark:text-gray-300">
+          <div className="text-xs text-slate-500 dark:text-slate-400 space-y-2 py-4">
+            <p className="font-medium text-slate-500 dark:text-slate-300">
               Ask the assistant about:
             </p>
-            <ul className="list-disc list-inside space-y-1 text-gray-400">
+            <ul className="list-disc list-inside space-y-1 text-slate-400">
               <li>Policy requirements for this submission</li>
               <li>What evidence is needed for a specific topic</li>
               <li>How submission findings relate to regulations</li>
               <li>Gaps between evidence and requirements</li>
             </ul>
-            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-3 italic">
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-3 italic">
               The assistant retrieves and summarizes — it does not make adequacy
               determinations.
             </p>
@@ -478,8 +478,8 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
             key={msg.id}
             className={`text-xs rounded-lg p-2.5 ${
               msg.role === 'user'
-                ? 'bg-indigo-50 dark:bg-indigo-900/20'
-                : 'bg-gray-50 dark:bg-gray-800/50'
+                ? 'bg-sky-50 dark:bg-sky-900/20'
+                : 'bg-slate-50 dark:bg-slate-800/50'
             }`}
           >
             {/* Role label + meta */}
@@ -487,14 +487,14 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
               <span
                 className={`text-[10px] font-semibold uppercase tracking-wide ${
                   msg.role === 'user'
-                    ? 'text-indigo-500 dark:text-indigo-400'
+                    ? 'text-sky-500 dark:text-sky-400'
                     : 'text-emerald-600 dark:text-emerald-400'
                 }`}
               >
                 {msg.role === 'user' ? 'You' : 'Assistant'}
               </span>
               {msg.meta && (
-                <span className="text-[9px] text-gray-400 dark:text-gray-500">
+                <span className="text-[9px] text-slate-400 dark:text-slate-500">
                   {msg.meta.model} · {(msg.meta.durationMs / 1000).toFixed(1)}s
                   · {msg.meta.retrievalCount} sources
                 </span>
@@ -502,14 +502,14 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
             </div>
 
             {/* Content */}
-            <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+            <div className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
               {msg.content}
               {/* Thinking indicator (empty assistant message) */}
               {isStreaming &&
                 msg.role === 'assistant' &&
                 msg.id === messages[messages.length - 1]?.id &&
                 !msg.content && (
-                  <span className="inline-flex items-center gap-1 text-gray-400">
+                  <span className="inline-flex items-center gap-1 text-slate-400">
                     <Loader2 className="w-3 h-3 animate-spin" />
                     Thinking...
                   </span>
@@ -534,7 +534,7 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
       </div>
 
       {/* Input bar */}
-      <div className="flex-shrink-0 pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex-shrink-0 pt-2 mt-2 border-t border-slate-200 dark:border-slate-700">
         <div className="flex gap-2">
           <label htmlFor="assistant-input" className="sr-only">
             Ask the assistant
@@ -551,7 +551,7 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
             }
             disabled={inputDisabled}
             rows={1}
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 resize-none disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+            className="flex-1 px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 resize-none disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
           />
           <button
             onClick={sendMessage}
@@ -567,7 +567,7 @@ export default function AssistantPanel({ submissionId }: AssistantPanelProps) {
           </button>
         </div>
         {modelInfo && (
-          <p className="text-[9px] text-gray-400 dark:text-gray-500 mt-1 text-right">
+          <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-1 text-right">
             {modelInfo}
           </p>
         )}
