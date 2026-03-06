@@ -38,40 +38,16 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   groupPollsByTheme,
   getFilteredPollResults,
 }) => {
-  const getThemeColors = (themeId: string) => {
+  // Base style matches the inactive filter buttons exactly
+  const inactiveBase = 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600';
+  const questionBase = 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600';
+
+  const getThemeDot = (themeId: string) => {
     switch (themeId) {
-      case 'holistic-protection':
-        return {
-          bg: 'bg-sky-50 dark:bg-sky-900/20',
-          hover: 'hover:bg-sky-100 dark:hover:bg-sky-900/30',
-          text: 'text-slate-900 dark:text-sky-100',
-          questionBg: 'bg-sky-100 dark:bg-sky-800/30',
-          questionHover: 'hover:bg-sky-200 dark:hover:bg-sky-800/40'
-        };
-      case 'tiered-framework':
-        return {
-          bg: 'bg-orange-50 dark:bg-orange-600/20',
-          hover: 'hover:bg-orange-100 dark:hover:bg-orange-600/30',
-          text: 'text-slate-900 dark:text-orange-200',
-          questionBg: 'bg-orange-100 dark:bg-orange-700/30',
-          questionHover: 'hover:bg-orange-200 dark:hover:bg-orange-700/40'
-        };
-      case 'prioritization':
-        return {
-          bg: 'bg-purple-50 dark:bg-purple-900/20',
-          hover: 'hover:bg-purple-100 dark:hover:bg-purple-900/30',
-          text: 'text-slate-900 dark:text-purple-100',
-          questionBg: 'bg-purple-100 dark:bg-purple-800/30',
-          questionHover: 'hover:bg-purple-200 dark:hover:bg-purple-800/40'
-        };
-      default:
-        return {
-          bg: 'bg-slate-50 dark:bg-slate-700/20',
-          hover: 'hover:bg-slate-100 dark:hover:bg-slate-700/30',
-          text: 'text-slate-900 dark:text-slate-100',
-          questionBg: 'bg-slate-100 dark:bg-slate-600/30',
-          questionHover: 'hover:bg-slate-200 dark:hover:bg-slate-600/40'
-        };
+      case 'holistic-protection': return 'bg-sky-500';
+      case 'tiered-framework': return 'bg-orange-500';
+      case 'prioritization': return 'bg-purple-500';
+      default: return 'bg-slate-400';
     }
   };
 
@@ -87,7 +63,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
             className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${
               filterMode === 'twg'
                 ? 'bg-sky-600 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600'
             }`}
           >
             SSTAC & TWG Only
@@ -97,7 +73,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
             className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${
               filterMode === 'cew'
                 ? 'bg-green-600 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600'
             }`}
           >
             CEW Only
@@ -107,7 +83,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
             className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${
               filterMode === 'all'
                 ? 'bg-purple-600 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600'
             }`}
           >
             All Responses
@@ -123,7 +99,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
               className={`w-full px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-between ${
                 showPresentationControls
                   ? 'bg-sky-700 text-white hover:bg-sky-800'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-600'
               }`}
             >
               <span>{showPresentationControls ? 'Hide Presentation Controls' : 'Show Presentation Controls'}</span>
@@ -145,35 +121,40 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
               if (theme.polls.length === 0) return null;
               
               const isExpanded = expandedGroup === themeId;
-              const colors = getThemeColors(themeId);
-              
+
               return (
                 <div key={themeId} className="space-y-1">
                   <button
                     onClick={() => setExpandedGroup(isExpanded ? null : themeId)}
-                    className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${colors.bg} ${colors.text} ${colors.hover} flex items-center justify-between`}
+                    className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${inactiveBase} flex items-center justify-between`}
                   >
-                    <span>{theme.name}</span>
+                    <span className="flex items-center gap-2">
+                      <span className={`w-2.5 h-2.5 rounded-full ${getThemeDot(themeId)} flex-shrink-0`} />
+                      {theme.name}
+                    </span>
                     <span className="text-sm">
                       {isExpanded ? '▼' : '▶'}
                     </span>
                   </button>
-                  
+
                   {isExpanded && (
                     <div className="ml-4 space-y-1">
                       {theme.polls.map((poll) => {
                         const pollKey = poll.poll_id || poll.ranking_poll_id || `poll-${poll.page_path}-${poll.poll_index}`;
                         const totalVotes = getFilteredPollResults(poll).reduce((sum, r) => sum + r.votes, 0);
-                        
+
                         return (
                           <button
                             key={pollKey}
                             onClick={() => setSelectedQuestion(pollKey)}
-                            className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${colors.questionBg} ${colors.text} ${colors.questionHover} flex items-center justify-between ${
+                            className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${questionBase} flex items-center justify-between ${
                               selectedQuestion === pollKey ? 'ring-2 ring-sky-500' : ''
                             }`}
                           >
-                            <span>Question {poll.poll_index + 1}</span>
+                            <span className="flex items-center gap-2">
+                              <span className={`w-1.5 h-1.5 rounded-full ${getThemeDot(themeId)} flex-shrink-0`} />
+                              Question {poll.poll_index + 1}
+                            </span>
                             <span className="text-xs bg-white dark:bg-slate-600 px-2 py-1 rounded-full">
                               {totalVotes} {(poll.is_ranking || poll.is_wordcloud) ? 'responses' : 'votes'}
                             </span>
