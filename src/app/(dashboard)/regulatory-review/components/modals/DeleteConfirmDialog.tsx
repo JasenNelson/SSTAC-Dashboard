@@ -65,7 +65,7 @@ export default function DeleteConfirmDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div
-        className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-md mx-4"
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md mx-4"
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="delete-title"
@@ -94,12 +94,12 @@ export default function DeleteConfirmDialog({
             This action cannot be undone.
           </p>
 
-          <label className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg cursor-pointer">
+          <label className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg cursor-pointer">
             <input
               type="checkbox"
               checked={deleteFiles}
               onChange={(e) => setDeleteFiles(e.target.checked)}
-              className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-red-600 focus:ring-red-500 dark:bg-slate-800"
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-red-600 focus:ring-red-500 dark:bg-slate-700"
             />
             <div>
               <span className="text-sm font-medium text-slate-900 dark:text-white">

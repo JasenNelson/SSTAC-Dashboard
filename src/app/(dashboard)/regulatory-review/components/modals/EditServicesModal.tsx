@@ -85,7 +85,7 @@ export default function EditServicesModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div
-        className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col"
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[85vh] flex flex-col"
         role="dialog"
         aria-modal="true"
         aria-labelledby="edit-services-title"
@@ -130,7 +130,7 @@ export default function EditServicesModal({
                         type="checkbox"
                         checked={selected.has(svc.id)}
                         onChange={() => toggle(svc.id)}
-                        className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus:ring-sky-500 dark:bg-slate-800"
+                        className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus:ring-sky-500 dark:bg-slate-700"
                       />
                       <div className="min-w-0">
                         <span className="text-sm font-medium text-slate-900 dark:text-white">

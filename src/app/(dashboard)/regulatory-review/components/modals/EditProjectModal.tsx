@@ -66,7 +66,7 @@ export default function EditProjectModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div
-        className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-lg mx-4"
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-lg mx-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby="edit-project-title"
@@ -102,7 +102,7 @@ export default function EditProjectModal({
               type="text"
               value={siteId}
               onChange={(e) => setSiteId(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
             />
           </div>
 
@@ -118,7 +118,7 @@ export default function EditProjectModal({
               type="text"
               value={siteName}
               onChange={(e) => setSiteName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
             />
           </div>
 
@@ -134,7 +134,7 @@ export default function EditProjectModal({
               type="text"
               value={applicantName}
               onChange={(e) => setApplicantName(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
             />
           </div>
 

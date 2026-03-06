@@ -126,7 +126,7 @@ function ProjectCard({
   );
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6 hover:shadow-md transition-shadow">
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="min-w-0">
@@ -270,7 +270,7 @@ export default function ActiveReviewsGrid({
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
+        <div className="text-center py-12 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
           <FileText className="mx-auto h-12 w-12 text-slate-400 dark:text-slate-500" />
           <h3 className="mt-4 text-lg font-medium text-slate-900 dark:text-white">
             No review projects
