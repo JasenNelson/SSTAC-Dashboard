@@ -69,19 +69,19 @@ export default async function TwgDocumentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         <header className="mb-8 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">TWG Documents</h1>
-            <p className="mt-1 text-lg text-slate-500">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">TWG Documents</h1>
+            <p className="mt-1 text-lg text-slate-500 dark:text-slate-400">
               Browse and review all technical working group documents.
             </p>
           </div>
           <div className="flex space-x-3">
             <Link 
               href="/twg/discussions" 
-              className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             >
               Discussion Forum
             </Link>

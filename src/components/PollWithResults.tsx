@@ -234,7 +234,7 @@ export default function PollWithResults({
   };
 
   return (
-    <div className="bg-gradient-to-br from-sky-50 to-slate-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-lg">
+    <div className="bg-gradient-to-br from-sky-50 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-8 shadow-lg">
       <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-8 text-center">
         {questionNumber && `Question ${questionNumber}: `}{question}
       </h3>
@@ -278,7 +278,7 @@ export default function PollWithResults({
             </div>
             <button
               onClick={handleCancelChange}
-              className="px-3 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
+              className="px-3 py-1 text-sm bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors"
             >
               Cancel
             </button>
@@ -300,9 +300,9 @@ export default function PollWithResults({
                 disabled={(isVoted && !showChangeOption) || isLoading}
                 className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-300 ${
                   (isVoted && !showChangeOption)
-                    ? 'bg-slate-100 dark:bg-slate-600 border-slate-300 dark:border-gray-500 cursor-not-allowed' 
-                    : 'bg-white dark:bg-slate-700 border-blue-300 dark:border-slate-600 hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md cursor-pointer'
-                } ${isSelected && (!isVoted || showChangeOption) ? 'ring-2 ring-blue-500' : ''} ${
+                    ? 'bg-slate-100 dark:bg-slate-600 border-slate-300 dark:border-slate-500 cursor-not-allowed' 
+                    : 'bg-white dark:bg-slate-700 border-sky-300 dark:border-slate-600 hover:border-sky-500 dark:hover:border-sky-400 hover:shadow-md cursor-pointer'
+                } ${isSelected && (!isVoted || showChangeOption) ? 'ring-2 ring-sky-500' : ''} ${
                   userVote === optionIndex && hasVoted && !showChangeOption ? 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-600' : ''
                 }`}
               >
@@ -310,7 +310,7 @@ export default function PollWithResults({
                   <span className={`font-medium ${
                     isVoted ? 'text-slate-500 dark:text-slate-300' : 'text-slate-800 dark:text-white'
                   }`}>
-                    <span className="font-bold text-blue-600 dark:text-blue-400 mr-2">
+                    <span className="font-bold text-sky-600 dark:text-sky-400 mr-2">
                       Option {String.fromCharCode(65 + optionIndex)}:
                     </span>
                     {option}
@@ -323,7 +323,7 @@ export default function PollWithResults({
                           Your Vote
                         </span>
                       )}
-                      <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                      <span className="text-sky-600 dark:text-sky-400 font-semibold">
                         {percentage}%
                       </span>
                       <span className="text-slate-500 dark:text-slate-400 text-sm">
@@ -334,17 +334,17 @@ export default function PollWithResults({
                   
                   {isLoading && isSelected && (
                     <div className="flex items-center space-x-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 dark:border-blue-400"></div>
-                      <span className="text-blue-600 dark:text-blue-400 text-sm">Submitting...</span>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-sky-600 dark:border-sky-400"></div>
+                      <span className="text-sky-600 dark:text-sky-400 text-sm">Submitting...</span>
                     </div>
                   )}
                 </div>
                 
                 {/* Progress bar for voted options */}
                 {isVoted && (
-                  <div className="mt-3 w-full bg-gray-200 dark:bg-slate-500 rounded-full h-2">
+                  <div className="mt-3 w-full bg-slate-200 dark:bg-slate-500 rounded-full h-2">
                     <div 
-                      className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-500 ease-out"
+                      className="bg-sky-600 dark:bg-sky-500 h-2 rounded-full transition-all duration-500 ease-out"
                       style={{ width: `${percentage}%` }}
                     ></div>
                   </div>
@@ -357,8 +357,8 @@ export default function PollWithResults({
 
       {/* Other Text Input - show when "Other" is selected */}
       {!hasVoted && isSelectedOther() && (
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <label htmlFor={`other-text-${pollIndex}`} className="block text-sm font-medium text-slate-900 dark:text-blue-200 mb-2">
+        <div className="mt-6 p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg">
+          <label htmlFor={`other-text-${pollIndex}`} className="block text-sm font-medium text-slate-900 dark:text-sky-200 mb-2">
             Please provide details for your &ldquo;Other&rdquo; selection:
           </label>
           <textarea
@@ -366,11 +366,11 @@ export default function PollWithResults({
             value={otherText}
             onChange={(e) => setOtherText(e.target.value)}
             placeholder="Enter your specific details here..."
-            className="w-full px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+            className="w-full px-3 py-2 border border-sky-300 dark:border-sky-600 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400"
             rows={3}
             maxLength={500}
           />
-          <div className="mt-1 text-xs text-slate-900 dark:text-blue-400">
+          <div className="mt-1 text-xs text-slate-900 dark:text-sky-400">
             {otherText.length}/500 characters
           </div>
         </div>
@@ -387,7 +387,7 @@ export default function PollWithResults({
             disabled={selectedOption === null || isLoading || (isSelectedOther() && !otherText.trim())}
             className={`px-8 py-3 font-semibold rounded-xl transition-colors duration-300 flex items-center space-x-2 ${
               selectedOption === null || isLoading || (isSelectedOther() && !otherText.trim())
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                ? 'bg-slate-400 text-slate-200 cursor-not-allowed'
                 : 'bg-sky-700 hover:bg-sky-800 text-white'
             }`}
           >

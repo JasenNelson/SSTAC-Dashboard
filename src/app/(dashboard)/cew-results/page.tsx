@@ -72,9 +72,9 @@ export default async function CewResultsPage() {
             </div>
 
             {/* KPI Card 2 */}
-            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-blue-500">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-sky-500">
               <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">
+                <div className="text-4xl font-bold text-sky-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   1.6
                 </div>
                 <div className="text-slate-900 dark:text-slate-200 font-semibold text-lg mb-2">
@@ -161,9 +161,9 @@ export default async function CewResultsPage() {
 
           {/* Section 2.2 Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-blue-500">
+            <div className="group relative bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-l-4 border-sky-500">
               <div className="text-center">
-                <div className="text-4xl font-bold text-blue-600 mb-2 group-hover:scale-110 transition-transform duration-300">
+                <div className="text-4xl font-bold text-sky-600 mb-2 group-hover:scale-110 transition-transform duration-300">
                   88%
                 </div>
                 <div className="text-slate-900 dark:text-slate-200 font-semibold text-lg mb-2">

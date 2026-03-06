@@ -43,8 +43,8 @@ export default async function EffectivenessPage() {
 
       {/* Header */}
       <header className="mb-8">
-        <h1 className="text-4xl font-bold text-slate-900 mb-4">Effectiveness of Current Standards</h1>
-        <p className="text-xl text-slate-500 max-w-3xl">
+        <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">Effectiveness of Current Standards</h1>
+        <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl">
           Analysis of current BC CSR Schedule 3.4 sediment standards&apos; effectiveness for protecting benthic organisms and preventing harmful bioaccumulation.
         </p>
       </header>
@@ -74,12 +74,12 @@ export default async function EffectivenessPage() {
       {/* Detailed Analysis Sections */}
       <div className="space-y-8">
         {/* Benthic Organism Protection */}
-        <div className="bg-white rounded-xl shadow-md p-8">
-          <h3 className="text-2xl font-semibold text-slate-700 mb-6">Benthic Organism Protection</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-8">
+          <h3 className="text-2xl font-semibold text-slate-700 dark:text-white mb-6">Benthic Organism Protection</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
-              <h4 className="text-lg font-medium text-slate-600 mb-4">Survey Results</h4>
-              <ul className="space-y-3 text-slate-500">
+              <h4 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-4">Survey Results</h4>
+              <ul className="space-y-3 text-slate-500 dark:text-slate-400">
                 <li className="flex items-start">
                   <span className="text-green-500 mr-3 mt-1">✓</span>
                   Over 60% rate standards as at least &quot;moderately effective&quot;
@@ -95,8 +95,8 @@ export default async function EffectivenessPage() {
               </ul>
             </div>
             <div>
-              <h4 className="text-lg font-medium text-slate-600 mb-4">Key Insights</h4>
-              <ul className="space-y-3 text-slate-500">
+              <h4 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-4">Key Insights</h4>
+              <ul className="space-y-3 text-slate-500 dark:text-slate-400">
                 <li className="flex items-start">
                   <span className="text-sky-500 mr-3 mt-1">📋</span>
                   Standards are perceived as adequate for basic benthic protection
@@ -115,12 +115,12 @@ export default async function EffectivenessPage() {
         </div>
 
         {/* Bioaccumulation Protection */}
-        <div className="bg-white rounded-xl shadow-md p-8">
-          <h3 className="text-2xl font-semibold text-slate-700 mb-6">Bioaccumulation Protection</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-8">
+          <h3 className="text-2xl font-semibold text-slate-700 dark:text-white mb-6">Bioaccumulation Protection</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
-              <h4 className="text-lg font-medium text-slate-600 mb-4">Critical Gap Identified</h4>
-              <ul className="space-y-3 text-slate-500">
+              <h4 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-4">Critical Gap Identified</h4>
+              <ul className="space-y-3 text-slate-500 dark:text-slate-400">
                 <li className="flex items-start">
                   <span className="text-red-500 mr-3 mt-1">🔴</span>
                   73% rate standards as &quot;Not Effective&quot; or &quot;Slightly Effective&quot;
@@ -136,8 +136,8 @@ export default async function EffectivenessPage() {
               </ul>
             </div>
             <div>
-              <h4 className="text-lg font-medium text-slate-600 mb-4">Stakeholder Quotes</h4>
-              <div className="space-y-3 text-slate-500 italic">
+              <h4 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-4">Stakeholder Quotes</h4>
+              <div className="space-y-3 text-slate-500 dark:text-slate-300 italic">
                 <blockquote className="border-l-4 border-red-200 pl-4">
                   &quot;The BC CSR sediment standards are not appropriate or adequate to protect upper trophic level organisms,
                   apex predators and humans at the top of foodwebs, as these sediment standards were or are designed for
@@ -153,12 +153,12 @@ export default async function EffectivenessPage() {
         </div>
 
         {/* Over-Protection Issues */}
-        <div className="bg-white rounded-xl shadow-md p-8">
-          <h3 className="text-2xl font-semibold text-slate-700 mb-6">Over-Protection Concerns</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-8">
+          <h3 className="text-2xl font-semibold text-slate-700 dark:text-white mb-6">Over-Protection Concerns</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
-              <h4 className="text-lg font-medium text-slate-600 mb-4">Stakeholder Feedback</h4>
-              <ul className="space-y-3 text-slate-500">
+              <h4 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-4">Stakeholder Feedback</h4>
+              <ul className="space-y-3 text-slate-500 dark:text-slate-400">
                 <li className="flex items-start">
                   <span className="text-yellow-500 mr-3 mt-1">⚠</span>
                   Standards can be overly conservative in some areas
@@ -174,8 +174,8 @@ export default async function EffectivenessPage() {
               </ul>
             </div>
             <div>
-              <h4 className="text-lg font-medium text-slate-600 mb-4">Examples Cited</h4>
-              <ul className="space-y-3 text-slate-500">
+              <h4 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-4">Examples Cited</h4>
+              <ul className="space-y-3 text-slate-500 dark:text-slate-400">
                 <li className="flex items-start">
                   <span className="text-sky-500 mr-3 mt-1">📋</span>
                   Fraser River arsenic and copper naturally higher than standards
@@ -194,12 +194,12 @@ export default async function EffectivenessPage() {
         </div>
 
         {/* Human Health Considerations */}
-        <div className="bg-white rounded-xl shadow-md p-8">
-          <h3 className="text-2xl font-semibold text-slate-700 mb-6">Human Health Considerations</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-8">
+          <h3 className="text-2xl font-semibold text-slate-700 dark:text-white mb-6">Human Health Considerations</h3>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
-              <h4 className="text-lg font-medium text-slate-600 mb-4">Current Gaps</h4>
-              <ul className="space-y-3 text-slate-500">
+              <h4 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-4">Current Gaps</h4>
+              <ul className="space-y-3 text-slate-500 dark:text-slate-400">
                 <li className="flex items-start">
                   <span className="text-red-500 mr-3 mt-1">🔴</span>
                   No human health risk assessment integration
@@ -215,8 +215,8 @@ export default async function EffectivenessPage() {
               </ul>
             </div>
             <div>
-              <h4 className="text-lg font-medium text-slate-600 mb-4">Stakeholder Recommendations</h4>
-              <ul className="space-y-3 text-slate-500">
+              <h4 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-4">Stakeholder Recommendations</h4>
+              <ul className="space-y-3 text-slate-500 dark:text-slate-400">
                 <li className="flex items-start">
                   <span className="text-sky-500 mr-3 mt-1">📋</span>
                   Link sediment quality to Human Health Risk Assessment
@@ -236,12 +236,12 @@ export default async function EffectivenessPage() {
       </div>
 
       {/* Recommendations */}
-      <div className="bg-white rounded-xl shadow-md p-8 mt-8">
-        <h3 className="text-2xl font-semibold text-slate-700 mb-6">Recommendations for Improvement</h3>
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-8 mt-8">
+        <h3 className="text-2xl font-semibold text-slate-700 dark:text-white mb-6">Recommendations for Improvement</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h4 className="text-lg font-medium text-slate-600 mb-4">Immediate Priorities</h4>
-            <ul className="space-y-3 text-slate-500">
+            <h4 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-4">Immediate Priorities</h4>
+            <ul className="space-y-3 text-slate-500 dark:text-slate-400">
               <li className="flex items-start">
                 <span className="text-red-500 mr-3 mt-1">🔴</span>
                 Develop bioaccumulation-based standards
@@ -257,8 +257,8 @@ export default async function EffectivenessPage() {
             </ul>
           </div>
           <div>
-            <h4 className="text-lg font-medium text-slate-600 mb-4">Long-term Improvements</h4>
-            <ul className="space-y-3 text-slate-500">
+            <h4 className="text-lg font-medium text-slate-600 dark:text-slate-300 mb-4">Long-term Improvements</h4>
+            <ul className="space-y-3 text-slate-500 dark:text-slate-400">
               <li className="flex items-start">
                 <span className="text-sky-500 mr-3 mt-1">📋</span>
                 Establish regional background concentrations

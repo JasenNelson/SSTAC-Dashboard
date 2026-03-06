@@ -42,17 +42,17 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
     switch (themeId) {
       case 'holistic-protection':
         return {
-          bg: 'bg-blue-50 dark:bg-blue-900/20',
-          hover: 'hover:bg-blue-100 dark:hover:bg-blue-900/30',
-          text: 'text-gray-900 dark:text-blue-100',
-          questionBg: 'bg-blue-100 dark:bg-blue-800/30',
-          questionHover: 'hover:bg-blue-200 dark:hover:bg-blue-800/40'
+          bg: 'bg-sky-50 dark:bg-sky-900/20',
+          hover: 'hover:bg-sky-100 dark:hover:bg-sky-900/30',
+          text: 'text-slate-900 dark:text-sky-100',
+          questionBg: 'bg-sky-100 dark:bg-sky-800/30',
+          questionHover: 'hover:bg-sky-200 dark:hover:bg-sky-800/40'
         };
       case 'tiered-framework':
         return {
           bg: 'bg-orange-50 dark:bg-orange-600/20',
           hover: 'hover:bg-orange-100 dark:hover:bg-orange-600/30',
-          text: 'text-gray-900 dark:text-orange-200',
+          text: 'text-slate-900 dark:text-orange-200',
           questionBg: 'bg-orange-100 dark:bg-orange-700/30',
           questionHover: 'hover:bg-orange-200 dark:hover:bg-orange-700/40'
         };
@@ -60,25 +60,25 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
         return {
           bg: 'bg-purple-50 dark:bg-purple-900/20',
           hover: 'hover:bg-purple-100 dark:hover:bg-purple-900/30',
-          text: 'text-gray-900 dark:text-purple-100',
+          text: 'text-slate-900 dark:text-purple-100',
           questionBg: 'bg-purple-100 dark:bg-purple-800/30',
           questionHover: 'hover:bg-purple-200 dark:hover:bg-purple-800/40'
         };
       default:
         return {
-          bg: 'bg-gray-50 dark:bg-gray-700/20',
-          hover: 'hover:bg-gray-100 dark:hover:bg-gray-700/30',
-          text: 'text-gray-900 dark:text-gray-100',
-          questionBg: 'bg-gray-100 dark:bg-gray-600/30',
-          questionHover: 'hover:bg-gray-200 dark:hover:bg-gray-600/40'
+          bg: 'bg-slate-50 dark:bg-slate-700/20',
+          hover: 'hover:bg-slate-100 dark:hover:bg-slate-700/30',
+          text: 'text-slate-900 dark:text-slate-100',
+          questionBg: 'bg-slate-100 dark:bg-slate-600/30',
+          questionHover: 'hover:bg-slate-200 dark:hover:bg-slate-600/40'
         };
     }
   };
 
   return (
-    <div className="fixed left-0 top-0 w-80 h-screen bg-white dark:bg-gray-800 shadow-lg border-r border-gray-200 dark:border-gray-700 flex-shrink-0 overflow-y-auto z-10">
+    <div className="fixed left-0 top-0 w-80 h-screen bg-white dark:bg-slate-800 shadow-lg border-r border-slate-200 dark:border-slate-700 flex-shrink-0 overflow-y-auto z-10">
       <div className="p-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Filter Results</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Filter Results</h2>
         
         {/* Filter Buttons */}
         <div className="space-y-3">
@@ -86,8 +86,8 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
             onClick={() => setFilterMode('twg')}
             className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${
               filterMode === 'twg'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ? 'bg-sky-600 text-white'
+                : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
             }`}
           >
             SSTAC & TWG Only
@@ -97,7 +97,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
             className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${
               filterMode === 'cew'
                 ? 'bg-green-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
             }`}
           >
             CEW Only
@@ -107,7 +107,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
             className={`w-full px-4 py-3 rounded-lg font-medium transition-colors text-left ${
               filterMode === 'all'
                 ? 'bg-purple-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                : 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
             }`}
           >
             All Responses
@@ -116,7 +116,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
         {/* Display Options */}
         <div className="mt-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Display Options</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">Display Options</h3>
           <div className="space-y-2">
             <button
               onClick={() => setShowPresentationControls((prev) => !prev)}
@@ -131,7 +131,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 {showPresentationControls ? 'ON' : 'OFF'}
               </span>
             </button>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Toggle the per-question export button, join instructions, and QR code display in the results view.
             </p>
           </div>
@@ -139,7 +139,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
         {/* Poll Question Groups */}
         <div className="mt-8">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Poll Groups</h3>
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Poll Groups</h3>
           <div className="space-y-2">
             {Object.entries(groupPollsByTheme(filteredPolls)).map(([themeId, theme]) => {
               if (theme.polls.length === 0) return null;
@@ -170,11 +170,11 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                             key={pollKey}
                             onClick={() => setSelectedQuestion(pollKey)}
                             className={`w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${colors.questionBg} ${colors.text} ${colors.questionHover} flex items-center justify-between ${
-                              selectedQuestion === pollKey ? 'ring-2 ring-blue-500' : ''
+                              selectedQuestion === pollKey ? 'ring-2 ring-sky-500' : ''
                             }`}
                           >
                             <span>Question {poll.poll_index + 1}</span>
-                            <span className="text-xs bg-white dark:bg-gray-600 px-2 py-1 rounded-full">
+                            <span className="text-xs bg-white dark:bg-slate-600 px-2 py-1 rounded-full">
                               {totalVotes} {(poll.is_ranking || poll.is_wordcloud) ? 'responses' : 'votes'}
                             </span>
                           </button>
@@ -208,7 +208,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
           <button
             onClick={onRefresh}
             disabled={loading}
-            className="w-full px-4 py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full px-4 py-3 bg-sky-600 dark:bg-sky-500 text-white rounded-lg hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -227,7 +227,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
         <div className="mt-4 flex justify-end">
           <button
             onClick={onHidePanel}
-            className="flex items-center justify-center w-10 h-10 bg-gray-600 dark:bg-gray-500 text-white rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors shadow-lg"
+            className="flex items-center justify-center w-10 h-10 bg-slate-600 dark:bg-slate-500 text-white rounded-lg hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-lg"
             title="Hide filter panel"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

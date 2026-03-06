@@ -58,9 +58,9 @@ export default function ProjectTimeline() {
 
   const getStatusColor = (milestone: Milestone) => {
     if (milestone.status === 'completed') return 'bg-green-500';
-    if (milestone.status === 'in_progress') return 'bg-blue-500';
-    if (isFutureDate(milestone.target_date)) return 'bg-blue-500';
-    return 'bg-gray-400';
+    if (milestone.status === 'in_progress') return 'bg-sky-500';
+    if (isFutureDate(milestone.target_date)) return 'bg-sky-500';
+    return 'bg-slate-400';
   };
 
   const getStatusText = (milestone: Milestone) => {
@@ -115,7 +115,7 @@ export default function ProjectTimeline() {
           <p>No milestones found</p>
           <button
             onClick={fetchMilestones}
-            className="mt-2 px-4 py-2 bg-gray-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+            className="mt-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
           >
             Refresh
           </button>
@@ -156,16 +156,16 @@ export default function ProjectTimeline() {
                 <div className={`p-3 rounded-lg border transition-all duration-300 ${
                   hoveredMilestone === milestone.id
                     ? 'border-sky-300 dark:border-sky-700 bg-sky-50 dark:bg-sky-900/30'
-                    : 'border-slate-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/50'
-                } ${expandedMilestone === milestone.id ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700' : ''}`}>
+                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50'
+                } ${expandedMilestone === milestone.id ? 'bg-sky-50 dark:bg-sky-900/30 border-sky-300 dark:border-sky-700' : ''}`}>
                   <div className="flex items-start justify-between mb-2">
                     <h3 className="font-semibold text-slate-800 dark:text-white text-base">{milestone.title}</h3>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       milestone.status === 'completed'
                         ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
                         : isFutureDate(milestone.target_date)
-                        ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300'
-                        : 'bg-gray-100 dark:bg-slate-700 text-slate-800 dark:text-slate-300'
+                        ? 'bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-300'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-300'
                     }`}>
                       {getStatusText(milestone)}
                     </span>
@@ -186,7 +186,7 @@ export default function ProjectTimeline() {
                   )}
                   
                   {/* Expand/Collapse indicator */}
-                  <div className="text-xs text-gray-400 dark:text-slate-500 mt-2 flex items-center">
+                  <div className="text-xs text-slate-400 dark:text-slate-500 mt-2 flex items-center">
                     <span className="mr-1">
                       {expandedMilestone === milestone.id ? 'Click to collapse' : 'Click to expand'}
                     </span>
@@ -216,11 +216,11 @@ export default function ProjectTimeline() {
               <span>Completed</span>
             </div>
             <div className="flex items-center">
-              <div className="w-3 h-3 rounded-full bg-blue-500 mr-2"></div>
+              <div className="w-3 h-3 rounded-full bg-sky-500 mr-2"></div>
               <span>Upcoming</span>
             </div>
             <div className="flex items-center">
-              <div className="w-3 h-3 rounded-full bg-gray-400 mr-2"></div>
+              <div className="w-3 h-3 rounded-full bg-slate-400 mr-2"></div>
               <span>Overdue</span>
             </div>
           </div>

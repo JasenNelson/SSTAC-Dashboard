@@ -99,7 +99,7 @@ export default function DetailedFindingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-50 dark:from-slate-900 dark:to-slate-900">
       {/* Header */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-sky-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -120,7 +120,7 @@ export default function DetailedFindingsPage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tab Navigation */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 mb-8">
           <div className="flex flex-wrap gap-2">
             {tabs.map((tab) => (
               <button
@@ -129,7 +129,7 @@ export default function DetailedFindingsPage() {
                 className={`flex items-center px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
                   activeTab === tab.id
                     ? 'bg-sky-700 text-white shadow-lg transform scale-105'
-                    : 'bg-slate-100 text-slate-600 hover:bg-gray-200 hover:scale-102'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-102'
                 }`}
               >
                 <span className="mr-2 text-lg">{tab.icon}</span>
@@ -140,13 +140,13 @@ export default function DetailedFindingsPage() {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white rounded-2xl shadow-lg p-8">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8">
           {/* Tab 1: Who We Heard (Respondent Demographics) */}
           {activeTab === 'demographics' && (
             <div className="space-y-8">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-slate-700 mb-4">Who We Heard</h2>
-                <p className="text-xl text-slate-500 max-w-3xl mx-auto">
+                <h2 className="text-3xl font-bold text-slate-700 dark:text-white mb-4">Who We Heard</h2>
+                <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto">
                   Establish the credibility and deep expertise of the survey respondents
                 </p>
               </div>
@@ -180,15 +180,15 @@ export default function DetailedFindingsPage() {
               </Suspense>
 
               {/* Supporting Text */}
-              <div className="bg-slate-50 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-slate-700 mb-4">Diverse Professional Backgrounds</h3>
-                <p className="text-slate-600 leading-relaxed">
+              <div className="bg-slate-50 dark:bg-slate-700 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Diverse Professional Backgrounds</h3>
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
                   The survey successfully reached a targeted audience of highly experienced professionals who work directly 
                   with the BC CSR sediment standards. Respondents included environmental consultants, industry representatives, 
                   academics, non-government organizations, and government regulators from various levels. This mix of perspectives 
                   provides a balanced and comprehensive overview of how the standards are used and perceived across different sectors.
                 </p>
-                <p className="text-slate-600 leading-relaxed mt-4">
+                <p className="text-slate-600 dark:text-slate-300 leading-relaxed mt-4">
                   The strong consensus on key issues that emerges from this diverse group underscores the validity of their 
                   shared concerns and recommendations. Over 70% of respondents described themselves as &quot;Very Familiar&quot; or
                   &quot;Familiar&quot; with the current BC CSR Schedule 3.4 numerical sediment standards, ensuring that the critiques 
@@ -202,8 +202,8 @@ export default function DetailedFindingsPage() {
           {activeTab === 'effectiveness' && (
             <div className="space-y-8">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-slate-700 mb-4">Effectiveness of Current Standards</h2>
-                <p className="text-xl text-slate-500 max-w-3xl mx-auto">
+                <h2 className="text-3xl font-bold text-slate-700 dark:text-white mb-4">Effectiveness of Current Standards</h2>
+                <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto">
                   Visually illustrate the perceived gap between protecting benthic organisms and preventing food web bioaccumulation
                 </p>
               </div>
@@ -251,7 +251,7 @@ export default function DetailedFindingsPage() {
               </div>
 
               {/* Voices from the Field Section */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6">
                 <VoicesCarousel
                   quotes={stakeholderQuotes
                     .filter(q => q.category === 'effectiveness' || q.category === 'challenges')
@@ -274,8 +274,8 @@ export default function DetailedFindingsPage() {
           {activeTab === 'solutions' && (
             <div className="space-y-8">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-slate-700 mb-4">Recommended Solutions & Modernization</h2>
-                <p className="text-xl text-slate-500 max-w-3xl mx-auto">
+                <h2 className="text-3xl font-bold text-slate-700 dark:text-white mb-4">Recommended Solutions & Modernization</h2>
+                <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl mx-auto">
                   Clearly present the strong expert consensus on the preferred path forward
                 </p>
               </div>
@@ -283,7 +283,7 @@ export default function DetailedFindingsPage() {
               {/* Central Interactive Visualization */}
               <Suspense fallback={<div className="bg-gradient-to-br from-sky-50 to-slate-50 rounded-xl p-6 animate-pulse h-96"></div>}>
               <div className="bg-gradient-to-br from-sky-50 to-slate-50 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-slate-700 mb-6">Respondents&apos; Most Recommended Approaches</h3>
+                <h3 className="text-xl font-semibold text-slate-700 dark:text-slate-200 mb-6">Respondents&apos; Most Recommended Approaches</h3>
                 <InteractiveBarChart
                   data={recommendedApproachesData}
                   title=""
@@ -292,7 +292,7 @@ export default function DetailedFindingsPage() {
                   showPercentages={true}
                   interactive={true}
                 />
-                <p className="text-sm text-slate-500 mt-4 italic text-center">
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-4 italic text-center">
                   Based on Figure 8 and supporting text from the survey data
                 </p>
               </div>
@@ -327,7 +327,7 @@ export default function DetailedFindingsPage() {
               </Suspense>
 
               {/* Additional Voices from the Field */}
-              <div className="bg-white border border-slate-200 rounded-xl p-6">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6">
                 <VoicesCarousel
                   quotes={stakeholderQuotes
                     .filter(q => q.category === 'solutions' || q.category === 'recommendations')
@@ -349,9 +349,9 @@ export default function DetailedFindingsPage() {
 
         {/* Report Link */}
         <div className="mt-8 text-center">
-          <div className="bg-white rounded-2xl shadow-lg p-6 inline-block">
-            <h3 className="text-lg font-semibold text-slate-700 mb-3">Access the Full Report</h3>
-            <p className="text-slate-500 mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 inline-block">
+            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-3">Access the Full Report</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-4">
               Download the complete &quot;Draft Sediment Standards Review: What We Heard&quot; report for detailed analysis
             </p>
             <a

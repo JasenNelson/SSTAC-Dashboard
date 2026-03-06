@@ -228,8 +228,8 @@ export default function TwgDiscussionsPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <header className="mb-8">
-        <h1 className="text-4xl font-bold text-slate-900 mb-4">TWG Discussion Forum</h1>
-        <p className="text-xl text-slate-500 max-w-3xl">
+        <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">TWG Discussion Forum</h1>
+        <p className="text-xl text-slate-500 dark:text-slate-400 max-w-3xl">
           Engage with other TWG members in discussions about technical topics and projects. 
           Browse discussions by title and click to read full threads.
         </p>
@@ -254,35 +254,35 @@ export default function TwgDiscussionsPage() {
       </div>
 
       {/* Discussions List */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200">
-          <h2 className="text-lg font-medium text-slate-600">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+          <h2 className="text-lg font-medium text-slate-600 dark:text-slate-300">
             All Discussions ({discussions.length})
           </h2>
         </div>
         
         {discussions.length > 0 ? (
-          <div className="divide-y divide-slate-200">
+          <div className="divide-y divide-slate-200 dark:divide-slate-700">
             {discussions.map((discussion) => (
               <Link
                 key={discussion.id}
                 href={`/twg/discussions/${discussion.id}`}
-                className="block p-6 hover:bg-slate-50 transition-colors duration-150"
+                className="block p-6 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-150"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-slate-900 hover:text-sky-700 transition-colors truncate">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white hover:text-sky-700 dark:hover:text-sky-400 transition-colors truncate">
                         {discussion.title}
                       </h3>
                       {discussion.updated_at !== discussion.created_at && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-sky-100 text-sky-800">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-sky-100 dark:bg-sky-900 text-sky-800 dark:text-sky-200">
                           Edited
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center text-sm text-slate-500 space-x-4 mb-3">
+                    <div className="flex items-center text-sm text-slate-500 dark:text-slate-400 space-x-4 mb-3">
                       <span className="flex items-center">
                         <span className="mr-1">👤</span>
                         {discussion.author}
@@ -298,7 +298,7 @@ export default function TwgDiscussionsPage() {
                     </div>
                     
                     {discussion.last_reply_at && (
-                      <div className="flex items-center text-sm text-slate-500">
+                      <div className="flex items-center text-sm text-slate-500 dark:text-slate-400">
                         <span className="mr-1">🔄</span>
                         Last activity: {formatDate(discussion.last_reply_at)}
                       </div>
@@ -311,7 +311,7 @@ export default function TwgDiscussionsPage() {
                          title={discussion.last_reply_at ? 'Recent activity' : 'No recent activity'} />
                     
                     {/* Reply count badge */}
-                    <div className="flex items-center px-3 py-1 bg-slate-100 rounded-full text-sm font-medium text-slate-600">
+                    <div className="flex items-center px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-sm font-medium text-slate-600 dark:text-slate-300">
                       <span className="mr-1">💬</span>
                       {discussion.reply_count}
                     </div>
@@ -330,8 +330,8 @@ export default function TwgDiscussionsPage() {
         ) : (
           <div className="text-center py-16">
             <div className="text-slate-400 text-6xl mb-4">💬</div>
-            <p className="text-slate-500 text-lg mb-2">No discussions yet.</p>
-            <p className="text-slate-400 text-sm">Be the first to start a discussion!</p>
+            <p className="text-slate-500 dark:text-slate-400 text-lg mb-2">No discussions yet.</p>
+            <p className="text-slate-400 dark:text-slate-500 text-sm">Be the first to start a discussion!</p>
           </div>
         )}
       </div>

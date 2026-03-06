@@ -110,16 +110,16 @@ export default async function Cew2025Page() {
               <p className="text-xl font-bold text-slate-900 dark:text-sky-200">{sessionData.sessionDate}</p>
             </div>
             
-            <div className="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-800 dark:to-pink-800 p-6 rounded-xl border border-purple-200 dark:border-purple-600 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-gradient-to-br from-sky-100 to-slate-100 dark:from-sky-800 dark:to-slate-800 p-6 rounded-xl border border-sky-200 dark:border-sky-600 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center space-x-3 mb-3">
-                <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-sky-600 rounded-lg flex items-center justify-center">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-200 uppercase tracking-wide">Session Time</h3>
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-sky-200 uppercase tracking-wide">Session Time</h3>
               </div>
-              <p className="text-xl font-bold text-purple-950 dark:text-purple-100">{sessionData.sessionTime}</p>
+              <p className="text-xl font-bold text-slate-900 dark:text-sky-200">{sessionData.sessionTime}</p>
             </div>
             
             <div className="bg-gradient-to-br from-sky-100 via-slate-100 to-slate-50 dark:from-sky-800 dark:via-slate-800 dark:to-slate-800 p-6 rounded-xl border border-sky-200 dark:border-sky-600 shadow-sm hover:shadow-md transition-shadow">
@@ -165,21 +165,21 @@ export default async function Cew2025Page() {
               </div>
 
               {/* TWG Members */}
-              <div className="bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-800 dark:to-pink-800 rounded-xl p-6 border border-purple-200 dark:border-purple-600 shadow-sm hover:shadow-md transition-shadow">
+              <div className="bg-gradient-to-br from-sky-100 to-slate-100 dark:from-sky-800 dark:to-slate-800 rounded-xl p-6 border border-sky-200 dark:border-sky-600 shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center space-x-3 mb-4">
-                  <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-sky-600 rounded-xl flex items-center justify-center">
                     <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold text-purple-950 dark:text-purple-100">TWG Members</h4>
+                    <h4 className="text-xl font-bold text-slate-900 dark:text-sky-200">TWG Members</h4>
                   </div>
                 </div>
                 <div className="space-y-3">
                   {sessionData.twgMembers.map((member) => (
-                    <div key={member} className="bg-white/70 dark:bg-purple-700/50 rounded-lg px-4 py-3 border border-purple-200/50 dark:border-purple-500/50 hover:bg-white dark:hover:bg-purple-600/70 transition-colors">
-                      <p className="text-purple-950 dark:text-purple-100 font-medium text-center">{member}</p>
+                    <div key={member} className="bg-white/70 dark:bg-sky-700/50 rounded-lg px-4 py-3 border border-sky-200/50 dark:border-sky-500/50 hover:bg-white dark:hover:bg-sky-600/70 transition-colors">
+                      <p className="text-slate-900 dark:text-sky-200 font-medium text-center">{member}</p>
                     </div>
                   ))}
                 </div>
@@ -278,12 +278,12 @@ export default async function Cew2025Page() {
           </div>
 
           {/* Break */}
-          <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 dark:from-purple-800 dark:via-pink-800 dark:to-rose-800 rounded-xl p-6 border border-purple-200 dark:border-purple-600 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-slate-50 dark:from-amber-900/40 dark:via-orange-900/30 dark:to-slate-800 rounded-xl p-6 border border-amber-200 dark:border-amber-700 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-purple-800 dark:text-purple-200">Break</h3>
-              <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-medium">10:00 - 10:30 AM</span>
+              <h3 className="text-xl font-semibold text-amber-800 dark:text-amber-200">Break</h3>
+              <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">10:00 - 10:30 AM</span>
             </div>
-            <p className="text-purple-700 dark:text-purple-300 italic mt-2 font-semibold">30-minute break</p>
+            <p className="text-amber-700 dark:text-amber-300 italic mt-2 font-semibold">30-minute break</p>
           </div>
 
           {/* Session 7 */}
@@ -341,12 +341,12 @@ export default async function Cew2025Page() {
           </div>
 
           {/* Lunch Break */}
-          <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 dark:from-purple-800 dark:via-pink-800 dark:to-rose-800 rounded-xl p-6 border border-purple-200 dark:border-purple-600 shadow-sm hover:shadow-md transition-shadow">
+          <div className="bg-gradient-to-br from-amber-50 via-orange-50 to-slate-50 dark:from-amber-900/40 dark:via-orange-900/30 dark:to-slate-800 rounded-xl p-6 border border-amber-200 dark:border-amber-700 shadow-sm hover:shadow-md transition-shadow">
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-purple-800 dark:text-purple-200">Lunch Break</h3>
-              <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-medium">12:00 PM</span>
+              <h3 className="text-xl font-semibold text-amber-800 dark:text-amber-200">Lunch Break</h3>
+              <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-medium">12:00 PM</span>
             </div>
-            <p className="text-purple-700 dark:text-purple-300 italic mt-2 font-semibold">Lunch break - Session concludes</p>
+            <p className="text-amber-700 dark:text-amber-300 italic mt-2 font-semibold">Lunch break - Session concludes</p>
           </div>
         </div>
       </div>

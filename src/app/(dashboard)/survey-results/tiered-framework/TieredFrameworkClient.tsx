@@ -52,7 +52,7 @@ export default function TieredFrameworkClient() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-slate-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Hero/Header Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
@@ -124,10 +124,10 @@ export default function TieredFrameworkClient() {
                 </div>
               </div>
               
-              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
+              <div className="bg-sky-50 dark:bg-sky-900/30 rounded-lg p-6">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 text-center">Bioavailability Adjustments Important</h3>
                 <div className="text-center mb-4">
-                  <div className="text-5xl font-bold text-blue-900 dark:text-blue-400 mb-2">88.1%</div>
+                  <div className="text-5xl font-bold text-sky-900 dark:text-sky-400 mb-2">88.1%</div>
                   <p className="text-slate-600 dark:text-slate-300 text-lg">
                     felt that incorporating bioavailability adjustments is important or essential for the future sediment standards framework
                   </p>
@@ -177,15 +177,15 @@ export default function TieredFrameworkClient() {
             </div>
 
             {/* Enhanced Protection */}
-            <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
+            <div className="bg-sky-50 dark:bg-sky-900/30 rounded-lg p-6">
               <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 text-center">Enhanced Protection</h3>
               <ul className="space-y-4 text-slate-600 dark:text-slate-300 text-lg">
                 <li className="flex items-start">
-                  <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">•</span>
+                  <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">•</span>
                   <span>Improved decision-making and environmental outcomes</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">•</span>
+                  <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">•</span>
                   <span>Effective resource allocation</span>
                 </li>
               </ul>
@@ -212,7 +212,7 @@ export default function TieredFrameworkClient() {
               </div>
 
               {/* Tier 2 */}
-              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
+              <div className="bg-sky-50 dark:bg-sky-900/30 rounded-lg p-6">
                 <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Tier 2: Site-Specific Sediment Standards</h3>
                 <p className="text-slate-600 dark:text-slate-300 text-lg">
                   Bioavailability-adjusted using Equilibrium Partitioning (EqP) and/or Biotic Ligand Model (BLM)
@@ -263,7 +263,7 @@ export default function TieredFrameworkClient() {
       </section>
 
       {/* Next Steps Section */}
-      <section className="py-12 px-6 bg-gradient-to-br from-gray-800 to-gray-900 text-white">
+      <section className="py-12 px-6 bg-gradient-to-br from-slate-800 to-slate-900 text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-8 font-['Merriweather'] text-white">
             Next Steps for Implementation
@@ -272,7 +272,7 @@ export default function TieredFrameworkClient() {
           <div className="space-y-8 text-lg">
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-green-300">Immediate Actions</h3>
-              <p className="text-gray-200 leading-relaxed">
+              <p className="text-slate-200 leading-relaxed">
                 Develop tier escalation criteria, establish bioavailability adjustment protocols, and create 
                 guidance for site-specific modifications within the three-tier framework.
               </p>
@@ -280,7 +280,7 @@ export default function TieredFrameworkClient() {
             
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-green-300">Long-term Development</h3>
-              <p className="text-gray-200 leading-relaxed">
+              <p className="text-slate-200 leading-relaxed">
                 Comprehensive training programs, practitioner support tools, and continuous refinement 
                 of the tiered approach based on real-world application experience.
               </p>
@@ -288,7 +288,7 @@ export default function TieredFrameworkClient() {
             
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-green-300">Your Continued Input</h3>
-              <p className="text-gray-200 mb-4">
+              <p className="text-slate-200 mb-4">
                 We welcome your ongoing perspectives as we develop this tiered framework together. 
                 Your input is essential for creating effective, practical assessment protocols.
               </p>
@@ -304,7 +304,7 @@ export default function TieredFrameworkClient() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
+      <footer className="bg-slate-900 text-white py-8">
         <div className="container mx-auto px-6 text-center">
           <p className="text-slate-400">
             &copy; 2024 SSTAC & TWG Dashboard | Tiered Assessment Framework

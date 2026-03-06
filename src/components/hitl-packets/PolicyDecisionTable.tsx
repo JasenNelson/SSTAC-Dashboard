@@ -91,7 +91,7 @@ export default function PolicyDecisionTable({ records }: PolicyDecisionTableProp
   function SortHeader({ field, label }: { field: SortField; label: string }) {
     return (
       <th
-        className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-600"
+        className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer select-none hover:text-slate-600 dark:hover:text-slate-300"
         onClick={() => toggleSort(field)}
       >
         <span className="inline-flex items-center gap-1">
@@ -106,15 +106,15 @@ export default function PolicyDecisionTable({ records }: PolicyDecisionTableProp
   function statusColor(status: string): string {
     switch (status) {
       case 'PASS':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300';
       case 'FAIL':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300';
       case 'NOT_FOUND':
-        return 'bg-slate-100 text-slate-800';
+        return 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-300';
       case 'ESCALATE':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300';
       default:
-        return 'bg-slate-100 text-slate-500';
+        return 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400';
     }
   }
 
@@ -127,7 +127,7 @@ export default function PolicyDecisionTable({ records }: PolicyDecisionTableProp
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="text-sm border border-slate-300 rounded-md px-2 py-1"
+          className="text-sm border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
         >
           <option value="">All statuses</option>
           {uniqueStatuses.map((s) => (
@@ -138,7 +138,7 @@ export default function PolicyDecisionTable({ records }: PolicyDecisionTableProp
         <select
           value={tierFilter}
           onChange={(e) => setTierFilter(e.target.value)}
-          className="text-sm border border-slate-300 rounded-md px-2 py-1"
+          className="text-sm border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
         >
           <option value="">All tiers</option>
           {uniqueTiers.map((t) => (
@@ -149,7 +149,7 @@ export default function PolicyDecisionTable({ records }: PolicyDecisionTableProp
         <select
           value={confidenceFilter}
           onChange={(e) => setConfidenceFilter(e.target.value)}
-          className="text-sm border border-slate-300 rounded-md px-2 py-1"
+          className="text-sm border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
         >
           <option value="">All confidence</option>
           {uniqueConfidences.map((c) => (
@@ -161,7 +161,7 @@ export default function PolicyDecisionTable({ records }: PolicyDecisionTableProp
           <select
             value={flagFilter}
             onChange={(e) => setFlagFilter(e.target.value)}
-            className="text-sm border border-slate-300 rounded-md px-2 py-1"
+            className="text-sm border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300"
           >
             <option value="">All flags</option>
             {uniqueFlags.map((f) => (
@@ -170,52 +170,52 @@ export default function PolicyDecisionTable({ records }: PolicyDecisionTableProp
           </select>
         )}
 
-        <span className="text-sm text-slate-500">
+        <span className="text-sm text-slate-500 dark:text-slate-400">
           {filtered.length} of {records.length} records
         </span>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto border border-slate-200 rounded-lg">
-        <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
+      <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-lg">
+        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+          <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>
               <SortHeader field="policy_id" label="Policy ID" />
               <SortHeader field="tier" label="Tier" />
               <SortHeader field="status" label="Status" />
               <SortHeader field="confidence" label="Confidence" />
               <SortHeader field="decision_score" label="Score" />
-              <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 AI Reason
               </th>
-              <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Evidence
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-slate-200">
+          <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
             {filtered.map((rec) => (
-              <tr key={rec.policy_id} className="hover:bg-slate-50">
-                <td className="px-3 py-2 text-sm font-mono">{rec.policy_id}</td>
-                <td className="px-3 py-2 text-sm">{rec.tier}</td>
+              <tr key={rec.policy_id} className="hover:bg-slate-50 dark:hover:bg-slate-700">
+                <td className="px-3 py-2 text-sm font-mono text-slate-900 dark:text-slate-100">{rec.policy_id}</td>
+                <td className="px-3 py-2 text-sm text-slate-900 dark:text-slate-100">{rec.tier}</td>
                 <td className="px-3 py-2 text-sm">
                   <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${statusColor(rec.status)}`}>
                     {rec.status}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-sm">{rec.confidence}</td>
-                <td className="px-3 py-2 text-sm font-mono">
+                <td className="px-3 py-2 text-sm text-slate-900 dark:text-slate-100">{rec.confidence}</td>
+                <td className="px-3 py-2 text-sm font-mono text-slate-900 dark:text-slate-100">
                   {rec.decision_score !== null ? rec.decision_score.toFixed(2) : '-'}
                 </td>
-                <td className="px-3 py-2 text-sm text-slate-500">{rec.ai_invocation_reason}</td>
-                <td className="px-3 py-2 text-sm text-slate-500 max-w-xs truncate">
+                <td className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">{rec.ai_invocation_reason}</td>
+                <td className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400 max-w-xs truncate">
                   {rec.best_evidence_location || '-'}
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-3 py-8 text-center text-sm text-slate-500">
+                <td colSpan={7} className="px-3 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
                   No records match the current filters.
                 </td>
               </tr>

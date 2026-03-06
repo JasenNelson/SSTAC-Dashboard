@@ -106,7 +106,7 @@ describe('FilterSidebar', () => {
     );
 
     const twgButton = screen.getByRole('button', { name: /SSTAC & TWG Only/i });
-    expect(twgButton).toHaveClass('bg-blue-600');
+    expect(twgButton).toHaveClass('bg-sky-600');
   });
 
   it('should call setFilterMode when filter button is clicked', () => {

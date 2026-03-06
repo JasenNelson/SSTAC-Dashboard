@@ -17,7 +17,7 @@ export default function WIKSClient() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Hero/Header Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
@@ -65,10 +65,10 @@ export default function WIKSClient() {
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Card 1: The 'Why' */}
             <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
-              <div className="bg-gradient-to-br from-sky-600 to-sky-700 text-white p-8 rounded-2xl shadow-2xl h-full">
+              <div className="bg-gradient-to-br from-sky-600 to-sky-700 dark:from-sky-800 dark:to-sky-900 text-white p-8 rounded-2xl shadow-2xl h-full border border-transparent dark:border-sky-700">
                 <div className="text-4xl mb-4">🌊</div>
                 <h3 className="text-2xl font-bold mb-4">The &apos;Why&apos; - Foundational Vision</h3>
-                <p className="text-sky-100 leading-relaxed">
+                <p className="text-sky-100 dark:text-sky-200 leading-relaxed">
                   Embrace &apos;Two-Eyed Seeing&apos; to move beyond conventional environmental management by braiding the deep, relational wisdom of Indigenous Knowledge and Science with Western science. This approach seeks to develop more holistic, place-based standards that are not only scientifically robust but also culturally relevant and respectful.
                 </p>
               </div>
@@ -76,10 +76,10 @@ export default function WIKSClient() {
 
             {/* Card 2: The 'How' */}
             <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
-              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-8 rounded-2xl shadow-2xl h-full">
+              <div className="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-800 dark:to-green-900 text-white p-8 rounded-2xl shadow-2xl h-full border border-transparent dark:border-green-700">
                 <div className="text-4xl mb-4">🏛️</div>
                 <h3 className="text-2xl font-bold mb-4">The &apos;How&apos; - A Tangible Example</h3>
-                <p className="text-green-100 leading-relaxed">
+                <p className="text-green-100 dark:text-green-200 leading-relaxed">
                   The Tsleil-Waututh Nation&apos;s work on the Burrard Inlet Water Quality Objectives 
                   is a precedent-setting, Nation-led initiative. It demonstrates a successful 
                   government-to-government process that weaves knowledges to create numerical 
@@ -280,7 +280,7 @@ export default function WIKSClient() {
           <div className="space-y-8 text-lg">
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-sky-300">Continuing the Dialogue</h3>
-              <p className="text-gray-200 leading-relaxed">
+              <p className="text-slate-200 leading-relaxed">
                 This conversation extends beyond today&apos;s session. We welcome your ongoing perspectives 
                 as we develop this framework together.
               </p>
@@ -288,7 +288,7 @@ export default function WIKSClient() {
             
             <div>
               <h3 className="text-2xl font-semibold mb-4 text-sky-300">Contact Information</h3>
-              <p className="text-gray-200 mb-4">
+              <p className="text-slate-200 mb-4">
                 Please reach out with additional insights or questions about the Sediment Standards Project.
               </p>
               <a 
@@ -303,7 +303,7 @@ export default function WIKSClient() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
+      <footer className="bg-slate-900 text-white py-8">
         <div className="container mx-auto px-6 text-center">
           <p className="text-slate-400">
             &copy; 2024 SSTAC & TWG Dashboard | Weaving Indigenous Knowledge & Science

@@ -258,7 +258,7 @@ export default function RankingPoll({
   };
 
   return (
-    <div className="bg-gradient-to-br from-sky-50 to-sky-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-lg">
+    <div className="bg-gradient-to-br from-sky-50 to-sky-100 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-8 shadow-lg">
       <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-8 text-center">
         {questionNumber && `Question ${questionNumber}: `}{question}
       </h3>
@@ -297,7 +297,7 @@ export default function RankingPoll({
             </div>
             <button
               onClick={handleCancelChange}
-              className="px-3 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
+              className="px-3 py-1 text-sm bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors"
             >
               Cancel
             </button>
@@ -314,12 +314,12 @@ export default function RankingPoll({
             <div key={option.id} className="relative">
               <div className={`w-full p-4 rounded-xl border-2 transition-all duration-300 ${
                 hasVoted 
-                  ? 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500' 
-                  : 'bg-white dark:bg-gray-700 border-sky-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 hover:shadow-md'
+                  ? 'bg-slate-100 dark:bg-slate-600 border-slate-300 dark:border-slate-500'
+                  : 'bg-white dark:bg-slate-700 border-sky-300 dark:border-slate-600 hover:border-sky-500 dark:hover:border-sky-400 hover:shadow-md'
               }`}>
                 <div className="flex justify-between items-center mb-3">
                   <span className={`font-medium ${
-                    hasVoted ? 'text-slate-500 dark:text-gray-300' : 'text-slate-800 dark:text-white'
+                    hasVoted ? 'text-slate-500 dark:text-slate-300' : 'text-slate-800 dark:text-white'
                   }`}>
                     <span className="font-bold text-sky-700 dark:text-sky-300 mr-2">
                       Option {String.fromCharCode(65 + index)}:
@@ -350,8 +350,8 @@ export default function RankingPoll({
                         onClick={() => handleRankChange(option.id, rankNum + 1)}
                         className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                           option.rank === rankNum + 1
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 dark:bg-gray-600 text-slate-600 dark:text-gray-200 hover:bg-sky-200 dark:hover:bg-blue-700 hover:text-gray-900 dark:hover:text-gray-100 border border-gray-300 dark:border-gray-500'
+                            ? 'bg-sky-600 text-white'
+                            : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-200 hover:bg-sky-200 dark:hover:bg-sky-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-300 dark:border-slate-500'
                         }`}
                       >
                         {getRankingText(rankNum + 1)}
@@ -375,7 +375,7 @@ export default function RankingPoll({
             disabled={isLoading || !rankingOptions.every(opt => opt.rank !== null)}
             className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
               isLoading || !rankingOptions.every(opt => opt.rank !== null)
-                ? 'bg-gray-300 dark:bg-gray-600 text-slate-500 dark:text-gray-400 cursor-not-allowed'
+                ? 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                 : 'bg-sky-700 hover:bg-sky-800 text-white hover:shadow-lg transform hover:-translate-y-1'
             }`}
           >

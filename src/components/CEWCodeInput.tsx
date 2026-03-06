@@ -24,7 +24,7 @@ export default function CEWCodeInput({ onCodeEntered }: CEWCodeInputProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-slate-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center">
           <div className="mb-6">
@@ -63,8 +63,8 @@ export default function CEWCodeInput({ onCodeEntered }: CEWCodeInputProps) {
             </button>
           </form>
           
-          <div className="mt-6 bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 border border-sky-200 dark:border-sky-700">
-            <p className="text-sm text-blue-800 dark:text-blue-200">
+          <div className="mt-6 bg-sky-50 dark:bg-sky-900/30 rounded-lg p-4 border border-sky-200 dark:border-sky-700">
+            <p className="text-sm text-sky-800 dark:text-sky-200">
               Your responses will be saved anonymously and combined with other participants&apos; responses.
             </p>
           </div>

@@ -150,7 +150,7 @@ export default function PrioritizationClient() {
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8 mb-12">
-            <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 dark:from-blue-900/30 dark:to-blue-800/30 rounded-2xl shadow-lg p-8 border-2 border-blue-300 dark:border-blue-700">
+            <div className="bg-gradient-to-br from-sky-500/10 to-sky-600/10 dark:from-sky-900/30 dark:to-sky-800/30 rounded-2xl shadow-lg p-8 border-2 border-sky-300 dark:border-sky-700">
               <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 text-center">Key Survey Findings</h3>
               <ul className="space-y-4 text-slate-600 dark:text-slate-300 text-center">
                 <li>Strong support for comprehensive contaminant coverage</li>
@@ -183,7 +183,7 @@ export default function PrioritizationClient() {
           <div className="grid md:grid-cols-3 gap-8">
             {/* Card 1: The Challenge */}
             <div className="group cursor-pointer transform transition-all duration-500 hover:-translate-y-4">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-900 dark:to-blue-800 text-white p-8 rounded-2xl shadow-2xl h-full">
+              <div className="bg-gradient-to-br from-sky-500 to-sky-600 dark:from-sky-900 dark:to-sky-800 text-white p-8 rounded-2xl shadow-2xl h-full">
                 <h3 className="text-2xl font-bold mb-4">The Challenge</h3>
                 <p className="text-white leading-relaxed">
                   There are many opportunities to modernize and improve sediment standards, but we have limited resources. 
@@ -226,7 +226,7 @@ export default function PrioritizationClient() {
           <div className="mb-16">
             <h3 className="text-3xl font-bold text-center mb-12 text-slate-800 dark:text-white">Key Areas for Modernizing the Sediment Standards Framework</h3>
             <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 dark:from-blue-900/30 dark:to-blue-800/30 rounded-2xl shadow-lg p-8 border-2 border-blue-300 dark:border-blue-700">
+              <div className="bg-gradient-to-br from-sky-500/10 to-sky-600/10 dark:from-sky-900/30 dark:to-sky-800/30 rounded-2xl shadow-lg p-8 border-2 border-sky-300 dark:border-sky-700">
                 <h4 className="text-2xl font-semibold text-slate-800 dark:text-white mb-4">Matrix Sediment Standards</h4>
                 <p className="text-slate-600 dark:text-slate-300 text-lg mb-4">
                   Holistic protection of ecological organisms and people, from direct and food-related toxicity.
@@ -279,7 +279,7 @@ export default function PrioritizationClient() {
             <h3 className="text-3xl font-bold text-center mb-12 text-slate-800 dark:text-white">Data Gap, Feasibility & Prioritization Framework</h3>
             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8">
               <div className="space-y-6">
-                <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
+                <div className="bg-sky-50 dark:bg-sky-900/30 rounded-lg p-4">
                   <h4 className="text-xl font-semibold text-slate-800 dark:text-white mb-3">Address Information Gaps</h4>
                   <p className="text-slate-600 dark:text-slate-300 text-lg mb-2">
                     Collaborative research to address priorities such as:
@@ -442,7 +442,7 @@ export default function PrioritizationClient() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
+      <footer className="bg-slate-900 text-white py-8">
         <div className="container mx-auto px-6 text-center">
           <p className="text-slate-400">
             &copy; 2024 SSTAC & TWG Dashboard | Contaminant Prioritization Framework

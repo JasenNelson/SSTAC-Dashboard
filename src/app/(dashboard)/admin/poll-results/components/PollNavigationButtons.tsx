@@ -23,7 +23,7 @@ export default function PollNavigationButtons({
       <div className="fixed left-4 top-20 z-50">
         <button
           onClick={onShowPanel}
-          className="flex items-center justify-center w-12 h-12 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-xl border-2 border-white dark:border-gray-800"
+          className="flex items-center justify-center w-12 h-12 bg-sky-600 dark:bg-sky-500 text-white rounded-lg hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors shadow-xl border-2 border-white dark:border-slate-800"
           title="Show filter panel"
         >
           <svg
@@ -46,7 +46,7 @@ export default function PollNavigationButtons({
       <div className="fixed left-4 top-32 z-50">
         <button
           onClick={onRefresh}
-          className="flex items-center justify-center w-12 h-12 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors shadow-xl border-2 border-white dark:border-gray-800"
+          className="flex items-center justify-center w-12 h-12 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors shadow-xl border-2 border-white dark:border-slate-800"
           title="Refresh results"
         >
           <svg

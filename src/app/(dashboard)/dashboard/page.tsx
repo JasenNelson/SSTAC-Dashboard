@@ -145,8 +145,8 @@ export default async function DashboardPage() {
 
             {/* CEW 2025 */}
             <Link href="/cew-2025" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 hover:border-green-300">
-                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-200 transition-colors">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-green-300 dark:hover:border-green-500">
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/40 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-800 transition-colors">
                   <span className="text-3xl">🌊</span>
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors mb-3">
@@ -160,8 +160,8 @@ export default async function DashboardPage() {
 
             {/* TWG Documents */}
             <Link href="/twg/documents" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 hover:border-purple-300">
-                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-200 transition-colors">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-purple-300 dark:hover:border-purple-500">
+                <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-purple-200 dark:group-hover:bg-purple-800 transition-colors">
                   <span className="text-3xl">📋</span>
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors mb-3">
@@ -175,8 +175,8 @@ export default async function DashboardPage() {
 
             {/* Discussion Forum */}
             <Link href="/twg/discussions" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 hover:border-orange-300">
-                <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-200 transition-colors">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-orange-300 dark:hover:border-orange-500">
+                <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/40 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-200 dark:group-hover:bg-orange-800 transition-colors">
                   <span className="text-3xl">💬</span>
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors mb-3">
@@ -190,8 +190,8 @@ export default async function DashboardPage() {
 
             {/* WIKS - Weaving Indigenous Knowledge & Science */}
             <Link href="/wiks" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 hover:border-amber-300">
-                <div className="w-16 h-16 bg-amber-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-amber-200 transition-colors">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-500">
+                <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/40 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-amber-200 dark:group-hover:bg-amber-800 transition-colors">
                   <span className="text-3xl">🌿</span>
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors mb-3">
@@ -205,8 +205,8 @@ export default async function DashboardPage() {
 
             {/* Admin Panel */}
             <Link href="/admin" className="group">
-              <div className="bg-white rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 hover:border-red-300">
-                <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-red-200 transition-colors">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-red-300 dark:hover:border-red-500">
+                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/40 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-red-200 dark:group-hover:bg-red-800 transition-colors">
                   <span className="text-3xl">⚙️</span>
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors mb-3">
@@ -223,7 +223,7 @@ export default async function DashboardPage() {
 
         {/* Project Status Summary */}
         <section className="mb-16">
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl p-10 text-white">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 dark:from-green-800 dark:to-emerald-900 rounded-2xl shadow-2xl p-10 text-white">
             <h2 className="text-3xl font-bold mb-8 text-center">Current Project Status</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
@@ -291,7 +291,7 @@ export default async function DashboardPage() {
                     </a>
                   </div>
                   <div>
-                    <strong className="text-slate-700">Ministry of Environment and Parks:</strong>{' '}
+                    <strong className="text-slate-700 dark:text-slate-200">Ministry of Environment and Parks:</strong>{' '}
                     <a 
                       href="mailto:jasen.nelson@gov.bc.ca" 
                       className="text-sky-700 hover:text-sky-800 underline font-medium"
@@ -302,7 +302,7 @@ export default async function DashboardPage() {
                 </div>
               </div>
               <div>
-                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">📋</span>
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Project Updates</h3>
@@ -311,7 +311,7 @@ export default async function DashboardPage() {
                 </p>
               </div>
               <div>
-                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <span className="text-3xl">🤝</span>
                 </div>
                 <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">Stakeholder Engagement</h3>

@@ -66,8 +66,8 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">New Documents This Month</p>
                 <p className="text-3xl font-bold text-green-600">{metrics.newDocumentsThisMonth}</p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                <FileText className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center">
+                <FileText className="w-6 h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </div>
@@ -79,8 +79,8 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Discussion Threads</p>
                 <p className="text-3xl font-bold text-purple-600">{metrics.totalDiscussionThreads}</p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                <MessageSquare className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center">
+                <MessageSquare className="w-6 h-6 text-purple-600 dark:text-purple-400" />
               </div>
             </div>
           </div>
@@ -92,8 +92,8 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Active Announcements</p>
                 <p className="text-3xl font-bold text-orange-600">{metrics.activeAnnouncements}</p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                <Bell className="w-6 h-6 text-orange-600" />
+              <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/40 rounded-xl flex items-center justify-center">
+                <Bell className="w-6 h-6 text-orange-600 dark:text-orange-400" />
               </div>
             </div>
           </div>
@@ -120,8 +120,8 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                   {Math.round((metrics.completedMilestones / metrics.totalMilestones) * 100)}%
                 </p>
               </div>
-              <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-teal-600" />
+              <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/40 rounded-xl flex items-center justify-center">
+                <BarChart3 className="w-6 h-6 text-teal-600 dark:text-teal-400" />
               </div>
             </div>
           </div>
@@ -162,8 +162,8 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
             {/* Manage Tags */}
             <Link href="/admin/tags" className="group">
               <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-green-300">
-                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-green-200 transition-colors">
-                  <Tags className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-green-200 dark:group-hover:bg-green-800 transition-colors">
+                  <Tags className="w-8 h-8 text-green-600 dark:text-green-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-green-600 transition-colors mb-2">
                   Manage Tags
@@ -177,8 +177,8 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
             {/* Create Announcement */}
             <Link href="/admin/announcements" className="group">
               <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-orange-300">
-                <div className="w-16 h-16 bg-orange-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-orange-200 transition-colors">
-                  <Bell className="w-8 h-8 text-orange-600" />
+                <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-orange-200 dark:group-hover:bg-orange-800 transition-colors">
+                  <Bell className="w-8 h-8 text-orange-600 dark:text-orange-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-orange-600 transition-colors mb-2">
                   Announcements
@@ -192,8 +192,8 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
             {/* Manage Milestones */}
             <Link href="/admin/milestones" className="group">
               <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-purple-300">
-                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-200 transition-colors">
-                  <Calendar className="w-8 h-8 text-purple-600" />
+                <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-200 dark:group-hover:bg-purple-800 transition-colors">
+                  <Calendar className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 transition-colors mb-2">
                   Milestones
@@ -222,8 +222,8 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
             {/* TWG White Paper Synthesis */}
             <Link href="/admin/twg-synthesis" className="group">
               <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-purple-300">
-                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-200 transition-colors">
-                  <FileSearch className="w-8 h-8 text-purple-600" />
+                <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-200 dark:group-hover:bg-purple-800 transition-colors">
+                  <FileSearch className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 transition-colors mb-2">
                   TWG White Paper Synthesis
@@ -237,8 +237,8 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
             {/* Regulatory Review */}
             <Link href="/regulatory-review" className="group">
               <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-teal-300">
-                <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-teal-200 transition-colors">
-                  <ClipboardCheck className="w-8 h-8 text-teal-600" />
+                <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-teal-200 dark:group-hover:bg-teal-800 transition-colors">
+                  <ClipboardCheck className="w-8 h-8 text-teal-600 dark:text-teal-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-teal-600 transition-colors mb-2">
                   Regulatory Review
@@ -257,7 +257,7 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
               <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
-                <span className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                <span className="w-6 h-6 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mr-3">
                   <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                 </span>
                 All Systems Operational

@@ -579,7 +579,7 @@ export default function AssessmentDetail({
             <button
               onClick={onBack}
               aria-label="Back to list"
-              className="p-1.5 text-slate-400 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              className="p-1.5 text-slate-400 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
               title="Back to list (Esc)"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -650,7 +650,7 @@ export default function AssessmentDetail({
                       <button
                         type="button"
                         onClick={() => setShowAnalysis(!showAnalysis)}
-                        className="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 rounded"
+                        className="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 rounded"
                       >
                         {showAnalysis ? 'Collapse' : 'Expand'}
                       </button>
@@ -682,7 +682,7 @@ export default function AssessmentDetail({
                   <button
                     type="button"
                     onClick={() => setShowAllEvidence((prev) => !prev)}
-                    className="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 rounded"
+                    className="text-xs font-medium text-sky-600 dark:text-sky-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 rounded"
                   >
                     {showAllEvidence ? `Show Top 3 of ${evidenceCandidates.length}` : `Show All (${evidenceCandidates.length})`}
                   </button>
@@ -715,7 +715,7 @@ export default function AssessmentDetail({
                     return (
                       <label
                         key={option.value}
-                        className={`relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-gray-900 ${
+                        className={`relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-slate-900 ${
                           isSelected
                             ? `${option.bgClass} border-current`
                             : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
@@ -775,7 +775,7 @@ export default function AssessmentDetail({
                     <label
                       key={option.value}
                       className={`
-                        relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-gray-900
+                        relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-slate-900
                         ${
                           isAllowed
                             ? isSelected
@@ -847,7 +847,7 @@ export default function AssessmentDetail({
                     id="confidence"
                     value={confidence}
                     onChange={(e) => setConfidence(e.target.value as ConfidenceLevel)}
-                    className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                   >
                     {CONFIDENCE_OPTIONS.map((level) => (
                       <option key={level} value={level}>
@@ -882,7 +882,7 @@ export default function AssessmentDetail({
                     }}
                     rows={2}
                     placeholder="Explain why you are overriding the AI result..."
-                    className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none ${
+                    className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 resize-none ${
                       validationErrors.overrideReason
                         ? 'border-red-300 dark:border-red-600'
                         : 'border-slate-300 dark:border-slate-600'
@@ -913,7 +913,7 @@ export default function AssessmentDetail({
                   onChange={(e) => setNotes(e.target.value)}
                   rows={3}
                   placeholder="Capture reviewer notes with citations as needed..."
-                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none"
+                  className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 resize-none"
                 />
               </div>
 
@@ -924,7 +924,7 @@ export default function AssessmentDetail({
                     type="checkbox"
                     checked={includeInFinal}
                     onChange={(e) => setIncludeInFinal(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                    className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                   />
                   Include-in-Final
                 </label>
@@ -942,7 +942,7 @@ export default function AssessmentDetail({
                       onChange={(e) => setFinalMemoSummary(e.target.value)}
                       rows={4}
                       placeholder="Write the executive-facing summary for the Final Memo..."
-                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none"
+                      className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 resize-none"
                     />
                   </div>
                 )}
@@ -951,7 +951,7 @@ export default function AssessmentDetail({
                     type="checkbox"
                     checked={followUpNeeded}
                     onChange={(e) => setFollowUpNeeded(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                    className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                   />
                   Follow-up needed (request more engine evaluation)
                 </label>
@@ -963,7 +963,7 @@ export default function AssessmentDetail({
               <button
                 type="button"
                 onClick={() => setIsBaselineExpanded(!isBaselineExpanded)}
-                className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                 aria-expanded={isBaselineExpanded}
                 aria-controls={baselinePanelId}
               >
@@ -1064,7 +1064,7 @@ export default function AssessmentDetail({
                 type="button"
                 onClick={onSkip}
                 disabled={isSaving || isLoading}
-                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
               >
                 Skip
               </button>
@@ -1072,7 +1072,7 @@ export default function AssessmentDetail({
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving || isLoading}
-                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                className="flex items-center gap-2 px-6 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
               >
                 {(isSaving || isLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
                 {selectedDecision ? 'Save Judgment' : 'Save Notes'}

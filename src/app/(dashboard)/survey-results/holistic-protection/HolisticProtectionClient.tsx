@@ -120,7 +120,7 @@ export default function HolisticProtectionClient() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-slate-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Hero/Header Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image */}
@@ -180,17 +180,17 @@ export default function HolisticProtectionClient() {
           
           <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8">
             <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
+              <div className="bg-sky-50 dark:bg-sky-900/30 rounded-lg p-6">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 text-center">Bioaccumulation Prevention</h3>
                 <div className="space-y-4">
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-blue-900 dark:text-blue-400 mb-2">73%</div>
+                    <div className="text-4xl font-bold text-sky-900 dark:text-sky-400 mb-2">73%</div>
                     <p className="text-slate-600 dark:text-slate-300 text-lg">
                       Current Sediment Standards are Not or Slightly Effective
                     </p>
                   </div>
                   <div className="mt-6 text-center">
-                    <div className="text-4xl font-bold text-blue-900 dark:text-blue-400 mb-2">76.7%</div>
+                    <div className="text-4xl font-bold text-sky-900 dark:text-sky-400 mb-2">76.7%</div>
                     <p className="text-slate-600 dark:text-slate-300 text-lg">
                       Necessary in Future Matrix Sediment Standards
                     </p>
@@ -228,7 +228,7 @@ export default function HolisticProtectionClient() {
             </div>
 
             {/* Ecosystem Integrity */}
-            <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
+            <div className="bg-sky-50 dark:bg-sky-900/30 rounded-lg p-6">
               <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">The Matrix Framework</h3>
               <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
                 Ecosystem Integrity: Holistic protection requires ensuring the ecological health of bottom-dwelling and pelagic organisms.
@@ -268,7 +268,7 @@ export default function HolisticProtectionClient() {
               <div>
                 <h3 className="text-2xl font-semibold text-slate-800 dark:text-white mb-4">Direct Toxicity (SedS-direct)</h3>
                 <div className="space-y-4">
-                  <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4">
+                  <div className="bg-sky-50 dark:bg-sky-900/30 rounded-lg p-4">
                     <h4 className="text-xl font-semibold text-slate-800 dark:text-white mb-2">SedS-directECO</h4>
                     <p className="text-slate-600 dark:text-slate-300">
                       Protect aquatic organisms from direct exposure from contaminants in sediment.
@@ -335,19 +335,19 @@ export default function HolisticProtectionClient() {
                 </ul>
               </div>
               
-              <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-6">
+              <div className="bg-sky-50 dark:bg-sky-900/30 rounded-lg p-6">
                 <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Important</h3>
                 <ul className="space-y-3 text-slate-600 dark:text-slate-300 text-lg">
                   <li className="flex items-start">
-                    <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">•</span>
+                    <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">•</span>
                     <span>Will improve regulatory decisions related to contaminated sediments</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">•</span>
+                    <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">•</span>
                     <span>Addresses a critical gap in current regime</span>
                   </li>
                   <li className="flex items-start">
-                    <span className="text-blue-600 dark:text-blue-400 mr-3 mt-1">•</span>
+                    <span className="text-sky-600 dark:text-sky-400 mr-3 mt-1">•</span>
                     <span>Environmental protection</span>
                   </li>
                 </ul>
@@ -392,7 +392,7 @@ export default function HolisticProtectionClient() {
       </section>
 
       {/* Next Steps Section */}
-      <section className="py-12 px-6 bg-gradient-to-br from-gray-800 to-gray-900 text-white">
+      <section className="py-12 px-6 bg-gradient-to-br from-slate-800 to-slate-900 text-white">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-8 font-['Merriweather'] text-white">
             Next Steps for Implementation
@@ -400,24 +400,24 @@ export default function HolisticProtectionClient() {
           
           <div className="space-y-8 text-lg">
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-blue-300">Immediate Actions</h3>
-              <p className="text-gray-200 leading-relaxed">
+              <h3 className="text-2xl font-semibold mb-4 text-sky-300">Immediate Actions</h3>
+              <p className="text-slate-200 leading-relaxed">
                 Develop draft matrix standards for key contaminants, create assessment frameworks, 
                 and establish stakeholder consultation processes to refine the approach.
               </p>
             </div>
             
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-blue-300">Long-term Development</h3>
-              <p className="text-gray-200 leading-relaxed">
+              <h3 className="text-2xl font-semibold mb-4 text-sky-300">Long-term Development</h3>
+              <p className="text-slate-200 leading-relaxed">
                 Comprehensive guidance documents, training programs, and monitoring frameworks 
                 to ensure successful implementation of the matrix sediment standards framework.
               </p>
             </div>
             
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-blue-300">Your Continued Input</h3>
-              <p className="text-gray-200 mb-4">
+              <h3 className="text-2xl font-semibold mb-4 text-sky-300">Your Continued Input</h3>
+              <p className="text-slate-200 mb-4">
                 We welcome your ongoing perspectives as we develop this framework together. 
                 Your input is essential for creating effective, practical matrix standards.
               </p>
@@ -433,7 +433,7 @@ export default function HolisticProtectionClient() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8">
+      <footer className="bg-slate-900 text-white py-8">
         <div className="container mx-auto px-6 text-center">
           <p className="text-slate-400">
             &copy; 2024 SSTAC & TWG Dashboard | Matrix Sediment Standards Framework

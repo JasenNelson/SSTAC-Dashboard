@@ -260,7 +260,7 @@ export default function TagManagement() {
                         const colorInput = document.getElementById('color') as HTMLInputElement;
                         if (colorInput) colorInput.value = color;
                       }}
-                      className="w-6 h-6 rounded border-2 border-slate-300 hover:border-gray-400 transition-colors"
+                      className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors"
                       style={{ backgroundColor: color }}
                       title={color}
                     />
@@ -288,7 +288,7 @@ export default function TagManagement() {
         <div className="px-6 py-4 border-b border-slate-200">
           <h3 className="text-lg font-medium text-slate-900">Existing Tags</h3>
         </div>
-        <ul className="divide-y divide-gray-200">
+        <ul className="divide-y divide-slate-200">
           {tags.length > 0 ? (
             tags.map((tag) => (
               <li key={tag.id} className="px-6 py-4">
@@ -379,7 +379,7 @@ export default function TagManagement() {
                             const colorInput = document.getElementById('edit-color') as HTMLInputElement;
                             if (colorInput) colorInput.value = color;
                           }}
-                          className="w-6 h-6 rounded border-2 border-slate-300 hover:border-gray-400 transition-colors"
+                          className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors"
                           style={{ backgroundColor: color }}
                           title={color}
                         />

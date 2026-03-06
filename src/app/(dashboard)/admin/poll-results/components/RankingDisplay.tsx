@@ -104,8 +104,8 @@ function RankingDisplay({ selectedPoll, isExpanded, getFilteredPollResults }: Ra
               isExpanded ? 'p-3' : 'p-4'
             } ${
               isTopChoice
-                ? 'border-blue-500 bg-white dark:bg-gray-800 dark:border-blue-400'
-                : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
+                ? 'border-blue-500 bg-white dark:bg-slate-800 dark:border-blue-400'
+                : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800'
             }`}
           >
             <div className={`flex items-center justify-between ${isExpanded ? 'mb-2' : 'mb-3'}`}>
@@ -128,7 +128,7 @@ function RankingDisplay({ selectedPoll, isExpanded, getFilteredPollResults }: Ra
                       : isExpanded
                         ? 'text-lg'
                         : 'text-base'
-                  } text-gray-900 dark:text-gray-100`}
+                  } text-slate-900 dark:text-slate-100`}
                 >
                   {result.option_text}
                 </span>
@@ -142,7 +142,7 @@ function RankingDisplay({ selectedPoll, isExpanded, getFilteredPollResults }: Ra
                   {result.averageRank?.toFixed(1) || 'N/A'}
                 </div>
                 <div
-                  className={`text-gray-600 dark:text-gray-400 ${
+                  className={`text-slate-600 dark:text-slate-400 ${
                     isExpanded ? 'text-base' : 'text-sm'
                   }`}
                 >
@@ -151,7 +151,7 @@ function RankingDisplay({ selectedPoll, isExpanded, getFilteredPollResults }: Ra
               </div>
             </div>
             <div
-              className={`w-full max-w-full bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden ${
+              className={`w-full max-w-full bg-slate-200 dark:bg-slate-300 rounded-full overflow-hidden ${
                 needsLargerText
                   ? isExpanded
                     ? 'h-10'

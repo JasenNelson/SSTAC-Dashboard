@@ -80,7 +80,7 @@ export default function MatrixGraphRenderer({
               const q2Text = q2Poll?.question || 'Question 2';
               exportMatrixGraph(specificGraph, q1Text, q2Text, 'Prioritization Q1-Q2');
             }}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+            className="px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
             title="Export matrix graph data to CSV"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +98,7 @@ export default function MatrixGraphRenderer({
         {/* Matrix Graph - Conditionally Rendered */}
         {isVisible && (
           <div className="p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
-            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4 text-center">
               Prioritization
             </h3>
             <div className="flex justify-center">
@@ -182,7 +182,7 @@ export default function MatrixGraphRenderer({
                 `Holistic Protection Q${selectedPoll.poll_index}-Q${selectedPoll.poll_index + 1}`
               );
             }}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+            className="px-6 py-3 bg-sky-600 hover:bg-sky-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
             title="Export matrix graph data to CSV"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -200,7 +200,7 @@ export default function MatrixGraphRenderer({
         {/* Matrix Graph - Conditionally Rendered */}
         {isVisible && (
           <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800">
-            <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4 text-center">
               Holistic Protection
             </h3>
             <div className="flex justify-center">
