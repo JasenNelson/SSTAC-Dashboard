@@ -6,7 +6,7 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  darkMode: 'class',
+  // darkMode handled by @custom-variant in globals.css (Tailwind v4)
   theme: {
     extend: {
       colors: {

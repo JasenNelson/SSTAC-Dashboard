@@ -8,7 +8,7 @@ export default function ProjectPhases() {
   return (
     <div className="space-y-6">
       <div className="flex items-start space-x-4">
-        <div className="flex-shrink-0 w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+        <div className="flex-shrink-0 w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center">
           <span className="text-2xl">📋</span>
         </div>
         <div className="flex-1">

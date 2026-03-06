@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { useTheme } from 'next-themes';
+import { useTheme } from '@/contexts/ThemeContext';
 import {
   BarChart,
   Bar,
@@ -30,15 +30,15 @@ export default function ReportBarChart({
   figureNumber,
   caption,
 }: ReportBarChartProps) {
-  const { theme, resolvedTheme } = useTheme();
+  const { theme } = useTheme();
 
   // Sort data by value (descending) for better readability
   const sortedData = useMemo(() => {
     return [...data].sort((a, b) => b.value - a.value);
   }, [data]);
 
-  // Theme-aware colors - use resolvedTheme to handle SSR cases
-  const currentTheme = resolvedTheme || theme || 'light';
+  // Theme-aware colors
+  const currentTheme = theme || 'light';
   const isDark = currentTheme === 'dark';
   const textColor = isDark ? '#ffffff' : '#111827'; // text-white / text-gray-900
   const secondaryTextColor = isDark ? '#d1d5db' : '#374151'; // text-gray-300 / text-gray-700

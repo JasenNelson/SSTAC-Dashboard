@@ -5,7 +5,7 @@ import ProjectPhases from "@/components/dashboard/ProjectPhases";
 
 export default function Home() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Header */}
       <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -38,7 +38,7 @@ export default function Home() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Project Context Section */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 mb-12 border border-slate-200 dark:border-slate-700">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-8 mb-12 border border-slate-200 dark:border-slate-700">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-8 text-center">
               About the Sediment Standards Project
@@ -73,7 +73,7 @@ export default function Home() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           <a
             href="/dashboard"
-            className="group bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:-translate-y-2"
+            className="group bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:-translate-y-2"
           >
             <div className="flex items-center space-x-4 mb-4">
               <div className="w-12 h-12 bg-sky-100 dark:bg-sky-900/40 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -81,14 +81,14 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Dashboard</h3>
             </div>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-slate-600 dark:text-slate-300">
               Access project overview, documents, and key metrics
             </p>
           </a>
 
           <a
             href="/survey-results"
-            className="group bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:-translate-y-2"
+            className="group bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:-translate-y-2"
           >
             <div className="flex items-center space-x-4 mb-4">
               <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -96,14 +96,14 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Survey Results</h3>
             </div>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-slate-600 dark:text-slate-300">
               Explore stakeholder feedback and survey findings
             </p>
           </a>
 
           <a
             href="/cew-2025"
-            className="group bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:-translate-y-2"
+            className="group bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:-translate-y-2"
           >
             <div className="flex items-center space-x-4 mb-4">
               <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -111,7 +111,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-white">CEW 2025</h3>
             </div>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-slate-600 dark:text-slate-300">
               Canadian Ecotoxicity Workshop session details
             </p>
           </a>
@@ -119,7 +119,7 @@ export default function Home() {
 
 
         {/* Authentication Section */}
-        <div className="bg-gradient-to-r from-sky-50 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-8 text-center">
+        <div className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-2xl shadow-sm p-8 text-center">
           <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
             Get Involved
           </h3>
