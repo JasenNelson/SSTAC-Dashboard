@@ -404,7 +404,7 @@ describe('Integration Tests: FilterSidebar Component Interactions', () => {
         btn.textContent?.includes('SSTAC & TWG Only')
       );
 
-      expect(activeButton).toHaveClass('bg-blue-600');
+      expect(activeButton).toHaveClass('bg-sky-600');
     });
 
     it('should call setFilterMode when filter button is clicked', () => {

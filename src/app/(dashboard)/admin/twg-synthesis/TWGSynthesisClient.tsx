@@ -346,10 +346,10 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
     <div className="p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
           TWG White Paper Synthesis Dashboard
         </h1>
-        <p className="text-gray-600 dark:text-gray-300">
+        <p className="text-slate-600 dark:text-slate-300">
           Analyze and synthesize feedback from the Technical Working Group review process
         </p>
       </div>
@@ -358,30 +358,30 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Total Submissions</h3>
-          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalSubmissions}</p>
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">Total Submissions</h3>
+          <p className="text-3xl font-bold text-sky-700 dark:text-sky-300">{totalSubmissions}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Submitted</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">Submitted</h3>
           <p className="text-3xl font-bold text-green-600 dark:text-green-400">{submittedCount}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">In Progress</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">In Progress</h3>
           <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{inProgressCount}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Files Uploaded</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+          <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">Files Uploaded</h3>
           <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{totalFiles}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Filters</h3>
+      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6 mb-8">
+        <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">Filters</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Search
             </label>
             <input
@@ -389,17 +389,17 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by email or name..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Status
             </label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as 'ALL' | 'IN_PROGRESS' | 'SUBMITTED')}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
             >
               <option value="ALL">All Status</option>
               <option value="SUBMITTED">Submitted</option>
@@ -407,13 +407,13 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Expertise Area
             </label>
             <select
               value={expertiseFilter}
               onChange={(e) => setExpertiseFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
             >
               <option value="ALL">All Expertise</option>
               {expertiseAreas.map(area => (
@@ -424,7 +424,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
           <div className="flex items-end">
             <button
               onClick={exportToCSV}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              className="w-full bg-sky-700 hover:bg-sky-800 text-white font-medium py-2 px-4 rounded-lg transition-colors"
             >
               Export CSV
             </button>
@@ -435,11 +435,11 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Quantitative Analysis */}
         <div className="space-y-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Quantitative Analysis</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Quantitative Analysis</h2>
           
           {/* Part 2 Ratings */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">
               High-Level Report Assessment
             </h3>
             <div className="space-y-4">
@@ -459,8 +459,8 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
           </div>
 
           {/* Part 4 Rankings - Matrix Framework */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">
               Matrix Framework - Contaminant Priority Rankings
             </h3>
             <InteractiveBarChart
@@ -476,8 +476,8 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
           </div>
 
           {/* Part 5 Bioavailability */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">
               Tiered Approach - Bioavailability Methods
             </h3>
             <InteractivePieChart
@@ -503,11 +503,11 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
 
         {/* Qualitative Analysis */}
         <div className="space-y-8">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Qualitative Analysis</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Qualitative Analysis</h2>
           
           {/* Comprehensive Comments Viewer */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">
               Complete Review Responses by Reviewer
             </h3>
             <div className="space-y-6 max-h-[800px] overflow-y-auto">
@@ -539,13 +539,13 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                 if (!hasContent) return null
 
                 return (
-                  <div key={submission.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/50">
-                    <div className="flex justify-between items-start mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
+                  <div key={submission.id} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 bg-slate-50 dark:bg-slate-900/50">
+                    <div className="flex justify-between items-start mb-4 pb-3 border-b border-slate-200 dark:border-slate-700">
                       <div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">
+                        <h4 className="font-semibold text-slate-900 dark:text-white">
                           {p1.name || 'Anonymous Reviewer'}
                         </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{submission.email}</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">{submission.email}</p>
                       </div>
                       <div className="text-right">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -555,7 +555,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                         }`}>
                           {submission.status}
                         </span>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                           {formatDate(submission.updated_at)}
                         </p>
                       </div>
@@ -564,57 +564,57 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                     <div className="space-y-4">
                       {/* Part 2: High-Level Assessment */}
                       {(p2.clarity || p2.completeness || p2.defensibility || p2.comments) && (
-                        <div className="bg-white dark:bg-gray-800 rounded p-3">
-                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 2: High-Level Report Assessment</h5>
+                        <div className="bg-white dark:bg-slate-800 rounded p-3">
+                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 2: High-Level Report Assessment</h5>
                           {(p2.clarity || p2.completeness || p2.defensibility) && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Ratings: Clarity: {p2.clarity || 'N/A'}, Completeness: {p2.completeness || 'N/A'}, Defensibility: {p2.defensibility || 'N/A'}
                             </div>
                           )}
                           {p2.comments && (
-                            <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{p2.comments}</p>
+                            <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{p2.comments}</p>
                           )}
                         </div>
                       )}
 
                       {/* Part 3: Line-by-Line Comments */}
                       {(p3.sectionI || p3.sectionII || p3.sectionIII || p3.sectionIV || p3.sectionV || p3.appendicesCD) && (
-                        <div className="bg-white dark:bg-gray-800 rounded p-3">
-                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 3: Line-by-Line Comments</h5>
+                        <div className="bg-white dark:bg-slate-800 rounded p-3">
+                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 3: Line-by-Line Comments</h5>
                           {p3.sectionI && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Section I - Introduction:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p3.sectionI}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Section I - Introduction:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p3.sectionI}</p>
                             </div>
                           )}
                           {p3.sectionII && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Section II - Preliminary Findings:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p3.sectionII}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Section II - Preliminary Findings:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p3.sectionII}</p>
                             </div>
                           )}
                           {p3.sectionIII && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Section III - Jurisdictional Scan:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p3.sectionIII}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Section III - Jurisdictional Scan:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p3.sectionIII}</p>
                             </div>
                           )}
                           {p3.sectionIV && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Section IV - Stakeholder Engagement:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p3.sectionIV}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Section IV - Stakeholder Engagement:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p3.sectionIV}</p>
                             </div>
                           )}
                           {p3.sectionV && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Section V - Proposed Framework:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p3.sectionV}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Section V - Proposed Framework:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p3.sectionV}</p>
                             </div>
                           )}
                           {p3.appendicesCD && (
                             <div>
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Appendices C & D:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p3.appendicesCD}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Appendices C & D:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p3.appendicesCD}</p>
                             </div>
                           )}
                         </div>
@@ -622,10 +622,10 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
 
                       {/* Part 4: Matrix Framework */}
                       {(p4.ranking || p4.challenges || p4.additionalComments || p4.otherContaminant) && (
-                        <div className="bg-white dark:bg-gray-800 rounded p-3">
-                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 4: Matrix Sediment Standards Framework</h5>
+                        <div className="bg-white dark:bg-slate-800 rounded p-3">
+                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 4: Matrix Sediment Standards Framework</h5>
                           {p4.ranking && Object.keys(p4.ranking).length > 0 && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Contaminant Rankings: {Object.entries(p4.ranking)
                                 .filter(([_, rank]) => rank)
                                 .sort(([_, a], [__, b]) => (a as number) - (b as number))
@@ -634,32 +634,32 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                             </div>
                           )}
                           {p4.otherContaminant && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Other Contaminant: {p4.otherContaminant}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">Other Contaminant: {p4.otherContaminant}</div>
                           )}
                           {p4.challenges && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Challenges:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p4.challenges}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Challenges:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p4.challenges}</p>
                             </div>
                           )}
                           {p4.additionalComments && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p4.additionalComments}</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p4.additionalComments}</p>
                           )}
                         </div>
                       )}
 
                       {/* Part 5: Tiered Approach */}
                       {(p5.bioavailability || p5.guidance || p5.additionalComments || p5.evidence || p5.otherBioavailability) && (
-                        <div className="bg-white dark:bg-gray-800 rounded p-3">
-                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 5: Tiered Assessment Approach</h5>
+                        <div className="bg-white dark:bg-slate-800 rounded p-3">
+                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 5: Tiered Assessment Approach</h5>
                           {p5.bioavailability && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Bioavailability Method: {p5.bioavailability}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">Bioavailability Method: {p5.bioavailability}</div>
                           )}
                           {p5.otherBioavailability && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Other: {p5.otherBioavailability}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">Other: {p5.otherBioavailability}</div>
                           )}
                           {p5.evidence && Object.keys(p5.evidence).length > 0 && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Evidence Rankings: {Object.entries(p5.evidence)
                                 .filter(([_, rank]) => rank)
                                 .sort(([_, a], [__, b]) => (a as number) - (b as number))
@@ -668,16 +668,16 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                             </div>
                           )}
                           {p5.evidenceOtherText && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Evidence Other: {p5.evidenceOtherText}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">Evidence Other: {p5.evidenceOtherText}</div>
                           )}
                           {p5.guidance && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Technical Guidance:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p5.guidance}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Technical Guidance:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p5.guidance}</p>
                             </div>
                           )}
                           {p5.additionalComments && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p5.additionalComments}</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p5.additionalComments}</p>
                           )}
                         </div>
                       )}
@@ -685,44 +685,44 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                       {/* Part 6: Indigenous Knowledge */}
                       {(p6.tier0Approaches || p6.frameworkElements || p6.studyComponents || p6.challenges || 
                         p6.additionalComments || p6.tier0OtherText || p6.frameworkOtherText || p6.studyOtherText) && (
-                        <div className="bg-white dark:bg-gray-800 rounded p-3">
-                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 6: WQCIU Approaches for Indigenous Uses</h5>
+                        <div className="bg-white dark:bg-slate-800 rounded p-3">
+                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 6: WQCIU Approaches for Indigenous Uses</h5>
                           {p6.tier0Approaches && p6.tier0Approaches.length > 0 && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Tier 0 Approaches: {p6.tier0Approaches.join(', ')}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">Tier 0 Approaches: {p6.tier0Approaches.join(', ')}</div>
                           )}
                           {p6.tier0OtherText && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Tier 0 Other: {p6.tier0OtherText}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">Tier 0 Other: {p6.tier0OtherText}</div>
                           )}
                           {p6.frameworkElements && p6.frameworkElements.length > 0 && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Framework Elements: {p6.frameworkElements.join(', ')}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">Framework Elements: {p6.frameworkElements.join(', ')}</div>
                           )}
                           {p6.frameworkOtherText && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Framework Other: {p6.frameworkOtherText}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">Framework Other: {p6.frameworkOtherText}</div>
                           )}
                           {p6.studyComponents && p6.studyComponents.length > 0 && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Study Components: {p6.studyComponents.join(', ')}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">Study Components: {p6.studyComponents.join(', ')}</div>
                           )}
                           {p6.studyOtherText && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">Study Other: {p6.studyOtherText}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">Study Other: {p6.studyOtherText}</div>
                           )}
                           {p6.challenges && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Challenges:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p6.challenges}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Challenges:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p6.challenges}</p>
                             </div>
                           )}
                           {p6.additionalComments && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p6.additionalComments}</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p6.additionalComments}</p>
                           )}
                         </div>
                       )}
 
                       {/* Part 7: Prioritization */}
                       {(p7.modernization || p7.research || p7.strategicPlanning || p7.additionalComments) && (
-                        <div className="bg-white dark:bg-gray-800 rounded p-3">
-                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 7: Prioritization and Strategic Direction</h5>
+                        <div className="bg-white dark:bg-slate-800 rounded p-3">
+                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 7: Prioritization and Strategic Direction</h5>
                           {p7.modernization && Object.keys(p7.modernization).length > 0 && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Modernization Rankings: {Object.entries(p7.modernization)
                                 .filter(([_, rank]) => rank)
                                 .sort(([_, a], [__, b]) => (a as number) - (b as number))
@@ -731,7 +731,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                             </div>
                           )}
                           {p7.research && Object.keys(p7.research).length > 0 && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Research Rankings: {Object.entries(p7.research)
                                 .filter(([_, rank]) => rank)
                                 .sort(([_, a], [__, b]) => (a as number) - (b as number))
@@ -741,168 +741,168 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                           )}
                           {p7.strategicPlanning && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Strategic Planning:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p7.strategicPlanning}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Strategic Planning:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p7.strategicPlanning}</p>
                             </div>
                           )}
                           {p7.additionalComments && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p7.additionalComments}</p>
+                            <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p7.additionalComments}</p>
                           )}
                         </div>
                       )}
 
                       {/* Part 8: Final Recommendations */}
                       {(p8.gaps || p8.suggestions) && (
-                        <div className="bg-white dark:bg-gray-800 rounded p-3">
-                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 8: Final Recommendations</h5>
+                        <div className="bg-white dark:bg-slate-800 rounded p-3">
+                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 8: Final Recommendations</h5>
                           {p8.gaps && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Critical Gaps:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p8.gaps}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Critical Gaps:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p8.gaps}</p>
                             </div>
                           )}
                           {p8.suggestions && (
                             <div>
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Suggestions:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p8.suggestions}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Suggestions:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p8.suggestions}</p>
                             </div>
                           )}
                         </div>
                       )}
 
                       {(p9.option1Edits || p9.option2Edits || p9.option3Edits || p9.otherPathwayIdeas || p9.pathwayRationale || p9.recommendationUpdates || p9.implementationRisks || p9.lineByLine) && (
-                        <div className="bg-white dark:bg-gray-800 rounded p-3">
-                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 9: Strategic Pathways &amp; Options Analysis</h5>
+                        <div className="bg-white dark:bg-slate-800 rounded p-3">
+                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 9: Strategic Pathways &amp; Options Analysis</h5>
                           {(p9.option1Edits || p9.option2Edits || p9.option3Edits) && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2 space-y-1">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2 space-y-1">
                               {p9.option1Edits && <div><span className="font-semibold">Option 1:</span> {p9.option1Edits}</div>}
                               {p9.option2Edits && <div><span className="font-semibold">Option 2:</span> {p9.option2Edits}</div>}
                               {p9.option3Edits && <div><span className="font-semibold">Option 3:</span> {p9.option3Edits}</div>}
                             </div>
                           )}
                           {p9.otherPathwayIdeas && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Alternate Pathway Ideas: {p9.otherPathwayIdeas}
                             </div>
                           )}
                           {p9.supportingFactors && p9.supportingFactors.length > 0 && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Supporting Factors: {p9.supportingFactors.join(', ')}
                             </div>
                           )}
                           {p9.supportingFactorsOther && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Additional Factor: {p9.supportingFactorsOther}
                             </div>
                           )}
                           {p9.pathwayRationale && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Summary of Edits:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p9.pathwayRationale}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Summary of Edits:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p9.pathwayRationale}</p>
                             </div>
                           )}
                           {p9.recommendationUpdates && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Recommendation & Timeline Updates:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p9.recommendationUpdates}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Recommendation & Timeline Updates:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p9.recommendationUpdates}</p>
                             </div>
                           )}
                           {p9.implementationRisks && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Risks & Dependencies:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p9.implementationRisks}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Risks & Dependencies:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p9.implementationRisks}</p>
                             </div>
                           )}
                           {p9.lineByLine && (
                             <div>
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Line-by-Line (Section VI):</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p9.lineByLine}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Line-by-Line (Section VI):</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p9.lineByLine}</p>
                             </div>
                           )}
                         </div>
                       )}
 
                       {(p10.recommendationConfidence || (Array.isArray(p10.priorityAreas) && p10.priorityAreas.length > 0) || p10.implementationSupport || p10.lineByLine) && (
-                        <div className="bg-white dark:bg-gray-800 rounded p-3">
-                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 10: Conclusions &amp; Recommendations</h5>
+                        <div className="bg-white dark:bg-slate-800 rounded p-3">
+                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 10: Conclusions &amp; Recommendations</h5>
                           {p10.recommendationConfidence && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Confidence Level: {p10.recommendationConfidence}
                             </div>
                           )}
                           {p10.priorityAreas && p10.priorityAreas.length > 0 && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Priority Actions: {p10.priorityAreas.join(', ')}
                             </div>
                           )}
                           {p10.priorityAreasOther && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Additional Priority: {p10.priorityAreasOther}
                             </div>
                           )}
                           {p10.implementationSupport && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Implementation Support:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p10.implementationSupport}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Implementation Support:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p10.implementationSupport}</p>
                             </div>
                           )}
                           {p10.lineByLine && (
                             <div>
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Line-by-Line (Section VII):</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p10.lineByLine}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Line-by-Line (Section VII):</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p10.lineByLine}</p>
                             </div>
                           )}
                         </div>
                       )}
 
                       {(p11.prioritizedEngagements || p11.prioritizedEngagementsOther || p11.engagementSummaryQuality || p11.evidenceSummary || p11.engagementInterests || p11.engagementInterestsOther || p11.lineByLine) && (
-                        <div className="bg-white dark:bg-gray-800 rounded p-3">
-                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 11: Community &amp; Stakeholder Engagement Insights</h5>
+                        <div className="bg-white dark:bg-slate-800 rounded p-3">
+                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 11: Community &amp; Stakeholder Engagement Insights</h5>
                           {p11.prioritizedEngagements && p11.prioritizedEngagements.length > 0 && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Prioritized Engagements: {p11.prioritizedEngagements.join(', ')}
                             </div>
                           )}
                           {p11.prioritizedEngagementsOther && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Additional Group: {p11.prioritizedEngagementsOther}
                             </div>
                           )}
                           {p11.engagementSummaryQuality && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Summary Assessment: {p11.engagementSummaryQuality}
                             </div>
                           )}
                           {p11.evidenceSummary && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Suggestions to Strengthen Section IV:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p11.evidenceSummary}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Suggestions to Strengthen Section IV:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p11.evidenceSummary}</p>
                             </div>
                           )}
                           {p11.engagementInterests && p11.engagementInterests.length > 0 && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Preferred Engagement Formats: {p11.engagementInterests.join(', ')}
                             </div>
                           )}
                           {p11.engagementInterestsOther && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2">
                               Additional Format: {p11.engagementInterestsOther}
                             </div>
                           )}
                           {p11.lineByLine && (
                             <div>
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Line-by-Line (Section IV):</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p11.lineByLine}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Line-by-Line (Section IV):</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p11.lineByLine}</p>
                             </div>
                           )}
                         </div>
                       )}
 
                       {((p12.appendixStatus && Object.keys(p12.appendixStatus).length > 0) || p12.alignmentSummary || p12.followUpNeeds || p12.lineByLine) && (
-                        <div className="bg-white dark:bg-gray-800 rounded p-3">
-                          <h5 className="font-medium text-gray-900 dark:text-white mb-2 text-sm">Part 12: “What We Heard” Reports (Appendices D, G, J)</h5>
+                        <div className="bg-white dark:bg-slate-800 rounded p-3">
+                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 12: “What We Heard” Reports (Appendices D, G, J)</h5>
                           {p12.appendixStatus && (
-                            <div className="text-xs text-gray-600 dark:text-gray-400 mb-2 space-y-1">
+                            <div className="text-xs text-slate-600 dark:text-slate-400 mb-2 space-y-1">
                               {['appendixD', 'appendixG', 'appendixJ'].map((key) => (
                                 p12.appendixStatus?.[key] ? (
                                   <div key={key}>
@@ -914,20 +914,20 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                           )}
                           {p12.alignmentSummary && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Alignment with Recommendations:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p12.alignmentSummary}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Alignment with Recommendations:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p12.alignmentSummary}</p>
                             </div>
                           )}
                           {p12.followUpNeeds && (
                             <div className="mb-2">
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Follow-up Needs:</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p12.followUpNeeds}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Follow-up Needs:</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p12.followUpNeeds}</p>
                             </div>
                           )}
                           {p12.lineByLine && (
                             <div>
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Line-by-Line (Appendices D/G/J):</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{p12.lineByLine}</p>
+                              <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Line-by-Line (Appendices D/G/J):</p>
+                              <p className="text-sm text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{p12.lineByLine}</p>
                             </div>
                           )}
                         </div>
@@ -955,7 +955,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                                   sub.form_data?.part12?.lineByLine
                 return !hasContent
               }).length > 0 && (
-                <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                <div className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
                   {filteredSubmissions.filter(sub => {
                     const hasContent = sub.form_data?.part2?.comments || sub.form_data?.part3?.sectionI ||
                                       sub.form_data?.part3?.sectionII || sub.form_data?.part3?.sectionIII ||
@@ -981,16 +981,16 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
           </div>
 
           {/* Files Viewer */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">
               Uploaded Files
             </h3>
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {files.map(file => (
-                <div key={file.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                <div key={file.id} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-700 rounded">
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{file.file_name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{file.file_name}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       {(file.file_size / 1024 / 1024).toFixed(2)} MB • {formatDate(file.created_at)}
                     </p>
                   </div>
@@ -999,7 +999,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                       // In a real implementation, you would download the file
                       alert('File download would be implemented here')
                     }}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    className="text-sky-700 hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-100 text-sm font-medium"
                   >
                     Download
                   </button>
@@ -1011,40 +1011,40 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
       </div>
 
       {/* Raw Data Table */}
-      <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+      <div className="mt-8 bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+        <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">
           Raw Data Table
         </h3>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+            <thead className="bg-slate-50 dark:bg-slate-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
                   Reviewer
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
                   Expertise
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
                   Submitted
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-300 uppercase tracking-wider">
                   Files
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
               {filteredSubmissions.map(submission => (
-                <tr key={submission.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <tr key={submission.id} className="hover:bg-slate-50 dark:hover:bg-slate-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      <div className="text-sm font-medium text-slate-900 dark:text-white">
                         {submission.form_data?.part1?.name || 'Anonymous'}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <div className="text-sm text-slate-500 dark:text-slate-400">
                         {submission.email}
                       </div>
                     </div>
@@ -1058,13 +1058,13 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                       {submission.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 dark:text-white">
                     {submission.form_data?.part1?.expertise?.join(', ') || 'Not specified'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                     {formatDate(submission.updated_at)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                     {submission.file_count}
                   </td>
                 </tr>

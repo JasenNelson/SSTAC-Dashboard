@@ -91,7 +91,7 @@ export default function DeleteButton({ documentId, documentTitle }: DeleteButton
         <button
           onClick={handleCancel}
           disabled={isDeleting}
-          className="px-3 py-1 text-sm font-medium text-gray-600 bg-gray-200 hover:bg-gray-300 rounded-md transition-colors"
+          className="px-3 py-1 text-sm font-medium text-slate-600 bg-slate-200 hover:bg-slate-300 rounded-md transition-colors"
         >
           Cancel
         </button>

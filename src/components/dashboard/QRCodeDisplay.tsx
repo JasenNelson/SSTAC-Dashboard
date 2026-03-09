@@ -32,9 +32,9 @@ export default function QRCodeDisplay({ pollGroup, className = '' }: QRCodeDispl
   if (imageError) {
     return (
       <div className={`flex flex-col items-center ${className}`}>
-        <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-md border border-gray-200 dark:border-gray-600">
-          <div className="w-[120px] h-[120px] bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center">
-            <span className="text-gray-500 dark:text-gray-400 text-sm">QR Code</span>
+        <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
+          <div className="w-[120px] h-[120px] bg-slate-100 dark:bg-slate-700 rounded flex items-center justify-center">
+            <span className="text-slate-500 dark:text-slate-400 text-sm">QR Code</span>
           </div>
         </div>
       </div>
@@ -43,7 +43,7 @@ export default function QRCodeDisplay({ pollGroup, className = '' }: QRCodeDispl
 
   return (
     <div className={`flex flex-col items-center ${className}`}>
-      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-md border border-gray-200 dark:border-gray-600">
+      <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow-md border border-slate-200 dark:border-slate-600">
         <Image
           src={qrCodePath}
           alt={`QR Code for ${pollGroup.replace('-', ' ')}`}

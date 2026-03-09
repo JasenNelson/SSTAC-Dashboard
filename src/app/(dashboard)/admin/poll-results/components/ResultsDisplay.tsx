@@ -75,7 +75,7 @@ function ResultsDisplay({
     <>
       <div
         key={pollKey}
-        className={`bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 transition-all duration-300 ${
+        className={`bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 transition-all duration-300 ${
           isExpanded
             ? `fixed top-20 right-4 bottom-4 ${leftPanelVisible ? 'left-80' : 'left-20'} z-[60] flex flex-col`
             : 'p-8'
@@ -87,7 +87,7 @@ function ResultsDisplay({
               <div className={`flex-1 mr-4 ${isExpanded ? 'max-w-4xl' : 'max-w-3xl'}`}>
                 <div className="flex items-center space-x-2 mb-2">
                   <h3
-                    className={`font-bold text-gray-800 dark:text-white ${
+                    className={`font-bold text-slate-800 dark:text-white ${
                       isExpanded ? 'text-3xl' : 'text-2xl'
                     }`}
                   >
@@ -95,7 +95,7 @@ function ResultsDisplay({
                   </h3>
                   <button
                     onClick={() => navigateToPreviousQuestion(selectedPoll)}
-                    className={`flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ${
+                    className={`flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded ${
                       isExpanded ? 'w-8 h-8' : 'w-6 h-6'
                     }`}
                     title="Previous question in group"
@@ -115,7 +115,7 @@ function ResultsDisplay({
                   </button>
                   <button
                     onClick={() => navigateToNextQuestion(selectedPoll)}
-                    className={`flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ${
+                    className={`flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded ${
                       isExpanded ? 'w-8 h-8' : 'w-6 h-6'
                     }`}
                     title="Next question in group"
@@ -135,7 +135,7 @@ function ResultsDisplay({
                   </button>
                   <button
                     onClick={() => setExpandedPoll(isExpanded ? null : pollKey)}
-                    className="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                    className="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
                     title={isExpanded ? 'Close expanded view' : 'Expand to fit screen'}
                   >
                     {isExpanded ? (
@@ -170,7 +170,7 @@ function ResultsDisplay({
                   </button>
                 </div>
                 <p
-                  className={`text-gray-700 dark:text-gray-300 leading-relaxed ${
+                  className={`text-slate-700 dark:text-slate-300 leading-relaxed ${
                     isExpanded ? 'text-xl mb-3' : 'text-lg'
                   }`}
                 >
@@ -191,7 +191,7 @@ function ResultsDisplay({
                         exportSingleChoicePoll(selectedPoll);
                       }
                     }}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200"
+                    className="flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200"
                     title="Export this question to CSV"
                   >
                     <svg
@@ -243,7 +243,7 @@ function ResultsDisplay({
                         {/* Web Address and Password */}
                         {webAddress && (
                           <div
-                            className={`flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-200 ${
+                            className={`flex flex-col items-center bg-sky-50 dark:bg-sky-900/20 rounded-lg border border-sky-200 dark:border-sky-800 cursor-pointer hover:bg-sky-100 dark:hover:bg-sky-900/30 transition-colors duration-200 ${
                               isExpanded ? 'p-5 transform scale-[1.45]' : 'p-3'
                             }`}
                             onClick={() => {
@@ -255,7 +255,7 @@ function ResultsDisplay({
                             {/* Join at section */}
                             <div className="flex flex-col items-center">
                               <div
-                                className={`font-bold text-blue-700 dark:text-white ${
+                                className={`font-bold text-sky-700 dark:text-white ${
                                   isExpanded ? 'text-base' : 'text-sm'
                                 }`}
                                 style={{ color: '#1d4ed8' }}
@@ -263,7 +263,7 @@ function ResultsDisplay({
                                 Join at:
                               </div>
                               <div
-                                className={`font-bold text-blue-700 dark:text-white ${
+                                className={`font-bold text-sky-700 dark:text-white ${
                                   isExpanded ? 'text-xl' : 'text-lg'
                                 }`}
                                 style={{ color: '#1d4ed8' }}
@@ -276,7 +276,7 @@ function ResultsDisplay({
                             {/* Password section */}
                             <div className="flex flex-col items-center">
                               <div
-                                className={`font-bold text-blue-700 dark:text-white ${
+                                className={`font-bold text-sky-700 dark:text-white ${
                                   isExpanded ? 'text-base' : 'text-sm'
                                 }`}
                                 style={{ color: '#1d4ed8' }}
@@ -284,7 +284,7 @@ function ResultsDisplay({
                                 Password:
                               </div>
                               <div
-                                className={`font-bold text-blue-700 dark:text-white ${
+                                className={`font-bold text-sky-700 dark:text-white ${
                                   isExpanded ? 'text-xl' : 'text-lg'
                                 }`}
                                 style={{ color: '#1d4ed8' }}
@@ -319,7 +319,7 @@ function ResultsDisplay({
           <div className="mt-4 flex flex-wrap gap-4 text-sm">
             {filterMode === 'all' && (
               <>
-                <div className="bg-blue-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
+                <div className="bg-sky-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
                   TWG/SSTAC: {selectedPoll.combined_survey_votes || 0} responses
                 </div>
                 <div className="bg-green-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
@@ -328,7 +328,7 @@ function ResultsDisplay({
               </>
             )}
             {filterMode === 'twg' && (
-              <div className="bg-blue-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
+              <div className="bg-sky-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
                 TWG/SSTAC: {selectedPoll.combined_survey_votes || 0} responses
               </div>
             )}
@@ -342,7 +342,7 @@ function ResultsDisplay({
 
         <div className={`space-y-2 ${isExpanded ? 'space-y-2 flex-1 px-4' : ''}`}>
           {selectedPoll.is_wordcloud ? (
-            <Suspense fallback={<div className="text-center py-8 text-gray-500">Loading wordcloud...</div>}>
+            <Suspense fallback={<div className="text-center py-8 text-slate-500">Loading wordcloud...</div>}>
               <WordcloudDisplay selectedPoll={selectedPoll} />
             </Suspense>
           ) : selectedPoll.is_ranking ? (
@@ -361,7 +361,7 @@ function ResultsDisplay({
         </div>
 
         {/* Matrix Graphs Renderer - Handles prioritization and holistic graphs (lazy loaded) */}
-        <Suspense fallback={<div className="text-center py-8 text-gray-500">Loading graphs...</div>}>
+        <Suspense fallback={<div className="text-center py-8 text-slate-500">Loading graphs...</div>}>
           <MatrixGraphRenderer
             selectedPoll={selectedPoll}
             matrixData={matrixData}

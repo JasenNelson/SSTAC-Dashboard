@@ -89,7 +89,7 @@ export default async function TWGReviewPage() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-gradient-to-br from-sky-50 to-sky-100 dark:from-slate-900 dark:to-slate-800">
         <TWGReviewClient 
           user={user}
           existingSubmission={existingSubmission}

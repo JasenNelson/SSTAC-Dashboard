@@ -74,7 +74,7 @@ export default function TagFilter({
   if (isLoading) {
     return (
       <div className={`animate-pulse ${className}`}>
-        <div className="h-4 bg-gray-200 rounded w-20"></div>
+        <div className="h-4 bg-slate-200 rounded w-20"></div>
       </div>
     );
   }
@@ -90,7 +90,7 @@ export default function TagFilter({
   return (
     <div className={className}>
       {showLabel && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-slate-600 mb-2">
           Filter by Tags
         </label>
       )}
@@ -99,7 +99,7 @@ export default function TagFilter({
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
       >
         <span>
           {selectedTags.length === 0 
@@ -142,7 +142,7 @@ export default function TagFilter({
           <button
             type="button"
             onClick={clearAllFilters}
-            className="text-xs text-gray-500 hover:text-gray-700 underline"
+            className="text-xs text-slate-500 hover:text-slate-600 underline"
           >
             Clear all
           </button>
@@ -151,18 +151,18 @@ export default function TagFilter({
 
       {/* Available tags dropdown */}
       {isExpanded && (
-        <div className="mt-2 p-3 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+        <div className="mt-2 p-3 bg-white border border-slate-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
           <div className="space-y-2">
             {tags.map((tag) => (
               <label
                 key={tag.id}
-                className="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+                className="flex items-center space-x-3 cursor-pointer hover:bg-slate-50 p-2 rounded-md transition-colors"
               >
                 <input
                   type="checkbox"
                   checked={selectedTags.includes(tag.id)}
                   onChange={() => handleTagToggle(tag.id)}
-                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-sky-700 focus:ring-sky-500 border-slate-300 rounded"
                 />
                 <span
                   className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
@@ -175,7 +175,7 @@ export default function TagFilter({
           </div>
           
           {tags.length === 0 && (
-            <p className="text-sm text-gray-500 italic text-center py-2">
+            <p className="text-sm text-slate-500 italic text-center py-2">
               No tags available
             </p>
           )}

@@ -1,4 +1,4 @@
-export const MENU_CATEGORIES = ['Main', 'Engagement', 'Core Themes', 'Resources'] as const;
+export const MENU_CATEGORIES = ['Main', 'Engagement', 'Core Themes', 'Resources', 'Tools'] as const;
 
 export type MenuCategory = (typeof MENU_CATEGORIES)[number];
 
@@ -21,6 +21,7 @@ export const MENU_LINKS: MenuLink[] = [
   { href: '/survey-results/prioritization', label: 'Prioritization Framework', icon: '🧪', category: 'Core Themes' },
   { href: '/wiks', label: 'Weaving Indigenous Knowledges & Science', icon: '🌿', category: 'Core Themes' },
   { href: '/twg/documents', label: 'Documents', icon: '📄', category: 'Resources' },
-  { href: '/twg/discussions', label: 'Discussion Forum', icon: '💬', category: 'Resources' }
+  { href: '/twg/discussions', label: 'Discussion Forum', icon: '💬', category: 'Resources' },
+  { href: '/bn-rrm', label: 'BN-RRM Risk Assessment', icon: '🧬', category: 'Tools' }
 ];
 

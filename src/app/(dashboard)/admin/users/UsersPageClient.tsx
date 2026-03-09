@@ -24,8 +24,8 @@ export default function UsersPageClient() {
     <ErrorBoundary>
       <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Panel</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Admin Panel</h1>
+        <p className="text-slate-500 dark:text-slate-400">
           Manage users, tags, and system settings for the SSTAC & TWG Dashboard.
         </p>
       </div>

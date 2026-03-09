@@ -37,8 +37,8 @@ const confidenceConfig: Record<ConfidenceLevel, {
   NONE: {
     label: 'None',
     segments: 0,
-    fillClass: 'bg-gray-300 dark:bg-gray-600',
-    textClass: 'text-gray-500 dark:text-gray-400',
+    fillClass: 'bg-slate-300 dark:bg-slate-600',
+    textClass: 'text-slate-500 dark:text-slate-400',
   },
 };
 
@@ -63,7 +63,7 @@ export default function ConfidenceMeter({
               className={`w-3 h-5 rounded-sm ${
                 isFilled
                   ? config.fillClass
-                  : 'bg-gray-200 dark:bg-gray-700'
+                  : 'bg-slate-200 dark:bg-slate-700'
               }`}
             />
           );

@@ -41,12 +41,12 @@ export function TWGReviewNavigation({
   return (
     <>
       {/* Desktop Navigation Sidebar */}
-      <div className={`hidden lg:block w-80 ${isDarkMode ? 'bg-gray-800' : lightSidebarBg} shadow-lg border-r border-gray-200 dark:border-gray-700`}>
+      <div className={`hidden lg:block w-80 ${isDarkMode ? 'bg-slate-800' : lightSidebarBg} shadow-lg border-r border-slate-200 dark:border-slate-700`}>
         <div className="p-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
             TWG Review
           </h1>
-          <p className="text-gray-600 dark:text-gray-300 mb-6">
+          <p className="text-slate-500 dark:text-slate-300 mb-6">
             Modernizing BC&apos;s Sediment Standards
           </p>
 
@@ -57,14 +57,14 @@ export function TWGReviewNavigation({
               const meta = phaseMeta[phase]
               const isOpen = openPhases[phase]
               return (
-                <div key={phase} className={`rounded-lg ${isDarkMode ? 'bg-gray-900/20' : lightPanelBg} shadow-sm border border-blue-100`}>
+                <div key={phase} className={`rounded-lg ${isDarkMode ? 'bg-slate-900/20' : lightPanelBg} shadow-sm border border-sky-100`}>
                   <button
                     type="button"
                     onClick={() => onTogglePhase(phase)}
                     className="w-full flex items-center justify-between px-3 py-2 text-sm font-bold italic text-red-600 dark:text-red-400 tracking-wide"
                   >
                     <span>{`${meta.label} — ${meta.date}`}</span>
-                    <span className="text-lg text-gray-700 dark:text-gray-200">{isOpen ? '−' : '+'}</span>
+                    <span className="text-lg text-slate-600 dark:text-slate-200">{isOpen ? '−' : '+'}</span>
                   </button>
                   {isOpen && (
                     <div className="px-1 pb-3 space-y-2">
@@ -84,8 +84,8 @@ export function TWGReviewNavigation({
                             }}
                             className={`w-full text-left p-3 rounded-lg transition-colors ${
                               isActive
-                                ? `${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`
-                                : `${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50'}`
+                                ? `${isDarkMode ? 'bg-sky-900' : 'bg-sky-100'}`
+                                : `${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-sky-50'}`
                             }`}
                           >
                             <div className="flex items-center justify-between">
@@ -119,11 +119,11 @@ export function TWGReviewNavigation({
         </div>
 
         {/* Save Progress Button */}
-        <div className="p-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-6 border-t border-slate-200 dark:border-slate-700">
           <button
             onClick={onSaveProgress}
             disabled={isSaving}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            className="w-full bg-sky-700 hover:bg-sky-800 disabled:bg-sky-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
           >
             {isSaving ? 'Saving...' : 'Save Progress'}
           </button>
@@ -137,14 +137,14 @@ export function TWGReviewNavigation({
       </div>
 
       {/* Mobile Navigation Header */}
-      <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+      <div className="lg:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">TWG Review</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white">TWG Review</h1>
           </div>
           <button
             onClick={() => onToggleMobileMenu(!isMobileMenuOpen)}
-            className="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="p-2 rounded-md text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               {isMobileMenuOpen ? (
@@ -160,13 +160,13 @@ export function TWGReviewNavigation({
       {/* Mobile Navigation Overlay */}
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50" onClick={() => onToggleMobileMenu(false)}>
-          <div className={`fixed inset-y-0 left-0 w-80 ${isDarkMode ? 'bg-gray-800' : lightSidebarBg} shadow-xl`} onClick={(e) => e.stopPropagation()}>
+          <div className={`fixed inset-y-0 left-0 w-80 ${isDarkMode ? 'bg-slate-800' : lightSidebarBg} shadow-xl`} onClick={(e) => e.stopPropagation()}>
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Review Navigation</h2>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Review Navigation</h2>
                 <button
                   onClick={() => onToggleMobileMenu(false)}
-                  className="text-gray-600 dark:text-gray-300"
+                  className="text-slate-500 dark:text-slate-300"
                 >
                   <span className="sr-only">Close menu</span>
                   ✕
@@ -179,14 +179,14 @@ export function TWGReviewNavigation({
                   const meta = phaseMeta[phase]
                   const isOpen = openPhases[phase]
                   return (
-                    <div key={phase} className={`rounded-lg ${isDarkMode ? 'bg-gray-900/20' : lightPanelBg} shadow-sm border border-blue-100`}>
+                    <div key={phase} className={`rounded-lg ${isDarkMode ? 'bg-slate-900/20' : lightPanelBg} shadow-sm border border-sky-100`}>
                       <button
                         type="button"
                         onClick={() => onTogglePhase(phase)}
                         className="w-full flex items-center justify-between px-3 py-2 text-sm font-bold italic text-red-600 dark:text-red-400 tracking-wide"
                       >
                         <span>{`${meta.label} — ${meta.date}`}</span>
-                        <span className="text-lg text-gray-700 dark:text-gray-200">{isOpen ? '−' : '+'}</span>
+                        <span className="text-lg text-slate-600 dark:text-slate-200">{isOpen ? '−' : '+'}</span>
                       </button>
                       {isOpen && (
                         <div className="px-1 pb-3 space-y-2">
@@ -206,8 +206,8 @@ export function TWGReviewNavigation({
                                 }}
                                 className={`w-full text-left p-3 rounded-lg transition-colors ${
                                   isActive
-                                    ? `${isDarkMode ? 'bg-blue-900' : 'bg-blue-100'}`
-                                    : `${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-blue-50'}`
+                                    ? `${isDarkMode ? 'bg-sky-900' : 'bg-sky-100'}`
+                                    : `${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-sky-50'}`
                                 }`}
                               >
                                 <div className="flex items-center justify-between">
@@ -240,14 +240,14 @@ export function TWGReviewNavigation({
               </nav>
 
               {/* Save Progress Button */}
-              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
                 <button
                   onClick={() => {
                     onSaveProgress()
                     onToggleMobileMenu(false)
                   }}
                   disabled={isSaving}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  className="w-full bg-sky-700 hover:bg-sky-800 disabled:bg-sky-400 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                 >
                   {isSaving ? 'Saving...' : 'Save Progress'}
                 </button>

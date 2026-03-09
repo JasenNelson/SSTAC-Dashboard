@@ -13,14 +13,14 @@ function Part4MatrixFramework({ data, onChange }: PartComponentProps) {
   ]
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8">
+      <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
         Part 3: The Matrix Sediment Standards Framework
       </h3>
 
       <div className="space-y-6">
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <p className="text-gray-700 dark:text-gray-300">
+        <div className="bg-sky-50 dark:bg-sky-900/40 border border-sky-200 dark:border-sky-800 rounded-lg p-4">
+          <p className="text-slate-600 dark:text-slate-300">
             This section focuses on the <strong>Matrix Sediment Standards Framework</strong> (see Section V.B of the report),
             which proposes separate standards for direct exposure (SedS-direct) and food pathway exposure (SedS-food)
             to protect both ecological and human health. The initial public survey showed 83% of respondents found
@@ -29,7 +29,7 @@ function Part4MatrixFramework({ data, onChange }: PartComponentProps) {
         </div>
 
         <div>
-          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <h4 className="text-lg font-medium text-slate-900 dark:text-white mb-4">
             The development of food pathway standards (SedS-food) will require significant scientific effort.
             Please rank the following contaminant groups for which this work is the highest priority (1 = Highest Priority):
           </h4>
@@ -37,7 +37,7 @@ function Part4MatrixFramework({ data, onChange }: PartComponentProps) {
           <div className="space-y-3">
             {contaminantGroups.map((group, index) => (
               <div key={group} className="flex items-center space-x-4">
-                <label className="w-8 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="w-8 text-sm font-medium text-slate-600 dark:text-slate-300">
                   Rank {index + 1}:
                 </label>
                 <select
@@ -46,7 +46,7 @@ function Part4MatrixFramework({ data, onChange }: PartComponentProps) {
                     const newRanking = { ...data.ranking, [group]: e.target.value }
                     onChange({ ...data, ranking: newRanking })
                   }}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
                 >
                   <option value="">Select rank</option>
                   {contaminantGroups.map((_, rankIndex) => (
@@ -55,14 +55,14 @@ function Part4MatrixFramework({ data, onChange }: PartComponentProps) {
                     </option>
                   ))}
                 </select>
-                <span className="text-sm text-gray-700 dark:text-gray-300">{group}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{group}</span>
               </div>
             ))}
           </div>
 
           {data.ranking?.['Other'] && (
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Please specify the other contaminant group:
               </label>
               <input
@@ -70,14 +70,14 @@ function Part4MatrixFramework({ data, onChange }: PartComponentProps) {
                 value={data.otherContaminant || ''}
                 onChange={(e) => onChange({ ...data, otherContaminant: e.target.value })}
                 placeholder="Enter the other contaminant group..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               />
             </div>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             What are the primary scientific or practical challenges you foresee in implementing the Matrix Framework?
             Please provide specific suggestions for addressing these challenges:
           </label>
@@ -87,17 +87,17 @@ function Part4MatrixFramework({ data, onChange }: PartComponentProps) {
               onChange={(e) => onChange({ ...data, challenges: e.target.value })}
               rows={6}
               maxLength={2000}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               placeholder="Enter your response here..."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-slate-500 dark:text-slate-400">
               {(data.challenges || '').length}/2000 characters
             </div>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             Additional comments or feedback related to the Matrix Sediment Standards Framework:
           </label>
           <div className="relative">
@@ -106,10 +106,10 @@ function Part4MatrixFramework({ data, onChange }: PartComponentProps) {
               onChange={(e) => onChange({ ...data, additionalComments: e.target.value })}
               rows={4}
               maxLength={1500}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               placeholder="Enter any additional comments or feedback here..."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-slate-500 dark:text-slate-400">
               {(data.additionalComments || '').length}/1500 characters
             </div>
           </div>

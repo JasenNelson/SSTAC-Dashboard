@@ -16,12 +16,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light');
   const [mounted, setMounted] = useState(false);
 
-  // Initialize theme from localStorage or system preference
+  // Initialize theme from localStorage; default to 'light' (not OS preference)
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme;
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const initialTheme = savedTheme || systemTheme;
-    
+    const initialTheme = savedTheme || 'light';
+
     setThemeState(initialTheme);
     setMounted(true);
   }, []);
@@ -50,7 +49,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   if (!mounted) {
     return (
       <ThemeContext.Provider value={{ theme: 'light', toggleTheme: () => {}, setTheme: () => {} }}>
-        <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+        <div className="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
           {children}
         </div>
       </ThemeContext.Provider>

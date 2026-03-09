@@ -1,48 +1,51 @@
 // Theme utility functions for consistent dark mode implementation
+// Re-exports tokens from design-tokens as the canonical themeClasses object.
+
+import { tokens, gradients } from '@/lib/design-tokens';
 
 export const themeClasses = {
   // Background gradients
-  pageBackground: "bg-gradient-to-br from-blue-50 via-green-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900",
-  cardBackground: "bg-white dark:bg-gray-800",
-  heroBackground: "bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800",
-  
+  pageBackground: "bg-gradient-to-br from-slate-50 via-white to-sky-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950",
+  cardBackground: "bg-white dark:bg-slate-800",
+  heroBackground: gradients.hero,
+
   // Text colors
-  primaryText: "text-gray-900 dark:text-white",
-  secondaryText: "text-gray-700 dark:text-gray-300",
-  mutedText: "text-gray-600 dark:text-gray-400",
-  
+  primaryText: tokens.primaryText,
+  secondaryText: tokens.secondaryText,
+  mutedText: tokens.mutedText,
+
   // Border colors
-  border: "border-gray-200 dark:border-gray-700",
-  borderLight: "border-gray-100 dark:border-gray-800",
-  
+  border: tokens.border,
+  borderLight: tokens.borderLight,
+
   // Button styles
-  primaryButton: "bg-blue-600 hover:bg-blue-700 text-white",
-  secondaryButton: "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-white",
-  
+  primaryButton: tokens.primaryButton,
+  secondaryButton: tokens.secondaryButton,
+
   // Card styles
-  card: "bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700",
-  cardHover: "hover:shadow-xl transition-shadow duration-300",
-  
+  card: tokens.card,
+  cardHover: tokens.cardHover,
+
   // Input styles
-  input: "bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white",
-  
+  input: tokens.input,
+
   // Poll styles
-  pollContainer: "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-lg",
-  pollOption: "bg-white dark:bg-gray-700 border-blue-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 text-gray-800 dark:text-white",
-  pollOptionVoted: "bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 text-gray-600 dark:text-gray-300",
-  
+  pollContainer: "bg-gradient-to-br from-sky-50 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-8 shadow-lg",
+  pollOption: "bg-white dark:bg-slate-700 border-sky-300 dark:border-slate-600 hover:border-sky-500 dark:hover:border-sky-400 text-slate-800 dark:text-white",
+  pollOptionVoted: "bg-slate-100 dark:bg-slate-600 border-slate-300 dark:border-slate-500 text-slate-600 dark:text-slate-300",
+
   // Accordion styles
-  accordionHeader: "bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700",
-  accordionContent: "bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300",
-  
+  accordionHeader: "bg-white dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700",
+  accordionContent: "bg-slate-50 dark:bg-slate-700 text-slate-700 dark:text-slate-300",
+
   // Matrix grid styles
-  matrixCell: "bg-white dark:bg-gray-800 border-2 border-blue-200 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 text-gray-900 dark:text-white",
+  matrixCell: "bg-white dark:bg-slate-800 border-2 border-sky-200 dark:border-slate-600 hover:border-sky-400 dark:hover:border-sky-500 text-slate-900 dark:text-white",
   matrixCellHover: "hover:shadow-lg hover:-translate-y-1 transition-all duration-300",
-  
+
   // Section backgrounds
-  sectionLight: "bg-white dark:bg-gray-800",
-  sectionDark: "bg-gray-50 dark:bg-gray-900",
-  sectionGradient: "bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800"
+  sectionLight: tokens.sectionLight,
+  sectionDark: tokens.sectionDark,
+  sectionGradient: tokens.sectionGradient,
 };
 
 export const getThemeClasses = (key: keyof typeof themeClasses) => {

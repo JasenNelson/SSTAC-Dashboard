@@ -187,9 +187,9 @@ export default function AdvancedPrioritizationMatrixGraph({
   const clusters = createClusters(individualPairs);
 
   return (
-    <div className="p-3 border rounded-lg shadow-md bg-white dark:bg-gray-800">
+    <div className="p-3 border rounded-lg shadow-md bg-white dark:bg-slate-800">
       <div className="flex justify-between items-center mb-2">
-        <h3 className="text-base font-semibold text-center text-gray-900 dark:text-white flex-1">{title}</h3>
+        <h3 className="text-base font-semibold text-center text-slate-900 dark:text-white flex-1">{title}</h3>
         
         {/* Visualization Mode Selector */}
         <div className="flex gap-1 ml-2">
@@ -199,8 +199,8 @@ export default function AdvancedPrioritizationMatrixGraph({
               onClick={() => setVisualizationMode(mode)}
               className={`px-2 py-1 text-xs rounded ${
                 visualizationMode === mode
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  ? 'bg-sky-700 text-white'
+                  : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
               }`}
               title={`Switch to ${mode.replace('-', ' ')} visualization`}
             >
@@ -417,10 +417,10 @@ export default function AdvancedPrioritizationMatrixGraph({
 
       {/* Description with visualization mode info */}
       <div className="text-center mt-2">
-        <p className="text-base text-gray-600 dark:text-gray-300">
+        <p className="text-base text-slate-500 dark:text-slate-300">
           Based on {responses} paired response(s). Showing {individualPairs.length} individual data points.
         </p>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Mode: {visualizationMode.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} | 
           {(() => {
             const overlappingClusters = Array.from(clusters.values()).filter(c => c.length > 1);

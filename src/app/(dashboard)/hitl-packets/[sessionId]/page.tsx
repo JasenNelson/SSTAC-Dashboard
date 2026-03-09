@@ -106,7 +106,7 @@ export default async function HitlPacketDetailPage({
     return (
       <div className="max-w-7xl mx-auto px-4 py-12 text-center">
         <h1 className="text-xl font-bold text-red-700">Invalid Session ID</h1>
-        <p className="mt-2 text-gray-500">The session ID contains invalid characters.</p>
+        <p className="mt-2 text-slate-500 dark:text-slate-400">The session ID contains invalid characters.</p>
       </div>
     );
   }
@@ -116,9 +116,9 @@ export default async function HitlPacketDetailPage({
   if (!rawPacket) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-12 text-center">
-        <h1 className="text-xl font-bold text-gray-900">Packet Not Found</h1>
-        <p className="mt-2 text-gray-500">
-          No packet found for session <code className="bg-gray-100 px-1 rounded">{sessionId}</code>.
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">Packet Not Found</h1>
+        <p className="mt-2 text-slate-500 dark:text-slate-400">
+          No packet found for session <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">{sessionId}</code>.
         </p>
       </div>
     );

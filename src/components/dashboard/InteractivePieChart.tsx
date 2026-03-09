@@ -32,8 +32,8 @@ export default function InteractivePieChart({
   if (!data || data.length === 0) {
     return (
       <div className="relative">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">{title}</h3>
-        <div className="text-center text-gray-500 py-8">
+        <h3 className="text-lg font-semibold text-slate-800 mb-4 text-center">{title}</h3>
+        <div className="text-center text-slate-500 py-8">
           No data available
         </div>
       </div>
@@ -123,7 +123,7 @@ export default function InteractivePieChart({
 
   return (
     <div className="relative">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">{title}</h3>
+      <h3 className="text-lg font-semibold text-slate-800 mb-4 text-center">{title}</h3>
       
       <div className="flex flex-col items-center">
         {/* SVG Chart */}
@@ -159,7 +159,7 @@ export default function InteractivePieChart({
                       x={centerX}
                       y={centerY + 5}
                       textAnchor="middle"
-                      className={`${fontSize} font-bold fill-gray-800`}
+                      className={`${fontSize} font-bold fill-slate-800`}
                     >
                       {slice.percentage.toFixed(1)}%
                     </text>
@@ -173,8 +173,8 @@ export default function InteractivePieChart({
           {selectedSlice === null && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-700">{total}</div>
-                <div className="text-sm text-gray-500">Total Responses</div>
+                <div className="text-2xl font-bold text-slate-600">{total}</div>
+                <div className="text-sm text-slate-500">Total Responses</div>
               </div>
             </div>
           )}
@@ -187,8 +187,8 @@ export default function InteractivePieChart({
               <div
                 key={index}
                 className={`flex items-center space-x-3 p-2 rounded-lg transition-all duration-200 ${
-                  hoveredSlice === index ? 'bg-gray-100' : ''
-                } ${selectedSlice === index ? 'bg-blue-50 border border-blue-200' : ''}`}
+                  hoveredSlice === index ? 'bg-slate-100' : ''
+                } ${selectedSlice === index ? 'bg-sky-50 border border-sky-200' : ''}`}
                 onMouseEnter={() => handleSliceHover(index)}
                 onMouseLeave={() => handleSliceHover(null)}
                 onClick={() => handleSliceClick(index)}
@@ -197,14 +197,14 @@ export default function InteractivePieChart({
                   className="w-4 h-4 rounded-full"
                   style={{ backgroundColor: slice.color }}
                 />
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-slate-600">
                   {slice.label}
                 </span>
-                <span className="text-sm font-bold text-gray-600">
+                <span className="text-sm font-bold text-slate-500">
                   {slice.percentage.toFixed(1)}%
                 </span>
                 {slice.description && (
-                  <span className="text-xs text-gray-500 ml-2">
+                  <span className="text-xs text-slate-500 ml-2">
                     ({slice.description})
                   </span>
                 )}

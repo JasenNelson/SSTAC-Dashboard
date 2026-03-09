@@ -6,7 +6,8 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminProvider } from "@/contexts/AdminContext";
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import { ThemeProvider as NextThemesProvider } from 'next-themes';
+// Removed: next-themes NextThemesProvider — custom ThemeContext handles dark/light class toggling.
+// Having two providers that both manage the 'dark' class on <html> caused conflicts.
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,17 +42,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NextThemesProvider attribute="class" defaultTheme="light" enableSystem>
-          <ThemeProvider>
-            <AuthProvider>
-              <AdminProvider>
-                <ToastProvider>
-                  {children}
-                </ToastProvider>
-              </AdminProvider>
-            </AuthProvider>
-          </ThemeProvider>
-        </NextThemesProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <AdminProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </AdminProvider>
+          </AuthProvider>
+        </ThemeProvider>
         <SpeedInsights />
       </body>
     </html>

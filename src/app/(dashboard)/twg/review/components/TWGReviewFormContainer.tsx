@@ -61,14 +61,14 @@ export function TWGReviewFormContainer({
               {`${currentPhaseMeta.label} — ${currentPhaseMeta.date}`}
             </div>
           )}
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-4">
             Expert Review Form: Modernizing British Columbia&apos;s Sediment Standards
           </h2>
-          <div className={`rounded-lg p-4 mb-6 border ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-sky-100 border-sky-200'}`}>
-            <p className={`${isDarkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+          <div className={`rounded-lg p-4 mb-6 border ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-sky-100 border-sky-200'}`}>
+            <p className={`${isDarkMode ? 'text-slate-200' : 'text-slate-600'}`}>
               Thank you for contributing your expertise to the Technical Working Group (TWG) review.
             </p>
-            <ul className={`mt-3 space-y-2 text-sm list-disc list-inside ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+            <ul className={`mt-3 space-y-2 text-sm list-disc list-inside ${isDarkMode ? 'text-slate-300' : 'text-slate-600'}`}>
               <li>The &quot;Save Progress&quot; buttons let you capture everything you&apos;ve entered without submitting.</li>
               <li>You can be anywhere in the form and still switch parts using the navigation panel or mobile drawer—your notes stay in place.</li>
               <li>Use the &quot;Submit Review&quot; button in Part 12 to let us know your review is ready.</li>
@@ -211,12 +211,12 @@ export function TWGReviewFormContainer({
 
         {/* Save and Proceed Button */}
         {currentSection < sections.length && (
-          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
             <div className="flex justify-between items-center">
               <button
                 onClick={onSaveProgress}
                 disabled={isSaving}
-                className="px-6 py-2 bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 text-white rounded-lg transition-colors"
+                className="px-6 py-2 bg-slate-500 hover:bg-slate-600 disabled:bg-slate-400 text-white rounded-lg transition-colors"
               >
                 {isSaving ? 'Saving...' : 'Save Progress'}
               </button>
@@ -224,7 +224,7 @@ export function TWGReviewFormContainer({
               <button
                 onClick={onNextSection}
                 disabled={isSaving || isSubmitting}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors flex items-center gap-2"
+                className="px-6 py-2 bg-sky-700 hover:bg-sky-800 disabled:bg-sky-400 text-white rounded-lg transition-colors flex items-center gap-2"
               >
                 Save and Proceed to Next Part
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,7 +243,7 @@ export function TWGReviewFormContainer({
 
         {/* Submit Button */}
         {currentSection === sections.length && (
-          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
             <button
               onClick={onSubmit}
               disabled={isSubmitting}

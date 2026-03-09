@@ -13,9 +13,9 @@ type Announcement = {
 };
 
 const priorityColors = {
-  high: 'bg-red-100 border-red-300 text-red-900 border-l-4',
-  medium: 'bg-orange-100 border-orange-300 text-orange-900 border-l-4',
-  low: 'bg-yellow-100 border-yellow-300 text-yellow-900 border-l-4'
+  high: 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200',
+  medium: 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200',
+  low: 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200'
 };
 
 const priorityLabels = {
@@ -68,14 +68,14 @@ export default function Announcements() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-6">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
         <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/2 mb-4"></div>
+          <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mb-4"></div>
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="p-3 border border-gray-200 rounded-lg">
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div key={i} className="p-3 border border-slate-200 dark:border-slate-700 rounded-lg">
+                <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div>
               </div>
             ))}
           </div>
@@ -86,12 +86,12 @@ export default function Announcements() {
 
   if (error) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="text-center text-red-600">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
+        <div className="text-center text-red-600 dark:text-red-400">
           <p>Error loading announcements: {error}</p>
           <button
             onClick={fetchAnnouncements}
-            className="mt-2 px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+            className="mt-2 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-md hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
           >
             Try Again
           </button>
@@ -102,12 +102,12 @@ export default function Announcements() {
 
   if (announcements.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <div className="text-center text-gray-500">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
+        <div className="text-center text-slate-500 dark:text-slate-400">
           <p>No announcements available</p>
           <button
             onClick={fetchAnnouncements}
-            className="mt-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+            className="mt-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
           >
             Refresh
           </button>
@@ -117,8 +117,8 @@ export default function Announcements() {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+    <div className="bg-white dark:bg-slate-800 rounded-xl shadow-md p-6">
+      <h2 className="text-xl font-semibold text-slate-800 dark:text-white mb-4 flex items-center">
         <span className="text-2xl mr-3">📢</span>
         Recent Announcements
       </h2>
@@ -129,38 +129,38 @@ export default function Announcements() {
              key={announcement.id}
              className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
                priorityColors[announcement.priority as keyof typeof priorityColors]
-             } ${expandedAnnouncement === announcement.id ? 'shadow-lg ring-2 ring-blue-300' : ''}`}
+             } ${expandedAnnouncement === announcement.id ? 'shadow-lg ring-2 ring-sky-300 dark:ring-sky-600' : ''}`}
              onClick={() => toggleAnnouncement(announcement.id)}
            >
             <div className="flex items-start justify-between mb-2">
-              <h3 className="font-semibold text-lg">{announcement.title}</h3>
+              <h3 className="font-semibold text-lg text-slate-900 dark:text-white">{announcement.title}</h3>
                              <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                 announcement.priority === 'high' 
-                   ? 'bg-red-200 text-red-900 border border-red-300'
+                 announcement.priority === 'high'
+                   ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
                    : announcement.priority === 'medium'
-                   ? 'bg-orange-200 text-orange-900 border border-orange-300'
-                   : 'bg-yellow-200 text-yellow-900 border border-yellow-300'
+                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                   : 'bg-slate-100 text-slate-600 dark:bg-slate-600 dark:text-slate-300'
                }`}>
                  {priorityLabels[announcement.priority as keyof typeof priorityLabels]}
                </span>
             </div>
             
                          {/* Date always visible */}
-             <div className="text-sm text-gray-700 font-medium mb-3">
+             <div className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-3">
                📅 Published: {formatDate(announcement.created_at)}
              </div>
             
                          {/* Content - only visible when expanded */}
              {expandedAnnouncement === announcement.id && (
-               <div className="mt-3 pt-3 border-t border-gray-300">
-                 <p className="text-base leading-relaxed text-gray-800 font-medium">
+               <div className="mt-3 pt-3 border-t border-slate-300 dark:border-slate-600">
+                 <p className="text-base leading-relaxed text-slate-800 dark:text-slate-200 font-medium">
                    {announcement.content}
                  </p>
                </div>
              )}
             
                          {/* Expand/Collapse indicator */}
-             <div className="text-sm text-gray-600 mt-3 flex items-center font-medium">
+             <div className="text-sm text-slate-500 dark:text-slate-400 mt-3 flex items-center font-medium">
                <span className="mr-2">
                  {expandedAnnouncement === announcement.id ? '📖 Click to collapse' : '📖 Click to expand'}
                </span>
@@ -180,10 +180,10 @@ export default function Announcements() {
       </div>
       
              {announcements.length > 0 && (
-         <div className="mt-4 pt-4 border-t border-gray-200">
+         <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
            <button
              onClick={fetchAnnouncements}
-             className="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 text-sm font-semibold transition-colors border border-blue-300"
+             className="px-4 py-2 bg-sky-100 dark:bg-sky-900/30 text-sky-800 dark:text-sky-300 rounded-lg hover:bg-sky-200 dark:hover:bg-sky-900/50 text-sm font-semibold transition-colors border border-sky-300 dark:border-sky-700"
            >
              🔄 Refresh Announcements
            </button>

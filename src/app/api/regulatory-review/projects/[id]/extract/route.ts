@@ -88,7 +88,8 @@ export async function POST(
     }
 
     // Spawn detached process
-    const child = spawn('python', args, {
+    const pythonPath = process.env.REG_REVIEW_PYTHON_PATH || 'python'
+    const child = spawn(pythonPath, args, {
       detached: true,
       stdio: 'ignore',
     });

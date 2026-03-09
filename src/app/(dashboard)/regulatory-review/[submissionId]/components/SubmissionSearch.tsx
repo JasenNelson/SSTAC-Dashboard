@@ -76,33 +76,33 @@ function ResultCard({ result, query, isExpanded, onToggle }: {
   };
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full flex items-start gap-2 p-2 text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        className="w-full flex items-start gap-2 p-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
       >
-        <span className="mt-0.5 text-gray-400">
+        <span className="mt-0.5 text-slate-400">
           {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400">
+            <span className="flex items-center gap-1 text-xs text-sky-600 dark:text-sky-400">
               <MapPin className="w-3 h-3" />
               {result.location}
             </span>
             {result.pageReference && (
-              <span className="text-[10px] text-gray-400">p. {result.pageReference}</span>
+              <span className="text-[10px] text-slate-400">p. {result.pageReference}</span>
             )}
             <span className={`text-[10px] px-1.5 py-0.5 rounded ${confidenceColors[result.confidence] || confidenceColors.MEDIUM}`}>
               {result.confidence}
             </span>
             {result.sourcePath && (
-              <span className="text-[10px] text-gray-400 dark:text-gray-500 truncate max-w-[200px]" title={result.sourcePath}>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate max-w-[200px]" title={result.sourcePath}>
                 {result.sourcePath}
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
             {highlightText(result.excerpt.substring(0, 200), query)}
             {result.excerpt.length > 200 && '...'}
           </p>
@@ -110,23 +110,23 @@ function ResultCard({ result, query, isExpanded, onToggle }: {
       </button>
 
       {isExpanded && (
-        <div className="px-3 pb-3 pt-1 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 space-y-2">
+        <div className="px-3 pb-3 pt-1 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 space-y-2">
           {/* Spec description */}
           {result.specDescription && (
-            <div className="text-[10px] text-gray-500 dark:text-gray-400">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400">
               <strong>Spec:</strong> {result.specDescription}
             </div>
           )}
 
           {/* Full excerpt */}
-          <div className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap max-h-48 overflow-y-auto bg-white dark:bg-gray-900 p-2 rounded border border-gray-200 dark:border-gray-700">
+          <div className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap max-h-48 overflow-y-auto bg-white dark:bg-slate-900 p-2 rounded border border-slate-200 dark:border-slate-700">
             {highlightText(result.excerpt, query)}
           </div>
 
           {/* Related CSAP ID */}
-          <div className="flex items-center gap-2 text-[10px] text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
             <span>Found in assessment:</span>
-            <span className="font-mono text-indigo-600 dark:text-indigo-400">{result.csapId}</span>
+            <span className="font-mono text-sky-600 dark:text-sky-400">{result.csapId}</span>
           </div>
 
           {/* Match reasons if available */}
@@ -135,7 +135,7 @@ function ResultCard({ result, query, isExpanded, onToggle }: {
               {result.matchReasons.slice(0, 5).map((reason, i) => (
                 <span
                   key={i}
-                  className="text-[10px] px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded"
+                  className="text-[10px] px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded"
                 >
                   {reason}
                 </span>
@@ -224,33 +224,33 @@ export default function SubmissionSearch({ submissionId }: SubmissionSearchProps
   }, [handleSearch]);
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
       {/* Header - always visible */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+        className="w-full flex items-center justify-between p-3 bg-sky-50 dark:bg-sky-900/20 hover:bg-sky-100 dark:hover:bg-sky-900/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
       >
         <div className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-blue-500" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <FileText className="w-4 h-4 text-sky-600" />
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
             Search Submission Content
           </span>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-slate-400">
             ({results.length > 0 ? `${results.length} results` : '841 excerpts'})
           </span>
         </div>
-        <span className="text-gray-400">
+        <span className="text-slate-400">
           {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
         </span>
       </button>
 
       {/* Expandable content */}
       {isOpen && (
-        <div className="p-3 space-y-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-3 space-y-3 border-t border-slate-200 dark:border-slate-700">
           {/* Search input */}
           <div className="flex gap-2">
             <div className="flex-1 relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <label htmlFor="submission-search-input" className="sr-only">Search submission evidence</label>
               <input
                 id="submission-search-input"
@@ -259,13 +259,13 @@ export default function SubmissionSearch({ submissionId }: SubmissionSearchProps
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Search HHRA, WARP, MHO content..."
-                className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                className="w-full pl-8 pr-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
               />
             </div>
             <button
               onClick={handleSearch}
               disabled={isSearching}
-              className="px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+              className="px-3 py-2 text-sm font-medium text-white bg-sky-700 rounded-lg hover:bg-sky-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
             >
               {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}
             </button>
@@ -277,7 +277,7 @@ export default function SubmissionSearch({ submissionId }: SubmissionSearchProps
               value={locationFilter}
               onChange={(e) => setLocationFilter(e.target.value)}
               aria-label="Filter by location"
-              className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded px-2 py-1.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+              className="w-full text-xs border border-slate-300 dark:border-slate-600 rounded px-2 py-1.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
             >
               <option value="all">All Documents ({locations.length})</option>
               {locations.map(loc => (
@@ -295,7 +295,7 @@ export default function SubmissionSearch({ submissionId }: SubmissionSearchProps
           {hasSearched && (
             <div className="space-y-2 max-h-72 overflow-y-auto">
               {results.length === 0 ? (
-                <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-4">
+                <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-4">
                   No content found matching your search.
                 </p>
               ) : (
@@ -314,9 +314,9 @@ export default function SubmissionSearch({ submissionId }: SubmissionSearchProps
 
           {/* Helpful hints when not searched yet */}
           {!hasSearched && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+            <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
               <p>Search through the submission documents:</p>
-              <ul className="list-disc list-inside space-y-0.5 text-gray-400">
+              <ul className="list-disc list-inside space-y-0.5 text-slate-400">
                 <li>HHRA - Human Health Risk Assessment</li>
                 <li>WARP - Work Plan narrative</li>
                 <li>MHO - Medical Health Officer report</li>

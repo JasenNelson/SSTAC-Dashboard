@@ -43,13 +43,19 @@ export default async function RegulatoryReviewLayout({
     redirect('/login');
   }
 
-  const isAdmin = user.app_metadata?.role === 'admin';
-  if (!isAdmin) {
+  const { data: roleData } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  if (!roleData) {
     redirect('/dashboard');
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {children}
     </div>
   );

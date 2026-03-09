@@ -20,7 +20,7 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
   return (
     <button
       type="submit"
-      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+      className="px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-sky-800 transition-colors"
     >
       {children}
     </button>
@@ -197,7 +197,7 @@ export default function AnnouncementsManagement() {
       case 'high': return 'bg-red-100 text-red-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-slate-100 text-slate-800';
     }
   };
 
@@ -213,8 +213,8 @@ export default function AnnouncementsManagement() {
   if (isLoading) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Loading announcements...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-700 mx-auto"></div>
+        <p className="mt-4 text-slate-500">Loading announcements...</p>
       </div>
     );
   }
@@ -224,14 +224,14 @@ export default function AnnouncementsManagement() {
       {/* Header with Create Button */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Announcements</h2>
-          <p className="text-gray-600 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900">Announcements</h2>
+          <p className="text-slate-500 mt-1">
             Manage dashboard announcements and important updates
           </p>
         </div>
         <button
           onClick={() => setShowCreateForm(true)}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center px-4 py-2 bg-sky-700 text-white rounded-lg hover:bg-sky-800 transition-colors"
         >
           <Plus className="w-4 h-4 mr-2" />
           New Announcement
@@ -240,8 +240,8 @@ export default function AnnouncementsManagement() {
 
       {/* Create/Edit Form */}
       {(showCreateForm || editingAnnouncement) && (
-        <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg shadow-md p-6 border border-slate-200">
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">
             {editingAnnouncement ? 'Edit Announcement' : 'Create New Announcement'}
           </h3>
           
@@ -259,7 +259,7 @@ export default function AnnouncementsManagement() {
             )}
             
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="title" className="block text-sm font-medium text-slate-600 mb-1">
                 Title *
               </label>
               <input
@@ -268,13 +268,13 @@ export default function AnnouncementsManagement() {
                 name="title"
                 required
                 defaultValue={editingAnnouncement?.title || ''}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                 placeholder="Enter announcement title"
               />
             </div>
 
             <div>
-              <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="content" className="block text-sm font-medium text-slate-600 mb-1">
                 Content *
               </label>
               <textarea
@@ -283,21 +283,21 @@ export default function AnnouncementsManagement() {
                 required
                 rows={4}
                 defaultValue={editingAnnouncement?.content || ''}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                 placeholder="Enter announcement content"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="priority" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="priority" className="block text-sm font-medium text-slate-600 mb-1">
                   Priority
                 </label>
                 <select
                   id="priority"
                   name="priority"
                   defaultValue={editingAnnouncement?.priority || 'medium'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -306,14 +306,14 @@ export default function AnnouncementsManagement() {
               </div>
 
               <div>
-                <label htmlFor="is_active" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="is_active" className="block text-sm font-medium text-slate-600 mb-1">
                   Status
                 </label>
                 <select
                   id="is_active"
                   name="is_active"
                   defaultValue={editingAnnouncement?.is_active?.toString() || 'true'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
                 >
                   <option value="true">Active</option>
                   <option value="false">Inactive</option>
@@ -328,7 +328,7 @@ export default function AnnouncementsManagement() {
                   setShowCreateForm(false);
                   setEditingAnnouncement(null);
                 }}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                className="px-4 py-2 text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
               >
                 Cancel
               </button>
@@ -341,27 +341,27 @@ export default function AnnouncementsManagement() {
       )}
 
       {/* Announcements List */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
+      <div className="bg-white rounded-lg shadow-md border border-slate-200">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <h3 className="text-lg font-semibold text-slate-900">
             Current Announcements ({announcements.length})
           </h3>
         </div>
         
         {announcements.length === 0 ? (
-          <div className="px-6 py-12 text-center text-gray-500">
+          <div className="px-6 py-12 text-center text-slate-500">
             <div className="text-4xl mb-4">📢</div>
             <p className="text-lg font-medium mb-2">No announcements yet</p>
             <p className="text-sm">Create your first announcement to get started</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-slate-200">
             {announcements.map((announcement) => (
-              <div key={announcement.id} className="p-6 hover:bg-gray-50 transition-colors">
+              <div key={announcement.id} className="p-6 hover:bg-slate-50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h4 className="text-lg font-semibold text-gray-900">
+                      <h4 className="text-lg font-semibold text-slate-900">
                         {announcement.title}
                       </h4>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(announcement.priority)}`}>
@@ -370,13 +370,13 @@ export default function AnnouncementsManagement() {
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         announcement.is_active 
                           ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
+                          : 'bg-slate-100 text-slate-800'
                       }`}>
                         {announcement.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
                     
-                    <div className="text-sm text-gray-600 mb-3">
+                    <div className="text-sm text-slate-500 mb-3">
                       <div className="flex items-center space-x-4">
                         <span className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
@@ -391,13 +391,13 @@ export default function AnnouncementsManagement() {
                       </div>
                     </div>
 
-                    <div className="text-gray-700">
+                    <div className="text-slate-600">
                       {expandedAnnouncement === announcement.id ? (
                         <div>
                           <p className="whitespace-pre-wrap">{announcement.content}</p>
                           <button
                             onClick={() => setExpandedAnnouncement(null)}
-                            className="text-blue-600 hover:text-blue-800 text-sm mt-2 flex items-center"
+                            className="text-sky-700 hover:text-sky-800 text-sm mt-2 flex items-center"
                           >
                             <EyeOff className="w-4 h-4 mr-1" />
                             Show less
@@ -408,7 +408,7 @@ export default function AnnouncementsManagement() {
                           <p className="line-clamp-2">{announcement.content}</p>
                           <button
                             onClick={() => setExpandedAnnouncement(announcement.id)}
-                            className="text-blue-600 hover:text-blue-800 text-sm mt-2 flex items-center"
+                            className="text-sky-700 hover:text-sky-800 text-sm mt-2 flex items-center"
                           >
                             <Eye className="w-4 h-4 mr-1" />
                             Show more
@@ -421,14 +421,14 @@ export default function AnnouncementsManagement() {
                   <div className="flex items-center space-x-2 ml-4">
                     <button
                       onClick={() => setEditingAnnouncement(announcement)}
-                      className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                      className="p-2 text-slate-500 hover:text-sky-700 hover:bg-sky-50 rounded-md transition-colors"
                       title="Edit announcement"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteAnnouncement(announcement.id)}
-                      className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                       title="Delete announcement"
                     >
                       <Trash2 className="w-4 h-4" />

@@ -96,21 +96,21 @@ export default function CEWPrioritizationPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-slate-800 shadow-sm border-b border-slate-200 dark:border-slate-700">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
               CEW 2025 Live Polling
             </h1>
             <h2 className="text-xl text-orange-600 dark:text-orange-400 font-semibold">
               Prioritization Framework
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">
+            <p className="text-slate-500 dark:text-slate-300 mt-2">
               Interactive polling for conference attendees
             </p>
-            <div className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <div className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               Authenticated as: <span className="font-mono font-semibold">{authCode}</span>
             </div>
           </div>
@@ -121,10 +121,10 @@ export default function CEWPrioritizationPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Instructions */}
         <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-orange-100 mb-2">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-orange-100 mb-2">
             📱 Mobile-Friendly Polling
           </h3>
-          <p className="text-gray-700 dark:text-orange-200 text-sm">
+          <p className="text-slate-600 dark:text-orange-200 text-sm">
             Select your response for each question below. Your answers will be saved anonymously and combined with other conference participants&apos; responses.
           </p>
         </div>
@@ -135,7 +135,7 @@ export default function CEWPrioritizationPage() {
             // Handle different poll types
             if (poll.isWordcloud) {
               return (
-                <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                <div key={pollIndex} className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
                   <WordCloudPoll
                     key={pollIndex}
                     pollIndex={pollIndex}
@@ -154,7 +154,7 @@ export default function CEWPrioritizationPage() {
               );
             } else if (poll.isRanking) {
               return (
-                <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                <div key={pollIndex} className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
                   <RankingPoll
                     key={pollIndex}
                     pollIndex={pollIndex}
@@ -171,7 +171,7 @@ export default function CEWPrioritizationPage() {
               );
             } else {
               return (
-                <div key={pollIndex} className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+                <div key={pollIndex} className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg overflow-hidden">
                   <PollWithResults
                     key={pollIndex}
                     pollIndex={pollIndex}
@@ -192,7 +192,7 @@ export default function CEWPrioritizationPage() {
 
         {/* Footer */}
         <div className="mt-12 text-center">
-          <p className="text-gray-500 dark:text-gray-400 text-sm">
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
             Canadian Ecotoxicity Workshop 2025 • Victoria, BC
           </p>
         </div>
