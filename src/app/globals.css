@@ -293,3 +293,118 @@ body {
   from { opacity: 1; transform: translateY(0);     }
   to   { opacity: 0; transform: translateY(-10px); }
 }
+
+/* ========================================
+   BN-RRM: React Flow Customizations
+   ======================================== */
+
+.bn-rrm-wrapper .react-flow {
+  background-color: #f8fafc; /* slate-50 */
+}
+
+html.dark .bn-rrm-wrapper .react-flow {
+  background-color: #0f172a; /* slate-900 */
+}
+
+.bn-rrm-wrapper .react-flow__node {
+  font-family: inherit;
+}
+
+.bn-rrm-wrapper .react-flow__handle {
+  width: 12px;
+  height: 12px;
+}
+
+.bn-rrm-wrapper .react-flow__edge-path {
+  stroke-width: 2;
+}
+
+.bn-rrm-wrapper .react-flow__minimap {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+html.dark .bn-rrm-wrapper .react-flow__minimap {
+  background-color: rgba(30, 41, 59, 0.9);
+}
+
+.bn-rrm-wrapper .react-flow__controls {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+html.dark .bn-rrm-wrapper .react-flow__controls {
+  background-color: #1e293b;
+}
+
+.bn-rrm-wrapper .react-flow__controls-button {
+  border: none;
+  background: white;
+}
+
+html.dark .bn-rrm-wrapper .react-flow__controls-button {
+  background: #1e293b;
+  fill: #e2e8f0;
+}
+
+.bn-rrm-wrapper .react-flow__controls-button:hover {
+  background: #f1f5f9;
+}
+
+html.dark .bn-rrm-wrapper .react-flow__controls-button:hover {
+  background: #334155;
+}
+
+/* ========================================
+   BN-RRM: Leaflet Dark Mode
+   ======================================== */
+
+html.dark .bn-rrm-wrapper .leaflet-control-attribution {
+  background: rgba(30, 41, 59, 0.8) !important;
+  color: #94a3b8 !important;
+}
+
+html.dark .bn-rrm-wrapper .leaflet-control-attribution a {
+  color: #60a5fa !important;
+}
+
+html.dark .bn-rrm-wrapper .cluster-marker {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* ========================================
+   BN-RRM: Custom Scrollbar
+   ======================================== */
+
+.bn-rrm-wrapper ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.bn-rrm-wrapper ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+html.dark .bn-rrm-wrapper ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.bn-rrm-wrapper ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+html.dark .bn-rrm-wrapper ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.bn-rrm-wrapper ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+html.dark .bn-rrm-wrapper ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
