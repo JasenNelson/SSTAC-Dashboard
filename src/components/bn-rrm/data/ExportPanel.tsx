@@ -29,23 +29,20 @@ export function ExportPanel() {
   const siteCount = Object.keys(sites).length;
   const assessmentCount = Object.keys(assessments).length;
 
-  const handleExport = async () => {
+  const handleExport = () => {
     setIsExporting(true);
     setExportComplete(false);
 
-    // Simulate export
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Generate export data
-    const exportData = generateExportData(selectedFormat, sites, assessments);
-
-    // Download file
-    downloadFile(exportData.content, exportData.filename, exportData.mimeType);
-
-    setIsExporting(false);
-    setExportComplete(true);
-
-    setTimeout(() => setExportComplete(false), 3000);
+    try {
+      const exportData = generateExportData(selectedFormat, sites, assessments);
+      downloadFile(exportData.content, exportData.filename, exportData.mimeType);
+      setExportComplete(true);
+      setTimeout(() => setExportComplete(false), 3000);
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -264,10 +261,14 @@ function downloadFile(content: string, filename: string, mimeType: string) {
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
+  a.style.display = 'none';
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // Delay cleanup to ensure download starts
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
 }
 
 export default ExportPanel;

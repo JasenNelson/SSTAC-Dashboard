@@ -174,7 +174,21 @@ export function SiteDetails({ className, onClose, onRunAssessment }: SiteDetails
               <Play className="w-4 h-4" />{assessment ? 'Re-run' : 'Run'} Assessment
             </button>
           )}
-          <button className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+          <button
+            onClick={() => {
+              const data = { exportDate: new Date().toISOString(), site, assessment: assessment ?? null };
+              const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `bn-rrm-site-${location.id}-${new Date().toISOString().split('T')[0]}.json`;
+              a.style.display = 'none';
+              document.body.appendChild(a);
+              a.click();
+              setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+            }}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+          >
             <FileText className="w-4 h-4" />Report
           </button>
         </div>
