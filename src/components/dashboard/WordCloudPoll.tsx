@@ -33,7 +33,7 @@ const SafeWordCloud = ({ words, options }: { words: WordCloudData[]; options?: W
     // Additional validation - ensure words is an array
     if (!Array.isArray(words)) {
       return (
-        <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+        <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
           <div className="text-center">
             <div className="text-4xl mb-2">⚠️</div>
             <p>Invalid data format</p>
@@ -56,7 +56,7 @@ const SafeWordCloud = ({ words, options }: { words: WordCloudData[]; options?: W
 
     if (safeWords.length === 0) {
       return (
-        <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+        <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
           <div className="text-center">
             <div className="text-4xl mb-2">☁️</div>
             <p>No valid words to display</p>
@@ -79,7 +79,7 @@ const SafeWordCloud = ({ words, options }: { words: WordCloudData[]; options?: W
   } catch (error) {
     console.error('SafeWordCloud Error:', error);
     return (
-      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+      <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
         <div className="text-center">
           <div className="text-4xl mb-2">⚠️</div>
           <p>Error rendering wordcloud</p>
@@ -455,8 +455,8 @@ export default function WordCloudPoll({
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8 shadow-lg">
-      <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-8 text-center">
+    <div className="bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-8 shadow-lg">
+      <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-8 text-center">
         {questionNumber && `Question ${questionNumber}: `}{question}
       </h3>
       
@@ -473,7 +473,7 @@ export default function WordCloudPoll({
             {!showChangeOption && !pagePath.startsWith('/cew-polls/') && (
               <button
                 onClick={handleChangeWords}
-                className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                className="px-3 py-1 text-sm bg-sky-600 hover:bg-sky-700 text-white rounded-md transition-colors"
               >
                 Change Words
               </button>
@@ -490,8 +490,8 @@ export default function WordCloudPoll({
             disabled={isFetchingAggregated}
             className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
               isFetchingAggregated
-                ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg transform hover:-translate-y-1'
+                ? 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                : 'bg-sky-600 hover:bg-sky-700 text-white hover:shadow-lg transform hover:-translate-y-1'
             }`}
           >
             {isFetchingAggregated ? (
@@ -518,7 +518,7 @@ export default function WordCloudPoll({
             </div>
             <button
               onClick={handleCancelChange}
-              className="px-3 py-1 text-sm bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
+              className="px-3 py-1 text-sm bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors"
             >
               Cancel
             </button>
@@ -532,7 +532,7 @@ export default function WordCloudPoll({
           {/* Predefined Options */}
           {predefinedOptions.length > 0 && (
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
                 Choose ONE option below OR enter custom words (not both):
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -542,18 +542,18 @@ export default function WordCloudPoll({
                     onClick={() => handlePredefinedToggle(option.keyword)}
                     className={`p-4 text-left rounded-lg border-2 transition-all duration-200 ${
                       selectedPredefined.includes(option.keyword)
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100'
-                        : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:border-blue-300 dark:hover:border-blue-500'
+                        ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/20 text-sky-900 dark:text-sky-100'
+                        : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:border-sky-300 dark:hover:border-sky-500'
                     }`}
                   >
                     <div className="font-medium">{option.display}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                       Will submit: <strong>{option.keyword}</strong>
                     </div>
                   </button>
                 ))}
               </div>
-              <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+              <div className="mt-3 text-sm text-slate-600 dark:text-slate-400">
                 Selected: {selectedPredefined.length} option{selectedPredefined.length !== 1 ? 's' : ''}
               </div>
             </div>
@@ -561,7 +561,7 @@ export default function WordCloudPoll({
 
           {/* Custom Words Input */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               Or enter custom words (up to {maxWords} words, {wordLimit} characters each):
             </label>
             <div className="relative">
@@ -570,7 +570,7 @@ export default function WordCloudPoll({
                 value={customWords}
                 onChange={(e) => handleCustomWordsChange(e.target.value)}
                 placeholder="Enter custom words separated by spaces"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                 style={{ 
                   pointerEvents: 'auto',
                   position: 'relative',
@@ -579,7 +579,7 @@ export default function WordCloudPoll({
                 autoComplete="off"
               />
             </div>
-            <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               {customWords.trim() ? `${customWords.trim().split(/\s+/).filter(w => w.length > 0).length} custom words` : 'No custom words entered'}
             </div>
           </div>
@@ -590,8 +590,8 @@ export default function WordCloudPoll({
               disabled={isLoading || getAllSelectedWords().length === 0}
               className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
                 isLoading || getAllSelectedWords().length === 0
-                  ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg transform hover:-translate-y-1'
+                  ? 'bg-slate-300 dark:bg-slate-600 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                  : 'bg-sky-600 hover:bg-sky-700 text-white hover:shadow-lg transform hover:-translate-y-1'
               }`}
             >
               {isLoading ? (
@@ -611,17 +611,17 @@ export default function WordCloudPoll({
       {showAggregatedResults && (results?.words?.length > 0 || (userWords && userWords.length > 0)) && (
         <div className="mt-8">
           <div className="mb-4 flex items-center justify-between">
-            <h4 className="text-lg font-semibold text-gray-800 dark:text-white">
+            <h4 className="text-lg font-semibold text-slate-800 dark:text-white">
               Word Cloud Results ({results.total_votes || 0} response{(results.total_votes || 0) !== 1 ? 's' : ''})
             </h4>
             
             {/* Color Scheme Selector */}
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Color:</span>
+              <span className="text-sm text-slate-600 dark:text-slate-400">Color:</span>
               <select
                 value={selectedColorScheme}
                 onChange={(e) => setSelectedColorScheme(e.target.value as keyof typeof colorSchemes)}
-                className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="px-2 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
               >
                 <option value="aquatic">Aquatic Blue</option>
                 <option value="ocean">Ocean Teal</option>
@@ -631,7 +631,7 @@ export default function WordCloudPoll({
             </div>
           </div>
           
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-inner">
+            <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-inner">
               <div style={{ height: '400px', width: '100%' }}>
                 {(() => {
                   // Show aggregated words from ALL users
@@ -639,7 +639,7 @@ export default function WordCloudPoll({
                   
                   if (!wordsToShow || !Array.isArray(wordsToShow) || wordsToShow.length === 0) {
                     return (
-                      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
                         <div className="text-center">
                           <div className="text-4xl mb-2">☁️</div>
                           <p>No words submitted yet</p>
@@ -662,7 +662,7 @@ export default function WordCloudPoll({
                   
                   if (validWords.length === 0) {
                     return (
-                      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
                         <div className="text-center">
                           <div className="text-4xl mb-2">⚠️</div>
                           <p>No valid words to display</p>
@@ -673,7 +673,7 @@ export default function WordCloudPoll({
                   
                   return (
                     <ErrorBoundary fallback={
-                      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
                         <div className="text-center">
                           <div className="text-4xl mb-2">⚠️</div>
                           <p>Error displaying wordcloud</p>
@@ -694,10 +694,10 @@ export default function WordCloudPoll({
           {/* Word Frequency Table */}
           {results.words && results.words.length > 0 && (
             <div className="mt-6">
-              <h5 className="text-md font-semibold text-gray-800 dark:text-white mb-3">
+              <h5 className="text-md font-semibold text-slate-800 dark:text-white mb-3">
                 Word Frequency
               </h5>
-              <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow">
+              <div className="bg-white dark:bg-slate-800 rounded-lg overflow-hidden shadow">
                 <div className="max-h-48 overflow-y-auto">
                   {(() => {
                     // Show aggregated words from ALL users
@@ -706,18 +706,18 @@ export default function WordCloudPoll({
                     const maxValue = Math.max(...wordsToShow.map(w => w.value));
                     
                     return wordsToShow.map((word, index) => (
-                      <div key={index} className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-                        <span className="font-medium text-gray-900 dark:text-white">{word.text}</span>
+                      <div key={index} className="flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-slate-700 last:border-b-0">
+                        <span className="font-medium text-slate-900 dark:text-white">{word.text}</span>
                         <div className="flex items-center space-x-2">
-                          <div className="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                          <div className="w-24 bg-slate-200 dark:bg-slate-600 rounded-full h-2">
                             <div 
-                              className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                              className="bg-sky-500 h-2 rounded-full transition-all duration-500"
                               style={{ 
                                 width: `${Math.min((word.value / maxValue) * 100, 100)}%` 
                               }}
                             ></div>
                           </div>
-                          <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 min-w-[2rem] text-right">
+                          <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 min-w-[2rem] text-right">
                             {word.value}
                           </span>
                         </div>

@@ -46,9 +46,9 @@ export default function PollResultsChart({
   // Safety check for no results
   if (!results || results.total_votes === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-6">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">{title}</h3>
-        <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 p-6">
+        <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">{title}</h3>
+        <div className="text-center text-slate-500 dark:text-slate-400 py-8">
           <div className="text-4xl mb-2">📊</div>
           <p>No votes yet</p>
           <p className="text-sm mt-1">Be the first to vote!</p>
@@ -77,9 +77,9 @@ export default function PollResultsChart({
     // Safety check for results array
     if (!singleChoiceResults.results || !Array.isArray(singleChoiceResults.results)) {
       return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">{title}</h3>
-          <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 p-6">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">{title}</h3>
+          <div className="text-center text-slate-500 dark:text-slate-400 py-8">
             <div className="text-4xl mb-2">📊</div>
             <p>No poll data available</p>
             <p className="text-sm mt-1">Poll results are being processed</p>
@@ -115,9 +115,9 @@ export default function PollResultsChart({
     // Safety check for results array
     if (!rankingResults.results || !Array.isArray(rankingResults.results)) {
       return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">{title}</h3>
-          <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 p-6">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">{title}</h3>
+          <div className="text-center text-slate-500 dark:text-slate-400 py-8">
             <div className="text-4xl mb-2">📊</div>
             <p>No ranking data available</p>
             <p className="text-sm mt-1">Ranking results are being processed</p>
@@ -159,9 +159,9 @@ export default function PollResultsChart({
     // If no valid results, show empty state
     if (chartData.length === 0) {
       return (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">{title}</h3>
-          <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+        <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 p-6">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">{title}</h3>
+          <div className="text-center text-slate-500 dark:text-slate-400 py-8">
             <div className="text-4xl mb-2">📊</div>
             <p>No ranking data available</p>
             <p className="text-sm mt-1">Complete rankings to see results</p>
@@ -177,10 +177,10 @@ export default function PollResultsChart({
     : title;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-6">
+    <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-600 p-6">
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">{chartTitle}</h3>
-        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+        <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">{chartTitle}</h3>
+        <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
           <span>
             {pollType === 'ranking' ? 'Average Rank' : 'Vote Count'}
           </span>
@@ -200,12 +200,12 @@ export default function PollResultsChart({
               <div key={index} className="group relative">
                 <div className="flex items-center space-x-3">
                   {/* Label */}
-                  <div className="w-64 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">
+                  <div className="w-64 text-sm font-medium text-slate-600 dark:text-slate-300 text-right">
                     {item.label}
                   </div>
 
                   {/* Bar Container */}
-                  <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-8 overflow-hidden relative">
+                  <div className="flex-1 bg-slate-200 dark:bg-slate-600 rounded-full h-8 overflow-hidden relative">
                     {/* Bar - sized based on inverse rank (lower rank = longer bar) */}
                     <div
                       className="h-full rounded-full transition-all duration-300"
@@ -224,7 +224,7 @@ export default function PollResultsChart({
                   </div>
 
                   {/* Rank Label */}
-                  <div className="w-20 text-sm font-semibold text-gray-600 dark:text-gray-400 text-right">
+                  <div className="w-20 text-sm font-semibold text-slate-500 dark:text-slate-400 text-right">
                     Rank {rankValue.toFixed(1)}
                   </div>
                 </div>
@@ -245,9 +245,9 @@ export default function PollResultsChart({
       )}
       
       {pollType === 'ranking' && (
-        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <div className="flex items-center space-x-2 text-sm text-blue-800 dark:text-blue-200">
-            <span className="text-blue-600 dark:text-blue-400">💡</span>
+        <div className="mt-4 p-3 bg-sky-50 dark:bg-sky-900/20 rounded-lg border border-sky-200 dark:border-sky-800">
+          <div className="flex items-center space-x-2 text-sm text-sky-800 dark:text-sky-200">
+            <span className="text-sky-700 dark:text-sky-300">💡</span>
             <span>
               <strong>Ranking Guide:</strong> Lower average rank = higher importance 
               (1st = most important, {chartData.length}th = least important)

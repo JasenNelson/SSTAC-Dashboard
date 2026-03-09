@@ -247,7 +247,7 @@ export default function CustomWordCloud({
 
   if (!words || words.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+      <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
         <div className="text-center">
           <div className="text-4xl mb-2">☁️</div>
           <p>No words to display</p>

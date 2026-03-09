@@ -190,7 +190,7 @@ export default function ReviewWizard() {
       />
 
       {/* Step content */}
-      <div className="mt-6 bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="mt-6 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-6">
         {renderStep()}
       </div>
 
@@ -202,7 +202,7 @@ export default function ReviewWizard() {
               <button
                 type="button"
                 onClick={() => dispatch({ type: 'PREV_STEP' })}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
               >
                 Back
               </button>
@@ -215,8 +215,8 @@ export default function ReviewWizard() {
             className={`
               px-6 py-2 text-sm font-medium rounded-lg transition-colors
               ${canProceed(state)
-                ? 'text-white bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600'
-                : 'text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 cursor-not-allowed'
+                ? 'text-white bg-sky-600 dark:bg-sky-500 hover:bg-sky-700 dark:hover:bg-sky-600'
+                : 'text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'
               }
             `}
           >

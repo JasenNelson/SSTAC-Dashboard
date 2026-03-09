@@ -978,10 +978,10 @@ export default function PollResultsClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading poll results...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-700 dark:border-sky-300 mx-auto mb-4"></div>
+          <p className="text-slate-600 dark:text-slate-400">Loading poll results...</p>
         </div>
       </div>
     );
@@ -989,14 +989,14 @@ export default function PollResultsClient() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="text-red-600 dark:text-red-400 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Error</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+          <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">Error</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">{error}</p>
           <button
             onClick={fetchPollResults}
-            className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 bg-sky-700 dark:bg-sky-600 text-white rounded-lg hover:bg-sky-800 dark:hover:bg-sky-700 transition-colors"
           >
             Try Again
           </button>
@@ -1006,7 +1006,7 @@ export default function PollResultsClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex">
       {/* Fixed Left Panel */}
       {leftPanelVisible && (
         <FilterSidebar
@@ -1036,7 +1036,7 @@ export default function PollResultsClient() {
         <div className="fixed left-4 top-20 z-50">
           <button
             onClick={() => setLeftPanelVisible(true)}
-            className="flex items-center justify-center w-12 h-12 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-xl border-2 border-white dark:border-gray-800"
+            className="flex items-center justify-center w-12 h-12 bg-sky-700 dark:bg-sky-600 text-white rounded-lg hover:bg-sky-800 dark:hover:bg-sky-700 transition-colors shadow-xl border-2 border-white dark:border-slate-800"
             title="Show filter panel"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1054,7 +1054,7 @@ export default function PollResultsClient() {
               fetchPollResults();
               setLastRefresh(new Date());
             }}
-            className="flex items-center justify-center w-12 h-12 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors shadow-xl border-2 border-white dark:border-gray-800"
+            className="flex items-center justify-center w-12 h-12 bg-green-600 dark:bg-green-500 text-white rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors shadow-xl border-2 border-white dark:border-slate-800"
             title="Refresh results"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1069,25 +1069,25 @@ export default function PollResultsClient() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Live Poll Results Dashboard</h1>
-            <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center space-x-2">
+            <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Live Poll Results Dashboard</h1>
+            <div className="text-sm text-slate-500 dark:text-slate-400 flex items-center space-x-2">
               <span>Last updated: {lastRefresh.toLocaleTimeString()}</span>
             </div>
           </div>
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">Combined results from TWG & SSTAC members (via dashboard) and CEW conference attendees (live event)</p>
+          <p className="text-xl text-slate-600 dark:text-slate-400 mb-8">Combined results from TWG & SSTAC members (via dashboard) and CEW conference attendees (live event)</p>
         </div>
 
         {pollResults.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">📊</div>
-            <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Poll Results Yet</h3>
-            <p className="text-gray-500 dark:text-gray-500">Poll results will appear here once users start voting.</p>
+            <div className="text-slate-400 dark:text-slate-500 text-6xl mb-4">📊</div>
+            <h3 className="text-xl font-semibold text-slate-600 dark:text-slate-400 mb-2">No Poll Results Yet</h3>
+            <p className="text-slate-500 dark:text-slate-500">Poll results will appear here once users start voting.</p>
           </div>
         ) : !selectedQuestion ? (
           <div className="text-center py-12">
-            <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">📋</div>
-            <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">Select a Question</h3>
-            <p className="text-gray-500 dark:text-gray-500">Choose a question from the left panel to view its results.</p>
+            <div className="text-slate-400 dark:text-slate-500 text-6xl mb-4">📋</div>
+            <h3 className="text-xl font-semibold text-slate-600 dark:text-slate-400 mb-2">Select a Question</h3>
+            <p className="text-slate-500 dark:text-slate-500">Choose a question from the left panel to view its results.</p>
           </div>
         ) : (
           <div>
@@ -1101,9 +1101,9 @@ export default function PollResultsClient() {
               if (!selectedPoll) {
                 return (
                   <div className="text-center py-12">
-                    <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">❌</div>
-                    <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">Question Not Found</h3>
-                    <p className="text-gray-500 dark:text-gray-500">The selected question could not be found.</p>
+                    <div className="text-slate-400 dark:text-slate-500 text-6xl mb-4">❌</div>
+                    <h3 className="text-xl font-semibold text-slate-600 dark:text-slate-400 mb-2">Question Not Found</h3>
+                    <p className="text-slate-500 dark:text-slate-500">The selected question could not be found.</p>
                   </div>
                 );
               }
@@ -1112,7 +1112,7 @@ export default function PollResultsClient() {
               const isExpanded = expandedPoll === pollKey;
               
               return (
-                <div key={pollKey} className={`bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 transition-all duration-300 ${
+                <div key={pollKey} className={`bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 transition-all duration-300 ${
                   isExpanded ? `fixed top-20 right-4 bottom-4 ${leftPanelVisible ? 'left-80' : 'left-20'} z-[60] flex flex-col` : 'p-8'
                 }`}>
                   <div className={isExpanded ? 'p-8 flex-1 flex flex-col' : ''}>
@@ -1120,12 +1120,12 @@ export default function PollResultsClient() {
                     <div className="flex items-start justify-between mb-4">
                       <div className={`flex-1 mr-4 ${isExpanded ? 'max-w-4xl' : 'max-w-3xl'}`}>
                         <div className="flex items-center space-x-2 mb-2">
-                          <h3 className={`font-bold text-gray-800 dark:text-white ${isExpanded ? 'text-3xl' : 'text-2xl'}`}>
+                          <h3 className={`font-bold text-slate-800 dark:text-white ${isExpanded ? 'text-3xl' : 'text-2xl'}`}>
                             {getPageTitle(selectedPoll.page_path)} - Question {selectedPoll.poll_index + 1}
                           </h3>
                           <button
                             onClick={() => navigateToPreviousQuestion(selectedPoll)}
-                            className={`flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ${isExpanded ? 'w-8 h-8' : 'w-6 h-6'}`}
+                            className={`flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded ${isExpanded ? 'w-8 h-8' : 'w-6 h-6'}`}
                             title="Previous question in group"
                           >
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className={`${isExpanded ? 'w-5 h-5' : 'w-4 h-4'}`}>
@@ -1134,7 +1134,7 @@ export default function PollResultsClient() {
                           </button>
                           <button
                             onClick={() => navigateToNextQuestion(selectedPoll)}
-                            className={`flex items-center justify-center text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded ${isExpanded ? 'w-8 h-8' : 'w-6 h-6'}`}
+                            className={`flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded ${isExpanded ? 'w-8 h-8' : 'w-6 h-6'}`}
                             title="Next question in group"
                           >
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className={`${isExpanded ? 'w-5 h-5' : 'w-4 h-4'}`}>
@@ -1143,7 +1143,7 @@ export default function PollResultsClient() {
                           </button>
                           <button
                             onClick={() => setExpandedPoll(isExpanded ? null : pollKey)}
-                            className="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                            className="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
                             title={isExpanded ? 'Close expanded view' : 'Expand to fit screen'}
                           >
                             {isExpanded ? (
@@ -1157,7 +1157,7 @@ export default function PollResultsClient() {
                             )}
                           </button>
                         </div>
-                        <p className={`text-gray-700 dark:text-gray-300 leading-relaxed ${isExpanded ? 'text-xl mb-3' : 'text-lg'}`}>{selectedPoll.question}</p>
+                        <p className={`text-slate-700 dark:text-slate-300 leading-relaxed ${isExpanded ? 'text-xl mb-3' : 'text-lg'}`}>{selectedPoll.question}</p>
                       </div>
                       
                       {/* Export Buttons */}
@@ -1173,7 +1173,7 @@ export default function PollResultsClient() {
                                 exportSingleChoicePoll(selectedPoll);
                               }
                             }}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200"
+                            className="flex items-center gap-2 px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white font-medium rounded-lg shadow-md transition-colors duration-200"
                             title="Export this question to CSV"
                           >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1211,7 +1211,7 @@ export default function PollResultsClient() {
                                 {/* Web Address and Password */}
                                 {webAddress && (
                                   <div 
-                                    className={`flex flex-col items-center bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors duration-200 ${isExpanded ? 'p-5 transform scale-[1.45]' : 'p-3'}`}
+                                    className={`flex flex-col items-center bg-sky-50 dark:bg-sky-900/20 rounded-lg border border-sky-200 dark:border-sky-800 cursor-pointer hover:bg-sky-100 dark:hover:bg-sky-900/30 transition-colors duration-200 ${isExpanded ? 'p-5 transform scale-[1.45]' : 'p-3'}`}
                                     onClick={() => {
                                       setExpandedPollGroup(pollGroup);
                                       setQrCodeExpanded(!qrCodeExpanded);
@@ -1220,10 +1220,10 @@ export default function PollResultsClient() {
                                   >
                                     {/* Join at section */}
                                     <div className="flex flex-col items-center">
-                                      <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-base' : 'text-sm'}`} style={{color: '#1d4ed8'}}>
+                                      <div className={`font-bold text-sky-700 dark:text-white ${isExpanded ? 'text-base' : 'text-sm'}`} style={{color: '#1d4ed8'}}>
                                         Join at:
                                       </div>
-                                      <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-xl' : 'text-lg'}`} style={{color: '#1d4ed8'}}>
+                                      <div className={`font-bold text-sky-700 dark:text-white ${isExpanded ? 'text-xl' : 'text-lg'}`} style={{color: '#1d4ed8'}}>
                                         {webAddress}
                                       </div>
                                     </div>
@@ -1231,10 +1231,10 @@ export default function PollResultsClient() {
                                     <div className="h-2"></div>
                                     {/* Password section */}
                                     <div className="flex flex-col items-center">
-                                      <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-base' : 'text-sm'}`} style={{color: '#1d4ed8'}}>
+                                      <div className={`font-bold text-sky-700 dark:text-white ${isExpanded ? 'text-base' : 'text-sm'}`} style={{color: '#1d4ed8'}}>
                                         Password:
                                       </div>
-                                      <div className={`font-bold text-blue-700 dark:text-white ${isExpanded ? 'text-xl' : 'text-lg'}`} style={{color: '#1d4ed8'}}>
+                                      <div className={`font-bold text-sky-700 dark:text-white ${isExpanded ? 'text-xl' : 'text-lg'}`} style={{color: '#1d4ed8'}}>
                                         CEW2025
                                       </div>
                                     </div>
@@ -1265,7 +1265,7 @@ export default function PollResultsClient() {
                   <div className="mt-4 flex flex-wrap gap-4 text-sm">
                     {filterMode === 'all' && (
                       <>
-                        <div className="bg-blue-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
+                        <div className="bg-sky-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
                           TWG/SSTAC: {selectedPoll.combined_survey_votes || 0} responses
                         </div>
                         <div className="bg-green-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
@@ -1274,7 +1274,7 @@ export default function PollResultsClient() {
                       </>
                     )}
                     {filterMode === 'twg' && (
-                      <div className="bg-blue-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
+                      <div className="bg-sky-600 text-white px-3 py-1 rounded-full font-medium shadow-sm">
                         TWG/SSTAC: {selectedPoll.combined_survey_votes || 0} responses
                       </div>
                     )}
@@ -1294,10 +1294,10 @@ export default function PollResultsClient() {
                       {/* Word Cloud Visualization */}
                       {selectedPoll.wordcloud_words && selectedPoll.wordcloud_words.length > 0 ? (
                         <div 
-                          className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-inner"
+                          className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-inner"
                         >
                           <div className="mb-4 flex justify-between items-center">
-                            <h4 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
+                            <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
                               Word Cloud ({selectedPoll.total_votes} response{selectedPoll.total_votes !== 1 ? 's' : ''})
                             </h4>
                           </div>
@@ -1312,7 +1312,7 @@ export default function PollResultsClient() {
                               word.value > 0
                             ) ? (
                               <ErrorBoundary fallback={
-                                <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                                <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
                                   <div className="text-center">
                                     <div className="text-4xl mb-2">⚠️</div>
                                     <p>Error displaying wordcloud</p>
@@ -1330,7 +1330,7 @@ export default function PollResultsClient() {
              />
                               </ErrorBoundary>
                             ) : (
-                              <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                              <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
                                 <div className="text-center">
                                   <div className="text-4xl mb-2">☁️</div>
                                   <p>No valid words to display</p>
@@ -1341,32 +1341,32 @@ export default function PollResultsClient() {
                         </div>
                       ) : (
                         <div className="text-center py-12">
-                          <div className="text-gray-400 dark:text-gray-500 text-6xl mb-4">☁️</div>
-                          <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No Words Yet</h3>
-                          <p className="text-gray-500 dark:text-gray-500">Word cloud will appear here once users start submitting words.</p>
+                          <div className="text-slate-400 dark:text-slate-500 text-6xl mb-4">☁️</div>
+                          <h3 className="text-xl font-semibold text-slate-600 dark:text-slate-400 mb-2">No Words Yet</h3>
+                          <p className="text-slate-500 dark:text-slate-500">Word cloud will appear here once users start submitting words.</p>
                         </div>
                       )}
                       
                       {/* Word Frequency Table */}
                       {selectedPoll.wordcloud_words && selectedPoll.wordcloud_words.length > 0 && (
-                        <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
-                          <h5 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">
+                        <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow">
+                          <h5 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">
                             Word Frequency
                           </h5>
                           <div className="max-h-64 overflow-y-auto">
                             {selectedPoll.wordcloud_words.map((word, index) => (
-                              <div key={index} className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
-                                <span className="font-medium text-gray-900 dark:text-white">{word.text}</span>
+                              <div key={index} className="flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-slate-700 last:border-b-0">
+                                <span className="font-medium text-slate-900 dark:text-white">{word.text}</span>
                                 <div className="flex items-center space-x-2">
-                                  <div className="w-24 bg-gray-200 dark:bg-gray-300 rounded-full h-2">
+                                  <div className="w-24 bg-slate-200 dark:bg-slate-300 rounded-full h-2">
                                     <div 
-                                      className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                                      className="bg-sky-500 h-2 rounded-full transition-all duration-500"
                                       style={{ 
                                         width: `${Math.min((word.value / Math.max(...(selectedPoll.wordcloud_words || []).map(w => w.value))) * 100, 100)}%` 
                                       }}
                                     ></div>
                                   </div>
-                                  <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 min-w-[2rem] text-right">
+                                  <span className="text-sm font-semibold text-slate-600 dark:text-slate-400 min-w-[2rem] text-right">
                                     {word.value}
                                   </span>
                                 </div>
@@ -1453,13 +1453,13 @@ export default function PollResultsClient() {
                                 isExpanded ? 'p-3' : 'p-4'
                               } ${
                                 isTopChoice 
-                                  ? 'border-blue-500 bg-white dark:bg-gray-800 dark:border-blue-400' 
-                                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
+                                  ? 'border-sky-500 bg-white dark:bg-slate-800 dark:border-sky-400' 
+                                  : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800'
                               }`}>
                                 <div className={`flex items-center justify-between ${isExpanded ? 'mb-2' : 'mb-3'}`}>
                                   <div className="flex items-center space-x-3">
                                     {isTopChoice && (
-                                      <div className={`bg-blue-500 text-white rounded-full flex items-center justify-center font-bold ${
+                                      <div className={`bg-sky-500 text-white rounded-full flex items-center justify-center font-bold ${
                                         isExpanded ? 'w-8 h-8 text-sm' : 'w-8 h-8 text-sm'
                                       }`}>
                                         🏆
@@ -1469,24 +1469,24 @@ export default function PollResultsClient() {
                                       needsLargerText 
                                         ? (isExpanded ? 'text-xl' : 'text-lg')
                                         : (isExpanded ? 'text-lg' : 'text-base')
-                                    } text-gray-900 dark:text-gray-100`}>
+                                    } text-slate-900 dark:text-slate-100`}>
                                       {result.option_text}
                                     </span>
                                   </div>
                                   <div className="text-right">
-                                    <div className={`font-bold text-blue-600 dark:text-blue-400 ${
+                                    <div className={`font-bold text-sky-600 dark:text-sky-400 ${
                                       isExpanded ? 'text-3xl' : 'text-2xl'
                                     }`}>
                                       {result.averageRank?.toFixed(1) || 'N/A'}
                                     </div>
-                                    <div className={`text-gray-600 dark:text-gray-400 ${
+                                    <div className={`text-slate-600 dark:text-slate-400 ${
                                       isExpanded ? 'text-base' : 'text-sm'
                                     }`}>
                                       Avg Rank
                                     </div>
                                   </div>
                                 </div>
-                                <div className={`w-full max-w-full bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden ${
+                                <div className={`w-full max-w-full bg-slate-200 dark:bg-slate-300 rounded-full overflow-hidden ${
                                   needsLargerText 
                                     ? (isExpanded ? 'h-10' : 'h-7')
                                     : (isExpanded ? 'h-8' : 'h-5')
@@ -1498,8 +1498,8 @@ export default function PollResultsClient() {
                                         : (isExpanded ? 'h-8' : 'h-5')
                                     } ${
                                       isTopChoice 
-                                        ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
-                                        : 'bg-gradient-to-r from-blue-400 to-blue-500'
+                                        ? 'bg-gradient-to-r from-sky-500 to-sky-600' 
+                                        : 'bg-gradient-to-r from-sky-400 to-sky-500'
                                     }`}
                                     style={{ 
                                       width: `${(() => {
@@ -1596,13 +1596,13 @@ export default function PollResultsClient() {
                               isExpanded ? 'p-3' : 'p-4'
                             } ${
                               isTopChoice 
-                                ? 'border-blue-500 bg-white dark:bg-gray-800 dark:border-blue-400' 
-                                : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
+                                ? 'border-sky-500 bg-white dark:bg-slate-800 dark:border-sky-400' 
+                                : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800'
                             }`}>
                               <div className={`flex items-center justify-between ${isExpanded ? 'mb-2' : 'mb-3'}`}>
                                 <div className="flex items-center space-x-3">
                                   {isTopChoice && (
-                                    <div className={`bg-blue-500 text-white rounded-full flex items-center justify-center font-bold ${
+                                    <div className={`bg-sky-500 text-white rounded-full flex items-center justify-center font-bold ${
                                       isExpanded ? 'w-8 h-8 text-sm' : 'w-8 h-8 text-sm'
                                     }`}>
                                       🏆
@@ -1612,24 +1612,24 @@ export default function PollResultsClient() {
                                     needsLargerText 
                                       ? (isExpanded ? 'text-xl' : 'text-lg')
                                       : (isExpanded ? 'text-lg' : 'text-base')
-                                  } text-gray-900 dark:text-gray-100`}>
+                                  } text-slate-900 dark:text-slate-100`}>
                                     {result.option_text}
                                   </span>
                                 </div>
                                 <div className="text-right">
-                                  <div className={`font-bold text-blue-600 dark:text-blue-400 ${
+                                  <div className={`font-bold text-sky-600 dark:text-sky-400 ${
                                     isExpanded ? 'text-3xl' : 'text-2xl'
                                   }`}>
                                     {result.votes}
                                   </div>
-                                  <div className={`text-gray-600 dark:text-gray-400 ${
+                                  <div className={`text-slate-600 dark:text-slate-400 ${
                                     isExpanded ? 'text-base' : 'text-sm'
                                   }`}>
                                     Votes
                                   </div>
                                 </div>
                               </div>
-                              <div className={`w-full max-w-full bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden ${
+                              <div className={`w-full max-w-full bg-slate-200 dark:bg-slate-300 rounded-full overflow-hidden ${
                                 needsLargerText 
                                   ? (isExpanded ? 'h-10' : 'h-7')
                                   : (isExpanded ? 'h-8' : 'h-5')
@@ -1641,8 +1641,8 @@ export default function PollResultsClient() {
                                       : (isExpanded ? 'h-8' : 'h-5')
                                   } ${
                                     isTopChoice 
-                                      ? 'bg-gradient-to-r from-blue-500 to-blue-600' 
-                                      : 'bg-gradient-to-r from-blue-400 to-blue-500'
+                                      ? 'bg-gradient-to-r from-sky-500 to-sky-600' 
+                                      : 'bg-gradient-to-r from-sky-400 to-sky-500'
                                   }`}
                                   style={{ 
                                     width: `${Math.max(2, percentage)}%` 
@@ -1664,11 +1664,11 @@ export default function PollResultsClient() {
                       // Define gradient colors from light to dark (lowest to highest votes)
                       const getGradientColor = (votes: number, maxVotes: number) => {
                         const ratio = maxVotes > 0 ? votes / maxVotes : 0;
-                        if (ratio >= 0.8) return 'bg-gradient-to-r from-indigo-600 to-indigo-700'; // Highest votes - dark indigo
-                        if (ratio >= 0.6) return 'bg-gradient-to-r from-indigo-500 to-indigo-600'; // High votes - indigo
-                        if (ratio >= 0.4) return 'bg-gradient-to-r from-blue-600 to-indigo-500'; // Medium votes - blue to indigo
-                        if (ratio >= 0.2) return 'bg-gradient-to-r from-blue-500 to-blue-600'; // Low votes - blue
-                        return 'bg-gradient-to-r from-blue-400 to-blue-500'; // Lowest votes - light blue
+                        if (ratio >= 0.8) return 'bg-gradient-to-r from-sky-700 to-sky-800'; // Highest votes - dark sky
+                        if (ratio >= 0.6) return 'bg-gradient-to-r from-sky-600 to-sky-700'; // High votes - sky
+                        if (ratio >= 0.4) return 'bg-gradient-to-r from-sky-500 to-sky-600'; // Medium votes - medium sky
+                        if (ratio >= 0.2) return 'bg-gradient-to-r from-sky-500 to-sky-600'; // Low votes - blue
+                        return 'bg-gradient-to-r from-sky-400 to-sky-500'; // Lowest votes - light blue
                       };
                       
                       // Check if this is a question that needs larger text (Questions 1-8 in holistic, Questions 1-2 in prioritization)
@@ -1679,7 +1679,7 @@ export default function PollResultsClient() {
                       
                       return (
                         <div 
-                          className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow"
+                          className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow"
                         >
                           <div className="space-y-2">
                             {sortedResults.map((result) => {
@@ -1688,7 +1688,7 @@ export default function PollResultsClient() {
                               return (
                                 <div key={result.option_index} className="flex items-center space-x-3">
                                   <div 
-                                    className={`flex-shrink-0 font-medium text-gray-600 dark:text-gray-400 text-left ${
+                                    className={`flex-shrink-0 font-medium text-slate-600 dark:text-slate-400 text-left ${
                                       needsLargerText ? 'text-lg' : 'text-xs'
                                     }`}
                                     style={{ width: `${textWidth}px` }}
@@ -1696,7 +1696,7 @@ export default function PollResultsClient() {
                                     {result.option_text}
                                   </div>
                                   <div className="flex-1 relative min-w-[80px]">
-                                    <div className={`w-full bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden ${
+                                    <div className={`w-full bg-slate-200 dark:bg-slate-300 rounded-full overflow-hidden ${
                                       needsLargerText ? 'h-6' : 'h-4'
                                     }`}>
                                       <div
@@ -1709,7 +1709,7 @@ export default function PollResultsClient() {
                                       ></div>
                                     </div>
                                   </div>
-                                  <div className={`w-12 flex-shrink-0 font-semibold text-gray-700 dark:text-gray-300 text-right ${
+                                  <div className={`w-12 flex-shrink-0 font-semibold text-slate-700 dark:text-slate-300 text-right ${
                                     needsLargerText ? 'text-sm' : 'text-xs'
                                   }`}>
                                     {result.votes}
@@ -1718,7 +1718,7 @@ export default function PollResultsClient() {
                               );
                             })}
                           </div>
-                          <div className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
+                          <div className="mt-3 text-center text-sm text-slate-500 dark:text-slate-400">
                             Total: {filteredTotal} response{filteredTotal !== 1 ? 's' : ''}
                           </div>
                         </div>
@@ -1770,7 +1770,7 @@ export default function PollResultsClient() {
                             const q2Text = q2Poll?.question || 'Question 2';
                             exportMatrixGraph(specificGraph, q1Text, q2Text, 'Prioritization Q1-Q2');
                           }}
-                          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+                          className="px-6 py-3 bg-sky-700 hover:bg-sky-800 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
                           title="Export matrix graph data to CSV"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1779,13 +1779,13 @@ export default function PollResultsClient() {
                           Export CSV
                         </button>
                       </div>
-                      
+
                       {/* Matrix Graph - Conditionally Rendered */}
                       {isVisible && (
-                        <div 
-                          className="p-6 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
+                        <div
+                          className="p-6 bg-gradient-to-r from-purple-50 to-sky-50 dark:from-purple-900/20 dark:to-sky-900/20 rounded-lg border border-purple-200 dark:border-purple-800"
                         >
-                          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">
+                          <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4 text-center">
                             Prioritization
                           </h3>
                           <div className="flex justify-center">
@@ -1845,7 +1845,7 @@ export default function PollResultsClient() {
                             const q2Text = feasibilityPoll?.question || `Question ${selectedPoll.poll_index + 1}`;
                             exportMatrixGraph(specificGraph, q1Text, q2Text, `Holistic Protection Q${selectedPoll.poll_index}-Q${selectedPoll.poll_index + 1}`);
                           }}
-                          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+                          className="px-6 py-3 bg-sky-700 hover:bg-sky-800 text-white font-medium rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
                           title="Export matrix graph data to CSV"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1860,7 +1860,7 @@ export default function PollResultsClient() {
                         <div 
                           className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800"
                         >
-                          <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">
+                          <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4 text-center">
                             Prioritization
                           </h3>
                           <div className="flex justify-center">

@@ -88,8 +88,8 @@ const DECISION_OPTIONS: {
     value: 'OVERRIDE_PASS',
     label: 'Override: PASS',
     description: 'Override AI result to PASS',
-    colorClass: 'text-blue-700 dark:text-blue-300',
-    bgClass: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700',
+    colorClass: 'text-sky-700 dark:text-sky-300',
+    bgClass: 'bg-sky-50 dark:bg-sky-900/20 border-sky-200 dark:border-sky-700',
   },
   {
     value: 'OVERRIDE_FAIL',
@@ -109,8 +109,8 @@ const DECISION_OPTIONS: {
     value: 'NOT_APPLICABLE',
     label: 'Not Applicable',
     description: 'This requirement does not apply to this submission',
-    colorClass: 'text-gray-700 dark:text-gray-300',
-    bgClass: 'bg-gray-50 dark:bg-gray-800/50 border-gray-300 dark:border-gray-600',
+    colorClass: 'text-slate-600 dark:text-slate-300',
+    bgClass: 'bg-slate-50 dark:bg-slate-800/50 border-slate-300 dark:border-slate-600',
   },
 ];
 
@@ -209,14 +209,14 @@ function _EvidenceCoverageBar({ coverage }: { coverage: number }) {
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
           Evidence Coverage
         </span>
-        <span className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+        <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">
           {coverage}%
         </span>
       </div>
-      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-300 ${getColorClass(coverage)}`}
           style={{ width: `${Math.min(100, Math.max(0, coverage))}%` }}
@@ -410,17 +410,17 @@ export default function JudgmentPanel({
     <>
       <div
         ref={panelRef}
-        className="w-[400px] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700 flex flex-col h-full"
+        className="w-[400px] bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-700 flex flex-col h-full"
       >
         {/* Header - Sticky */}
-        <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="flex-shrink-0 p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
           <div className="flex items-center justify-between mb-2">
             <div className="pr-2">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
                 {displayLabel}
               </h3>
               {showInternalId && (
-                <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
                   ID: {assessment.csapId}
                 </div>
               )}
@@ -428,7 +428,7 @@ export default function JudgmentPanel({
             <button
               onClick={onClose}
               aria-label="Close panel"
-              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              className="p-1.5 text-slate-400 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
               title="Close panel (Esc)"
             >
               <X className="w-5 h-5" />
@@ -439,7 +439,7 @@ export default function JudgmentPanel({
             {tierConstraints.tooltipMessage && (
               <div className="group relative">
                 <AlertTriangle className="w-4 h-4 text-amber-500" />
-                <div className="absolute left-0 top-full mt-1 w-64 p-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                <div className="absolute left-0 top-full mt-1 w-64 p-2 bg-slate-900 dark:bg-slate-700 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                   {tierConstraints.tooltipMessage}
                 </div>
               </div>
@@ -450,14 +450,14 @@ export default function JudgmentPanel({
         {/* Content - Scrollable */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {/* Brief AI Summary - compact reference */}
-          <section className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <section className="flex items-center justify-between py-2 px-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400">AI Result:</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">AI Result:</span>
               <StatusBadge status={statusMap[assessment.aiResult]} />
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400">Evidence:</span>
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-xs text-slate-500 dark:text-slate-400">Evidence:</span>
+              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
                 {assessment.evidenceFound.length} items
               </span>
             </div>
@@ -468,7 +468,7 @@ export default function JudgmentPanel({
 
           {/* Judgment Form */}
           <section className="space-y-4">
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               Your Judgment
             </h4>
 
@@ -482,13 +482,13 @@ export default function JudgmentPanel({
                   <label
                     key={option.value}
                     className={`
-                      relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-gray-900
+                      relative flex items-start p-3 rounded-lg border-2 cursor-pointer transition-all focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-slate-900
                       ${
                         isAllowed
                           ? isSelected
                             ? `${option.bgClass} border-current`
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                          : 'opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                          : 'opacity-50 cursor-not-allowed bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
                       }
                     `}
                     title={!isAllowed ? tierConstraints.tooltipMessage : undefined}
@@ -508,7 +508,7 @@ export default function JudgmentPanel({
                         ${
                           isSelected
                             ? 'border-current bg-current'
-                            : 'border-gray-300 dark:border-gray-600'
+                            : 'border-slate-300 dark:border-slate-600'
                         }
                       `}
                     >
@@ -521,12 +521,12 @@ export default function JudgmentPanel({
                     <div className="flex-1">
                       <div
                         className={`text-sm font-medium ${
-                          isSelected ? option.colorClass : 'text-gray-900 dark:text-gray-100'
+                          isSelected ? option.colorClass : 'text-slate-900 dark:text-slate-100'
                         }`}
                       >
                         {option.label}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         {option.description}
                       </div>
                     </div>
@@ -545,7 +545,7 @@ export default function JudgmentPanel({
               <div>
                 <label
                   htmlFor="confidence"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1"
                 >
                   Override Confidence
                 </label>
@@ -553,7 +553,7 @@ export default function JudgmentPanel({
                     id="confidence"
                     value={confidence}
                     onChange={(e) => setConfidence(e.target.value as ConfidenceLevel)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                   >
                   {CONFIDENCE_OPTIONS.map((level) => (
                     <option key={level} value={level}>
@@ -569,7 +569,7 @@ export default function JudgmentPanel({
               <div>
                 <label
                   htmlFor="overrideReason"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1"
                 >
                   Override Reason{' '}
                   <span className="text-red-500">*</span>
@@ -589,10 +589,10 @@ export default function JudgmentPanel({
                   }}
                   rows={3}
                   placeholder="Explain why you are overriding the AI result..."
-                  className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none ${
+                  className={`w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 resize-none ${
                     validationErrors.overrideReason
                       ? 'border-red-300 dark:border-red-600'
-                      : 'border-gray-300 dark:border-gray-600'
+                      : 'border-slate-300 dark:border-slate-600'
                   }`}
                 />
                 {validationErrors.overrideReason && (
@@ -600,7 +600,7 @@ export default function JudgmentPanel({
                     {validationErrors.overrideReason}
                   </p>
                 )}
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   {overrideReason.length}/{MIN_OVERRIDE_REASON_LENGTH} min characters
                 </p>
               </div>
@@ -610,9 +610,9 @@ export default function JudgmentPanel({
             <div>
               <label
                 htmlFor="notes"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1"
               >
-                Notes <span className="text-gray-400">(optional)</span>
+                Notes <span className="text-slate-400">(optional)</span>
               </label>
               <textarea
                 id="notes"
@@ -620,7 +620,7 @@ export default function JudgmentPanel({
                 onChange={(e) => setNotes(e.target.value)}
                 rows={4}
                 placeholder="Add any additional notes or observations..."
-                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 resize-none"
+                className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 resize-none"
               />
             </div>
           </section>
@@ -630,13 +630,13 @@ export default function JudgmentPanel({
         </div>
 
         {/* Footer - Sticky */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="flex-shrink-0 p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
           <div className="flex gap-3">
             <button
               type="button"
               onClick={onSkip}
               disabled={isSaving || isLoading}
-              className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
             >
               Skip
             </button>
@@ -644,15 +644,15 @@ export default function JudgmentPanel({
               type="button"
               onClick={handleSave}
               disabled={isSaving || isLoading || !selectedDecision}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
             >
               {(isSaving || isLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
               Save
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-2">
-            Press <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">Enter</kbd> to save,{' '}
-            <kbd className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs">Esc</kbd> to close
+          <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-2">
+            Press <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs">Enter</kbd> to save,{' '}
+            <kbd className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-xs">Esc</kbd> to close
           </p>
         </div>
       </div>

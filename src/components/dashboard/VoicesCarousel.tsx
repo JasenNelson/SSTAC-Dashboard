@@ -82,18 +82,18 @@ export default function VoicesCarousel({ quotes: providedQuotes, autoRotate = tr
   if (!currentQuote) return null;
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
-      <h3 className="text-xl font-semibold text-blue-800 mb-4 flex items-center justify-center">
+    <div className="bg-gradient-to-br from-sky-50 to-indigo-50 rounded-xl p-6 border border-sky-200">
+      <h3 className="text-xl font-semibold text-sky-800 mb-4 flex items-center justify-center">
         <span className="text-2xl mr-3">💬</span>
         Voices from the Field
       </h3>
       
       <div className="text-center">
-        <blockquote className="text-blue-700 italic text-lg leading-relaxed mb-4 border-l-4 border-blue-300 pl-6 text-center max-w-4xl mx-auto">
+        <blockquote className="text-sky-700 italic text-lg leading-relaxed mb-4 border-l-4 border-sky-300 pl-6 text-center max-w-4xl mx-auto">
           &quot;{currentQuote.text}&quot;
         </blockquote>
-        <p className="text-blue-600 text-sm font-medium">- {currentQuote.author}</p>
-        <p className="text-blue-500 text-xs text-center mt-2">{currentQuote.background}</p>
+        <p className="text-sky-600 text-sm font-medium">- {currentQuote.author}</p>
+        <p className="text-sky-500 text-xs text-center mt-2">{currentQuote.background}</p>
       </div>
 
       {/* Quote Navigation Dots */}
@@ -105,8 +105,8 @@ export default function VoicesCarousel({ quotes: providedQuotes, autoRotate = tr
             onClick={() => setCurrentQuoteIndex(index)}
             className={`w-3 h-3 rounded-full transition-all duration-300 ${
               index === currentQuoteIndex
-                ? 'bg-blue-600 scale-125'
-                : 'bg-blue-300 hover:bg-blue-400'
+                ? 'bg-sky-600 scale-125'
+                : 'bg-sky-300 hover:bg-sky-400'
             }`}
             aria-label={`Go to quote ${index + 1}`}
           />
@@ -116,7 +116,7 @@ export default function VoicesCarousel({ quotes: providedQuotes, autoRotate = tr
 
       {/* Quote Counter */}
       <div className="text-center mt-4">
-        <span className="text-blue-500 text-sm">
+        <span className="text-sky-500 text-sm">
           Quote {currentQuoteIndex + 1} of {quotesToUse.length}
         </span>
       </div>

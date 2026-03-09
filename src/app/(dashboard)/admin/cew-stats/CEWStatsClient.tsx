@@ -103,13 +103,13 @@ export default function CEWStatsClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-8">
         <div className="max-w-6xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-1/3 mb-6"></div>
+            <div className="h-8 bg-slate-300 dark:bg-slate-700 rounded w-1/3 mb-6"></div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-32 bg-gray-300 dark:bg-gray-700 rounded-lg"></div>
+                <div key={i} className="h-32 bg-slate-300 dark:bg-slate-700 rounded-lg"></div>
               ))}
             </div>
           </div>
@@ -119,66 +119,66 @@ export default function CEWStatsClient() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-8">
           CEW Poll Statistics
         </h1>
 
         {/* Overall Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
               Total Votes
             </h3>
-            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+            <p className="text-3xl font-bold text-sky-700 dark:text-sky-300">
               {stats?.totalVotes || 0}
             </p>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
               Anonymous Votes
             </h3>
             <p className="text-3xl font-bold text-green-600 dark:text-green-400">
               {stats?.anonymousVotes || 0}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               {stats ? Math.round((stats.anonymousVotes / stats.totalVotes) * 100) : 0}% of total
             </p>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
               Authenticated Votes
             </h3>
             <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
               {stats?.authenticatedVotes || 0}
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               {stats ? Math.round((stats.authenticatedVotes / stats.totalVotes) * 100) : 0}% of total
             </p>
           </div>
         </div>
 
         {/* Page Stats */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-6">
             Poll Breakdown
           </h2>
           
           <div className="space-y-4">
             {stats?.pageStats.map((pageStat, index) => (
-              <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div key={index} className="border border-slate-200 dark:border-slate-700 rounded-lg p-4">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-medium text-gray-900 dark:text-white">
+                  <h3 className="font-medium text-slate-900 dark:text-white">
                     {pageStat.pagePath} - Question {pageStat.pollIndex}
                   </h3>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
                     {pageStat.totalVotes} total votes
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
                   {pageStat.question}
                 </p>
                 <div className="flex space-x-4 text-sm">
@@ -197,7 +197,7 @@ export default function CEWStatsClient() {
         <div className="mt-6 text-center">
           <button
             onClick={fetchStats}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-sky-700 hover:bg-sky-800 text-white rounded-lg transition-colors"
           >
             Refresh Stats
           </button>

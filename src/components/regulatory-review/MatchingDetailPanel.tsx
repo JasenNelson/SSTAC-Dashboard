@@ -36,18 +36,18 @@ function ScoreBar({
   const percentage = Math.round(score * 100);
   return (
     <div className="flex items-center gap-2 text-xs">
-      <span className="w-20 text-gray-500 dark:text-gray-400">{label}</span>
-      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+      <span className="w-20 text-slate-500 dark:text-slate-400">{label}</span>
+      <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
         <div
           className={`h-full ${color} rounded-full transition-all duration-300`}
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className="w-10 text-right font-mono text-gray-700 dark:text-gray-300">
+      <span className="w-10 text-right font-mono text-slate-600 dark:text-slate-300">
         {percentage}%
       </span>
       {weight !== undefined && (
-        <span className="w-12 text-right text-gray-400">
+        <span className="w-12 text-right text-slate-400">
           (×{weight.toFixed(1)})
         </span>
       )}
@@ -96,10 +96,10 @@ function Section({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+    <div className="border-b border-slate-200 dark:border-slate-700 last:border-b-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+        className="w-full flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/50"
       >
         {isOpen ? (
           <ChevronDown className="w-4 h-4" />
@@ -131,15 +131,15 @@ export default function MatchingDetailPanel({
   const isAiReasoning = matchingRationale.evaluationType === 'ai_reasoning';
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900">
+    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
       {/* Header - always visible */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <Search className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <Search className="w-4 h-4 text-slate-500" />
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
             Matching Details
           </span>
           <span
@@ -149,28 +149,28 @@ export default function MatchingDetailPanel({
                 : matchingRationale.method === 'ai_fallback'
                 ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200'
                 : matchingRationale.method === 'hybrid'
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                ? 'bg-sky-100 dark:bg-sky-900/30 text-sky-800 dark:text-sky-200'
+                : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
             }`}
           >
             {methodLabels[matchingRationale.method] || matchingRationale.method}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-slate-500">
             Score: {Math.round(matchingRationale.scores.combined * 100)}%
           </span>
           {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-gray-400" />
+            <ChevronDown className="w-4 h-4 text-slate-400" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-gray-400" />
+            <ChevronRight className="w-4 h-4 text-slate-400" />
           )}
         </div>
       </button>
 
       {/* Expanded content */}
       {isExpanded && (
-        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+        <div className="divide-y divide-slate-200 dark:divide-slate-700">
           {/* Score Breakdown */}
           <Section title="Score Breakdown" icon={BarChart3}>
             {isAiReasoning ? (
@@ -179,7 +179,7 @@ export default function MatchingDetailPanel({
                   <ScoreBar
                     label="Similarity"
                     score={matchingRationale.scores.similarity ?? 0}
-                    color="bg-blue-500"
+                    color="bg-sky-500"
                   />
                   <ScoreBar
                     label="Relevance"
@@ -191,7 +191,7 @@ export default function MatchingDetailPanel({
                     score={matchingRationale.scores.completeness ?? 0}
                     color="bg-green-500"
                   />
-                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
                     <ScoreBar
                       label="Combined"
                       score={matchingRationale.scores.combined}
@@ -210,7 +210,7 @@ export default function MatchingDetailPanel({
                     label="Keyword"
                     score={matchingRationale.scores.keyword}
                     weight={0.4}
-                    color="bg-blue-500"
+                    color="bg-sky-500"
                   />
                   <ScoreBar
                     label="Semantic"
@@ -224,7 +224,7 @@ export default function MatchingDetailPanel({
                     weight={0.2}
                     color="bg-amber-500"
                   />
-                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                  <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
                     <ScoreBar
                       label="Combined"
                       score={matchingRationale.scores.combined}
@@ -233,7 +233,7 @@ export default function MatchingDetailPanel({
                   </div>
                 </div>
                 {matchingRationale.scoreBreakdown.length > 0 && (
-                  <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs text-gray-600 dark:text-gray-400">
+                  <div className="mt-3 p-2 bg-slate-50 dark:bg-slate-800 rounded text-xs text-slate-500 dark:text-slate-400">
                     {matchingRationale.scoreBreakdown.map((line, i) => (
                       <div key={i}>{line}</div>
                     ))}
@@ -247,7 +247,7 @@ export default function MatchingDetailPanel({
           <Section title="Keywords Analysis" icon={Tag}>
             <div className="space-y-3">
               <div>
-                <div className="text-xs text-gray-500 mb-1">
+                <div className="text-xs text-slate-500 mb-1">
                   Policy Keywords ({matchingRationale.policyKeywords.length})
                 </div>
                 <div className="flex flex-wrap gap-1">
@@ -269,7 +269,7 @@ export default function MatchingDetailPanel({
                   <XCircle className="w-3 h-3" />
                   {matchingRationale.keywordsMissing.length} missing
                 </div>
-                <div className="text-gray-500">
+                <div className="text-slate-500">
                   Source: {matchingRationale.keywordsSource}
                 </div>
               </div>
@@ -281,30 +281,30 @@ export default function MatchingDetailPanel({
             <Section title="AI Assistance" icon={Sparkles}>
               <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-500">Trigger Reason:</span>
+                  <span className="text-slate-500">Trigger Reason:</span>
                   <span className="text-purple-600 dark:text-purple-400">
                     {matchingRationale.aiDetails.triggerReason || 'Low keyword score'}
                   </span>
                 </div>
                 {matchingRationale.aiDetails.model && (
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-500">Model:</span>
-                    <span className="font-mono text-gray-700 dark:text-gray-300">
+                    <span className="text-slate-500">Model:</span>
+                    <span className="font-mono text-slate-600 dark:text-slate-300">
                       {matchingRationale.aiDetails.model}
                     </span>
                   </div>
                 )}
                 {matchingRationale.aiDetails.reasoning && (
                   <div className="mt-2 p-2 bg-purple-50 dark:bg-purple-900/20 rounded border border-purple-200 dark:border-purple-800">
-                    <div className="text-gray-500 mb-1">AI Reasoning:</div>
-                    <div className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    <div className="text-slate-500 mb-1">AI Reasoning:</div>
+                    <div className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">
                       {matchingRationale.aiDetails.reasoning}
                     </div>
                   </div>
                 )}
                 {matchingRationale.aiDetails.confidence !== undefined && (
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-500">Confidence:</span>
+                    <span className="text-slate-500">Confidence:</span>
                     <span className="font-mono">
                       {Math.round(matchingRationale.aiDetails.confidence * 100)}%
                     </span>
@@ -319,19 +319,19 @@ export default function MatchingDetailPanel({
             <Section title="Cross-Reference Boost" icon={Link2}>
               <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-500">Boost Applied:</span>
+                  <span className="text-slate-500">Boost Applied:</span>
                   <span className="text-green-600 dark:text-green-400 font-mono">
                     +{(matchingRationale.crossRefDetails.boostAmount * 100).toFixed(0)}%
                   </span>
                 </div>
                 {matchingRationale.crossRefDetails.relatedPolicies.length > 0 && (
                   <div>
-                    <div className="text-gray-500 mb-1">Related Policies:</div>
+                    <div className="text-slate-500 mb-1">Related Policies:</div>
                     <div className="flex flex-wrap gap-1">
                       {matchingRationale.crossRefDetails.relatedPolicies.map((p, i) => (
                         <span
                           key={i}
-                          className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded text-xs font-mono"
+                          className="px-2 py-0.5 bg-sky-100 dark:bg-sky-900/30 text-sky-800 dark:text-sky-200 rounded text-xs font-mono"
                         >
                           {p}
                         </span>
@@ -347,27 +347,27 @@ export default function MatchingDetailPanel({
           <Section title="Search Statistics" icon={Search} defaultOpen={false}>
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
-                <div className="text-gray-500">Sections Searched</div>
-                <div className="font-mono text-lg text-gray-700 dark:text-gray-300">
+                <div className="text-slate-500">Sections Searched</div>
+                <div className="font-mono text-lg text-slate-600 dark:text-slate-300">
                   {matchingRationale.searchStats.sectionsSearched}
                 </div>
               </div>
               <div>
-                <div className="text-gray-500">Best Match Score</div>
+                <div className="text-slate-500">Best Match Score</div>
                 <div className="font-mono text-lg text-green-600 dark:text-green-400">
                   {Math.round(matchingRationale.searchStats.bestScore * 100)}%
                 </div>
               </div>
               <div className="col-span-2">
-                <div className="text-gray-500">Best Section</div>
-                <div className="font-mono text-gray-700 dark:text-gray-300 truncate">
+                <div className="text-slate-500">Best Section</div>
+                <div className="font-mono text-slate-600 dark:text-slate-300 truncate">
                   {matchingRationale.searchStats.bestSection}
                 </div>
               </div>
               {matchingRationale.searchStats.runnerUpScore !== undefined && (
                 <div className="col-span-2">
-                  <div className="text-gray-500">Runner-up Score</div>
-                  <div className="font-mono text-gray-600 dark:text-gray-400">
+                  <div className="text-slate-500">Runner-up Score</div>
+                  <div className="font-mono text-slate-500 dark:text-slate-400">
                     {Math.round(matchingRationale.searchStats.runnerUpScore * 100)}%
                   </div>
                 </div>
@@ -379,13 +379,13 @@ export default function MatchingDetailPanel({
           <Section title="Policy Context" icon={FileText} defaultOpen={false}>
             <div className="space-y-3 text-xs">
               <div className="flex items-center gap-2">
-                <span className="text-gray-500">Policy ID:</span>
-                <span className="font-mono text-gray-700 dark:text-gray-300">
+                <span className="text-slate-500">Policy ID:</span>
+                <span className="font-mono text-slate-600 dark:text-slate-300">
                   {policyContext.policyId}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-gray-500">Tier:</span>
+                <span className="text-slate-500">Tier:</span>
                 <span
                   className={`px-2 py-0.5 rounded text-xs font-medium ${
                     policyContext.discretionTier === 'TIER_1_BINARY'
@@ -399,13 +399,13 @@ export default function MatchingDetailPanel({
                 </span>
               </div>
               <div>
-                <div className="text-gray-500 mb-1">5-Sentence Framework:</div>
-                <div className="space-y-1 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
+                <div className="text-slate-500 mb-1">5-Sentence Framework:</div>
+                <div className="space-y-1 pl-2 border-l-2 border-slate-200 dark:border-slate-700">
                   {Object.entries(policyContext.semanticSentences).map(([key, val]) => (
                     <div key={key} className="flex gap-2">
-                      <span className="w-20 text-gray-400 uppercase text-[10px]">{key}</span>
-                      <span className="text-gray-700 dark:text-gray-300 flex-1">
-                        {val || <span className="italic text-gray-400">(not defined)</span>}
+                      <span className="w-20 text-slate-400 uppercase text-[10px]">{key}</span>
+                      <span className="text-slate-600 dark:text-slate-300 flex-1">
+                        {val || <span className="italic text-slate-400">(not defined)</span>}
                       </span>
                     </div>
                   ))}

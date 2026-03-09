@@ -18,7 +18,7 @@ function FormField({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+      <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
         {label}
         {required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
@@ -28,14 +28,14 @@ function FormField({
 }
 
 const inputClasses =
-  'block w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm text-gray-900 dark:text-white dark:bg-gray-800 shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500';
+  'block w-full rounded-lg border border-slate-300 dark:border-slate-600 px-3 py-2 text-sm text-slate-900 dark:text-white dark:bg-slate-800 shadow-sm placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-sky-500 focus:ring-1 focus:ring-sky-500';
 
 export default function SiteInfoForm({ siteInfo, onChange }: SiteInfoFormProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Site Information</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Site Information</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Enter details about the contaminated site and applicant. Fields marked with{' '}
           <span className="text-red-500">*</span> are required.
         </p>

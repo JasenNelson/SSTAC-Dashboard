@@ -118,7 +118,7 @@ export default function MatchingDetailPage({
       case 'TIER_3_STATUTORY':
         return 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200';
       default:
-        return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+        return 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200';
     }
   };
 
@@ -147,7 +147,7 @@ export default function MatchingDetailPage({
         };
       default:
         return {
-          class: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
+          class: 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200',
           icon: AlertCircle,
         };
     }
@@ -156,7 +156,7 @@ export default function MatchingDetailPage({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-sky-600" />
       </div>
     );
   }
@@ -166,7 +166,7 @@ export default function MatchingDetailPage({
       <div className="p-4">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-4"
+          className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Assessments
@@ -190,7 +190,7 @@ export default function MatchingDetailPage({
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+          className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Assessments
@@ -198,7 +198,7 @@ export default function MatchingDetailPage({
 
         <div className="flex items-center gap-2">
           {detail.validation && (
-            <span className="px-2 py-1 rounded text-xs font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-200">
+            <span className="px-2 py-1 rounded text-xs font-medium bg-sky-100 dark:bg-sky-900/30 text-sky-800 dark:text-sky-200">
               Validated
             </span>
           )}
@@ -206,13 +206,13 @@ export default function MatchingDetailPage({
       </div>
 
       {/* Assessment Header Card */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <FileText className="w-5 h-5 text-gray-500" />
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                <FileText className="w-5 h-5 text-slate-500" />
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                   {detail.csapId}
                 </h2>
                 <span
@@ -223,7 +223,7 @@ export default function MatchingDetailPage({
                   {detail.policyContext.discretionTier.replace(/_/g, ' ')}
                 </span>
               </div>
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                 {detail.policyContext.verbatimText}
               </p>
             </div>
@@ -231,11 +231,11 @@ export default function MatchingDetailPage({
         </div>
 
         {/* Engine Determination Summary */}
-        <div className="p-4 bg-gray-50 dark:bg-gray-800/50">
+        <div className="p-4 bg-slate-50 dark:bg-slate-800/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Engine Result:</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400">Engine Result:</span>
                 <span
                   className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${resultBadge.class}`}
                 >
@@ -244,14 +244,14 @@ export default function MatchingDetailPage({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Confidence:</span>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Confidence:</span>
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
                   {detail.engineDetermination.confidence}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Coverage:</span>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Coverage:</span>
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
                   {Math.round(detail.engineDetermination.evidenceCoverage)}%
                 </span>
               </div>
@@ -264,13 +264,13 @@ export default function MatchingDetailPage({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Evidence Context */}
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
             Evidence Found ({detail.evidenceContext.length})
           </h3>
 
           {detail.evidenceContext.length === 0 ? (
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 text-sm text-gray-500 dark:text-gray-400 italic">
+            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 text-sm text-slate-500 dark:text-slate-400 italic">
               No evidence excerpts available for this assessment.
             </div>
           ) : (
@@ -278,28 +278,28 @@ export default function MatchingDetailPage({
               {detail.evidenceContext.map((evidence, index) => (
                 <div
                   key={index}
-                  className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden"
                 >
-                  <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                       {evidence.sourceDocument}
                     </span>
                     {evidence.pageRange && (
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-slate-500">
                         Pages {evidence.pageRange[0]}-{evidence.pageRange[1]}
                       </span>
                     )}
                   </div>
                   <div className="p-3">
-                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                    <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                       {evidence.excerpt}
                     </p>
                     {evidence.fullContext && (
                       <details className="mt-2">
-                        <summary className="text-xs text-indigo-600 dark:text-indigo-400 cursor-pointer hover:underline">
+                        <summary className="text-xs text-sky-600 dark:text-sky-400 cursor-pointer hover:underline">
                           Show full context
                         </summary>
-                        <p className="mt-2 text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                           {evidence.fullContext}
                         </p>
                       </details>
@@ -313,7 +313,7 @@ export default function MatchingDetailPage({
 
         {/* Right Column - Validation Form */}
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <Scale className="w-4 h-4" />
             Human Validation
           </h3>
@@ -334,11 +334,11 @@ export default function MatchingDetailPage({
           />
 
           {/* Guidance box */}
-          <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-indigo-900 dark:text-indigo-200 mb-2">
+          <div className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-sky-900 dark:text-sky-200 mb-2">
               Validation Guidance
             </h4>
-            <ul className="text-xs text-indigo-700 dark:text-indigo-300 space-y-1">
+            <ul className="text-xs text-sky-700 dark:text-sky-300 space-y-1">
               <li>
                 <strong>True Positive:</strong> Engine correctly flagged a real deficiency
               </li>

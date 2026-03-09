@@ -55,7 +55,7 @@ export default async function RegulatoryReviewLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       {children}
     </div>
   );

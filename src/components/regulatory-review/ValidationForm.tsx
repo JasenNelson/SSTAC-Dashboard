@@ -51,8 +51,8 @@ const VALIDATION_OPTIONS: ValidationOption[] = [
     label: 'True Negative',
     description: 'Engine correctly passed/found no issue',
     icon: CheckCircle,
-    colorClass: 'text-blue-700 dark:text-blue-300',
-    bgClass: 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700',
+    colorClass: 'text-sky-700 dark:text-sky-300',
+    bgClass: 'bg-sky-50 dark:bg-sky-900/20 border-sky-300 dark:border-sky-700',
   },
   {
     value: 'FALSE_NEGATIVE',
@@ -104,12 +104,12 @@ export default function ValidationForm({
   };
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-      <div className="bg-gray-50 dark:bg-gray-800 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+      <div className="bg-slate-50 dark:bg-slate-800 px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+        <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           Baseline Validation
         </h4>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
           {getGuidanceText()}
         </p>
       </div>
@@ -128,7 +128,7 @@ export default function ValidationForm({
                   relative flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all
                   ${isSelected
                     ? `${option.bgClass} border-current`
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                   }
                 `}
               >
@@ -140,14 +140,14 @@ export default function ValidationForm({
                   onChange={() => setSelectedAssessment(option.value)}
                   className="sr-only"
                 />
-                <div className={`flex-shrink-0 mt-0.5 ${isSelected ? option.colorClass : 'text-gray-400'}`}>
+                <div className={`flex-shrink-0 mt-0.5 ${isSelected ? option.colorClass : 'text-slate-400'}`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className={`text-sm font-medium ${isSelected ? option.colorClass : 'text-gray-900 dark:text-gray-100'}`}>
+                  <div className={`text-sm font-medium ${isSelected ? option.colorClass : 'text-slate-900 dark:text-slate-100'}`}>
                     {option.label}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {option.description}
                   </p>
                 </div>
@@ -158,29 +158,29 @@ export default function ValidationForm({
 
         {/* Notes */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Validation Notes <span className="text-gray-400">(optional)</span>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+            Validation Notes <span className="text-slate-400">(optional)</span>
           </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Explain why you selected this validation..."
             rows={2}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+            className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
           />
         </div>
 
         {/* Save Button */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
           {currentValidation?.timestamp && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
               Last validated: {new Date(currentValidation.timestamp).toLocaleString()}
             </span>
           )}
           <button
             onClick={handleSave}
             disabled={!selectedAssessment || isSaving || isLoading}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ml-auto"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-sky-600 rounded-lg hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ml-auto"
           >
             {(isSaving || isLoading) && <Loader2 className="w-4 h-4 animate-spin" />}
             <Save className="w-4 h-4" />

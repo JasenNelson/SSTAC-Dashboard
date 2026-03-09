@@ -49,10 +49,10 @@ export default function ResetVotesClient() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 py-8">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">
             Reset Poll Votes
           </h1>
           
@@ -71,7 +71,7 @@ export default function ResetVotesClient() {
               <button
                 onClick={() => resetVotes(true)}
                 disabled={loading}
-                className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-semibold transition-colors disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-3 bg-sky-700 hover:bg-sky-800 disabled:bg-sky-400 text-white rounded-lg font-semibold transition-colors disabled:cursor-not-allowed"
               >
                 {loading ? 'Resetting...' : 'Reset with Backup'}
               </button>
@@ -98,13 +98,13 @@ export default function ResetVotesClient() {
             )}
           </div>
 
-          <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+          <div className="mt-8 p-6 bg-slate-50 dark:bg-slate-700 rounded-lg">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-3">
               What This Does:
             </h3>
-            <ul className="space-y-2 text-gray-700 dark:text-gray-300">
-              <li>• Deletes all votes from <code className="bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">poll_votes</code> table</li>
-              <li>• Deletes all votes from <code className="bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">ranking_votes</code> table</li>
+            <ul className="space-y-2 text-slate-700 dark:text-slate-300">
+              <li>• Deletes all votes from <code className="bg-slate-200 dark:bg-slate-600 px-2 py-1 rounded">poll_votes</code> table</li>
+              <li>• Deletes all votes from <code className="bg-slate-200 dark:bg-slate-600 px-2 py-1 rounded">ranking_votes</code> table</li>
               <li>• Poll results views will automatically show 0 votes</li>
               <li>• This does NOT affect poll questions or options</li>
             </ul>

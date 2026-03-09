@@ -102,7 +102,7 @@ function StatusDot({ status }: { status: Assessment['status'] }) {
 // Compact tier badge component
 function TierBadgeCompact({ tier }: { tier: Assessment['tier'] }) {
   const config: Record<Assessment['tier'], { bg: string; text: string; label: string }> = {
-    TIER_1_BINARY: { bg: 'bg-blue-100 dark:bg-blue-900/40', text: 'text-blue-700 dark:text-blue-300', label: 'T1' },
+    TIER_1_BINARY: { bg: 'bg-sky-100 dark:bg-sky-900/40', text: 'text-sky-700 dark:text-sky-300', label: 'T1' },
     TIER_2_PROFESSIONAL: { bg: 'bg-purple-100 dark:bg-purple-900/40', text: 'text-purple-700 dark:text-purple-300', label: 'T2' },
     TIER_3_STATUTORY: { bg: 'bg-red-100 dark:bg-red-900/40', text: 'text-red-700 dark:text-red-300', label: 'T3' },
   };
@@ -148,19 +148,19 @@ function SheetSection({
   const sectionId = `sheet-${sheetName.toLowerCase().replace(/[^a-z0-9_-]+/g, '-')}`;
 
   return (
-    <div className="border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+    <div className="border-b border-slate-100 dark:border-slate-700 last:border-b-0">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+        className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
         aria-expanded={isExpanded}
         aria-controls={sectionId}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <FileText className="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-          <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate group-focus-within:whitespace-normal group-focus-within:break-words" title={sheetName}>
+          <FileText className="h-4 w-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
+          <span className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate group-focus-within:whitespace-normal group-focus-within:break-words" title={sheetName}>
             {sheetName}
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-slate-500 dark:text-slate-400">
             ({assessments.length})
           </span>
         </div>
@@ -171,9 +171,9 @@ function SheetSection({
             </span>
           )}
           {isExpanded ? (
-            <ChevronUp className="h-4 w-4 text-gray-400" />
+            <ChevronUp className="h-4 w-4 text-slate-400" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-gray-400" />
+            <ChevronDown className="h-4 w-4 text-slate-400" />
           )}
         </div>
       </button>
@@ -193,18 +193,18 @@ function SheetSection({
               <button
                 key={assessment.id}
                 onClick={() => onSelect(assessment.id)}
-                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
                   selectedId === assessment.id
-                    ? 'bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-300 dark:border-indigo-600'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-700/50 border border-transparent'
+                    ? 'bg-sky-100 dark:bg-sky-900/40 border border-sky-300 dark:border-sky-600'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-700/50 border border-transparent'
                 }`}
               >
                 <StatusDot status={assessment.status} />
                 <span
                   className={`flex-1 text-xs truncate group-focus-within:whitespace-normal group-focus-within:break-words ${
                     selectedId === assessment.id
-                      ? 'text-indigo-900 dark:text-indigo-100 font-medium'
-                      : 'text-gray-700 dark:text-gray-300'
+                      ? 'text-sky-900 dark:text-sky-100 font-medium'
+                      : 'text-slate-600 dark:text-slate-300'
                   }`}
                   title={title}
                 >
@@ -284,10 +284,10 @@ export default function ReviewSidebar({
   // Collapsed state - show "Filters" label
   if (isCollapsed) {
     return (
-      <div className="w-10 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center transition-all duration-200">
+      <div className="w-10 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col items-center transition-all duration-200">
         <button
           onClick={onToggleCollapse}
-          className="w-full h-full flex flex-col items-center justify-center gap-2 py-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          className="w-full h-full flex flex-col items-center justify-center gap-2 py-4 text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
           aria-label="Show filters"
           title="Show filters"
         >
@@ -301,15 +301,15 @@ export default function ReviewSidebar({
   }
 
   return (
-    <div className="w-[280px] bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full transition-all duration-200">
+    <div className="w-[280px] bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 flex flex-col h-full transition-all duration-200">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Review Items</h3>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Review Items</h3>
           {onToggleCollapse && (
             <button
               onClick={onToggleCollapse}
-              className="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+              className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
               aria-label="Collapse sidebar"
               title="Collapse sidebar"
             >
@@ -328,10 +328,10 @@ export default function ReviewSidebar({
               <button
                 key={status}
                 onClick={() => onFilterChange({ ...filters, status })}
-                className={`px-2 py-1 text-xs font-medium rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 ${
+                className={`px-2 py-1 text-xs font-medium rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
                   isActive
-                    ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? 'bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
                 {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -347,7 +347,7 @@ export default function ReviewSidebar({
           id="tierFilter"
           value={filters.tier}
           onChange={(e) => onFilterChange({ ...filters, tier: e.target.value as TierFilter })}
-          className="w-full text-xs border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900 transition-colors"
+          className="w-full text-xs border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1.5 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 transition-colors"
         >
           <option value="all">All Tiers</option>
           <option value="TIER_1_BINARY">Tier 1 - Binary</option>
@@ -371,25 +371,25 @@ export default function ReviewSidebar({
             />
           ))
         ) : (
-          <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+          <div className="p-4 text-center text-sm text-slate-500 dark:text-slate-400">
             No assessments match filters
           </div>
         )}
       </div>
 
       {/* Bottom Area - Progress Summary */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+      <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
         {/* Progress Bar */}
         <div className="mb-3">
-          <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
             <span>Progress</span>
             <span className="font-medium">
               {progressStats.reviewed} of {progressStats.total} reviewed
             </span>
           </div>
-          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
             <div
-              className="h-full bg-indigo-500 dark:bg-indigo-400 rounded-full transition-all duration-300"
+              className="h-full bg-sky-500 dark:bg-sky-400 rounded-full transition-all duration-300"
               style={{
                 width: progressStats.total > 0
                   ? `${(progressStats.reviewed / progressStats.total) * 100}%`
@@ -403,7 +403,7 @@ export default function ReviewSidebar({
         <button
           type="button"
           disabled
-          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
           title="Export results (coming soon)"
         >
           <Download className="h-4 w-4" />

@@ -63,22 +63,22 @@ export default function MatrixGraphDemo() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
           Matrix Graph Overlapping Data Points Demo
         </h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-4">
+        <p className="text-slate-500 dark:text-slate-300 mb-4">
           This demo shows how overlapping data points are visualized when multiple users submit identical importance and feasibility ratings.
         </p>
         
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-4">
-          <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Demo Data with Color Spectrum:</h3>
-          <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-            <li>• <strong>Cluster 1:</strong> 8 users at Importance=1, Feasibility=1 - <span className="font-mono text-xs bg-gray-200 dark:bg-gray-700 px-1 rounded">Dark Indigo</span> (7-10 points)</li>
-            <li>• <strong>Cluster 2:</strong> 6 users at Importance=2, Feasibility=2 - <span className="font-mono text-xs bg-gray-200 dark:bg-gray-700 px-1 rounded">Indigo</span> (6 points)</li>
-            <li>• <strong>Cluster 3:</strong> 4 users at Importance=3, Feasibility=3 - <span className="font-mono text-xs bg-gray-200 dark:bg-gray-700 px-1 rounded">Darker Blue</span> (4 points)</li>
-            <li>• <strong>Individual points:</strong> Multiple users with unique coordinates - <span className="font-mono text-xs bg-gray-200 dark:bg-gray-700 px-1 rounded">Standard Blue</span> (1 point each)</li>
+        <div className="bg-sky-50 dark:bg-sky-900/20 p-4 rounded-lg mb-4">
+          <h3 className="font-semibold text-sky-900 dark:text-sky-100 mb-2">Demo Data with Color Spectrum:</h3>
+          <ul className="text-sm text-sky-800 dark:text-sky-200 space-y-1">
+            <li>• <strong>Cluster 1:</strong> 8 users at Importance=1, Feasibility=1 - <span className="font-mono text-xs bg-slate-200 dark:bg-slate-700 px-1 rounded">Dark Indigo</span> (7-10 points)</li>
+            <li>• <strong>Cluster 2:</strong> 6 users at Importance=2, Feasibility=2 - <span className="font-mono text-xs bg-slate-200 dark:bg-slate-700 px-1 rounded">Indigo</span> (6 points)</li>
+            <li>• <strong>Cluster 3:</strong> 4 users at Importance=3, Feasibility=3 - <span className="font-mono text-xs bg-slate-200 dark:bg-slate-700 px-1 rounded">Darker Blue</span> (4 points)</li>
+            <li>• <strong>Individual points:</strong> Multiple users with unique coordinates - <span className="font-mono text-xs bg-slate-200 dark:bg-slate-700 px-1 rounded">Standard Blue</span> (1 point each)</li>
           </ul>
-          <div className="mt-2 text-xs text-blue-700 dark:text-blue-300">
+          <div className="mt-2 text-xs text-sky-700 dark:text-sky-300">
             <strong>Color Legend:</strong> Standard Blue (1) → Medium Dark (2) → Dark (3) → Darker (4) → Very Dark (5) → Indigo (6) → Dark Indigo (7-10) → Deeper Indigo (11-20) → Darkest Indigo (20+)
           </div>
         </div>
@@ -88,8 +88,8 @@ export default function MatrixGraphDemo() {
             onClick={() => setShowAdvanced(false)}
             className={`px-4 py-2 rounded-lg font-medium ${
               !showAdvanced
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                ? 'bg-sky-700 text-white'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
             }`}
           >
             Hybrid Component (Icon-based mode switching)
@@ -98,8 +98,8 @@ export default function MatrixGraphDemo() {
             onClick={() => setShowAdvanced(true)}
             className={`px-4 py-2 rounded-lg font-medium ${
               showAdvanced
-                ? 'bg-blue-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                ? 'bg-sky-700 text-white'
+                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
             }`}
           >
             Advanced Multi-Mode (Text-based)
@@ -113,9 +113,9 @@ export default function MatrixGraphDemo() {
         <PrioritizationMatrixGraph {...demoData} />
       )}
 
-      <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">How to Use:</h3>
-        <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+      <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-lg">
+        <h3 className="font-semibold text-slate-900 dark:text-white mb-2">How to Use:</h3>
+        <ul className="text-sm text-slate-500 dark:text-slate-300 space-y-1">
           <li>• <strong>Hover over dots</strong> to see individual user information and cluster sizes</li>
           <li>• <strong>Jittered mode:</strong> Overlapping points are spread in a small radius around the original location</li>
           <li>• <strong>Advanced mode:</strong> Switch between 4 visualization approaches using the buttons above the graph</li>

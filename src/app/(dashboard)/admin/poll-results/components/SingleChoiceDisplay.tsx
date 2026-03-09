@@ -102,8 +102,8 @@ function SingleChoiceDisplay({
                 isExpanded ? 'p-3' : 'p-4'
               } ${
                 isTopChoice
-                  ? 'border-blue-500 bg-white dark:bg-gray-800 dark:border-blue-400'
-                  : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
+                  ? 'border-blue-500 bg-white dark:bg-slate-800 dark:border-blue-400'
+                  : 'border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800'
               }`}
             >
               <div className={`flex items-center justify-between ${isExpanded ? 'mb-2' : 'mb-3'}`}>
@@ -126,7 +126,7 @@ function SingleChoiceDisplay({
                         : isExpanded
                           ? 'text-lg'
                           : 'text-base'
-                    } text-gray-900 dark:text-gray-100`}
+                    } text-slate-900 dark:text-slate-100`}
                   >
                     {result.option_text}
                   </span>
@@ -140,7 +140,7 @@ function SingleChoiceDisplay({
                     {result.votes}
                   </div>
                   <div
-                    className={`text-gray-600 dark:text-gray-400 ${
+                    className={`text-slate-600 dark:text-slate-400 ${
                       isExpanded ? 'text-base' : 'text-sm'
                     }`}
                   >
@@ -149,7 +149,7 @@ function SingleChoiceDisplay({
                 </div>
               </div>
               <div
-                className={`w-full max-w-full bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden ${
+                className={`w-full max-w-full bg-slate-200 dark:bg-slate-300 rounded-full overflow-hidden ${
                   needsLargerText
                     ? isExpanded
                       ? 'h-10'
@@ -201,7 +201,7 @@ function SingleChoiceDisplay({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
+    <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow">
       <div className="space-y-2">
         {sortedResults.map((result) => {
           const percentage = getPercentage(result.votes, filteredTotal);
@@ -209,7 +209,7 @@ function SingleChoiceDisplay({
           return (
             <div key={result.option_index} className="flex items-center space-x-3">
               <div
-                className={`flex-shrink-0 font-medium text-gray-600 dark:text-gray-400 text-left ${
+                className={`flex-shrink-0 font-medium text-slate-600 dark:text-slate-400 text-left ${
                   needsLargerText ? 'text-lg' : 'text-xs'
                 }`}
                 style={{ width: `${textWidth}px` }}
@@ -218,7 +218,7 @@ function SingleChoiceDisplay({
               </div>
               <div className="flex-1 relative min-w-[80px]">
                 <div
-                  className={`w-full bg-gray-200 dark:bg-gray-300 rounded-full overflow-hidden ${
+                  className={`w-full bg-slate-200 dark:bg-slate-300 rounded-full overflow-hidden ${
                     needsLargerText ? 'h-6' : 'h-4'
                   }`}
                 >
@@ -234,7 +234,7 @@ function SingleChoiceDisplay({
                 </div>
               </div>
               <div
-                className={`w-12 flex-shrink-0 font-semibold text-gray-700 dark:text-gray-300 text-right ${
+                className={`w-12 flex-shrink-0 font-semibold text-slate-700 dark:text-slate-300 text-right ${
                   needsLargerText ? 'text-sm' : 'text-xs'
                 }`}
               >
@@ -244,7 +244,7 @@ function SingleChoiceDisplay({
           );
         })}
       </div>
-      <div className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
+      <div className="mt-3 text-center text-sm text-slate-500 dark:text-slate-400">
         Total: {filteredTotal} response{filteredTotal !== 1 ? 's' : ''}
       </div>
     </div>

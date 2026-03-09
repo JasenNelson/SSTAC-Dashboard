@@ -20,14 +20,14 @@ function Part10Conclusions({ data, onChange }: PartComponentProps) {
   ]
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8">
+      <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
         Part 10: Conclusions &amp; Recommendations
       </h3>
 
       <div className="space-y-6">
         <div>
-          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+          <h4 className="text-lg font-medium text-slate-900 dark:text-white mb-3">
             How well do the Conclusions &amp; Recommendations (Section VII) capture the path forward for modernizing BC&apos;s sediment standards?
           </h4>
           <div className="space-y-3">
@@ -39,16 +39,16 @@ function Part10Conclusions({ data, onChange }: PartComponentProps) {
                   value={option}
                   checked={data.recommendationConfidence === option}
                   onChange={(e) => onChange({ ...data, recommendationConfidence: e.target.value })}
-                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                  className="mt-1 h-4 w-4 text-sky-700 focus:ring-sky-500 border-slate-300"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{option}</span>
               </label>
             ))}
           </div>
         </div>
 
         <div>
-          <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
+          <h4 className="text-lg font-medium text-slate-900 dark:text-white mb-3">
             Which recommended actions must be prioritized in the first 12–18 months? (Select all that apply)
           </h4>
           <div className="space-y-3">
@@ -64,9 +64,9 @@ function Part10Conclusions({ data, onChange }: PartComponentProps) {
                       : currentAreas.filter((item: string) => item !== area)
                     onChange({ ...data, priorityAreas: updated })
                   }}
-                  className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="mt-1 h-4 w-4 text-sky-700 focus:ring-sky-500 border-slate-300 rounded"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{area}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{area}</span>
               </label>
             ))}
           </div>
@@ -78,14 +78,14 @@ function Part10Conclusions({ data, onChange }: PartComponentProps) {
                 value={data.priorityAreasOther || ''}
                 onChange={(e) => onChange({ ...data, priorityAreasOther: e.target.value })}
                 placeholder="Please specify additional priority actions..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               />
             </div>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             What resources, governance steps, or policy decisions are essential to operationalize the recommendations?
           </label>
           <div className="relative">
@@ -94,17 +94,17 @@ function Part10Conclusions({ data, onChange }: PartComponentProps) {
               onChange={(e) => onChange({ ...data, implementationSupport: e.target.value })}
               rows={5}
               maxLength={1800}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               placeholder="Identify funding, staffing, regulatory changes, or partnerships required..."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-slate-500 dark:text-slate-400">
               {(data.implementationSupport || '').length}/1800 characters
             </div>
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             Line-by-line feedback for Section VII – Conclusions &amp; Recommendations (5,000 characters max):
           </label>
           <div className="relative">
@@ -113,10 +113,10 @@ function Part10Conclusions({ data, onChange }: PartComponentProps) {
               onChange={(e) => onChange({ ...data, lineByLine: e.target.value })}
               rows={8}
               maxLength={5000}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
               placeholder="Reference specific lines in Section VII where revisions, clarifications, or evidence additions are needed..."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="absolute bottom-2 right-2 text-xs text-slate-500 dark:text-slate-400">
               {(data.lineByLine || '').length}/5000 characters
             </div>
           </div>

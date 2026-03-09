@@ -37,8 +37,8 @@ export default function InteractiveBarChart({
   if (!data || data.length === 0) {
     return (
       <div className="relative">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
-        <div className="text-center text-gray-500 py-8">
+        <h3 className="text-lg font-semibold text-slate-800 mb-4">{title}</h3>
+        <div className="text-center text-slate-500 py-8">
           No data available
         </div>
       </div>
@@ -72,7 +72,7 @@ export default function InteractiveBarChart({
   if (orientation === 'horizontal') {
     return (
       <div className="relative">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
+        <h3 className="text-lg font-semibold text-slate-800 mb-4">{title}</h3>
         
         {/* Mobile-friendly container with responsive design */}
         <div className="space-y-3 overflow-x-auto">
@@ -91,17 +91,17 @@ export default function InteractiveBarChart({
               >
                 <div className="flex items-center space-x-3">
                   {/* Label - responsive width for mobile */}
-                  <div className="w-32 sm:w-48 md:w-64 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 text-right flex-shrink-0">
+                  <div className="w-32 sm:w-48 md:w-64 text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-300 text-right flex-shrink-0">
                     {bar.label}
                   </div>
                   
                   {/* Bar Container */}
-                  <div className="flex-1 bg-gray-200 dark:bg-gray-600 rounded-full h-8 overflow-hidden relative">
+                  <div className="flex-1 bg-slate-200 dark:bg-slate-600 rounded-full h-8 overflow-hidden relative">
                     {/* Bar */}
                     <div
                       className={`h-full rounded-full transition-all duration-300 ${
                         isHovered ? 'shadow-lg' : ''
-                      } ${isSelected ? 'ring-2 ring-blue-400 ring-offset-2' : ''}`}
+                      } ${isSelected ? 'ring-2 ring-sky-400 ring-offset-2' : ''}`}
                       style={{
                         backgroundColor: bar.color,
                         width: `${bar.width}%`,
@@ -122,7 +122,7 @@ export default function InteractiveBarChart({
                   
                   {/* Percentage - responsive for mobile */}
                   {showPercentages && (
-                    <div className="w-16 sm:w-20 text-xs sm:text-sm font-semibold text-gray-600 dark:text-gray-400 text-right flex-shrink-0">
+                    <div className="w-16 sm:w-20 text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 text-right flex-shrink-0">
                       {bar.percentage.toFixed(1)}%
                     </div>
                   )}
@@ -141,8 +141,8 @@ export default function InteractiveBarChart({
   // Vertical orientation (for future use)
   return (
     <div className="relative">
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">{title}</h3>
-      <div className="text-center text-gray-500">
+      <h3 className="text-lg font-semibold text-slate-800 mb-4">{title}</h3>
+      <div className="text-center text-slate-500">
         Vertical orientation not yet implemented
       </div>
     </div>

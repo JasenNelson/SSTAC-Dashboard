@@ -17,27 +17,27 @@ function Part1ReviewerInformation({ data, onChange }: PartComponentProps) {
   ]
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+    <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-8">
+      <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
         Part 1: Reviewer Information (Optional)
       </h3>
 
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             Name and Affiliation:
           </label>
           <input
             type="text"
             value={data.name || ''}
             onChange={(e) => onChange({ ...data, name: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
             placeholder="Enter your name and affiliation"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             Primary Area(s) of Expertise (please select all that apply):
           </label>
           <div className="grid grid-cols-2 gap-3">
@@ -53,9 +53,9 @@ function Part1ReviewerInformation({ data, onChange }: PartComponentProps) {
                       : currentExpertise.filter((exp: string) => exp !== option)
                     onChange({ ...data, expertise: newExpertise })
                   }}
-                  className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="mr-2 h-4 w-4 text-sky-700 focus:ring-sky-500 border-slate-300 rounded"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">{option}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{option}</span>
               </label>
             ))}
           </div>
@@ -66,7 +66,7 @@ function Part1ReviewerInformation({ data, onChange }: PartComponentProps) {
                 type="text"
                 value={data.otherExpertise || ''}
                 onChange={(e) => onChange({ ...data, otherExpertise: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
                 placeholder="Please specify other expertise"
               />
             </div>

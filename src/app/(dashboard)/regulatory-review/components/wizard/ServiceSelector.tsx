@@ -27,18 +27,18 @@ function ServiceCheckbox({
     <label
       className={`
         flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors
-        ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}
+        ${isSelected ? 'bg-sky-50 dark:bg-sky-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}
       `}
     >
       <input
         type="checkbox"
         checked={isSelected}
         onChange={onToggle}
-        className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-800"
+        className="mt-0.5 h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus:ring-sky-500 dark:bg-slate-800"
       />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-gray-900 dark:text-white">{service.name}</div>
-        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{service.description}</div>
+        <div className="text-sm font-medium text-slate-900 dark:text-white">{service.name}</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{service.description}</div>
       </div>
     </label>
   );
@@ -84,11 +84,11 @@ export default function ServiceSelector({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Additional Services</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Additional Services</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Optionally select additional services to include in this review.
           {selectedServices.length > 0 && (
-            <span className="ml-1 font-medium text-indigo-600 dark:text-indigo-400">
+            <span className="ml-1 font-medium text-sky-600 dark:text-sky-400">
               {selectedServices.length} selected
             </span>
           )}
@@ -98,10 +98,10 @@ export default function ServiceSelector({
       {/* Related Services */}
       {relatedServices.length > 0 && (
         <div>
-          <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <h3 className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
             Related Services
             {selectedStages.size > 0 && (
-              <span className="text-gray-400 dark:text-gray-500 font-normal ml-1">
+              <span className="text-slate-400 dark:text-slate-500 font-normal ml-1">
                 (same lifecycle {selectedStages.size === 1 ? 'stage' : 'stages'})
               </span>
             )}
@@ -125,7 +125,7 @@ export default function ServiceSelector({
           <button
             type="button"
             onClick={() => setShowOther(!showOther)}
-            className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
           >
             {showOther ? (
               <ChevronDown className="w-4 h-4" />
@@ -133,7 +133,7 @@ export default function ServiceSelector({
               <ChevronRight className="w-4 h-4" />
             )}
             Other Services
-            <span className="text-gray-400 dark:text-gray-500 font-normal">({otherServices.length})</span>
+            <span className="text-slate-400 dark:text-slate-500 font-normal">({otherServices.length})</span>
           </button>
           {showOther && (
             <div className="mt-2 space-y-1">
@@ -151,18 +151,18 @@ export default function ServiceSelector({
       )}
 
       {/* Approved Professional toggle */}
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+      <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
             checked={showApprovedProfessional}
             onChange={() => setShowApprovedProfessional(!showApprovedProfessional)}
-            className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 dark:bg-gray-800"
+            className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-sky-600 focus:ring-sky-500 dark:bg-slate-800"
           />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
             Include Approved Professional services
           </span>
-          <span className="text-xs text-gray-400 dark:text-gray-500">(Schedule 3)</span>
+          <span className="text-xs text-slate-400 dark:text-slate-500">(Schedule 3)</span>
         </label>
         {showApprovedProfessional && apServices.length > 0 && (
           <div className="mt-3 ml-7 space-y-1">
