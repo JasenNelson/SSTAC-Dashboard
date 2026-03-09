@@ -125,5 +125,6 @@ export const config = {
     '/survey-results/:path*',
     '/cew-2025/:path*',
     '/regulatory-review/:path*',
+    '/bn-rrm/:path*',
   ],
 }
