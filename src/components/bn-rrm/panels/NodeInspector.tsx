@@ -53,14 +53,14 @@ const categoryConfig: Record<
   condition: {
     icon: Thermometer,
     label: 'Environmental Condition',
-    color: 'text-violet-600',
-    bgColor: 'bg-violet-50',
+    color: 'text-violet-600 dark:text-violet-400',
+    bgColor: 'bg-violet-50 dark:bg-violet-900/30',
   },
   effect: {
     icon: Activity,
     label: 'Effect',
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50',
+    color: 'text-amber-600 dark:text-amber-400',
+    bgColor: 'bg-amber-50 dark:bg-amber-900/30',
   },
   impact: {
     icon: AlertTriangle,
