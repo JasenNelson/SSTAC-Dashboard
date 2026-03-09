@@ -10,11 +10,11 @@
 
 'use client';
 
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState, useCallback } from 'react';
 import { useNetworkStore } from '@/stores/bn-rrm/networkStore';
 import { BeliefBar } from '@/components/bn-rrm/canvas/BeliefBar';
 import { cn } from '@/utils/cn';
-import type { NetworkNodeData, NodeCategory, NodeState, ConditionalProbabilityTable } from '@/types/bn-rrm/network';
+import type { NetworkNodeData, NodeCategory, NodeState, ConditionalProbabilityTable, CPTEntry } from '@/types/bn-rrm/network';
 import {
   X,
   Beaker,
@@ -29,6 +29,7 @@ import {
   ArrowLeft,
   Info,
   BookOpen,
+  Filter,
 } from 'lucide-react';
 
 // =============================================================================
@@ -414,6 +415,8 @@ function NodeLink({ node, onClick }: NodeLinkProps) {
 // CPT VIEWER (read-only, CPT-first rendering)
 // =============================================================================
 
+const PAGE_SIZE = 25;
+
 interface CPTViewerProps {
   nodeId: string;
   states: NodeState[];
@@ -424,75 +427,29 @@ interface CPTViewerProps {
 
 function CPTViewer({ nodeId, states, parentNodes, cpts, isRoot }: CPTViewerProps) {
   const cpt = cpts?.find((c) => c.nodeId === nodeId);
+  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(0);
 
-  // (a) CPT exists with entries → always render table
+  // Reset filters/page when node changes
+  const [prevNodeId, setPrevNodeId] = useState(nodeId);
+  if (nodeId !== prevNodeId) {
+    setPrevNodeId(nodeId);
+    setFilters({});
+    setPage(0);
+  }
+
+  // (a) CPT exists with entries → smart viewer
   if (cpt && cpt.entries.length > 0) {
-    const parentIds = cpt.parentNodeIds;
     return (
-      <div className="overflow-x-auto -mx-1">
-        <table className="w-full text-xs border-collapse">
-          <thead>
-            <tr className="bg-slate-100 dark:bg-slate-700">
-              {parentIds.map((pid) => {
-                const parent = parentNodes.find((n) => n.id === pid);
-                return (
-                  <th
-                    key={pid}
-                    className="px-2 py-1.5 text-left font-medium text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-600"
-                  >
-                    {parent?.label ?? pid}
-                  </th>
-                );
-              })}
-              {states.map((s) => (
-                <th
-                  key={s.id}
-                  className="px-2 py-1.5 text-right font-medium border-b border-slate-200 dark:border-slate-600"
-                  style={{ color: s.color || undefined }}
-                >
-                  {s.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {cpt.entries.map((entry, idx) => (
-              <tr
-                key={idx}
-                className={cn(
-                  'transition-colors hover:bg-blue-50/50 dark:hover:bg-blue-900/20',
-                  idx % 2 === 0
-                    ? 'bg-white dark:bg-slate-800'
-                    : 'bg-slate-50/50 dark:bg-slate-750/50'
-                )}
-              >
-                {parentIds.map((pid) => (
-                  <td
-                    key={pid}
-                    className="px-2 py-1.5 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-700 font-medium"
-                  >
-                    {entry.parentStates[pid] ?? '\u2014'}
-                  </td>
-                ))}
-                {states.map((s) => {
-                  const prob = entry.distribution[s.id] ?? 0;
-                  return (
-                    <td
-                      key={s.id}
-                      className="px-2 py-1.5 text-right tabular-nums border-b border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-400"
-                    >
-                      {(prob * 100).toFixed(1)}%
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2 px-1">
-          {cpt.entries.length} row{cpt.entries.length !== 1 ? 's' : ''} &middot; read-only
-        </p>
-      </div>
+      <SmartCPTTable
+        cpt={cpt}
+        states={states}
+        parentNodes={parentNodes}
+        filters={filters}
+        setFilters={setFilters}
+        page={page}
+        setPage={setPage}
+      />
     );
   }
 
@@ -514,6 +471,294 @@ function CPTViewer({ nodeId, states, parentNodes, cpts, isRoot }: CPTViewerProps
       <div className="mt-2 text-[10px] text-red-600/80 dark:text-red-400/70 space-y-0.5">
         <p>Parents: {parentNodes.map((n) => n.id).join(', ') || 'none detected'}</p>
         <p>Model CPTs loaded: {cpts?.length ?? 0}</p>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// SMART CPT TABLE
+// =============================================================================
+
+interface SmartCPTTableProps {
+  cpt: ConditionalProbabilityTable;
+  states: NodeState[];
+  parentNodes: NetworkNodeData[];
+  filters: Record<string, string>;
+  setFilters: (f: Record<string, string>) => void;
+  page: number;
+  setPage: (p: number) => void;
+}
+
+function SmartCPTTable({ cpt, states, parentNodes, filters, setFilters, page, setPage }: SmartCPTTableProps) {
+  const parentIds = cpt.parentNodeIds;
+
+  // Collect unique values per parent for filter dropdowns
+  const parentStateOptions = useMemo(() => {
+    const opts: Record<string, string[]> = {};
+    for (const pid of parentIds) {
+      const seen = new Set<string>();
+      for (const entry of cpt.entries) {
+        const v = entry.parentStates[pid];
+        if (v) seen.add(v);
+      }
+      opts[pid] = Array.from(seen).sort();
+    }
+    return opts;
+  }, [cpt, parentIds]);
+
+  // Filter entries
+  const filtered = useMemo(() => {
+    return cpt.entries.filter((entry) =>
+      parentIds.every((pid) => {
+        const f = filters[pid];
+        return !f || entry.parentStates[pid] === f;
+      })
+    );
+  }, [cpt, parentIds, filters]);
+
+  // Count unique distributions
+  const uniqueDistributions = useMemo(() => {
+    const set = new Set<string>();
+    for (const entry of filtered) {
+      const key = states.map((s) => (entry.distribution[s.id] ?? 0).toFixed(4)).join(',');
+      set.add(key);
+    }
+    return set.size;
+  }, [filtered, states]);
+
+  // Pagination
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paged = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  // Determine which parent values changed vs previous row (suppress repeats)
+  const prevValues = useMemo(() => {
+    const result: Record<string, string>[] = [];
+    for (let i = 0; i < paged.length; i++) {
+      if (i === 0) {
+        result.push({});
+      } else {
+        const prev: Record<string, string> = {};
+        for (const pid of parentIds) {
+          prev[pid] = paged[i - 1].parentStates[pid] ?? '';
+        }
+        result.push(prev);
+      }
+    }
+    return result;
+  }, [paged, parentIds]);
+
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+
+  const handleFilterChange = useCallback((pid: string, value: string) => {
+    const next = { ...filters };
+    if (value) {
+      next[pid] = value;
+    } else {
+      delete next[pid];
+    }
+    setFilters(next);
+    setPage(0);
+  }, [filters, setFilters, setPage]);
+
+  const parentLabel = useCallback((pid: string) => {
+    return parentNodes.find((n) => n.id === pid)?.label ?? pid;
+  }, [parentNodes]);
+
+  return (
+    <div className="space-y-2">
+      {/* Summary bar */}
+      <div className="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500">
+        <span>{cpt.entries.length} rows</span>
+        <span>&middot;</span>
+        <span>{parentIds.length} parents</span>
+        <span>&middot;</span>
+        <span>{uniqueDistributions} unique</span>
+      </div>
+
+      {/* Parent filter dropdowns */}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
+          <Filter className="w-3 h-3" />
+          <span>Filter by parent state</span>
+          {activeFilterCount > 0 && (
+            <button
+              onClick={() => { setFilters({}); setPage(0); }}
+              className="ml-auto text-blue-500 hover:text-blue-700 dark:text-blue-400"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+        {parentIds.map((pid) => (
+          <div key={pid} className="flex items-center gap-1.5">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate w-20 shrink-0" title={parentLabel(pid)}>
+              {parentLabel(pid)}
+            </span>
+            <select
+              value={filters[pid] ?? ''}
+              onChange={(e) => handleFilterChange(pid, e.target.value)}
+              className={cn(
+                'flex-1 text-[11px] rounded border px-1.5 py-1 bg-white dark:bg-slate-700',
+                'border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300',
+                'focus:outline-none focus:ring-1 focus:ring-blue-500',
+                filters[pid] && 'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+              )}
+            >
+              <option value="">All</option>
+              {parentStateOptions[pid]?.map((v) => (
+                <option key={v} value={v}>{v}</option>
+              ))}
+            </select>
+          </div>
+        ))}
+      </div>
+
+      {/* Filtered count */}
+      {activeFilterCount > 0 && (
+        <p className="text-[10px] text-blue-500 dark:text-blue-400">
+          Showing {filtered.length} of {cpt.entries.length} rows
+        </p>
+      )}
+
+      {/* CPT rows as cards (fits narrow panel) */}
+      {filtered.length === 0 ? (
+        <p className="text-xs text-slate-400 dark:text-slate-500 text-center py-3">
+          No rows match current filters.
+        </p>
+      ) : (
+        <div className="space-y-1">
+          {paged.map((entry, idx) => (
+            <CPTRow
+              key={page * PAGE_SIZE + idx}
+              entry={entry}
+              states={states}
+              parentIds={parentIds}
+              parentLabel={parentLabel}
+              prevRow={prevValues[idx]}
+              isFirst={idx === 0}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-1">
+          <button
+            onClick={() => setPage(Math.max(0, page - 1))}
+            disabled={page === 0}
+            className="text-[10px] px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-30 hover:bg-slate-200 dark:hover:bg-slate-600"
+          >
+            Prev
+          </button>
+          <span className="text-[10px] text-slate-400 dark:text-slate-500">
+            {page + 1} / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+            disabled={page >= totalPages - 1}
+            className="text-[10px] px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 disabled:opacity-30 hover:bg-slate-200 dark:hover:bg-slate-600"
+          >
+            Next
+          </button>
+        </div>
+      )}
+
+      <p className="text-[10px] text-slate-400 dark:text-slate-500">
+        read-only
+      </p>
+    </div>
+  );
+}
+
+// =============================================================================
+// CPT ROW CARD
+// =============================================================================
+
+interface CPTRowProps {
+  entry: CPTEntry;
+  states: NodeState[];
+  parentIds: string[];
+  parentLabel: (pid: string) => string;
+  prevRow: Record<string, string>;
+  isFirst: boolean;
+}
+
+function CPTRow({ entry, states, parentIds, parentLabel, prevRow, isFirst }: CPTRowProps) {
+  // Determine which parent values changed from previous row
+  const changedParents = parentIds.filter((pid) => {
+    if (isFirst) return true;
+    return entry.parentStates[pid] !== prevRow[pid];
+  });
+
+  // Show parent pills only for changed values, or show a dim "same" indicator
+  const showParentHeader = changedParents.length > 0;
+
+  return (
+    <div className={cn(
+      'rounded-lg border px-2.5 py-2',
+      'border-slate-100 dark:border-slate-700',
+      'bg-white dark:bg-slate-800/50',
+      showParentHeader ? 'mt-1.5' : 'mt-0.5 border-dashed border-slate-100/60 dark:border-slate-700/40'
+    )}>
+      {/* Parent state combination */}
+      {showParentHeader ? (
+        <div className="flex flex-wrap gap-1 mb-1.5">
+          {parentIds.map((pid) => {
+            const val = entry.parentStates[pid] ?? '\u2014';
+            const changed = changedParents.includes(pid);
+            return (
+              <span
+                key={pid}
+                className={cn(
+                  'inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded',
+                  changed
+                    ? 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium'
+                    : 'text-slate-400 dark:text-slate-500'
+                )}
+                title={`${parentLabel(pid)}: ${val}`}
+              >
+                <span className="text-slate-400 dark:text-slate-500 truncate max-w-[60px]">
+                  {parentLabel(pid).split(' ').pop()}
+                </span>
+                <span className={changed ? '' : 'opacity-50'}>{val}</span>
+              </span>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="flex items-center gap-1 mb-1 text-[10px] text-slate-300 dark:text-slate-600">
+          <span>\u22EE same parents</span>
+        </div>
+      )}
+
+      {/* Distribution bars */}
+      <div className="space-y-0.5">
+        {states.map((s) => {
+          const prob = entry.distribution[s.id] ?? 0;
+          const pct = prob * 100;
+          return (
+            <div key={s.id} className="flex items-center gap-1.5">
+              <span className="text-[10px] w-14 truncate text-slate-500 dark:text-slate-400" title={s.label}>
+                {s.label}
+              </span>
+              <div className="flex-1 h-3 bg-slate-100 dark:bg-slate-700 rounded overflow-hidden">
+                <div
+                  className="h-full rounded transition-all"
+                  style={{
+                    width: `${pct}%`,
+                    backgroundColor: s.color || '#94a3b8',
+                    minWidth: pct > 0 ? '2px' : '0',
+                  }}
+                />
+              </div>
+              <span className="text-[10px] w-10 text-right tabular-nums text-slate-600 dark:text-slate-400">
+                {pct.toFixed(1)}%
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
