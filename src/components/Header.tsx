@@ -36,7 +36,7 @@ export default function Header() {
 
   // Handle protected route redirects when session is lost
   useEffect(() => {
-    const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025'];
+    const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025', '/bn-rrm'];
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
     if (!isProtectedRoute) return; // Not a protected route, no action needed
