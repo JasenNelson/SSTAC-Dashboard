@@ -35,6 +35,8 @@ type Station = {
   waterbody_type: string;
   data_counts: { chemistry: number; toxicity: number; community: number };
   co_location: string;
+  provenance_quality?: string;
+  provenance_coverage?: { data_records: number; provenance_linked: number; coverage_pct: number };
   provenance_records: ProvenanceRecord[];
 };
 
@@ -55,6 +57,13 @@ const CO_LOC_BADGES: Record<string, { bg: string; text: string; label: string }>
   partial: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', label: 'Partial' },
   single_loe: { bg: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-600 dark:text-slate-300', label: 'Single LoE' },
   no_data: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-600 dark:text-red-400', label: 'No Data' },
+};
+
+const PROV_QUALITY_BADGES: Record<string, { bg: string; text: string; label: string; note: string }> = {
+  full_provenance: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300', label: 'Full', note: 'All data records have document-level provenance.' },
+  partial_provenance: { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300', label: 'Partial', note: 'Some data records lack document-level provenance linkage.' },
+  legacy_no_provenance: { bg: 'bg-slate-200 dark:bg-slate-600', text: 'text-slate-600 dark:text-slate-300', label: 'Legacy', note: 'Pre-extraction data — provenance established at site/report level, not per-record.' },
+  no_data: { bg: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-500 dark:text-slate-400', label: '—', note: 'No data records at this station.' },
 };
 
 function exportData(data: unknown, filename: string, type: 'json' | 'csv') {
@@ -271,7 +280,12 @@ export function DataProvenance() {
                       <td className="px-3 py-2">
                         <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${badge.bg} ${badge.text}`}>{badge.label}</span>
                       </td>
-                      <td className="px-3 py-2 text-center text-slate-500">{st.provenance_records.length || '—'}</td>
+                      <td className="px-3 py-2 text-center">
+                        {(() => {
+                          const pq = PROV_QUALITY_BADGES[st.provenance_quality ?? 'no_data'] ?? PROV_QUALITY_BADGES.no_data;
+                          return <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${pq.bg} ${pq.text}`}>{pq.label}</span>;
+                        })()}
+                      </td>
                     </tr>
                   );
                 })}
@@ -314,6 +328,25 @@ export function DataProvenance() {
                   </div>
                 ))}
               </div>
+
+              {/* Provenance quality callout */}
+              {(() => {
+                const pq = PROV_QUALITY_BADGES[selectedStationData.provenance_quality ?? 'no_data'] ?? PROV_QUALITY_BADGES.no_data;
+                const cov = selectedStationData.provenance_coverage;
+                return (
+                  <div className={`rounded-lg p-2.5 ${pq.bg}`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-semibold ${pq.text}`}>Provenance: {pq.label}</span>
+                      {cov && cov.data_records > 0 && (
+                        <span className={`text-[10px] ${pq.text} opacity-70`}>
+                          ({cov.provenance_linked}/{cov.data_records} records linked, {cov.coverage_pct}%)
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-[10px] mt-0.5 ${pq.text} opacity-80`}>{pq.note}</p>
+                  </div>
+                );
+              })()}
 
               {/* Provenance records */}
               {selectedStationData.provenance_records.length > 0 ? (

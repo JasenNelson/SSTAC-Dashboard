@@ -4,7 +4,10 @@
   "dataset_status": "FROZEN (DR-003, 2026-03-09)",
   "files": {
     "model-overview.json": "1c54ae078cd2846d73932751016f2fa5ebbc281841f5d9236a57718ec67ea472",
-    "decisions.json": "f37270dda60d58728025d0c4f66423fb22c62c7be58ee6d349d1cabcdf36ffbe"
+    "decisions.json": "f37270dda60d58728025d0c4f66423fb22c62c7be58ee6d349d1cabcdf36ffbe",
+    "cpt_transparency.json": "b27ba1de8156d709f82a41fae35e750dae04456d6ac488750455565201f6085e",
+    "provenance_registry.json": "706b2b13092ffdff17e8552e6f66712099711b7c909f65e8e5befa59c6690bd0",
+    "site_reports.json": "16aceb9deb0251c5b1e08822bab4ace4f4026fd1116b4c380cd87578a6c993ec"
   },
   "frozen_baseline": {
     "sites": 8,
@@ -21,5 +24,6 @@
     "views": 2,
     "sediment_guidelines": 42
   },
-  "validation": "PASSED"
+  "validation": "PASSED",
+  "phase2_export_date": "2026-03-10T06:08:10.059752+00:00"
 }

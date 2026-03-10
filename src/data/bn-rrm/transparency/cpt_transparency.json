@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "export_date": "2026-03-10T05:39:03.814342+00:00",
+    "export_date": "2026-03-10T06:08:09.983786+00:00",
     "db_hash": "e68bcd7b9ced7e598dcfc5948eec952589ff0f6c8b93e9ddd04d06e9504a73d9",
     "description": "Per-node CPT transparency: source type, sample counts, config coverage, expert vs learned distributions"
   },
@@ -213,7 +213,7 @@
       "label": "Total PAHs",
       "tier": 1,
       "cpt_source": "Noisy-OR",
-      "sample_count": 191,
+      "sample_count": 187,
       "parameter": "Total PAHs",
       "unit": "\u00b5g/kg",
       "dr001_affected": false,
