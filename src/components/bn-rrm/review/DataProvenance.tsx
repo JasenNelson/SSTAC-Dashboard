@@ -126,17 +126,73 @@ export function DataProvenance() {
     return data.stations.find(s => s.station_id === selectedStation) ?? null;
   }, [data.stations, selectedStation]);
 
+  const flatStationExport = (stations: Station[]) => stations.map(s => ({
+    station_id: s.station_id,
+    station_name: s.station_name,
+    site_name: s.site_name,
+    registry_id: s.registry_id,
+    waterbody_type: s.waterbody_type,
+    chemistry_records: s.data_counts.chemistry,
+    toxicity_records: s.data_counts.toxicity,
+    community_records: s.data_counts.community,
+    co_location: s.co_location,
+    provenance_quality: s.provenance_quality ?? '',
+    provenance_coverage_pct: s.provenance_coverage?.coverage_pct ?? 0,
+    provenance_count: s.provenance_records.length,
+  }));
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Data & Provenance</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Document registry and station-level data traceability
-        </p>
+      {/* Header with export toolbar */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Data & Provenance</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Document registry and station-level data traceability
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 ml-4">
+          {activeTab === 'registry' ? (
+            <>
+              <button
+                onClick={() => exportData(data.documents, 'document_registry.json', 'json')}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              >
+                Export JSON
+              </button>
+              <button
+                onClick={() => exportData(data.documents, 'document_registry.csv', 'csv')}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              >
+                Export CSV
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="text-xs text-slate-400 dark:text-slate-500 mr-1">
+                {filteredStations.length < data.stations.length
+                  ? `Exports ${filteredStations.length} filtered stations`
+                  : `Exports all ${data.stations.length} stations`}
+              </span>
+              <button
+                onClick={() => exportData(flatStationExport(filteredStations), 'station_provenance.json', 'json')}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              >
+                Export JSON
+              </button>
+              <button
+                onClick={() => exportData(flatStationExport(filteredStations), 'station_provenance.csv', 'csv')}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              >
+                Export CSV
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Tab switcher */}
-      <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+      <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
         {[
           { id: 'registry' as const, label: 'Document Registry', count: data.documents.length },
           { id: 'stations' as const, label: 'Station Provenance', count: data.stations.length },
@@ -144,13 +200,13 @@ export function DataProvenance() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition-colors ${
               activeTab === tab.id
                 ? 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
             }`}
           >
-            {tab.label} <span className="text-[10px] opacity-60">({tab.count})</span>
+            {tab.label} <span className="text-xs opacity-60">({tab.count})</span>
           </button>
         ))}
       </div>
@@ -160,51 +216,35 @@ export function DataProvenance() {
           {/* Document table */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700">
-                    <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">ID</th>
-                    <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Title</th>
-                    <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Type</th>
-                    <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Author</th>
-                    <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Date</th>
-                    <th className="px-3 py-2 text-right font-semibold text-slate-600 dark:text-slate-300">Pages</th>
+                    <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300">ID</th>
+                    <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300">Title</th>
+                    <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300">Type</th>
+                    <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300">Author</th>
+                    <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300">Date</th>
+                    <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">Pages</th>
                   </tr>
                 </thead>
                 <tbody>
                   {data.documents.map(doc => (
                     <tr key={doc.doc_id} className="border-b border-slate-100 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/30">
-                      <td className="px-3 py-2 font-mono text-slate-500">{doc.doc_id}</td>
-                      <td className="px-3 py-2 text-slate-800 dark:text-slate-200 max-w-xs truncate" title={doc.title}>{doc.title}</td>
-                      <td className="px-3 py-2">
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                      <td className="px-3 py-2.5 font-mono text-slate-500">{doc.doc_id}</td>
+                      <td className="px-3 py-2.5 text-slate-800 dark:text-slate-200 max-w-xs truncate" title={doc.title}>{doc.title}</td>
+                      <td className="px-3 py-2.5">
+                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                           {doc.type}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-slate-600 dark:text-slate-400">{doc.author}</td>
-                      <td className="px-3 py-2 text-slate-500 font-mono">{doc.date}</td>
-                      <td className="px-3 py-2 text-right text-slate-500">{doc.pages ?? '—'}</td>
+                      <td className="px-3 py-2.5 text-slate-600 dark:text-slate-400">{doc.author}</td>
+                      <td className="px-3 py-2.5 text-slate-500 font-mono">{doc.date}</td>
+                      <td className="px-3 py-2.5 text-right text-slate-500">{doc.pages ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </div>
-
-          {/* Export */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => exportData(data.documents, 'document_registry.json', 'json')}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-            >
-              Export JSON
-            </button>
-            <button
-              onClick={() => exportData(data.documents, 'document_registry.csv', 'csv')}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-            >
-              Export CSV
-            </button>
           </div>
         </div>
       )}
@@ -218,12 +258,12 @@ export function DataProvenance() {
               placeholder="Search stations..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
+              className="flex-1 px-4 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder:text-slate-400"
             />
             <select
               value={siteFilter}
               onChange={e => setSiteFilter(e.target.value)}
-              className="px-3 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
+              className="px-4 py-2.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
             >
               <option value="all">All Sites</option>
               {siteNames.map(name => (
@@ -237,26 +277,26 @@ export function DataProvenance() {
             {Object.entries(data.summary.co_location_breakdown).map(([key, count]) => {
               const badge = CO_LOC_BADGES[key] ?? CO_LOC_BADGES.no_data;
               return (
-                <div key={key} className={`p-2 rounded-lg ${badge.bg}`}>
-                  <div className={`text-lg font-bold ${badge.text}`}>{count}</div>
-                  <div className={`text-[10px] ${badge.text} opacity-80`}>{badge.label}</div>
+                <div key={key} className={`p-3 rounded-lg ${badge.bg}`}>
+                  <div className={`text-xl font-bold ${badge.text}`}>{count}</div>
+                  <div className={`text-xs ${badge.text} opacity-80`}>{badge.label}</div>
                 </div>
               );
             })}
           </div>
 
           {/* Station list */}
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 max-h-96 overflow-auto">
-            <table className="w-full text-xs">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 max-h-[28rem] overflow-auto">
+            <table className="w-full text-sm">
               <thead className="sticky top-0 bg-slate-50 dark:bg-slate-900/80">
                 <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Station</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Site</th>
-                  <th className="px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-300">Chem</th>
-                  <th className="px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-300">Tox</th>
-                  <th className="px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-300">Comm</th>
-                  <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Co-loc</th>
-                  <th className="px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-300">Prov</th>
+                  <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300">Station</th>
+                  <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300">Site</th>
+                  <th className="px-3 py-2.5 text-center font-semibold text-slate-600 dark:text-slate-300">Chem</th>
+                  <th className="px-3 py-2.5 text-center font-semibold text-slate-600 dark:text-slate-300">Tox</th>
+                  <th className="px-3 py-2.5 text-center font-semibold text-slate-600 dark:text-slate-300">Comm</th>
+                  <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300">Co-loc</th>
+                  <th className="px-3 py-2.5 text-center font-semibold text-slate-600 dark:text-slate-300">Prov</th>
                 </tr>
               </thead>
               <tbody>
@@ -272,18 +312,18 @@ export function DataProvenance() {
                           : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'
                       }`}
                     >
-                      <td className="px-3 py-2 font-mono text-slate-800 dark:text-slate-200">{st.station_name}</td>
-                      <td className="px-3 py-2 text-slate-600 dark:text-slate-400 truncate max-w-[150px]" title={st.site_name}>{st.site_name}</td>
-                      <td className="px-3 py-2 text-center text-slate-500">{st.data_counts.chemistry || '—'}</td>
-                      <td className="px-3 py-2 text-center text-slate-500">{st.data_counts.toxicity || '—'}</td>
-                      <td className="px-3 py-2 text-center text-slate-500">{st.data_counts.community || '—'}</td>
-                      <td className="px-3 py-2">
-                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${badge.bg} ${badge.text}`}>{badge.label}</span>
+                      <td className="px-3 py-2.5 font-mono text-slate-800 dark:text-slate-200">{st.station_name}</td>
+                      <td className="px-3 py-2.5 text-slate-600 dark:text-slate-400 truncate max-w-[160px]" title={st.site_name}>{st.site_name}</td>
+                      <td className="px-3 py-2.5 text-center text-slate-500">{st.data_counts.chemistry || '—'}</td>
+                      <td className="px-3 py-2.5 text-center text-slate-500">{st.data_counts.toxicity || '—'}</td>
+                      <td className="px-3 py-2.5 text-center text-slate-500">{st.data_counts.community || '—'}</td>
+                      <td className="px-3 py-2.5">
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${badge.bg} ${badge.text}`}>{badge.label}</span>
                       </td>
-                      <td className="px-3 py-2 text-center">
+                      <td className="px-3 py-2.5 text-center">
                         {(() => {
                           const pq = PROV_QUALITY_BADGES[st.provenance_quality ?? 'no_data'] ?? PROV_QUALITY_BADGES.no_data;
-                          return <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${pq.bg} ${pq.text}`}>{pq.label}</span>;
+                          return <span className={`px-2 py-0.5 rounded text-xs font-medium ${pq.bg} ${pq.text}`}>{pq.label}</span>;
                         })()}
                       </td>
                     </tr>
@@ -295,19 +335,19 @@ export function DataProvenance() {
 
           {/* Station detail panel */}
           {selectedStationData && (
-            <div className="bg-white dark:bg-slate-800 rounded-xl border border-blue-200 dark:border-blue-800 p-4 space-y-3">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-blue-200 dark:border-blue-800 p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                  <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
                     {selectedStationData.station_name}
                   </h3>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     {selectedStationData.site_name} &middot; Registry: {selectedStationData.registry_id} &middot; {selectedStationData.waterbody_type}
                   </p>
                 </div>
                 <button
                   onClick={() => setSelectedStation(null)}
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -322,9 +362,9 @@ export function DataProvenance() {
                   { label: 'Toxicity', count: selectedStationData.data_counts.toxicity },
                   { label: 'Community', count: selectedStationData.data_counts.community },
                 ].map(d => (
-                  <div key={d.label} className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-2 text-center">
-                    <div className="text-sm font-bold text-slate-800 dark:text-slate-100">{d.count}</div>
-                    <div className="text-[10px] text-slate-500">{d.label}</div>
+                  <div key={d.label} className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-slate-800 dark:text-slate-100">{d.count}</div>
+                    <div className="text-xs text-slate-500">{d.label}</div>
                   </div>
                 ))}
               </div>
@@ -334,16 +374,16 @@ export function DataProvenance() {
                 const pq = PROV_QUALITY_BADGES[selectedStationData.provenance_quality ?? 'no_data'] ?? PROV_QUALITY_BADGES.no_data;
                 const cov = selectedStationData.provenance_coverage;
                 return (
-                  <div className={`rounded-lg p-2.5 ${pq.bg}`}>
+                  <div className={`rounded-lg p-3.5 ${pq.bg}`}>
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-semibold ${pq.text}`}>Provenance: {pq.label}</span>
+                      <span className={`text-sm font-semibold ${pq.text}`}>Provenance: {pq.label}</span>
                       {cov && cov.data_records > 0 && (
-                        <span className={`text-[10px] ${pq.text} opacity-70`}>
+                        <span className={`text-xs ${pq.text} opacity-70`}>
                           ({cov.provenance_linked}/{cov.data_records} records linked, {cov.coverage_pct}%)
                         </span>
                       )}
                     </div>
-                    <p className={`text-[10px] mt-0.5 ${pq.text} opacity-80`}>{pq.note}</p>
+                    <p className={`text-xs mt-1 ${pq.text} opacity-80`}>{pq.note}</p>
                   </div>
                 );
               })()}
@@ -351,26 +391,26 @@ export function DataProvenance() {
               {/* Provenance records */}
               {selectedStationData.provenance_records.length > 0 ? (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-[10px]">
+                  <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-700">
-                        <th className="px-2 py-1 text-left font-semibold text-slate-600 dark:text-slate-300">Table</th>
-                        <th className="px-2 py-1 text-left font-semibold text-slate-600 dark:text-slate-300">Source Document</th>
-                        <th className="px-2 py-1 text-left font-semibold text-slate-600 dark:text-slate-300">Page</th>
-                        <th className="px-2 py-1 text-left font-semibold text-slate-600 dark:text-slate-300">Table #</th>
-                        <th className="px-2 py-1 text-left font-semibold text-slate-600 dark:text-slate-300">Method</th>
-                        <th className="px-2 py-1 text-center font-semibold text-slate-600 dark:text-slate-300">Conf</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Table</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Source Document</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Page</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Table #</th>
+                        <th className="px-3 py-2 text-left font-semibold text-slate-600 dark:text-slate-300">Method</th>
+                        <th className="px-3 py-2 text-center font-semibold text-slate-600 dark:text-slate-300">Conf</th>
                       </tr>
                     </thead>
                     <tbody>
                       {selectedStationData.provenance_records.map((pr, i) => (
                         <tr key={i} className="border-b border-slate-100 dark:border-slate-700/50">
-                          <td className="px-2 py-1 font-mono text-slate-500">{pr.target_table}</td>
-                          <td className="px-2 py-1 text-slate-700 dark:text-slate-300 max-w-[200px] truncate" title={pr.doc_title}>{pr.doc_title}</td>
-                          <td className="px-2 py-1 text-slate-500">{pr.page_number ?? '—'}</td>
-                          <td className="px-2 py-1 text-slate-500">{pr.table_number ?? '—'}</td>
-                          <td className="px-2 py-1 text-slate-500">{pr.extraction_method ?? '—'}</td>
-                          <td className="px-2 py-1 text-center text-slate-500">
+                          <td className="px-3 py-2 font-mono text-slate-500">{pr.target_table}</td>
+                          <td className="px-3 py-2 text-slate-700 dark:text-slate-300 max-w-[220px] truncate" title={pr.doc_title}>{pr.doc_title}</td>
+                          <td className="px-3 py-2 text-slate-500">{pr.page_number ?? '—'}</td>
+                          <td className="px-3 py-2 text-slate-500">{pr.table_number ?? '—'}</td>
+                          <td className="px-3 py-2 text-slate-500">{pr.extraction_method ?? '—'}</td>
+                          <td className="px-3 py-2 text-center text-slate-500">
                             {pr.confidence !== null ? (pr.confidence * 100).toFixed(0) + '%' : '—'}
                           </td>
                         </tr>
@@ -379,54 +419,10 @@ export function DataProvenance() {
                   </table>
                 </div>
               ) : (
-                <p className="text-xs text-slate-400 italic">No provenance records linked to this station.</p>
+                <p className="text-sm text-slate-400 italic">No provenance records linked to this station.</p>
               )}
             </div>
           )}
-
-          {/* Export */}
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                const flat = filteredStations.map(s => ({
-                  station_id: s.station_id,
-                  station_name: s.station_name,
-                  site_name: s.site_name,
-                  registry_id: s.registry_id,
-                  waterbody_type: s.waterbody_type,
-                  chemistry_records: s.data_counts.chemistry,
-                  toxicity_records: s.data_counts.toxicity,
-                  community_records: s.data_counts.community,
-                  co_location: s.co_location,
-                  provenance_count: s.provenance_records.length,
-                }));
-                exportData(flat, 'station_provenance.json', 'json');
-              }}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-            >
-              Export JSON
-            </button>
-            <button
-              onClick={() => {
-                const flat = filteredStations.map(s => ({
-                  station_id: s.station_id,
-                  station_name: s.station_name,
-                  site_name: s.site_name,
-                  registry_id: s.registry_id,
-                  waterbody_type: s.waterbody_type,
-                  chemistry_records: s.data_counts.chemistry,
-                  toxicity_records: s.data_counts.toxicity,
-                  community_records: s.data_counts.community,
-                  co_location: s.co_location,
-                  provenance_count: s.provenance_records.length,
-                }));
-                exportData(flat, 'station_provenance.csv', 'csv');
-              }}
-              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-            >
-              Export CSV
-            </button>
-          </div>
         </div>
       )}
     </div>

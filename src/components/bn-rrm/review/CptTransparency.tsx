@@ -42,7 +42,7 @@ const SOURCE_BADGES: Record<string, { bg: string; text: string; label: string }>
 function SourceBadge({ source }: { source: string }) {
   const badge = SOURCE_BADGES[source] ?? SOURCE_BADGES.Expert;
   return (
-    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${badge.bg} ${badge.text}`}>
+    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${badge.bg} ${badge.text}`}>
       {badge.label}
     </span>
   );
@@ -52,9 +52,9 @@ function DistributionBar({ distribution, label }: { distribution: Record<string,
   const states = Object.entries(distribution);
   const colors = ['bg-green-400', 'bg-amber-400', 'bg-red-400'];
   return (
-    <div className="space-y-1">
-      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{label}</div>
-      <div className="flex h-5 rounded-full overflow-hidden">
+    <div className="space-y-1.5">
+      <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">{label}</div>
+      <div className="flex h-6 rounded-full overflow-hidden">
         {states.map(([state, prob], i) => (
           <div
             key={state}
@@ -62,18 +62,28 @@ function DistributionBar({ distribution, label }: { distribution: Record<string,
             style={{ width: `${prob * 100}%` }}
           >
             {prob >= 0.1 && (
-              <span className="text-[8px] font-bold text-white">{(prob * 100).toFixed(0)}%</span>
+              <span className="text-[10px] font-bold text-white">{(prob * 100).toFixed(0)}%</span>
             )}
           </div>
         ))}
       </div>
-      <div className="flex justify-between text-[9px] text-slate-400">
+      <div className="flex justify-between text-xs text-slate-400">
         {states.map(([state]) => (
           <span key={state}>{state}</span>
         ))}
       </div>
     </div>
   );
+}
+
+function downloadFile(content: string, filename: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function NodeCard({ node }: { node: NodeRecord }) {
@@ -87,42 +97,42 @@ function NodeCard({ node }: { node: NodeRecord }) {
     } overflow-hidden`}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 p-3 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
       >
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{node.label}</span>
+          <div className="flex items-center gap-2.5">
+            <span className="text-base font-medium text-slate-800 dark:text-slate-100">{node.label}</span>
             <SourceBadge source={node.cpt_source} />
             {node.dr001_affected && (
-              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
                 DR-001
               </span>
             )}
           </div>
-          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-            T{node.tier} &middot; N={node.sample_count} stations
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Tier {node.tier} &middot; N = {node.sample_count} stations
             {node.config_coverage && (
               <> &middot; {node.config_coverage.observed}/{node.config_coverage.possible} configs ({node.config_coverage.coverage_pct}%)</>
             )}
           </div>
         </div>
-        <svg className={`w-4 h-4 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className={`w-5 h-5 text-slate-400 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {expanded && (
-        <div className="border-t border-slate-100 dark:border-slate-700 p-4 space-y-4">
+        <div className="border-t border-slate-100 dark:border-slate-700 p-5 space-y-4">
           {/* ESS / Prior Weight */}
           {node.ess_prior_weight && (
-            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3">
-              <div className="text-xs font-medium text-slate-700 dark:text-slate-300">
+            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3.5">
+              <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 {node.ess_prior_weight.method}
               </div>
               {node.ess_prior_weight.ess !== null && (
-                <div className="text-[10px] text-slate-500 mt-1">ESS = {node.ess_prior_weight.ess}</div>
+                <div className="text-xs text-slate-500 mt-1">ESS = {node.ess_prior_weight.ess}</div>
               )}
-              <div className="text-[10px] text-slate-400 mt-1">{node.ess_prior_weight.note}</div>
+              <div className="text-xs text-slate-400 mt-1">{node.ess_prior_weight.note}</div>
             </div>
           )}
 
@@ -140,14 +150,14 @@ function NodeCard({ node }: { node: NodeRecord }) {
             />
           )}
           {!node.expert_distribution && !node.learned_distribution && (
-            <div className="text-xs text-slate-400 italic">
+            <div className="text-sm text-slate-400 italic">
               No distribution data available for this node.
             </div>
           )}
 
           {/* Parameter/unit info */}
           {node.parameter && (
-            <div className="text-[10px] text-slate-400">
+            <div className="text-xs text-slate-400">
               Parameter: {node.parameter} {node.unit && `(${node.unit})`}
             </div>
           )}
@@ -167,26 +177,49 @@ export function CptTransparency() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">CPT Transparency</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Per-node conditional probability table source, sample counts, and distribution comparisons
-        </p>
+      {/* Header with export toolbar */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">CPT Transparency</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Per-node conditional probability table source, sample counts, and distribution comparisons
+          </p>
+        </div>
+        <div className="flex gap-2 shrink-0 ml-4">
+          <button
+            onClick={() => downloadFile(JSON.stringify(data, null, 2), 'cpt_transparency.json', 'application/json')}
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+          >
+            Export JSON
+          </button>
+          <button
+            onClick={() => {
+              const header = 'id,label,tier,cpt_source,sample_count,parameter,unit,dr001_affected,config_observed,config_possible,config_pct\n';
+              const rows = data.nodes.map(n =>
+                [n.id, `"${n.label}"`, n.tier, n.cpt_source, n.sample_count, n.parameter ?? '', n.unit ?? '', n.dr001_affected,
+                  n.config_coverage?.observed ?? '', n.config_coverage?.possible ?? '', n.config_coverage?.coverage_pct ?? ''].join(',')
+              ).join('\n');
+              downloadFile(header + rows, 'cpt_transparency.csv', 'text/csv');
+            }}
+            className="px-4 py-2 text-sm font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+          >
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {/* DR-001 Callout */}
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
         <div className="flex items-center gap-2 mb-2">
-          <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200">
+          <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200">
             {data.dr001_callout.id}
           </span>
           <span className="text-sm font-semibold text-red-800 dark:text-red-200">{data.dr001_callout.title}</span>
         </div>
-        <p className="text-xs text-red-700 dark:text-red-300">{data.dr001_callout.description}</p>
-        <div className="mt-2 flex flex-wrap gap-1">
+        <p className="text-sm text-red-700 dark:text-red-300">{data.dr001_callout.description}</p>
+        <div className="mt-2 flex flex-wrap gap-1.5">
           {data.dr001_callout.affected_nodes.map(nid => (
-            <span key={nid} className="px-1.5 py-0.5 rounded text-[9px] bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 font-mono">
+            <span key={nid} className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 font-mono">
               {nid}
             </span>
           ))}
@@ -199,18 +232,18 @@ export function CptTransparency() {
           <button
             key={ts.tier}
             onClick={() => setFilterTier(filterTier === ts.tier ? null : ts.tier)}
-            className={`p-3 rounded-lg border text-left transition-colors ${
+            className={`p-3.5 rounded-lg border text-left transition-colors ${
               filterTier === ts.tier
                 ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700'
                 : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'
             }`}
           >
-            <div className="text-[10px] text-slate-500 dark:text-slate-400">T{ts.tier}</div>
-            <div className="text-xs font-medium text-slate-800 dark:text-slate-100">{ts.name}</div>
-            <div className="text-[10px] text-slate-400 mt-1">{ts.node_count} nodes</div>
-            <div className="mt-1 flex flex-wrap gap-0.5">
+            <div className="text-xs text-slate-500 dark:text-slate-400">Tier {ts.tier}</div>
+            <div className="text-sm font-medium text-slate-800 dark:text-slate-100 mt-0.5">{ts.name}</div>
+            <div className="text-xs text-slate-400 mt-1">{ts.node_count} nodes</div>
+            <div className="mt-1.5 flex flex-wrap gap-1">
               {ts.cpt_methods.map(m => (
-                <span key={m} className="text-[8px] px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                <span key={m} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
                   {m}
                 </span>
               ))}
@@ -221,9 +254,9 @@ export function CptTransparency() {
 
       {/* Source legend */}
       <div className="flex items-center gap-3">
-        <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Source:</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Source:</span>
         {Object.entries(SOURCE_BADGES).map(([key, badge]) => (
-          <span key={key} className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${badge.bg} ${badge.text}`}>
+          <span key={key} className={`px-2.5 py-1 rounded-full text-xs font-semibold ${badge.bg} ${badge.text}`}>
             {badge.label}
           </span>
         ))}
@@ -234,43 +267,6 @@ export function CptTransparency() {
         {filteredNodes.map(node => (
           <NodeCard key={node.id} node={node} />
         ))}
-      </div>
-
-      {/* Export */}
-      <div className="flex gap-2 pt-4 border-t border-slate-200 dark:border-slate-700">
-        <button
-          onClick={() => {
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'cpt_transparency.json';
-            a.click();
-            URL.revokeObjectURL(url);
-          }}
-          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-        >
-          Export JSON
-        </button>
-        <button
-          onClick={() => {
-            const header = 'id,label,tier,cpt_source,sample_count,parameter,unit,dr001_affected,config_observed,config_possible,config_pct\n';
-            const rows = data.nodes.map(n =>
-              [n.id, `"${n.label}"`, n.tier, n.cpt_source, n.sample_count, n.parameter ?? '', n.unit ?? '', n.dr001_affected,
-                n.config_coverage?.observed ?? '', n.config_coverage?.possible ?? '', n.config_coverage?.coverage_pct ?? ''].join(',')
-            ).join('\n');
-            const blob = new Blob([header + rows], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'cpt_transparency.csv';
-            a.click();
-            URL.revokeObjectURL(url);
-          }}
-          className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-        >
-          Export CSV
-        </button>
       </div>
     </div>
   );
