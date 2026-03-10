@@ -1,0 +1,731 @@
+{
+  "_meta": {
+    "export_date": "2026-03-10T05:39:03.814342+00:00",
+    "db_hash": "e68bcd7b9ced7e598dcfc5948eec952589ff0f6c8b93e9ddd04d06e9504a73d9",
+    "description": "Per-node CPT transparency: source type, sample counts, config coverage, expert vs learned distributions"
+  },
+  "nodes": [
+    {
+      "id": "sed_cu",
+      "label": "Sediment Cu",
+      "tier": 1,
+      "cpt_source": "Noisy-OR",
+      "sample_count": 200,
+      "parameter": "Copper",
+      "unit": "mg/kg",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "<ISQG (18.7)",
+          "ISQG-PEL",
+          ">PEL (108)"
+        ],
+        "marginal": {
+          "below_isqg": 0.4,
+          "isqg_pel": 0.35,
+          "above_pel": 0.25
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Threshold-based (CCME ISQG/PEL)",
+        "note": "Deterministic classification based on guideline exceedance"
+      }
+    },
+    {
+      "id": "sed_zn",
+      "label": "Sediment Zn",
+      "tier": 1,
+      "cpt_source": "Noisy-OR",
+      "sample_count": 190,
+      "parameter": "Zinc",
+      "unit": "mg/kg",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "<ISQG (124)",
+          "ISQG-PEL",
+          ">PEL (271)"
+        ],
+        "marginal": {
+          "below_isqg": 0.45,
+          "isqg_pel": 0.35,
+          "above_pel": 0.2
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Threshold-based (CCME ISQG/PEL)",
+        "note": "Deterministic classification based on guideline exceedance"
+      }
+    },
+    {
+      "id": "sed_pb",
+      "label": "Sediment Pb",
+      "tier": 1,
+      "cpt_source": "Noisy-OR",
+      "sample_count": 197,
+      "parameter": "Lead",
+      "unit": "mg/kg",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "<ISQG (30.2)",
+          "ISQG-PEL",
+          ">PEL (112)"
+        ],
+        "marginal": {
+          "below_isqg": 0.5,
+          "isqg_pel": 0.35,
+          "above_pel": 0.15
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Threshold-based (CCME ISQG/PEL)",
+        "note": "Deterministic classification based on guideline exceedance"
+      }
+    },
+    {
+      "id": "sed_cd",
+      "label": "Sediment Cd",
+      "tier": 1,
+      "cpt_source": "Noisy-OR",
+      "sample_count": 190,
+      "parameter": "Cadmium",
+      "unit": "mg/kg",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "<ISQG (0.7)",
+          "ISQG-PEL",
+          ">PEL (4.2)"
+        ],
+        "marginal": {
+          "below_isqg": 0.45,
+          "isqg_pel": 0.4,
+          "above_pel": 0.15
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Threshold-based (CCME ISQG/PEL)",
+        "note": "Deterministic classification based on guideline exceedance"
+      }
+    },
+    {
+      "id": "sed_hg",
+      "label": "Sediment Hg",
+      "tier": 1,
+      "cpt_source": "Noisy-OR",
+      "sample_count": 182,
+      "parameter": "Mercury",
+      "unit": "mg/kg",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "<ISQG (0.13)",
+          "ISQG-PEL",
+          ">PEL (0.7)"
+        ],
+        "marginal": {
+          "below_isqg": 0.5,
+          "isqg_pel": 0.35,
+          "above_pel": 0.15
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Threshold-based (CCME ISQG/PEL)",
+        "note": "Deterministic classification based on guideline exceedance"
+      }
+    },
+    {
+      "id": "sed_as",
+      "label": "Sediment As",
+      "tier": 1,
+      "cpt_source": "Noisy-OR",
+      "sample_count": 182,
+      "parameter": "Arsenic",
+      "unit": "mg/kg",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "<ISQG (7.24)",
+          "ISQG-PEL",
+          ">PEL (41.6)"
+        ],
+        "marginal": {
+          "below_isqg": 0.4,
+          "isqg_pel": 0.45,
+          "above_pel": 0.15
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Threshold-based (CCME ISQG/PEL)",
+        "note": "Deterministic classification based on guideline exceedance"
+      }
+    },
+    {
+      "id": "sed_cr",
+      "label": "Sediment Cr",
+      "tier": 1,
+      "cpt_source": "Noisy-OR",
+      "sample_count": 182,
+      "parameter": "Chromium",
+      "unit": "mg/kg",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "<ISQG (52.3)",
+          "ISQG-PEL",
+          ">PEL (160)"
+        ],
+        "marginal": {
+          "below_isqg": 0.55,
+          "isqg_pel": 0.35,
+          "above_pel": 0.1
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Threshold-based (CCME ISQG/PEL)",
+        "note": "Deterministic classification based on guideline exceedance"
+      }
+    },
+    {
+      "id": "sed_pahs",
+      "label": "Total PAHs",
+      "tier": 1,
+      "cpt_source": "Noisy-OR",
+      "sample_count": 191,
+      "parameter": "Total PAHs",
+      "unit": "\u00b5g/kg",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "<ISQG",
+          "ISQG-PEL",
+          ">PEL"
+        ],
+        "marginal": {
+          "below_isqg": 0.5,
+          "isqg_pel": 0.35,
+          "above_pel": 0.15
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Threshold-based (CCME ISQG/PEL)",
+        "note": "Deterministic classification based on guideline exceedance"
+      }
+    },
+    {
+      "id": "sed_pcbs",
+      "label": "Total PCBs",
+      "tier": 1,
+      "cpt_source": "Noisy-OR",
+      "sample_count": 10,
+      "parameter": "Total PCBs",
+      "unit": "\u00b5g/kg",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "<ISQG",
+          "ISQG-PEL",
+          ">PEL"
+        ],
+        "marginal": {
+          "below_isqg": 0.6,
+          "isqg_pel": 0.3,
+          "above_pel": 0.1
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Threshold-based (CCME ISQG/PEL)",
+        "note": "Deterministic classification based on guideline exceedance"
+      }
+    },
+    {
+      "id": "toc",
+      "label": "TOC",
+      "tier": 1,
+      "cpt_source": "Expert",
+      "sample_count": 104,
+      "parameter": "TOC",
+      "unit": "%",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "Low (<1%)",
+          "Moderate (1-3%)",
+          "High (>3%)"
+        ],
+        "marginal": {
+          "low": 0.25,
+          "moderate": 0.5,
+          "high": 0.25
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Expert elicitation (Chapman & Anderson framework)",
+        "note": "No data learning \u2014 CPT entirely from expert judgment"
+      }
+    },
+    {
+      "id": "avs",
+      "label": "AVS",
+      "tier": 1,
+      "cpt_source": "Expert",
+      "sample_count": 61,
+      "parameter": "AVS",
+      "unit": "\u00b5mol/g",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "Low (<5)",
+          "Moderate (5-20)",
+          "High (>20)"
+        ],
+        "marginal": {
+          "low": 0.4,
+          "moderate": 0.4,
+          "high": 0.2
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Expert elicitation (Chapman & Anderson framework)",
+        "note": "No data learning \u2014 CPT entirely from expert judgment"
+      }
+    },
+    {
+      "id": "grain_size",
+      "label": "Grain Size",
+      "tier": 1,
+      "cpt_source": "Expert",
+      "sample_count": 114,
+      "parameter": "Grain Size",
+      "unit": "% fines",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "Low Fines (<20%)",
+          "Moderate Fines (20-60%)",
+          "High Fines (>60%)"
+        ],
+        "marginal": {
+          "low": 0.3,
+          "moderate": 0.45,
+          "high": 0.25
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Expert elicitation (Chapman & Anderson framework)",
+        "note": "No data learning \u2014 CPT entirely from expert judgment"
+      }
+    },
+    {
+      "id": "metal_contamination",
+      "label": "Metal Contamination",
+      "tier": 2,
+      "cpt_source": "Hybrid",
+      "sample_count": 47,
+      "parameter": null,
+      "unit": null,
+      "dr001_affected": false,
+      "config_coverage": {
+        "observed": 1,
+        "possible": 1,
+        "coverage_pct": 100.0
+      },
+      "expert_distribution": {
+        "states": [
+          "Low",
+          "Moderate",
+          "High"
+        ],
+        "marginal": {
+          "low": 0.35,
+          "moderate": 0.4,
+          "high": 0.25
+        }
+      },
+      "learned_distribution": {
+        "states": [
+          "High",
+          "Low",
+          "Moderate"
+        ],
+        "marginal": {
+          "High": 0.4688,
+          "Low": 0.0625,
+          "Moderate": 0.4688
+        }
+      },
+      "ess_prior_weight": {
+        "ess": 1.0,
+        "method": "BDeu (equivalent sample size = 1)",
+        "note": "BDeu learning with ESS=1 provides weak prior, allowing data to dominate where available"
+      }
+    },
+    {
+      "id": "organic_contamination",
+      "label": "Organic Contamination",
+      "tier": 2,
+      "cpt_source": "Expert",
+      "sample_count": 0,
+      "parameter": null,
+      "unit": null,
+      "dr001_affected": true,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "Low",
+          "Moderate",
+          "High"
+        ],
+        "marginal": {
+          "low": 0.5,
+          "moderate": 0.35,
+          "high": 0.15
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Expert elicitation (Chapman & Anderson framework)",
+        "note": "No data learning \u2014 CPT entirely from expert judgment"
+      }
+    },
+    {
+      "id": "metal_bioavail",
+      "label": "Metal Bioavailability",
+      "tier": 3,
+      "cpt_source": "Hybrid",
+      "sample_count": 47,
+      "parameter": null,
+      "unit": null,
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "Low",
+          "Moderate",
+          "High"
+        ],
+        "marginal": {
+          "low": 0.35,
+          "moderate": 0.45,
+          "high": 0.2
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": 1.0,
+        "method": "BDeu (equivalent sample size = 1)",
+        "note": "BDeu learning with ESS=1 provides weak prior, allowing data to dominate where available"
+      }
+    },
+    {
+      "id": "organic_bioavail",
+      "label": "Organic Bioavailability",
+      "tier": 3,
+      "cpt_source": "Expert",
+      "sample_count": 0,
+      "parameter": null,
+      "unit": null,
+      "dr001_affected": true,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "Low",
+          "Moderate",
+          "High"
+        ],
+        "marginal": {
+          "low": 0.5,
+          "moderate": 0.35,
+          "high": 0.15
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Expert elicitation (Chapman & Anderson framework)",
+        "note": "No data learning \u2014 CPT entirely from expert judgment"
+      }
+    },
+    {
+      "id": "tox_amphipod",
+      "label": "Amphipod Toxicity",
+      "tier": 4,
+      "cpt_source": "Hybrid",
+      "sample_count": 97,
+      "parameter": null,
+      "unit": null,
+      "dr001_affected": false,
+      "config_coverage": {
+        "observed": 1,
+        "possible": 1,
+        "coverage_pct": 100.0
+      },
+      "expert_distribution": {
+        "states": [
+          "Low",
+          "Moderate",
+          "High"
+        ],
+        "marginal": {
+          "low": 0.5,
+          "moderate": 0.3,
+          "high": 0.2
+        }
+      },
+      "learned_distribution": {
+        "states": [
+          "High",
+          "Low",
+          "Moderate"
+        ],
+        "marginal": {
+          "High": 0.1094,
+          "Low": 0.6562,
+          "Moderate": 0.2344
+        }
+      },
+      "ess_prior_weight": {
+        "ess": 1.0,
+        "method": "BDeu (equivalent sample size = 1)",
+        "note": "BDeu learning with ESS=1 provides weak prior, allowing data to dominate where available"
+      }
+    },
+    {
+      "id": "taxa_richness",
+      "label": "Taxa Richness",
+      "tier": 4,
+      "cpt_source": "Hybrid",
+      "sample_count": 52,
+      "parameter": null,
+      "unit": null,
+      "dr001_affected": false,
+      "config_coverage": {
+        "observed": 1,
+        "possible": 1,
+        "coverage_pct": 100.0
+      },
+      "expert_distribution": {
+        "states": [
+          "High (>75th)",
+          "Moderate (25-75th)",
+          "Low (<25th)"
+        ],
+        "marginal": {
+          "high": 0.3,
+          "moderate": 0.45,
+          "low": 0.25
+        }
+      },
+      "learned_distribution": {
+        "states": [
+          "High",
+          "Low",
+          "Moderate"
+        ],
+        "marginal": {
+          "High": 0.0625,
+          "Low": 0.875,
+          "Moderate": 0.0625
+        }
+      },
+      "ess_prior_weight": {
+        "ess": 1.0,
+        "method": "BDeu (equivalent sample size = 1)",
+        "note": "BDeu learning with ESS=1 provides weak prior, allowing data to dominate where available"
+      }
+    },
+    {
+      "id": "diversity",
+      "label": "Shannon Diversity",
+      "tier": 4,
+      "cpt_source": "Hybrid",
+      "sample_count": 52,
+      "parameter": null,
+      "unit": null,
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "High (>2.5)",
+          "Moderate (1.5-2.5)",
+          "Low (<1.5)"
+        ],
+        "marginal": {
+          "high": 0.35,
+          "moderate": 0.4,
+          "low": 0.25
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": 1.0,
+        "method": "BDeu (equivalent sample size = 1)",
+        "note": "BDeu learning with ESS=1 provides weak prior, allowing data to dominate where available"
+      }
+    },
+    {
+      "id": "ecological_risk",
+      "label": "Ecological Risk",
+      "tier": 5,
+      "cpt_source": "Expert",
+      "sample_count": 47,
+      "parameter": null,
+      "unit": null,
+      "dr001_affected": false,
+      "config_coverage": {
+        "observed": 11,
+        "possible": 54,
+        "coverage_pct": 20.4
+      },
+      "expert_distribution": {
+        "states": [
+          "Low",
+          "Moderate",
+          "High"
+        ],
+        "marginal": {
+          "low": 0.65,
+          "moderate": 0.25,
+          "high": 0.1
+        }
+      },
+      "learned_distribution": {
+        "states": [
+          "High",
+          "Low",
+          "Moderate"
+        ],
+        "marginal": {
+          "High": 0.3058,
+          "Low": 0.4024,
+          "Moderate": 0.2919
+        }
+      },
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Expert elicitation (Chapman & Anderson framework)",
+        "note": "No data learning \u2014 CPT entirely from expert judgment"
+      }
+    }
+  ],
+  "woe_risk_comparison": {
+    "expert": {
+      "description": "Chapman & Anderson 8-scenario deterministic matrix (with smoothing)",
+      "states": [
+        "Low",
+        "Moderate",
+        "High"
+      ]
+    },
+    "learned": {
+      "variable": "WOE_Risk",
+      "states": [
+        "High",
+        "Low",
+        "Moderate"
+      ],
+      "parents": [
+        "Chem_Exceedance",
+        "Community_Effect",
+        "Tox_Effect",
+        "WOE_Framework"
+      ]
+    },
+    "note": "Expert CPT uses Chapman & Anderson 8-scenario deterministic matrix. Learned CPT uses BDeu from 82 co-located observations."
+  },
+  "dr001_callout": {
+    "id": "DR-001",
+    "title": "Organic Pathway Expert-Only",
+    "affected_nodes": [
+      "organic_contamination",
+      "organic_bioavail",
+      "sed_pahs",
+      "sed_pcbs"
+    ],
+    "description": "0 co-located PAH+PCB pairs in BC training data. Organic pathway CPTs use expert priors only (0 BDeu observations).",
+    "severity": "HIGH"
+  },
+  "tier_summary": [
+    {
+      "tier": 1,
+      "name": "Substance/Condition",
+      "node_count": 12,
+      "cpt_methods": [
+        "Noisy-OR",
+        "Expert"
+      ]
+    },
+    {
+      "tier": 2,
+      "name": "Contamination",
+      "node_count": 2,
+      "cpt_methods": [
+        "Hybrid",
+        "Expert (DR-001)"
+      ]
+    },
+    {
+      "tier": 3,
+      "name": "Bioavailability",
+      "node_count": 2,
+      "cpt_methods": [
+        "Hybrid",
+        "Expert (DR-001)"
+      ]
+    },
+    {
+      "tier": 4,
+      "name": "Effect",
+      "node_count": 3,
+      "cpt_methods": [
+        "Hybrid"
+      ]
+    },
+    {
+      "tier": 5,
+      "name": "Impact",
+      "node_count": 1,
+      "cpt_methods": [
+        "Expert"
+      ]
+    }
+  ]
+}

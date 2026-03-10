@@ -5,13 +5,19 @@ import { cn } from '@/utils/cn';
 import { ModelOverview } from './ModelOverview';
 import { ValidationDashboard } from './ValidationDashboard';
 import { DecisionsAndLimitations } from './DecisionsAndLimitations';
+import { CptTransparency } from './CptTransparency';
+import { DataProvenance } from './DataProvenance';
+import { SiteReports } from './SiteReports';
 
-type ReviewSection = 'overview' | 'validation' | 'decisions';
+type ReviewSection = 'overview' | 'validation' | 'decisions' | 'cpt' | 'provenance' | 'sites';
 
 const sections: { id: ReviewSection; label: string; description: string }[] = [
   { id: 'overview', label: 'Model Overview', description: 'Architecture, metrics, training data' },
   { id: 'validation', label: 'QA/QC & Validation', description: 'LOO results, confusion matrix' },
   { id: 'decisions', label: 'Decisions & Limitations', description: 'DR records, known limitations' },
+  { id: 'cpt', label: 'CPT Transparency', description: 'Per-node source, coverage, distributions' },
+  { id: 'provenance', label: 'Data & Provenance', description: 'Document registry, station tracing' },
+  { id: 'sites', label: 'Site Reports', description: 'Per-site chemistry, toxicity, community' },
 ];
 
 export function ReviewView() {
@@ -63,6 +69,9 @@ export function ReviewView() {
           {activeSection === 'overview' && <ModelOverview />}
           {activeSection === 'validation' && <ValidationDashboard />}
           {activeSection === 'decisions' && <DecisionsAndLimitations />}
+          {activeSection === 'cpt' && <CptTransparency />}
+          {activeSection === 'provenance' && <DataProvenance />}
+          {activeSection === 'sites' && <SiteReports />}
         </div>
       </div>
     </div>
