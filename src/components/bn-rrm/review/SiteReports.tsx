@@ -52,6 +52,13 @@ type SourceDocument = {
   type: string;
 };
 
+type SpatialContext = {
+  location_label: string;
+  spatial_reference_type: string;
+  spatial_source_ref: string;
+  spatial_audit_note: string;
+};
+
 type StationDetail = {
   station_id: number;
   station_name: string;
@@ -67,6 +74,9 @@ type StationDetail = {
   community_records: number;
   co_location: string;
   cross_year_merge: boolean;
+  spatial_reference_type?: string;
+  location_label?: string;
+  spatial_audit_note?: string;
 };
 
 type Site = {
@@ -78,6 +88,7 @@ type Site = {
   station_count: number;
   campaign_dates: CampaignDates | null;
   temporal_note: string | null;
+  spatial_context: SpatialContext | null;
   source_documents: SourceDocument[] | null;
   station_details: StationDetail[] | null;
   co_location_quality: Record<string, number>;
@@ -97,6 +108,14 @@ type SiteReportsData = {
     sites_with_toxicity: number;
     sites_with_community: number;
   };
+};
+
+const SPATIAL_REF_LABELS: Record<string, { label: string; bg: string; text: string }> = {
+  exact_coords:   { label: 'Exact Coords',   bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300' },
+  map_derived:    { label: 'Map/Table Source', bg: 'bg-sky-100 dark:bg-sky-900/30',   text: 'text-sky-700 dark:text-sky-300' },
+  relative_only:  { label: 'Relative Only',   bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300' },
+  site_level_only:{ label: 'Site-Level Only', bg: 'bg-slate-100 dark:bg-slate-700',   text: 'text-slate-600 dark:text-slate-300' },
+  unknown:        { label: 'Unknown',         bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-600 dark:text-red-300' },
 };
 
 const WATERBODY_COLORS: Record<string, { bg: string; text: string }> = {
@@ -151,6 +170,9 @@ function flattenStationDetails(stations: StationDetail[], siteName: string): Rec
     community_records: s.community_records,
     co_location: s.co_location,
     cross_year_merge: s.cross_year_merge,
+    spatial_reference_type: s.spatial_reference_type ?? '',
+    location_label: s.location_label ?? '',
+    spatial_audit_note: s.spatial_audit_note ?? '',
   }));
 }
 
@@ -338,11 +360,30 @@ export function SiteReports() {
               </div>
             )}
 
-            {/* Missing coordinates callout */}
-            {coordStats && coordStats.missing === coordStats.total && (
-              <div className="mt-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  <span className="font-semibold">Data note:</span> Station coordinates (lat/lon) were not extracted into the database for this site. Spatial audit requires the original source documents listed above.
+            {/* Spatial context section */}
+            {selectedSite.spatial_context && (
+              <div className="mt-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Spatial Context</span>
+                  {(() => {
+                    const sp = SPATIAL_REF_LABELS[selectedSite.spatial_context!.spatial_reference_type] ?? SPATIAL_REF_LABELS.unknown;
+                    return (
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${sp.bg} ${sp.text}`}>
+                        {sp.label}
+                      </span>
+                    );
+                  })()}
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
+                  {selectedSite.spatial_context.location_label}
+                </p>
+                {selectedSite.spatial_context.spatial_source_ref && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
+                    <span className="font-medium">Source:</span> {selectedSite.spatial_context.spatial_source_ref}
+                  </p>
+                )}
+                <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                  {selectedSite.spatial_context.spatial_audit_note}
                 </p>
               </div>
             )}
@@ -553,7 +594,8 @@ export function SiteReports() {
                         <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300" title="Chemistry sample records">Chem</th>
                         <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300" title="Toxicity test records">Tox</th>
                         <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300" title="Benthic community survey records">Community</th>
-                        <th className="px-3 py-2.5 text-center font-semibold text-slate-600 dark:text-slate-300" title="Latitude/longitude coordinates (when available in database)">Coords</th>
+                        <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300" title="Spatial reference quality: exact coords, map/table source, relative, or site-level only">Spatial</th>
+                        <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300" title="Location label or coordinates when available">Location</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -583,11 +625,22 @@ export function SiteReports() {
                             <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-400">{s.chemistry_records || '\u2014'}</td>
                             <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-400">{s.toxicity_records || '\u2014'}</td>
                             <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-400">{s.community_records || '\u2014'}</td>
-                            <td className="px-3 py-2 text-center" title={s.latitude !== null && s.longitude !== null ? `${s.latitude}, ${s.longitude}` : 'Coordinates not available in database'}>
+                            <td className="px-3 py-2" title={s.spatial_audit_note ?? ''}>
+                              {(() => {
+                                const refType = s.spatial_reference_type ?? 'unknown';
+                                const sp = SPATIAL_REF_LABELS[refType] ?? SPATIAL_REF_LABELS.unknown;
+                                return (
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${sp.bg} ${sp.text}`}>
+                                    {sp.label}
+                                  </span>
+                                );
+                              })()}
+                            </td>
+                            <td className="px-3 py-2 text-xs text-slate-600 dark:text-slate-400 max-w-[200px]" title={s.spatial_audit_note ?? ''}>
                               {s.latitude !== null && s.longitude !== null ? (
-                                <span className="text-green-600 dark:text-green-400 text-xs font-mono">{s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}</span>
+                                <span className="text-green-600 dark:text-green-400 font-mono">{s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}</span>
                               ) : (
-                                <span className="text-slate-300 dark:text-slate-600 text-xs">n/a</span>
+                                <span className="truncate block">{s.location_label || 'n/a'}</span>
                               )}
                             </td>
                           </tr>
@@ -598,14 +651,14 @@ export function SiteReports() {
                 </div>
                 <p className="text-xs text-slate-400">
                   {selectedSite.station_details.length} stations
-                  {coordStats && coordStats.missing === coordStats.total && (
-                    <> &middot; No coordinates in dataset (lat/lon not extracted)</>
-                  )}
-                  {coordStats && coordStats.missing > 0 && coordStats.missing < coordStats.total && (
-                    <> &middot; {coordStats.withCoords}/{coordStats.total} stations with coordinates</>
+                  {coordStats && coordStats.withCoords > 0 && (
+                    <> &middot; {coordStats.withCoords}/{coordStats.total} with exact coordinates</>
                   )}
                   {selectedSite.station_details.some(s => s.cross_year_merge) && (
                     <> &middot; <span className="text-amber-600 dark:text-amber-400">Amber rows = cross-year merged</span></>
+                  )}
+                  {selectedSite.spatial_context && (
+                    <> &middot; Spatial: {SPATIAL_REF_LABELS[selectedSite.spatial_context.spatial_reference_type]?.label ?? 'Unknown'}</>
                   )}
                 </p>
               </div>
