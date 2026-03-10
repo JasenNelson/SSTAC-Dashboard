@@ -342,7 +342,7 @@ export function SiteReports() {
             {coordStats && coordStats.missing === coordStats.total && (
               <div className="mt-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  <span className="font-semibold">Data note:</span> Station coordinates (lat/lon) not available for this site. Spatial audit requires original source documents.
+                  <span className="font-semibold">Data note:</span> Station coordinates (lat/lon) were not extracted into the database for this site. Spatial audit requires the original source documents listed above.
                 </p>
               </div>
             )}
@@ -548,12 +548,12 @@ export function SiteReports() {
                       <tr className="border-b border-slate-200 dark:border-slate-700">
                         <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300">Station</th>
                         <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300">Type</th>
-                        <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300">Co-location</th>
-                        <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">Dates</th>
-                        <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">Chem</th>
-                        <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">Tox</th>
-                        <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">Comm</th>
-                        <th className="px-3 py-2.5 text-center font-semibold text-slate-600 dark:text-slate-300">XY</th>
+                        <th className="px-3 py-2.5 text-left font-semibold text-slate-600 dark:text-slate-300" title="Co-location quality: full triad (chem+tox+comm), chem+tox, or single LOE">Co-location</th>
+                        <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300" title="Sampling date range (count of unique dates)">Dates</th>
+                        <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300" title="Chemistry sample records">Chem</th>
+                        <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300" title="Toxicity test records">Tox</th>
+                        <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300" title="Benthic community survey records">Community</th>
+                        <th className="px-3 py-2.5 text-center font-semibold text-slate-600 dark:text-slate-300" title="Latitude/longitude coordinates (when available in database)">Coords</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -583,11 +583,11 @@ export function SiteReports() {
                             <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-400">{s.chemistry_records || '\u2014'}</td>
                             <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-400">{s.toxicity_records || '\u2014'}</td>
                             <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-400">{s.community_records || '\u2014'}</td>
-                            <td className="px-3 py-2 text-center">
+                            <td className="px-3 py-2 text-center" title={s.latitude !== null && s.longitude !== null ? `${s.latitude}, ${s.longitude}` : 'Coordinates not available in database'}>
                               {s.latitude !== null && s.longitude !== null ? (
-                                <span className="text-green-500 text-xs">Yes</span>
+                                <span className="text-green-600 dark:text-green-400 text-xs font-mono">{s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}</span>
                               ) : (
-                                <span className="text-slate-300 text-xs">\u2014</span>
+                                <span className="text-slate-300 dark:text-slate-600 text-xs">n/a</span>
                               )}
                             </td>
                           </tr>
@@ -598,8 +598,11 @@ export function SiteReports() {
                 </div>
                 <p className="text-xs text-slate-400">
                   {selectedSite.station_details.length} stations
-                  {coordStats && coordStats.missing > 0 && (
-                    <> &middot; {coordStats.missing}/{coordStats.total} missing coordinates</>
+                  {coordStats && coordStats.missing === coordStats.total && (
+                    <> &middot; No coordinates in dataset (lat/lon not extracted)</>
+                  )}
+                  {coordStats && coordStats.missing > 0 && coordStats.missing < coordStats.total && (
+                    <> &middot; {coordStats.withCoords}/{coordStats.total} stations with coordinates</>
                   )}
                   {selectedSite.station_details.some(s => s.cross_year_merge) && (
                     <> &middot; <span className="text-amber-600 dark:text-amber-400">Amber rows = cross-year merged</span></>
