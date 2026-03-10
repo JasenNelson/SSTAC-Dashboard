@@ -1,0 +1,25 @@
+{
+  "export_date": "2026-03-10T05:02:42.758776+00:00",
+  "db_hash": "e68bcd7b9ced7e598dcfc5948eec952589ff0f6c8b93e9ddd04d06e9504a73d9",
+  "dataset_status": "FROZEN (DR-003, 2026-03-09)",
+  "files": {
+    "model-overview.json": "1c54ae078cd2846d73932751016f2fa5ebbc281841f5d9236a57718ec67ea472",
+    "decisions.json": "f37270dda60d58728025d0c4f66423fb22c62c7be58ee6d349d1cabcdf36ffbe"
+  },
+  "frozen_baseline": {
+    "sites": 8,
+    "stations": 282,
+    "chemistry_records": 7784,
+    "toxicity_records": 334,
+    "community_records": 52,
+    "env_modifier_records": 593,
+    "co_located": 82,
+    "full_triads_native": 36,
+    "full_triads_effective": 44,
+    "provenance_records": 7738,
+    "tables": 19,
+    "views": 2,
+    "sediment_guidelines": 42
+  },
+  "validation": "PASSED"
+}

@@ -1,0 +1,293 @@
+{
+  "_meta": {
+    "export_date": "2026-03-10T05:02:42.756851+00:00",
+    "db_hash": "e68bcd7b9ced7e598dcfc5948eec952589ff0f6c8b93e9ddd04d06e9504a73d9",
+    "model_version": "3.2",
+    "dataset_status": "FROZEN (DR-003)",
+    "handoff_version": "21.0",
+    "release_packet_date": "2026-03-09"
+  },
+  "model_identity": {
+    "name": "BN-RRM (Bayesian Network Relative Risk Model)",
+    "framework": "Landis (2021) Causal DAG",
+    "model_id": "bnrrm-landis-causal",
+    "version": "3.0",
+    "nodes": 20,
+    "edges": 24,
+    "states_per_node": 3,
+    "states": [
+      "low",
+      "moderate",
+      "high"
+    ],
+    "containers": 5,
+    "container_labels": [
+      "Metals",
+      "Organics",
+      "Conditions",
+      "Effects",
+      "Impact"
+    ]
+  },
+  "architecture": {
+    "tiers": [
+      {
+        "tier": 1,
+        "name": "Substance",
+        "description": "Contaminant concentrations (9 nodes)",
+        "cpt_method": "Noisy-OR (data-fitted)",
+        "nodes": [
+          "sed_cu",
+          "sed_zn",
+          "sed_pb",
+          "sed_cd",
+          "sed_hg",
+          "sed_as",
+          "sed_cr",
+          "sed_pah",
+          "sed_pcb"
+        ]
+      },
+      {
+        "tier": 2,
+        "name": "Contamination",
+        "description": "Aggregate contamination (2 latent nodes)",
+        "cpt_method": "Expert MAP + BDeu hybrid",
+        "nodes": [
+          "metal_contamination",
+          "organic_contamination"
+        ]
+      },
+      {
+        "tier": 3,
+        "name": "Bioavailability",
+        "description": "Bioavailability modulated by conditions (2 latent nodes)",
+        "cpt_method": "Expert MAP + BDeu hybrid",
+        "nodes": [
+          "metal_bioavail",
+          "organic_bioavail"
+        ]
+      },
+      {
+        "tier": 4,
+        "name": "Effect",
+        "description": "Biological effects (3 effect nodes)",
+        "cpt_method": "Expert + BDeu hybrid",
+        "nodes": [
+          "tox_amphipod",
+          "taxa_richness",
+          "community_diversity"
+        ]
+      },
+      {
+        "tier": 5,
+        "name": "Impact",
+        "description": "Ecological risk (1 impact node)",
+        "cpt_method": "Expert-only (latent by design)",
+        "nodes": [
+          "ecological_risk"
+        ]
+      }
+    ],
+    "condition_nodes": [
+      "env_toc",
+      "env_avs",
+      "env_grain_size"
+    ]
+  },
+  "training_data": {
+    "dataset_counts": {
+      "sites": 8,
+      "stations": 282,
+      "chemistry_records": 7784,
+      "toxicity_records": 334,
+      "community_records": 52,
+      "env_modifier_records": 593,
+      "co_located": 82,
+      "full_triads_native": 36,
+      "full_triads_effective": 44,
+      "provenance_records": 7738,
+      "tables": 19,
+      "views": 2,
+      "sediment_guidelines": 42
+    },
+    "site_breakdown": [
+      {
+        "name": "Woodfibre",
+        "registry_id": "9930",
+        "triads": 0,
+        "triads_effective": 8,
+        "co_located": 0,
+        "total_stations": 213,
+        "waterbody": "marine",
+        "consultant": "Keystone"
+      },
+      {
+        "name": "CP Nelson",
+        "registry_id": "0311",
+        "triads": 5,
+        "triads_effective": 5,
+        "co_located": 8,
+        "total_stations": 8,
+        "waterbody": "freshwater",
+        "consultant": "SNC-Lavalin"
+      },
+      {
+        "name": "Island Copper",
+        "registry_id": "4205",
+        "triads": 0,
+        "triads_effective": 0,
+        "co_located": 15,
+        "total_stations": 15,
+        "waterbody": "marine",
+        "consultant": "Keystone"
+      },
+      {
+        "name": "Blue Water",
+        "registry_id": "15125",
+        "triads": 0,
+        "triads_effective": 0,
+        "co_located": 22,
+        "total_stations": 24,
+        "waterbody": "marine",
+        "consultant": "Keystone"
+      },
+      {
+        "name": "IOCO",
+        "registry_id": "3130",
+        "triads": 0,
+        "triads_effective": 0,
+        "co_located": 6,
+        "total_stations": 6,
+        "waterbody": "marine",
+        "consultant": "SNC-Lavalin"
+      },
+      {
+        "name": "Toquaht",
+        "registry_id": "15184",
+        "triads": 20,
+        "triads_effective": 20,
+        "co_located": 20,
+        "total_stations": 20,
+        "waterbody": "marine",
+        "consultant": "Keystone"
+      },
+      {
+        "name": "ALCAN",
+        "registry_id": "0331",
+        "triads": 5,
+        "triads_effective": 5,
+        "co_located": 5,
+        "total_stations": 5,
+        "waterbody": "marine",
+        "consultant": "Golder"
+      },
+      {
+        "name": "Brunette River",
+        "registry_id": "16029",
+        "triads": 6,
+        "triads_effective": 6,
+        "co_located": 6,
+        "total_stations": 6,
+        "waterbody": "freshwater",
+        "consultant": "Exponent"
+      }
+    ],
+    "total_sites": 8,
+    "geographic_scope": "British Columbia, Canada",
+    "temporal_scope": "~2005-2016, pre-remediation",
+    "waterbody_types": {
+      "marine": 6,
+      "freshwater": 2
+    }
+  },
+  "performance": {
+    "loo_accuracy": 0.4268,
+    "loo_kappa": 0.0326,
+    "n_complete": 82,
+    "per_class": {
+      "low": {
+        "precision": 0.6571,
+        "recall": 0.4035,
+        "f1": 0.5,
+        "support": 57
+      },
+      "moderate": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0,
+        "support": 8
+      },
+      "high": {
+        "precision": 0.2927,
+        "recall": 0.7059,
+        "f1": 0.4138,
+        "support": 17
+      }
+    },
+    "kappa_interpretation": {
+      "value": 0.0326,
+      "scale": [
+        {
+          "range": [
+            0.0,
+            0.2
+          ],
+          "label": "Poor",
+          "color": "red"
+        },
+        {
+          "range": [
+            0.2,
+            0.4
+          ],
+          "label": "Fair",
+          "color": "amber"
+        },
+        {
+          "range": [
+            0.4,
+            0.6
+          ],
+          "label": "Moderate",
+          "color": "yellow"
+        },
+        {
+          "range": [
+            0.6,
+            0.8
+          ],
+          "label": "Substantial",
+          "color": "green"
+        },
+        {
+          "range": [
+            0.8,
+            1.0
+          ],
+          "label": "Almost Perfect",
+          "color": "emerald"
+        }
+      ],
+      "current_band": "Poor",
+      "narrative": "Kappa of 0.033 falls in the 'Poor' band on the Landis/Koch scale. This reflects three structural factors: (1) the moderate class has only 8 samples (0% recall \u2014 the model cannot learn a class with so few examples), (2) the model is intentionally conservative for regulatory screening (predicting high when uncertain), and (3) high-risk recall is 70.6% \u2014 the model correctly identifies most contaminated sites. For a protective screening tool, high recall matters more than balanced accuracy."
+    },
+    "performance_plateau": {
+      "previous_n": 63,
+      "current_n": 82,
+      "delta_accuracy": 0.0,
+      "delta_kappa": 0.0,
+      "interpretation": "Adding 19 LOO-eligible stations produced zero change in any metric. The learning curve has plateaued."
+    }
+  },
+  "intended_use": {
+    "primary": "Screening-level ecological risk assessment for BC contaminated sediment sites",
+    "users": "Qualified Professionals (QPs), BC Ministry ENV staff",
+    "not_suitable_for": [
+      "Balanced risk classification (moderate class undetectable)",
+      "Quantitative risk ranking between sites",
+      "Non-BC jurisdictions (unvalidated)",
+      "Post-remediation assessment (training data is pre-remediation only)"
+    ]
+  }
+}

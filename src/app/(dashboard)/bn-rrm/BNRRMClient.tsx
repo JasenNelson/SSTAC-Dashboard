@@ -13,7 +13,7 @@ import { ExportPanel } from '@/components/bn-rrm/data/ExportPanel';
 import { SiteDetails } from '@/components/bn-rrm/map/SiteDetails';
 import { classifyRawSiteData, dagForwardInference } from '@/lib/bn-rrm/bn-inference';
 import { createTrainedNetwork } from '@/lib/bn-rrm/trained-network';
-import { Workflow, Network, Map, Database, PanelRightOpen, PanelRightClose, ChevronRight, Beaker, Thermometer, Activity, AlertTriangle, Upload, Table, Download } from 'lucide-react';
+import { Workflow, Network, Map, Database, PanelRightOpen, PanelRightClose, ChevronRight, Beaker, Thermometer, Activity, AlertTriangle, Upload, Table, Download, ClipboardCheck } from 'lucide-react';
 
 const Canvas = dynamic(() => import('@/components/bn-rrm/canvas/Canvas').then((mod) => mod.Canvas), {
   ssr: false,
@@ -30,7 +30,12 @@ const CPTExplorer = dynamic(() => import('@/components/bn-rrm/cpt/CPTExplorer').
   loading: () => <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="flex items-center gap-3 text-slate-400 dark:text-slate-500"><div className="w-6 h-6 border-2 border-slate-300 dark:border-slate-600 border-t-blue-500 rounded-full animate-spin" /><span>Loading CPT explorer...</span></div></div>,
 });
 
-type ViewTab = 'conceptual' | 'detailed' | 'cpt' | 'map' | 'data';
+const ReviewView = dynamic(() => import('@/components/bn-rrm/review/ReviewView').then((mod) => mod.ReviewView), {
+  ssr: false,
+  loading: () => <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="flex items-center gap-3 text-slate-400 dark:text-slate-500"><div className="w-6 h-6 border-2 border-slate-300 dark:border-slate-600 border-t-blue-500 rounded-full animate-spin" /><span>Loading review...</span></div></div>,
+});
+
+type ViewTab = 'conceptual' | 'detailed' | 'cpt' | 'map' | 'data' | 'review';
 
 const tabs: { id: ViewTab; label: string; icon: typeof Workflow; description: string }[] = [
   { id: 'conceptual', label: 'Conceptual', icon: Workflow, description: 'High-level causal framework' },
@@ -38,6 +43,7 @@ const tabs: { id: ViewTab; label: string; icon: typeof Workflow; description: st
   { id: 'cpt', label: 'CPT', icon: Table, description: 'Conditional Probability Tables' },
   { id: 'map', label: 'Map', icon: Map, description: 'Spatial data explorer' },
   { id: 'data', label: 'Data', icon: Database, description: 'Upload & export' },
+  { id: 'review', label: 'Review', icon: ClipboardCheck, description: 'Peer review transparency' },
 ];
 
 export default function BNRRMClient() {
@@ -197,6 +203,7 @@ export default function BNRRMClient() {
         {activeTab === 'cpt' && <CPTExplorer />}
         {activeTab === 'map' && <MapView showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} onRunAssessment={handleRunAssessment} />}
         {activeTab === 'data' && <DataView onViewOnMap={handleViewOnMap} onRunAssessment={handleRunAssessment} />}
+        {activeTab === 'review' && <ReviewView />}
       </main>
     </div>
   );
