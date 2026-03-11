@@ -16,6 +16,7 @@ import { getTaxonomySummaries, type TaxonomySummary } from '@/lib/regulatory-rev
 import {
   getReviewProjectById,
   getProjectFiles,
+  updateReviewProject,
 } from '@/lib/sqlite/queries/review-projects';
 
 // Structured evidence item for detailed display
@@ -324,6 +325,34 @@ export default async function SubmissionReviewPage({ params }: PageProps) {
     const project = getReviewProjectById(submissionId);
 
     if (project) {
+      // Reconcile stale status: if a submission exists for this project but
+      // getSubmissionWithAssessments failed above (e.g. taxonomy/assessment error),
+      // correct the project status and retry loading the full submission.
+      const STALE_STATUSES = ['created', 'extracted', 'extracting', 'evaluating'];
+      if (STALE_STATUSES.includes(project.status)) {
+        const existingSub = getSubmissionById(project.id);
+        if (existingSub) {
+          updateReviewProject(project.id, { status: 'evaluated' });
+          project.status = 'evaluated';
+
+          // Retry: the submission exists, so try loading full assessments again
+          const retrySubmission = getSubmissionWithAssessments(submissionId);
+          if (retrySubmission) {
+            return (
+              <ErrorBoundary>
+                <ReviewDashboardClient
+                  submission={retrySubmission}
+                  user={{
+                    id: user.id,
+                    email: user.email || '',
+                  }}
+                />
+              </ErrorBoundary>
+            );
+          }
+        }
+      }
+
       const files = getProjectFiles(submissionId);
       let applicationTypes: string[] = [];
       let selectedServices: string[] = [];
