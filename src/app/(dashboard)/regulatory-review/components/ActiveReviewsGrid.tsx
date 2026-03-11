@@ -43,6 +43,22 @@ const STATUS_CONFIG: Record<
     text: 'text-emerald-800 dark:text-emerald-200',
     label: 'Extracted',
   },
+  evaluating: {
+    bg: 'bg-sky-100 dark:bg-sky-900/30',
+    text: 'text-sky-800 dark:text-sky-200',
+    label: 'Evaluating',
+    pulse: true,
+  },
+  evaluated: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    text: 'text-emerald-800 dark:text-emerald-200',
+    label: 'Evaluated',
+  },
+  eval_failed: {
+    bg: 'bg-red-100 dark:bg-red-900/30',
+    text: 'text-red-800 dark:text-red-200',
+    label: 'Evaluation Failed',
+  },
   active: {
     bg: 'bg-green-100 dark:bg-green-900/30',
     text: 'text-green-800 dark:text-green-200',
