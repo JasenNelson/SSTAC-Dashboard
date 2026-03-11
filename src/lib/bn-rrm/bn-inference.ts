@@ -476,12 +476,22 @@ export function classifyRawSiteData(site: SiteData): Evidence {
       else evidence.toc = 'high';
     }
 
+    // sulfide_binding (v4.0): 4-state classification from AVS + SEM data
     const avsValues = chem.map(s => s.avs).filter((v): v is number => v !== undefined);
-    if (avsValues.length > 0) {
+    const semValues = chem.map(s => s.sem).filter((v): v is number => v !== undefined);
+    if (avsValues.length > 0 && semValues.length > 0) {
+      // Both SEM and AVS measured — use SEM/AVS ratio
       const avgAvs = avsValues.reduce((a, b) => a + b, 0) / avsValues.length;
-      if (avgAvs < 5) evidence.avs = 'low';
-      else if (avgAvs <= 20) evidence.avs = 'medium';
-      else evidence.avs = 'high';
+      const avgSem = semValues.reduce((a, b) => a + b, 0) / semValues.length;
+      evidence.sulfide_binding = avgAvs > 0 && avgSem / avgAvs < 1
+        ? 'bound_measured'
+        : 'excess_measured';
+    } else if (avsValues.length > 0) {
+      // AVS only — proxy classification
+      const avgAvs = avsValues.reduce((a, b) => a + b, 0) / avsValues.length;
+      evidence.sulfide_binding = avgAvs >= 5 ? 'bound_proxy' : 'uncertain_proxy';
+    } else {
+      evidence.sulfide_binding = 'uncertain_proxy';
     }
 
     const finesValues = chem.map(s => s.percentFines).filter((v): v is number => v !== undefined);

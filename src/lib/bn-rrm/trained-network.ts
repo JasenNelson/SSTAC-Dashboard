@@ -254,20 +254,21 @@ const conditionNodes: ConditionNodeData[] = [
     containerId: 'container_condition',
   },
   {
-    id: 'avs',
-    label: 'AVS',
+    id: 'sulfide_binding',
+    label: 'Sulfide Binding',
     category: 'condition',
-    parameter: 'Acid Volatile Sulfide',
-    unit: 'μmol/g',
-    description: 'Sulfide binding capacity for divalent metals (N=0 stations in DB — expert prior only)',
-    typicalRange: { min: 0, max: 50 },
+    parameter: 'SEM/AVS Ratio',
+    unit: 'ratio',
+    description: 'Sulfide metal binding state (4-state). Replaces AVS node in v4.0. Modifies divalent metal bioavailability.',
+    typicalRange: { min: 0, max: 4 },
     effectDirection: 'decreases',
     states: [
-      { id: 'low', label: 'Low (<5)', minValue: 0, maxValue: 5, color: '#fca5a5' },
-      { id: 'medium', label: 'Medium (5-20)', minValue: 5, maxValue: 20, color: '#fde047' },
-      { id: 'high', label: 'High (>20)', minValue: 20, maxValue: 100, color: '#86efac' },
+      { id: 'bound_measured', label: 'Bound (measured)', minValue: 0, maxValue: 1, color: '#86efac' },
+      { id: 'excess_measured', label: 'Excess (measured)', minValue: 1, maxValue: 4, color: '#fca5a5' },
+      { id: 'bound_proxy', label: 'Bound (proxy)', minValue: 0, maxValue: 1, color: '#bbf7d0' },
+      { id: 'uncertain_proxy', label: 'Uncertain (proxy)', minValue: 0, maxValue: 4, color: '#fde68a' },
     ],
-    beliefs: { low: 0.40, medium: 0.40, high: 0.20 },
+    beliefs: { bound_measured: 0.25, excess_measured: 0.25, bound_proxy: 0.25, uncertain_proxy: 0.25 },
     evidence: null,
     containerId: 'container_condition',
   },
@@ -455,23 +456,23 @@ const containers: ContainerData[] = [
     category: 'substance',
     collapsed: true,
     childNodeIds: ['sed_pahs', 'sed_pcbs', 'organic_contamination'],
-    position: { x: 50, y: 450 },
+    position: { x: 50, y: 500 },
   },
   {
     id: 'container_condition',
     label: 'Conditions (Habitat)',
     category: 'condition',
-    collapsed: false,
-    childNodeIds: ['toc', 'avs', 'grain_size'],
-    position: { x: 350, y: 100 },
+    collapsed: true,
+    childNodeIds: ['toc', 'sulfide_binding', 'grain_size'],
+    position: { x: 420, y: 100 },
   },
   {
     id: 'container_effect',
     label: 'Exposure & Effects',
     category: 'effect',
-    collapsed: false,
+    collapsed: true,
     childNodeIds: ['metal_bioavail', 'organic_bioavail', 'tox_amphipod', 'taxa_richness', 'diversity'],
-    position: { x: 650, y: 50 },
+    position: { x: 800, y: 50 },
   },
   {
     id: 'container_impact',
@@ -479,7 +480,7 @@ const containers: ContainerData[] = [
     category: 'impact',
     collapsed: false,
     childNodeIds: ['ecological_risk'],
-    position: { x: 1050, y: 200 },
+    position: { x: 1180, y: 200 },
   },
 ];
 
@@ -504,7 +505,7 @@ const edges: NetworkEdge[] = [
   // === Contamination + Conditions → Bioavailability ===
   { id: 'e_mcon_bioavail', source: 'metal_contamination', target: 'metal_bioavail' },
   { id: 'e_toc_mbioavail', source: 'toc', target: 'metal_bioavail' },
-  { id: 'e_avs_mbioavail', source: 'avs', target: 'metal_bioavail' },
+  { id: 'e_sulfide_metal_bioavail', source: 'sulfide_binding', target: 'metal_bioavail' },
 
   { id: 'e_ocon_obioavail', source: 'organic_contamination', target: 'organic_bioavail' },
   { id: 'e_toc_obioavail', source: 'toc', target: 'organic_bioavail' },
@@ -564,6 +565,8 @@ function severity(state: string): number {
     below_isqg: 0, isqg_pel: 1, above_pel: 2,
     low: 0, medium: 1, high: 2, moderate: 1,
     coarse: 0, mixed: 1, fine: 2,
+    // sulfide_binding 4-state (v4.0): protectiveness encoded as inverse severity
+    bound_measured: 0, bound_proxy: 0.15, uncertain_proxy: 2, excess_measured: 2,
   };
   return map[state] ?? 1;
 }
@@ -625,15 +628,16 @@ const organicContaminationCPT = generateCPT(
   },
 );
 
-// metal_bioavail = f(metal_contamination, TOC, AVS)
-// Higher metals + lower TOC/AVS → higher bioavailability
+// metal_bioavail = f(metal_contamination, TOC, sulfide_binding)
+// Higher metals + lower TOC/sulfide binding → higher bioavailability
+const sulfideStates = ['bound_measured', 'excess_measured', 'bound_proxy', 'uncertain_proxy'];
 const metalBioavailCPT = generateCPT(
   'metal_bioavail',
-  ['metal_contamination', 'toc', 'avs'],
-  { metal_contamination: effectThree, toc: threeStates, avs: threeStates },
+  ['metal_contamination', 'toc', 'sulfide_binding'],
+  { metal_contamination: effectThree, toc: threeStates, sulfide_binding: sulfideStates },
   (combo) => {
     const metalScore = severity(combo.metal_contamination);
-    const protScore = (protectiveness(combo.toc) + protectiveness(combo.avs)) / 2;
+    const protScore = (protectiveness(combo.toc) + protectiveness(combo.sulfide_binding)) / 2;
     const net = Math.max(0, Math.min(2, metalScore - protScore * 0.6 + 0.3));
     const norm = net / 2;
     const pHigh = Math.min(0.95, norm * norm);

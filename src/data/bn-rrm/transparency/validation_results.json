@@ -1,0 +1,519 @@
+{
+  "loo_accuracy": 0.5488,
+  "loo_kappa": 0.18,
+  "n_complete": 82,
+  "per_class": {
+    "low": {
+      "precision": 0.7442,
+      "recall": 0.5614,
+      "f1": 0.64,
+      "support": 57
+    },
+    "moderate": {
+      "precision": 0.1,
+      "recall": 0.125,
+      "f1": 0.1111,
+      "support": 8
+    },
+    "high": {
+      "precision": 0.4138,
+      "recall": 0.7059,
+      "f1": 0.5217,
+      "support": 17
+    }
+  },
+  "predictions": [
+    {
+      "station_id": 1,
+      "station_name": "SED06-103",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 2,
+      "station_name": "SED06-104",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 3,
+      "station_name": "SED06-105",
+      "predicted": "low",
+      "observed": "moderate"
+    },
+    {
+      "station_id": 4,
+      "station_name": "SED06-111",
+      "predicted": "moderate",
+      "observed": "moderate"
+    },
+    {
+      "station_id": 6,
+      "station_name": "SED06-114",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 8,
+      "station_name": "SED06-116",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 10,
+      "station_name": "SED06-118",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 11,
+      "station_name": "SED06-119",
+      "predicted": "low",
+      "observed": "moderate"
+    },
+    {
+      "station_id": 201,
+      "station_name": "SED19-3",
+      "predicted": "high",
+      "observed": "high"
+    },
+    {
+      "station_id": 202,
+      "station_name": "SED19-4",
+      "predicted": "high",
+      "observed": "high"
+    },
+    {
+      "station_id": 203,
+      "station_name": "SED19-5",
+      "predicted": "high",
+      "observed": "high"
+    },
+    {
+      "station_id": 204,
+      "station_name": "SED19-6",
+      "predicted": "high",
+      "observed": "high"
+    },
+    {
+      "station_id": 205,
+      "station_name": "SED19-REF1",
+      "predicted": "high",
+      "observed": "high"
+    },
+    {
+      "station_id": 207,
+      "station_name": "SED13-1",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 208,
+      "station_name": "SED13-2",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 209,
+      "station_name": "SED13-5",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 210,
+      "station_name": "SED13-6",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 211,
+      "station_name": "SED13-10",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 212,
+      "station_name": "SED13-12",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 213,
+      "station_name": "SED13-16",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 214,
+      "station_name": "SED13-21",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 215,
+      "station_name": "SED13-23",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 216,
+      "station_name": "SED13-24",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 222,
+      "station_name": "SED06-6",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 223,
+      "station_name": "SED06-11",
+      "predicted": "moderate",
+      "observed": "low"
+    },
+    {
+      "station_id": 224,
+      "station_name": "SED06-17",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 225,
+      "station_name": "SED06-19",
+      "predicted": "moderate",
+      "observed": "low"
+    },
+    {
+      "station_id": 227,
+      "station_name": "SED06-22",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 228,
+      "station_name": "SED06-35",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 229,
+      "station_name": "SED06-38",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 230,
+      "station_name": "SED06-42",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 231,
+      "station_name": "SED06-46",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 232,
+      "station_name": "SED06-63",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 233,
+      "station_name": "SED12-13",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 234,
+      "station_name": "SED12-14",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 235,
+      "station_name": "SED12-21",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 236,
+      "station_name": "SED12-22",
+      "predicted": "high",
+      "observed": "moderate"
+    },
+    {
+      "station_id": 237,
+      "station_name": "SED12-23",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 238,
+      "station_name": "SED12-24",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 240,
+      "station_name": "SED12-34",
+      "predicted": "moderate",
+      "observed": "low"
+    },
+    {
+      "station_id": 241,
+      "station_name": "SED12-35",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 242,
+      "station_name": "SED12-44",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 243,
+      "station_name": "SED12-45",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 244,
+      "station_name": "SED12-46",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 245,
+      "station_name": "SED12-48",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 246,
+      "station_name": "IRS-SD09-04",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 247,
+      "station_name": "IRS-SD09-10",
+      "predicted": "high",
+      "observed": "high"
+    },
+    {
+      "station_id": 248,
+      "station_name": "IRS-SD09-12",
+      "predicted": "high",
+      "observed": "high"
+    },
+    {
+      "station_id": 249,
+      "station_name": "IRS-SD09-14",
+      "predicted": "high",
+      "observed": "high"
+    },
+    {
+      "station_id": 250,
+      "station_name": "IRS-SD09-19",
+      "predicted": "high",
+      "observed": "high"
+    },
+    {
+      "station_id": 251,
+      "station_name": "IRS-SD09-20",
+      "predicted": "high",
+      "observed": "high"
+    },
+    {
+      "station_id": 252,
+      "station_name": "SED13-06",
+      "predicted": "moderate",
+      "observed": "low"
+    },
+    {
+      "station_id": 253,
+      "station_name": "SED13-08",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 254,
+      "station_name": "SED13-10",
+      "predicted": "moderate",
+      "observed": "low"
+    },
+    {
+      "station_id": 255,
+      "station_name": "SED13-12",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 256,
+      "station_name": "SED13-13",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 257,
+      "station_name": "SED13-15b",
+      "predicted": "moderate",
+      "observed": "low"
+    },
+    {
+      "station_id": 258,
+      "station_name": "SED13-16",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 259,
+      "station_name": "SED13-18",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 260,
+      "station_name": "SED13-20",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 261,
+      "station_name": "SED13-24",
+      "predicted": "moderate",
+      "observed": "low"
+    },
+    {
+      "station_id": 262,
+      "station_name": "SED13-26b",
+      "predicted": "high",
+      "observed": "low"
+    },
+    {
+      "station_id": 263,
+      "station_name": "SED13-28",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 264,
+      "station_name": "SED13-29",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 265,
+      "station_name": "SED13-31",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 266,
+      "station_name": "SED13-36",
+      "predicted": "moderate",
+      "observed": "low"
+    },
+    {
+      "station_id": 267,
+      "station_name": "SED13-37",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 268,
+      "station_name": "SED13-38",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 269,
+      "station_name": "SED13-39",
+      "predicted": "moderate",
+      "observed": "low"
+    },
+    {
+      "station_id": 270,
+      "station_name": "SED13-40",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 271,
+      "station_name": "SED13-41",
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 272,
+      "station_name": "SS-2",
+      "predicted": "low",
+      "observed": "moderate"
+    },
+    {
+      "station_id": 273,
+      "station_name": "SS-23",
+      "predicted": "low",
+      "observed": "moderate"
+    },
+    {
+      "station_id": 274,
+      "station_name": "SS-24",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 275,
+      "station_name": "SS-32",
+      "predicted": "low",
+      "observed": "moderate"
+    },
+    {
+      "station_id": 276,
+      "station_name": "SS-46",
+      "predicted": "low",
+      "observed": "moderate"
+    },
+    {
+      "station_id": 277,
+      "station_name": "PZ16-02",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 278,
+      "station_name": "PZ16-03",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 279,
+      "station_name": "PZ16-04",
+      "predicted": "high",
+      "observed": "high"
+    },
+    {
+      "station_id": 280,
+      "station_name": "PZ16-05",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 281,
+      "station_name": "PZ16-07",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 282,
+      "station_name": "PZ16-08",
+      "predicted": "high",
+      "observed": "high"
+    }
+  ]
+}
