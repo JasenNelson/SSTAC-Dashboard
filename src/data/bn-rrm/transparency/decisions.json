@@ -3,10 +3,10 @@
     "export_date": "2026-03-10T05:02:42.758387+00:00",
     "db_hash": "e68bcd7b9ced7e598dcfc5948eec952589ff0f6c8b93e9ddd04d06e9504a73d9",
     "source_docs": [
-      "QA_QC_LOG.md v1.9",
-      "MODEL_SPECIFICATION.md v1.4",
-      "MODEL_CARD.md v3.2",
-      "BNRRM_HANDOFF.md v21.0"
+      "QA_QC_LOG.md v2.1",
+      "MODEL_SPECIFICATION.md v1.7",
+      "MODEL_CARD.md v4.1",
+      "BNRRM_HANDOFF.md v27.0"
     ]
   },
   "decision_records": [
@@ -135,11 +135,11 @@
     "note": "See BNRRM_HANDOFF.md Active Issues table for full details."
   },
   "spec_versions": {
-    "MODEL_SPECIFICATION": "1.4",
-    "MODEL_CARD": "3.2",
+    "MODEL_SPECIFICATION": "1.7",
+    "MODEL_CARD": "4.1",
     "METHODOLOGY": "3.1",
     "DATABASE_SPECIFICATION": "1.1",
-    "QA_QC_LOG": "1.9",
+    "QA_QC_LOG": "2.1",
     "EXTRACTION_SOP": "1.2",
     "ANTI_DRIFT_ENFORCEMENT": "1.1",
     "canonical_py": "1.2"

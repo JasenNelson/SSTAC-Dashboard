@@ -97,20 +97,21 @@ const conditionNodes: ConditionNodeData[] = [
     containerId: 'container_condition',
   },
   {
-    id: 'avs',
-    label: 'AVS',
+    id: 'sulfide_binding',
+    label: 'Sulfide Binding',
     category: 'condition',
-    parameter: 'Acid Volatile Sulfide',
-    unit: 'umol/g',
-    description: 'Sulfide binding capacity for divalent metals',
-    typicalRange: { min: 0, max: 50 },
+    parameter: 'SEM/AVS Ratio',
+    unit: 'ratio',
+    description: 'Sulfide metal binding state (v4.0, 4-state)',
+    typicalRange: { min: 0, max: 4 },
     effectDirection: 'decreases',
     states: [
-      { id: 'low', label: 'Low (<5)', minValue: 0, maxValue: 5, color: '#fca5a5' },
-      { id: 'medium', label: 'Medium (5-20)', minValue: 5, maxValue: 20, color: '#fde047' },
-      { id: 'high', label: 'High (>20)', minValue: 20, maxValue: 100, color: '#86efac' },
+      { id: 'bound_measured', label: 'Bound (measured)', minValue: 0, maxValue: 1, color: '#86efac' },
+      { id: 'excess_measured', label: 'Excess (measured)', minValue: 1, maxValue: 4, color: '#fca5a5' },
+      { id: 'bound_proxy', label: 'Bound (proxy)', minValue: 0, maxValue: 1, color: '#bbf7d0' },
+      { id: 'uncertain_proxy', label: 'Uncertain (proxy)', minValue: 0, maxValue: 4, color: '#fde68a' },
     ],
-    beliefs: { 'low': 0.40, 'medium': 0.40, 'high': 0.20 },
+    beliefs: { 'bound_measured': 0.25, 'excess_measured': 0.25, 'bound_proxy': 0.25, 'uncertain_proxy': 0.25 },
     evidence: null,
     containerId: 'container_condition',
   },
@@ -224,7 +225,7 @@ const impactNodes: ImpactNodeData[] = [
 
 const containers: ContainerData[] = [
   { id: 'container_substance', label: 'Substance', category: 'substance', collapsed: false, childNodeIds: ['sed_cu', 'sed_zn', 'sed_pahs'], position: { x: 50, y: 100 } },
-  { id: 'container_condition', label: 'Environmental Conditions', category: 'condition', collapsed: false, childNodeIds: ['toc', 'avs', 'grain_size'], position: { x: 350, y: 100 } },
+  { id: 'container_condition', label: 'Environmental Conditions', category: 'condition', collapsed: false, childNodeIds: ['toc', 'sulfide_binding', 'grain_size'], position: { x: 350, y: 100 } },
   { id: 'container_effect', label: 'Effect', category: 'effect', collapsed: false, childNodeIds: ['metal_bioavail', 'tox_amphipod', 'taxa_richness', 'diversity'], position: { x: 650, y: 100 } },
   { id: 'container_impact', label: 'Impact', category: 'impact', collapsed: false, childNodeIds: ['benthic_impact'], position: { x: 950, y: 100 } },
 ];
@@ -233,7 +234,7 @@ const edges: NetworkEdge[] = [
   { id: 'e1', source: 'sed_cu', target: 'metal_bioavail' },
   { id: 'e2', source: 'sed_zn', target: 'metal_bioavail' },
   { id: 'e3', source: 'toc', target: 'metal_bioavail' },
-  { id: 'e4', source: 'avs', target: 'metal_bioavail' },
+  { id: 'e4', source: 'sulfide_binding', target: 'metal_bioavail' },
   { id: 'e5', source: 'sed_pahs', target: 'tox_amphipod' },
   { id: 'e6', source: 'metal_bioavail', target: 'tox_amphipod' },
   { id: 'e7', source: 'tox_amphipod', target: 'taxa_richness' },
@@ -248,10 +249,10 @@ const edges: NetworkEdge[] = [
 const cpts: ConditionalProbabilityTable[] = [
   {
     nodeId: 'metal_bioavail',
-    parentNodeIds: ['sed_cu', 'toc', 'avs'],
+    parentNodeIds: ['sed_cu', 'toc', 'sulfide_binding'],
     entries: [
-      { parentStates: { sed_cu: 'below_isqg', toc: 'high', avs: 'high' }, distribution: { low: 0.90, moderate: 0.08, high: 0.02 } },
-      { parentStates: { sed_cu: 'above_pel', toc: 'low', avs: 'low' }, distribution: { low: 0.05, moderate: 0.25, high: 0.70 } },
+      { parentStates: { sed_cu: 'below_isqg', toc: 'high', sulfide_binding: 'bound_measured' }, distribution: { low: 0.90, moderate: 0.08, high: 0.02 } },
+      { parentStates: { sed_cu: 'above_pel', toc: 'low', sulfide_binding: 'uncertain_proxy' }, distribution: { low: 0.05, moderate: 0.25, high: 0.70 } },
     ],
   },
 ];

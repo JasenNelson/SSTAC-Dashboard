@@ -1,24 +1,24 @@
 {
-  "loo_accuracy": 0.4268,
-  "loo_kappa": 0.0326,
+  "loo_accuracy": 0.5488,
+  "loo_kappa": 0.18,
   "n_complete": 82,
   "per_class": {
     "low": {
-      "precision": 0.6571,
-      "recall": 0.4035,
-      "f1": 0.5,
+      "precision": 0.7442,
+      "recall": 0.5614,
+      "f1": 0.64,
       "support": 57
     },
     "moderate": {
-      "precision": 0.0,
-      "recall": 0.0,
-      "f1": 0,
+      "precision": 0.1,
+      "recall": 0.125,
+      "f1": 0.1111,
       "support": 8
     },
     "high": {
-      "precision": 0.2927,
+      "precision": 0.4138,
       "recall": 0.7059,
-      "f1": 0.4138,
+      "f1": 0.5217,
       "support": 17
     }
   },
@@ -44,7 +44,7 @@
     {
       "station_id": 4,
       "station_name": "SED06-111",
-      "predicted": "low",
+      "predicted": "moderate",
       "observed": "moderate"
     },
     {
@@ -152,7 +152,7 @@
     {
       "station_id": 215,
       "station_name": "SED13-23",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -218,7 +218,7 @@
     {
       "station_id": 232,
       "station_name": "SED06-63",
-      "predicted": "moderate",
+      "predicted": "high",
       "observed": "low"
     },
     {
@@ -332,13 +332,13 @@
     {
       "station_id": 252,
       "station_name": "SED13-06",
-      "predicted": "high",
+      "predicted": "moderate",
       "observed": "low"
     },
     {
       "station_id": 253,
       "station_name": "SED13-08",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -350,13 +350,13 @@
     {
       "station_id": 255,
       "station_name": "SED13-12",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 256,
       "station_name": "SED13-13",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -368,25 +368,25 @@
     {
       "station_id": 258,
       "station_name": "SED13-16",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 259,
       "station_name": "SED13-18",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 260,
       "station_name": "SED13-20",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 261,
       "station_name": "SED13-24",
-      "predicted": "high",
+      "predicted": "moderate",
       "observed": "low"
     },
     {
@@ -416,25 +416,25 @@
     {
       "station_id": 266,
       "station_name": "SED13-36",
-      "predicted": "high",
+      "predicted": "moderate",
       "observed": "low"
     },
     {
       "station_id": 267,
       "station_name": "SED13-37",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 268,
       "station_name": "SED13-38",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 269,
       "station_name": "SED13-39",
-      "predicted": "high",
+      "predicted": "moderate",
       "observed": "low"
     },
     {

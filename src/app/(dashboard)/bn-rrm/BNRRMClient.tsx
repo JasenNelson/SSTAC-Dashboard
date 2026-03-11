@@ -292,7 +292,7 @@ function ConceptualView() {
         <div className="flex items-stretch justify-center gap-4 mb-8">
           <ConceptualBox title="Substance" description="Contaminant presence in environmental media" icon={Beaker} color="blue" items={['Metals (Cu, Zn, Pb, Cd, Hg, As, Cr)', 'PAHs (16 priority compounds)', 'PCBs']} />
           <Arrow />
-          <ConceptualBox title="Conditions" description="Factors modifying bioavailability and exposure" icon={Thermometer} color="violet" items={['TOC (organic carbon binding)', 'AVS (sulfide binding capacity)', 'Grain size (habitat structure)']} />
+          <ConceptualBox title="Conditions" description="Factors modifying bioavailability and exposure" icon={Thermometer} color="violet" items={['TOC (organic carbon binding)', 'Sulfide binding (metal bioavailability modifier)', 'Grain size (habitat structure)']} />
           <Arrow />
           <ConceptualBox title="Effect" description="Biological responses through causal pathways" icon={Activity} color="amber" items={['Metal/organic bioavailability', 'Amphipod toxicity', 'Community diversity & richness']} />
           <Arrow />

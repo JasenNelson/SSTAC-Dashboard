@@ -296,32 +296,34 @@
       }
     },
     {
-      "id": "avs",
-      "label": "AVS",
+      "id": "sulfide_binding",
+      "label": "Sulfide Binding",
       "tier": 1,
       "cpt_source": "Expert",
       "sample_count": 61,
-      "parameter": "AVS",
-      "unit": "\u00b5mol/g",
+      "parameter": "SEM/AVS Ratio",
+      "unit": "ratio",
       "dr001_affected": false,
       "config_coverage": null,
       "expert_distribution": {
         "states": [
-          "Low (<5)",
-          "Moderate (5-20)",
-          "High (>20)"
+          "Bound Measured",
+          "Excess Measured",
+          "Bound Proxy",
+          "Uncertain Proxy"
         ],
         "marginal": {
-          "low": 0.4,
-          "moderate": 0.4,
-          "high": 0.2
+          "bound_measured": 0.25,
+          "excess_measured": 0.25,
+          "bound_proxy": 0.25,
+          "uncertain_proxy": 0.25
         }
       },
       "learned_distribution": null,
       "ess_prior_weight": {
         "ess": null,
-        "method": "Expert elicitation (Chapman & Anderson framework)",
-        "note": "No data learning \u2014 CPT entirely from expert judgment"
+        "method": "Expert elicitation (v4.0 calibration: bound_measured=2.0, excess_measured=0.0, bound_proxy=1.7, uncertain_proxy=0.0)",
+        "note": "4-state sulfide binding replaces 3-state AVS in v4.0. SULFIDE_SEVERITY calibrated from 9-candidate sweep."
       }
     },
     {

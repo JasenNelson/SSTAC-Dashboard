@@ -126,7 +126,7 @@ export function ModelOverview() {
           <MetricCard label="Accuracy" value={`${(perf.loo_accuracy * 100).toFixed(1)}%`} subtitle="Combined (all sites)" />
           <MetricCard label="Kappa" value={perf.loo_kappa.toFixed(3)} subtitle="Cohen's kappa" alert />
           <MetricCard label="High Recall" value={`${(perf.per_class.high.recall * 100).toFixed(1)}%`} subtitle="12/17 high-risk detected" />
-          <MetricCard label="Moderate Recall" value="0.0%" subtitle="0/8 — structural gap" alert />
+          <MetricCard label="Moderate Recall" value={`${(perf.per_class.moderate.recall * 100).toFixed(1)}%`} subtitle={`${Math.round(perf.per_class.moderate.recall * perf.per_class.moderate.support)}/${perf.per_class.moderate.support} moderate detected`} alert={perf.per_class.moderate.recall < 0.2} />
         </div>
       </div>
 

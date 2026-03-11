@@ -2,16 +2,16 @@
   "_meta": {
     "export_date": "2026-03-10T05:02:42.756851+00:00",
     "db_hash": "e68bcd7b9ced7e598dcfc5948eec952589ff0f6c8b93e9ddd04d06e9504a73d9",
-    "model_version": "3.2",
+    "model_version": "4.1",
     "dataset_status": "FROZEN (DR-003)",
-    "handoff_version": "21.0",
+    "handoff_version": "27.0",
     "release_packet_date": "2026-03-09"
   },
   "model_identity": {
     "name": "BN-RRM (Bayesian Network Relative Risk Model)",
     "framework": "Landis (2021) Causal DAG",
     "model_id": "bnrrm-landis-causal",
-    "version": "3.0",
+    "version": "4.0",
     "nodes": 20,
     "edges": 24,
     "states_per_node": 3,
@@ -91,7 +91,7 @@
     ],
     "condition_nodes": [
       "env_toc",
-      "env_avs",
+      "sulfide_binding",
       "env_grain_size"
     ]
   },
@@ -202,31 +202,31 @@
     }
   },
   "performance": {
-    "loo_accuracy": 0.4268,
-    "loo_kappa": 0.0326,
+    "loo_accuracy": 0.5488,
+    "loo_kappa": 0.18,
     "n_complete": 82,
     "per_class": {
       "low": {
-        "precision": 0.6571,
-        "recall": 0.4035,
-        "f1": 0.5,
+        "precision": 0.7442,
+        "recall": 0.5614,
+        "f1": 0.64,
         "support": 57
       },
       "moderate": {
-        "precision": 0.0,
-        "recall": 0.0,
-        "f1": 0,
+        "precision": 0.1,
+        "recall": 0.125,
+        "f1": 0.1111,
         "support": 8
       },
       "high": {
-        "precision": 0.2927,
+        "precision": 0.4138,
         "recall": 0.7059,
-        "f1": 0.4138,
+        "f1": 0.5217,
         "support": 17
       }
     },
     "kappa_interpretation": {
-      "value": 0.0326,
+      "value": 0.18,
       "scale": [
         {
           "range": [
@@ -270,7 +270,7 @@
         }
       ],
       "current_band": "Poor",
-      "narrative": "Kappa of 0.033 falls in the 'Poor' band on the Landis/Koch scale. This reflects three structural factors: (1) the moderate class has only 8 samples (0% recall \u2014 the model cannot learn a class with so few examples), (2) the model is intentionally conservative for regulatory screening (predicting high when uncertain), and (3) high-risk recall is 70.6% \u2014 the model correctly identifies most contaminated sites. For a protective screening tool, high recall matters more than balanced accuracy."
+      "narrative": "Kappa of 0.180 falls in the 'Poor' band on the Landis/Koch scale but represents a 5.5\u00d7 improvement over v3 (0.033). The v4 sulfide_binding node improved moderate recall from 0% to 12.5% and low recall from 40% to 56%. High-risk recall is preserved at 70.6%. Conservative over-prediction (FP rate) reduced from 49% to 44%. For a protective screening tool, high recall matters more than balanced accuracy."
     },
     "performance_plateau": {
       "previous_n": 63,
@@ -284,7 +284,7 @@
     "primary": "Screening-level ecological risk assessment for BC contaminated sediment sites",
     "users": "Qualified Professionals (QPs), BC Ministry ENV staff",
     "not_suitable_for": [
-      "Balanced risk classification (moderate class undetectable)",
+      "Balanced risk classification (moderate class recall 12.5%)",
       "Quantitative risk ranking between sites",
       "Non-BC jurisdictions (unvalidated)",
       "Post-remediation assessment (training data is pre-remediation only)"
