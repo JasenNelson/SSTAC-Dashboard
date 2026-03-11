@@ -3,8 +3,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { getSubmissions, type Submission } from '@/lib/sqlite/queries';
-import { getReviewProjects } from '@/lib/sqlite/queries/review-projects';
+import { getSubmissions, getSubmissionById, type Submission } from '@/lib/sqlite/queries';
+import { getReviewProjects, updateReviewProject } from '@/lib/sqlite/queries/review-projects';
 import LandingPageClient from './components/LandingPageClient';
 import type { ReviewProjectDisplay } from './components/LandingPageClient';
 import { SubmissionCard, type DisplaySubmission } from './components';
@@ -85,6 +85,24 @@ export default async function RegulatoryReviewPage() {
   let projectsDisplay: ReviewProjectDisplay[] = [];
   try {
     const rawProjects = getReviewProjects();
+
+    // Reconcile stale statuses: if a submission exists for a project
+    // that's stuck in a pre-evaluated state, correct it to 'evaluated'.
+    const STALE_STATUSES = ['created', 'extracted', 'extracting', 'evaluating'];
+    for (const p of rawProjects) {
+      if (STALE_STATUSES.includes(p.status)) {
+        try {
+          const sub = getSubmissionById(p.id);
+          if (sub) {
+            updateReviewProject(p.id, { status: 'evaluated' });
+            p.status = 'evaluated';
+          }
+        } catch {
+          // Non-critical — skip reconciliation on error
+        }
+      }
+    }
+
     projectsDisplay = rawProjects.map((p) => {
       let selectedServices: string[] = [];
       try {
