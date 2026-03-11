@@ -456,23 +456,23 @@ const containers: ContainerData[] = [
     category: 'substance',
     collapsed: true,
     childNodeIds: ['sed_pahs', 'sed_pcbs', 'organic_contamination'],
-    position: { x: 50, y: 450 },
+    position: { x: 50, y: 500 },
   },
   {
     id: 'container_condition',
     label: 'Conditions (Habitat)',
     category: 'condition',
-    collapsed: false,
+    collapsed: true,
     childNodeIds: ['toc', 'sulfide_binding', 'grain_size'],
-    position: { x: 350, y: 100 },
+    position: { x: 420, y: 100 },
   },
   {
     id: 'container_effect',
     label: 'Exposure & Effects',
     category: 'effect',
-    collapsed: false,
+    collapsed: true,
     childNodeIds: ['metal_bioavail', 'organic_bioavail', 'tox_amphipod', 'taxa_richness', 'diversity'],
-    position: { x: 650, y: 50 },
+    position: { x: 800, y: 50 },
   },
   {
     id: 'container_impact',
@@ -480,7 +480,7 @@ const containers: ContainerData[] = [
     category: 'impact',
     collapsed: false,
     childNodeIds: ['ecological_risk'],
-    position: { x: 1050, y: 200 },
+    position: { x: 1180, y: 200 },
   },
 ];
 

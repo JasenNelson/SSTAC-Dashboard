@@ -224,10 +224,10 @@ const impactNodes: ImpactNodeData[] = [
 ];
 
 const containers: ContainerData[] = [
-  { id: 'container_substance', label: 'Substance', category: 'substance', collapsed: false, childNodeIds: ['sed_cu', 'sed_zn', 'sed_pahs'], position: { x: 50, y: 100 } },
-  { id: 'container_condition', label: 'Environmental Conditions', category: 'condition', collapsed: false, childNodeIds: ['toc', 'sulfide_binding', 'grain_size'], position: { x: 350, y: 100 } },
-  { id: 'container_effect', label: 'Effect', category: 'effect', collapsed: false, childNodeIds: ['metal_bioavail', 'tox_amphipod', 'taxa_richness', 'diversity'], position: { x: 650, y: 100 } },
-  { id: 'container_impact', label: 'Impact', category: 'impact', collapsed: false, childNodeIds: ['benthic_impact'], position: { x: 950, y: 100 } },
+  { id: 'container_substance', label: 'Substance', category: 'substance', collapsed: true, childNodeIds: ['sed_cu', 'sed_zn', 'sed_pahs'], position: { x: 50, y: 100 } },
+  { id: 'container_condition', label: 'Environmental Conditions', category: 'condition', collapsed: true, childNodeIds: ['toc', 'sulfide_binding', 'grain_size'], position: { x: 420, y: 100 } },
+  { id: 'container_effect', label: 'Effect', category: 'effect', collapsed: true, childNodeIds: ['metal_bioavail', 'tox_amphipod', 'taxa_richness', 'diversity'], position: { x: 800, y: 100 } },
+  { id: 'container_impact', label: 'Impact', category: 'impact', collapsed: false, childNodeIds: ['benthic_impact'], position: { x: 1180, y: 100 } },
 ];
 
 const edges: NetworkEdge[] = [
