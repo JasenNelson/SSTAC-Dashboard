@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "export_date": "2026-03-12T01:13:06.389276+00:00",
+    "export_date": "2026-03-12T01:18:49.225047+00:00",
     "db_hash": "053b049b09dfff6874a18d5cef8be28f44f2d1b13c09748e1cc93557e2a66552",
     "description": "Per-site summary data: station counts, chemistry/toxicity/community summaries, co-location quality"
   },
@@ -3820,7 +3820,7 @@
         {
           "parameter": "1,2,3,4,6,7,8-Hepta CDD",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.966,
           "max": 581.0,
           "mean": 90.1641,
@@ -3833,7 +3833,7 @@
         {
           "parameter": "1,2,3,4,6,7,8-Hepta CDF",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.123,
           "max": 303.0,
           "mean": 27.1723,
@@ -3846,7 +3846,7 @@
         {
           "parameter": "1,2,3,4,7,8,9-Hepta CDF",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.0025,
           "max": 2.66,
           "mean": 1.5047,
@@ -3859,7 +3859,7 @@
         {
           "parameter": "1,2,3,4,7,8-Hexa CDD",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.013,
           "max": 2.11,
           "mean": 1.0429,
@@ -3872,7 +3872,7 @@
         {
           "parameter": "1,2,3,6,7,8-Hexa CDD",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.0,
           "max": 87.4,
           "mean": 19.6956,
@@ -3885,7 +3885,7 @@
         {
           "parameter": "1,2,3,7,8,9-Hexa CDD",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.0,
           "max": 44.3,
           "mean": 10.5887,
@@ -3898,7 +3898,7 @@
         {
           "parameter": "1,2,3,7,8-Penta CDD",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.81,
           "max": 6.15,
           "mean": 2.4778,
@@ -3911,7 +3911,7 @@
         {
           "parameter": "1,2,3,7,8-Penta CDF",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.14,
           "max": 4.45,
           "mean": 1.3432,
@@ -3924,7 +3924,7 @@
         {
           "parameter": "2,3,4,6,7,8-Hexa CDD",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.0,
           "max": 2.72,
           "mean": 0.9256,
@@ -3937,7 +3937,7 @@
         {
           "parameter": "2,3,4,7,8-Penta CDF",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.85,
           "max": 3.65,
           "mean": 1.6703,
@@ -3950,7 +3950,7 @@
         {
           "parameter": "2,3,7,8-Tetra CDD",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.2,
           "max": 2.61,
           "mean": 0.8294,
@@ -3963,7 +3963,7 @@
         {
           "parameter": "2,3,7,8-Tetra CDF",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.5,
           "max": 59.6,
           "mean": 13.1788,
@@ -3976,7 +3976,7 @@
         {
           "parameter": "Octa CDD",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.447,
           "max": 3290.0,
           "mean": 497.6226,
@@ -3989,7 +3989,7 @@
         {
           "parameter": "Octa CDF",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.0155,
           "max": 146.0,
           "mean": 21.4154,
@@ -4002,7 +4002,7 @@
         {
           "parameter": "Total Toxicity Equivalency (CSR)**",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.97,
           "max": 41.341,
           "mean": 12.9475,
@@ -4015,7 +4015,7 @@
         {
           "parameter": "Total Toxicity Equivalency (NATO)**",
           "group": "Dioxin/Furan",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.48,
           "max": 31.2,
           "mean": 9.4757,
@@ -4028,7 +4028,7 @@
         {
           "parameter": "EPH (C10-C19)",
           "group": "Hydrocarbon",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 250.0,
           "max": 250.0,
           "mean": 250.0,
@@ -4041,7 +4041,7 @@
         {
           "parameter": "EPH (C19-C32)",
           "group": "Hydrocarbon",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 250.0,
           "max": 250.0,
           "mean": 250.0,
@@ -4054,7 +4054,7 @@
         {
           "parameter": "HEPH",
           "group": "Hydrocarbon",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 250.0,
           "max": 250.0,
           "mean": 250.0,
@@ -4067,7 +4067,7 @@
         {
           "parameter": "LEPH",
           "group": "Hydrocarbon",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 250.0,
           "max": 250.0,
           "mean": 250.0,
@@ -4080,7 +4080,7 @@
         {
           "parameter": "Aluminum",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 5810.0,
           "max": 36800.0,
           "mean": 14653.4906,
@@ -4094,23 +4094,10 @@
           "parameter": "Antimony",
           "group": "Metal",
           "unit": "mg/kg",
-          "min": null,
-          "max": null,
-          "mean": null,
-          "n": 7,
-          "isqg": null,
-          "pel": null,
-          "exceed_isqg": 0,
-          "exceed_pel": 0
-        },
-        {
-          "parameter": "Antimony",
-          "group": "Metal",
-          "unit": "ug/g",
           "min": 10.0,
           "max": 10.0,
           "mean": 10.0,
-          "n": 106,
+          "n": 113,
           "isqg": null,
           "pel": null,
           "exceed_isqg": 0,
@@ -4120,23 +4107,10 @@
           "parameter": "Arsenic",
           "group": "Metal",
           "unit": "mg/kg",
-          "min": null,
-          "max": null,
-          "mean": null,
-          "n": 7,
-          "isqg": 7.24,
-          "pel": 41.6,
-          "exceed_isqg": 88,
-          "exceed_pel": 0
-        },
-        {
-          "parameter": "Arsenic",
-          "group": "Metal",
-          "unit": "ug/g",
           "min": 5.0,
           "max": 15.0,
           "mean": 9.2717,
-          "n": 106,
+          "n": 113,
           "isqg": 7.24,
           "pel": 41.6,
           "exceed_isqg": 88,
@@ -4146,23 +4120,10 @@
           "parameter": "Barium",
           "group": "Metal",
           "unit": "mg/kg",
-          "min": null,
-          "max": null,
-          "mean": null,
-          "n": 7,
-          "isqg": null,
-          "pel": null,
-          "exceed_isqg": 0,
-          "exceed_pel": 0
-        },
-        {
-          "parameter": "Barium",
-          "group": "Metal",
-          "unit": "ug/g",
           "min": 26.0,
           "max": 220.0,
           "mean": 92.4698,
-          "n": 106,
+          "n": 113,
           "isqg": null,
           "pel": null,
           "exceed_isqg": 0,
@@ -4172,23 +4133,10 @@
           "parameter": "Beryllium",
           "group": "Metal",
           "unit": "mg/kg",
-          "min": null,
-          "max": null,
-          "mean": null,
-          "n": 7,
-          "isqg": null,
-          "pel": null,
-          "exceed_isqg": 0,
-          "exceed_pel": 0
-        },
-        {
-          "parameter": "Beryllium",
-          "group": "Metal",
-          "unit": "ug/g",
           "min": 0.5,
           "max": 1.0,
           "mean": 0.9104,
-          "n": 106,
+          "n": 113,
           "isqg": null,
           "pel": null,
           "exceed_isqg": 0,
@@ -4197,7 +4145,7 @@
         {
           "parameter": "Boron",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.0,
           "max": 120.0,
           "mean": 21.5287,
@@ -4211,23 +4159,10 @@
           "parameter": "Cadmium",
           "group": "Metal",
           "unit": "mg/kg",
-          "min": null,
-          "max": null,
-          "mean": null,
-          "n": 11,
-          "isqg": 0.7,
-          "pel": 4.2,
-          "exceed_isqg": 13,
-          "exceed_pel": 0
-        },
-        {
-          "parameter": "Cadmium",
-          "group": "Metal",
-          "unit": "ug/g",
           "min": 0.5,
           "max": 2.0,
           "mean": 0.5945,
-          "n": 106,
+          "n": 117,
           "isqg": 0.7,
           "pel": 4.2,
           "exceed_isqg": 13,
@@ -4236,7 +4171,7 @@
         {
           "parameter": "Calcium",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1080.0,
           "max": 301000.0,
           "mean": 15161.8868,
@@ -4250,23 +4185,10 @@
           "parameter": "Chromium",
           "group": "Metal",
           "unit": "mg/kg",
-          "min": null,
-          "max": null,
-          "mean": null,
-          "n": 7,
-          "isqg": 52.3,
-          "pel": 160.0,
-          "exceed_isqg": 2,
-          "exceed_pel": 0
-        },
-        {
-          "parameter": "Chromium",
-          "group": "Metal",
-          "unit": "ug/g",
           "min": 3.0,
           "max": 59.0,
           "mean": 16.6736,
-          "n": 106,
+          "n": 113,
           "isqg": 52.3,
           "pel": 160.0,
           "exceed_isqg": 2,
@@ -4276,23 +4198,10 @@
           "parameter": "Cobalt",
           "group": "Metal",
           "unit": "mg/kg",
-          "min": null,
-          "max": null,
-          "mean": null,
-          "n": 7,
-          "isqg": null,
-          "pel": null,
-          "exceed_isqg": 0,
-          "exceed_pel": 0
-        },
-        {
-          "parameter": "Cobalt",
-          "group": "Metal",
-          "unit": "ug/g",
           "min": 2.0,
           "max": 23.0,
           "mean": 8.1764,
-          "n": 106,
+          "n": 113,
           "isqg": null,
           "pel": null,
           "exceed_isqg": 0,
@@ -4302,23 +4211,10 @@
           "parameter": "Copper",
           "group": "Metal",
           "unit": "mg/kg",
-          "min": 10.4,
-          "max": 1580.0,
-          "mean": 151.6227,
-          "n": 22,
-          "isqg": 18.7,
-          "pel": 108.0,
-          "exceed_isqg": 100,
-          "exceed_pel": 21
-        },
-        {
-          "parameter": "Copper",
-          "group": "Metal",
-          "unit": "ug/g",
           "min": 7.0,
-          "max": 942.0,
-          "mean": 74.4991,
-          "n": 106,
+          "max": 1580.0,
+          "mean": 87.7547,
+          "n": 128,
           "isqg": 18.7,
           "pel": 108.0,
           "exceed_isqg": 100,
@@ -4327,7 +4223,7 @@
         {
           "parameter": "Iron",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 4380.0,
           "max": 46800.0,
           "mean": 18128.2075,
@@ -4341,23 +4237,10 @@
           "parameter": "Lead",
           "group": "Metal",
           "unit": "mg/kg",
-          "min": 7.4,
-          "max": 64.7,
-          "mean": 20.1357,
-          "n": 14,
-          "isqg": 30.2,
-          "pel": 112.0,
-          "exceed_isqg": 15,
-          "exceed_pel": 1
-        },
-        {
-          "parameter": "Lead",
-          "group": "Metal",
-          "unit": "ug/g",
           "min": 4.6,
           "max": 537.0,
-          "mean": 19.8077,
-          "n": 104,
+          "mean": 19.8466,
+          "n": 118,
           "isqg": 30.2,
           "pel": 112.0,
           "exceed_isqg": 15,
@@ -4366,7 +4249,7 @@
         {
           "parameter": "Magnesium",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 2260.0,
           "max": 13100.0,
           "mean": 7010.7547,
@@ -4379,7 +4262,7 @@
         {
           "parameter": "Manganese",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 145.0,
           "max": 811.0,
           "mean": 322.6604,
@@ -4393,23 +4276,10 @@
           "parameter": "Mercury",
           "group": "Metal",
           "unit": "mg/kg",
-          "min": 0.051,
-          "max": 0.103,
-          "mean": 0.0675,
-          "n": 4,
-          "isqg": 0.13,
-          "pel": 0.7,
-          "exceed_isqg": 3,
-          "exceed_pel": 1
-        },
-        {
-          "parameter": "Mercury",
-          "group": "Metal",
-          "unit": "ug/g",
           "min": 0.01,
           "max": 0.96,
-          "mean": 0.0427,
-          "n": 106,
+          "mean": 0.0436,
+          "n": 110,
           "isqg": 0.13,
           "pel": 0.7,
           "exceed_isqg": 3,
@@ -4418,7 +4288,7 @@
         {
           "parameter": "Molybdenum",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 4.0,
           "max": 16.0,
           "mean": 4.8302,
@@ -4432,23 +4302,10 @@
           "parameter": "Nickel",
           "group": "Metal",
           "unit": "mg/kg",
-          "min": null,
-          "max": null,
-          "mean": null,
-          "n": 4,
-          "isqg": null,
-          "pel": null,
-          "exceed_isqg": 0,
-          "exceed_pel": 0
-        },
-        {
-          "parameter": "Nickel",
-          "group": "Metal",
-          "unit": "ug/g",
           "min": 2.0,
           "max": 50.0,
           "mean": 10.4019,
-          "n": 106,
+          "n": 110,
           "isqg": null,
           "pel": null,
           "exceed_isqg": 0,
@@ -4457,7 +4314,7 @@
         {
           "parameter": "Phosphorus",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 129.0,
           "max": 1710.0,
           "mean": 597.8679,
@@ -4470,7 +4327,7 @@
         {
           "parameter": "Potassium",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 599.0,
           "max": 8630.0,
           "mean": 3357.4811,
@@ -4483,7 +4340,7 @@
         {
           "parameter": "Selenium",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.1,
           "max": 2.0,
           "mean": 0.464,
@@ -4496,7 +4353,7 @@
         {
           "parameter": "Silver",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 2.0,
           "max": 3.0,
           "mean": 2.0094,
@@ -4509,7 +4366,7 @@
         {
           "parameter": "Sodium",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 99.0,
           "max": 26900.0,
           "mean": 7051.0,
@@ -4522,7 +4379,7 @@
         {
           "parameter": "Strontium",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 8.0,
           "max": 745.0,
           "mean": 86.9972,
@@ -4535,7 +4392,7 @@
         {
           "parameter": "Tin",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 5.0,
           "max": 104.0,
           "mean": 6.5,
@@ -4548,7 +4405,7 @@
         {
           "parameter": "Titanium",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 187.0,
           "max": 1560.0,
           "mean": 694.066,
@@ -4561,7 +4418,7 @@
         {
           "parameter": "Vanadium",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 8.0,
           "max": 81.0,
           "mean": 41.9783,
@@ -4575,23 +4432,10 @@
           "parameter": "Zinc",
           "group": "Metal",
           "unit": "mg/kg",
-          "min": 65.8,
-          "max": 167.0,
-          "mean": 110.925,
-          "n": 4,
-          "isqg": 124.0,
-          "pel": 271.0,
-          "exceed_isqg": 12,
-          "exceed_pel": 0
-        },
-        {
-          "parameter": "Zinc",
-          "group": "Metal",
-          "unit": "ug/g",
           "min": 22.0,
           "max": 239.0,
-          "mean": 73.8453,
-          "n": 106,
+          "mean": 75.1936,
+          "n": 110,
           "isqg": 124.0,
           "pel": 271.0,
           "exceed_isqg": 12,
@@ -4600,7 +4444,7 @@
         {
           "parameter": "Zirconium",
           "group": "Metal",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.0,
           "max": 16.0,
           "mean": 2.2414,
@@ -4613,7 +4457,7 @@
         {
           "parameter": "Dibutyl-tin",
           "group": "Organotin",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.001,
           "max": 0.048,
           "mean": 0.0054,
@@ -4626,7 +4470,7 @@
         {
           "parameter": "Methyl Mercury",
           "group": "Organotin",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.0001,
           "max": 0.0013,
           "mean": 0.0004,
@@ -4639,7 +4483,7 @@
         {
           "parameter": "Monobutyl-tin",
           "group": "Organotin",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.001,
           "max": 0.006,
           "mean": 0.0013,
@@ -4652,7 +4496,7 @@
         {
           "parameter": "Tributyl-tin",
           "group": "Organotin",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.001,
           "max": 0.435,
           "mean": 0.0561,
@@ -4665,7 +4509,7 @@
         {
           "parameter": "Bisphenol-A",
           "group": "Other",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.0,
           "max": 440.0,
           "mean": 79.1167,
@@ -4678,7 +4522,7 @@
         {
           "parameter": "Nonylphenol diethoxylates",
           "group": "Other",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.0,
           "max": 69.0,
           "mean": 12.3333,
@@ -4691,7 +4535,7 @@
         {
           "parameter": "Nonylphenol monoethoxylates",
           "group": "Other",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.0,
           "max": 200.0,
           "mean": 34.1667,
@@ -4704,7 +4548,7 @@
         {
           "parameter": "Nonylphenols",
           "group": "Other",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 29.0,
           "max": 250.0,
           "mean": 89.1667,
@@ -4717,7 +4561,7 @@
         {
           "parameter": "n-Nonylphenol",
           "group": "Other",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.0,
           "max": 4.6,
           "mean": 1.85,
@@ -4730,7 +4574,7 @@
         {
           "parameter": "n-Nonylphenol monoethoxylate",
           "group": "Other",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.0,
           "max": 1.0,
           "mean": 1.0,
@@ -4743,7 +4587,7 @@
         {
           "parameter": "t-Octylphenol",
           "group": "Other",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.0,
           "max": 1.3,
           "mean": 1.05,
@@ -4756,7 +4600,7 @@
         {
           "parameter": "t-Octylphenol diethoxylate",
           "group": "Other",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.0,
           "max": 1.0,
           "mean": 1.0,
@@ -4769,7 +4613,7 @@
         {
           "parameter": "t-Octylphenol monoethoxylate",
           "group": "Other",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 1.0,
           "max": 1.0,
           "mean": 1.0,
@@ -5237,7 +5081,7 @@
         {
           "parameter": "2,3,4,5-Tetrachlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5250,7 +5094,7 @@
         {
           "parameter": "2,3,4,6-Tetrachlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5263,7 +5107,7 @@
         {
           "parameter": "2,3,4-Trichlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5276,7 +5120,7 @@
         {
           "parameter": "2,3,5,6-Tetrachlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5289,7 +5133,7 @@
         {
           "parameter": "2,3,5-Trichlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5302,7 +5146,7 @@
         {
           "parameter": "2,3,6-Trichlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5315,7 +5159,7 @@
         {
           "parameter": "2,3-Dichlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.04,
           "mean": 0.0233,
@@ -5328,7 +5172,7 @@
         {
           "parameter": "2,4 & 2,5 Dichlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5341,7 +5185,7 @@
         {
           "parameter": "2,4,5-Trichlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5354,7 +5198,7 @@
         {
           "parameter": "2,4,6-Trichlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5367,7 +5211,7 @@
         {
           "parameter": "2,4-Dimethylphenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 29.0,
           "max": 250.0,
           "mean": 89.1667,
@@ -5380,7 +5224,7 @@
         {
           "parameter": "2,6-Dichlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5393,7 +5237,7 @@
         {
           "parameter": "2,6-Dichlorosyringaldehyde",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5406,7 +5250,7 @@
         {
           "parameter": "2-Chlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5419,7 +5263,7 @@
         {
           "parameter": "2-Chlorosyringaldehyde",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5432,7 +5276,7 @@
         {
           "parameter": "3,4,5-Trichlorocatechol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5445,7 +5289,7 @@
         {
           "parameter": "3,4,5-Trichloroguaiacol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5458,7 +5302,7 @@
         {
           "parameter": "3,4,5-Trichlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5471,7 +5315,7 @@
         {
           "parameter": "3,4,5-Trichlorosyringol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5484,7 +5328,7 @@
         {
           "parameter": "3,4,5-Trichloroveratrole",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5497,7 +5341,7 @@
         {
           "parameter": "3,4,6-Trichlorocatechol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5510,7 +5354,7 @@
         {
           "parameter": "3,4,6-Trichloroguaiacol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5523,7 +5367,7 @@
         {
           "parameter": "3,4,6-Trichloroveratrole",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5536,7 +5380,7 @@
         {
           "parameter": "3,4-Dichlorocatechol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5549,7 +5393,7 @@
         {
           "parameter": "3,4-Dichloroguaiacol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.2,
           "mean": 0.0983,
@@ -5562,7 +5406,7 @@
         {
           "parameter": "3,4-Dichlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5575,7 +5419,7 @@
         {
           "parameter": "3,5-Dichlorocatechol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5588,7 +5432,7 @@
         {
           "parameter": "3,5-Dichlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5601,7 +5445,7 @@
         {
           "parameter": "3,5-Dichlorosyringol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5614,7 +5458,7 @@
         {
           "parameter": "3,6-Dichlorocatechol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5627,7 +5471,7 @@
         {
           "parameter": "3-Chlorocatechol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5640,7 +5484,7 @@
         {
           "parameter": "3-Chlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5653,7 +5497,7 @@
         {
           "parameter": "3-Chlorosyringol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5666,7 +5510,7 @@
         {
           "parameter": "4,5,6-Trichloroguaiacol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5679,7 +5523,7 @@
         {
           "parameter": "4,5-Dichlorocatechol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5692,7 +5536,7 @@
         {
           "parameter": "4,5-Dichloroguaiacol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5705,7 +5549,7 @@
         {
           "parameter": "4,5-Dichloroveratrole",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5718,7 +5562,7 @@
         {
           "parameter": "4,6-Dichloroguaiacol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 1.0,
           "mean": 0.5067,
@@ -5731,7 +5575,7 @@
         {
           "parameter": "4-Chloro-3-methylphenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5744,7 +5588,7 @@
         {
           "parameter": "4-Chlorocatechol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5757,7 +5601,7 @@
         {
           "parameter": "4-Chloroguaiacol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5770,7 +5614,7 @@
         {
           "parameter": "4-Chlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5783,7 +5627,7 @@
         {
           "parameter": "5,6-Dichlorovanillin",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5796,7 +5640,7 @@
         {
           "parameter": "5-Chloroguaiacol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5809,7 +5653,7 @@
         {
           "parameter": "5-Chlorovanillin",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5822,7 +5666,7 @@
         {
           "parameter": "6-Chloroguaiacol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5835,7 +5679,7 @@
         {
           "parameter": "6-Chlorovanillin",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.101,
           "mean": 0.0448,
@@ -5848,7 +5692,7 @@
         {
           "parameter": "Chlorinated Phenolics",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5861,7 +5705,7 @@
         {
           "parameter": "Non-Chlorinated Phenolics",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.03,
           "mean": 0.0217,
@@ -5874,7 +5718,7 @@
         {
           "parameter": "Nonylphenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.568,
           "mean": 0.128,
@@ -5887,7 +5731,7 @@
         {
           "parameter": "Pentachlorophenol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5900,7 +5744,7 @@
         {
           "parameter": "Tetrachloroguaiacol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5913,7 +5757,7 @@
         {
           "parameter": "Tetrachloroveratrole",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.02,
           "mean": 0.02,
@@ -5926,7 +5770,7 @@
         {
           "parameter": "m-Cresol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.02,
           "max": 0.04,
           "mean": 0.025,
@@ -5939,7 +5783,7 @@
         {
           "parameter": "o-Cresol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.03,
           "max": 0.3,
           "mean": 0.1233,
@@ -5952,7 +5796,7 @@
         {
           "parameter": "p-Cresol",
           "group": "Phenolic",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.2,
           "max": 0.6,
           "mean": 0.4333,
@@ -5965,7 +5809,7 @@
         {
           "parameter": "Arachidic Acid",
           "group": "RAFA",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 2.43,
           "max": 19.8,
           "mean": 8.8133,
@@ -5978,7 +5822,7 @@
         {
           "parameter": "Behenic Acid",
           "group": "RAFA",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.9,
           "max": 2.04,
           "mean": 1.5883,
@@ -5991,7 +5835,7 @@
         {
           "parameter": "Fatty Acids",
           "group": "RAFA",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.868,
           "max": 5.5,
           "mean": 2.4713,
@@ -6004,7 +5848,7 @@
         {
           "parameter": "Lauric Acid",
           "group": "RAFA",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 4.3,
           "max": 45.8,
           "mean": 17.5433,
@@ -6017,7 +5861,7 @@
         {
           "parameter": "Lignoceric Acid",
           "group": "RAFA",
-          "unit": "ug/g",
+          "unit": "mg/kg",
           "min": 0.05,
           "max": 0.9,
           "mean": 0.4455,
