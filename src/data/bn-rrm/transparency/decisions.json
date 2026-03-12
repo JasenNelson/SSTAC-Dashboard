@@ -42,9 +42,9 @@
       "status": "ACTIVE",
       "date": "2026-03-09",
       "severity": "HIGH",
-      "summary": "Dataset frozen at 44 full triads / 82 co-located from 8 sites. Performance plateau confirmed: +19 stations (n=63->82) with zero change in accuracy (0.427) or kappa (0.033).",
-      "rationale": "Learning curve plateaued. Bottleneck is expert prior shape (28/57 low-risk FP) and config diversity (Tier 3 at 1/9 configs), not data volume.",
-      "impact": "No further BC site extraction. Next phase is model architecture work (expert prior shape investigation) or regulatory application.",
+      "summary": "Dataset frozen at 44 full triads / 82 co-located from 8 sites. Performance plateau confirmed at v3.0; v4.0 broke plateau via architecture change (accuracy 0.549, kappa 0.180).",
+      "rationale": "Learning curve plateaued at v3.0. v4.0 (sulfide_binding replacement) improved without new data, confirming bottleneck is expert prior shape (25/57 low-risk FP) and config diversity (Tier 3 at 1/9 configs), not data volume.",
+      "impact": "No further BC site extraction. Focus is expert prior shape investigation and peer review with Dr. Landis.",
       "reopen_criteria": "Novel contamination profile site identified, or expert prior recalibration unlocks accuracy gains benefiting from additional data.",
       "related_issues": [
         "I-018"
@@ -54,10 +54,10 @@
   "known_limitations": [
     {
       "id": "L1",
-      "title": "Moderate recall = 0.000",
+      "title": "Moderate recall = 12.5%",
       "severity": "HIGH",
       "category": "structural",
-      "description": "Only 8/82 co-located samples are moderate-risk. Model cannot learn moderate class from insufficient examples.",
+      "description": "Only 8/82 co-located samples are moderate-risk. v4.0 detects 1/8 (12.5% recall, was 0% in v3.0). Model still cannot reliably learn moderate class from insufficient examples.",
       "mitigation": "Acceptable for screening tool (moderate predicted as high = conservative). Not suitable for balanced classification.",
       "related": "I-017"
     },
@@ -72,10 +72,10 @@
     },
     {
       "id": "L3",
-      "title": "Conservative over-prediction (FP rate 49%)",
+      "title": "Conservative over-prediction (FP rate 44%)",
       "severity": "MEDIUM",
       "category": "model_behavior",
-      "description": "28/57 low-risk stations predicted as high-risk. Systematic conservative bias from expert prior shape.",
+      "description": "25/57 low-risk stations predicted as high-risk (v4.0, was 28/57 in v3.0). Systematic conservative bias from expert prior shape, reduced by I-018b recalibration.",
       "mitigation": "Acceptable for regulatory screening (false positive = conservative). High recall (70.6%) means true high-risk sites are rarely missed.",
       "related": "I-018"
     },
@@ -84,7 +84,7 @@
       "title": "Performance plateau",
       "severity": "MEDIUM",
       "category": "data_saturation",
-      "description": "Adding 19 stations (n=63->82) produced zero change in accuracy (0.427) or kappa (0.033). Learning curve has plateaued.",
+      "description": "Adding 19 stations (n=63->82) produced zero change in accuracy or kappa at v3.0. v4.0 broke plateau via architecture change (accuracy 0.549, kappa 0.180), confirming bottleneck is prior shape, not data volume.",
       "mitigation": "Bottleneck is prior shape and config diversity, not data volume. Dataset frozen (DR-003).",
       "related": "DR-003"
     },
