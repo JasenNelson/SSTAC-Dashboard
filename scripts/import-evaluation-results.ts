@@ -8,7 +8,7 @@
  *   npx ts-node scripts/import-evaluation-results.ts [path-to-json]
  *
  * Default path:
- *   F:\Regulatory-Review\1_Active_Reviews\Teck_Trail-WARP\2_Evaluation_Output\TECK_TRAIL_WARP_evaluation_results_v6.json
+ *   C:\Projects\Regulatory-Review\1_Active_Reviews\Teck_Trail-WARP\2_Evaluation_Output\TECK_TRAIL_WARP_evaluation_results_v6.json
  */
 
 import Database from 'better-sqlite3';
@@ -19,7 +19,7 @@ import * as path from 'path';
 // Configuration
 // =============================================================================
 
-const DEFAULT_JSON_PATH = 'F:\\Regulatory-Review\\1_Active_Reviews\\Teck_Trail-WARP\\2_Evaluation_Output\\WARP_EvalResult_20260111_180401.json';
+const DEFAULT_JSON_PATH = 'C:\\Projects\\Regulatory-Review\\1_Active_Reviews\\Teck_Trail-WARP\\2_Evaluation_Output\\WARP_EvalResult_20260111_180401.json';
 const DB_PATH = path.join(process.cwd(), 'src', 'data', 'regulatory-review.db');
 const MIGRATIONS_PATH = path.join(process.cwd(), 'src', 'lib', 'sqlite', 'migrations');
 
