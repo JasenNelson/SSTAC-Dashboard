@@ -1,13 +1,10 @@
 {
-  "export_date": "2026-03-10T05:02:42.758776+00:00",
-  "db_hash": "e68bcd7b9ced7e598dcfc5948eec952589ff0f6c8b93e9ddd04d06e9504a73d9",
+  "export_date": "2026-03-15T19:15:19.184824+00:00",
+  "db_hash": "053b049b09dfff6874a18d5cef8be28f44f2d1b13c09748e1cc93557e2a66552",
   "dataset_status": "FROZEN (DR-003, 2026-03-09)",
   "files": {
-    "model-overview.json": "1c54ae078cd2846d73932751016f2fa5ebbc281841f5d9236a57718ec67ea472",
-    "decisions.json": "f37270dda60d58728025d0c4f66423fb22c62c7be58ee6d349d1cabcdf36ffbe",
-    "cpt_transparency.json": "2e85c139f22411fa30f33926a24c306a0db322c1e0015e053a03119dccb268eb",
-    "provenance_registry.json": "0d90855fc4dde7a707906440a661fe69d56bcf7b37dac48510e1d3c6b9fd3fff",
-    "site_reports.json": "a180bdade5cf120e6d8a02c1802b9e507efb1b78adc7b6d017efe1198e0c2ead"
+    "model-overview.json": "bb33a9d96f725c768a9622502ddd88b8114c40e2b6b7e804727026f3576e2f9b",
+    "decisions.json": "ea05c0042b44b3c8e1b2b504927da88d2d360d5b43b65128aec87eb637279925"
   },
   "frozen_baseline": {
     "sites": 8,
@@ -15,7 +12,7 @@
     "chemistry_records": 7784,
     "toxicity_records": 334,
     "community_records": 52,
-    "env_modifier_records": 593,
+    "env_modifier_records": 626,
     "co_located": 82,
     "full_triads_native": 36,
     "full_triads_effective": 44,
@@ -24,6 +21,5 @@
     "views": 2,
     "sediment_guidelines": 42
   },
-  "validation": "PASSED",
-  "phase2_export_date": "2026-03-10T15:29:40.630608+00:00"
+  "validation": "PASSED"
 }

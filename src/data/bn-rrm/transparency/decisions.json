@@ -1,24 +1,24 @@
 {
   "_meta": {
-    "export_date": "2026-03-10T05:02:42.758387+00:00",
-    "db_hash": "e68bcd7b9ced7e598dcfc5948eec952589ff0f6c8b93e9ddd04d06e9504a73d9",
+    "export_date": "2026-03-15T19:15:19.184461+00:00",
+    "db_hash": "053b049b09dfff6874a18d5cef8be28f44f2d1b13c09748e1cc93557e2a66552",
     "source_docs": [
-      "QA_QC_LOG.md v2.1",
-      "MODEL_SPECIFICATION.md v1.7",
-      "MODEL_CARD.md v4.1",
-      "BNRRM_HANDOFF.md v27.0"
+      "QA_QC_LOG.md v2.3",
+      "MODEL_SPECIFICATION.md v1.9",
+      "MODEL_CARD.md v4.3",
+      "BNRRM_HANDOFF.md v28.1"
     ]
   },
   "decision_records": [
     {
       "id": "DR-001",
-      "title": "Organic Pathway Expert-Only",
+      "title": "Organic Pathway Expert-Dominant",
       "status": "ACTIVE LIMITATION",
-      "date": "2026-03-08",
+      "date": "2026-03-15",
       "severity": "HIGH",
-      "summary": "PAH+PCB co-located data structurally scarce in BC. 30+ sites scanned, 0 usable co-located data found. Organic pathway remains expert-dominant (0 BDeu observations).",
-      "rationale": "PCBs not routinely analyzed in BC sediment assessments. Co-location with PAH at same stations is structurally rare.",
-      "impact": "Organic pathway CPTs (organic_contamination, organic_bioavail) use expert priors only. No data-informed learning for these nodes.",
+      "summary": "4 analyzed co-located PAH+PCB station-events (3 with detected PCBs), covering 1 of 9 parent configurations. All from ALCAN Kitimat. Organic pathway remains expert-dominant.",
+      "rationale": "PCBs not routinely analyzed in BC sediment assessments. Only ALCAN yielded co-located PAH+PCB data (4 stations, single contamination profile). 8/9 parent configurations remain unobserved.",
+      "impact": "Organic pathway CPTs (organic_contamination, organic_bioavail) remain expert-dominant. Noisy-OR Tier 1 threshold (n>=5 per config) not met; CPTs fall back to expert prior.",
       "reopen_criteria": ">=10 co-located PAH+PCB measurements from >=2 sites, >=3/9 parent configurations, LOO validation gate.",
       "related_issues": [
         "I-016"
@@ -42,9 +42,9 @@
       "status": "ACTIVE",
       "date": "2026-03-09",
       "severity": "HIGH",
-      "summary": "Dataset frozen at 44 full triads / 82 co-located from 8 sites. Performance plateau confirmed at v3.0; v4.0 broke plateau via architecture change (accuracy 0.549, kappa 0.180).",
-      "rationale": "Learning curve plateaued at v3.0. v4.0 (sulfide_binding replacement) improved without new data, confirming bottleneck is expert prior shape (25/57 low-risk FP) and config diversity (Tier 3 at 1/9 configs), not data volume.",
-      "impact": "No further BC site extraction. Focus is expert prior shape investigation and peer review with Dr. Landis.",
+      "summary": "Dataset frozen at 44 full triads / 82 co-located from 8 sites. Performance plateau confirmed: +19 stations (n=63->82). v4.0 accuracy 0.549, kappa 0.180.",
+      "rationale": "Learning curve plateaued. Bottleneck is expert prior shape (25/57 low-risk FP in v4.0) and config diversity (Tier 3 at 1/9 configs), not data volume.",
+      "impact": "No further BC site extraction. Next phase is model architecture work (expert prior shape investigation) or regulatory application.",
       "reopen_criteria": "Novel contamination profile site identified, or expert prior recalibration unlocks accuracy gains benefiting from additional data.",
       "related_issues": [
         "I-018"
@@ -54,10 +54,10 @@
   "known_limitations": [
     {
       "id": "L1",
-      "title": "Moderate recall = 12.5%",
+      "title": "Moderate recall = 0.125",
       "severity": "HIGH",
       "category": "structural",
-      "description": "Only 8/82 co-located samples are moderate-risk. v4.0 detects 1/8 (12.5% recall, was 0% in v3.0). Model still cannot reliably learn moderate class from insufficient examples.",
+      "description": "Only 8/82 co-located samples are moderate-risk. v4.0 recall improved to 12.5% (1/8) from 0% (v3). Still a structural limitation.",
       "mitigation": "Acceptable for screening tool (moderate predicted as high = conservative). Not suitable for balanced classification.",
       "related": "I-017"
     },
@@ -66,16 +66,16 @@
       "title": "Organic pathway expert-dominant",
       "severity": "HIGH",
       "category": "data_gap",
-      "description": "0 BDeu observations for organic_contamination and organic_bioavail nodes. CPTs are entirely expert-elicited.",
-      "mitigation": "Metal pathway claims are in-scope (49 BDeu obs). Organic pathway claims are out-of-scope for data-supported inference.",
+      "description": "4 analyzed co-located PAH+PCB station-events (3 with detected PCBs), covering 1 of 9 parent configurations. All from ALCAN \u2014 expert-dominant, not entirely expert-elicited.",
+      "mitigation": "Metal pathway claims are in-scope (49 BDeu obs across 12/36 configs). Organic pathway claims are out-of-scope for data-supported inference.",
       "related": "DR-001, I-016"
     },
     {
       "id": "L3",
-      "title": "Conservative over-prediction (FP rate 44%)",
+      "title": "Conservative over-prediction (FP rate ~44%)",
       "severity": "MEDIUM",
       "category": "model_behavior",
-      "description": "25/57 low-risk stations predicted as high-risk (v4.0, was 28/57 in v3.0). Systematic conservative bias from expert prior shape, reduced by I-018b recalibration.",
+      "description": "25/57 low-risk stations predicted as high-risk (v4.0, reduced from 28/57 in v3). Systematic conservative bias from expert prior shape.",
       "mitigation": "Acceptable for regulatory screening (false positive = conservative). High recall (70.6%) means true high-risk sites are rarely missed.",
       "related": "I-018"
     },
@@ -84,7 +84,7 @@
       "title": "Performance plateau",
       "severity": "MEDIUM",
       "category": "data_saturation",
-      "description": "Adding 19 stations (n=63->82) produced zero change in accuracy or kappa at v3.0. v4.0 broke plateau via architecture change (accuracy 0.549, kappa 0.180), confirming bottleneck is prior shape, not data volume.",
+      "description": "Adding 19 stations (n=63->82) produced v4.0 accuracy 0.549, kappa 0.180 (up from v3 0.427/0.033). Learning curve has plateaued at current architecture.",
       "mitigation": "Bottleneck is prior shape and config diversity, not data volume. Dataset frozen (DR-003).",
       "related": "DR-003"
     },
@@ -135,11 +135,11 @@
     "note": "See BNRRM_HANDOFF.md Active Issues table for full details."
   },
   "spec_versions": {
-    "MODEL_SPECIFICATION": "1.7",
-    "MODEL_CARD": "4.1",
+    "MODEL_SPECIFICATION": "1.4",
+    "MODEL_CARD": "3.2",
     "METHODOLOGY": "3.1",
     "DATABASE_SPECIFICATION": "1.1",
-    "QA_QC_LOG": "2.1",
+    "QA_QC_LOG": "1.9",
     "EXTRACTION_SOP": "1.2",
     "ANTI_DRIFT_ENFORCEMENT": "1.1",
     "canonical_py": "1.2"

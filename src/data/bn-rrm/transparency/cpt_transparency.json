@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "export_date": "2026-03-12T01:13:06.298595+00:00",
+    "export_date": "2026-03-15T19:09:25.177417+00:00",
     "db_hash": "053b049b09dfff6874a18d5cef8be28f44f2d1b13c09748e1cc93557e2a66552",
     "description": "Per-node CPT transparency: source type, sample counts, config coverage, expert vs learned distributions"
   },
@@ -404,7 +404,7 @@
       "label": "Organic Contamination",
       "tier": 2,
       "cpt_source": "Expert",
-      "sample_count": 0,
+      "sample_count": 4,
       "parameter": null,
       "unit": null,
       "dr001_affected": true,
@@ -462,7 +462,7 @@
       "label": "Organic Bioavailability",
       "tier": 3,
       "cpt_source": "Expert",
-      "sample_count": 0,
+      "sample_count": 4,
       "parameter": null,
       "unit": null,
       "dr001_affected": true,
@@ -675,14 +675,14 @@
   },
   "dr001_callout": {
     "id": "DR-001",
-    "title": "Organic Pathway Expert-Only",
+    "title": "Organic Pathway Expert-Dominant",
     "affected_nodes": [
       "organic_contamination",
       "organic_bioavail",
       "sed_pahs",
       "sed_pcbs"
     ],
-    "description": "0 co-located PAH+PCB pairs in BC training data. Organic pathway CPTs use expert priors only (0 BDeu observations).",
+    "description": "4 analyzed co-located PAH+PCB station-events (3 with detected PCBs), covering 1 of 9 parent configurations. All from ALCAN Kitimat. Organic pathway CPTs remain expert-dominant.",
     "severity": "HIGH"
   },
   "tier_summary": [
