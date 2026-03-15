@@ -311,7 +311,7 @@ export default function ProjectDetailClient({
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {files.map((file) => {
-                  const icon = fileTypeIcon(file.fileType);
+                  const _icon = fileTypeIcon(file.fileType);
                   return (
                     <div
                       key={file.id}

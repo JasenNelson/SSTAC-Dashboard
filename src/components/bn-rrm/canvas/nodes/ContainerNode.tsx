@@ -22,12 +22,12 @@ const containerSummaryNode: Record<string, string> = {
 };
 
 export const ContainerNode = memo(function ContainerNode({ data, selected }: { data: ContainerData; selected?: boolean }) {
-  const { toggleContainer, getNodesInContainer, model, nodeMap } = useNetworkStore();
+  const { toggleContainer, getNodesInContainer, nodeMap } = useNetworkStore();
 
   const config = categoryConfig[data.category];
   const Icon = config.icon;
 
-  const childNodes = useMemo(() => getNodesInContainer(data.id), [data.id, getNodesInContainer, model]);
+  const childNodes = useMemo(() => getNodesInContainer(data.id), [data.id, getNodesInContainer]);
 
   // Find the contamination summary node for this container (if any)
   const summaryNodeId = containerSummaryNode[data.id];
