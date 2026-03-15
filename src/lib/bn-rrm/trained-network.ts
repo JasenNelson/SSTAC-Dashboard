@@ -825,8 +825,9 @@ export function createTrainedNetwork(
 
     return {
       id: 'bnrrm-landis-causal',
-      name: 'BN-RRM Causal Model (Data-Learned)',
-      description: `20-node causal DAG with data-learned CPTs from ${learnedModel.nStations ?? 245} stations. ` +
+      name: 'BN-RRM Causal Model (Tiered: Data + Expert)',
+      description: `20-node causal DAG with tiered CPTs from ${learnedModel.nStations ?? 245} stations. ` +
+        `Metal pathway partially data-learned (49 BDeu obs). Organic pathway expert-dominant (DR-001). ` +
         `Tiered learning: Noisy-OR (contamination), BDeu+expert (bioavailability/effects), expert-dominated (risk).`,
       version: learnedModel.version ?? '3.1',
       nodes: allNodes,

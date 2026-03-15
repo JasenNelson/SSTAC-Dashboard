@@ -1,17 +1,17 @@
 {
   "_meta": {
-    "export_date": "2026-03-15T19:15:19.182982+00:00",
+    "export_date": "2026-03-15T19:42:56.864717+00:00",
     "db_hash": "053b049b09dfff6874a18d5cef8be28f44f2d1b13c09748e1cc93557e2a66552",
-    "model_version": "3.2",
+    "model_version": "4.0",
     "dataset_status": "FROZEN (DR-003)",
-    "handoff_version": "21.0",
+    "handoff_version": "28.1",
     "release_packet_date": "2026-03-09"
   },
   "model_identity": {
     "name": "BN-RRM (Bayesian Network Relative Risk Model)",
     "framework": "Landis (2021) Causal DAG",
     "model_id": "bnrrm-landis-causal",
-    "version": "3.0",
+    "version": "4.0",
     "nodes": 20,
     "edges": 24,
     "states_per_node": 3,
@@ -90,9 +90,9 @@
       }
     ],
     "condition_nodes": [
-      "env_toc",
-      "env_avs",
-      "env_grain_size"
+      "toc",
+      "sulfide_binding",
+      "grain_size"
     ]
   },
   "training_data": {
@@ -270,14 +270,16 @@
         }
       ],
       "current_band": "Poor",
-      "narrative": "Kappa of 0.033 falls in the 'Poor' band on the Landis/Koch scale. This reflects three structural factors: (1) the moderate class has only 8 samples (0% recall \u2014 the model cannot learn a class with so few examples), (2) the model is intentionally conservative for regulatory screening (predicting high when uncertain), and (3) high-risk recall is 70.6% \u2014 the model correctly identifies most contaminated sites. For a protective screening tool, high recall matters more than balanced accuracy."
+      "narrative": "Kappa of 0.180 falls in the 'Poor' band on the Landis/Koch scale. This reflects three structural factors: (1) the moderate class has only 8 samples (12.5% recall \u2014 v4.0 improved from 0% but remains limited by class rarity), (2) the model is intentionally conservative for regulatory screening (predicting high when uncertain), and (3) high-risk recall is 70.6% \u2014 the model correctly identifies most contaminated sites. For a protective screening tool, high recall matters more than balanced accuracy."
     },
     "performance_plateau": {
       "previous_n": 63,
       "current_n": 82,
-      "delta_accuracy": 0.0,
-      "delta_kappa": 0.0,
-      "interpretation": "Adding 19 LOO-eligible stations produced zero change in any metric. The learning curve has plateaued."
+      "v3_accuracy": 0.427,
+      "v4_accuracy": 0.549,
+      "v3_kappa": 0.033,
+      "v4_kappa": 0.18,
+      "interpretation": "v3.0 data plateau: adding 19 stations (n=63\u219282) produced zero gain at v3 architecture. v4.0 (sulfide_binding) broke the plateau: accuracy 0.427\u21920.549, kappa 0.033\u21920.180. Bottleneck was prior shape, not data volume."
     }
   },
   "intended_use": {
