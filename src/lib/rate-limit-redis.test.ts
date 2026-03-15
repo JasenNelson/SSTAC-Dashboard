@@ -189,6 +189,7 @@ describe('checkRateLimitRedis', () => {
     });
 
     it('includes resetTime', async () => {
+      const before = Date.now();
       const result = await checkRateLimitRedis('struct-test-3', {
         max: 100,
         windowMs: 60000,
@@ -196,7 +197,7 @@ describe('checkRateLimitRedis', () => {
 
       expect(result).toHaveProperty('resetTime');
       expect(typeof result.resetTime).toBe('number');
-      expect(result.resetTime).toBeGreaterThan(Date.now());
+      expect(result.resetTime).toBeGreaterThanOrEqual(before + 60000);
     });
 
     it('includes message only when rate limited', async () => {
@@ -224,13 +225,14 @@ describe('checkRateLimitRedis', () => {
     });
 
     it('handles very small window', async () => {
+      const before = Date.now();
       const result = await checkRateLimitRedis('edge-small-window', {
         max: 100,
         windowMs: 1,
       });
 
       expect(result.success).toBe(true);
-      expect(result.resetTime).toBeGreaterThan(Date.now());
+      expect(result.resetTime).toBeGreaterThanOrEqual(before + 1);
     });
 
     it('handles very large max count', async () => {
