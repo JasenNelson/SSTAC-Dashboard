@@ -12,7 +12,15 @@ interface ProcessLauncherProps {
   onComplete: (projectId: string) => void;
 }
 
-type ProcessPhase = 'idle' | 'creating' | 'uploading' | 'extracting' | 'done' | 'error';
+type ProcessPhase =
+  | 'idle'
+  | 'creating'
+  | 'uploading'
+  | 'extracting'
+  | 'evaluating'
+  | 'importing'
+  | 'done'
+  | 'error';
 
 interface ExtractStatus {
   status: string;
@@ -23,20 +31,40 @@ interface ExtractStatus {
   errors: string[];
 }
 
+interface EvalStatus {
+  status: string;
+  policies_completed?: number;
+  policies_total?: number;
+  elapsed_s?: number;
+  error?: string;
+  importResult?: {
+    submissionCreated: boolean;
+    assessmentsImported: number;
+  };
+}
+
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function formatElapsed(seconds: number): string {
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  return `${mins}m ${secs}s`;
+}
+
 export default function ProcessLauncher({
   wizardState,
-  onComplete,
+  onComplete: _onComplete,
 }: ProcessLauncherProps) {
   const [phase, setPhase] = useState<ProcessPhase>('idle');
   const [error, setError] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
   const [extractStatus, setExtractStatus] = useState<ExtractStatus | null>(null);
+  const [evalStatus, setEvalStatus] = useState<EvalStatus | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const engineEnabled = isLocalEngineClient();
 
@@ -56,6 +84,58 @@ export default function ProcessLauncher({
     .filter(Boolean);
 
   const totalFileSize = wizardState.files.reduce((sum, f) => sum + f.size, 0);
+
+  /**
+   * Start evaluation after extraction completes.
+   * Triggers POST to evaluate route, then polls evaluate-status.
+   */
+  const startEvaluation = useCallback(async (pid: string) => {
+    setPhase('evaluating');
+    setEvalStatus(null);
+
+    try {
+      const evalRes = await fetch(
+        `/api/regulatory-review/projects/${pid}/evaluate`,
+        { method: 'POST' },
+      );
+
+      if (!evalRes.ok) {
+        const body = await evalRes.json().catch(() => ({}));
+        throw new Error(body.error || `Failed to start evaluation: ${evalRes.statusText}`);
+      }
+
+      // Poll evaluate-status
+      pollRef.current = setInterval(async () => {
+        try {
+          const statusRes = await fetch(
+            `/api/regulatory-review/projects/${pid}/evaluate-status`,
+          );
+          if (!statusRes.ok) return;
+
+          const status: EvalStatus = await statusRes.json();
+          setEvalStatus(status);
+
+          if (status.status === 'completed') {
+            if (pollRef.current) clearInterval(pollRef.current);
+            setPhase('done');
+          } else if (status.status === 'error' || status.status === 'import_failed') {
+            if (pollRef.current) clearInterval(pollRef.current);
+            throw new Error(status.error || 'Evaluation failed');
+          }
+        } catch (pollErr) {
+          // Only surface actual errors, not transient fetch failures
+          if (pollErr instanceof Error && pollErr.message !== 'Evaluation failed') return;
+          if (pollRef.current) clearInterval(pollRef.current);
+          setPhase('error');
+          setError(pollErr instanceof Error ? pollErr.message : 'Evaluation failed');
+        }
+      }, 5000); // 5s interval — evaluation is long-running
+    } catch (err) {
+      setPhase('error');
+      setError(err instanceof Error ? err.message : 'Failed to start evaluation');
+      if (pollRef.current) clearInterval(pollRef.current);
+    }
+  }, []);
 
   const handleStart = useCallback(async () => {
     setPhase('creating');
@@ -132,7 +212,8 @@ export default function ProcessLauncher({
 
           if (status.status === 'completed' || status.status === 'completed_with_errors') {
             if (pollRef.current) clearInterval(pollRef.current);
-            setPhase('done');
+            // Chain: start evaluation automatically
+            startEvaluation(newProjectId);
           }
         } catch {
           // Ignore transient poll errors
@@ -143,20 +224,30 @@ export default function ProcessLauncher({
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       if (pollRef.current) clearInterval(pollRef.current);
     }
-  }, [wizardState, onComplete]);
+  }, [wizardState, startEvaluation]);
 
   const handleRetry = () => {
     setPhase('idle');
     setError(null);
     setProjectId(null);
     setExtractStatus(null);
+    setEvalStatus(null);
   };
 
-  const isProcessing = phase !== 'idle' && phase !== 'done' && phase !== 'error';
+  const isProcessing =
+    phase !== 'idle' && phase !== 'done' && phase !== 'error';
 
   if (!engineEnabled) {
     return <UnderConstruction feature="Document Processing" />;
   }
+
+  // Evaluation progress percentage
+  const evalProgress =
+    evalStatus?.policies_total && evalStatus.policies_total > 0
+      ? Math.round(
+          ((evalStatus.policies_completed ?? 0) / evalStatus.policies_total) * 100,
+        )
+      : 0;
 
   return (
     <div className="space-y-6">
@@ -262,7 +353,11 @@ export default function ProcessLauncher({
             {phase === 'creating' && 'Creating project...'}
             {phase === 'uploading' && 'Uploading files...'}
             {phase === 'extracting' && 'Extracting documents...'}
+            {phase === 'evaluating' && 'Evaluating policies...'}
+            {phase === 'importing' && 'Importing results...'}
           </div>
+
+          {/* Extraction progress */}
           {extractStatus && phase === 'extracting' && (
             <>
               <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
@@ -279,6 +374,27 @@ export default function ProcessLauncher({
               </p>
             </>
           )}
+
+          {/* Evaluation progress */}
+          {phase === 'evaluating' && evalStatus && evalStatus.policies_total != null && (
+            <>
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                <div
+                  className="bg-sky-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${evalProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {evalStatus.policies_completed ?? 0} of {evalStatus.policies_total} policies
+                {evalStatus.elapsed_s != null && ` (${formatElapsed(evalStatus.elapsed_s)})`}
+              </p>
+            </>
+          )}
+          {phase === 'evaluating' && (!evalStatus || evalStatus.policies_total == null) && (
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Initializing evaluation pipeline...
+            </p>
+          )}
         </div>
       )}
 
@@ -286,7 +402,14 @@ export default function ProcessLauncher({
         <div className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800 p-4 flex items-center gap-3">
           <CheckCircle2 className="w-6 h-6 text-emerald-500 flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">Processing complete</p>
+            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+              Processing complete
+              {evalStatus?.importResult && (
+                <span className="font-normal text-emerald-600 dark:text-emerald-400">
+                  {' '}&mdash; {evalStatus.importResult.assessmentsImported} assessments imported
+                </span>
+              )}
+            </p>
             <a
               href={`/regulatory-review/${projectId}`}
               className="inline-flex items-center gap-1 text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 mt-1"

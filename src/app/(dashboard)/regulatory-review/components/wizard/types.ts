@@ -2,8 +2,6 @@
  * Wizard types and constants for the submission workflow.
  */
 
-import type { LifecycleStage } from '@/lib/regulatory-review/schedule3';
-
 // =============================================================================
 // Types
 // =============================================================================

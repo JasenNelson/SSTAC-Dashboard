@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "export_date": "2026-03-10T06:08:09.983786+00:00",
-    "db_hash": "e68bcd7b9ced7e598dcfc5948eec952589ff0f6c8b93e9ddd04d06e9504a73d9",
+    "export_date": "2026-03-12T01:13:06.298595+00:00",
+    "db_hash": "053b049b09dfff6874a18d5cef8be28f44f2d1b13c09748e1cc93557e2a66552",
     "description": "Per-node CPT transparency: source type, sample counts, config coverage, expert vs learned distributions"
   },
   "nodes": [
@@ -296,37 +296,6 @@
       }
     },
     {
-      "id": "sulfide_binding",
-      "label": "Sulfide Binding",
-      "tier": 1,
-      "cpt_source": "Expert",
-      "sample_count": 61,
-      "parameter": "SEM/AVS Ratio",
-      "unit": "ratio",
-      "dr001_affected": false,
-      "config_coverage": null,
-      "expert_distribution": {
-        "states": [
-          "Bound Measured",
-          "Excess Measured",
-          "Bound Proxy",
-          "Uncertain Proxy"
-        ],
-        "marginal": {
-          "bound_measured": 0.25,
-          "excess_measured": 0.25,
-          "bound_proxy": 0.25,
-          "uncertain_proxy": 0.25
-        }
-      },
-      "learned_distribution": null,
-      "ess_prior_weight": {
-        "ess": null,
-        "method": "Expert elicitation (v4.0 calibration: bound_measured=2.0, excess_measured=0.0, bound_proxy=1.7, uncertain_proxy=0.0)",
-        "note": "4-state sulfide binding replaces 3-state AVS in v4.0. SULFIDE_SEVERITY calibrated from 9-candidate sweep."
-      }
-    },
-    {
       "id": "grain_size",
       "label": "Grain Size",
       "tier": 1,
@@ -346,6 +315,37 @@
           "low": 0.3,
           "moderate": 0.45,
           "high": 0.25
+        }
+      },
+      "learned_distribution": null,
+      "ess_prior_weight": {
+        "ess": null,
+        "method": "Expert elicitation (Chapman & Anderson framework)",
+        "note": "No data learning \u2014 CPT entirely from expert judgment"
+      }
+    },
+    {
+      "id": "sulfide_binding",
+      "label": "Sulfide Binding",
+      "tier": 1,
+      "cpt_source": "Expert",
+      "sample_count": 61,
+      "parameter": "SEM/AVS Ratio",
+      "unit": "ratio",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": {
+        "states": [
+          "Bound (Measured)",
+          "Excess (Measured)",
+          "Bound (Proxy)",
+          "Uncertain (Proxy)"
+        ],
+        "marginal": {
+          "bound_measured": 0.0,
+          "excess_measured": 0.0,
+          "bound_proxy": 0.6,
+          "uncertain_proxy": 0.4
         }
       },
       "learned_distribution": null,

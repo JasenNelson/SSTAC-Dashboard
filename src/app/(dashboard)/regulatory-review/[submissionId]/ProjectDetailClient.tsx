@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -15,6 +15,8 @@ import {
   Building2,
   StickyNote,
   RefreshCw,
+  AlertCircle,
+  Search,
 } from 'lucide-react';
 import { getServiceById } from '@/lib/regulatory-review/schedule3';
 
@@ -97,6 +99,21 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }>
     text: 'text-green-800 dark:text-green-200',
     label: 'Active',
   },
+  evaluating: {
+    bg: 'bg-sky-100 dark:bg-sky-900/30',
+    text: 'text-sky-800 dark:text-sky-200',
+    label: 'Evaluating',
+  },
+  evaluated: {
+    bg: 'bg-emerald-100 dark:bg-emerald-900/30',
+    text: 'text-emerald-800 dark:text-emerald-200',
+    label: 'Evaluated',
+  },
+  eval_failed: {
+    bg: 'bg-red-100 dark:bg-red-900/30',
+    text: 'text-red-800 dark:text-red-200',
+    label: 'Evaluation Failed',
+  },
   archived: {
     bg: 'bg-slate-100 dark:bg-slate-700',
     text: 'text-slate-500 dark:text-slate-400',
@@ -123,8 +140,61 @@ export default function ProjectDetailClient({
 }: ProjectDetailClientProps) {
   const [reprocessing, setReprocessing] = useState(false);
   const [reprocessError, setReprocessError] = useState<string | null>(null);
+  const [evalChecking, setEvalChecking] = useState(false);
+  const [evalCheckResult, setEvalCheckResult] = useState<string | null>(null);
+  const [currentStatus, setCurrentStatus] = useState(project.status);
 
-  const statusConfig = STATUS_CONFIG[project.status] || STATUS_CONFIG.created;
+  // Probe evaluate-status to recover completed-but-unimported evaluations
+  const checkEvalStatus = useCallback(async () => {
+    setEvalChecking(true);
+    setEvalCheckResult(null);
+    try {
+      const res = await fetch(
+        `/api/regulatory-review/projects/${project.id}/evaluate-status`,
+      );
+      if (!res.ok) {
+        setEvalCheckResult('Failed to check status');
+        return;
+      }
+      const data = await res.json();
+
+      if (data.status === 'completed') {
+        // Route auto-imported and set project to 'evaluated'
+        setCurrentStatus('evaluated');
+        setEvalCheckResult(
+          data.importResult
+            ? `Imported ${data.importResult.assessmentsImported} assessments`
+            : 'Results imported successfully',
+        );
+      } else if (data.status === 'error' || data.status === 'import_failed') {
+        setCurrentStatus('eval_failed');
+        setEvalCheckResult(data.error || 'Evaluation failed');
+      } else if (data.status === 'not_started') {
+        setEvalCheckResult('No evaluation found');
+      } else {
+        // Still running
+        const progress = data.policies_completed != null && data.policies_total != null
+          ? ` (${data.policies_completed}/${data.policies_total} policies)`
+          : '';
+        setEvalCheckResult(`Still running${progress}`);
+      }
+    } catch {
+      setEvalCheckResult('Failed to check status');
+    } finally {
+      setEvalChecking(false);
+    }
+  }, [project.id]);
+
+  // Auto-probe on mount when project status hasn't reached a terminal state.
+  // Covers 'evaluating' (normal) and 'created'/'extracted' (stale after recovery).
+  useEffect(() => {
+    const TERMINAL = ['evaluated', 'eval_failed', 'archived'];
+    if (!TERMINAL.includes(project.status)) {
+      checkEvalStatus();
+    }
+  }, [project.status, checkEvalStatus]);
+
+  const statusConfig = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.created;
   const processedCount = files.filter((f) => f.processed).length;
   const totalSize = files.reduce((sum, f) => sum + (f.fileSize || 0), 0);
 
@@ -241,7 +311,7 @@ export default function ProjectDetailClient({
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-slate-800">
                 {files.map((file) => {
-                  const icon = fileTypeIcon(file.fileType);
+                  const _icon = fileTypeIcon(file.fileType);
                   return (
                     <div
                       key={file.id}
@@ -302,6 +372,56 @@ export default function ProjectDetailClient({
               <div className="mt-4 flex items-center gap-2 text-sm text-sky-700 dark:text-sky-400">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Extraction in progress...
+              </div>
+            )}
+
+            {/* Evaluation status recovery */}
+            {currentStatus === 'evaluating' && (
+              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2 text-sm text-sky-700 dark:text-sky-400">
+                  {evalChecking ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Search className="w-4 h-4" />
+                  )}
+                  <span>Evaluation in progress</span>
+                  {!evalChecking && (
+                    <button
+                      onClick={checkEvalStatus}
+                      className="ml-2 px-2 py-0.5 text-xs font-medium rounded bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors"
+                    >
+                      Check Status
+                    </button>
+                  )}
+                </div>
+                {evalCheckResult && (
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{evalCheckResult}</p>
+                )}
+              </div>
+            )}
+
+            {currentStatus === 'evaluated' && currentStatus !== project.status && (
+              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>{evalCheckResult || 'Evaluation complete'}</span>
+                </div>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Reload to View Results
+                </button>
+              </div>
+            )}
+
+            {currentStatus === 'eval_failed' && (
+              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-400">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{evalCheckResult || 'Evaluation failed'}</span>
+                </div>
               </div>
             )}
           </section>
