@@ -5,7 +5,6 @@ import { X, Loader2 } from 'lucide-react';
 import {
   SERVICES,
   LIFECYCLE_STAGES,
-  type LifecycleStage,
 } from '@/lib/regulatory-review/schedule3';
 import type { ReviewProjectDisplay } from '../LandingPageClient';
 

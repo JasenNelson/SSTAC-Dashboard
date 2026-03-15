@@ -58,7 +58,7 @@ function formatElapsed(seconds: number): string {
 
 export default function ProcessLauncher({
   wizardState,
-  onComplete,
+  onComplete: _onComplete,
 }: ProcessLauncherProps) {
   const [phase, setPhase] = useState<ProcessPhase>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -224,7 +224,7 @@ export default function ProcessLauncher({
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       if (pollRef.current) clearInterval(pollRef.current);
     }
-  }, [wizardState, onComplete, startEvaluation]);
+  }, [wizardState, startEvaluation]);
 
   const handleRetry = () => {
     setPhase('idle');

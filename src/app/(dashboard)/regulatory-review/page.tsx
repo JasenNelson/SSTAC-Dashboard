@@ -7,7 +7,7 @@ import { getSubmissions, getSubmissionById, type Submission } from '@/lib/sqlite
 import { getReviewProjects, updateReviewProject } from '@/lib/sqlite/queries/review-projects';
 import LandingPageClient from './components/LandingPageClient';
 import type { ReviewProjectDisplay } from './components/LandingPageClient';
-import { SubmissionCard, type DisplaySubmission } from './components';
+import { type DisplaySubmission } from './components';
 
 function transformSubmission(sub: Submission): DisplaySubmission {
   // Determine status based on review progress
