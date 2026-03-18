@@ -52,11 +52,21 @@ type SourceDocument = {
   type: string;
 };
 
+type SpatialSummary = {
+  total_stations: number;
+  georeferenced: number;
+  by_class: Record<string, number>;
+  methods_used: string[];
+  accuracy_range_m: [number, number] | null;
+  confidence_range: [number, number] | null;
+};
+
 type SpatialContext = {
   location_label: string;
   spatial_reference_type: string;
   spatial_source_ref: string;
   spatial_audit_note: string;
+  spatial_summary?: SpatialSummary | null;
 };
 
 type StationDetail = {
@@ -77,6 +87,12 @@ type StationDetail = {
   spatial_reference_type?: string;
   location_label?: string;
   spatial_audit_note?: string;
+  spatial_class?: 'EXACT' | 'APPROXIMATE' | 'RELATIVE' | 'ZONE' | null;
+  extraction_method?: string | null;
+  confidence?: number | null;
+  estimated_accuracy_m?: number | null;
+  source_reference?: string | null;
+  upgrade_path?: string | null;
 };
 
 type Site = {
@@ -110,6 +126,15 @@ type SiteReportsData = {
   };
 };
 
+/** Governed spatial class badges (authoritative when spatial_class is present) */
+const SPATIAL_CLASS_BADGES: Record<string, { label: string; bg: string; text: string }> = {
+  EXACT:       { label: 'Exact',       bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300' },
+  APPROXIMATE: { label: 'Approximate', bg: 'bg-sky-100 dark:bg-sky-900/30',     text: 'text-sky-700 dark:text-sky-300' },
+  RELATIVE:    { label: 'Relative',    bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-700 dark:text-amber-300' },
+  ZONE:        { label: 'Zone Only',   bg: 'bg-orange-100 dark:bg-orange-900/30', text: 'text-orange-700 dark:text-orange-300' },
+};
+
+/** Legacy spatial_reference_type badges (fallback when spatial_class is null/unclassified) */
 const SPATIAL_REF_LABELS: Record<string, { label: string; bg: string; text: string }> = {
   exact_coords:   { label: 'Exact Coords',   bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300' },
   map_derived:    { label: 'Map/Table Source', bg: 'bg-sky-100 dark:bg-sky-900/30',   text: 'text-sky-700 dark:text-sky-300' },
@@ -117,6 +142,50 @@ const SPATIAL_REF_LABELS: Record<string, { label: string; bg: string; text: stri
   site_level_only:{ label: 'Site-Level Only', bg: 'bg-slate-100 dark:bg-slate-700',   text: 'text-slate-600 dark:text-slate-300' },
   unknown:        { label: 'Unknown',         bg: 'bg-red-100 dark:bg-red-900/30',    text: 'text-red-600 dark:text-red-300' },
 };
+
+/** Resolve badge for a station: governed spatial_class takes priority, legacy fallback otherwise */
+function resolveStationBadge(station: StationDetail): { label: string; bg: string; text: string } {
+  if (station.spatial_class && SPATIAL_CLASS_BADGES[station.spatial_class]) {
+    return SPATIAL_CLASS_BADGES[station.spatial_class];
+  }
+  // Fallback to legacy spatial_reference_type
+  const refType = station.spatial_reference_type ?? 'unknown';
+  return SPATIAL_REF_LABELS[refType] ?? SPATIAL_REF_LABELS.unknown;
+}
+
+/** Build tooltip text for governed spatial metadata */
+function spatialTooltip(station: StationDetail): string {
+  const parts: string[] = [];
+  if (station.spatial_class) {
+    parts.push(`Class: ${station.spatial_class}`);
+    if (station.extraction_method) parts.push(`Method: ${station.extraction_method}`);
+    if (station.confidence !== null && station.confidence !== undefined) parts.push(`Confidence: ${station.confidence}`);
+    if (station.estimated_accuracy_m !== null && station.estimated_accuracy_m !== undefined) parts.push(`Accuracy: ~${station.estimated_accuracy_m}m`);
+    if (station.source_reference) parts.push(`Source: ${station.source_reference}`);
+    if (station.upgrade_path) parts.push(`Upgrade: ${station.upgrade_path}`);
+  } else if (station.spatial_audit_note) {
+    parts.push(station.spatial_audit_note);
+  }
+  return parts.join(' | ');
+}
+
+/** Resolve site-level spatial badge: use spatial_summary.by_class if available, else legacy */
+function resolveSiteSpatialBadge(ctx: SpatialContext): { label: string; bg: string; text: string } {
+  const summary = ctx.spatial_summary;
+  if (summary && summary.georeferenced > 0) {
+    const classes = Object.keys(summary.by_class);
+    if (classes.length === 1 && SPATIAL_CLASS_BADGES[classes[0]]) {
+      return SPATIAL_CLASS_BADGES[classes[0]];
+    }
+    // Mixed classes - use the lowest-confidence class for the badge
+    const classOrder = ['ZONE', 'RELATIVE', 'APPROXIMATE', 'EXACT'];
+    for (const cls of classOrder) {
+      if (summary.by_class[cls]) return SPATIAL_CLASS_BADGES[cls];
+    }
+  }
+  // Fallback to legacy
+  return SPATIAL_REF_LABELS[ctx.spatial_reference_type] ?? SPATIAL_REF_LABELS.unknown;
+}
 
 const WATERBODY_COLORS: Record<string, { bg: string; text: string }> = {
   marine: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300' },
@@ -171,6 +240,12 @@ function flattenStationDetails(stations: StationDetail[], siteName: string): Rec
     co_location: s.co_location,
     cross_year_merge: s.cross_year_merge,
     spatial_reference_type: s.spatial_reference_type ?? '',
+    spatial_class: s.spatial_class ?? '',
+    extraction_method: s.extraction_method ?? '',
+    confidence: s.confidence ?? '',
+    estimated_accuracy_m: s.estimated_accuracy_m ?? '',
+    source_reference: s.source_reference ?? '',
+    upgrade_path: s.upgrade_path ?? '',
     location_label: s.location_label ?? '',
     spatial_audit_note: s.spatial_audit_note ?? '',
   }));
@@ -366,13 +441,22 @@ export function SiteReports() {
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Spatial Context</span>
                   {(() => {
-                    const sp = SPATIAL_REF_LABELS[selectedSite.spatial_context!.spatial_reference_type] ?? SPATIAL_REF_LABELS.unknown;
+                    const sp = resolveSiteSpatialBadge(selectedSite.spatial_context!);
                     return (
                       <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${sp.bg} ${sp.text}`}>
                         {sp.label}
                       </span>
                     );
                   })()}
+                  {/* Show mixed-class breakdown inline when multiple classes present */}
+                  {selectedSite.spatial_context.spatial_summary &&
+                    Object.keys(selectedSite.spatial_context.spatial_summary.by_class).length > 1 && (
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                      ({Object.entries(selectedSite.spatial_context.spatial_summary.by_class)
+                        .map(([cls, n]) => `${n} ${cls.toLowerCase()}`)
+                        .join(', ')})
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-400 mb-1">
                   {selectedSite.spatial_context.location_label}
@@ -381,6 +465,33 @@ export function SiteReports() {
                   <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">
                     <span className="font-medium">Source:</span> {selectedSite.spatial_context.spatial_source_ref}
                   </p>
+                )}
+                {/* Spatial summary stats from governed fields */}
+                {selectedSite.spatial_context.spatial_summary && (
+                  <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-1">
+                    <span>
+                      {selectedSite.spatial_context.spatial_summary.georeferenced}/{selectedSite.spatial_context.spatial_summary.total_stations} georeferenced
+                    </span>
+                    {selectedSite.spatial_context.spatial_summary.methods_used.length > 0 && (
+                      <span>Methods: {selectedSite.spatial_context.spatial_summary.methods_used.join(', ')}</span>
+                    )}
+                    {selectedSite.spatial_context.spatial_summary.accuracy_range_m && (
+                      <span>
+                        Accuracy: {selectedSite.spatial_context.spatial_summary.accuracy_range_m[0] === selectedSite.spatial_context.spatial_summary.accuracy_range_m[1]
+                          ? `~${selectedSite.spatial_context.spatial_summary.accuracy_range_m[0]}m`
+                          : `~${selectedSite.spatial_context.spatial_summary.accuracy_range_m[0]}-${selectedSite.spatial_context.spatial_summary.accuracy_range_m[1]}m`
+                        }
+                      </span>
+                    )}
+                    {selectedSite.spatial_context.spatial_summary.confidence_range && (
+                      <span>
+                        Confidence: {selectedSite.spatial_context.spatial_summary.confidence_range[0] === selectedSite.spatial_context.spatial_summary.confidence_range[1]
+                          ? selectedSite.spatial_context.spatial_summary.confidence_range[0]
+                          : `${selectedSite.spatial_context.spatial_summary.confidence_range[0]}-${selectedSite.spatial_context.spatial_summary.confidence_range[1]}`
+                        }
+                      </span>
+                    )}
+                  </div>
                 )}
                 <p className="text-xs text-slate-500 dark:text-slate-400 italic">
                   {selectedSite.spatial_context.spatial_audit_note}
@@ -625,20 +736,32 @@ export function SiteReports() {
                             <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-400">{s.chemistry_records || '\u2014'}</td>
                             <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-400">{s.toxicity_records || '\u2014'}</td>
                             <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-400">{s.community_records || '\u2014'}</td>
-                            <td className="px-3 py-2" title={s.spatial_audit_note ?? ''}>
+                            <td className="px-3 py-2" title={spatialTooltip(s)}>
                               {(() => {
-                                const refType = s.spatial_reference_type ?? 'unknown';
-                                const sp = SPATIAL_REF_LABELS[refType] ?? SPATIAL_REF_LABELS.unknown;
+                                const sp = resolveStationBadge(s);
                                 return (
                                   <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${sp.bg} ${sp.text}`}>
                                     {sp.label}
                                   </span>
                                 );
                               })()}
+                              {s.confidence !== null && s.confidence !== undefined && (
+                                <span className="ml-1 text-[10px] text-slate-400 dark:text-slate-500">
+                                  {s.confidence}
+                                </span>
+                              )}
                             </td>
-                            <td className="px-3 py-2 text-xs text-slate-600 dark:text-slate-400 max-w-[200px]" title={s.spatial_audit_note ?? ''}>
-                              {s.latitude !== null && s.longitude !== null ? (
-                                <span className="text-green-600 dark:text-green-400 font-mono">{s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}</span>
+                            <td className="px-3 py-2 text-xs text-slate-600 dark:text-slate-400 max-w-[200px]" title={spatialTooltip(s)}>
+                              {/* ZONE stations: never display coordinates, show location label only */}
+                              {s.spatial_class === 'ZONE' ? (
+                                <span className="truncate block">{s.location_label || 'Zone (no coordinates)'}</span>
+                              ) : s.latitude !== null && s.longitude !== null ? (
+                                <>
+                                  <span className="text-green-600 dark:text-green-400 font-mono">{s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}</span>
+                                  {s.estimated_accuracy_m !== null && s.estimated_accuracy_m !== undefined && (
+                                    <span className="ml-1 text-[10px] text-slate-400 dark:text-slate-500">(~{s.estimated_accuracy_m}m)</span>
+                                  )}
+                                </>
                               ) : (
                                 <span className="truncate block">{s.location_label || 'n/a'}</span>
                               )}
@@ -651,14 +774,17 @@ export function SiteReports() {
                 </div>
                 <p className="text-xs text-slate-400">
                   {selectedSite.station_details.length} stations
-                  {coordStats && coordStats.withCoords > 0 && (
-                    <> &middot; {coordStats.withCoords}/{coordStats.total} with exact coordinates</>
-                  )}
+                  {selectedSite.spatial_context?.spatial_summary ? (
+                    <> &middot; {selectedSite.spatial_context.spatial_summary.georeferenced}/{selectedSite.spatial_context.spatial_summary.total_stations} georeferenced
+                      {Object.entries(selectedSite.spatial_context.spatial_summary.by_class).map(([cls, n]) => (
+                        <span key={cls}> &middot; {n} {cls.toLowerCase()}</span>
+                      ))}
+                    </>
+                  ) : coordStats && coordStats.withCoords > 0 ? (
+                    <> &middot; {coordStats.withCoords}/{coordStats.total} with coordinates</>
+                  ) : null}
                   {selectedSite.station_details.some(s => s.cross_year_merge) && (
                     <> &middot; <span className="text-amber-600 dark:text-amber-400">Amber rows = cross-year merged</span></>
-                  )}
-                  {selectedSite.spatial_context && (
-                    <> &middot; Spatial: {SPATIAL_REF_LABELS[selectedSite.spatial_context.spatial_reference_type]?.label ?? 'Unknown'}</>
                   )}
                 </p>
               </div>
