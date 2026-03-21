@@ -109,6 +109,11 @@ const STATUS_CONFIG: Record<string, { bg: string; text: string; label: string }>
     text: 'text-emerald-800 dark:text-emerald-200',
     label: 'Evaluated',
   },
+  extract_failed: {
+    bg: 'bg-red-100 dark:bg-red-900/30',
+    text: 'text-red-800 dark:text-red-200',
+    label: 'Extraction Failed',
+  },
   eval_failed: {
     bg: 'bg-red-100 dark:bg-red-900/30',
     text: 'text-red-800 dark:text-red-200',
@@ -188,7 +193,7 @@ export default function ProjectDetailClient({
   // Auto-probe on mount when project status hasn't reached a terminal state.
   // Covers 'evaluating' (normal) and 'created'/'extracted' (stale after recovery).
   useEffect(() => {
-    const TERMINAL = ['evaluated', 'eval_failed', 'archived'];
+    const TERMINAL = ['evaluated', 'eval_failed', 'extract_failed', 'archived'];
     if (!TERMINAL.includes(project.status)) {
       checkEvalStatus();
     }
@@ -372,6 +377,18 @@ export default function ProjectDetailClient({
               <div className="mt-4 flex items-center gap-2 text-sm text-sky-700 dark:text-sky-400">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Extraction in progress...
+              </div>
+            )}
+
+            {currentStatus === 'extract_failed' && (
+              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-400">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>Extraction failed or timed out</span>
+                </div>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Use &quot;Full Re-extraction&quot; below to retry, or manage files manually.
+                </p>
               </div>
             )}
 

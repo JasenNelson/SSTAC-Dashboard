@@ -54,6 +54,11 @@ const STATUS_CONFIG: Record<
     text: 'text-emerald-800 dark:text-emerald-200',
     label: 'Evaluated',
   },
+  extract_failed: {
+    bg: 'bg-red-100 dark:bg-red-900/30',
+    text: 'text-red-800 dark:text-red-200',
+    label: 'Extraction Failed',
+  },
   eval_failed: {
     bg: 'bg-red-100 dark:bg-red-900/30',
     text: 'text-red-800 dark:text-red-200',

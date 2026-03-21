@@ -56,6 +56,10 @@ function formatElapsed(seconds: number): string {
   return `${mins}m ${secs}s`;
 }
 
+// Tracks which phase was active when an error occurred, so retry can resume
+// from the right point instead of creating a duplicate project.
+type FailedPhase = 'extracting' | 'evaluating' | null;
+
 export default function ProcessLauncher({
   wizardState,
   onComplete: _onComplete,
@@ -63,6 +67,7 @@ export default function ProcessLauncher({
   const [phase, setPhase] = useState<ProcessPhase>('idle');
   const [error, setError] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
+  const [failedPhase, setFailedPhase] = useState<FailedPhase>(null);
   const [extractStatus, setExtractStatus] = useState<ExtractStatus | null>(null);
   const [evalStatus, setEvalStatus] = useState<EvalStatus | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -86,12 +91,68 @@ export default function ProcessLauncher({
   const totalFileSize = wizardState.files.reduce((sum, f) => sum + f.size, 0);
 
   /**
+   * Start extraction for an existing project.
+   * Triggers POST to extract route, then polls extract-status.
+   * On completion, chains to startEvaluation.
+   */
+  const startExtraction = useCallback(async (pid: string) => {
+    setPhase('extracting');
+    setExtractStatus(null);
+    setFailedPhase(null);
+
+    try {
+      const extractRes = await fetch(
+        `/api/regulatory-review/projects/${pid}/extract`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'full' }),
+        },
+      );
+
+      if (!extractRes.ok) {
+        throw new Error(`Failed to start extraction: ${extractRes.statusText}`);
+      }
+
+      pollRef.current = setInterval(async () => {
+        try {
+          const statusRes = await fetch(
+            `/api/regulatory-review/projects/${pid}/extract-status`,
+          );
+          if (!statusRes.ok) return;
+
+          const status: ExtractStatus = await statusRes.json();
+          setExtractStatus(status);
+
+          if (status.status === 'completed' || status.status === 'completed_with_errors') {
+            if (pollRef.current) clearInterval(pollRef.current);
+            startEvaluation(pid);
+          } else if (status.status === 'error') {
+            if (pollRef.current) clearInterval(pollRef.current);
+            setPhase('error');
+            setFailedPhase('extracting');
+            setError((status as ExtractStatus & { error?: string }).error || 'Extraction failed');
+          }
+        } catch {
+          // Ignore transient poll errors
+        }
+      }, 2000);
+    } catch (err) {
+      setPhase('error');
+      setFailedPhase('extracting');
+      setError(err instanceof Error ? err.message : 'Failed to start extraction');
+      if (pollRef.current) clearInterval(pollRef.current);
+    }
+  }, []);
+
+  /**
    * Start evaluation after extraction completes.
    * Triggers POST to evaluate route, then polls evaluate-status.
    */
   const startEvaluation = useCallback(async (pid: string) => {
     setPhase('evaluating');
     setEvalStatus(null);
+    setFailedPhase(null);
 
     try {
       const evalRes = await fetch(
@@ -127,11 +188,13 @@ export default function ProcessLauncher({
           if (pollErr instanceof Error && pollErr.message !== 'Evaluation failed') return;
           if (pollRef.current) clearInterval(pollRef.current);
           setPhase('error');
+          setFailedPhase('evaluating');
           setError(pollErr instanceof Error ? pollErr.message : 'Evaluation failed');
         }
       }, 5000); // 5s interval — evaluation is long-running
     } catch (err) {
       setPhase('error');
+      setFailedPhase('evaluating');
       setError(err instanceof Error ? err.message : 'Failed to start evaluation');
       if (pollRef.current) clearInterval(pollRef.current);
     }
@@ -184,52 +247,33 @@ export default function ProcessLauncher({
         throw new Error(`Failed to upload files: ${uploadRes.statusText}`);
       }
 
-      // Step 3: Trigger extraction
-      setPhase('extracting');
-      const extractRes = await fetch(
-        `/api/regulatory-review/projects/${newProjectId}/extract`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mode: 'full' }),
-        },
-      );
-
-      if (!extractRes.ok) {
-        throw new Error(`Failed to start extraction: ${extractRes.statusText}`);
-      }
-
-      // Step 4: Poll for extraction status
-      pollRef.current = setInterval(async () => {
-        try {
-          const statusRes = await fetch(
-            `/api/regulatory-review/projects/${newProjectId}/extract-status`,
-          );
-          if (!statusRes.ok) return;
-
-          const status: ExtractStatus = await statusRes.json();
-          setExtractStatus(status);
-
-          if (status.status === 'completed' || status.status === 'completed_with_errors') {
-            if (pollRef.current) clearInterval(pollRef.current);
-            // Chain: start evaluation automatically
-            startEvaluation(newProjectId);
-          }
-        } catch {
-          // Ignore transient poll errors
-        }
-      }, 2000);
+      // Step 3: Trigger extraction + poll (reuses startExtraction helper)
+      await startExtraction(newProjectId);
     } catch (err) {
       setPhase('error');
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       if (pollRef.current) clearInterval(pollRef.current);
     }
-  }, [wizardState, startEvaluation]);
+  }, [wizardState, startExtraction]);
 
   const handleRetry = () => {
-    setPhase('idle');
     setError(null);
+
+    // If a project already exists, resume from the failed phase instead of
+    // creating a duplicate project.
+    if (projectId && failedPhase === 'extracting') {
+      startExtraction(projectId);
+      return;
+    }
+    if (projectId && failedPhase === 'evaluating') {
+      startEvaluation(projectId);
+      return;
+    }
+
+    // No existing project or failure was before project creation — full reset
+    setPhase('idle');
     setProjectId(null);
+    setFailedPhase(null);
     setExtractStatus(null);
     setEvalStatus(null);
   };

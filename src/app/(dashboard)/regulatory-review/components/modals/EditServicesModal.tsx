@@ -58,7 +58,7 @@ export default function EditServicesModal({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          selected_services: JSON.stringify(Array.from(selected)),
+          selectedServices: Array.from(selected),
         }),
       });
 
