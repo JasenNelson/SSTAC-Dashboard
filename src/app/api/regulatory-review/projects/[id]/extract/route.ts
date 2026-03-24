@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, requireLocalEngine } from '@/lib/api-guards';
 import { spawn } from 'child_process';
+import { openSync, closeSync, existsSync } from 'fs';
 import path from 'path';
 import {
   getReviewProjectById,
@@ -87,13 +88,34 @@ export async function POST(
       }
     }
 
-    // Spawn detached process
-    const pythonPath = process.env.REG_REVIEW_PYTHON_PATH || 'python'
+    // Spawn detached process with log capture for post-mortem diagnosis.
+    // The Python script also writes its own .extraction.log via TeeWriter,
+    // but this captures any startup/crash output that occurs before the
+    // script's own logging initializes.
+    const logFile = path.join(
+      ACTIVE_REVIEWS_BASE,
+      project.folder_path,
+      '.extraction_spawn.log'
+    );
+    const logFd = openSync(logFile, 'w');
+    // Use pythonw.exe (windowless) to prevent console window spam on Windows.
+    // FAIL-CLOSED: throw if pythonw.exe missing — no silent fallback to python.exe.
+    const configuredPython = process.env.REG_REVIEW_PYTHON_PATH || 'python';
+    const pythonwPath = configuredPython.replace(/python\.exe$/i, 'pythonw.exe');
+    if (!existsSync(pythonwPath)) {
+      return NextResponse.json(
+        { error: `pythonw.exe not found at ${pythonwPath}. Required for windowless extraction.` },
+        { status: 500 }
+      );
+    }
+    const pythonPath = pythonwPath;
     const child = spawn(pythonPath, args, {
       detached: true,
-      stdio: 'ignore',
+      stdio: ['ignore', logFd, logFd],
+      windowsHide: true,
     });
     child.unref();
+    closeSync(logFd);
 
     // Update project status
     updateReviewProject(id, { status: 'extracting' });

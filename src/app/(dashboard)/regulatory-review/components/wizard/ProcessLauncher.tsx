@@ -93,7 +93,11 @@ export default function ProcessLauncher({
   /**
    * Start extraction for an existing project.
    * Triggers POST to extract route, then polls extract-status.
-   * On completion, chains to startEvaluation.
+   *
+   * When extraction completes, the extract-status route auto-chains into
+   * evaluation server-side (Option B).  This function transitions the UI
+   * to pollEvaluation() — it does NOT POST to the evaluate route, which
+   * would spawn a duplicate evaluation process.
    */
   const startExtraction = useCallback(async (pid: string) => {
     setPhase('extracting');
@@ -124,9 +128,18 @@ export default function ProcessLauncher({
           const status: ExtractStatus = await statusRes.json();
           setExtractStatus(status);
 
-          if (status.status === 'completed' || status.status === 'completed_with_errors') {
+          if (status.status === 'completed') {
+            // Clean extraction success — server auto-chains evaluation.
+            // Transition UI to poll evaluate-status (no POST needed).
             if (pollRef.current) clearInterval(pollRef.current);
-            startEvaluation(pid);
+            pollEvaluation(pid);
+          } else if (status.status === 'completed_with_errors') {
+            // Partial extraction — do NOT auto-chain evaluation.
+            // Stop polling; user must review errors before proceeding.
+            if (pollRef.current) clearInterval(pollRef.current);
+            setPhase('error');
+            setFailedPhase('extracting');
+            setError('Extraction completed with errors — review before evaluating');
           } else if (status.status === 'error') {
             if (pollRef.current) clearInterval(pollRef.current);
             setPhase('error');
@@ -146,13 +159,51 @@ export default function ProcessLauncher({
   }, []);
 
   /**
-   * Start evaluation after extraction completes.
-   * Triggers POST to evaluate route, then polls evaluate-status.
+   * Poll evaluate-status until evaluation completes or fails.
+   *
+   * Does NOT start evaluation — the server already did that via the
+   * extract-status auto-chain.  This only tracks progress for UI display.
    */
-  const startEvaluation = useCallback(async (pid: string) => {
+  const pollEvaluation = useCallback((pid: string) => {
     setPhase('evaluating');
     setEvalStatus(null);
     setFailedPhase(null);
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const statusRes = await fetch(
+          `/api/regulatory-review/projects/${pid}/evaluate-status`,
+        );
+        if (!statusRes.ok) return;
+
+        const status: EvalStatus = await statusRes.json();
+        setEvalStatus(status);
+
+        if (status.status === 'completed') {
+          if (pollRef.current) clearInterval(pollRef.current);
+          setPhase('done');
+        } else if (status.status === 'error' || status.status === 'import_failed') {
+          if (pollRef.current) clearInterval(pollRef.current);
+          setPhase('error');
+          setFailedPhase('evaluating');
+          setError(status.error || 'Evaluation failed');
+        }
+      } catch {
+        // Ignore transient poll errors
+      }
+    }, 5000);
+  }, []);
+
+  /**
+   * Retry evaluation after a failure.  POSTs to the evaluate route
+   * explicitly — this is the ONLY wizard path that calls evaluate POST.
+   * The normal happy path uses the server-side auto-chain instead.
+   */
+  const retryEvaluation = useCallback(async (pid: string) => {
+    setPhase('evaluating');
+    setEvalStatus(null);
+    setFailedPhase(null);
+    setError(null);
 
     try {
       const evalRes = await fetch(
@@ -165,40 +216,14 @@ export default function ProcessLauncher({
         throw new Error(body.error || `Failed to start evaluation: ${evalRes.statusText}`);
       }
 
-      // Poll evaluate-status
-      pollRef.current = setInterval(async () => {
-        try {
-          const statusRes = await fetch(
-            `/api/regulatory-review/projects/${pid}/evaluate-status`,
-          );
-          if (!statusRes.ok) return;
-
-          const status: EvalStatus = await statusRes.json();
-          setEvalStatus(status);
-
-          if (status.status === 'completed') {
-            if (pollRef.current) clearInterval(pollRef.current);
-            setPhase('done');
-          } else if (status.status === 'error' || status.status === 'import_failed') {
-            if (pollRef.current) clearInterval(pollRef.current);
-            throw new Error(status.error || 'Evaluation failed');
-          }
-        } catch (pollErr) {
-          // Only surface actual errors, not transient fetch failures
-          if (pollErr instanceof Error && pollErr.message !== 'Evaluation failed') return;
-          if (pollRef.current) clearInterval(pollRef.current);
-          setPhase('error');
-          setFailedPhase('evaluating');
-          setError(pollErr instanceof Error ? pollErr.message : 'Evaluation failed');
-        }
-      }, 5000); // 5s interval — evaluation is long-running
+      // Now poll — same as pollEvaluation
+      pollEvaluation(pid);
     } catch (err) {
       setPhase('error');
       setFailedPhase('evaluating');
       setError(err instanceof Error ? err.message : 'Failed to start evaluation');
-      if (pollRef.current) clearInterval(pollRef.current);
     }
-  }, []);
+  }, [pollEvaluation]);
 
   const handleStart = useCallback(async () => {
     setPhase('creating');
@@ -266,7 +291,9 @@ export default function ProcessLauncher({
       return;
     }
     if (projectId && failedPhase === 'evaluating') {
-      startEvaluation(projectId);
+      // Evaluation failed — explicitly POST to evaluate route to retry.
+      // This is the manual recovery path (distinct from auto-chain).
+      retryEvaluation(projectId);
       return;
     }
 

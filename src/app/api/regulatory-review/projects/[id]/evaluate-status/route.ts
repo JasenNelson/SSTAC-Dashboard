@@ -24,6 +24,13 @@ import {
 
 const ACTIVE_REVIEWS_BASE = 'C:/Projects/Regulatory-Review/1_Active_Reviews';
 
+// Default: 30 minutes since the last progress update.
+// Mirrors extract-status stale detection.  If the evaluation process dies
+// without writing {"status":"error"}, this ensures the project transitions
+// to eval_failed instead of staying stuck in 'evaluating' forever.
+// Override via EVAL_STALE_TIMEOUT_MS env var.
+const DEFAULT_EVAL_STALE_TIMEOUT_MS = 30 * 60 * 1000;
+
 /**
  * Find the most recent evaluation output JSON in outputDir.
  */
@@ -84,19 +91,29 @@ export async function GET(
     const raw = await readFile(progressFile, 'utf-8');
     const progress = JSON.parse(raw);
 
-    // Stale detection (mirrors extract-status pattern)
+    // Stale detection: use updatedAt from JSON content if available,
+    // fall back to file mtime.  Mirrors extract-status pattern.
     const TERMINAL_STATUSES = ['completed', 'complete', 'error'];
     if (!TERMINAL_STATUSES.includes(progress.status)) {
-      const staleMs = parseInt(process.env.EVAL_STALE_TIMEOUT_MS || '', 10);
-      if (staleMs > 0) {
+      const staleMs = parseInt(
+        process.env.EVAL_STALE_TIMEOUT_MS || '',
+        10
+      ) || DEFAULT_EVAL_STALE_TIMEOUT_MS;
+
+      let elapsedMs: number;
+      if (progress.updatedAt) {
+        elapsedMs = Date.now() - new Date(progress.updatedAt).getTime();
+      } else {
         const fileStat = await stat(progressFile);
-        if (Date.now() - fileStat.mtime.getTime() > staleMs) {
-          updateReviewProject(id, { status: 'eval_failed' });
-          return NextResponse.json({
-            status: 'error',
-            error: 'Evaluation timed out (no progress update)',
-          });
-        }
+        elapsedMs = Date.now() - fileStat.mtime.getTime();
+      }
+
+      if (elapsedMs > staleMs) {
+        updateReviewProject(id, { status: 'eval_failed' });
+        return NextResponse.json({
+          status: 'error',
+          error: `Evaluation timed out — no progress for ${Math.round(elapsedMs / 60000)} minutes`,
+        });
       }
     }
 

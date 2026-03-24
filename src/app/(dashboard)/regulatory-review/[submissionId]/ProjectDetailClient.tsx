@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -148,6 +148,32 @@ export default function ProjectDetailClient({
   const [evalChecking, setEvalChecking] = useState(false);
   const [evalCheckResult, setEvalCheckResult] = useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = useState(project.status);
+  const [evalStarting, setEvalStarting] = useState(false);
+  const [evalProgress, setEvalProgress] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Probe extract-status to recover completed-but-unacknowledged extractions.
+  // The route already handles DB transition (extracting → extracted) and marks
+  // files processed — we just need to call it and update local state.
+  const checkExtractStatus = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/regulatory-review/projects/${project.id}/extract-status`,
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+
+      if (data.status === 'completed' || data.status === 'completed_with_errors') {
+        // extract-status route already updated DB to 'extracted'
+        setCurrentStatus('extracted');
+      } else if (data.status === 'error') {
+        setCurrentStatus('extract_failed');
+      }
+      // else still extracting — currentStatus stays as-is
+    } catch {
+      // Ignore transient errors
+    }
+  }, [project.id]);
 
   // Probe evaluate-status to recover completed-but-unimported evaluations
   const checkEvalStatus = useCallback(async () => {
@@ -190,14 +216,82 @@ export default function ProjectDetailClient({
     }
   }, [project.id]);
 
-  // Auto-probe on mount when project status hasn't reached a terminal state.
-  // Covers 'evaluating' (normal) and 'created'/'extracted' (stale after recovery).
+  // Start evaluation from the detail page.  POSTs to the evaluate route,
+  // then polls evaluate-status until completion or failure.
+  const handleStartEvaluation = useCallback(async () => {
+    setEvalStarting(true);
+    setEvalProgress(null);
+    setEvalCheckResult(null);
+
+    try {
+      const res = await fetch(
+        `/api/regulatory-review/projects/${project.id}/evaluate`,
+        { method: 'POST' },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Failed to start evaluation: ${res.statusText}`);
+      }
+
+      setCurrentStatus('evaluating');
+
+      // Poll evaluate-status
+      pollRef.current = setInterval(async () => {
+        try {
+          const statusRes = await fetch(
+            `/api/regulatory-review/projects/${project.id}/evaluate-status`,
+          );
+          if (!statusRes.ok) return;
+          const data = await statusRes.json();
+
+          if (data.policies_completed != null && data.policies_total != null) {
+            setEvalProgress(`${data.policies_completed}/${data.policies_total} policies`);
+          }
+
+          if (data.status === 'completed') {
+            if (pollRef.current) clearInterval(pollRef.current);
+            setCurrentStatus('evaluated');
+            setEvalStarting(false);
+            setEvalCheckResult(
+              data.importResult
+                ? `Imported ${data.importResult.assessmentsImported} assessments`
+                : 'Evaluation complete',
+            );
+          } else if (data.status === 'error' || data.status === 'import_failed') {
+            if (pollRef.current) clearInterval(pollRef.current);
+            setCurrentStatus('eval_failed');
+            setEvalStarting(false);
+            setEvalCheckResult(data.error || 'Evaluation failed');
+          }
+        } catch {
+          // Ignore transient poll errors
+        }
+      }, 5000);
+    } catch (err) {
+      setEvalStarting(false);
+      setCurrentStatus('eval_failed');
+      setEvalCheckResult(err instanceof Error ? err.message : 'Failed to start evaluation');
+    }
+  }, [project.id]);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
+
+  // Auto-probe on mount based on current DB status.
+  // - 'extracting': probe extract-status (handles DB transition + file marking)
+  // - other non-terminal: probe evaluate-status (handles import recovery)
   useEffect(() => {
     const TERMINAL = ['evaluated', 'eval_failed', 'extract_failed', 'archived'];
-    if (!TERMINAL.includes(project.status)) {
+    if (project.status === 'extracting') {
+      checkExtractStatus();
+    } else if (!TERMINAL.includes(project.status)) {
       checkEvalStatus();
     }
-  }, [project.status, checkEvalStatus]);
+  }, [project.status, checkExtractStatus, checkEvalStatus]);
 
   const statusConfig = STATUS_CONFIG[currentStatus] || STATUS_CONFIG.created;
   const processedCount = files.filter((f) => f.processed).length;
@@ -346,7 +440,7 @@ export default function ProjectDetailClient({
             )}
 
             {/* Re-process buttons */}
-            {files.length > 0 && project.status !== 'extracting' && (
+            {files.length > 0 && currentStatus !== 'extracting' && (
               <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex gap-3">
                 {files.some((f) => !f.processed) && (
                   <button
@@ -373,10 +467,33 @@ export default function ProjectDetailClient({
               <p className="mt-2 text-xs text-red-600 dark:text-red-400">{reprocessError}</p>
             )}
 
-            {project.status === 'extracting' && (
+            {currentStatus === 'extracting' && (
               <div className="mt-4 flex items-center gap-2 text-sm text-sky-700 dark:text-sky-400">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Extraction in progress...
+                <button
+                  onClick={checkExtractStatus}
+                  className="ml-2 px-2 py-0.5 text-xs font-medium rounded bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors"
+                >
+                  Check Status
+                </button>
+              </div>
+            )}
+
+            {currentStatus === 'extracted' && (
+              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Extraction complete</span>
+                </div>
+                <button
+                  onClick={handleStartEvaluation}
+                  disabled={evalStarting}
+                  className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg text-white bg-sky-600 dark:bg-sky-500 hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors disabled:opacity-50 shadow-sm"
+                >
+                  {evalStarting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  Start Evaluation
+                </button>
               </div>
             )}
 
@@ -392,17 +509,16 @@ export default function ProjectDetailClient({
               </div>
             )}
 
-            {/* Evaluation status recovery */}
+            {/* Evaluation status — active polling or recovery probe */}
             {currentStatus === 'evaluating' && (
               <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2 text-sm text-sky-700 dark:text-sky-400">
-                  {evalChecking ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Search className="w-4 h-4" />
-                  )}
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Evaluation in progress</span>
-                  {!evalChecking && (
+                  {evalProgress && (
+                    <span className="text-xs text-slate-500 dark:text-slate-400">({evalProgress})</span>
+                  )}
+                  {!evalStarting && !evalChecking && (
                     <button
                       onClick={checkEvalStatus}
                       className="ml-2 px-2 py-0.5 text-xs font-medium rounded bg-sky-50 dark:bg-sky-900/30 text-sky-600 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 transition-colors"
@@ -439,6 +555,14 @@ export default function ProjectDetailClient({
                   <AlertCircle className="w-4 h-4" />
                   <span>{evalCheckResult || 'Evaluation failed'}</span>
                 </div>
+                <button
+                  onClick={handleStartEvaluation}
+                  disabled={evalStarting}
+                  className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg text-white bg-sky-600 dark:bg-sky-500 hover:bg-sky-700 dark:hover:bg-sky-600 transition-colors disabled:opacity-50 shadow-sm"
+                >
+                  {evalStarting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  Retry Evaluation
+                </button>
               </div>
             )}
           </section>
