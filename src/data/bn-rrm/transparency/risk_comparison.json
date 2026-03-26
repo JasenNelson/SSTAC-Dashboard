@@ -1842,5 +1842,155 @@
         "noWOERecord": []
       }
     }
+  ],
+  "externalSites": [
+    {
+      "siteId": "11687",
+      "siteName": "Water Lot, 1 Port Drive, Nanaimo",
+      "registryId": "11687",
+      "region": "Vancouver Island",
+      "waterbody": "marine",
+      "isTrainingSite": false,
+      "gateOutcome": "DESCRIPTIVE_ONLY",
+      "gateReason": "WOE conclusions are site-level per receptor group, not station-level. PAH-only contamination profile (no metals COPCs). Cannot support station-level agreement statistics.",
+      "consultant": "Tetra Tech EBA Inc.",
+      "reportDate": "2015-10",
+      "reportTitle": "Detailed Risk Assessment, Water Lot Portion of 1 Port Drive, Nanaimo, BC",
+      "reportFile": "ENVIND03511-02",
+      "comparisonType": "descriptive",
+      "bnInputCoverage": {
+        "metals": false,
+        "pahs": true,
+        "pcbs": false,
+        "toc": false,
+        "grainSize": false,
+        "sulfideBinding": false,
+        "toxicity": true,
+        "community": false,
+        "note": "PAH-only contamination profile. 7 of 9 substance nodes (metals) have no site-specific evidence. BN inference is partial-evidence."
+      },
+      "reportConclusions": [
+        {
+          "receptor": "Benthic Invertebrates",
+          "loeCount": 3,
+          "loes": [
+            "Sediment Chemistry (2a): Moderate",
+            "Toxicity Tests (2b): Negligible",
+            "Tissue Chemistry (2c): Negligible"
+          ],
+          "woeConclusion": "Negligible",
+          "woeIntegrationNote": "Moderate chemistry hazard refuted by higher-weighted negligible toxicity and tissue LOEs.",
+          "mappedBNClass": "low",
+          "mappingConfidence": "approximate",
+          "mappingJustification": "Tetra Tech Negligible maps approximately to BN Low — both indicate minimal ecological concern. Mapping is approximate because the frameworks use different conceptual bases and the WOE scale is a 3-level hazard scale, not a 3-class ecological risk scale.",
+          "comparisonLevel": "site",
+          "provenance": {
+            "sourceDocument": "Tetra Tech EBA Inc. (2015). Detailed Risk Assessment, Water Lot Portion of 1 Port Drive, Nanaimo, BC. File: ENVIND03511-02.",
+            "sourcePage": 48,
+            "sourceTableFigure": "Table AF",
+            "extractedLabel": "Negligible",
+            "extractionMethod": "manual",
+            "extractionDate": "2026-03-26",
+            "extractor": "claude"
+          },
+          "isTrainingTarget": false
+        },
+        {
+          "receptor": "Aquatic Macrophytes",
+          "loeCount": 2,
+          "loes": [
+            "Plant Tissue Chemistry (1a): Negligible",
+            "Plant Community Health (1b): Negligible"
+          ],
+          "woeConclusion": "Negligible",
+          "mappedBNClass": null,
+          "mappingConfidence": "not_mappable",
+          "mappingJustification": "Aquatic macrophytes are not a BN-RRM receptor group. No mapping to 3-class ecological risk.",
+          "comparisonLevel": "site",
+          "provenance": {
+            "sourceDocument": "Tetra Tech EBA Inc. (2015). Detailed Risk Assessment, Water Lot Portion of 1 Port Drive, Nanaimo, BC.",
+            "sourcePage": 45,
+            "sourceTableFigure": "Table AB",
+            "extractedLabel": "Negligible",
+            "extractionMethod": "manual",
+            "extractionDate": "2026-03-26",
+            "extractor": "claude"
+          },
+          "isTrainingTarget": false
+        },
+        {
+          "receptor": "Fish",
+          "loeCount": 1,
+          "loes": [
+            "Derived from benthic/plant results (3a): Negligible"
+          ],
+          "woeConclusion": "Negligible",
+          "mappedBNClass": null,
+          "mappingConfidence": "not_mappable",
+          "mappingJustification": "Fish risk derived from benthic results, not independently assessed. Not directly comparable to BN-RRM ecological_risk.",
+          "comparisonLevel": "site",
+          "provenance": {
+            "sourceDocument": "Tetra Tech EBA Inc. (2015). Detailed Risk Assessment, Water Lot Portion of 1 Port Drive, Nanaimo, BC.",
+            "sourcePage": 49,
+            "extractedLabel": "Negligible",
+            "extractionMethod": "manual",
+            "extractionDate": "2026-03-26",
+            "extractor": "claude"
+          },
+          "isTrainingTarget": false
+        }
+      ],
+      "toxicityStations": [
+        {
+          "stationId": "15SED02",
+          "amphipodSurvival": 99,
+          "polychaeteSurvival": 100,
+          "polychaeteGrowth": 0.69,
+          "bivalveDev": 88
+        },
+        {
+          "stationId": "15SED03",
+          "amphipodSurvival": 95,
+          "polychaeteSurvival": 92,
+          "polychaeteGrowth": 0.73,
+          "bivalveDev": 86
+        },
+        {
+          "stationId": "15SED05",
+          "amphipodSurvival": 98,
+          "polychaeteSurvival": 100,
+          "polychaeteGrowth": 0.69,
+          "bivalveDev": 80
+        },
+        {
+          "stationId": "15SED06",
+          "amphipodSurvival": 97,
+          "polychaeteSurvival": 92,
+          "polychaeteGrowth": 0.61,
+          "bivalveDev": 88
+        },
+        {
+          "stationId": "15SED07",
+          "amphipodSurvival": 99,
+          "polychaeteSurvival": 100,
+          "polychaeteGrowth": 0.72,
+          "bivalveDev": 83
+        },
+        {
+          "stationId": "15SED08",
+          "amphipodSurvival": 98,
+          "polychaeteSurvival": 96,
+          "polychaeteGrowth": 0.66,
+          "bivalveDev": 87
+        }
+      ],
+      "statisticalAuthorization": {
+        "kappa": false,
+        "confusionMatrix": false,
+        "agreement": false,
+        "mcNemar": false,
+        "reason": "No station-level paired labels. WOE conclusions are site-level per receptor. Only descriptive comparison authorized."
+      }
+    }
   ]
 }
