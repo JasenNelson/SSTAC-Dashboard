@@ -1991,6 +1991,109 @@
         "mcNemar": false,
         "reason": "No station-level paired labels. WOE conclusions are site-level per receptor. Only descriptive comparison authorized."
       }
+    },
+    {
+      "siteId": "6726",
+      "siteName": "Chevron Burnaby Refinery, Seep Area Foreshore",
+      "registryId": "6726",
+      "region": "Metro Vancouver",
+      "waterbody": "marine",
+      "isTrainingSite": false,
+      "gateOutcome": "DESCRIPTIVE_ONLY",
+      "gateReason": "Class 3 partial-method comparison. HQ-based area-level ecological conclusions (Eastern Seep vs Western Seep). No WOE or LoE integration framework applied. Petroleum-dominant contamination profile (LEPH, VPH, benzene, ethylbenzene, xylenes) with minimal BN-RRM substance overlap (Cu, Zn only in porewater/prey pathway). Cannot support station-level agreement statistics or multi-LoE descriptive integrated comparison.",
+      "consultant": "SLR Consulting (Canada) Ltd.",
+      "reportDate": "2014-02",
+      "reportTitle": "Human Health and Ecological Risk Assessment of Seep Area, Foreshore Down Slope of the East Impounding Basin, Chevron Burnaby Refinery, Burnaby, BC",
+      "reportFile": "SLR Project No. 201.00959.00001",
+      "comparisonType": "partial-method",
+      "bnInputCoverage": {
+        "metals": false,
+        "pahs": false,
+        "pcbs": false,
+        "toc": false,
+        "grainSize": false,
+        "sulfideBinding": false,
+        "toxicity": false,
+        "community": false,
+        "note": "Petroleum-dominant profile (LEPH, VPH, BTEX). Sediment COPCs are LEPH, VPH, benzene, ethylbenzene, xylenes — none are BN-RRM canonical substance nodes. Cu and Zn appear only as porewater/prey-pathway COPCs, not sediment COPCs. No sediment metals, PAHs (as Total PAHs), PCBs, TOC, grain size, or AVS reported as COPCs. Benthic invertebrate sampling conducted (SLR field program) but not as formal toxicity testing or community survey — used as supporting line of evidence only. BN-RRM inference would rely almost entirely on prior distributions."
+      },
+      "reportConclusions": [
+        {
+          "receptor": "Benthic Invertebrates (Porewater Contact)",
+          "loeCount": 1,
+          "loes": [
+            "HQ Screening: LEPHw in porewater (HQ 3.76-5.92), benzo(a)pyrene in porewater (HQ evaluated), zinc in porewater (HQ 1.12)"
+          ],
+          "woeConclusion": "Low risk (acceptable)",
+          "woeIntegrationNote": "HQ > 1 for LEPHw and zinc in porewater, but risk considered low based on limited area of impact, intermittent tidal submergence, lower habitat suitability of mid/upper intertidal seep area, and low magnitude of HQs. Not a WOE integration — professional judgment applied to HQ results with supporting site observations.",
+          "mappedBNClass": "low",
+          "mappingConfidence": "weak",
+          "mappingJustification": "SLR 'low risk (acceptable)' maps weakly to BN Low. The consultant conclusion is based on HQ magnitude + area-of-impact argument, not an integrated multi-LoE framework. The mapping is weak because: (1) HQ screening is a single-pathway method, not comparable to multi-LoE ecological risk classification; (2) the petroleum COPCs do not overlap with BN-RRM substance nodes; (3) the 'acceptable' determination is partially based on remedial context (IRA barriers in place), not solely on ecological risk level.",
+          "comparisonLevel": "area",
+          "provenance": {
+            "sourceDocument": "SLR Consulting (Canada) Ltd. (2014). HHERA of Seep Area, Foreshore Down Slope of the East Impounding Basin, Chevron Burnaby Refinery. SLR Project No. 201.00959.00001.",
+            "sourcePage": 85,
+            "sourceTableFigure": "Section 6.3.1",
+            "extractedLabel": "Low risk (acceptable) — HQs for LEPHw and zinc > 1 but considered low based on limited impact area and low magnitude",
+            "extractionMethod": "manual",
+            "extractionDate": "2026-03-26",
+            "extractor": "claude"
+          },
+          "isTrainingTarget": false
+        },
+        {
+          "receptor": "Benthic Invertebrates (Sediment Contact, Pre-IRA)",
+          "loeCount": 1,
+          "loes": [
+            "HQ Screening: LEPH, VPH, benzene, ethylbenzene, xylenes in sediment (Pre-IRA barriers scenario only — contaminated sediment removed during IRA installation)"
+          ],
+          "woeConclusion": "Not a current concern (remediated)",
+          "woeIntegrationNote": "Sediment COPCs (LEPH, VPH, xylenes) were identified under the pre-IRA scenario only. The contaminated sediment has been removed during IRA barrier installation. Risk from sediment COPCs is not a concern under the current IRA barriers scenario.",
+          "mappedBNClass": null,
+          "mappingConfidence": "not_mappable",
+          "mappingJustification": "Pre-IRA scenario only. Contaminated sediment has been removed. No current sediment risk to map. The BN-RRM models current ecological risk, not historical pre-remediation conditions.",
+          "comparisonLevel": "area",
+          "provenance": {
+            "sourceDocument": "SLR Consulting (Canada) Ltd. (2014). HHERA of Seep Area, Foreshore Down Slope of the East Impounding Basin, Chevron Burnaby Refinery.",
+            "sourcePage": 85,
+            "sourceTableFigure": "Section 6.3.1 and Executive Summary Table (p. iii)",
+            "extractedLabel": "Sediment COPCs not a concern under current IRA barriers exposure scenario",
+            "extractionMethod": "manual",
+            "extractionDate": "2026-03-26",
+            "extractor": "claude"
+          },
+          "isTrainingTarget": false
+        },
+        {
+          "receptor": "Birds and Mammals",
+          "loeCount": 1,
+          "loes": [
+            "HQ Screening: Dietary exposure via prey (benzo(a)pyrene, copper, zinc). All HQs < 1."
+          ],
+          "woeConclusion": "Negligible",
+          "mappedBNClass": null,
+          "mappingConfidence": "not_mappable",
+          "mappingJustification": "Birds and mammals are not directly modeled by BN-RRM ecological_risk node. Not mappable.",
+          "comparisonLevel": "area",
+          "provenance": {
+            "sourceDocument": "SLR Consulting (Canada) Ltd. (2014). HHERA of Seep Area, Foreshore Down Slope of the East Impounding Basin, Chevron Burnaby Refinery.",
+            "sourcePage": 85,
+            "sourceTableFigure": "Section 6.3.1",
+            "extractedLabel": "Negligible — all HQs < 1 for all scenarios",
+            "extractionMethod": "manual",
+            "extractionDate": "2026-03-26",
+            "extractor": "claude"
+          },
+          "isTrainingTarget": false
+        }
+      ],
+      "statisticalAuthorization": {
+        "kappa": false,
+        "confusionMatrix": false,
+        "agreement": false,
+        "mcNemar": false,
+        "reason": "Class 3 partial-method only. No station-level labels. No multi-LoE integration. HQ screening is a single-pathway method. Petroleum-dominant COPCs do not overlap with BN-RRM substance nodes. Only narrative partial-method comparison authorized: BN-RRM posterior vs consultant HQ-based area-level conclusion."
+      }
     }
   ]
 }
