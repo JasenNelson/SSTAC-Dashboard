@@ -1,0 +1,1846 @@
+{
+  "_meta": {
+    "generatedDate": "2026-03-26T01:34:22.081764Z",
+    "governanceSpec": "COMPARISON_GOVERNANCE.md v1.0",
+    "modelVersion": "bnrrm-landis-causal v4.0",
+    "comparatorType": "WOE",
+    "note": "Comparator labels are external reference labels only. They are NEVER BN training targets."
+  },
+  "summary": {
+    "totalWOERecords": 59,
+    "totalLOOPredictions": 82,
+    "matchedStations": 48,
+    "excludedNoLOO": 11,
+    "excludedNoWOE": 34,
+    "sitesWithWOE": 5,
+    "sitesWithoutWOE": 3,
+    "sitesWithoutWOENames": [
+      "IOCO (3130)",
+      "Toquaht (15184)",
+      "ALCAN (0331)"
+    ]
+  },
+  "mappingTable": {
+    "source": "COMPARISON_GOVERNANCE.md Section 7.2",
+    "mappings": {
+      "low": {
+        "mapped": "low",
+        "confidence": "defensible",
+        "justification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)"
+      },
+      "negligible": {
+        "mapped": "low",
+        "confidence": "defensible",
+        "justification": "WOE negligible maps to BN low per governance spec Section 7.2 (both indicate no significant risk)"
+      },
+      "moderate": {
+        "mapped": "moderate",
+        "confidence": "defensible",
+        "justification": "Direct ordinal alignment: WOE moderate = BN moderate"
+      },
+      "moderate-to-high": {
+        "mapped": "high",
+        "confidence": "defensible",
+        "justification": "Conservative mapping per governance spec Section 7.2: WOE moderate-to-high maps to BN high"
+      },
+      "high": {
+        "mapped": "high",
+        "confidence": "defensible",
+        "justification": "Direct ordinal alignment: WOE high = BN high"
+      }
+    }
+  },
+  "siteComparisons": [
+    {
+      "siteId": 1,
+      "siteName": "Woodfibre (Former Squamish Pulp Mill)",
+      "registryId": "9930",
+      "stationComparisons": [
+        {
+          "stationId": 1,
+          "stationName": "SED06-103",
+          "reportEstimate": {
+            "stationId": 1,
+            "stationName": "SED06-103",
+            "siteId": 1,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": 2,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Addendum #1 to Sediment HHERA - Former Squamish Pulp Mill, Woodfibre, BC (Keystone Environmental Ltd., 2014-11-28)",
+              "sourcePage": 107,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 2,
+          "stationName": "SED06-104",
+          "reportEstimate": {
+            "stationId": 2,
+            "stationName": "SED06-104",
+            "siteId": 1,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": 2,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Addendum #1 to Sediment HHERA - Former Squamish Pulp Mill, Woodfibre, BC (Keystone Environmental Ltd., 2014-11-28)",
+              "sourcePage": 107,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 3,
+          "stationName": "SED06-105",
+          "reportEstimate": {
+            "stationId": 3,
+            "stationName": "SED06-105",
+            "siteId": 1,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": 1,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Addendum #1 to Sediment HHERA - Former Squamish Pulp Mill, Woodfibre, BC (Keystone Environmental Ltd., 2014-11-28)",
+              "sourcePage": 107,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "moderate",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 4,
+          "stationName": "SED06-111",
+          "reportEstimate": {
+            "stationId": 4,
+            "stationName": "SED06-111",
+            "siteId": 1,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": 2,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Addendum #1 to Sediment HHERA - Former Squamish Pulp Mill, Woodfibre, BC (Keystone Environmental Ltd., 2014-11-28)",
+              "sourcePage": 107,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "moderate",
+          "bnrrmObserved": "moderate",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 5,
+          "stationName": "SED06-113",
+          "reportEstimate": {
+            "stationId": 5,
+            "stationName": "SED06-113",
+            "siteId": 1,
+            "comparatorType": "WOE",
+            "originalLabel": "moderate-to-high",
+            "woeScenario": 8,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "high",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Conservative mapping per governance spec Section 7.2: WOE moderate-to-high maps to BN high",
+            "provenance": {
+              "sourceDocument": "Addendum #1 to Sediment HHERA - Former Squamish Pulp Mill, Woodfibre, BC (Keystone Environmental Ltd., 2014-11-28)",
+              "sourcePage": 107,
+              "sourceTableFigure": null,
+              "extractedLabel": "moderate-to-high",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": null,
+          "bnrrmObserved": null,
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 6,
+          "stationName": "SED06-114",
+          "reportEstimate": {
+            "stationId": 6,
+            "stationName": "SED06-114",
+            "siteId": 1,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": 2,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Addendum #1 to Sediment HHERA - Former Squamish Pulp Mill, Woodfibre, BC (Keystone Environmental Ltd., 2014-11-28)",
+              "sourcePage": 107,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 7,
+          "stationName": "SED06-115",
+          "reportEstimate": {
+            "stationId": 7,
+            "stationName": "SED06-115",
+            "siteId": 1,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": 2,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Addendum #1 to Sediment HHERA - Former Squamish Pulp Mill, Woodfibre, BC (Keystone Environmental Ltd., 2014-11-28)",
+              "sourcePage": 107,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": null,
+          "bnrrmObserved": null,
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 8,
+          "stationName": "SED06-116",
+          "reportEstimate": {
+            "stationId": 8,
+            "stationName": "SED06-116",
+            "siteId": 1,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": 2,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Addendum #1 to Sediment HHERA - Former Squamish Pulp Mill, Woodfibre, BC (Keystone Environmental Ltd., 2014-11-28)",
+              "sourcePage": 107,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 9,
+          "stationName": "SED06-117",
+          "reportEstimate": {
+            "stationId": 9,
+            "stationName": "SED06-117",
+            "siteId": 1,
+            "comparatorType": "WOE",
+            "originalLabel": "moderate-to-high",
+            "woeScenario": 7,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "high",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Conservative mapping per governance spec Section 7.2: WOE moderate-to-high maps to BN high",
+            "provenance": {
+              "sourceDocument": "Addendum #1 to Sediment HHERA - Former Squamish Pulp Mill, Woodfibre, BC (Keystone Environmental Ltd., 2014-11-28)",
+              "sourcePage": 107,
+              "sourceTableFigure": null,
+              "extractedLabel": "moderate-to-high",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": null,
+          "bnrrmObserved": null,
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 10,
+          "stationName": "SED06-118",
+          "reportEstimate": {
+            "stationId": 10,
+            "stationName": "SED06-118",
+            "siteId": 1,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": 2,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Addendum #1 to Sediment HHERA - Former Squamish Pulp Mill, Woodfibre, BC (Keystone Environmental Ltd., 2014-11-28)",
+              "sourcePage": 107,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 11,
+          "stationName": "SED06-119",
+          "reportEstimate": {
+            "stationId": 11,
+            "stationName": "SED06-119",
+            "siteId": 1,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": 2,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Addendum #1 to Sediment HHERA - Former Squamish Pulp Mill, Woodfibre, BC (Keystone Environmental Ltd., 2014-11-28)",
+              "sourcePage": 107,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "moderate",
+          "bnrrmPosterior": null
+        }
+      ],
+      "siteRiskNarrative": null,
+      "agreementMetrics": null,
+      "excludedStations": {
+        "noLOOPrediction": [
+          "SED06-113",
+          "SED06-115",
+          "SED06-117"
+        ],
+        "noWOERecord": []
+      }
+    },
+    {
+      "siteId": 2,
+      "siteName": "CP Nelson Yard (Hall Mines Smelter)",
+      "registryId": "0311",
+      "stationComparisons": [
+        {
+          "stationId": 199,
+          "stationName": "SED19-1",
+          "reportEstimate": {
+            "stationId": 199,
+            "stationName": "SED19-1",
+            "siteId": 2,
+            "comparatorType": "WOE",
+            "originalLabel": "high",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "high",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE high = BN high",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment - CP Nelson Yard (SNC-Lavalin Inc., 2020-04-27)",
+              "sourcePage": 110,
+              "sourceTableFigure": null,
+              "extractedLabel": "high",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": null,
+          "bnrrmObserved": null,
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 200,
+          "stationName": "SED19-2",
+          "reportEstimate": {
+            "stationId": 200,
+            "stationName": "SED19-2",
+            "siteId": 2,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment - CP Nelson Yard (SNC-Lavalin Inc., 2020-04-27)",
+              "sourcePage": 110,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": null,
+          "bnrrmObserved": null,
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 201,
+          "stationName": "SED19-3",
+          "reportEstimate": {
+            "stationId": 201,
+            "stationName": "SED19-3",
+            "siteId": 2,
+            "comparatorType": "WOE",
+            "originalLabel": "moderate",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "moderate",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE moderate = BN moderate",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment - CP Nelson Yard (SNC-Lavalin Inc., 2020-04-27)",
+              "sourcePage": 110,
+              "sourceTableFigure": null,
+              "extractedLabel": "moderate",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "high",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 202,
+          "stationName": "SED19-4",
+          "reportEstimate": {
+            "stationId": 202,
+            "stationName": "SED19-4",
+            "siteId": 2,
+            "comparatorType": "WOE",
+            "originalLabel": "moderate",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "moderate",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE moderate = BN moderate",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment - CP Nelson Yard (SNC-Lavalin Inc., 2020-04-27)",
+              "sourcePage": 110,
+              "sourceTableFigure": null,
+              "extractedLabel": "moderate",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "high",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 203,
+          "stationName": "SED19-5",
+          "reportEstimate": {
+            "stationId": 203,
+            "stationName": "SED19-5",
+            "siteId": 2,
+            "comparatorType": "WOE",
+            "originalLabel": "high",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "high",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE high = BN high",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment - CP Nelson Yard (SNC-Lavalin Inc., 2020-04-27)",
+              "sourcePage": 110,
+              "sourceTableFigure": null,
+              "extractedLabel": "high",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "high",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 204,
+          "stationName": "SED19-6",
+          "reportEstimate": {
+            "stationId": 204,
+            "stationName": "SED19-6",
+            "siteId": 2,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment - CP Nelson Yard (SNC-Lavalin Inc., 2020-04-27)",
+              "sourcePage": 110,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "high",
+          "bnrrmPosterior": null
+        }
+      ],
+      "siteRiskNarrative": null,
+      "agreementMetrics": null,
+      "excludedStations": {
+        "noLOOPrediction": [
+          "SED19-1",
+          "SED19-2"
+        ],
+        "noWOERecord": []
+      }
+    },
+    {
+      "siteId": 3,
+      "siteName": "Island Copper Mine (Foreshore)",
+      "registryId": "4205",
+      "stationComparisons": [
+        {
+          "stationId": 207,
+          "stationName": "SED13-1",
+          "reportEstimate": {
+            "stationId": 207,
+            "stationName": "SED13-1",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 208,
+          "stationName": "SED13-2",
+          "reportEstimate": {
+            "stationId": 208,
+            "stationName": "SED13-2",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 209,
+          "stationName": "SED13-5",
+          "reportEstimate": {
+            "stationId": 209,
+            "stationName": "SED13-5",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 210,
+          "stationName": "SED13-6",
+          "reportEstimate": {
+            "stationId": 210,
+            "stationName": "SED13-6",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 211,
+          "stationName": "SED13-10",
+          "reportEstimate": {
+            "stationId": 211,
+            "stationName": "SED13-10",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 212,
+          "stationName": "SED13-12",
+          "reportEstimate": {
+            "stationId": 212,
+            "stationName": "SED13-12",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 213,
+          "stationName": "SED13-16",
+          "reportEstimate": {
+            "stationId": 213,
+            "stationName": "SED13-16",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 214,
+          "stationName": "SED13-21",
+          "reportEstimate": {
+            "stationId": 214,
+            "stationName": "SED13-21",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 215,
+          "stationName": "SED13-23",
+          "reportEstimate": {
+            "stationId": 215,
+            "stationName": "SED13-23",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 216,
+          "stationName": "SED13-24",
+          "reportEstimate": {
+            "stationId": 216,
+            "stationName": "SED13-24",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "moderate",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "moderate",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE moderate = BN moderate",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "moderate",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 217,
+          "stationName": "SED13-100",
+          "reportEstimate": {
+            "stationId": 217,
+            "stationName": "SED13-100",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": null,
+          "bnrrmObserved": null,
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 218,
+          "stationName": "SED13-101",
+          "reportEstimate": {
+            "stationId": 218,
+            "stationName": "SED13-101",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": null,
+          "bnrrmObserved": null,
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 219,
+          "stationName": "SED13-102",
+          "reportEstimate": {
+            "stationId": 219,
+            "stationName": "SED13-102",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": null,
+          "bnrrmObserved": null,
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 220,
+          "stationName": "SED13-103",
+          "reportEstimate": {
+            "stationId": 220,
+            "stationName": "SED13-103",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": null,
+          "bnrrmObserved": null,
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 221,
+          "stationName": "SED13-104",
+          "reportEstimate": {
+            "stationId": 221,
+            "stationName": "SED13-104",
+            "siteId": 3,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Chapman_Anderson_2005",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Sediment Human Health Risk Assessment and Ecological Problem Formulation - Former Island Copper Mine Water Lots 152 and 232 (Keystone Environmental Ltd., 2015-12-31)",
+              "sourcePage": 132,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": null,
+          "bnrrmObserved": null,
+          "bnrrmPosterior": null
+        }
+      ],
+      "siteRiskNarrative": null,
+      "agreementMetrics": null,
+      "excludedStations": {
+        "noLOOPrediction": [
+          "SED13-100",
+          "SED13-101",
+          "SED13-102",
+          "SED13-103",
+          "SED13-104"
+        ],
+        "noWOERecord": []
+      }
+    },
+    {
+      "siteId": 4,
+      "siteName": "Blue Water (855 Centennial Road)",
+      "registryId": "15125",
+      "stationComparisons": [
+        {
+          "stationId": 222,
+          "stationName": "SED06-6",
+          "reportEstimate": {
+            "stationId": 222,
+            "stationName": "SED06-6",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 223,
+          "stationName": "SED06-11",
+          "reportEstimate": {
+            "stationId": 223,
+            "stationName": "SED06-11",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "moderate",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 224,
+          "stationName": "SED06-17",
+          "reportEstimate": {
+            "stationId": 224,
+            "stationName": "SED06-17",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 225,
+          "stationName": "SED06-19",
+          "reportEstimate": {
+            "stationId": 225,
+            "stationName": "SED06-19",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "moderate",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 226,
+          "stationName": "SED06-20",
+          "reportEstimate": {
+            "stationId": 226,
+            "stationName": "SED06-20",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "moderate",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "moderate",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE moderate = BN moderate",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "moderate",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": null,
+          "bnrrmObserved": null,
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 227,
+          "stationName": "SED06-22",
+          "reportEstimate": {
+            "stationId": 227,
+            "stationName": "SED06-22",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 228,
+          "stationName": "SED06-35",
+          "reportEstimate": {
+            "stationId": 228,
+            "stationName": "SED06-35",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 229,
+          "stationName": "SED06-38",
+          "reportEstimate": {
+            "stationId": 229,
+            "stationName": "SED06-38",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 230,
+          "stationName": "SED06-42",
+          "reportEstimate": {
+            "stationId": 230,
+            "stationName": "SED06-42",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 231,
+          "stationName": "SED06-46",
+          "reportEstimate": {
+            "stationId": 231,
+            "stationName": "SED06-46",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 232,
+          "stationName": "SED06-63",
+          "reportEstimate": {
+            "stationId": 232,
+            "stationName": "SED06-63",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 233,
+          "stationName": "SED12-13",
+          "reportEstimate": {
+            "stationId": 233,
+            "stationName": "SED12-13",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "moderate",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "moderate",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE moderate = BN moderate",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "moderate",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 234,
+          "stationName": "SED12-14",
+          "reportEstimate": {
+            "stationId": 234,
+            "stationName": "SED12-14",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 235,
+          "stationName": "SED12-21",
+          "reportEstimate": {
+            "stationId": 235,
+            "stationName": "SED12-21",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 236,
+          "stationName": "SED12-22",
+          "reportEstimate": {
+            "stationId": 236,
+            "stationName": "SED12-22",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "moderate",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 237,
+          "stationName": "SED12-23",
+          "reportEstimate": {
+            "stationId": 237,
+            "stationName": "SED12-23",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 238,
+          "stationName": "SED12-24",
+          "reportEstimate": {
+            "stationId": 238,
+            "stationName": "SED12-24",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 240,
+          "stationName": "SED12-34",
+          "reportEstimate": {
+            "stationId": 240,
+            "stationName": "SED12-34",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "moderate",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 241,
+          "stationName": "SED12-35",
+          "reportEstimate": {
+            "stationId": 241,
+            "stationName": "SED12-35",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 242,
+          "stationName": "SED12-44",
+          "reportEstimate": {
+            "stationId": 242,
+            "stationName": "SED12-44",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "moderate",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "moderate",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE moderate = BN moderate",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "moderate",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 243,
+          "stationName": "SED12-45",
+          "reportEstimate": {
+            "stationId": 243,
+            "stationName": "SED12-45",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "moderate",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "moderate",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE moderate = BN moderate",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "moderate",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 244,
+          "stationName": "SED12-46",
+          "reportEstimate": {
+            "stationId": 244,
+            "stationName": "SED12-46",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "high",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "high",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE high = BN high",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "high",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 245,
+          "stationName": "SED12-48",
+          "reportEstimate": {
+            "stationId": 245,
+            "stationName": "SED12-48",
+            "siteId": 4,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Keystone_Toxicity_WOE",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human Health and Ecological Risk Assessment and Remedial Action Plan - 855 Centennial Road, Vancouver, BC (Keystone Environmental Ltd., 2013-07-02)",
+              "sourcePage": 125,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "low",
+          "bnrrmPosterior": null
+        }
+      ],
+      "siteRiskNarrative": null,
+      "agreementMetrics": null,
+      "excludedStations": {
+        "noLOOPrediction": [
+          "SED06-20"
+        ],
+        "noWOERecord": []
+      }
+    },
+    {
+      "siteId": 8,
+      "siteName": "Hercules Forwarding ULC (Brunette River)",
+      "registryId": "16029",
+      "stationComparisons": [
+        {
+          "stationId": 277,
+          "stationName": "PZ16-02",
+          "reportEstimate": {
+            "stationId": 277,
+            "stationName": "PZ16-02",
+            "siteId": 8,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Exponent_2011",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human and Ecological Risk Assessment, Hercules Forwarding ULC, 151 Spruce Street, New Westminster, BC (Golder Associates Ltd., 2016-12-12)",
+              "sourcePage": 47,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "high",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 278,
+          "stationName": "PZ16-03",
+          "reportEstimate": {
+            "stationId": 278,
+            "stationName": "PZ16-03",
+            "siteId": 8,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Exponent_2011",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human and Ecological Risk Assessment, Hercules Forwarding ULC, 151 Spruce Street, New Westminster, BC (Golder Associates Ltd., 2016-12-12)",
+              "sourcePage": 47,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "high",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 279,
+          "stationName": "PZ16-04",
+          "reportEstimate": {
+            "stationId": 279,
+            "stationName": "PZ16-04",
+            "siteId": 8,
+            "comparatorType": "WOE",
+            "originalLabel": "low",
+            "woeScenario": null,
+            "frameworkType": "Exponent_2011",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "Direct ordinal alignment: WOE low = BN low (both indicate minimal ecological concern)",
+            "provenance": {
+              "sourceDocument": "Human and Ecological Risk Assessment, Hercules Forwarding ULC, 151 Spruce Street, New Westminster, BC (Golder Associates Ltd., 2016-12-12)",
+              "sourcePage": 47,
+              "sourceTableFigure": null,
+              "extractedLabel": "low",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "high",
+          "bnrrmObserved": "high",
+          "bnrrmPosterior": null
+        },
+        {
+          "stationId": 280,
+          "stationName": "PZ16-05",
+          "reportEstimate": {
+            "stationId": 280,
+            "stationName": "PZ16-05",
+            "siteId": 8,
+            "comparatorType": "WOE",
+            "originalLabel": "negligible",
+            "woeScenario": null,
+            "frameworkType": "Exponent_2011",
+            "mappedBNClass": "low",
+            "mappingConfidence": "defensible",
+            "mappingJustification": "WOE negligible maps to BN low per governance spec Section 7.2 (both indicate no significant risk)",
+            "provenance": {
+              "sourceDocument": "Human and Ecological Risk Assessment, Hercules Forwarding ULC, 151 Spruce Street, New Westminster, BC (Golder Associates Ltd., 2016-12-12)",
+              "sourcePage": 47,
+              "sourceTableFigure": null,
+              "extractedLabel": "negligible",
+              "extractionMethod": "manual",
+              "extractionDate": "2026-03-09",
+              "extractor": "claude"
+            },
+            "isTrainingTarget": false
+          },
+          "bnrrmPredicted": "low",
+          "bnrrmObserved": "high",
+          "bnrrmPosterior": null
+        }
+      ],
+      "siteRiskNarrative": null,
+      "agreementMetrics": null,
+      "excludedStations": {
+        "noLOOPrediction": [],
+        "noWOERecord": []
+      }
+    }
+  ]
+}

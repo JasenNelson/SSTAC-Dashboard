@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import cptDataRaw from '@/data/bn-rrm/transparency/cpt_transparency.json';
+import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
+import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
 type NodeRecord = {
   id: string;
@@ -109,10 +111,16 @@ function NodeCard({ node }: { node: NodeRecord }) {
               </span>
             )}
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Tier {node.tier} &middot; N = {node.sample_count} stations
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1 flex-wrap">
+            <span>Tier {node.tier} &middot; N = {node.sample_count} stations</span>
             {node.config_coverage && (
-              <> &middot; {node.config_coverage.observed}/{node.config_coverage.possible} configs ({node.config_coverage.coverage_pct}%)</>
+              <>
+                <span>&middot; {node.config_coverage.observed}/{node.config_coverage.possible} configs ({node.config_coverage.coverage_pct}%)</span>
+                <InfoTooltip
+                  {...TOOLTIP.configCoverage(node.config_coverage.observed, node.config_coverage.possible, node.config_coverage.coverage_pct)}
+                  iconSize={11}
+                />
+              </>
             )}
           </div>
         </div>
@@ -126,11 +134,15 @@ function NodeCard({ node }: { node: NodeRecord }) {
           {/* ESS / Prior Weight */}
           {node.ess_prior_weight && (
             <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3.5">
-              <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              <div className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
                 {node.ess_prior_weight.method}
+                <InfoTooltip {...TOOLTIP.cptLearningMethod} iconSize={12} />
               </div>
               {node.ess_prior_weight.ess !== null && (
-                <div className="text-xs text-slate-500 mt-1">ESS = {node.ess_prior_weight.ess}</div>
+                <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                  ESS = {node.ess_prior_weight.ess}
+                  <InfoTooltip {...TOOLTIP.ess} iconSize={11} />
+                </div>
               )}
               <div className="text-xs text-slate-400 mt-1">{node.ess_prior_weight.note}</div>
             </div>
@@ -180,7 +192,10 @@ export function CptTransparency() {
       {/* Header with export toolbar */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">CPT Transparency</h2>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+            CPT Transparency
+            <InfoTooltip {...TOOLTIP.cptTransparency} />
+          </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Per-node conditional probability table source, sample counts, and distribution comparisons
           </p>

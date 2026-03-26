@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import siteDataRaw from '@/data/bn-rrm/transparency/site_reports.json';
+import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
+import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
 type ChemRow = {
   parameter: string;
@@ -440,6 +442,7 @@ export function SiteReports() {
               <div className="mt-2 px-3 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Spatial Context</span>
+                  <InfoTooltip {...TOOLTIP.spatialReferenceClasses} iconSize={11} />
                   {(() => {
                     const sp = resolveSiteSpatialBadge(selectedSite.spatial_context!);
                     return (
@@ -598,8 +601,12 @@ export function SiteReports() {
                       <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">Max</th>
                       <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">Mean</th>
                       <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">N</th>
-                      <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">ISQG</th>
-                      <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">PEL</th>
+                      <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">
+                        <span className="inline-flex items-center gap-1">ISQG <InfoTooltip {...TOOLTIP.isqg} iconSize={11} /></span>
+                      </th>
+                      <th className="px-3 py-2.5 text-right font-semibold text-slate-600 dark:text-slate-300">
+                        <span className="inline-flex items-center gap-1">PEL <InfoTooltip {...TOOLTIP.pel} iconSize={11} /></span>
+                      </th>
                       <th className="px-3 py-2.5 text-right font-semibold text-amber-600 dark:text-amber-400">&gt;ISQG</th>
                       <th className="px-3 py-2.5 text-right font-semibold text-red-600 dark:text-red-400">&gt;PEL</th>
                     </tr>

@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react';
 import modelOverviewData from '@/data/bn-rrm/transparency/model-overview.json';
+import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
+import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
 type PerClassMetrics = {
   precision: number;
@@ -76,10 +78,18 @@ function PerClassTable({ perClass }: { perClass: Record<string, PerClassMetrics>
       <thead>
         <tr className="border-b border-slate-200 dark:border-slate-700">
           <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Class</th>
-          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">Precision</th>
-          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">Recall</th>
-          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">F1</th>
-          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">Support</th>
+          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1">Precision <InfoTooltip {...TOOLTIP.precision} iconSize={12} /></span>
+          </th>
+          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1">Recall <InfoTooltip {...TOOLTIP.recall} iconSize={12} /></span>
+          </th>
+          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1">F1 <InfoTooltip {...TOOLTIP.f1Score} iconSize={12} /></span>
+          </th>
+          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1">Support <InfoTooltip {...TOOLTIP.support} iconSize={12} /></span>
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -121,10 +131,13 @@ export function ModelOverview() {
 
       {/* Performance Summary Cards */}
       <div>
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">LOO Cross-Validation (n={perf.n_complete})</h3>
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+          LOO Cross-Validation (n={perf.n_complete})
+          <InfoTooltip {...TOOLTIP.looCrossValidation} />
+        </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <MetricCard label="Accuracy" value={`${(perf.loo_accuracy * 100).toFixed(1)}%`} subtitle="Combined (all sites)" />
-          <MetricCard label="Kappa" value={perf.loo_kappa.toFixed(3)} subtitle="Cohen's kappa" alert />
+          <MetricCard label="Kappa" value={perf.loo_kappa.toFixed(3)} subtitle="Cohen's kappa (unweighted)" alert />
           <MetricCard label="High Recall" value={`${(perf.per_class.high.recall * 100).toFixed(1)}%`} subtitle="12/17 high-risk detected" />
           <MetricCard label="Moderate Recall" value={`${(perf.per_class.moderate.recall * 100).toFixed(1)}%`} subtitle={`${Math.round(perf.per_class.moderate.recall * perf.per_class.moderate.support)}/${perf.per_class.moderate.support} moderate detected`} alert={perf.per_class.moderate.recall < 0.2} />
         </div>
@@ -132,7 +145,10 @@ export function ModelOverview() {
 
       {/* Kappa Health Meter with Narrative */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-4">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Kappa Interpretation (Landis/Koch Scale)</h3>
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
+          Kappa Interpretation (Landis/Koch Scale)
+          <InfoTooltip {...TOOLTIP.cohensKappa} />
+        </h3>
         <KappaHealthMeter value={perf.loo_kappa} />
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
@@ -165,7 +181,11 @@ export function ModelOverview() {
           <MetricCard label="Sites" value={String(data.total_sites)} />
           <MetricCard label="Stations" value={data.dataset_counts.stations.toLocaleString()} />
           <MetricCard label="Co-located" value={String(data.dataset_counts.co_located)} subtitle="BDeu target: 50" />
-          <MetricCard label="Full Triads" value={`${data.dataset_counts.full_triads_effective}`} subtitle={`${data.dataset_counts.full_triads_native} native + 8 DR-002`} />
+          <MetricCard label="Full Triads" value={`${data.dataset_counts.full_triads_effective}`} subtitle={`${data.dataset_counts.full_triads_native} raw + 8 Level C merged`} />
+        </div>
+        <div className="text-xs text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-1">
+          <InfoTooltip {...TOOLTIP.triadReconciliation} />
+          <span>Co-located: chemistry + toxicity at same event. Full triad: + community data. See triad reconciliation note.</span>
         </div>
 
         {/* Site Breakdown Table */}
@@ -206,7 +226,10 @@ export function ModelOverview() {
 
       {/* Architecture Tiers */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">DAG Architecture (5 Tiers)</h3>
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
+          DAG Architecture (5 Tiers)
+          <InfoTooltip {...TOOLTIP.dagArchitectureTiers} />
+        </h3>
         <div className="space-y-3">
           {overview.architecture.tiers.map((tier) => (
             <div key={tier.tier} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">

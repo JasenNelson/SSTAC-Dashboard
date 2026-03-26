@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react';
 import validationData from '@/data/bn-rrm/transparency/validation_results.json';
 import modelComparisonData from '@/data/bn-rrm/transparency/model_comparison.json';
+import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
+import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
 type Prediction = {
   station_id: number;
@@ -44,7 +46,13 @@ function ConfusionMatrix({ predictions }: { predictions: Prediction[] }) {
 
   return (
     <div>
-      <div className="text-xs text-slate-500 dark:text-slate-400 text-center mb-2 font-medium">Predicted</div>
+      <div className="text-xs text-slate-500 dark:text-slate-400 text-center mb-2 font-medium flex items-center justify-center gap-1">
+        Predicted
+        <InfoTooltip
+          {...TOOLTIP.confusionMatrix}
+          iconSize={12}
+        />
+      </div>
       <div className="flex items-start gap-2">
         <div className="flex flex-col justify-center gap-0 mt-7 mr-1">
           <div className="text-xs text-slate-500 dark:text-slate-400 font-medium -rotate-90 whitespace-nowrap origin-center" style={{ height: '80px', lineHeight: '80px' }}>Observed</div>
@@ -104,8 +112,12 @@ function PredictionsTable({ predictions, filter }: { predictions: Prediction[]; 
         <thead className="sticky top-0 bg-white dark:bg-slate-800">
           <tr className="border-b border-slate-200 dark:border-slate-700">
             <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Station</th>
-            <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Predicted</th>
-            <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Observed</th>
+            <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">
+              <span className="inline-flex items-center gap-1">Predicted <InfoTooltip {...TOOLTIP.predicted} iconSize={12} /></span>
+            </th>
+            <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">
+              <span className="inline-flex items-center gap-1">Observed <InfoTooltip {...TOOLTIP.observed} iconSize={12} /></span>
+            </th>
             <th className="text-center py-2 font-medium text-slate-500 dark:text-slate-400">Result</th>
           </tr>
         </thead>
@@ -159,9 +171,15 @@ function ModelComparisonTable() {
         <tr className="border-b border-slate-200 dark:border-slate-700">
           <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Model</th>
           <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">n</th>
-          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">Accuracy</th>
-          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">Kappa</th>
-          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">High Recall</th>
+          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1">Accuracy <InfoTooltip {...TOOLTIP.accuracy} iconSize={12} /></span>
+          </th>
+          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1">Kappa <InfoTooltip {...TOOLTIP.cohensKappaShort} iconSize={12} /></span>
+          </th>
+          <th className="text-right py-2 font-medium text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1">High Recall <InfoTooltip {...TOOLTIP.highRiskRecall} iconSize={12} /></span>
+          </th>
         </tr>
       </thead>
       <tbody>

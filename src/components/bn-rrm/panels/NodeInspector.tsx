@@ -30,6 +30,8 @@ import {
   Info,
   BookOpen,
 } from 'lucide-react';
+import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
+import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
 // =============================================================================
 // CATEGORY CONFIG
@@ -268,6 +270,14 @@ export const NodeInspector = memo(function NodeInspector({
 
         {/* Current Beliefs */}
         <Section title="Probability Distribution" icon={Activity}>
+          <div className="flex items-center gap-1 mb-2">
+            <span className="text-xs text-slate-500 dark:text-slate-400">
+              {selectedNode.evidence !== undefined && selectedNode.evidence !== null
+                ? 'Evidence set — showing certainty'
+                : 'Posterior probability given all set evidence'}
+            </span>
+            <InfoTooltip {...TOOLTIP.posteriorProbability} iconSize={11} />
+          </div>
           <BeliefBar
             states={selectedNode.states}
             beliefs={selectedNode.beliefs}

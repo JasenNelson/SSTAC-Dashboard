@@ -8,8 +8,9 @@ import { DecisionsAndLimitations } from './DecisionsAndLimitations';
 import { CptTransparency } from './CptTransparency';
 import { DataProvenance } from './DataProvenance';
 import { SiteReports } from './SiteReports';
+import { RiskComparison } from './RiskComparison';
 
-type ReviewSection = 'overview' | 'validation' | 'decisions' | 'cpt' | 'provenance' | 'sites';
+type ReviewSection = 'overview' | 'validation' | 'decisions' | 'cpt' | 'provenance' | 'sites' | 'comparison';
 
 const sections: { id: ReviewSection; label: string; description: string }[] = [
   { id: 'overview', label: 'Model Overview', description: 'Architecture, metrics, training data' },
@@ -18,6 +19,7 @@ const sections: { id: ReviewSection; label: string; description: string }[] = [
   { id: 'cpt', label: 'CPT Transparency', description: 'Per-node source, coverage, distributions' },
   { id: 'provenance', label: 'Data & Provenance', description: 'Document registry, station tracing' },
   { id: 'sites', label: 'Site Reports', description: 'Per-site chemistry, toxicity, community' },
+  { id: 'comparison', label: 'Risk Comparison', description: 'BN-RRM vs report-stated WOE' },
 ];
 
 export function ReviewView() {
@@ -72,6 +74,7 @@ export function ReviewView() {
           {activeSection === 'cpt' && <CptTransparency />}
           {activeSection === 'provenance' && <DataProvenance />}
           {activeSection === 'sites' && <SiteReports />}
+          {activeSection === 'comparison' && <RiskComparison />}
         </div>
       </div>
     </div>

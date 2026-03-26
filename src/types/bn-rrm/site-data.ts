@@ -168,3 +168,79 @@ export const CCME_GUIDELINES = {
 } as const;
 
 export type GuidelineParameter = keyof typeof CCME_GUIDELINES;
+
+// =============================================================================
+// COMPARISON TYPES — External reference labels (NEVER training targets)
+// See: COMPARISON_GOVERNANCE.md in bn_learning/docs/
+// =============================================================================
+
+export type ComparatorType = 'WOE' | 'SQT' | 'SQG' | 'PEC-Q' | 'mPEC-Q';
+export type BNRiskClass = 'low' | 'moderate' | 'high';
+export type MappingConfidence = 'defensible' | 'approximate' | 'not_mappable';
+export type ExtractionMethod = 'manual' | 'pymupdf' | 'ai_assisted';
+export type Extractor = 'human' | 'claude' | 'gemini' | 'other_ai';
+
+export interface LabelProvenance {
+  sourceDocument: string;
+  sourcePage: number | string;
+  sourceTableFigure?: string;
+  extractedLabel: string;
+  extractionMethod: ExtractionMethod;
+  extractionDate: string;
+  extractor: Extractor;
+  directQuote?: string;
+}
+
+export interface ReportRiskEstimate {
+  stationId: number;
+  stationName: string;
+  siteId: number;
+  comparatorType: ComparatorType;
+  originalLabel: string;
+  mappedBNClass?: BNRiskClass;
+  mappingConfidence?: MappingConfidence;
+  mappingJustification?: string;
+  continuousValue?: number;
+  provenance: LabelProvenance;
+  isTrainingTarget: false;
+}
+
+export interface SiteRiskComparison {
+  siteId: number;
+  siteName: string;
+  registryId: string;
+  stationComparisons: {
+    stationId: number;
+    stationName: string;
+    bnrrmPredicted: BNRiskClass;
+    bnrrmPosterior: Record<BNRiskClass, number>;
+    reportEstimate?: ReportRiskEstimate;
+  }[];
+  siteRiskNarrative?: string;
+  agreementMetrics?: {
+    weightedKappa: number;
+    weightedKappaCI: { lower: number; upper: number };
+    accuracy: number;
+    confusionMatrix: number[][];
+    n: number;
+    nExcluded: number;
+    exclusionReason?: string;
+  };
+}
+
+export interface CaseStudy {
+  siteId: string;
+  siteName: string;
+  registryId?: string;
+  region: string;
+  isTrainingSite: boolean;
+  dataAvailability: {
+    chemistry: boolean;
+    toxicity: boolean;
+    community: boolean;
+    modifiers: boolean;
+  };
+  reportRiskEstimates: ReportRiskEstimate[];
+  bnrrmAssessment?: SiteAssessment;
+  comparisonNotes: string;
+}

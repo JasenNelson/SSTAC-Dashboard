@@ -13,7 +13,7 @@ import { ExportPanel } from '@/components/bn-rrm/data/ExportPanel';
 import { SiteDetails } from '@/components/bn-rrm/map/SiteDetails';
 import { classifyRawSiteData, dagForwardInference } from '@/lib/bn-rrm/bn-inference';
 import { createTrainedNetwork } from '@/lib/bn-rrm/trained-network';
-import { Workflow, Network, Map, Database, PanelRightOpen, PanelRightClose, ChevronRight, Beaker, Thermometer, Activity, AlertTriangle, Upload, Table, Download, ClipboardCheck } from 'lucide-react';
+import { Workflow, Network, Map, Database, PanelRightOpen, PanelRightClose, ChevronRight, Beaker, Thermometer, Activity, AlertTriangle, Upload, Table, Download, ClipboardCheck, BookOpen } from 'lucide-react';
 
 const Canvas = dynamic(() => import('@/components/bn-rrm/canvas/Canvas').then((mod) => mod.Canvas), {
   ssr: false,
@@ -35,15 +35,27 @@ const ReviewView = dynamic(() => import('@/components/bn-rrm/review/ReviewView')
   loading: () => <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="flex items-center gap-3 text-slate-400 dark:text-slate-500"><div className="w-6 h-6 border-2 border-slate-300 dark:border-slate-600 border-t-blue-500 rounded-full animate-spin" /><span>Loading review...</span></div></div>,
 });
 
-type ViewTab = 'conceptual' | 'detailed' | 'cpt' | 'map' | 'data' | 'review';
+const CaseStudiesView = dynamic(() => import('@/components/bn-rrm/casestudies/CaseStudiesView').then((mod) => mod.CaseStudiesView), {
+  ssr: false,
+  loading: () => <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="flex items-center gap-3 text-slate-400 dark:text-slate-500"><div className="w-6 h-6 border-2 border-slate-300 dark:border-slate-600 border-t-blue-500 rounded-full animate-spin" /><span>Loading case studies...</span></div></div>,
+});
+
+const GettingStartedView = dynamic(() => import('@/components/bn-rrm/getting-started/GettingStartedView').then((mod) => mod.GettingStartedView), {
+  ssr: false,
+  loading: () => <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="flex items-center gap-3 text-slate-400 dark:text-slate-500"><div className="w-6 h-6 border-2 border-slate-300 dark:border-slate-600 border-t-blue-500 rounded-full animate-spin" /><span>Loading guide...</span></div></div>,
+});
+
+type ViewTab = 'gettingstarted' | 'conceptual' | 'detailed' | 'cpt' | 'map' | 'data' | 'review' | 'casestudies';
 
 const tabs: { id: ViewTab; label: string; icon: typeof Workflow; description: string }[] = [
+  { id: 'gettingstarted', label: 'Guide', icon: BookOpen, description: 'Getting started' },
   { id: 'conceptual', label: 'Conceptual', icon: Workflow, description: 'High-level causal framework' },
   { id: 'detailed', label: 'Detailed BN', icon: Network, description: 'Full Bayesian Network' },
   { id: 'cpt', label: 'CPT', icon: Table, description: 'Conditional Probability Tables' },
   { id: 'map', label: 'Map', icon: Map, description: 'Spatial data explorer' },
   { id: 'data', label: 'Data', icon: Database, description: 'Upload & export' },
   { id: 'review', label: 'Review', icon: ClipboardCheck, description: 'Peer review transparency' },
+  { id: 'casestudies', label: 'Case Studies', icon: BookOpen, description: 'Site comparisons' },
 ];
 
 export default function BNRRMClient() {
@@ -198,12 +210,14 @@ export default function BNRRMClient() {
       </div>
 
       <main className="flex-1 overflow-hidden flex">
+        {activeTab === 'gettingstarted' && <GettingStartedView />}
         {activeTab === 'conceptual' && <ConceptualView />}
         {activeTab === 'detailed' && <DetailedView showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} onCloseLeftPanel={() => setShowLeftPanel(false)} />}
         {activeTab === 'cpt' && <CPTExplorer />}
         {activeTab === 'map' && <MapView showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} onRunAssessment={handleRunAssessment} />}
         {activeTab === 'data' && <DataView onViewOnMap={handleViewOnMap} onRunAssessment={handleRunAssessment} />}
         {activeTab === 'review' && <ReviewView />}
+        {activeTab === 'casestudies' && <CaseStudiesView />}
       </main>
     </div>
   );

@@ -25,6 +25,8 @@ import {
   ChevronUp,
   Beaker,
 } from 'lucide-react';
+import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
+import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
 // =============================================================================
 // RISK DISPLAY CONFIG
@@ -299,16 +301,30 @@ function ForwardInferenceView({
 
   return (
     <div className="p-4 space-y-4">
-      {/* Evidence summary */}
-      <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
+      {/* Inference basis */}
+      <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 space-y-2">
         <div className="flex items-center gap-2 text-sm">
           <Target className="w-4 h-4 text-slate-400 dark:text-slate-500" />
           <span className="text-slate-600 dark:text-slate-400">
             {evidenceCount === 0
-              ? 'No evidence set (using prior probabilities)'
-              : `${evidenceCount} evidence node${evidenceCount > 1 ? 's' : ''} set`}
+              ? 'Prior probabilities only — no evidence set'
+              : `Evidence from ${evidenceCount} node${evidenceCount > 1 ? 's' : ''}`}
           </span>
+          <InfoTooltip
+            {...(evidenceCount === 0 ? TOOLTIP.inferenceBasis.noEvidence : TOOLTIP.inferenceBasis.withEvidence)}
+          />
         </div>
+        {evidenceCount > 0 && model && (
+          <div className="text-xs text-slate-500 dark:text-slate-400 pl-6">
+            {model.nodes
+              .filter(n => n.evidence !== undefined && n.evidence !== null)
+              .map(n => n.label)
+              .join(', ')}
+          </div>
+        )}
+        <p className="text-xs text-slate-400 dark:text-slate-500 pl-6 italic">
+          These are model estimates, not measured outcomes.
+        </p>
       </div>
 
       {/* Risk summary card */}
@@ -322,11 +338,17 @@ function ForwardInferenceView({
         <div className="flex items-start gap-3">
           <Icon className={cn('w-6 h-6 mt-0.5', config.color)} />
           <div>
-            <h4 className={cn('font-semibold', config.color)}>
-              {riskAssessment.level === 'very-high'
-                ? 'Very High Risk'
-                : `${riskAssessment.level.charAt(0).toUpperCase() + riskAssessment.level.slice(1)} Risk`}
-            </h4>
+            <div className="flex items-center gap-1.5">
+              <h4 className={cn('font-semibold', config.color)}>
+                {riskAssessment.level === 'very-high'
+                  ? 'Very High Risk'
+                  : `${riskAssessment.level.charAt(0).toUpperCase() + riskAssessment.level.slice(1)} Risk`}
+              </h4>
+              <InfoTooltip
+                {...TOOLTIP.riskClassification}
+                position="left"
+              />
+            </div>
             <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{riskAssessment.message}</p>
           </div>
         </div>
@@ -337,6 +359,7 @@ function ForwardInferenceView({
         <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
           <BarChart3 className="w-4 h-4" />
           Ecological Risk Distribution
+          <InfoTooltip {...TOOLTIP.ecologicalRiskDistribution} />
         </h4>
 
         <div className="space-y-2">
@@ -368,8 +391,9 @@ function ForwardInferenceView({
 
       {/* Cumulative probability */}
       <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+        <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
           Cumulative Probability
+          <InfoTooltip {...TOOLTIP.cumulativeProbability} />
         </h4>
         <div className="space-y-2 text-sm">
           {(() => {
@@ -606,6 +630,7 @@ function BackwardInferenceView() {
         <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
           <BarChart3 className="w-4 h-4" />
           Sensitivity Analysis (Tornado)
+          <InfoTooltip {...TOOLTIP.sensitivityAnalysis} />
         </h4>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
           Change in P(worst state) when each source node varies from best to worst

@@ -81,7 +81,11 @@ export function SiteMap({
   const sites = useSiteDataStore((state) => state.sites);
   const assessments = useSiteDataStore((state) => state.assessments);
   const selectedSiteId = useSiteDataStore((state) => state.selectedSiteId);
+  const selectedSiteIds = useSiteDataStore((state) => state.selectedSiteIds);
   const selectSite = useSiteDataStore((state) => state.selectSite);
+  const toggleSiteSelection = useSiteDataStore((state) => state.toggleSiteSelection);
+  const selectAllSites = useSiteDataStore((state) => state.selectAllSites);
+  const clearSiteSelection = useSiteDataStore((state) => state.clearSiteSelection);
 
   const siteLocations = useMemo(() => {
     return Object.values(sites)
@@ -205,7 +209,7 @@ export function SiteMap({
 
     siteLocations.forEach(({ location, assessment }) => {
       const color = getMarkerColor(assessment);
-      const isSelected = selectedSiteId === location.id;
+      const isSelected = selectedSiteIds.includes(location.id) || selectedSiteId === location.id;
 
       const marker = L.circleMarker([location.latitude, location.longitude], {
         radius: isSelected ? 16 : 12,
@@ -217,14 +221,19 @@ export function SiteMap({
       });
 
       marker.bindPopup(createPopupContent(location, assessment), { maxWidth: 280 });
-      marker.on('click', () => {
-        selectSite(location.id);
-        onSiteSelect?.(location.id);
+      marker.on('click', (e: { originalEvent?: { ctrlKey?: boolean; metaKey?: boolean } }) => {
+        const isMultiSelect = e.originalEvent?.ctrlKey || e.originalEvent?.metaKey;
+        if (isMultiSelect) {
+          toggleSiteSelection(location.id);
+        } else {
+          selectSite(location.id);
+          onSiteSelect?.(location.id);
+        }
       });
 
       markersLayer.addLayer(marker);
     });
-  }, [siteLocations, selectedSiteId, isLoaded, leaflet, onSiteSelect, selectSite]);
+  }, [siteLocations, selectedSiteId, selectedSiteIds, isLoaded, leaflet, onSiteSelect, selectSite, toggleSiteSelection]);
 
   // Fit to sites on first load
   useEffect(() => {
@@ -415,32 +424,67 @@ export function SiteMap({
           </button>
 
           {siteListExpanded && (
-            <div className="max-h-40 overflow-y-auto">
-              {siteLocations.map(({ location, assessment }) => (
-                <button
-                  key={location.id}
-                  onClick={() => panToSite(location.id)}
-                  className={cn(
-                    "w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 border-b border-slate-50 dark:border-slate-700/50 last:border-0",
-                    selectedSiteId === location.id && "bg-blue-50 dark:bg-blue-900/30"
-                  )}
-                >
-                  <div
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: getMarkerColor(assessment) }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className={cn("text-sm font-medium truncate", selectedSiteId === location.id ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300")}>
-                      {location.name}
-                    </p>
-                    <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-                      {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
-                    </p>
-                  </div>
-                  <ExternalLink className="w-3 h-3 text-slate-300 dark:text-slate-600 flex-shrink-0" />
-                </button>
-              ))}
-            </div>
+            <>
+              {/* Multi-select controls */}
+              <div className="px-3 py-1.5 flex items-center justify-between border-b border-slate-100 dark:border-slate-700">
+                <span className="text-xs text-slate-400 dark:text-slate-500">
+                  {selectedSiteIds.length > 0 ? `${selectedSiteIds.length} selected` : 'Ctrl+click for multi-select'}
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={selectAllSites}
+                    className="text-xs text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 px-1"
+                  >
+                    All
+                  </button>
+                  <span className="text-slate-300 dark:text-slate-600">|</span>
+                  <button
+                    onClick={clearSiteSelection}
+                    className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 px-1"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+              <div className="max-h-40 overflow-y-auto">
+                {siteLocations.map(({ location, assessment }) => {
+                  const isSelected = selectedSiteIds.includes(location.id) || selectedSiteId === location.id;
+                  return (
+                    <button
+                      key={location.id}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey) {
+                          toggleSiteSelection(location.id);
+                        } else {
+                          panToSite(location.id);
+                        }
+                      }}
+                      className={cn(
+                        "w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 border-b border-slate-50 dark:border-slate-700/50 last:border-0",
+                        isSelected && "bg-blue-50 dark:bg-blue-900/30"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "w-3 h-3 rounded-full flex-shrink-0 border-2",
+                          isSelected ? "border-blue-500" : "border-transparent"
+                        )}
+                        style={{ backgroundColor: getMarkerColor(assessment) }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className={cn("text-sm font-medium truncate", isSelected ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300")}>
+                          {location.name}
+                        </p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                          {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+                        </p>
+                      </div>
+                      <ExternalLink className="w-3 h-3 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       )}
