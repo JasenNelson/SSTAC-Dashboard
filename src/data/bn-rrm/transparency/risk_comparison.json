@@ -1845,6 +1845,112 @@
   ],
   "externalSites": [
     {
+      "siteId": "0139",
+      "siteName": "Westminster Pier Park, 224 Front Street, New Westminster",
+      "registryId": "0139",
+      "region": "Metro Vancouver",
+      "waterbody": "estuarine",
+      "isTrainingSite": false,
+      "gateOutcome": "DESCRIPTIVE_ONLY",
+      "gateReason": "Class 2 descriptive integrated comparison. Genuine Aquatic DERA with WOE approach integrating multiple LOEs per AEC. Area-level conclusions (per-AEC: AEC 1B, AEC 22A/B, AEC 2/16B/17A/B). No station-level risk classifications. Sediment + groundwater + porewater assessed. Fraser River foreshore (tidally influenced).",
+      "consultant": "WorleyParsons Canada Services Ltd.",
+      "reportDate": "2011-12",
+      "reportTitle": "Human Health and Detailed Ecological Risk Assessment, 224 Front Street, New Westminster, BC",
+      "reportFile": "Project 09216, Rev 0",
+      "comparisonType": "descriptive-integrated",
+      "bnInputCoverage": {
+        "metals": true,
+        "pahs": true,
+        "pcbs": false,
+        "toc": false,
+        "grainSize": false,
+        "sulfideBinding": false,
+        "toxicity": true,
+        "community": false,
+        "note": "Metals (mercury, arsenic confirmed as COPCs via fish ingestion pathway). PAHs confirmed (creosote-related COPCs, industrial foreshore). Aquatic toxicity testing (§17.2.1) and sediment toxicity testing (§17.2.2) conducted. Benthic/epibenthic invertebrates are ROPCs but community survey status unconfirmed from executive summary. BN-RRM inference is partial-evidence — multiple substance nodes can be populated but condition nodes (TOC, grain size, AVS) are unconfirmed."
+      },
+      "reportConclusions": [
+        {
+          "receptor": "Aquatic Life (Site-Wide WOE)",
+          "loeCount": 3,
+          "loes": [
+            "Multiple LOE within each AEC (sediment chemistry, groundwater/porewater chemistry, toxicity testing)",
+            "Site-specific physico-chemical data and observations",
+            "Engineering controls and anticipated post-remediation improvements"
+          ],
+          "woeConclusion": "Low overall risk",
+          "woeIntegrationNote": "WOE approach integrating multiple LOE per AEC. Conclusion considers probability, magnitude and scale of harm, and ecological relevance. Engineering controls (Jet Grout containment wall, sediment capping) contribute to the low-risk determination.",
+          "mappedBNClass": "low",
+          "mappingConfidence": "approximate",
+          "mappingJustification": "WorleyParsons 'low overall risk' maps approximately to BN Low. Mapping is approximate because: (1) the WOE integrates remediation context (engineering controls) alongside ecological evidence, making it partially a managed-risk conclusion; (2) the conclusion is site-wide, not per-station; (3) the Fraser River foreshore is estuarine/tidal, overlapping with but not identical to the BN-RRM marine training domain.",
+          "comparisonLevel": "site",
+          "provenance": {
+            "sourceDocument": "WorleyParsons Canada Services Ltd. (2011). Human Health and Detailed Ecological Risk Assessment, 224 Front Street, New Westminster, BC. Project 09216, Rev 0.",
+            "sourcePage": 6,
+            "sourceTableFigure": "Executive Summary, Aquatic DERA section (p. vi)",
+            "extractedLabel": "Low overall risk to aquatic ROPCs",
+            "extractionMethod": "manual",
+            "extractionDate": "2026-03-26",
+            "extractor": "claude"
+          },
+          "isTrainingTarget": false
+        },
+        {
+          "receptor": "Aquatic Life (AEC 1B)",
+          "loeCount": 2,
+          "loes": [
+            "Per-AEC LOE integration (Section 18.2)",
+            "Sediment and groundwater chemistry + toxicity testing within AEC 1B"
+          ],
+          "woeConclusion": "Low risk (per-AEC conclusion)",
+          "mappedBNClass": "low",
+          "mappingConfidence": "approximate",
+          "mappingJustification": "Per-AEC conclusion from WOE integration. AEC 1B is the primary near-field assessment area. Mapping is approximate — AEC is an area-level unit, not station-level.",
+          "comparisonLevel": "area",
+          "provenance": {
+            "sourceDocument": "WorleyParsons (2011). HHERA, 224 Front Street, New Westminster, BC.",
+            "sourcePage": 124,
+            "sourceTableFigure": "Section 18.2 (AEC 1B)",
+            "extractedLabel": "Per-AEC risk characterization",
+            "extractionMethod": "manual",
+            "extractionDate": "2026-03-26",
+            "extractor": "claude"
+          },
+          "isTrainingTarget": false
+        },
+        {
+          "receptor": "Aquatic Life (AEC 22A/B)",
+          "loeCount": 2,
+          "loes": [
+            "Per-AEC LOE integration (Section 18.3)",
+            "Sediment and groundwater chemistry within AEC 22A/B"
+          ],
+          "woeConclusion": "Low risk (per-AEC conclusion)",
+          "mappedBNClass": "low",
+          "mappingConfidence": "approximate",
+          "mappingJustification": "Per-AEC conclusion. AEC 22A/B is an area-level assessment unit covering a defined portion of the foreshore.",
+          "comparisonLevel": "area",
+          "provenance": {
+            "sourceDocument": "WorleyParsons (2011). HHERA, 224 Front Street, New Westminster, BC.",
+            "sourcePage": 126,
+            "sourceTableFigure": "Section 18.3 (AEC 22A/B)",
+            "extractedLabel": "Per-AEC risk characterization",
+            "extractionMethod": "manual",
+            "extractionDate": "2026-03-26",
+            "extractor": "claude"
+          },
+          "isTrainingTarget": false
+        }
+      ],
+      "statisticalAuthorization": {
+        "kappa": false,
+        "confusionMatrix": false,
+        "agreement": false,
+        "mcNemar": false,
+        "reason": "Class 2 descriptive integrated only. WOE conclusions are area-level per AEC, not station-level. No station-level paired labels exist. Descriptive comparison authorized: BN-RRM area-level posterior distribution presented alongside consultant per-AEC WOE conclusion. No agreement statistics."
+      }
+    },
+    {
       "siteId": "11687",
       "siteName": "Water Lot, 1 Port Drive, Nanaimo",
       "registryId": "11687",
