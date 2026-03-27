@@ -24,6 +24,9 @@ import {
   ChevronUp,
   ChevronDown,
   ExternalLink,
+  Hand,
+  BoxSelect,
+  MousePointer,
 } from 'lucide-react';
 
 interface SiteMapProps {
@@ -77,6 +80,11 @@ export function SiteMap({
   const [activeLayer, setActiveLayer] = useState<keyof typeof BASE_LAYERS>('streets');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [siteListExpanded, setSiteListExpanded] = useState(true);
+  const [interactionMode, setInteractionMode] = useState<'pan' | 'select-individual' | 'select-area'>('pan');
+  const interactionModeRef = useRef(interactionMode);
+  interactionModeRef.current = interactionMode;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const areaSelectRectRef = useRef<any>(null);
 
   const sites = useSiteDataStore((state) => state.sites);
   const assessments = useSiteDataStore((state) => state.assessments);
@@ -164,6 +172,26 @@ export function SiteMap({
         },
       });
 
+      // Ctrl+click on a cluster selects all its child markers
+      markers.on('clusterclick', (e: { layer?: { getAllChildMarkers?: () => { options?: { locationId?: string } }[] }; originalEvent?: MouseEvent }) => {
+        const orig = e.originalEvent;
+        if (orig?.ctrlKey || orig?.metaKey) {
+          orig.preventDefault();
+          orig.stopPropagation();
+          const children = e.layer?.getAllChildMarkers?.() ?? [];
+          const childIds = children
+            .map((m: { options?: { locationId?: string } }) => m.options?.locationId)
+            .filter((id): id is string => !!id);
+          if (childIds.length > 0) {
+            // Add all cluster children to the current selection
+            const current = useSiteDataStore.getState().selectedSiteIds;
+            const merged = [...new Set([...current, ...childIds])];
+            useSiteDataStore.getState().selectMultipleSites(merged);
+          }
+        }
+        // Without Ctrl, default zoom behavior applies
+      });
+
       map.addLayer(markers);
       markersLayerRef.current = markers;
 
@@ -224,15 +252,15 @@ export function SiteMap({
         opacity: 1,
         fillOpacity: 0.9,
         dashArray: isCentroid ? '4 3' : undefined,
+        locationId: location.id, // Custom option — read by cluster click handler
       });
 
       marker.bindPopup(createPopupContent(location, assessment), { maxWidth: 280 });
       marker.on('click', (e: { originalEvent?: MouseEvent; sourceTarget?: unknown; ctrlKey?: boolean; metaKey?: boolean }) => {
-        // Check both originalEvent and the Leaflet event itself — MarkerCluster
-        // spiderfy can forward clicks without a full originalEvent reference.
         const orig = e.originalEvent;
-        const isMultiSelect = orig?.ctrlKey || orig?.metaKey || e.ctrlKey || e.metaKey;
-        if (isMultiSelect) {
+        const ctrlHeld = orig?.ctrlKey || orig?.metaKey || e.ctrlKey || e.metaKey;
+        // In select-individual mode, every click toggles selection (no Ctrl needed)
+        if (ctrlHeld || interactionModeRef.current === 'select-individual') {
           toggleSiteSelection(location.id);
         } else {
           selectSite(location.id);
@@ -271,6 +299,80 @@ export function SiteMap({
       });
     });
   }, [selectedSiteId, selectedSiteIds, siteLocations, isLoaded, leaflet]);
+
+  // Area select (rectangle drag) mode
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !isLoaded || !leaflet) return;
+
+    if (interactionMode === 'select-area') {
+      map.dragging.disable();
+      map.getContainer().style.cursor = 'crosshair';
+
+      let startLatLng: { lat: number; lng: number } | null = null;
+
+      const onMouseDown = (e: { latlng: { lat: number; lng: number }; originalEvent: MouseEvent }) => {
+        startLatLng = e.latlng;
+        if (areaSelectRectRef.current) {
+          map.removeLayer(areaSelectRectRef.current);
+          areaSelectRectRef.current = null;
+        }
+      };
+
+      const onMouseMove = (e: { latlng: { lat: number; lng: number } }) => {
+        if (!startLatLng) return;
+        if (areaSelectRectRef.current) {
+          map.removeLayer(areaSelectRectRef.current);
+        }
+        areaSelectRectRef.current = leaflet.rectangle(
+          [startLatLng, e.latlng],
+          { color: '#3b82f6', weight: 2, fillOpacity: 0.15, dashArray: '6 3' },
+        ).addTo(map);
+      };
+
+      const onMouseUp = (e: { latlng: { lat: number; lng: number } }) => {
+        if (!startLatLng) return;
+        const bounds = leaflet.latLngBounds(startLatLng, e.latlng);
+
+        // Find all sites within the rectangle
+        const insideIds = siteLocations
+          .filter(({ location }) => bounds.contains(leaflet.latLng(location.latitude, location.longitude)))
+          .map(({ location }) => location.id);
+
+        if (insideIds.length > 0) {
+          const current = useSiteDataStore.getState().selectedSiteIds;
+          const merged = [...new Set([...current, ...insideIds])];
+          useSiteDataStore.getState().selectMultipleSites(merged);
+        }
+
+        // Clean up rectangle
+        if (areaSelectRectRef.current) {
+          map.removeLayer(areaSelectRectRef.current);
+          areaSelectRectRef.current = null;
+        }
+        startLatLng = null;
+      };
+
+      map.on('mousedown', onMouseDown);
+      map.on('mousemove', onMouseMove);
+      map.on('mouseup', onMouseUp);
+
+      return () => {
+        map.off('mousedown', onMouseDown);
+        map.off('mousemove', onMouseMove);
+        map.off('mouseup', onMouseUp);
+        map.dragging.enable();
+        map.getContainer().style.cursor = '';
+        if (areaSelectRectRef.current) {
+          map.removeLayer(areaSelectRectRef.current);
+          areaSelectRectRef.current = null;
+        }
+      };
+    } else {
+      map.dragging.enable();
+      map.getContainer().style.cursor = '';
+    }
+  }, [interactionMode, isLoaded, leaflet, siteLocations]);
 
   // Fit to sites on first load
   useEffect(() => {
@@ -422,6 +524,49 @@ export function SiteMap({
           title="Export map image"
         >
           <Download className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+        </button>
+      </div>
+
+      {/* Interaction mode toggle */}
+      <div className="absolute top-4 right-[72px] z-[1000] flex bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <button
+          onClick={() => setInteractionMode('pan')}
+          className={cn(
+            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
+            interactionMode === 'pan'
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
+          )}
+          title="Pan mode — drag to move map"
+        >
+          <Hand className="w-4 h-4" />
+          <span className="hidden sm:inline">Pan</span>
+        </button>
+        <button
+          onClick={() => setInteractionMode('select-individual')}
+          className={cn(
+            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
+            interactionMode === 'select-individual'
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
+          )}
+          title="Select mode — click markers, Ctrl+click clusters"
+        >
+          <MousePointer className="w-4 h-4" />
+          <span className="hidden sm:inline">Select</span>
+        </button>
+        <button
+          onClick={() => setInteractionMode('select-area')}
+          className={cn(
+            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors',
+            interactionMode === 'select-area'
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
+          )}
+          title="Area select — drag rectangle to select markers"
+        >
+          <BoxSelect className="w-4 h-4" />
+          <span className="hidden sm:inline">Area</span>
         </button>
       </div>
 
