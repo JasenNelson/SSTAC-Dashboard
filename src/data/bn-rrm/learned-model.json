@@ -1,10 +1,10 @@
 {
   "modelId": "bnrrm-landis-causal",
   "modelName": "BN-RRM Landis Causal Model (Tiered: Data + Expert)",
-  "version": "4.0",
-  "description": "20-node Landis BN-RRM causal DAG with tiered CPTs. Metal pathway: partially data-learned (49 BDeu observations, 12/36 configs). Organic pathway: expert-dominant (DR-001 reframed: PAH/PCB do not require co-location for candidacy; CPT-learning limitation: 4 jointly observed station-events, 1/9 configs). Tier 1 (Noisy-OR) for contamination indices, Tier 2-3 (BDeu + expert blend) for bioavailability and effects, Tier 4 (expert-dominated) for ecological risk. Learned from 281 stations in bnrrm_training.db.",
-  "createdAt": "2026-03-10",
-  "updatedAt": "2026-03-15",
+  "version": "4.1",
+  "description": "20-node Landis BN-RRM causal DAG with data-learned CPTs. v4.1: soft evidence injection for derived organic states (c=0.60). Tier 1 (Noisy-OR) for contamination indices, Tier 2-3 (BDeu + expert blend) for bioavailability and effects, Tier 4 (expert-dominated) for ecological risk. Learned from 281 stations in bnrrm_training.db.",
+  "createdAt": "2026-03-27",
+  "updatedAt": "2026-03-27",
   "author": "Tiered CPTs (data-learned metal pathway + expert-dominant organic pathway) from bnrrm_training.db",
   "source": "learned",
   "nStations": 281,
@@ -36945,7 +36945,7 @@
           "distribution": {
             "low": 0.9313725490196078,
             "moderate": 0.049019607843137296,
-            "high": 0.0196078431372549
+            "high": 0.019607843137254905
           }
         },
         {
@@ -36954,9 +36954,9 @@
             "organic_bioavail": "moderate"
           },
           "distribution": {
-            "low": 0.5800000000000001,
-            "moderate": 0.33090909090909093,
-            "high": 0.08909090909090908
+            "low": 0.5244117647058824,
+            "moderate": 0.37470588235294117,
+            "high": 0.10088235294117646
           }
         },
         {
@@ -36966,8 +36966,8 @@
           },
           "distribution": {
             "low": 0.09000000000000002,
-            "moderate": 0.42,
-            "high": 0.48999999999999994
+            "moderate": 0.42000000000000004,
+            "high": 0.49
           }
         },
         {
@@ -36998,7 +36998,7 @@
             "organic_bioavail": "high"
           },
           "distribution": {
-            "low": 0.022500000000000006,
+            "low": 0.022500000000000003,
             "moderate": 0.25500000000000006,
             "high": 0.7224999999999999
           }
@@ -37010,8 +37010,8 @@
           },
           "distribution": {
             "low": 0.09000000000000002,
-            "moderate": 0.42,
-            "high": 0.48999999999999994
+            "moderate": 0.42000000000000004,
+            "high": 0.49
           }
         },
         {
@@ -37020,7 +37020,7 @@
             "organic_bioavail": "moderate"
           },
           "distribution": {
-            "low": 0.022500000000000006,
+            "low": 0.022500000000000003,
             "moderate": 0.25500000000000006,
             "high": 0.7224999999999999
           }
@@ -37031,7 +37031,7 @@
             "organic_bioavail": "high"
           },
           "distribution": {
-            "low": 0.0196078431372549,
+            "low": 0.019607843137254905,
             "moderate": 0.049019607843137296,
             "high": 0.9313725490196078
           }
@@ -37053,7 +37053,7 @@
           "distribution": {
             "low": 0.9313725490196078,
             "moderate": 0.049019607843137296,
-            "high": 0.0196078431372549
+            "high": 0.019607843137254905
           }
         },
         {
@@ -37062,9 +37062,9 @@
             "organic_bioavail": "moderate"
           },
           "distribution": {
-            "low": 0.2816666666666667,
-            "moderate": 0.30333333333333334,
-            "high": 0.415
+            "low": 0.3286111111111112,
+            "moderate": 0.3538888888888889,
+            "high": 0.3175
           }
         },
         {
@@ -37074,8 +37074,8 @@
           },
           "distribution": {
             "low": 0.09000000000000002,
-            "moderate": 0.42,
-            "high": 0.48999999999999994
+            "moderate": 0.42000000000000004,
+            "high": 0.49
           }
         },
         {
@@ -37106,7 +37106,7 @@
             "organic_bioavail": "high"
           },
           "distribution": {
-            "low": 0.022500000000000006,
+            "low": 0.022500000000000003,
             "moderate": 0.25500000000000006,
             "high": 0.7224999999999999
           }
@@ -37118,8 +37118,8 @@
           },
           "distribution": {
             "low": 0.09000000000000002,
-            "moderate": 0.42,
-            "high": 0.48999999999999994
+            "moderate": 0.42000000000000004,
+            "high": 0.49
           }
         },
         {
@@ -37128,7 +37128,7 @@
             "organic_bioavail": "moderate"
           },
           "distribution": {
-            "low": 0.022500000000000006,
+            "low": 0.022500000000000003,
             "moderate": 0.25500000000000006,
             "high": 0.7224999999999999
           }
@@ -37139,7 +37139,7 @@
             "organic_bioavail": "high"
           },
           "distribution": {
-            "low": 0.0196078431372549,
+            "low": 0.019607843137254905,
             "moderate": 0.049019607843137296,
             "high": 0.9313725490196078
           }
@@ -37159,9 +37159,9 @@
             "taxa_richness": "low"
           },
           "distribution": {
-            "low": 0.74777183600713,
-            "moderate": 0.19964349376114085,
-            "high": 0.05258467023172905
+            "low": 0.7871148459383753,
+            "moderate": 0.1673669467787115,
+            "high": 0.04551820728291316
           }
         },
         {
@@ -37170,9 +37170,9 @@
             "taxa_richness": "moderate"
           },
           "distribution": {
-            "low": 0.36571428571428577,
-            "moderate": 0.6114285714285713,
-            "high": 0.02285714285714286
+            "low": 0.4480000000000001,
+            "moderate": 0.5239999999999999,
+            "high": 0.028000000000000008
           }
         },
         {
@@ -37183,7 +37183,7 @@
           "distribution": {
             "low": 0.36,
             "moderate": 0.48,
-            "high": 0.16000000000000003
+            "high": 0.16
           }
         },
         {
@@ -37215,8 +37215,8 @@
           },
           "distribution": {
             "low": 0.09000000000000002,
-            "moderate": 0.42,
-            "high": 0.48999999999999994
+            "moderate": 0.42000000000000004,
+            "high": 0.49
           }
         },
         {
@@ -37225,7 +37225,7 @@
             "taxa_richness": "low"
           },
           "distribution": {
-            "low": 0.16000000000000003,
+            "low": 0.16,
             "moderate": 0.48,
             "high": 0.36
           }
@@ -37236,8 +37236,8 @@
             "taxa_richness": "moderate"
           },
           "distribution": {
-            "low": 0.03999999999999998,
-            "moderate": 0.3199999999999999,
+            "low": 0.03999999999999999,
+            "moderate": 0.31999999999999995,
             "high": 0.6400000000000001
           }
         },
@@ -37247,7 +37247,7 @@
             "taxa_richness": "high"
           },
           "distribution": {
-            "low": 0.0196078431372549,
+            "low": 0.019607843137254905,
             "moderate": 0.049019607843137296,
             "high": 0.9313725490196078
           }
@@ -37590,10 +37590,10 @@
     }
   ],
   "validation": {
-    "loo_accuracy": 0.5488,
-    "loo_kappa": 0.18,
-    "accuracy": 0.5488,
-    "kappa": 0.18,
+    "loo_accuracy": 0.5244,
+    "loo_kappa": 0.2072,
+    "accuracy": 0.5244,
+    "kappa": 0.2072,
     "nComplete": 82
   },
   "dataCoverage": {
