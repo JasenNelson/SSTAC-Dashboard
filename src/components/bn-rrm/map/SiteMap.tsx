@@ -60,6 +60,92 @@ const BASE_LAYERS = {
   },
 };
 
+const BC_WMS_URL = 'https://openmaps.gov.bc.ca/geo/pub/ows';
+const BC_ATTR = '© Province of British Columbia';
+
+interface OverlayDef {
+  name: string;
+  layer: string;
+  color: string; // Legend swatch color
+  category: 'protected' | 'aquatic' | 'ecology' | 'regulatory';
+}
+
+const OVERLAY_LAYERS: Record<string, OverlayDef> = {
+  parks: {
+    name: 'Parks & Protected Areas',
+    layer: 'pub:WHSE_TANTALIS.TA_PARK_ECORES_PA_SVW',
+    color: '#22c55e',
+    category: 'protected',
+  },
+  conservancy: {
+    name: 'Conservancy Areas',
+    layer: 'pub:WHSE_TANTALIS.TA_CONSERVANCY_AREAS_SVW',
+    color: '#16a34a',
+    category: 'protected',
+  },
+  nationalParks: {
+    name: 'National Parks (BC)',
+    layer: 'pub:WHSE_ADMIN_BOUNDARIES.CLAB_NATIONAL_PARKS',
+    color: '#15803d',
+    category: 'protected',
+  },
+  criticalHabitat: {
+    name: 'Critical Habitat (SARA)',
+    layer: 'pub:WHSE_WILDLIFE_MANAGEMENT.WCP_CRITICAL_HABITAT_SP',
+    color: '#dc2626',
+    category: 'protected',
+  },
+  wildlifeHabitat: {
+    name: 'Wildlife Habitat Areas',
+    layer: 'pub:WHSE_WILDLIFE_MANAGEMENT.WCP_WILDLIFE_HABITAT_AREA_POLY',
+    color: '#ea580c',
+    category: 'protected',
+  },
+  oldGrowth: {
+    name: 'Old Growth Forests',
+    layer: 'pub:WHSE_FOREST_VEGETATION.OGSR_TAP_OG_FORESTS_SP',
+    color: '#166534',
+    category: 'ecology',
+  },
+  watersheds: {
+    name: 'Watersheds',
+    layer: 'pub:WHSE_BASEMAPPING.FWA_ASSESSMENT_WATERSHEDS_POLY',
+    color: '#3b82f6',
+    category: 'aquatic',
+  },
+  wetlands: {
+    name: 'Wetlands',
+    layer: 'pub:WHSE_BASEMAPPING.FWA_WETLANDS_POLY',
+    color: '#0ea5e9',
+    category: 'aquatic',
+  },
+  ecoregions: {
+    name: 'Freshwater Ecoregions',
+    layer: 'pub:WHSE_LAND_AND_NATURAL_RESOURCE.EAUBC_ECOREGIONS_SP',
+    color: '#8b5cf6',
+    category: 'ecology',
+  },
+  bec: {
+    name: 'Biogeoclimatic Zones',
+    layer: 'pub:WHSE_FOREST_VEGETATION.BEC_BIOGEOCLIMATIC_POLY',
+    color: '#a855f7',
+    category: 'ecology',
+  },
+  csrWildlands: {
+    name: 'CSR Natural Wildlands',
+    layer: 'pub:WHSE_ENVIRONMENT_ASSESSMENT.CSR_NATURAL_WILDLANDS_SP',
+    color: '#f59e0b',
+    category: 'regulatory',
+  },
+};
+
+const OVERLAY_CATEGORIES: { key: string; label: string }[] = [
+  { key: 'protected', label: 'Protected Areas & Habitat' },
+  { key: 'aquatic', label: 'Aquatic Features' },
+  { key: 'ecology', label: 'Ecosystem Classification' },
+  { key: 'regulatory', label: 'Regulatory' },
+];
+
 export function SiteMap({
   className,
   onSiteSelect,
@@ -79,6 +165,9 @@ export function SiteMap({
   const [leaflet, setLeaflet] = useState<any>(null);
   const [activeLayer, setActiveLayer] = useState<keyof typeof BASE_LAYERS>('streets');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
+  const [activeOverlays, setActiveOverlays] = useState<Set<string>>(new Set());
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const overlayLayersRef = useRef<Map<string, any>>(new Map());
   const [siteListExpanded, setSiteListExpanded] = useState(true);
   const [interactionMode, setInteractionMode] = useState<'pan' | 'select-individual' | 'select-area'>('pan');
   const interactionModeRef = useRef(interactionMode);
@@ -225,6 +314,49 @@ export function SiteMap({
       attribution: layerConfig.attribution,
     }).addTo(map);
   }, [activeLayer, leaflet]);
+
+  // Manage WMS overlay layers
+  useEffect(() => {
+    if (!mapInstanceRef.current || !leaflet) return;
+    const map = mapInstanceRef.current;
+    const currentLayers = overlayLayersRef.current;
+
+    // Remove overlays no longer active
+    for (const [key, layer] of currentLayers.entries()) {
+      if (!activeOverlays.has(key)) {
+        map.removeLayer(layer);
+        currentLayers.delete(key);
+      }
+    }
+
+    // Add newly active overlays
+    for (const key of activeOverlays) {
+      if (!currentLayers.has(key)) {
+        const def = OVERLAY_LAYERS[key];
+        if (!def) continue;
+        const wmsLayer = leaflet.tileLayer.wms(BC_WMS_URL, {
+          layers: def.layer,
+          format: 'image/png',
+          transparent: true,
+          opacity: 0.6,
+          attribution: BC_ATTR,
+        }).addTo(map);
+        currentLayers.set(key, wmsLayer);
+      }
+    }
+  }, [activeOverlays, leaflet]);
+
+  const toggleOverlay = useCallback((key: string) => {
+    setActiveOverlays(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
 
   // Track individual markers by location ID so selection updates don't destroy cluster/spiderfy state
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -503,16 +635,47 @@ export function SiteMap({
           </button>
 
           {showLayerMenu && (
-            <div className="absolute right-full mr-2 top-0 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 min-w-[140px]">
+            <div className="absolute right-full mr-2 top-0 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 min-w-[220px] max-h-[70vh] overflow-y-auto">
+              {/* Base layers */}
+              <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Base Map</p>
               {Object.entries(BASE_LAYERS).map(([key, layer]) => (
                 <button
                   key={key}
-                  onClick={() => { setActiveLayer(key as keyof typeof BASE_LAYERS); setShowLayerMenu(false); }}
-                  className={cn("w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700", activeLayer === key && "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium")}
+                  onClick={() => setActiveLayer(key as keyof typeof BASE_LAYERS)}
+                  className={cn("w-full px-3 py-1.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2", activeLayer === key && "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium")}
                 >
+                  <div className={cn("w-3 h-3 rounded-full border-2", activeLayer === key ? "border-blue-500 bg-blue-500" : "border-slate-300 dark:border-slate-600")} />
                   {layer.name}
                 </button>
               ))}
+
+              {/* Overlay layers by category */}
+              {OVERLAY_CATEGORIES.map(({ key: catKey, label }) => {
+                const overlaysInCat = Object.entries(OVERLAY_LAYERS).filter(([, def]) => def.category === catKey);
+                if (overlaysInCat.length === 0) return null;
+                return (
+                  <div key={catKey}>
+                    <div className="border-t border-slate-200 dark:border-slate-700 mt-1" />
+                    <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{label}</p>
+                    {overlaysInCat.map(([key, def]) => (
+                      <button
+                        key={key}
+                        onClick={() => toggleOverlay(key)}
+                        className={cn("w-full px-3 py-1.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2", activeOverlays.has(key) && "bg-green-50 dark:bg-green-900/20")}
+                      >
+                        <div className={cn(
+                          "w-3 h-3 rounded-sm border-2 transition-colors",
+                          activeOverlays.has(key)
+                            ? "border-green-500 bg-green-500"
+                            : "border-slate-300 dark:border-slate-600",
+                        )} />
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: def.color, opacity: 0.7 }} />
+                        <span className="truncate">{def.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
