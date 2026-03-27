@@ -198,7 +198,11 @@ export function SiteMap({
     }).addTo(map);
   }, [activeLayer, leaflet]);
 
-  // Update markers
+  // Track individual markers by location ID so selection updates don't destroy cluster/spiderfy state
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markerMapRef = useRef<Map<string, any>>(new Map());
+
+  // Create/recreate markers only when the site list or assessments change
   useEffect(() => {
     if (!mapInstanceRef.current || !isLoaded || !leaflet || !markersLayerRef.current) return;
 
@@ -206,33 +210,28 @@ export function SiteMap({
     const markersLayer = markersLayerRef.current;
 
     markersLayer.clearLayers();
+    markerMapRef.current.clear();
 
     siteLocations.forEach(({ location, assessment }) => {
       const color = getMarkerColor(assessment);
-      const isSelected = selectedSiteIds.includes(location.id) || selectedSiteId === location.id;
-
       const isCentroid = location.spatialClass === 'SITE_CENTROID';
-      const borderColor = isSelected
-        ? '#3b82f6'
-        : location.sourceTag === 'training'
-          ? '#a855f7'
-          : location.sourceTag === 'comparison'
-            ? '#14b8a6'
-            : 'white';
 
       const marker = L.circleMarker([location.latitude, location.longitude], {
-        radius: isSelected ? 16 : isCentroid ? 14 : 12,
+        radius: isCentroid ? 14 : 12,
         fillColor: color,
-        color: borderColor,
-        weight: isSelected ? 4 : 3,
+        color: 'white',
+        weight: 3,
         opacity: 1,
         fillOpacity: 0.9,
         dashArray: isCentroid ? '4 3' : undefined,
       });
 
       marker.bindPopup(createPopupContent(location, assessment), { maxWidth: 280 });
-      marker.on('click', (e: { originalEvent?: { ctrlKey?: boolean; metaKey?: boolean } }) => {
-        const isMultiSelect = e.originalEvent?.ctrlKey || e.originalEvent?.metaKey;
+      marker.on('click', (e: { originalEvent?: MouseEvent; sourceTarget?: unknown; ctrlKey?: boolean; metaKey?: boolean }) => {
+        // Check both originalEvent and the Leaflet event itself — MarkerCluster
+        // spiderfy can forward clicks without a full originalEvent reference.
+        const orig = e.originalEvent;
+        const isMultiSelect = orig?.ctrlKey || orig?.metaKey || e.ctrlKey || e.metaKey;
         if (isMultiSelect) {
           toggleSiteSelection(location.id);
         } else {
@@ -241,9 +240,37 @@ export function SiteMap({
         }
       });
 
+      markerMapRef.current.set(location.id, marker);
       markersLayer.addLayer(marker);
     });
-  }, [siteLocations, selectedSiteId, selectedSiteIds, isLoaded, leaflet, onSiteSelect, selectSite, toggleSiteSelection]);
+  }, [siteLocations, isLoaded, leaflet, onSiteSelect, selectSite, toggleSiteSelection]);
+
+  // Update marker styles when selection changes — without clearing/recreating layers
+  useEffect(() => {
+    if (!isLoaded || !leaflet) return;
+
+    markerMapRef.current.forEach((marker, locationId) => {
+      const site = siteLocations.find(s => s.location.id === locationId);
+      if (!site) return;
+      const { location } = site;
+      const isSelected = selectedSiteIds.includes(locationId) || selectedSiteId === locationId;
+      const isCentroid = location.spatialClass === 'SITE_CENTROID';
+
+      const borderColor = isSelected
+        ? '#3b82f6'
+        : location.sourceTag === 'training'
+          ? '#a855f7'
+          : location.sourceTag === 'comparison'
+            ? '#14b8a6'
+            : 'white';
+
+      marker.setStyle({
+        radius: isSelected ? 16 : isCentroid ? 14 : 12,
+        color: borderColor,
+        weight: isSelected ? 4 : 3,
+      });
+    });
+  }, [selectedSiteId, selectedSiteIds, siteLocations, isLoaded, leaflet]);
 
   // Fit to sites on first load
   useEffect(() => {
