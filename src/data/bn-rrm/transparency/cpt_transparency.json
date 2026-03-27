@@ -682,7 +682,7 @@
       "sed_pahs",
       "sed_pcbs"
     ],
-    "description": "4 analyzed co-located PAH+PCB station-events (3 with detected PCBs), covering 1 of 9 parent configurations. All from ALCAN Kitimat. Organic pathway CPTs remain expert-dominant.",
+    "description": "Organic pathway CPTs remain expert-dominant. DR-001 reframed: PAH and PCB do not need co-location for candidacy/search \u2014 each needs its own conditions/effects evidence. Current code limitation: CPT fitting requires both parents observed, so only 4 ALCAN station-events (1/9 configs) contribute to CPT learning.",
     "severity": "HIGH"
   },
   "tier_summary": [

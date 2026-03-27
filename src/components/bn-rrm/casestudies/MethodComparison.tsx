@@ -21,7 +21,7 @@ const METHODS = [
     ],
     limitations: [
       'Trained on 8 BC sites (82 co-located stations)',
-      'Organic pathway expert-dominant (limited PAH+PCB data)',
+      'Organic pathway expert-dominant (DR-001 reframed: PAH/PCB candidacy decoupled; CPT learning limited by jointly observed data)',
       'Moderate-risk detection limited (12.5% recall in LOO)',
       'Requires discretization of continuous measurements',
     ],

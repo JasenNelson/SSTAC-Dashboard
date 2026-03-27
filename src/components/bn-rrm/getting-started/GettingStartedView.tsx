@@ -125,7 +125,7 @@ export function GettingStartedView() {
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-3">
                 <div className="space-y-2">
                   <LimitationItem text="The model was trained on 8 BC contaminated sites (82 co-located stations). Performance at sites with very different contamination profiles has not been validated." />
-                  <LimitationItem text="The organic pathway (PAH + PCB combined) relies primarily on expert judgment rather than training data, due to structural scarcity of co-located PAH+PCB data in BC sediment assessments." />
+                  <LimitationItem text="The organic pathway (PAH + PCB) relies primarily on expert judgment rather than training data. DR-001 reframed: PAH and PCB do not need co-location for candidacy — each needs its own conditions/effects evidence. Current code limitation: CPT fitting requires both parents observed, and jointly analyzed PAH+PCB data is scarce in BC sediment assessments (4 station-events from 1 site)." />
                   <LimitationItem text="Moderate-risk detection is limited (12.5% recall). The model is better at identifying high-risk and low-risk stations than moderate-risk stations." />
                   <LimitationItem text="Model outputs are posterior probability estimates, not measured environmental outcomes. They should inform professional judgment, not replace it." />
                 </div>

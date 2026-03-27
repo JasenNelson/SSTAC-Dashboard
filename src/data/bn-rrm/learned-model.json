@@ -2,7 +2,7 @@
   "modelId": "bnrrm-landis-causal",
   "modelName": "BN-RRM Landis Causal Model (Tiered: Data + Expert)",
   "version": "4.0",
-  "description": "20-node Landis BN-RRM causal DAG with tiered CPTs. Metal pathway: partially data-learned (49 BDeu observations, 12/36 configs). Organic pathway: expert-dominant (4 co-located PAH+PCB station-events, 1/9 configs — DR-001). Tier 1 (Noisy-OR) for contamination indices, Tier 2-3 (BDeu + expert blend) for bioavailability and effects, Tier 4 (expert-dominated) for ecological risk. Learned from 281 stations in bnrrm_training.db.",
+  "description": "20-node Landis BN-RRM causal DAG with tiered CPTs. Metal pathway: partially data-learned (49 BDeu observations, 12/36 configs). Organic pathway: expert-dominant (DR-001 reframed: PAH/PCB do not require co-location for candidacy; CPT-learning limitation: 4 jointly observed station-events, 1/9 configs). Tier 1 (Noisy-OR) for contamination indices, Tier 2-3 (BDeu + expert blend) for bioavailability and effects, Tier 4 (expert-dominated) for ecological risk. Learned from 281 stations in bnrrm_training.db.",
   "createdAt": "2026-03-10",
   "updatedAt": "2026-03-15",
   "author": "Tiered CPTs (data-learned metal pathway + expert-dominant organic pathway) from bnrrm_training.db",

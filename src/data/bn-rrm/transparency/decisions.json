@@ -16,10 +16,10 @@
       "status": "ACTIVE LIMITATION",
       "date": "2026-03-15",
       "severity": "HIGH",
-      "summary": "4 analyzed co-located PAH+PCB station-events (3 with detected PCBs), covering 1 of 9 parent configurations. All from ALCAN Kitimat. Organic pathway remains expert-dominant.",
-      "rationale": "PCBs not routinely analyzed in BC sediment assessments. Only ALCAN yielded co-located PAH+PCB data (4 stations, single contamination profile). 8/9 parent configurations remain unobserved.",
-      "impact": "Organic pathway CPTs (organic_contamination, organic_bioavail) remain expert-dominant. Noisy-OR Tier 1 threshold (n>=5 per config) not met; CPTs fall back to expert prior.",
-      "reopen_criteria": ">=10 co-located PAH+PCB measurements from >=2 sites, >=3/9 parent configurations, LOO validation gate.",
+      "summary": "Organic pathway remains expert-dominant. DR-001 was reframed: PAH and PCB do not need to be co-located in the same samples for candidacy/search \u2014 each substance needs its own co-located conditions/effects evidence independently. Current code limitation: organic_contamination CPT fitting still requires both parents observed, so only 4 ALCAN station-events (1/9 configs) contribute to CPT learning.",
+      "rationale": "PCBs not routinely analyzed in BC sediment assessments. PAH-only and PCB-only stations can support candidacy and inference (marginalization), but the current organic_contamination CPT fitting code requires both sed_pahs and sed_pcbs observed at the same station. Only ALCAN yielded joint PAH+PCB data (4 stations, single config). 8/9 parent configurations remain unobserved for CPT learning.",
+      "impact": "Organic pathway CPTs (organic_contamination, organic_bioavail) remain expert-dominant. Noisy-OR Tier 1 threshold (n>=5 per config) not met; CPTs fall back to expert prior. PAH-only evidence supports inference via marginalization but does not expand CPT learning under current code.",
+      "reopen_criteria": "For CPT learning: >=10 station-events with both PAH and PCB observed, from >=2 sites, >=3/9 parent configurations, LOO validation gate. For candidacy/search: PAH-only or PCB-only sites are valid candidates independently (reframed, no co-location requirement).",
       "related_issues": [
         "I-016"
       ]
@@ -66,7 +66,7 @@
       "title": "Organic pathway expert-dominant",
       "severity": "HIGH",
       "category": "data_gap",
-      "description": "4 analyzed co-located PAH+PCB station-events (3 with detected PCBs), covering 1 of 9 parent configurations. All from ALCAN \u2014 expert-dominant, not entirely expert-elicited.",
+      "description": "Organic pathway expert-dominant. DR-001 reframed: PAH and PCB do not need co-location for candidacy/search. Current code limitation: organic_contamination CPT fitting requires both parents observed \u2014 only 4 ALCAN station-events (1/9 configs) contribute to CPT learning. Not entirely expert-elicited, but expert-dominant.",
       "mitigation": "Metal pathway claims are in-scope (49 BDeu obs across 12/36 configs). Organic pathway claims are out-of-scope for data-supported inference.",
       "related": "DR-001, I-016"
     },
