@@ -13,6 +13,8 @@ export interface SiteLocation {
   region?: string;
   waterbody?: string;
   dateCollected: string;
+  sourceTag?: 'user' | 'training' | 'comparison';
+  spatialClass?: 'EXACT' | 'APPROXIMATE' | 'ZONE' | 'SITE_CENTROID';
 }
 
 export interface SedimentChemistry {

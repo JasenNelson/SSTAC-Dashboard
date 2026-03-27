@@ -1,12 +1,12 @@
 /**
  * SiteDetails Component
  *
- * Side panel showing details of selected site on the map
+ * Side panel showing details of selected site on the map.
+ * Supports multi-select for batch assessment and multi-site report export.
  */
 
 'use client';
 
-// React hooks available if needed
 import { cn } from '@/utils/cn';
 import { useSiteDataStore } from '@/stores/bn-rrm/siteDataStore';
 import {
@@ -18,22 +18,28 @@ import {
   X,
   Play,
   FileText,
+  Info,
 } from 'lucide-react';
 
 interface SiteDetailsProps {
   className?: string;
   onClose?: () => void;
   onRunAssessment?: (siteId: string) => void;
+  onRunBatchAssessment?: (siteIds: string[]) => void;
 }
 
-export function SiteDetails({ className, onClose, onRunAssessment }: SiteDetailsProps) {
+export function SiteDetails({ className, onClose, onRunAssessment, onRunBatchAssessment }: SiteDetailsProps) {
   const selectedSiteId = useSiteDataStore((state) => state.selectedSiteId);
+  const selectedSiteIds = useSiteDataStore((state) => state.selectedSiteIds);
   const sites = useSiteDataStore((state) => state.sites);
   const assessments = useSiteDataStore((state) => state.assessments);
   const selectSite = useSiteDataStore((state) => state.selectSite);
+  const batchProgress = useSiteDataStore((state) => state.batchAssessmentProgress);
 
   const site = selectedSiteId ? sites[selectedSiteId] : undefined;
   const assessment = selectedSiteId ? assessments[selectedSiteId] : undefined;
+  const multiCount = selectedSiteIds.length;
+  const isMultiSelect = multiCount > 1;
 
   if (!site) {
     return (
@@ -54,6 +60,41 @@ export function SiteDetails({ className, onClose, onRunAssessment }: SiteDetails
   const maxCopper = Math.max(...sedimentChemistry.map((c) => c.copper || 0));
   const maxZinc = Math.max(...sedimentChemistry.map((c) => c.zinc || 0));
 
+  // Determine batch assessment button label
+  const allHaveAssessments = isMultiSelect && selectedSiteIds.every(id => assessments[id]);
+  const batchButtonLabel = isMultiSelect
+    ? `${allHaveAssessments ? 'Re-run' : 'Run'} Assessment (${multiCount} sites)`
+    : `${assessment ? 'Re-run' : 'Run'} Assessment`;
+
+  // Multi-site report export
+  const handleReportExport = () => {
+    if (isMultiSelect) {
+      const selectedSites = selectedSiteIds
+        .map(id => ({ site: sites[id], assessment: assessments[id] ?? null }))
+        .filter(s => s.site);
+      const data = {
+        exportDate: new Date().toISOString(),
+        siteCount: selectedSites.length,
+        sites: selectedSites,
+      };
+      downloadJson(data, `bn-rrm-multi-site-${new Date().toISOString().split('T')[0]}.json`);
+    } else {
+      const data = { exportDate: new Date().toISOString(), site, assessment: assessment ?? null };
+      downloadJson(data, `bn-rrm-site-${location.id}-${new Date().toISOString().split('T')[0]}.json`);
+    }
+  };
+
+  // Assessment handler — single or batch
+  const handleAssessment = () => {
+    if (isMultiSelect && onRunBatchAssessment) {
+      onRunBatchAssessment(selectedSiteIds);
+    } else if (onRunAssessment) {
+      onRunAssessment(location.id);
+    }
+  };
+
+  const isReferenceData = location.sourceTag === 'training' || location.sourceTag === 'comparison';
+
   return (
     <div className={cn('bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col', className)}>
       <div className="p-4 border-b border-slate-100 dark:border-slate-700">
@@ -61,6 +102,9 @@ export function SiteDetails({ className, onClose, onRunAssessment }: SiteDetails
           <div>
             <h3 className="font-semibold text-slate-800 dark:text-slate-100">{location.name}</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">{location.region || 'No region'}</p>
+            {isMultiSelect && (
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">{multiCount} sites selected</p>
+            )}
           </div>
           {onClose && (
             <button onClick={() => { selectSite(null); onClose(); }} className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600">
@@ -68,6 +112,12 @@ export function SiteDetails({ className, onClose, onRunAssessment }: SiteDetails
             </button>
           )}
         </div>
+        {isReferenceData && (
+          <div className="flex items-center gap-1.5 mt-2 px-2 py-1 bg-amber-50 dark:bg-amber-900/20 rounded text-xs text-amber-700 dark:text-amber-400">
+            <Info className="w-3.5 h-3.5 shrink-0" />
+            Reference data — site-level mean chemistry
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -157,7 +207,7 @@ export function SiteDetails({ className, onClose, onRunAssessment }: SiteDetails
             <div className="text-center py-4">
               <AlertTriangle className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
               <p className="text-sm text-slate-500 dark:text-slate-400">Not yet assessed</p>
-              {onRunAssessment && (
+              {onRunAssessment && !isMultiSelect && (
                 <button onClick={() => onRunAssessment(location.id)} className="mt-3 flex items-center gap-2 px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors mx-auto">
                   <Play className="w-4 h-4" />Run Assessment
                 </button>
@@ -168,33 +218,49 @@ export function SiteDetails({ className, onClose, onRunAssessment }: SiteDetails
       </div>
 
       <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+        {batchProgress && (
+          <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
+            Assessing {batchProgress.current}/{batchProgress.total}...
+          </p>
+        )}
         <div className="flex gap-2">
-          {onRunAssessment && (
-            <button onClick={() => onRunAssessment(location.id)} className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors">
-              <Play className="w-4 h-4" />{assessment ? 'Re-run' : 'Run'} Assessment
+          {(onRunAssessment || onRunBatchAssessment) && (
+            <button
+              onClick={handleAssessment}
+              disabled={!!batchProgress}
+              className={cn(
+                'flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-colors',
+                batchProgress
+                  ? 'bg-blue-300 dark:bg-blue-800 text-white cursor-not-allowed'
+                  : 'bg-blue-500 text-white hover:bg-blue-600',
+              )}
+            >
+              <Play className="w-4 h-4" />{batchButtonLabel}
             </button>
           )}
           <button
-            onClick={() => {
-              const data = { exportDate: new Date().toISOString(), site, assessment: assessment ?? null };
-              const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `bn-rrm-site-${location.id}-${new Date().toISOString().split('T')[0]}.json`;
-              a.style.display = 'none';
-              document.body.appendChild(a);
-              a.click();
-              setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-            }}
+            onClick={handleReportExport}
             className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
           >
-            <FileText className="w-4 h-4" />Report
+            <FileText className="w-4 h-4" />
+            {isMultiSelect ? `Report (${multiCount})` : 'Report'}
           </button>
         </div>
       </div>
     </div>
   );
+}
+
+function downloadJson(data: unknown, filename: string) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
 }
 
 function Section({ title, icon: Icon, children }: { title: string; icon: typeof MapPin; children: React.ReactNode }) {

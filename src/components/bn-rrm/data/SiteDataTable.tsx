@@ -218,7 +218,15 @@ export function SiteDataTable({ onRunAssessment, onViewOnMap }: SiteDataTablePro
               <StatusIcon status={status} />
 
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-slate-800 dark:text-slate-100 truncate">{site.location.name}</p>
+                <p className="font-medium text-slate-800 dark:text-slate-100 truncate">
+                  {site.location.name}
+                  {site.location.sourceTag === 'training' && (
+                    <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300">Training</span>
+                  )}
+                  {site.location.sourceTag === 'comparison' && (
+                    <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">Comparison</span>
+                  )}
+                </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {site.sedimentChemistry.length} sample{site.sedimentChemistry.length !== 1 ? 's' : ''} • {site.location.region || 'No region'}
                 </p>

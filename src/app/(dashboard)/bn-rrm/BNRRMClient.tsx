@@ -8,6 +8,7 @@ import { useSiteDataStore } from '@/stores/bn-rrm/siteDataStore';
 import { NodeInspector } from '@/components/bn-rrm/panels/NodeInspector';
 import { ResultsPanel } from '@/components/bn-rrm/panels/ResultsPanel';
 import { DataUploader } from '@/components/bn-rrm/data/DataUploader';
+import { ReferenceDataImporter } from '@/components/bn-rrm/data/ReferenceDataImporter';
 import { SiteDataTable } from '@/components/bn-rrm/data/SiteDataTable';
 import { ExportPanel } from '@/components/bn-rrm/data/ExportPanel';
 import { SiteDetails } from '@/components/bn-rrm/map/SiteDetails';
@@ -80,7 +81,7 @@ export default function BNRRMClient() {
   }, [selectSite]);
 
   // Run causal BN-RRM assessment for a site
-  const handleRunAssessment = useCallback((siteId: string) => {
+  const handleRunAssessment = useCallback((siteId: string, options?: { silent?: boolean }) => {
     const site = sites[siteId];
     if (!site) return;
 
@@ -159,18 +160,46 @@ export default function BNRRMClient() {
       keyModifiers,
     });
 
-    // Build evidence summary for alert
-    const evidenceKeys = Object.entries(bnEvidence)
-      .map(([k, v]) => `${k}: ${v}`)
-      .join('\n');
+    if (!options?.silent) {
+      // Build evidence summary for alert
+      const evidenceKeys = Object.entries(bnEvidence)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join('\n');
 
-    alert(
-      `BN-RRM Causal Assessment for ${site.location.name}\n\n` +
-      `Ecological Risk: Low=${(lowProb*100).toFixed(0)}%, Moderate=${(modProb*100).toFixed(0)}%, High=${(highProb*100).toFixed(0)}%\n\n` +
-      `Evidence set:\n${evidenceKeys}\n\n` +
-      `Key contaminants: ${keyContaminants.join(', ') || 'None above ISQG'}`
-    );
+      alert(
+        `BN-RRM Causal Assessment for ${site.location.name}\n\n` +
+        `Ecological Risk: Low=${(lowProb*100).toFixed(0)}%, Moderate=${(modProb*100).toFixed(0)}%, High=${(highProb*100).toFixed(0)}%\n\n` +
+        `Evidence set:\n${evidenceKeys}\n\n` +
+        `Key contaminants: ${keyContaminants.join(', ') || 'None above ISQG'}`
+      );
+    }
+
+    return mostLikelyImpact;
   }, [sites, addAssessment, model]);
+
+  // Run batch assessment for multiple sites
+  const setBatchProgress = useSiteDataStore((state) => state.setBatchAssessmentProgress);
+  const handleRunBatchAssessment = useCallback((siteIds: string[]) => {
+    const counts = { none: 0, minor: 0, moderate: 0, severe: 0 };
+    setBatchProgress({ current: 0, total: siteIds.length, currentSiteName: '' });
+
+    for (let i = 0; i < siteIds.length; i++) {
+      const site = sites[siteIds[i]];
+      if (!site) continue;
+      setBatchProgress({ current: i + 1, total: siteIds.length, currentSiteName: site.location.name });
+      const impact = handleRunAssessment(siteIds[i], { silent: true });
+      if (impact) counts[impact]++;
+    }
+
+    setBatchProgress(null);
+
+    const parts: string[] = [];
+    if (counts.severe > 0) parts.push(`${counts.severe} severe`);
+    if (counts.moderate > 0) parts.push(`${counts.moderate} moderate`);
+    if (counts.minor > 0) parts.push(`${counts.minor} minor`);
+    if (counts.none > 0) parts.push(`${counts.none} none`);
+    alert(`Batch assessment complete: ${siteIds.length} sites assessed.\n\nResults: ${parts.join(', ')}`);
+  }, [sites, handleRunAssessment, setBatchProgress]);
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col bg-slate-100 dark:bg-slate-900 bn-rrm-wrapper">
@@ -214,7 +243,7 @@ export default function BNRRMClient() {
         {activeTab === 'conceptual' && <ConceptualView />}
         {activeTab === 'detailed' && <DetailedView showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} onCloseLeftPanel={() => setShowLeftPanel(false)} />}
         {activeTab === 'cpt' && <CPTExplorer />}
-        {activeTab === 'map' && <MapView showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} onRunAssessment={handleRunAssessment} />}
+        {activeTab === 'map' && <MapView showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} onRunAssessment={handleRunAssessment} onRunBatchAssessment={handleRunBatchAssessment} />}
         {activeTab === 'data' && <DataView onViewOnMap={handleViewOnMap} onRunAssessment={handleRunAssessment} />}
         {activeTab === 'review' && <ReviewView />}
         {activeTab === 'casestudies' && <CaseStudiesView />}
@@ -233,11 +262,11 @@ function DetailedView({ showLeftPanel, showRightPanel, onCloseLeftPanel }: { sho
   );
 }
 
-function MapView({ showLeftPanel, showRightPanel, onRunAssessment }: { showLeftPanel: boolean; showRightPanel: boolean; onRunAssessment: (siteId: string) => void }) {
+function MapView({ showLeftPanel, showRightPanel, onRunAssessment, onRunBatchAssessment }: { showLeftPanel: boolean; showRightPanel: boolean; onRunAssessment: (siteId: string) => void; onRunBatchAssessment: (siteIds: string[]) => void }) {
   const selectSite = useSiteDataStore((state) => state.selectSite);
   return (
     <div className="flex-1 flex overflow-hidden">
-      <div className={cn('transition-all duration-300 ease-in-out overflow-hidden', showLeftPanel ? 'w-80' : 'w-0')}><SiteDetails className="h-full w-80" onRunAssessment={onRunAssessment} /></div>
+      <div className={cn('transition-all duration-300 ease-in-out overflow-hidden', showLeftPanel ? 'w-80' : 'w-0')}><SiteDetails className="h-full w-80" onRunAssessment={onRunAssessment} onRunBatchAssessment={onRunBatchAssessment} /></div>
       <div className="flex-1 relative"><SiteMap onSiteSelect={(id) => selectSite(id)} /></div>
       <div className={cn('transition-all duration-300 ease-in-out overflow-hidden', showRightPanel ? 'w-80' : 'w-0')}><ResultsPanel className="h-full w-80" /></div>
     </div>
@@ -266,6 +295,9 @@ function DataView({ onViewOnMap, onRunAssessment }: { onViewOnMap: (siteId: stri
               <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Upload Site Data</h2>
               <p className="text-slate-500 dark:text-slate-400 mb-6">Import sediment chemistry, toxicity, and benthic community data from CSV, Excel, or JSON files.</p>
               <DataUploader />
+              <div className="mt-8 pt-8 border-t border-slate-200 dark:border-slate-700">
+                <ReferenceDataImporter />
+              </div>
             </div>
           )}
           {activeSection === 'sites' && (

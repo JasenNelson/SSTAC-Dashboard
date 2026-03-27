@@ -211,13 +211,23 @@ export function SiteMap({
       const color = getMarkerColor(assessment);
       const isSelected = selectedSiteIds.includes(location.id) || selectedSiteId === location.id;
 
+      const isCentroid = location.spatialClass === 'SITE_CENTROID';
+      const borderColor = isSelected
+        ? '#3b82f6'
+        : location.sourceTag === 'training'
+          ? '#a855f7'
+          : location.sourceTag === 'comparison'
+            ? '#14b8a6'
+            : 'white';
+
       const marker = L.circleMarker([location.latitude, location.longitude], {
-        radius: isSelected ? 16 : 12,
+        radius: isSelected ? 16 : isCentroid ? 14 : 12,
         fillColor: color,
-        color: isSelected ? '#3b82f6' : 'white',
+        color: borderColor,
         weight: isSelected ? 4 : 3,
         opacity: 1,
         fillOpacity: 0.9,
+        dashArray: isCentroid ? '4 3' : undefined,
       });
 
       marker.bindPopup(createPopupContent(location, assessment), { maxWidth: 280 });
@@ -397,6 +407,10 @@ export function SiteMap({
           <LegendItem color="#f97316" label="Moderate" />
           <LegendItem color="#ef4444" label="Severe" />
         </div>
+        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 space-y-2">
+          <LegendItem color="#a855f7" label="Training site" />
+          <LegendItem color="#14b8a6" label="Comparison site" />
+        </div>
       </div>
 
       {/* Site count header */}
@@ -473,6 +487,8 @@ export function SiteMap({
                       />
                       <div className="flex-1 min-w-0">
                         <p className={cn("text-sm font-medium truncate", isSelected ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300")}>
+                          {location.sourceTag === 'training' && <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400 mr-1">[T]</span>}
+                          {location.sourceTag === 'comparison' && <span className="text-[9px] font-bold text-teal-600 dark:text-teal-400 mr-1">[C]</span>}
                           {location.name}
                         </p>
                         <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">

@@ -22,11 +22,13 @@ interface SiteDataState {
   isUploading: boolean;
   uploadProgress: number;
   lastUploadResult: { success: boolean; message: string } | null;
+  batchAssessmentProgress: { current: number; total: number; currentSiteName: string } | null;
 
   addSite: (site: SiteData) => void;
   addSites: (sites: SiteData[]) => void;
   removeSite: (siteId: string) => void;
   clearAllSites: () => void;
+  clearSitesByTag: (tag: string) => void;
   selectSite: (siteId: string | null) => void;
   toggleSiteSelection: (siteId: string) => void;
   selectMultipleSites: (siteIds: string[]) => void;
@@ -41,6 +43,7 @@ interface SiteDataState {
   removeSelectedSites: () => void;
   selectAllSites: () => void;
   getSiteCount: () => number;
+  setBatchAssessmentProgress: (progress: { current: number; total: number; currentSiteName: string } | null) => void;
 }
 
 export const useSiteDataStore = create<SiteDataState>()(
@@ -54,6 +57,7 @@ export const useSiteDataStore = create<SiteDataState>()(
         isUploading: false,
         uploadProgress: 0,
         lastUploadResult: null,
+        batchAssessmentProgress: null,
 
         addSite: (site) => {
           set((state) => ({ sites: { ...state.sites, [site.location.id]: site } }));
@@ -71,16 +75,51 @@ export const useSiteDataStore = create<SiteDataState>()(
           set((state) => {
             const { [siteId]: _removedSite, ...remainingSites } = state.sites;
             const { [siteId]: _removedAssessment, ...remainingAssessments } = state.assessments;
+            const newSelectedIds = state.selectedSiteIds.filter(id => id !== siteId);
             return {
               sites: remainingSites,
               assessments: remainingAssessments,
-              selectedSiteId: state.selectedSiteId === siteId ? null : state.selectedSiteId,
+              selectedSiteId: state.selectedSiteId === siteId ? (newSelectedIds[0] ?? null) : state.selectedSiteId,
+              selectedSiteIds: newSelectedIds,
             };
           });
         },
 
         clearAllSites: () => {
-          set({ sites: {}, assessments: {}, selectedSiteId: null });
+          set({ sites: {}, assessments: {}, selectedSiteId: null, selectedSiteIds: [] });
+        },
+
+        clearSitesByTag: (tag) => {
+          set((state) => {
+            const remainingSites: Record<string, SiteData> = {};
+            const remainingAssessments: Record<string, SiteAssessment> = {};
+            const removedIds = new Set<string>();
+
+            for (const [id, site] of Object.entries(state.sites)) {
+              if (site.location.sourceTag === tag) {
+                removedIds.add(id);
+              } else {
+                remainingSites[id] = site;
+                if (state.assessments[id]) {
+                  remainingAssessments[id] = state.assessments[id];
+                }
+              }
+            }
+            // Also keep assessments for non-removed sites
+            for (const [id, assessment] of Object.entries(state.assessments)) {
+              if (!removedIds.has(id)) {
+                remainingAssessments[id] = assessment;
+              }
+            }
+
+            const newSelectedIds = state.selectedSiteIds.filter(id => !removedIds.has(id));
+            return {
+              sites: remainingSites,
+              assessments: remainingAssessments,
+              selectedSiteIds: newSelectedIds,
+              selectedSiteId: removedIds.has(state.selectedSiteId ?? '') ? (newSelectedIds[0] ?? null) : state.selectedSiteId,
+            };
+          });
         },
 
         selectSite: (siteId) => {
@@ -202,6 +241,10 @@ export const useSiteDataStore = create<SiteDataState>()(
 
         getSiteCount: () => {
           return Object.keys(get().sites).length;
+        },
+
+        setBatchAssessmentProgress: (progress) => {
+          set({ batchAssessmentProgress: progress });
         },
       }),
       { name: 'sstac-bn-rrm-site-data' }
