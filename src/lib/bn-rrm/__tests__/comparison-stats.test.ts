@@ -14,6 +14,7 @@
  * the comparison data has been updated — investigate before accepting.
  */
 
+import { describe, test, expect } from 'vitest';
 import {
   confusionMatrixFromPairs,
   cohensKappa,
