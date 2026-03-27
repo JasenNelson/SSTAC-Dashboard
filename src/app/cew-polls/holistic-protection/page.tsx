@@ -159,8 +159,8 @@ export default function CEWHolisticProtectionPage() {
                   pagePath="/cew-polls/holistic-protection"
                   questionNumber={poll.questionNumber}
                   authCode={authCode}
-                  onVote={(pollIndex, optionIndex, otherText) => {
-                    console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}`);
+                  onVote={(_pollIndex, _optionIndex, _otherText) => {
+                    // Vote submitted
                   }}
                 />
               </div>
