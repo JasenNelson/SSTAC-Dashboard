@@ -1,5 +1,6 @@
 {
   "export_date": "2026-03-15T19:42:56.866581+00:00",
+  "release_version": "1.0-publication-candidate",
   "db_hash": "053b049b09dfff6874a18d5cef8be28f44f2d1b13c09748e1cc93557e2a66552",
   "dataset_status": "FROZEN (DR-003, 2026-03-09)",
   "files": {
@@ -25,5 +26,5 @@
     "sediment_guidelines": 42
   },
   "validation": "PASSED",
-  "phase2_export_date": "2026-03-18T05:03:05.631873+00:00"
+  "phase2_export_date": "2026-03-27T00:00:00.000000+00:00"
 }

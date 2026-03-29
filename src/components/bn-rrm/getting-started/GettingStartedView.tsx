@@ -33,7 +33,7 @@ export function GettingStartedView() {
             Bayesian Network Relative Risk Model for sediment ecological risk assessment
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-            Model: bnrrm-landis-causal v4.0 &middot; 20-node causal DAG &middot; 3 risk states
+            Model: bnrrm-landis-causal (v4.0 architecture) &middot; Release v1.0 publication candidate &middot; 20-node causal DAG &middot; 3 risk states
           </p>
         </div>
 

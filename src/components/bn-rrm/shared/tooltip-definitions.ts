@@ -9,6 +9,11 @@
  * training target = ecological_risk, sulfide_binding (not avs).
  */
 
+// Version note (2026-03-27):
+// "v4.0" references below are ARCHITECTURE GENERATION identifiers (20-node DAG, sulfide_binding, etc.)
+// The publication RELEASE version is v1.0. Both labels are correct and intentional.
+// Architecture: v4.0 | Release: v1.0 publication candidate
+
 export const TOOLTIP = {
   // ── ResultsPanel ──────────────────────────────────────────────────────
   inferenceBasis: {
