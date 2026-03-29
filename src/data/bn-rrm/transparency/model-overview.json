@@ -6,8 +6,8 @@
     "dataset_status": "FROZEN (DR-003)",
     "handoff_version": "28.1",
     "release_packet_date": "2026-03-09",
-    "release_version": "1.0-publication-candidate",
-    "release_status": "Publication candidate — not production. v0.4.1 remains in production."
+    "release_version": "1.0",
+    "release_status": "v1.0 is the canonical BN-RRM development line. v0.4.1 is the legacy baseline. v1.0 remains under active review and refinement."
   },
   "model_identity": {
     "name": "BN-RRM (Bayesian Network Relative Risk Model)",

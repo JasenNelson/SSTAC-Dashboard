@@ -143,7 +143,7 @@ export function ModelOverview() {
         </div>
       </div>
 
-      {/* v1.0 Publication Candidate Baseline */}
+      {/* v1.0 Canonical Baseline */}
       {(modelOverviewData as Record<string, unknown>).publication_baseline && (() => {
         const pub = (modelOverviewData as Record<string, unknown>).publication_baseline as {
           evaluation_set: string;
@@ -153,10 +153,10 @@ export function ModelOverview() {
         return (
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-5 space-y-3">
             <h3 className="text-sm font-semibold text-emerald-800 dark:text-emerald-200 uppercase tracking-wider">
-              v1.0 Publication Candidate Baseline
+              v1.0 Canonical Baseline
             </h3>
             <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-              Publication candidate — not production. v0.4.1 remains in production.
+              v1.0 canonical development line, under active review. v0.4.1 is the legacy baseline.
             </p>
             <p className="text-xs text-emerald-700 dark:text-emerald-300">
               Evaluation: {pub.evaluation_set}

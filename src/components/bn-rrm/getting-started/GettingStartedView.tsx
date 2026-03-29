@@ -33,7 +33,7 @@ export function GettingStartedView() {
             Bayesian Network Relative Risk Model for sediment ecological risk assessment
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-            Model: bnrrm-landis-causal (v4.0 architecture) &middot; Release v1.0 publication candidate &middot; 20-node causal DAG &middot; 3 risk states
+            Model: bnrrm-landis-causal (v4.0 architecture) &middot; Release v1.0 &middot; 20-node causal DAG &middot; 3 risk states
           </p>
         </div>
 
@@ -157,10 +157,10 @@ export function GettingStartedView() {
           <div className="space-y-4">
             <TrackHeader title="For Technical Reviewers" color="violet" />
 
-            <ExpandableSection title="v1.0 Publication Candidate Status" defaultOpen>
+            <ExpandableSection title="v1.0 Model Status" defaultOpen>
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-3">
                 <p className="text-amber-600 dark:text-amber-400 font-medium">
-                  BN-RRM v1.0 is a publication candidate under expert review. v0.4.1 remains the operational production model.
+                  BN-RRM v1.0 is the canonical development line, under active review and refinement. v0.4.1 is the legacy baseline.
                 </p>
                 <p>
                   <strong>What changed:</strong> The v1.0 publication candidate uses the same v4.0 architecture (20-node DAG)

@@ -1,6 +1,6 @@
 {
   "export_date": "2026-03-15T19:42:56.866581+00:00",
-  "release_version": "1.0-publication-candidate",
+  "release_version": "1.0",
   "db_hash": "053b049b09dfff6874a18d5cef8be28f44f2d1b13c09748e1cc93557e2a66552",
   "dataset_status": "FROZEN (DR-003, 2026-03-09)",
   "files": {
