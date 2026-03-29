@@ -136,6 +136,12 @@ export interface UpdateJudgmentData extends Partial<CreateJudgmentData> {
  * Get all submissions with optional ordering
  */
 export function getSubmissions(orderBy: 'imported_at' | 'evaluation_completed' = 'imported_at'): Submission[] {
+  // Runtime validation for order by parameter to prevent SQL injection
+  const allowedOrderByColumns = ['imported_at', 'evaluation_completed'];
+  if (!allowedOrderByColumns.includes(orderBy)) {
+    throw new Error(`Invalid orderBy parameter: ${orderBy}`);
+  }
+
   const sql = `
     SELECT * FROM submissions
     ORDER BY ${orderBy} DESC
@@ -250,10 +256,12 @@ export function getAssessments(submissionId: string, filters: AssessmentFilters 
     ORDER BY a.item_number ASC, a.id ASC
   `;
 
-  if (filters.limit) {
-    sql += ` LIMIT ${filters.limit}`;
-    if (filters.offset) {
-      sql += ` OFFSET ${filters.offset}`;
+  if (filters.limit !== undefined) {
+    sql += ` LIMIT ?`;
+    params.push(filters.limit);
+    if (filters.offset !== undefined) {
+      sql += ` OFFSET ?`;
+      params.push(filters.offset);
     }
   }
 
