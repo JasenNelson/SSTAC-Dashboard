@@ -515,5 +515,60 @@
       "predicted": "high",
       "observed": "high"
     }
-  ]
+  ],
+  "v1_publication_loo": {
+    "description": "v1.0 publication candidate LOO validation (strict Tier 1, 33 stations, 5 sites). Four-fix pipeline with entropy-aware classification.",
+    "evaluation_set": "Strict Tier 1: 33 full-triad stations across Toquaht (17), ALCAN (5), CP Nelson (4), Island Copper (4), Brunette River (3)",
+    "entropy_rule": {
+      "accuracy": 0.515,
+      "kappa": 0.179,
+      "n_evaluated": 33,
+      "per_class": {
+        "low": {
+          "recall": 0.368,
+          "precision": 0.7,
+          "f1": 0.483,
+          "support": 19
+        },
+        "moderate": {
+          "recall": 0.75,
+          "precision": 0.429,
+          "f1": 0.545,
+          "support": 12
+        },
+        "high": {
+          "recall": 0.5,
+          "precision": 0.5,
+          "f1": 0.5,
+          "support": 2
+        }
+      },
+      "note": "Entropy rule: when posterior entropy > 1.06 AND P(Moderate) > 0.25, classify Moderate. High support = 2 (not statistically meaningful)."
+    },
+    "map_comparator": {
+      "accuracy": 0.515,
+      "kappa": 0.093,
+      "n_evaluated": 33,
+      "per_class": {
+        "low": {
+          "recall": 0.737,
+          "precision": 0.609,
+          "f1": 0.667,
+          "support": 19
+        },
+        "moderate": {
+          "recall": 0.167,
+          "precision": 0.4,
+          "f1": 0.235,
+          "support": 12
+        },
+        "high": {
+          "recall": 0.5,
+          "precision": 0.2,
+          "f1": 0.286,
+          "support": 2
+        }
+      }
+    }
+  }
 }

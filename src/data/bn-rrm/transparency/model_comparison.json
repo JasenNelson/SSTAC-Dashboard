@@ -307,5 +307,23 @@
     }
   },
   "majority_baseline_3class": 0.7818,
-  "majority_baseline_binary": 0.7818
+  "majority_baseline_binary": 0.7818,
+  "v1_publication": {
+    "M5": {
+      "id": "M5",
+      "name": "v1.0 Publication Candidate",
+      "description": "Four-fix pipeline: decoupled fitting (281 rows), label-first observation, ecological_risk injection (alpha=10), entropy-aware classification. Evaluated on strict Tier 1 (33 stations, 5 sites).",
+      "status": "publication_candidate",
+      "architecture": "v4.0 (20-node DAG, unchanged)",
+      "evaluation_set": "Strict Tier 1 (N=33, 5 sites)",
+      "metrics": {
+        "accuracy": 0.515,
+        "kappa": 0.179,
+        "high_recall": 0.5,
+        "moderate_recall": 0.75,
+        "low_recall": 0.368
+      },
+      "note": "Different evaluation set than M1-M4 (33 vs 82 stations). Not directly comparable. High support = 2."
+    }
+  }
 }

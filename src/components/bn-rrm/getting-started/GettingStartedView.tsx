@@ -157,6 +157,31 @@ export function GettingStartedView() {
           <div className="space-y-4">
             <TrackHeader title="For Technical Reviewers" color="violet" />
 
+            <ExpandableSection title="v1.0 Publication Candidate Status" defaultOpen>
+              <div className="text-sm text-slate-600 dark:text-slate-400 space-y-3">
+                <p className="text-amber-600 dark:text-amber-400 font-medium">
+                  BN-RRM v1.0 is a publication candidate under expert review. v0.4.1 remains the operational production model.
+                </p>
+                <p>
+                  <strong>What changed:</strong> The v1.0 publication candidate uses the same v4.0 architecture (20-node DAG)
+                  with a corrected evaluation pipeline: decoupled CPT fitting, adjudicated ground-truth labels,
+                  ecological risk data injection, and entropy-aware classification for uncertain cases.
+                </p>
+                <p>
+                  <strong>Evaluation:</strong> Strict Tier 1 &mdash; 33 full-triad stations across 5 sites
+                  (Toquaht, ALCAN, CP Nelson, Island Copper, Brunette River).
+                </p>
+                <p>
+                  <strong>Key metrics (entropy rule):</strong> Accuracy 0.515, Kappa 0.179,
+                  Moderate recall 0.750 (n=12), High recall 0.500 (n=2), Low recall 0.368 (n=19).
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Kappa 0.179 = &ldquo;slight&rdquo; agreement (Landis &amp; Koch 1977). High support = 2 (not statistically meaningful).
+                  See the Review tab for detailed validation results.
+                </p>
+              </div>
+            </ExpandableSection>
+
             <ExpandableSection title="Model architecture (v4.0)" defaultOpen>
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-3">
                 <p>

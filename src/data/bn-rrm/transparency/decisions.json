@@ -16,7 +16,7 @@
       "status": "ACTIVE LIMITATION",
       "date": "2026-03-15",
       "severity": "HIGH",
-      "summary": "Organic pathway remains expert-dominant. DR-001 was reframed: PAH and PCB do not need to be co-located in the same samples for candidacy/search \u2014 each substance needs its own co-located conditions/effects evidence independently. Current code limitation: organic_contamination CPT fitting still requires both parents observed, so only 4 ALCAN station-events (1/9 configs) contribute to CPT learning.",
+      "summary": "Organic pathway remains expert-dominant. DR-001 was reframed: PAH and PCB do not need to be co-located in the same samples for candidacy/search — each substance needs its own co-located conditions/effects evidence independently. Current code limitation: organic_contamination CPT fitting still requires both parents observed, so only 4 ALCAN station-events (1/9 configs) contribute to CPT learning.",
       "rationale": "PCBs not routinely analyzed in BC sediment assessments. PAH-only and PCB-only stations can support candidacy and inference (marginalization), but the current organic_contamination CPT fitting code requires both sed_pahs and sed_pcbs observed at the same station. Only ALCAN yielded joint PAH+PCB data (4 stations, single config). 8/9 parent configurations remain unobserved for CPT learning.",
       "impact": "Organic pathway CPTs (organic_contamination, organic_bioavail) remain expert-dominant. Noisy-OR Tier 1 threshold (n>=5 per config) not met; CPTs fall back to expert prior. PAH-only evidence supports inference via marginalization but does not expand CPT learning under current code.",
       "reopen_criteria": "For CPT learning: >=10 station-events with both PAH and PCB observed, from >=2 sites, >=3/9 parent configurations, LOO validation gate. For candidacy/search: PAH-only or PCB-only sites are valid candidates independently (reframed, no co-location requirement).",
@@ -33,7 +33,7 @@
       "summary": "8 Woodfibre stations approved for cross-year merge (2006 chemistry + 2014 toxicity/community). 3 stations rejected (post-dredging contamination profile change).",
       "rationale": "Stations SED06-103/104/105/111/114/116/118/119 had consistent contamination profiles across 2006-2014. Stations SED06-113/115/117 showed post-dredging changes.",
       "impact": "Adds 8 effective training triads (36 native -> 44 effective). Rejected stations retained in DB for single-LoE reference.",
-      "reopen_criteria": "N/A \u2014 decision is final.",
+      "reopen_criteria": "N/A — decision is final.",
       "related_issues": []
     },
     {
@@ -48,6 +48,20 @@
       "reopen_criteria": "Novel contamination profile site identified, or expert prior recalibration unlocks accuracy gains benefiting from additional data.",
       "related_issues": [
         "I-018"
+      ]
+    },
+    {
+      "id": "DR-004",
+      "title": "v1.0 Publication Candidate Baseline",
+      "status": "ESTABLISHED",
+      "date": "2026-03-29",
+      "severity": "HIGH",
+      "summary": "BN-RRM v1.0 publication candidate established with four-fix pipeline: (1) decoupled fitting (CPTs on all 281 rows, evaluation on adjudicated labels only), (2) label-first observation (WOE/adjudicated labels as ground truth), (3) ecological_risk data injection (alpha=10, 89 stations), (4) entropy-aware classification (entropy > 1.06 AND P(Moderate) > 0.25). Evaluated on strict Tier 1: 33 full-triad stations across 5 sites. v0.4.1 remains in production.",
+      "rationale": "Corpus comparison (filtered corpora collapsed CPT fitting) and label-alignment analysis (heuristic bypassed adjudicated labels) identified that the v0.4.1 coupled pipeline was not using adjudicated labels correctly. Four targeted fixes resolve this without architecture changes. Entropy-aware rule captures genuine model uncertainty as middle-risk classification.",
+      "impact": "Publication candidate with LOO-validated metrics: accuracy 0.515, kappa 0.179, Low recall 0.368 (n=19), Moderate recall 0.750 (n=12), High recall 0.500 (n=2). Kappa nearly doubled from MAP baseline (0.093). Does not replace v0.4.1 in production.",
+      "reopen_criteria": "Dr. Landis expert review. Peer review feedback. Additional training data for ecological_risk CPT (especially Moderate-class stations).",
+      "related_issues": [
+        "DR-003"
       ]
     }
   ],
@@ -66,7 +80,7 @@
       "title": "Organic pathway expert-dominant",
       "severity": "HIGH",
       "category": "data_gap",
-      "description": "Organic pathway expert-dominant. DR-001 reframed: PAH and PCB do not need co-location for candidacy/search. Current code limitation: organic_contamination CPT fitting requires both parents observed \u2014 only 4 ALCAN station-events (1/9 configs) contribute to CPT learning. Not entirely expert-elicited, but expert-dominant.",
+      "description": "Organic pathway expert-dominant. DR-001 reframed: PAH and PCB do not need co-location for candidacy/search. Current code limitation: organic_contamination CPT fitting requires both parents observed — only 4 ALCAN station-events (1/9 configs) contribute to CPT learning. Not entirely expert-elicited, but expert-dominant.",
       "mitigation": "Metal pathway claims are in-scope (49 BDeu obs across 12/36 configs). Organic pathway claims are out-of-scope for data-supported inference.",
       "related": "DR-001, I-016"
     },
@@ -105,6 +119,24 @@
       "description": "Effect nodes (tox_amphipod, taxa_richness) observe only 1 of 9 possible parent configurations. Limits generalization.",
       "mitigation": "Expert priors fill unobserved configurations. Additional config diversity requires novel contamination profiles.",
       "related": "DR-003"
+    },
+    {
+      "id": "L7",
+      "title": "v1.0 Low recall tradeoff",
+      "severity": "MEDIUM",
+      "category": "model_behavior",
+      "description": "v1.0 entropy-aware rule reduces Low recall from 0.737 to 0.368. The model reclassifies 63% of genuinely Low stations as Moderate when the posterior is flat (high entropy). This is the cost of recovering Moderate recall (0.167 to 0.750).",
+      "mitigation": "Low precision improves (0.609 to 0.700) — remaining Low predictions are more confident. The tradeoff is explicit: uncertain cases default to Moderate rather than being forced to Low.",
+      "related": "DR-004"
+    },
+    {
+      "id": "L8",
+      "title": "v1.0 High recall based on N=2",
+      "severity": "HIGH",
+      "category": "statistical",
+      "description": "v1.0 strict Tier 1 evaluation set contains only 2 High-risk stations. The reported High recall of 0.500 (1/2 correct) is not statistically meaningful.",
+      "mitigation": "High recall should be interpreted with extreme caution. The v4.0 baseline (N=17 High stations) provides a more robust estimate of High-risk detection capability.",
+      "related": "DR-004"
     }
   ],
   "issue_summary": {

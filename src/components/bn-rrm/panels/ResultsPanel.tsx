@@ -446,7 +446,7 @@ function ForwardInferenceView({
             <strong>BN-RRM Causal Model</strong> — {model.nodes.length} nodes, {model.cpts.length} CPTs, {model.edges.length} causal edges
           </p>
           <p className="text-[10px] text-blue-500 dark:text-blue-400 mt-1">
-            Expert-elicited CPTs (interim — pending data-learned replacement)
+            Hybrid CPTs: Noisy-OR (Tier 1), BDeu+Expert blend (Tiers 2-3), Expert-dominated (Tier 4)
           </p>
         </div>
       )}

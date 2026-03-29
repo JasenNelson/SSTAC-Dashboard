@@ -143,6 +143,53 @@ export function ModelOverview() {
         </div>
       </div>
 
+      {/* v1.0 Publication Candidate Baseline */}
+      {(modelOverviewData as Record<string, unknown>).publication_baseline && (() => {
+        const pub = (modelOverviewData as Record<string, unknown>).publication_baseline as {
+          evaluation_set: string;
+          loo_entropy_rule: { accuracy: number; kappa: number; low_recall: number; moderate_recall: number; high_recall: number };
+          loo_map_comparator: { accuracy: number; kappa: number; low_recall: number; moderate_recall: number; high_recall: number };
+        };
+        return (
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-5 space-y-3">
+            <h3 className="text-sm font-semibold text-emerald-800 dark:text-emerald-200 uppercase tracking-wider">
+              v1.0 Publication Candidate Baseline
+            </h3>
+            <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+              Publication candidate — not production. v0.4.1 remains in production.
+            </p>
+            <p className="text-xs text-emerald-700 dark:text-emerald-300">
+              Evaluation: {pub.evaluation_set}
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-1">Entropy Rule (adopted)</h4>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between"><span>Accuracy</span><span className="font-mono">{(pub.loo_entropy_rule.accuracy * 100).toFixed(1)}%</span></div>
+                  <div className="flex justify-between"><span>Kappa</span><span className="font-mono">{pub.loo_entropy_rule.kappa.toFixed(3)}</span></div>
+                  <div className="flex justify-between"><span>Low recall (n=19)</span><span className="font-mono">{(pub.loo_entropy_rule.low_recall * 100).toFixed(1)}%</span></div>
+                  <div className="flex justify-between"><span>Moderate recall (n=12)</span><span className="font-mono font-bold">{(pub.loo_entropy_rule.moderate_recall * 100).toFixed(1)}%</span></div>
+                  <div className="flex justify-between"><span>High recall (n=2)</span><span className="font-mono">{(pub.loo_entropy_rule.high_recall * 100).toFixed(1)}%</span></div>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 mb-1">MAP (comparator)</h4>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between"><span>Accuracy</span><span className="font-mono">{(pub.loo_map_comparator.accuracy * 100).toFixed(1)}%</span></div>
+                  <div className="flex justify-between"><span>Kappa</span><span className="font-mono">{pub.loo_map_comparator.kappa.toFixed(3)}</span></div>
+                  <div className="flex justify-between"><span>Low recall (n=19)</span><span className="font-mono">{(pub.loo_map_comparator.low_recall * 100).toFixed(1)}%</span></div>
+                  <div className="flex justify-between"><span>Moderate recall (n=12)</span><span className="font-mono">{(pub.loo_map_comparator.moderate_recall * 100).toFixed(1)}%</span></div>
+                  <div className="flex justify-between"><span>High recall (n=2)</span><span className="font-mono">{(pub.loo_map_comparator.high_recall * 100).toFixed(1)}%</span></div>
+                </div>
+              </div>
+            </div>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1">
+              High support = 2 stations (not statistically meaningful). v0.4.1 comparison uses different evaluation set (82 vs 33 stations) — not directly comparable.
+            </p>
+          </div>
+        );
+      })()}
+
       {/* Kappa Health Meter with Narrative */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-4">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">

@@ -62,6 +62,9 @@ export function ReviewView() {
           <div className="text-xs text-amber-500 dark:text-amber-500 mt-0.5">
             2026-03-09 &middot; 82 stations
           </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            v1.0 publication candidate uses same training data with decoupled evaluation pipeline
+          </div>
         </div>
       </div>
 
