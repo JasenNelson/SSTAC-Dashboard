@@ -1,0 +1,142 @@
+{
+  "type": "general_vs_site_comparison",
+  "n_stations": 8,
+  "stations": [
+    {
+      "station_id": 199,
+      "station_name": "SED19-1",
+      "observed_risk": null,
+      "site_model_posterior": {
+        "low": 0.2949,
+        "moderate": 0.3402,
+        "high": 0.3648
+      },
+      "general_model_posterior": {
+        "low": 0.2949,
+        "moderate": 0.3402,
+        "high": 0.3648
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 200,
+      "station_name": "SED19-2",
+      "observed_risk": null,
+      "site_model_posterior": {
+        "low": 0.2031,
+        "moderate": 0.3096,
+        "high": 0.4873
+      },
+      "general_model_posterior": {
+        "low": 0.2031,
+        "moderate": 0.3096,
+        "high": 0.4873
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 201,
+      "station_name": "SED19-3",
+      "observed_risk": "high",
+      "site_model_posterior": {
+        "low": 0.3092,
+        "moderate": 0.3442,
+        "high": 0.3465
+      },
+      "general_model_posterior": {
+        "low": 0.3092,
+        "moderate": 0.3442,
+        "high": 0.3465
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 202,
+      "station_name": "SED19-4",
+      "observed_risk": "high",
+      "site_model_posterior": {
+        "low": 0.2949,
+        "moderate": 0.3403,
+        "high": 0.3648
+      },
+      "general_model_posterior": {
+        "low": 0.2949,
+        "moderate": 0.3403,
+        "high": 0.3648
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 203,
+      "station_name": "SED19-5",
+      "observed_risk": "high",
+      "site_model_posterior": {
+        "low": 0.1121,
+        "moderate": 0.2346,
+        "high": 0.6533
+      },
+      "general_model_posterior": {
+        "low": 0.1121,
+        "moderate": 0.2346,
+        "high": 0.6533
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 204,
+      "station_name": "SED19-6",
+      "observed_risk": "high",
+      "site_model_posterior": {
+        "low": 0.2132,
+        "moderate": 0.3136,
+        "high": 0.4732
+      },
+      "general_model_posterior": {
+        "low": 0.2132,
+        "moderate": 0.3136,
+        "high": 0.4732
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 205,
+      "station_name": "SED19-REF1",
+      "observed_risk": "high",
+      "site_model_posterior": {
+        "low": 0.2993,
+        "moderate": 0.3382,
+        "high": 0.3625
+      },
+      "general_model_posterior": {
+        "low": 0.2993,
+        "moderate": 0.3382,
+        "high": 0.3625
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 206,
+      "station_name": "SED19-REF2",
+      "observed_risk": null,
+      "site_model_posterior": {
+        "low": 0.3135,
+        "moderate": 0.3415,
+        "high": 0.345
+      },
+      "general_model_posterior": {
+        "low": 0.3135,
+        "moderate": 0.3415,
+        "high": 0.345
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "type": "diagnostic_replay",
+  "disclaimer": "NOT validation. Labels are derived from _determine_observed_risk() heuristic, not independent consultant assessments. LOO at N=5 has no statistical power (~35% CI width). This checks internal consistency only.",
+  "n_eligible": 5,
+  "n_complete": 5,
+  "accuracy": 1.0,
+  "kappa": 1.0,
+  "loo_accuracy": 1.0,
+  "loo_kappa": 1.0,
+  "per_class": {
+    "low": {
+      "precision": 0,
+      "recall": 0,
+      "f1": 0,
+      "support": 0
+    },
+    "moderate": {
+      "precision": 0,
+      "recall": 0,
+      "f1": 0,
+      "support": 0
+    },
+    "high": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 5
+    }
+  },
+  "station_results": [
+    {
+      "station_id": 201,
+      "station_name": "SED19-3",
+      "predicted": "high",
+      "observed": "high",
+      "posterior": {
+        "low": 0.3092,
+        "moderate": 0.3442,
+        "high": 0.3465
+      }
+    },
+    {
+      "station_id": 202,
+      "station_name": "SED19-4",
+      "predicted": "high",
+      "observed": "high",
+      "posterior": {
+        "low": 0.2949,
+        "moderate": 0.3403,
+        "high": 0.3648
+      }
+    },
+    {
+      "station_id": 203,
+      "station_name": "SED19-5",
+      "predicted": "high",
+      "observed": "high",
+      "posterior": {
+        "low": 0.1121,
+        "moderate": 0.2346,
+        "high": 0.6533
+      }
+    },
+    {
+      "station_id": 204,
+      "station_name": "SED19-6",
+      "predicted": "high",
+      "observed": "high",
+      "posterior": {
+        "low": 0.2132,
+        "moderate": 0.3136,
+        "high": 0.4732
+      }
+    },
+    {
+      "station_id": 205,
+      "station_name": "SED19-REF1",
+      "predicted": "high",
+      "observed": "high",
+      "posterior": {
+        "low": 0.2993,
+        "moderate": 0.3382,
+        "high": 0.3625
+      }
+    }
+  ]
+}

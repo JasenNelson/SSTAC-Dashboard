@@ -1,0 +1,180 @@
+{
+  "_meta": {
+    "export_date": "2026-03-30T20:49:33.126293+00:00",
+    "db_hash": "d88facb26e3f6a0f1840d5fd4c964af71bb57959d8fb8e302c57c5b87c003a13",
+    "scope": "site_specific",
+    "site_registry_id": "0311",
+    "model_version": "4.1-site"
+  },
+  "model_identity": {
+    "name": "BN-RRM Site: CP Nelson Yard (Hall Mines Smelter)",
+    "framework": "Landis (2021) Causal DAG",
+    "model_id": "bnrrm-landis-causal",
+    "version": "4.1-site",
+    "nodes": 20,
+    "edges": 24,
+    "states_per_node": 3,
+    "scope": "site_specific",
+    "parent_model": "bnrrm-general-v1.0-dev-map"
+  },
+  "training_data": {
+    "site": "CP Nelson Yard (Hall Mines Smelter)",
+    "registry_id": "0311",
+    "waterbody": "freshwater",
+    "n_stations": 8,
+    "record_counts": {
+      "sediment_chemistry": 0,
+      "env_modifiers": 0,
+      "toxicity_tests": 0,
+      "benthic_community": 0,
+      "extraction_provenance": 0
+    },
+    "stations": [
+      {
+        "station_id": 199,
+        "name": "SED19-1",
+        "type": "exposure"
+      },
+      {
+        "station_id": 200,
+        "name": "SED19-2",
+        "type": "exposure"
+      },
+      {
+        "station_id": 201,
+        "name": "SED19-3",
+        "type": "exposure"
+      },
+      {
+        "station_id": 202,
+        "name": "SED19-4",
+        "type": "exposure"
+      },
+      {
+        "station_id": 203,
+        "name": "SED19-5",
+        "type": "exposure"
+      },
+      {
+        "station_id": 204,
+        "name": "SED19-6",
+        "type": "exposure"
+      },
+      {
+        "station_id": 205,
+        "name": "SED19-REF1",
+        "type": "reference"
+      },
+      {
+        "station_id": 206,
+        "name": "SED19-REF2",
+        "type": "reference"
+      }
+    ],
+    "dataset_counts": {
+      "sites": 1,
+      "stations": 8,
+      "co_located": 8
+    },
+    "site_breakdown": [
+      {
+        "name": "CP Nelson Yard (Hall Mines Smelter)",
+        "registry_id": "0311",
+        "waterbody": "freshwater",
+        "total_stations": 8
+      }
+    ]
+  },
+  "diagnostic": {
+    "type": "diagnostic_replay",
+    "disclaimer": "NOT validation. Labels are derived from _determine_observed_risk() heuristic, not independent consultant assessments. LOO at N=5 has no statistical power (~35% CI width). This checks internal consistency only.",
+    "n_eligible": 5,
+    "accuracy": 1.0,
+    "kappa": 1.0,
+    "per_class": {
+      "low": {
+        "precision": 0,
+        "recall": 0,
+        "f1": 0,
+        "support": 0
+      },
+      "moderate": {
+        "precision": 0,
+        "recall": 0,
+        "f1": 0,
+        "support": 0
+      },
+      "high": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 5
+      }
+    }
+  },
+  "limitations": [
+    "N=8: CPTs are >80% expert-prior-dominated. This is a demonstration model.",
+    "Diagnostic replay is NOT validation (model-derived labels create circularity).",
+    "No spatial generalization within the site.",
+    "Marginals are site-specific; CPTs are not meaningfully data-learned at this sample size.",
+    "Any reported accuracy or kappa has confidence intervals wider than the estimate itself (N=8)."
+  ],
+  "anti_overclaim": "This site-specific BN-RRM applies the Landis (2021) 20-node causal DAG to CP Nelson Yard (Hall Mines Smelter) sediment data. With N=8 stations, conditional probability tables are dominated by expert priors (>80% expert contribution). Site-specific marginal distributions reflect the site's contamination profile. This model is an illustrative application suitable for demonstration / case study, not a validated predictive tool.",
+  "marginal_highlights": {
+    "sed_cu": {
+      "below_isqg": 0.0939,
+      "isqg_pel": -0.225,
+      "above_pel": 0.1311
+    },
+    "sed_zn": {
+      "below_isqg": -0.6768,
+      "isqg_pel": -0.0328,
+      "above_pel": 0.7096
+    },
+    "sed_pb": {
+      "below_isqg": -0.6632,
+      "isqg_pel": -0.0277,
+      "above_pel": 0.6909
+    },
+    "sed_cd": {
+      "below_isqg": -0.5648,
+      "isqg_pel": 0.2059,
+      "above_pel": 0.359
+    },
+    "sed_hg": {
+      "below_isqg": -0.2382,
+      "isqg_pel": 0.0461,
+      "above_pel": 0.1921
+    },
+    "sed_as": {
+      "below_isqg": 0.2705,
+      "isqg_pel": -0.4112,
+      "above_pel": 0.1407
+    },
+    "sed_cr": {
+      "below_isqg": -0.0594,
+      "isqg_pel": 0.0594,
+      "above_pel": 0.0
+    },
+    "sed_pahs": {
+      "below_isqg": -0.2335,
+      "isqg_pel": 0.0531,
+      "above_pel": 0.1805
+    },
+    "sed_pcbs": {
+      "below_isqg": 0.3333,
+      "isqg_pel": -0.6667,
+      "above_pel": 0.3333
+    },
+    "toc": {
+      "low": 0.0791,
+      "moderate": -0.2362,
+      "high": 0.1571
+    },
+    "grain_size": {
+      "low": 0.1828,
+      "moderate": 0.1964,
+      "high": -0.3792
+    }
+  }
+}

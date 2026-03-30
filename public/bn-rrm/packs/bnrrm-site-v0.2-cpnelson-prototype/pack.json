@@ -1,0 +1,60 @@
+{
+  "pack_id": "bnrrm-site-v0.2-cpnelson-prototype",
+  "display_name": "BN-RRM Site: CP Nelson (Prototype, Hierarchical)",
+  "model_family": "site",
+  "scope_type": "site_specific",
+  "site_scope": {
+    "registry_id": "0311",
+    "name": "CP Nelson",
+    "waterbody": "freshwater"
+  },
+  "site_inventory": [
+    {
+      "registry_id": "0311",
+      "name": "CP Nelson Yard (Hall Mines Smelter)",
+      "waterbody": "freshwater"
+    }
+  ],
+  "runtime_schema_version": "canonical-20node-v1",
+  "dag_node_count": 20,
+  "dag_edge_count": 24,
+  "training_corpus": {
+    "n_stations": 7,
+    "n_co_located": 5,
+    "n_sites": 1,
+    "cohort_rule": "T1+T2",
+    "dataset_status": "FROZEN (DR-003, 2026-03-09)"
+  },
+  "evaluation_profile": {
+    "decision_rule": "MAP",
+    "primary_metric": "weighted_kappa",
+    "loo_accuracy": 1.0,
+    "loo_kappa": 1.0
+  },
+  "release_stage": "prototype",
+  "is_default": false,
+  "parent_pack_id": "bnrrm-general-v1.0-dev-map",
+  "applicability_boundaries": [
+    "Woodfibre: dioxin/furan unmodeled contaminant boundary",
+    "Pinchi: natural mineralization / regional-background boundary",
+    "Sullivan: water-column-dominant pathway boundary"
+  ],
+  "version_history": {
+    "created": "2026-03-30",
+    "model_version": "4.1-site",
+    "architecture_version": "v4.0 (20-node DAG)"
+  },
+  "artifacts": {
+    "runtime_model": "runtime/learned-model.json",
+    "review": {
+      "model_overview": "review/model-overview.json",
+      "validation": "review/validation_results.json",
+      "comparison": "review/model_comparison.json",
+      "decisions": "review/decisions.json",
+      "cpt_transparency": "review/cpt_transparency.json",
+      "provenance": "review/provenance_registry.json",
+      "site_reports": "review/site_reports.json",
+      "risk_comparison": "review/risk_comparison.json"
+    }
+  }
+}

@@ -1,0 +1,205 @@
+{
+  "_meta": {
+    "export_date": "2026-03-30T20:49:33.129009+00:00",
+    "scope": "site_specific",
+    "site_registry_id": "0311"
+  },
+  "comparison_type": "general_vs_site_risk",
+  "site": "CP Nelson Yard (Hall Mines Smelter)",
+  "station_comparisons": [
+    {
+      "station_id": 199,
+      "station_name": "SED19-1",
+      "observed_risk": null,
+      "site_model_posterior": {
+        "low": 0.2949,
+        "moderate": 0.3402,
+        "high": 0.3648
+      },
+      "general_model_posterior": {
+        "low": 0.2949,
+        "moderate": 0.3402,
+        "high": 0.3648
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 200,
+      "station_name": "SED19-2",
+      "observed_risk": null,
+      "site_model_posterior": {
+        "low": 0.2031,
+        "moderate": 0.3096,
+        "high": 0.4873
+      },
+      "general_model_posterior": {
+        "low": 0.2031,
+        "moderate": 0.3096,
+        "high": 0.4873
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 201,
+      "station_name": "SED19-3",
+      "observed_risk": "high",
+      "site_model_posterior": {
+        "low": 0.3092,
+        "moderate": 0.3442,
+        "high": 0.3465
+      },
+      "general_model_posterior": {
+        "low": 0.3092,
+        "moderate": 0.3442,
+        "high": 0.3465
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 202,
+      "station_name": "SED19-4",
+      "observed_risk": "high",
+      "site_model_posterior": {
+        "low": 0.2949,
+        "moderate": 0.3403,
+        "high": 0.3648
+      },
+      "general_model_posterior": {
+        "low": 0.2949,
+        "moderate": 0.3403,
+        "high": 0.3648
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 203,
+      "station_name": "SED19-5",
+      "observed_risk": "high",
+      "site_model_posterior": {
+        "low": 0.1121,
+        "moderate": 0.2346,
+        "high": 0.6533
+      },
+      "general_model_posterior": {
+        "low": 0.1121,
+        "moderate": 0.2346,
+        "high": 0.6533
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 204,
+      "station_name": "SED19-6",
+      "observed_risk": "high",
+      "site_model_posterior": {
+        "low": 0.2132,
+        "moderate": 0.3136,
+        "high": 0.4732
+      },
+      "general_model_posterior": {
+        "low": 0.2132,
+        "moderate": 0.3136,
+        "high": 0.4732
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 205,
+      "station_name": "SED19-REF1",
+      "observed_risk": "high",
+      "site_model_posterior": {
+        "low": 0.2993,
+        "moderate": 0.3382,
+        "high": 0.3625
+      },
+      "general_model_posterior": {
+        "low": 0.2993,
+        "moderate": 0.3382,
+        "high": 0.3625
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    },
+    {
+      "station_id": 206,
+      "station_name": "SED19-REF2",
+      "observed_risk": null,
+      "site_model_posterior": {
+        "low": 0.3135,
+        "moderate": 0.3415,
+        "high": 0.345
+      },
+      "general_model_posterior": {
+        "low": 0.3135,
+        "moderate": 0.3415,
+        "high": 0.345
+      },
+      "site_model_map": "high",
+      "general_model_map": "high"
+    }
+  ],
+  "marginal_deltas": {
+    "sed_cu": {
+      "below_isqg": 0.0939,
+      "isqg_pel": -0.225,
+      "above_pel": 0.1311
+    },
+    "sed_zn": {
+      "below_isqg": -0.6768,
+      "isqg_pel": -0.0328,
+      "above_pel": 0.7096
+    },
+    "sed_pb": {
+      "below_isqg": -0.6632,
+      "isqg_pel": -0.0277,
+      "above_pel": 0.6909
+    },
+    "sed_cd": {
+      "below_isqg": -0.5648,
+      "isqg_pel": 0.2059,
+      "above_pel": 0.359
+    },
+    "sed_hg": {
+      "below_isqg": -0.2382,
+      "isqg_pel": 0.0461,
+      "above_pel": 0.1921
+    },
+    "sed_as": {
+      "below_isqg": 0.2705,
+      "isqg_pel": -0.4112,
+      "above_pel": 0.1407
+    },
+    "sed_cr": {
+      "below_isqg": -0.0594,
+      "isqg_pel": 0.0594,
+      "above_pel": 0.0
+    },
+    "sed_pahs": {
+      "below_isqg": -0.2335,
+      "isqg_pel": 0.0531,
+      "above_pel": 0.1805
+    },
+    "sed_pcbs": {
+      "below_isqg": 0.3333,
+      "isqg_pel": -0.6667,
+      "above_pel": 0.3333
+    },
+    "toc": {
+      "low": 0.0791,
+      "moderate": -0.2362,
+      "high": 0.1571
+    },
+    "grain_size": {
+      "low": 0.1828,
+      "moderate": 0.1964,
+      "high": -0.3792
+    }
+  },
+  "interpretation": "Both models share the same expert DAG architecture. Differences arise from: (1) site-specific marginals reflecting the contamination profile, and (2) minor CPT differences from site-only fitting. At N=8, CPT differences are negligible (>80% expert-dominated)."
+}

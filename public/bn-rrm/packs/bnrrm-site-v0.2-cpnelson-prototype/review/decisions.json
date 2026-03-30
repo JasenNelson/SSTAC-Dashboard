@@ -1,0 +1,43 @@
+{
+  "_meta": {
+    "export_date": "2026-03-30T20:49:33.127721+00:00",
+    "scope": "site_specific",
+    "site_registry_id": "0311"
+  },
+  "applicability_boundaries": [
+    "N=8: Expert-prior-dominated CPTs, no meaningful data learning",
+    "Diagnostic replay checks internal consistency, NOT predictive validation",
+    "Model-derived labels (circularity in LOO)",
+    "Site-specific marginals informative; CPTs essentially identical to general model"
+  ],
+  "decision_records": [
+    {
+      "id": "SD-001",
+      "title": "Site Model Framing",
+      "status": "ACTIVE",
+      "date": "2026-03-30",
+      "summary": "Site-specific BN-RRM for CP Nelson Yard (Hall Mines Smelter) is framed as a demonstration/case study model. With N=8 stations, CPTs are >80% expert-prior-dominated. No validation or accuracy claims are supported at this sample size."
+    },
+    {
+      "id": "SD-002",
+      "title": "Hierarchical Borrowing from General Model",
+      "status": "ACTIVE",
+      "date": "2026-03-30",
+      "summary": "Site-specific CPTs fitted using hierarchical borrowing: general model CPTs serve as informative priors in BDeu estimation. Tier 1 (Noisy-OR) borrowed wholesale. Tiers 2-4 use alpha values {'tier2': 3.0, 'tier3': 5.0, 'tier4': 4.0} controlling general-vs-site data blend. Parent pack: bnrrm-general-v1.0-dev-map."
+    }
+  ],
+  "known_limitations": [
+    {
+      "id": "SL-001",
+      "title": "Expert-prior dominance (N=8)",
+      "severity": "HIGH",
+      "description": "With only 8 training stations, the BDeu data contribution is negligible. CPTs are >80% determined by expert priors. The site model's primary value is in site-specific marginal distributions, not data-learned conditional probabilities."
+    },
+    {
+      "id": "SL-002",
+      "title": "No independent validation labels",
+      "severity": "HIGH",
+      "description": "ALCAN has no consultant-assessed WOE labels in the database. 'Observed risk' is derived from the model's own heuristic (_determine_observed_risk), creating circularity in any LOO-style evaluation."
+    }
+  ]
+}

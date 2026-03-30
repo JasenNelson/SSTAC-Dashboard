@@ -767,17 +767,34 @@ type LearnedModelJSON = any;
  * expected by the DAG inference engine.
  */
 function loadLearnedCPTs(model: LearnedModelJSON): ConditionalProbabilityTable[] {
-  return (model.cpts as Array<{
-    nodeId: string;
-    parentNodeIds: string[];
-    entries: Array<{
-      parentStates: Record<string, string>;
-      distribution: Record<string, number>;
-    }>;
-  }>).map((cpt) => ({
-    nodeId: cpt.nodeId,
-    parentNodeIds: cpt.parentNodeIds,
-    entries: cpt.entries,
+  // Array format from export_for_frontend.py
+  if (Array.isArray(model.cpts)) {
+    return (model.cpts as Array<{
+      nodeId: string;
+      parentNodeIds: string[];
+      entries: Array<{
+        parentStates: Record<string, string>;
+        distribution: Record<string, number>;
+      }>;
+    }>).map((cpt) => ({
+      nodeId: cpt.nodeId,
+      parentNodeIds: cpt.parentNodeIds,
+      entries: cpt.entries,
+    }));
+  }
+  // Object-keyed format from fit_causal_model.py / fit_site_model.py
+  // Shape: {node_id: {parents: string[], states: string[], method: string, table: {config_key: {state: prob}}}}
+  return Object.entries(model.cpts as Record<string, any>).map(([nodeId, cptData]) => ({
+    nodeId,
+    parentNodeIds: cptData.parents as string[],
+    entries: Object.entries(cptData.table as Record<string, Record<string, number>>).map(
+      ([configKey, dist]) => ({
+        parentStates: Object.fromEntries(
+          (cptData.parents as string[]).map((pid: string, i: number) => [pid, configKey.split('|')[i]])
+        ),
+        distribution: dist,
+      })
+    ),
   }));
 }
 
@@ -785,8 +802,9 @@ function loadLearnedCPTs(model: LearnedModelJSON): ConditionalProbabilityTable[]
  * Build edges from learned model JSON (may differ from expert DAG).
  */
 function loadLearnedEdges(model: LearnedModelJSON): NetworkEdge[] {
-  return (model.structure.edges as Array<{ id: string; source: string; target: string }>).map((e) => ({
-    id: e.id,
+  const rawEdges = model.structure?.edges ?? model.edges ?? [];
+  return rawEdges.map((e: any, i: number) => ({
+    id: e.id ?? `${e.source}_${e.target}`,
     source: e.source,
     target: e.target,
   }));
@@ -812,13 +830,13 @@ export function createTrainedNetwork(
     const learnedEdges = loadLearnedEdges(learnedModel);
 
     // Update node priors from data-derived marginals if available
-    if (learnedModel.structure?.nodes) {
-      for (const learnedNode of learnedModel.structure.nodes as Array<{ id: string; beliefs?: Record<string, number> }>) {
-        if (learnedNode.beliefs) {
-          const node = allNodes.find((n) => n.id === learnedNode.id);
-          if (node) {
-            node.beliefs = learnedNode.beliefs;
-          }
+    const learnedNodes = (learnedModel.structure?.nodes ?? learnedModel.nodes ?? []) as Array<{ id: string; beliefs?: Record<string, number>; priors?: Record<string, number> }>;
+    for (const learnedNode of learnedNodes) {
+      const beliefs = learnedNode.beliefs ?? learnedNode.priors;
+      if (beliefs) {
+        const node = allNodes.find((n) => n.id === learnedNode.id);
+        if (node) {
+          node.beliefs = beliefs;
         }
       }
     }
