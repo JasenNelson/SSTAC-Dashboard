@@ -208,7 +208,8 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
         <div className="mt-4 flex justify-end">
           <button
             onClick={onHidePanel}
-            className="flex items-center justify-center w-10 h-10 bg-slate-600 dark:bg-slate-500 text-white rounded-lg hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-lg"
+            className="flex items-center justify-center w-10 h-10 bg-slate-600 dark:bg-slate-500 text-white rounded-lg hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
+            aria-label="Hide filter panel"
             title="Hide filter panel"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

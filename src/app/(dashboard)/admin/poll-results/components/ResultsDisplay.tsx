@@ -95,9 +95,10 @@ function ResultsDisplay({
                   </h3>
                   <button
                     onClick={() => navigateToPreviousQuestion(selectedPoll)}
-                    className={`flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded ${
+                    className={`flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 ${
                       isExpanded ? 'w-8 h-8' : 'w-6 h-6'
                     }`}
+                    aria-label="Previous question in group"
                     title="Previous question in group"
                   >
                     <svg
@@ -115,9 +116,10 @@ function ResultsDisplay({
                   </button>
                   <button
                     onClick={() => navigateToNextQuestion(selectedPoll)}
-                    className={`flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded ${
+                    className={`flex items-center justify-center text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 ${
                       isExpanded ? 'w-8 h-8' : 'w-6 h-6'
                     }`}
+                    aria-label="Next question in group"
                     title="Next question in group"
                   >
                     <svg
@@ -135,7 +137,8 @@ function ResultsDisplay({
                   </button>
                   <button
                     onClick={() => setExpandedPoll(isExpanded ? null : pollKey)}
-                    className="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
+                    className="flex items-center justify-center w-8 h-8 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                    aria-label={isExpanded ? 'Close expanded view' : 'Expand to fit screen'}
                     title={isExpanded ? 'Close expanded view' : 'Expand to fit screen'}
                   >
                     {isExpanded ? (
