@@ -92,15 +92,18 @@ export default function BNRRMClient() {
     loadRegistry();
   }, [loadRegistry]);
 
-  // When pack is selected and manifest loaded, load the runtime model
+  // When pack is selected and manifest loaded, load the runtime model.
+  // Guard: only load if the manifest belongs to the currently selected pack.
+  // During pack switching, selectedPackId updates immediately but packManifest
+  // may still be from the previous pack until the new manifest fetch completes.
   useEffect(() => {
-    if (packManifest && packBaseUrl) {
+    if (packManifest && packBaseUrl && selectedPackId && packManifest.pack_id === selectedPackId) {
       loadPackModel(packBaseUrl, packManifest);
-    } else if (registryLoaded && !packManifest && !packLoading) {
+    } else if (registryLoaded && !packManifest && !packLoading && !selectedPackId) {
       // Fallback: if registry failed or no packs available, use legacy path
       loadTrainedModel();
     }
-  }, [packManifest, packBaseUrl, registryLoaded, packLoading, loadPackModel, loadTrainedModel]);
+  }, [packManifest, packBaseUrl, selectedPackId, registryLoaded, packLoading, loadPackModel, loadTrainedModel]);
 
   // If user is on Data tab and switches to a read-only pack, redirect to Review
   useEffect(() => {
