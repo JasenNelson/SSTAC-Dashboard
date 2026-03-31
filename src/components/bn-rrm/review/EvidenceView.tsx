@@ -158,8 +158,9 @@ export function EvidenceView() {
               </div>
             </div>
             <div className="flex-1 text-sm text-slate-500 dark:text-slate-400">
-              {rawData?.summary ??
-                `${stats.changed} of ${stats.total} stations change prediction between screening and assessment mode.`}
+              {typeof rawData?.summary === 'string'
+                ? rawData.summary
+                : `${stats.changed} of ${stats.total} stations change prediction between screening and assessment mode.`}
             </div>
           </div>
         </div>
