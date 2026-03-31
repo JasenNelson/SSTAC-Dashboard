@@ -187,6 +187,15 @@ export const usePackStore = create<PackState>()(
           return null;
         }
 
+        // Guard: manifest must belong to the currently selected pack.
+        // During pack switching, selectedPackId updates immediately but
+        // packManifest may still be the old pack's manifest until the
+        // new manifest fetch completes. Don't resolve artifact paths
+        // from a stale manifest.
+        if (packManifest.pack_id !== selectedPackId) {
+          return null;
+        }
+
         const entry = registry.packs.find(p => p.pack_id === selectedPackId);
         if (!entry) return null;
 
