@@ -7,7 +7,12 @@
  *
  * Model lock: bnrrm-landis-causal v4.0, 20 nodes, 24 edges,
  * training target = ecological_risk, sulfide_binding (not avs).
+ *
+ * Pack-aware: getPackTooltips(manifest) returns tooltips with pack-specific
+ * counts substituted. TOOLTIP remains the static default for backward compat.
  */
+
+import type { PackManifest } from '@/lib/bn-rrm/pack-types';
 
 // Version note (2026-03-27):
 // "v4.0" references below are ARCHITECTURE GENERATION identifiers (20-node DAG, sulfide_binding, etc.)
@@ -221,3 +226,19 @@ export const TOOLTIP = {
       'EXACT: published coordinates from report tables. APPROXIMATE: digitised from figures via affine transform or satellite matching. RELATIVE: described by distance/direction only. ZONE: quadrant or general area only (coordinates not displayed). Class governs whether coordinates can be shown on the map.',
   },
 } as const;
+
+/**
+ * Generate pack-aware tooltip overrides.
+ * Substitutes pack-specific counts (co-located stations, site count) into
+ * tooltips that contain those values. Returns a partial overlay — spread over TOOLTIP.
+ */
+export function getPackTooltipOverrides(manifest: PackManifest) {
+  const nCoLocated = manifest.training_corpus.n_co_located;
+  return {
+    looCrossValidation: {
+      title: 'Leave-One-Out Cross-Validation',
+      description:
+        `Each of the ${nCoLocated} co-located stations is predicted using a model trained on all other stations. This provides an unbiased estimate of how the v4.0 causal DAG generalises to new stations.`,
+    },
+  };
+}

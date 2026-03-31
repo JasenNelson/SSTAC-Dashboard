@@ -18,6 +18,7 @@ import type {
   RiskComparisonJSON,
   ImportResult,
 } from '@/lib/bn-rrm/transparency-adapters';
+import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 import {
   Database,
   GitCompareArrows,
@@ -27,14 +28,10 @@ import {
   CheckCircle,
 } from 'lucide-react';
 
-import siteReportsData from '@/data/bn-rrm/transparency/site_reports.json';
-import riskComparisonData from '@/data/bn-rrm/transparency/risk_comparison.json';
-
-const siteReports = siteReportsData as unknown as SiteReportsJSON;
-const riskComparison = riskComparisonData as unknown as RiskComparisonJSON;
-
 export function ReferenceDataImporter() {
   const { sites, addSites, clearSitesByTag } = useSiteDataStore();
+  const { data: siteReports, loading: srLoading } = usePackArtifact<SiteReportsJSON>('site_reports');
+  const { data: riskComparison, loading: rcLoading } = usePackArtifact<RiskComparisonJSON>('risk_comparison');
 
   const [trainingResult, setTrainingResult] = useState<ImportResult | null>(null);
   const [comparisonResult, setComparisonResult] = useState<ImportResult | null>(null);
@@ -49,16 +46,18 @@ export function ReferenceDataImporter() {
   }, [sites]);
 
   const handleImportTraining = useCallback(() => {
+    if (!siteReports) return;
     const result = adaptTrainingSites(siteReports);
     addSites(result.sites);
     setTrainingResult(result);
-  }, [addSites]);
+  }, [addSites, siteReports]);
 
   const handleImportComparison = useCallback(() => {
+    if (!riskComparison || !siteReports) return;
     const result = adaptComparisonSites(riskComparison, siteReports);
     addSites(result.sites);
     setComparisonResult(result);
-  }, [addSites]);
+  }, [addSites, riskComparison, siteReports]);
 
   const handleRemoveTraining = useCallback(() => {
     clearSitesByTag('training');
@@ -117,10 +116,11 @@ export function ReferenceDataImporter() {
           ) : (
             <button
               onClick={handleImportTraining}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 rounded hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors"
+              disabled={srLoading || !siteReports}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/20 rounded hover:bg-purple-100 dark:hover:bg-purple-900/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download className="w-3.5 h-3.5" />
-              Import Training Sites
+              {srLoading ? 'Loading...' : 'Import Training Sites'}
             </button>
           )}
         </div>
@@ -153,10 +153,11 @@ export function ReferenceDataImporter() {
           ) : (
             <button
               onClick={handleImportComparison}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/20 rounded hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors"
+              disabled={rcLoading || srLoading || !riskComparison || !siteReports}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/20 rounded hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Download className="w-3.5 h-3.5" />
-              Import Comparison Sites
+              {rcLoading || srLoading ? 'Loading...' : 'Import Comparison Sites'}
             </button>
           )}
         </div>

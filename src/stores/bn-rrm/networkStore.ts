@@ -18,6 +18,7 @@ import type {
 import { createDummyNetwork } from '@/lib/bn-rrm/dummy-data';
 import { createTrainedNetwork } from '@/lib/bn-rrm/trained-network';
 import { dagForwardInference, dagBackwardInference } from '@/lib/bn-rrm/bn-inference';
+import type { PackManifest } from '@/lib/bn-rrm/pack-types';
 
 // =============================================================================
 // STORE INTERFACE
@@ -42,11 +43,14 @@ interface NetworkState {
   // Loading state
   isLoading: boolean;
   isInferenceRunning: boolean;
+  /** Monotonic counter to detect stale loadPackModel fetches */
+  _loadGeneration: number;
 
   // Actions - Model
   loadModel: (model: NetworkModel) => void;
   loadDummyModel: () => void;
   loadTrainedModel: (source?: 'expert' | 'learned') => void;
+  loadPackModel: (packBaseUrl: string, manifest: PackManifest) => Promise<void>;
 
   // Actions - Inference
   runInference: (mode: 'forward' | 'backward') => void;
@@ -97,6 +101,7 @@ export const useNetworkStore = create<NetworkState>()(
       highlightedPath: [],
       isLoading: false,
       isInferenceRunning: false,
+      _loadGeneration: 0,
 
       // =======================================================================
       // MODEL ACTIONS
@@ -136,6 +141,34 @@ export const useNetworkStore = create<NetworkState>()(
         } else {
           const trainedModel = createTrainedNetwork('expert');
           get().loadModel(trainedModel);
+        }
+      },
+
+      loadPackModel: async (packBaseUrl: string, manifest: PackManifest) => {
+        const generation = get()._loadGeneration + 1;
+        set({ isLoading: true, _loadGeneration: generation });
+        try {
+          const modelUrl = `${packBaseUrl}/${manifest.artifacts.runtime_model}`;
+          const res = await fetch(modelUrl);
+          if (!res.ok) {
+            throw new Error(`Failed to load runtime model: ${res.status} ${res.statusText}`);
+          }
+          const learnedJson = await res.json();
+          // Guard against stale fetch: if another loadPackModel was called, discard this result
+          if (get()._loadGeneration !== generation) return;
+          const trainedModel = createTrainedNetwork('learned', learnedJson);
+          get().loadModel(trainedModel);
+        } catch (err) {
+          if (get()._loadGeneration !== generation) return;
+          console.error('[NetworkStore] Pack model load failed:', err);
+          // Fallback to expert model
+          const trainedModel = createTrainedNetwork('expert');
+          get().loadModel(trainedModel);
+        } finally {
+          // Only clear loading if this is still the active generation
+          if (get()._loadGeneration === generation) {
+            set({ isLoading: false });
+          }
         }
       },
 

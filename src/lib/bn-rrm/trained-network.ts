@@ -823,7 +823,20 @@ export function createTrainedNetwork(
   source: 'expert' | 'learned' = 'expert',
   learnedModel?: LearnedModelJSON,
 ): NetworkModel {
-  const allNodes = [...metalNodes, metalContaminationNode, ...organicNodes, organicContaminationNode, ...conditionNodes, ...effectNodes, impactNode];
+  // Deep-copy node objects to prevent mutating module-level constants when
+  // updating beliefs from learned model data. Without this, switching packs
+  // mutates the same objects and React cannot detect the change.
+  const deepCopyNode = <T extends { beliefs: Record<string, number> }>(n: T): T =>
+    ({ ...n, beliefs: { ...n.beliefs } });
+  const allNodes = [
+    ...metalNodes.map(deepCopyNode),
+    deepCopyNode(metalContaminationNode),
+    ...organicNodes.map(deepCopyNode),
+    deepCopyNode(organicContaminationNode),
+    ...conditionNodes.map(deepCopyNode),
+    ...effectNodes.map(deepCopyNode),
+    deepCopyNode(impactNode),
+  ];
 
   if (source === 'learned' && learnedModel) {
     const learnedCPTs = loadLearnedCPTs(learnedModel);
@@ -841,12 +854,18 @@ export function createTrainedNetwork(
       }
     }
 
+    const isSiteSpecific = learnedModel.scope === 'site_specific';
+    const siteName = learnedModel.siteScope?.name ?? '';
+    const modelName = isSiteSpecific
+      ? `BN-RRM Site: ${siteName} (Hierarchical)`
+      : 'BN-RRM Causal Model (Tiered: Data + Expert)';
+    const modelDesc = learnedModel.description
+      ?? `20-node causal DAG with tiered CPTs from ${learnedModel.nStations ?? 245} stations.`;
+
     return {
       id: 'bnrrm-landis-causal',
-      name: 'BN-RRM Causal Model (Tiered: Data + Expert)',
-      description: `20-node causal DAG with tiered CPTs from ${learnedModel.nStations ?? 245} stations. ` +
-        `Metal pathway partially data-learned (49 BDeu obs). Organic pathway expert-dominant (DR-001). ` +
-        `Tiered learning: Noisy-OR (contamination), BDeu+expert (bioavailability/effects), expert-dominated (risk).`,
+      name: modelName,
+      description: modelDesc,
       version: learnedModel.version ?? '3.1',
       nodes: allNodes,
       edges: learnedEdges,
