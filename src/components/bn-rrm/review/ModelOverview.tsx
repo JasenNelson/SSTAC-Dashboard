@@ -154,7 +154,7 @@ export function ModelOverview() {
       {/* Performance Summary Cards */}
       <div>
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
-          LOO Cross-Validation (n={perf.n_complete})
+          LOO Cross-Validation{perf.n_complete != null ? ` (n=${perf.n_complete})` : ''}
           <InfoTooltip {...TOOLTIP.looCrossValidation} />
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -218,30 +218,36 @@ export function ModelOverview() {
           Kappa Interpretation (Landis/Koch Scale)
           <InfoTooltip {...TOOLTIP.cohensKappa} />
         </h3>
-        <KappaHealthMeter value={perf.loo_kappa} kappaScale={kappaScale} />
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
-            {perf.kappa_interpretation.narrative}
-          </p>
-        </div>
+        {perf.loo_kappa != null && <KappaHealthMeter value={perf.loo_kappa} kappaScale={kappaScale} />}
+        {perf.kappa_interpretation?.narrative && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
+              {perf.kappa_interpretation.narrative}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Per-Class Metrics */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
-        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Per-Class Performance</h3>
-        <PerClassTable perClass={perf.per_class as Record<string, PerClassMetrics>} />
-      </div>
+      {perf.per_class && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Per-Class Performance</h3>
+          <PerClassTable perClass={perf.per_class as Record<string, PerClassMetrics>} />
+        </div>
+      )}
 
       {/* Performance Plateau */}
-      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-5">
-        <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200 uppercase tracking-wider mb-2">Performance Plateau (DR-003)</h3>
-        <div className="grid grid-cols-3 gap-4 mb-3">
-          <div><span className="text-xs text-amber-600 dark:text-amber-400">Previous n</span><div className="text-lg font-bold text-amber-800 dark:text-amber-100">{perf.performance_plateau.previous_n}</div></div>
-          <div><span className="text-xs text-amber-600 dark:text-amber-400">Current n</span><div className="text-lg font-bold text-amber-800 dark:text-amber-100">{perf.performance_plateau.current_n}</div></div>
-          <div><span className="text-xs text-amber-600 dark:text-amber-400">Delta</span><div className="text-lg font-bold text-amber-800 dark:text-amber-100">0.000</div></div>
+      {perf.performance_plateau && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-5">
+          <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200 uppercase tracking-wider mb-2">Performance Plateau (DR-003)</h3>
+          <div className="grid grid-cols-3 gap-4 mb-3">
+            <div><span className="text-xs text-amber-600 dark:text-amber-400">Previous n</span><div className="text-lg font-bold text-amber-800 dark:text-amber-100">{perf.performance_plateau.previous_n}</div></div>
+            <div><span className="text-xs text-amber-600 dark:text-amber-400">Current n</span><div className="text-lg font-bold text-amber-800 dark:text-amber-100">{perf.performance_plateau.current_n}</div></div>
+            <div><span className="text-xs text-amber-600 dark:text-amber-400">Delta</span><div className="text-lg font-bold text-amber-800 dark:text-amber-100">0.000</div></div>
+          </div>
+          <p className="text-sm text-amber-700 dark:text-amber-300">{perf.performance_plateau.interpretation}</p>
         </div>
-        <p className="text-sm text-amber-700 dark:text-amber-300">{perf.performance_plateau.interpretation}</p>
-      </div>
+      )}
 
       {/* Training Data Summary */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
