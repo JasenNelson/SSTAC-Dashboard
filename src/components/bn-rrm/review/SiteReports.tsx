@@ -380,7 +380,7 @@ export function SiteReports() {
         <div>
           <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Site Reports</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {data.summary.total_sites} sites &middot; {data.summary.total_stations} stations
+            {data.summary?.total_sites ?? data.sites?.length ?? '?'} sites &middot; {data.summary?.total_stations ?? '?'} stations
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-4">

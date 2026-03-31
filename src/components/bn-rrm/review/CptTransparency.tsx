@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import cptDataRaw from '@/data/bn-rrm/transparency/cpt_transparency.json';
+import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
@@ -180,7 +180,27 @@ function NodeCard({ node }: { node: NodeRecord }) {
 }
 
 export function CptTransparency() {
+  const { data: cptDataRaw, loading, error } = usePackArtifact<any>('cpt_transparency');
   const [filterTier, setFilterTier] = useState<number | null>(null);
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex items-center gap-3 text-slate-400">
+          <div className="w-5 h-5 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !cptDataRaw) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-red-500 text-sm">{error ?? 'Failed to load data'}</div>
+      </div>
+    );
+  }
 
   const data = cptDataRaw as unknown as CptTransparencyData;
   const filteredNodes = filterTier !== null
@@ -224,6 +244,7 @@ export function CptTransparency() {
       </div>
 
       {/* DR-001 Callout */}
+      {data.dr001_callout && (
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
         <div className="flex items-center gap-2 mb-2">
           <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200">
@@ -233,13 +254,14 @@ export function CptTransparency() {
         </div>
         <p className="text-sm text-red-700 dark:text-red-300">{data.dr001_callout.description}</p>
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {data.dr001_callout.affected_nodes.map(nid => (
+          {(data.dr001_callout.affected_nodes ?? []).map((nid: string) => (
             <span key={nid} className="px-2 py-0.5 rounded text-xs bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 font-mono">
               {nid}
             </span>
           ))}
         </div>
       </div>
+      )}
 
       {/* Tier summary cards */}
       <div className="grid grid-cols-5 gap-2">

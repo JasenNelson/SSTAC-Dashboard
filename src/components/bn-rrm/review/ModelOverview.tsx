@@ -300,6 +300,7 @@ export function ModelOverview() {
       </div>
 
       {/* Architecture Tiers */}
+      {overview.architecture?.tiers && (
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
           DAG Architecture (5 Tiers)
@@ -320,6 +321,7 @@ export function ModelOverview() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Intended Use */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
