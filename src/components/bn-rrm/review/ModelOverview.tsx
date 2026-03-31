@@ -158,10 +158,10 @@ export function ModelOverview() {
           <InfoTooltip {...TOOLTIP.looCrossValidation} />
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <MetricCard label="Accuracy" value={`${(perf.loo_accuracy * 100).toFixed(1)}%`} subtitle="Combined (all sites)" />
-          <MetricCard label="Kappa" value={perf.loo_kappa.toFixed(3)} subtitle="Cohen's kappa (unweighted)" alert />
-          <MetricCard label="High Recall" value={`${(perf.per_class.high.recall * 100).toFixed(1)}%`} subtitle="12/17 high-risk detected" />
-          <MetricCard label="Moderate Recall" value={`${(perf.per_class.moderate.recall * 100).toFixed(1)}%`} subtitle={`${Math.round(perf.per_class.moderate.recall * perf.per_class.moderate.support)}/${perf.per_class.moderate.support} moderate detected`} alert={perf.per_class.moderate.recall < 0.2} />
+          <MetricCard label="Accuracy" value={perf.loo_accuracy != null ? `${(perf.loo_accuracy * 100).toFixed(1)}%` : '—'} subtitle="Combined (all sites)" />
+          <MetricCard label="Kappa" value={perf.loo_kappa != null ? perf.loo_kappa.toFixed(3) : '—'} subtitle="Cohen's kappa (unweighted)" alert />
+          <MetricCard label="High Recall" value={perf.per_class?.high?.recall != null ? `${(perf.per_class.high.recall * 100).toFixed(1)}%` : '—'} subtitle="High-risk detection rate" />
+          <MetricCard label="Moderate Recall" value={perf.per_class?.moderate?.recall != null ? `${(perf.per_class.moderate.recall * 100).toFixed(1)}%` : '—'} subtitle="Moderate-risk detection rate" alert={perf.per_class?.moderate?.recall != null && perf.per_class.moderate.recall < 0.2} />
         </div>
       </div>
 
