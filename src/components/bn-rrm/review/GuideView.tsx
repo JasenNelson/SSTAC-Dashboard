@@ -91,7 +91,7 @@ interface GovernanceData {
   scope_notes?: string[];
 }
 
-interface HitlQuestion {
+interface ExpertReviewQuestion {
   question: string;
   context?: string;
 }
@@ -104,7 +104,7 @@ interface ExplainerData {
   before_after?: BeforeAfterData;
   residual_outliers?: ResidualOutlier[];
   governance?: GovernanceData;
-  hitl_review_questions?: HitlQuestion[];
+  expert_review_questions?: ExpertReviewQuestion[];
 }
 
 // ---------------------------------------------------------------------------
@@ -491,7 +491,7 @@ function ResidualOutliersSection({ data }: { data: any[] }) {
 }
 
 function GovernanceSection({ data }: { data: any }) {
-  const decisions = data.decisions ?? data.hitl_decisions ?? [];
+  const decisions = data.decisions ?? data.expert_decisions ?? [];
   const scopeNotes = data.scope_notes ?? data.applicability_notes ?? [];
   const scopeNote = data.scope_note;
 
@@ -506,7 +506,7 @@ function GovernanceSection({ data }: { data: any }) {
       {Array.isArray(decisions) && decisions.length > 0 && (
         <div className="mb-4">
           <h4 className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider mb-2">
-            HITL Decisions
+            Expert Decisions
           </h4>
           <div className="space-y-2">
             {decisions.map((d: any, i: number) => (
@@ -541,9 +541,9 @@ function GovernanceSection({ data }: { data: any }) {
   );
 }
 
-function HitlReviewQuestionsSection({ data }: { data: HitlQuestion[] }) {
+function ExpertReviewQuestionsSection({ data }: { data: ExpertReviewQuestion[] }) {
   return (
-    <SectionCard title="HITL Review Questions">
+    <SectionCard title="Expert Review Questions">
       <ol className="space-y-4">
         {data.map((q, i) => (
           <li key={i} className="flex gap-3">
@@ -621,8 +621,8 @@ export function GuideView() {
         <ResidualOutliersSection data={data.residual_outliers} />
       )}
       {data.governance && <GovernanceSection data={data.governance} />}
-      {data.hitl_review_questions && data.hitl_review_questions.length > 0 && (
-        <HitlReviewQuestionsSection data={data.hitl_review_questions} />
+      {data.expert_review_questions && data.expert_review_questions.length > 0 && (
+        <ExpertReviewQuestionsSection data={data.expert_review_questions} />
       )}
     </div>
   );

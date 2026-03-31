@@ -152,7 +152,7 @@
       "observed": "high",
       "predicted": "low",
       "explanation": "SS-24 has the most severe community impact at ALCAN (5 taxa, 10.5 abundance) and is correctly flagged as High in the v1.0 model (P=0.42). In chemistry-only inference, high protective factors (TOC, AVS at other stations) dominate, producing a near-uniform posterior that defaults to Low. SS-24 also lacks AVS/SEM data, compounding the chemistry-only limitation.",
-      "recommendation": "flag_for_hitl"
+      "recommendation": "flag_for_expert_review"
     },
     {
       "station_id": "SS-2",
@@ -188,7 +188,7 @@
     "scope_note": "No site-scoped overrides needed. The organic pathway is fully populated at ALCAN, so no marginalization applies. The chemistry-only all-Low result reflects the strong protective factors at this site and is a genuine model interpretation, not a data gap artifact. The v1.0 model demonstrates the model correctly integrates observed community impacts.",
     "dag_unchanged": true,
     "general_model_unchanged": true,
-    "hitl_decisions": [
+    "expert_decisions": [
       {
         "decision": "Accepted ALCAN chemistry-only result as a legitimate model interpretation of strong protective factors. The v1.0 model (5/5 correct) validates the model's ability to integrate observed effects.",
         "date": "2026-03-31",
@@ -203,7 +203,7 @@
     ]
   },
 
-  "hitl_review_questions": [
+  "expert_review_questions": [
     {
       "question": "Is the chemistry-only all-Low result (0/5 correct) an acceptable model behavior at sites with strong protective factors?",
       "context": "ALCAN has high TOC and high AVS/SEM ratios, which the model correctly interprets as attenuating both metal and organic bioavailability. But the site still shows significant community impacts (taxa richness loss at all 5 stations). This is the classic 'protective factors mask real effects' pattern.",

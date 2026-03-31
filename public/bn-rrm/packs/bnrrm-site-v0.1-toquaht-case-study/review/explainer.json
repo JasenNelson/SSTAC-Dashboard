@@ -89,13 +89,13 @@
         "node": "tox_amphipod",
         "override_type": "marginalize_parent",
         "rationale": "organic_bioavail is NULL at all 20 Toquaht stations (no PAH/PCB data). Without marginalization, all 20 amphipod observations are discarded. The override distributes uniform weight (1/3) across the missing parent's states, allowing the metal pathway data to be learned.",
-        "hitl_approved": true
+        "expert_approved": true
       },
       {
         "node": "taxa_richness",
         "override_type": "marginalize_parent",
         "rationale": "Same as tox_amphipod: organic_bioavail is NULL at all 20 stations. Without marginalization, all 20 taxa richness observations are discarded.",
-        "hitl_approved": true
+        "expert_approved": true
       }
     ],
     "cpt_tiers": [
@@ -199,7 +199,7 @@
       "observed": "low",
       "predicted": "high",
       "explanation": "SED13-26b has one of two statistically significant amphipod effects at Toquaht (91% survival, sig=1), combined with low AVS (0.402 umol/g) and moderate TOC (2.0%). The model reads significant toxicity + low sulfide protection as potentially high-risk. This is a scientifically defensible interpretation even though the consultant's overall WOE assessment classified it as Low.",
-      "recommendation": "flag_for_hitl"
+      "recommendation": "flag_for_expert_review"
     }
   ],
 
@@ -207,7 +207,7 @@
     "scope_note": "Site-scoped marginalization override for the organic pathway at Toquaht only. The general DAG structure (20 nodes, 24 edges) is unchanged. The general model's CPTs are completely unaffected. The organic_bioavail edge still exists in the DAG and will be used at sites that have organic data (e.g., ALCAN).",
     "dag_unchanged": true,
     "general_model_unchanged": true,
-    "hitl_decisions": [
+    "expert_decisions": [
       {
         "decision": "Approved site-scoped marginalization of organic_bioavail parent for tox_amphipod and taxa_richness at Toquaht (Site 15184). Missing organic pathway data must not suppress observed biological effects from the metal pathway.",
         "date": "2026-03-30",
@@ -217,11 +217,11 @@
     "applicability_notes": [
       "Would NOT apply at organic-dominant sites like ALCAN where organic data is present.",
       "Should not be applied where organic data was collected but is missing due to QA/QC failures -- only where the pathway is genuinely absent.",
-      "Each new site application of this marginalization override requires separate HITL review."
+      "Each new site application of this marginalization override requires separate expert review."
     ]
   },
 
-  "hitl_review_questions": [
+  "expert_review_questions": [
     {
       "question": "Is the 95% LOO accuracy a meaningful result?",
       "context": "With 20 stations all observed as Low, 19/20 correct is strong consistency. But the model has not been tested against Moderate or High risk at this site. The result demonstrates internal coherence, not predictive power across risk classes.",
@@ -234,7 +234,7 @@
     },
     {
       "question": "Should the marginalization override be applied to other sites?",
-      "context": "Only to sites where one pathway is genuinely absent (e.g., no PAH/PCB measurements). It should not be applied where data was collected but is missing due to QA/QC failures. Each site application requires HITL review.",
+      "context": "Only to sites where one pathway is genuinely absent (e.g., no PAH/PCB measurements). It should not be applied where data was collected but is missing due to QA/QC failures. Each site application requires expert review.",
       "priority": "important"
     },
     {

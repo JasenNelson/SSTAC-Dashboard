@@ -95,13 +95,13 @@
         "node": "tox_amphipod",
         "override_type": "marginalize_parent",
         "rationale": "organic_bioavail is NULL at all CP Nelson stations (no PAH/PCB data). Without marginalization, amphipod observations would be discarded from CPT fitting.",
-        "hitl_approved": true
+        "expert_approved": true
       },
       {
         "node": "taxa_richness",
         "override_type": "marginalize_parent",
         "rationale": "Same as tox_amphipod: organic_bioavail is NULL at all stations.",
-        "hitl_approved": true
+        "expert_approved": true
       }
     ],
     "cpt_tiers": [
@@ -187,7 +187,7 @@
     "scope_note": "Site-scoped organic pathway marginalization (same pattern as Toquaht). The chemistry-only null result is a known consequence of missing AVS/SEM data, not a model defect. The v1.0 model demonstrates the model works correctly when biological effects are available. AVS data recovery at CP Nelson remains the highest-leverage improvement action.",
     "dag_unchanged": true,
     "general_model_unchanged": true,
-    "hitl_decisions": [
+    "expert_decisions": [
       {
         "decision": "Accepted CP Nelson chemistry-only null result as a known limitation of missing AVS/SEM data. The v1.0 model (8/8 correct) demonstrates model validity when effects are available.",
         "date": "2026-03-31",
@@ -201,7 +201,7 @@
     ]
   },
 
-  "hitl_review_questions": [
+  "expert_review_questions": [
     {
       "question": "Is the chemistry-only null result (1/8 correct, near-uniform posteriors) an acceptable known limitation?",
       "context": "All 8 stations lack AVS/SEM data, which means metal_bioavail is NULL. Without bioavailability modifiers, the chemistry-only model cannot resolve the metals-to-effects causal chain. The v1.0 model corrects all 8 predictions when biological effects are entered as hard evidence.",
