@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "default_pack_id": "bnrrm-general-v1.0-dev-map",
+  "packs": [
+    {
+      "pack_id": "bnrrm-general-v1.0-dev-map",
+      "display_name": "BN-RRM General v1.0 (Development, MAP)",
+      "scope_type": "general",
+      "release_stage": "internal",
+      "is_default": true,
+      "path": "packs/bnrrm-general-v1.0-dev-map"
+    },
+    {
+      "pack_id": "bnrrm-site-v0.1-alcan-map",
+      "display_name": "BN-RRM Site: ALCAN (Prototype, v1.0 REBUILD)",
+      "scope_type": "site_specific",
+      "release_stage": "review",
+      "is_default": false,
+      "path": "packs/bnrrm-site-v0.1-alcan-map"
+    },
+    {
+      "pack_id": "bnrrm-site-v0.1-toquaht-case-study",
+      "display_name": "BN-RRM Site: Toquaht (Case Study, v1.0 REBUILD)",
+      "scope_type": "site_specific",
+      "release_stage": "review",
+      "is_default": false,
+      "path": "packs/bnrrm-site-v0.1-toquaht-case-study"
+    },
+    {
+      "pack_id": "bnrrm-site-v0.2-cpnelson-prototype",
+      "display_name": "BN-RRM Site: CP Nelson (Prototype, v1.0 REBUILD)",
+      "scope_type": "site_specific",
+      "release_stage": "review",
+      "is_default": false,
+      "path": "packs/bnrrm-site-v0.2-cpnelson-prototype"
+    }
+  ]
+}
