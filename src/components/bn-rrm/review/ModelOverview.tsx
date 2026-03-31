@@ -126,13 +126,13 @@ export function ModelOverview() {
   }
 
   const overview = modelOverviewData;
-  const kappaScale = modelOverviewData.performance.kappa_interpretation.scale as {
+  const perf = overview?.performance ?? {};
+  const kappaScale = (perf?.kappa_interpretation?.scale ?? []) as {
     range: [number, number];
     label: string;
     color: string;
   }[];
-  const perf = overview.performance;
-  const data = overview.training_data;
+  const data = overview?.training_data ?? {};
 
   const siteRows = data?.site_breakdown ?? [];
 
