@@ -10,12 +10,14 @@ import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 interface ContaminationProfile {
   label: string;
   detail?: string;
+  [key: string]: any;
 }
 
 interface SiteContextData {
   narrative: string;
   pathway: 'metals' | 'organic' | 'mixed';
   contamination_profile?: ContaminationProfile[] | string;
+  [key: string]: any;
 }
 
 interface DataInventoryItem {
@@ -25,6 +27,7 @@ interface DataInventoryItem {
   stations_with_data?: number;
   total_stations?: number;
   dag_nodes?: string[];
+  [key: string]: any;
 }
 
 interface DataInventoryData {
@@ -34,6 +37,7 @@ interface DataInventoryData {
   station_count?: number;
   coverage_table?: DataInventoryItem[];
   key_gaps?: string[];
+  [key: string]: any;
 }
 
 interface TierEntry {
@@ -41,17 +45,22 @@ interface TierEntry {
   name: string;
   cpt_method: string;
   nodes?: string[];
+  [key: string]: any;
 }
 
 interface OverrideCallout {
   label: string;
   description: string;
+  [key: string]: any;
 }
 
 interface FittingApproachData {
   summary: string;
   tiers?: TierEntry[];
+  cpt_tiers?: TierEntry[];
   overrides?: OverrideCallout[];
+  site_scoped_overrides?: OverrideCallout[];
+  [key: string]: any;
 }
 
 interface StationPrediction {
@@ -59,6 +68,7 @@ interface StationPrediction {
   observed: string;
   predicted: string;
   correct: boolean;
+  [key: string]: any;
 }
 
 interface ResultsSummaryData {
@@ -66,6 +76,7 @@ interface ResultsSummaryData {
   loo_kappa?: number;
   loo_n?: number;
   predictions?: StationPrediction[];
+  [key: string]: any;
 }
 
 interface MetricComparison {
@@ -78,22 +89,26 @@ interface BeforeAfterData {
   before_label?: string;
   after_label?: string;
   metrics: MetricComparison[];
+  [key: string]: any;
 }
 
 interface ResidualOutlier {
   station: string;
   explanation: string;
   recommendation?: string;
+  [key: string]: any;
 }
 
 interface GovernanceData {
   decisions?: string[];
   scope_notes?: string[];
+  [key: string]: any;
 }
 
 interface ExpertReviewQuestion {
   question: string;
   context?: string;
+  [key: string]: any;
 }
 
 interface ExplainerData {

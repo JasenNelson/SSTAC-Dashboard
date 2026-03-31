@@ -816,8 +816,8 @@ export function SiteReports() {
                   {(selectedSite?.station_details ?? []).length} stations
                   {selectedSite.spatial_context?.spatial_summary ? (
                     <> &middot; {selectedSite.spatial_context.spatial_summary.georeferenced}/{selectedSite.spatial_context.spatial_summary.total_stations} georeferenced
-                      {Object.entries(selectedSite.spatial_context.spatial_summary.by_class).map(([cls, n]) => (
-                        <span key={cls}> &middot; {n} {cls.toLowerCase()}</span>
+                      {Object.entries(selectedSite.spatial_context.spatial_summary.by_class).map(([cls, n]: [string, any]) => (
+                        <span key={cls}> &middot; {String(n)} {cls.toLowerCase()}</span>
                       ))}
                     </>
                   ) : coordStats && coordStats.withCoords > 0 ? (

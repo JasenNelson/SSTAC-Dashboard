@@ -505,7 +505,7 @@ export function classifyRawSiteData(site: SiteData): Evidence {
 
   // Toxicity — directly set amphipod toxicity if data available
   if (site.toxicityTests && site.toxicityTests.length > 0) {
-    const amphipodTests = site.toxicityTests.filter(t => t.testType === 'amphipod_survival' || t.testType === 'hyalella_survival');
+    const amphipodTests = site.toxicityTests.filter(t => t.testType === 'amphipod_survival' || (t.testType as string) === 'hyalella_survival');
     if (amphipodTests.length > 0) {
       const minSurvival = Math.min(...amphipodTests.map(t => t.result));
       if (minSurvival >= 80) evidence.tox_amphipod = 'low';

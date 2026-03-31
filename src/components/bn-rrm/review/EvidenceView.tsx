@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 
 // ---------------------------------------------------------------------------
@@ -25,7 +25,7 @@ function riskBg(risk: string | null | undefined): string {
   return '';
 }
 
-function agreementIcon(predicted: string | null, observed: string | null): JSX.Element {
+function agreementIcon(predicted: string | null, observed: string | null): React.ReactNode {
   if (!predicted || !observed) return <span className="text-slate-300 dark:text-slate-600">—</span>;
   if (predicted.toLowerCase() === observed.toLowerCase()) {
     return <span className="text-green-600 dark:text-green-400 font-bold">&#10003;</span>;
