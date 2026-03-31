@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { normalizeRiskComparison, type NormalizedSiteComparison } from '@/lib/bn-rrm/normalize-artifacts';
 import { computeComparisonReport } from '@/lib/bn-rrm/comparison-stats';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { ExpandableSection } from '@/components/bn-rrm/shared/ExpandableSection';
@@ -16,59 +17,14 @@ const CLASS_COLORS: Record<string, { bg: string; text: string }> = {
   high: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-300' },
 };
 
-type StationComparison = {
-  stationId: number;
-  stationName: string;
-  bnrrmPredicted: string | null;
-  bnrrmObserved: string | null;
-  reportEstimate: {
-    originalLabel: string;
-    mappedBNClass: string | null;
-    mappingConfidence: string;
-    mappingJustification: string;
-    comparatorType: string;
-    frameworkType: string;
-    provenance: {
-      sourceDocument: string;
-      sourcePage: number | null;
-    };
-  };
-};
-
-type SiteComparison = {
-  siteId: number;
-  siteName: string;
-  registryId: string;
-  stationComparisons: StationComparison[];
-  excludedStations: {
-    noLOOPrediction: string[];
-    noWOERecord: string[];
-  };
-};
-
-type ComparisonData = {
-  _meta: { governanceSpec: string; modelVersion: string; note: string };
-  summary: {
-    matchedStations: number;
-    excludedNoLOO: number;
-    excludedNoWOE: number;
-    sitesWithWOE: number;
-    sitesWithoutWOE: number;
-    sitesWithoutWOENames: string[];
-  };
-  mappingTable: {
-    source: string;
-    mappings: Record<string, { mapped: string; confidence: string; justification: string }>;
-  };
-  siteComparisons: SiteComparison[];
-};
+// Types are now in normalize-artifacts.ts — using NormalizedRiskComparison and NormalizedSiteComparison
 
 export function RiskComparison() {
-  const { data: comparisonDataRaw, loading, error } = usePackArtifact<any>('risk_comparison');
+  const { data: rawData, loading, error } = usePackArtifact<any>('risk_comparison');
   const [selectedSite, setSelectedSite] = useState<number | null>(null);
   const [showExclusions, setShowExclusions] = useState(false);
 
-  const data = (comparisonDataRaw && !error) ? comparisonDataRaw as unknown as ComparisonData : null;
+  const data = (rawData && !error) ? normalizeRiskComparison(rawData) : null;
 
   // ALL hooks must be called before any early return (React Rules of Hooks)
   const { pairs, bnrrm, woe } = useMemo(() => {
@@ -149,11 +105,11 @@ export function RiskComparison() {
           (MAP state of the ecological_risk posterior) with report-stated WOE risk classifications
           mapped to the BN 3-class space. These are different assessment methods — agreement metrics
           measure consistency between methods, not accuracy against ground truth.
-          The {data?._meta?.modelVersion ?? ''} model was not trained on WOE labels.
+          The {data.meta.modelVersion} model was not trained on WOE labels.
         </p>
         <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
-          Governance: {data?._meta?.governanceSpec ?? ''} &middot;
-          n = {report.n} matched stations across {data?.summary?.sitesWithWOE ?? 0} sites &middot;
+          Governance: {data.meta.governanceSpec} &middot;
+          n = {report.n} matched stations across {data.summary.sitesWithWOE} sites &middot;
           {report.nExcludedNoLOO} excluded (WOE but no LOO) &middot;
           {report.nExcludedNoWOE} excluded (LOO but no WOE)
         </p>
@@ -307,7 +263,7 @@ export function RiskComparison() {
           >
             All sites ({report.n})
           </button>
-          {(data?.siteComparisons ?? []).map((site) => {
+          {data.siteComparisons.map((site) => {
             const n = site.stationComparisons.filter((s) => s.bnrrmPredicted && s.reportEstimate.mappedBNClass).length;
             return (
               <button
@@ -322,7 +278,7 @@ export function RiskComparison() {
           })}
         </div>
         <StationTable
-          sites={selectedSiteData ? [selectedSiteData] : (data?.siteComparisons ?? [])}
+          sites={selectedSiteData ? [selectedSiteData] : data.siteComparisons}
           showExclusions={showExclusions}
         />
         <label className="flex items-center gap-2 mt-2 text-xs text-slate-400 dark:text-slate-500 cursor-pointer">
@@ -333,9 +289,9 @@ export function RiskComparison() {
 
       {/* Exclusion transparency */}
       <div className="text-xs text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-700 pt-4 space-y-1">
-        <p>Sites without WOE data: {data?.summary?.sitesWithoutWOENames?.join(', ') ?? '\u2014'}</p>
-        <p>Governance: {data?._meta?.governanceSpec ?? ''} &middot; Model: {data?._meta?.modelVersion ?? ''}</p>
-        <p className="italic">{data?._meta?.note ?? ''}</p>
+        <p>Sites without WOE data: {data.summary.sitesWithoutWOENames.join(', ') || '\u2014'}</p>
+        <p>Governance: {data.meta.governanceSpec} &middot; Model: {data.meta.modelVersion}</p>
+        <p className="italic">{data.meta.note}</p>
       </div>
     </div>
   );
@@ -410,8 +366,8 @@ function ComparisonMatrix({ matrix }: { matrix: number[][] }) {
   );
 }
 
-function StationTable({ sites, showExclusions }: { sites: SiteComparison[]; showExclusions: boolean }) {
-  const rows: StationComparison[] = [];
+function StationTable({ sites, showExclusions }: { sites: NormalizedSiteComparison[]; showExclusions: boolean }) {
+  const rows: NormalizedSiteComparison['stationComparisons'][number][] = [];
   for (const site of sites) {
     for (const sc of site.stationComparisons) {
       if (sc.bnrrmPredicted || showExclusions) {

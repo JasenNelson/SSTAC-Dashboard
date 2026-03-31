@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { normalizeDecisions } from '@/lib/bn-rrm/normalize-artifacts';
 
 type DecisionRecord = {
   id: string;
@@ -184,7 +185,7 @@ function ExportButton({ data, filename }: { data: unknown; filename: string }) {
 }
 
 export function DecisionsAndLimitations() {
-  const { data: decisionsData, loading, error } = usePackArtifact<any>('decisions');
+  const { data: rawData, loading, error } = usePackArtifact<any>('decisions');
 
   if (loading) {
     return (
@@ -197,7 +198,9 @@ export function DecisionsAndLimitations() {
     );
   }
 
-  if (error || !decisionsData) {
+  const data = rawData ? normalizeDecisions(rawData) : null;
+
+  if (error || !data) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-red-500 text-sm">{error ?? 'Failed to load data'}</div>
@@ -205,10 +208,10 @@ export function DecisionsAndLimitations() {
     );
   }
 
-  const decisions = decisionsData.decision_records as DecisionRecord[];
-  const limitations = decisionsData.known_limitations as Limitation[];
-  const specs = decisionsData.spec_versions;
-  const issueSummary = decisionsData.issue_summary;
+  const decisions = data.decision_records as DecisionRecord[];
+  const limitations = data.known_limitations as Limitation[];
+  const specs = data.spec_versions;
+  const issueSummary = data.issue_summary;
 
   return (
     <div className="space-y-8">
@@ -247,6 +250,7 @@ export function DecisionsAndLimitations() {
       </div>
 
       {/* Issue Summary */}
+      {issueSummary && (
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Issue Tracker Summary</h3>
         <div className="grid grid-cols-4 gap-3 mb-3">
@@ -269,12 +273,14 @@ export function DecisionsAndLimitations() {
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400">{issueSummary.note}</p>
       </div>
+      )}
 
       {/* Specification Versions */}
+      {Object.keys(specs).length > 0 && (
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Specification Versions</h3>
         <div className="grid grid-cols-2 gap-2">
-          {Object.entries(specs ?? {}).map(([doc, version]) => (
+          {Object.entries(specs).map(([doc, version]) => (
             <div key={doc} className="flex items-center justify-between py-1.5 px-3 rounded bg-slate-50 dark:bg-slate-700/50">
               <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{doc.replace(/_/g, ' ')}</span>
               <span className="text-xs font-mono text-slate-500 dark:text-slate-400">v{String(version)}</span>
@@ -282,10 +288,11 @@ export function DecisionsAndLimitations() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Export Metadata */}
       <div className="text-xs text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-700 pt-4">
-        Source: {(decisionsData?._meta?.source_docs ?? []).join(' | ')} &middot; Export: {decisionsData?._meta?.export_date ?? ''}
+        Source: {data.meta.source_docs.join(' | ')} &middot; Export: {data.meta.export_date}
       </div>
     </div>
   );

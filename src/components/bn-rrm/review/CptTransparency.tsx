@@ -2,37 +2,11 @@
 
 import { useState } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { normalizeCptTransparency, type NormalizedCptNode } from '@/lib/bn-rrm/normalize-artifacts';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
-type NodeRecord = {
-  id: string;
-  label: string;
-  tier: number;
-  cpt_source: string;
-  sample_count: number;
-  parameter: string | null;
-  unit: string | null;
-  dr001_affected: boolean;
-  config_coverage: { observed: number; possible: number; coverage_pct: number } | null;
-  expert_distribution: { states: string[]; marginal: Record<string, number> } | null;
-  learned_distribution: { states: string[]; marginal: Record<string, number> } | null;
-  ess_prior_weight: { ess: number | null; method: string; note: string } | null;
-};
-
-type TierSummary = { tier: number; name: string; node_count: number; cpt_methods: string[] };
-
-type CptTransparencyData = {
-  _meta: { export_date: string; db_hash: string };
-  nodes: NodeRecord[];
-  woe_risk_comparison: {
-    expert: { description: string; states: string[] };
-    learned: { variable: string; states: string[]; parents: string[] };
-    note: string;
-  } | null;
-  dr001_callout: { id: string; title: string; affected_nodes: string[]; description: string; severity: string };
-  tier_summary: TierSummary[];
-};
+// Types are now in normalize-artifacts.ts — using NormalizedCptNode directly
 
 const SOURCE_BADGES: Record<string, { bg: string; text: string; label: string }> = {
   'Noisy-OR': { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-300', label: 'Noisy-OR' },
@@ -88,7 +62,7 @@ function downloadFile(content: string, filename: string, mimeType: string) {
   URL.revokeObjectURL(url);
 }
 
-function NodeCard({ node }: { node: NodeRecord }) {
+function NodeCard({ node }: { node: NormalizedCptNode }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -180,7 +154,7 @@ function NodeCard({ node }: { node: NodeRecord }) {
 }
 
 export function CptTransparency() {
-  const { data: cptDataRaw, loading, error } = usePackArtifact<any>('cpt_transparency');
+  const { data: rawData, loading, error } = usePackArtifact<any>('cpt_transparency');
   const [filterTier, setFilterTier] = useState<number | null>(null);
 
   if (loading) {
@@ -194,7 +168,9 @@ export function CptTransparency() {
     );
   }
 
-  if (error || !cptDataRaw) {
+  const data = rawData ? normalizeCptTransparency(rawData) : null;
+
+  if (error || !data) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-red-500 text-sm">{error ?? 'Failed to load data'}</div>
@@ -202,9 +178,8 @@ export function CptTransparency() {
     );
   }
 
-  const data = cptDataRaw as unknown as CptTransparencyData;
   const filteredNodes = filterTier !== null
-    ? (data.nodes ?? []).filter(n => n.tier === filterTier)
+    ? data.nodes.filter(n => n.tier === filterTier)
     : data.nodes;
 
   return (

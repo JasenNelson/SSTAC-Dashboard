@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { normalizeValidation } from '@/lib/bn-rrm/normalize-artifacts';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
@@ -239,7 +240,7 @@ function ExportButton({ data, filename, label }: { data: unknown; filename: stri
 }
 
 export function ValidationDashboard() {
-  const { data: validationData, loading: loadingVal, error: errorVal } = usePackArtifact<any>('validation');
+  const { data: rawValData, loading: loadingVal, error: errorVal } = usePackArtifact<any>('validation');
   const { data: modelComparisonData, loading: loadingComp, error: errorComp } = usePackArtifact<any>('comparison');
   const [predFilter, setPredFilter] = useState('all');
 
@@ -257,6 +258,8 @@ export function ValidationDashboard() {
     );
   }
 
+  const validationData = rawValData ? normalizeValidation(rawValData) : null;
+
   if (error || !validationData) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
@@ -273,10 +276,9 @@ export function ValidationDashboard() {
     );
   }
 
-  const predictions: Prediction[] = Array.isArray(validationData?.predictions) ? validationData.predictions : [];
-
+  const predictions: Prediction[] = validationData.predictions;
   const correctCount = predictions.filter((p) => p.predicted === p.observed).length;
-  const nComplete = validationData?.n_complete ?? predictions.length;
+  const nComplete = validationData.n_complete;
 
   return (
     <div className="space-y-8">

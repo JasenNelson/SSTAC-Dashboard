@@ -2,6 +2,7 @@
 
 // useMemo removed — siteRows computed inline
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { normalizeModelOverview } from '@/lib/bn-rrm/normalize-artifacts';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
@@ -104,7 +105,7 @@ function PerClassTable({ perClass }: { perClass: Record<string, PerClassMetrics>
 }
 
 export function ModelOverview() {
-  const { data: modelOverviewData, loading, error } = usePackArtifact<any>('model_overview');
+  const { data: rawData, loading, error } = usePackArtifact<any>('model_overview');
 
   if (loading) {
     return (
@@ -117,7 +118,9 @@ export function ModelOverview() {
     );
   }
 
-  if (error || !modelOverviewData) {
+  const data = rawData ? normalizeModelOverview(rawData) : null;
+
+  if (error || !data) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-red-500 text-sm">{error ?? 'Failed to load data'}</div>
@@ -125,16 +128,9 @@ export function ModelOverview() {
     );
   }
 
-  const overview = modelOverviewData;
-  const perf = overview?.performance ?? {};
-  const kappaScale = (perf?.kappa_interpretation?.scale ?? []) as {
-    range: [number, number];
-    label: string;
-    color: string;
-  }[];
-  const data = overview?.training_data ?? {};
-
-  const siteRows = data?.site_breakdown ?? [];
+  const perf = data.performance;
+  const kappaScale = perf.kappa_interpretation?.scale ?? [];
+  const siteRows = data.training.site_breakdown;
 
   return (
     <div className="space-y-8">
@@ -142,12 +138,14 @@ export function ModelOverview() {
       <div>
         <div className="flex items-center gap-3 mb-2">
           <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Model Overview</h2>
+          {data.meta.dataset_status && (
           <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 text-xs font-semibold rounded-full">
-            {overview?._meta?.dataset_status ?? ''}
+            {data.meta.dataset_status}
           </span>
+          )}
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {overview?.model_identity?.framework ?? ''} &mdash; {overview?.model_identity?.nodes ?? ''} nodes, {overview?.model_identity?.edges ?? ''} edges, {overview?.model_identity?.states_per_node ?? ''} states/node
+          {data.identity.framework} &mdash; {data.identity.nodes} nodes, {data.identity.edges} edges, {data.identity.states_per_node} states/node
         </p>
       </div>
 
@@ -158,16 +156,16 @@ export function ModelOverview() {
           <InfoTooltip {...TOOLTIP.looCrossValidation} />
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <MetricCard label="Accuracy" value={perf.loo_accuracy != null ? `${(perf.loo_accuracy * 100).toFixed(1)}%` : '—'} subtitle="Combined (all sites)" />
-          <MetricCard label="Kappa" value={perf.loo_kappa != null ? perf.loo_kappa.toFixed(3) : '—'} subtitle="Cohen's kappa (unweighted)" alert />
-          <MetricCard label="High Recall" value={perf.per_class?.high?.recall != null ? `${(perf.per_class.high.recall * 100).toFixed(1)}%` : '—'} subtitle="High-risk detection rate" />
-          <MetricCard label="Moderate Recall" value={perf.per_class?.moderate?.recall != null ? `${(perf.per_class.moderate.recall * 100).toFixed(1)}%` : '—'} subtitle="Moderate-risk detection rate" alert={perf.per_class?.moderate?.recall != null && perf.per_class.moderate.recall < 0.2} />
+          <MetricCard label="Accuracy" value={perf.accuracy != null ? `${(perf.accuracy * 100).toFixed(1)}%` : '\u2014'} subtitle="Combined (all sites)" />
+          <MetricCard label="Kappa" value={perf.kappa != null ? perf.kappa.toFixed(3) : '\u2014'} subtitle="Cohen's kappa (unweighted)" alert />
+          <MetricCard label="High Recall" value={perf.per_class?.high?.recall != null ? `${(perf.per_class.high.recall * 100).toFixed(1)}%` : '\u2014'} subtitle="High-risk detection rate" />
+          <MetricCard label="Moderate Recall" value={perf.per_class?.moderate?.recall != null ? `${(perf.per_class.moderate.recall * 100).toFixed(1)}%` : '\u2014'} subtitle="Moderate-risk detection rate" alert={perf.per_class?.moderate?.recall != null && perf.per_class.moderate.recall < 0.2} />
         </div>
       </div>
 
       {/* v1.0 Canonical Baseline */}
-      {!!(modelOverviewData as Record<string, unknown>).publication_baseline && (() => {
-        const pub = (modelOverviewData as Record<string, unknown>).publication_baseline as {
+      {!!data.publication_baseline && (() => {
+        const pub = data.publication_baseline as {
           evaluation_set: string;
           loo_entropy_rule: { accuracy: number; kappa: number; low_recall: number; moderate_recall: number; high_recall: number };
           loo_map_comparator: { accuracy: number; kappa: number; low_recall: number; moderate_recall: number; high_recall: number };
@@ -218,7 +216,7 @@ export function ModelOverview() {
           Kappa Interpretation (Landis/Koch Scale)
           <InfoTooltip {...TOOLTIP.cohensKappa} />
         </h3>
-        {perf.loo_kappa != null && <KappaHealthMeter value={perf.loo_kappa} kappaScale={kappaScale} />}
+        {perf.kappa != null && <KappaHealthMeter value={perf.kappa} kappaScale={kappaScale} />}
         {perf.kappa_interpretation?.narrative && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
@@ -253,10 +251,10 @@ export function ModelOverview() {
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Training Data</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <MetricCard label="Sites" value={String(data?.total_sites ?? '\u2014')} />
-          <MetricCard label="Stations" value={data?.dataset_counts?.stations != null ? data.dataset_counts.stations.toLocaleString() : '\u2014'} />
-          <MetricCard label="Co-located" value={String(data?.dataset_counts?.co_located ?? '\u2014')} subtitle="BDeu target: 50" />
-          <MetricCard label="Full Triads" value={`${data?.dataset_counts?.full_triads_effective ?? '\u2014'}`} subtitle={`${data?.dataset_counts?.full_triads_native ?? '?'} raw + 8 Level C merged`} />
+          <MetricCard label="Sites" value={String(data.training.total_sites ?? '\u2014')} />
+          <MetricCard label="Stations" value={data.training.dataset_counts?.stations != null ? data.training.dataset_counts.stations.toLocaleString() : '\u2014'} />
+          <MetricCard label="Co-located" value={String(data.training.dataset_counts?.co_located ?? '\u2014')} subtitle="BDeu target: 50" />
+          <MetricCard label="Full Triads" value={`${data.training.dataset_counts?.full_triads_effective ?? '\u2014'}`} subtitle={`${data.training.dataset_counts?.full_triads_native ?? '?'} raw + 8 Level C merged`} />
         </div>
         <div className="text-xs text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-1">
           <InfoTooltip {...TOOLTIP.triadReconciliation} />
@@ -300,14 +298,14 @@ export function ModelOverview() {
       </div>
 
       {/* Architecture Tiers */}
-      {overview.architecture?.tiers && (
+      {data.architecture?.tiers && (
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3 flex items-center gap-2">
           DAG Architecture (5 Tiers)
           <InfoTooltip {...TOOLTIP.dagArchitectureTiers} />
         </h3>
         <div className="space-y-3">
-          {overview.architecture.tiers.map((tier: any) => (
+          {data.architecture.tiers.map((tier: any) => (
             <div key={tier.tier} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">
               <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 shrink-0">
                 T{tier.tier}
@@ -324,14 +322,15 @@ export function ModelOverview() {
       )}
 
       {/* Intended Use */}
+      {data.intended_use && (
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Intended Use</h3>
-        <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">{overview?.intended_use?.primary ?? ''}</p>
-        {overview?.intended_use?.not_suitable_for && (
+        <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">{data.intended_use.primary}</p>
+        {data.intended_use.not_suitable_for.length > 0 && (
         <>
         <div className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Not suitable for:</div>
         <ul className="space-y-1">
-          {overview.intended_use.not_suitable_for.map((item: any, i: number) => (
+          {data.intended_use.not_suitable_for.map((item: any, i: number) => (
             <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
               <span className="text-red-400 mt-0.5">&#x2717;</span>
               {item}
@@ -341,10 +340,11 @@ export function ModelOverview() {
         </>
         )}
       </div>
+      )}
 
       {/* Export Metadata */}
       <div className="text-xs text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-700 pt-4">
-        Export: {overview?._meta?.export_date ?? ''} &middot; DB hash: {overview?._meta?.db_hash?.slice(0, 12) ?? ''}... &middot; Model Card v{overview?._meta?.model_version ?? ''} &middot; Handoff v{overview?._meta?.handoff_version ?? ''}
+        Export: {data.meta.export_date} &middot; DB hash: {data.meta.db_hash.slice(0, 12)}... &middot; Model Card v{data.meta.model_version} &middot; Handoff v{data.meta.handoff_version}
       </div>
     </div>
   );

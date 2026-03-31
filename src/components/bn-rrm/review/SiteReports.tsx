@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { normalizeSiteReports } from '@/lib/bn-rrm/normalize-artifacts';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
@@ -311,7 +312,7 @@ export function SiteReports() {
   const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
   const [activeDataTab, setActiveDataTab] = useState<DataTab>('chemistry');
 
-  const data = (!error && siteDataRaw) ? siteDataRaw as unknown as SiteReportsData : null;
+  const data = (!error && siteDataRaw) ? normalizeSiteReports(siteDataRaw) : null;
 
   // ALL hooks before early returns (React Rules of Hooks)
   const selectedSite = useMemo(() => {
@@ -357,8 +358,8 @@ export function SiteReports() {
     );
   }
 
-  // Normalize sites array once — site packs may have different shapes
-  const sites: any[] = Array.isArray(data.sites) ? data.sites : [];
+  // Normalization now handled by normalizeSiteReports
+  const sites = data.sites;
 
   const exportFilename = selectedSite
     ? `${selectedSite.name.replace(/\s/g, '_')}_${activeDataTab}`

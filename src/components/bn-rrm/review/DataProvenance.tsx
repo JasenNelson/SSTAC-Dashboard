@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { normalizeProvenance, type NormalizedStation } from '@/lib/bn-rrm/normalize-artifacts';
 
 type Document = {
   doc_id: number;
@@ -102,7 +103,7 @@ export function DataProvenance() {
   const [searchTerm, setSearchTerm] = useState('');
   const [siteFilter, setSiteFilter] = useState<string>('all');
 
-  const data = (!error && provDataRaw) ? provDataRaw as unknown as ProvenanceRegistryData : null;
+  const data = (!error && provDataRaw) ? normalizeProvenance(provDataRaw) : null;
 
   // ALL hooks must be called before early returns (React Rules of Hooks)
   const siteNames = useMemo(() => {
@@ -149,7 +150,7 @@ export function DataProvenance() {
     );
   }
 
-  const flatStationExport = (stations: Station[]) => stations.map(s => ({
+  const flatStationExport = (stations: NormalizedStation[]) => stations.map(s => ({
     station_id: s.station_id,
     station_name: s.station_name,
     site_name: s.site_name,
@@ -193,9 +194,9 @@ export function DataProvenance() {
           ) : (
             <>
               <span className="text-xs text-slate-400 dark:text-slate-500 mr-1">
-                {filteredStations.length < (data?.stations?.length ?? 0)
+                {filteredStations.length < data.stations.length
                   ? `Exports ${filteredStations.length} filtered stations`
-                  : `Exports all ${data?.stations?.length ?? 0} stations`}
+                  : `Exports all ${data.stations.length} stations`}
               </span>
               <button
                 onClick={() => exportData(flatStationExport(filteredStations), 'station_provenance.json', 'json')}
