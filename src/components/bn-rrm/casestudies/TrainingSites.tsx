@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import comparisonDataRaw from '@/data/bn-rrm/transparency/risk_comparison.json';
-import siteReportsRaw from '@/data/bn-rrm/transparency/site_reports.json';
+import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { usePackStore } from '@/stores/bn-rrm/packStore';
+import { normalizeRiskComparison, normalizeSiteReports } from '@/lib/bn-rrm/normalize-artifacts';
+import type { NormalizedRiskComparison, NormalizedSiteReports } from '@/lib/bn-rrm/normalize-artifacts';
 import { ExpandableSection } from '@/components/bn-rrm/shared/ExpandableSection';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { cn } from '@/utils/cn';
@@ -13,28 +15,63 @@ const CLASS_COLORS: Record<string, { bg: string; text: string }> = {
   high: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-300' },
 };
 
-type ComparisonData = typeof comparisonDataRaw;
-type SiteReportsData = typeof siteReportsRaw;
-
-const ALL_TRAINING_SITES = [
-  { registryId: '9930', name: 'Woodfibre', waterbody: 'marine' },
-  { registryId: '0311', name: 'CP Nelson', waterbody: 'freshwater' },
-  { registryId: '4205', name: 'Island Copper', waterbody: 'marine' },
-  { registryId: '15125', name: 'Blue Water', waterbody: 'marine' },
-  { registryId: '3130', name: 'IOCO', waterbody: 'marine' },
-  { registryId: '15184', name: 'Toquaht', waterbody: 'marine' },
-  { registryId: '0331', name: 'ALCAN', waterbody: 'marine' },
-  { registryId: '16029', name: 'Brunette River', waterbody: 'freshwater' },
-];
-
 export function TrainingSites() {
-  const data = comparisonDataRaw as ComparisonData;
-  const siteReports = siteReportsRaw as SiteReportsData;
+  const packManifest = usePackStore((s) => s.packManifest);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: comparisonDataRaw, loading: loadingComparison } = usePackArtifact<any>('risk_comparison');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: siteReportsRaw, loading: loadingSiteReports } = usePackArtifact<any>('site_reports');
+
+  // Hook: useState — must be above early returns
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
 
+  // Normalize artifacts through the standard normalizer layer
+  const data: NormalizedRiskComparison | null = useMemo(
+    () => comparisonDataRaw ? normalizeRiskComparison(comparisonDataRaw) : null,
+    [comparisonDataRaw],
+  );
+  const siteReports: NormalizedSiteReports | null = useMemo(
+    () => siteReportsRaw ? normalizeSiteReports(siteReportsRaw) : null,
+    [siteReportsRaw],
+  );
+
+  // Site inventory comes from pack manifest instead of hardcoded array
+  const trainingSites = useMemo(() => {
+    if (packManifest?.site_inventory) {
+      return packManifest.site_inventory.map(s => ({
+        registryId: s.registry_id,
+        name: s.name,
+        waterbody: s.waterbody,
+      }));
+    }
+    // Fallback if no pack manifest
+    return [];
+  }, [packManifest]);
+
   const sitesWithWOE = useMemo(() => {
+    if (!data) return new Set<string>();
     return new Set(data.siteComparisons.map((s) => s.registryId));
   }, [data]);
+
+  // Early returns AFTER all hooks
+  if (loadingComparison || loadingSiteReports) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex items-center gap-3 text-slate-400">
+          <div className="w-5 h-5 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+          <span>Loading training sites...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data || !siteReports) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-red-500 text-sm">Failed to load comparison or site report data</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -60,11 +97,11 @@ export function TrainingSites() {
 
       {/* Site cards */}
       <div className="grid grid-cols-1 gap-3">
-        {ALL_TRAINING_SITES.map((site) => {
+        {trainingSites.map((site) => {
           const hasWOE = sitesWithWOE.has(site.registryId);
           const compSite = data.siteComparisons.find((s) => s.registryId === site.registryId);
-          const siteReport = (siteReports as SiteReportsData).sites?.find(
-            (s: { registry_id: string }) => s.registry_id === site.registryId
+          const siteReport = siteReports.sites?.find(
+            (s) => s.registry_id === site.registryId
           );
           const isSelected = selectedSiteId === site.registryId;
 
@@ -168,8 +205,8 @@ export function TrainingSites() {
 
       {/* Footer */}
       <div className="text-xs text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-700 pt-4">
-        <p>Model: {data._meta.modelVersion} &middot; Governance: {data._meta.governanceSpec}</p>
-        <p className="italic mt-1">{data._meta.note}</p>
+        <p>Model: {data.meta.modelVersion} &middot; Governance: {data.meta.governanceSpec}</p>
+        <p className="italic mt-1">{data.meta.note}</p>
       </div>
     </div>
   );
@@ -177,8 +214,10 @@ export function TrainingSites() {
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function SiteDistributionComparison({ site }: { site: ComparisonData['siteComparisons'][0] }) {
-  const matched = site.stationComparisons.filter((s) => s.bnrrmPredicted && s.reportEstimate.mappedBNClass);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function SiteDistributionComparison({ site }: { site: any }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const matched = site.stationComparisons.filter((s: any) => s.bnrrmPredicted && s.reportEstimate.mappedBNClass);
 
   const bnDist = { low: 0, moderate: 0, high: 0 };
   const woeDist = { low: 0, moderate: 0, high: 0 };
@@ -239,7 +278,7 @@ function DistributionRow({ label, dist, n }: { label: string; dist: Record<strin
   );
 }
 
-function SiteStationTable({ site }: { site: ComparisonData['siteComparisons'][0] }) {
+function SiteStationTable({ site }: { site: NormalizedRiskComparison['siteComparisons'][0] }) {
   return (
     <div className="max-h-72 overflow-auto">
       <table className="w-full text-xs">
@@ -254,7 +293,8 @@ function SiteStationTable({ site }: { site: ComparisonData['siteComparisons'][0]
           </tr>
         </thead>
         <tbody>
-          {site.stationComparisons.map((sc) => {
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {site.stationComparisons.map((sc: any) => {
             const mapped = sc.reportEstimate.mappedBNClass;
             const match = sc.bnrrmPredicted && mapped ? sc.bnrrmPredicted === mapped : null;
             return (

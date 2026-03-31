@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import comparisonDataRaw from '@/data/bn-rrm/transparency/risk_comparison.json';
+import { useState, useMemo } from 'react';
+import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { normalizeRiskComparison } from '@/lib/bn-rrm/normalize-artifacts';
+import type { NormalizedRiskComparison } from '@/lib/bn-rrm/normalize-artifacts';
 import { ExpandableSection } from '@/components/bn-rrm/shared/ExpandableSection';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { cn } from '@/utils/cn';
@@ -72,11 +74,43 @@ const CLASS_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export function ExternalSites() {
-  const data = comparisonDataRaw as { externalSites?: ExternalSite[] };
-  const externalSites = data.externalSites ?? [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: comparisonDataRaw, loading, error } = usePackArtifact<any>('risk_comparison');
+
+  // Normalize artifact through the standard normalizer layer
+  const normalized: NormalizedRiskComparison | null = useMemo(
+    () => comparisonDataRaw ? normalizeRiskComparison(comparisonDataRaw) : null,
+    [comparisonDataRaw],
+  );
+
+  // Extract external sites from the raw data (externalSites is not in normalized shape)
+  const rawData = comparisonDataRaw as { externalSites?: ExternalSite[] } | null;
+  const externalSites = rawData?.externalSites ?? [];
+
+  // Hook: useState — must be above early returns
   const [expandedSite, setExpandedSite] = useState<string | null>(
     externalSites.length === 1 ? externalSites[0].siteId : null
   );
+
+  // Early returns AFTER all hooks
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex items-center gap-3 text-slate-400">
+          <div className="w-5 h-5 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+          <span>Loading external sites...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !comparisonDataRaw) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-red-500 text-sm">{error ?? 'Failed to load comparison data'}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -15,11 +15,14 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { ExpandableSection } from '@/components/bn-rrm/shared/ExpandableSection';
+import { usePackStore } from '@/stores/bn-rrm/packStore';
+import { getScopeBadge, getReleaseBadge } from '@/lib/bn-rrm/pack-types';
 
 type Audience = 'decision-maker' | 'technical' | null;
 
 export function GettingStartedView() {
   const [audience, setAudience] = useState<Audience>(null);
+  const packManifest = usePackStore((s) => s.packManifest);
 
   return (
     <div className="flex-1 p-8 overflow-auto">
@@ -33,7 +36,10 @@ export function GettingStartedView() {
             Bayesian Network Relative Risk Model for sediment ecological risk assessment
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-            Model: bnrrm-landis-causal (v4.0 architecture) &middot; Release v1.0 &middot; 20-node causal DAG &middot; 3 risk states
+            {packManifest
+              ? `Model: ${packManifest?.pack_id ?? ''} (${packManifest?.version_history?.architecture_version ?? ''}) · ${packManifest?.display_name ?? ''} · ${packManifest?.dag_node_count ?? 20}-node causal DAG · 3 risk states`
+              : 'Model: loading... · 20-node causal DAG · 3 risk states'
+            }
           </p>
         </div>
 
@@ -124,7 +130,10 @@ export function GettingStartedView() {
             <ExpandableSection title="What are the model's limitations?">
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-3">
                 <div className="space-y-2">
-                  <LimitationItem text="The model was trained on 8 BC contaminated sites (82 co-located stations). Performance at sites with very different contamination profiles has not been validated." />
+                  <LimitationItem text={packManifest
+                    ? `The model was trained on ${packManifest?.training_corpus?.n_sites ?? 'N/A'} BC contaminated sites (${packManifest?.training_corpus?.n_co_located ?? 'N/A'} co-located stations). Performance at sites with very different contamination profiles has not been validated.`
+                    : "Performance at sites with very different contamination profiles has not been validated."
+                  } />
                   <LimitationItem text="The organic pathway (PAH + PCB) relies primarily on expert judgment rather than training data. DR-001 reframed: PAH and PCB do not need co-location for candidacy — each needs its own conditions/effects evidence. Current code limitation: CPT fitting requires both parents observed, and jointly analyzed PAH+PCB data is scarce in BC sediment assessments (4 station-events from 1 site)." />
                   <LimitationItem text="Moderate-risk detection is limited (12.5% recall). The model is better at identifying high-risk and low-risk stations than moderate-risk stations." />
                   <LimitationItem text="Model outputs are posterior probability estimates, not measured environmental outcomes. They should inform professional judgment, not replace it." />
@@ -286,8 +295,11 @@ export function GettingStartedView() {
             <ExpandableSection title="Evaluation context and LOO validation">
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-3">
                 <p>
-                  Model performance is assessed via Leave-One-Out (LOO) cross-validation on 82
-                  co-located stations across 8 sites. Each station is predicted using a model trained
+                  Model performance is assessed via Leave-One-Out (LOO) cross-validation on{' '}
+                  {packManifest
+                    ? `${packManifest?.training_corpus?.n_co_located ?? 'N/A'} co-located stations across ${packManifest?.training_corpus?.n_sites ?? 'N/A'} sites`
+                    : 'the training corpus'
+                  }. Each station is predicted using a model trained
                   on all other stations. The predicted class is the MAP (maximum a posteriori) state
                   of the <code>ecological_risk</code> posterior.
                 </p>
