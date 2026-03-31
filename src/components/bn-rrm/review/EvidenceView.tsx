@@ -28,7 +28,8 @@ interface SensitivityData {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function riskColor(risk: string): string {
+function riskColor(risk: string | null | undefined): string {
+  if (!risk) return 'text-slate-400 dark:text-slate-500';
   const r = risk.toLowerCase();
   if (r === 'low') return 'text-green-600 dark:text-green-400';
   if (r === 'moderate') return 'text-amber-600 dark:text-amber-400';
@@ -36,7 +37,8 @@ function riskColor(risk: string): string {
   return 'text-slate-600 dark:text-slate-400';
 }
 
-function riskBgSubtle(risk: string): string {
+function riskBgSubtle(risk: string | null | undefined): string {
+  if (!risk) return '';
   const r = risk.toLowerCase();
   if (r === 'low') return 'bg-green-50 dark:bg-green-900/10';
   if (r === 'moderate') return 'bg-amber-50 dark:bg-amber-900/10';
@@ -85,8 +87,14 @@ export function EvidenceView() {
 
   const stats = useMemo(() => {
     if (!data?.stations) return null;
-    const total = data.stations.length;
-    const changed = data.stations.filter((s) => s.changed).length;
+    const total = data.stations?.length ?? 0;
+    const changed = (data.stations ?? []).filter((s: any) => {
+      if (s.changed != null || s.map_changed != null) return s.changed ?? s.map_changed;
+      // Derive from nested structure
+      const sMap = s.screening_map ?? s.screening?.map_prediction ?? s.site_screening?.map;
+      const aMap = s.assessment_map ?? s.assessment?.map_prediction ?? s.site_assessment?.map;
+      return sMap && aMap && sMap !== aMap;
+    }).length;
     return { total, changed };
   }, [data]);
 
@@ -194,28 +202,35 @@ export function EvidenceView() {
               </tr>
             </thead>
             <tbody>
-              {data.stations.map((station, i) => (
+              {data.stations.map((raw: any, i: number) => {
+                // Normalize field names — handle both flat and nested JSON formats
+                const name = raw.station ?? raw.station_name ?? raw.station_id ?? `Station ${i}`;
+                const observed = raw.observed_risk;
+                const screeningMap = raw.screening_map ?? raw.screening?.map_prediction ?? raw.site_screening?.map ?? raw.screening?.map;
+                const assessmentMap = raw.assessment_map ?? raw.assessment?.map_prediction ?? raw.site_assessment?.map ?? raw.assessment?.map;
+                const changed = raw.changed ?? raw.map_changed ?? (screeningMap !== assessmentMap);
+
+                return (
                 <tr
                   key={i}
-                  className={`border-b border-slate-100 dark:border-slate-800 ${station.changed ? riskBgSubtle(station.assessment_map) : ''}`}
+                  className={`border-b border-slate-100 dark:border-slate-800 ${changed ? riskBgSubtle(assessmentMap) : ''}`}
                 >
                   <td className="py-2 font-medium text-slate-700 dark:text-slate-300">
-                    {station.station}
+                    {name}
                   </td>
-                  <td className={`py-2 capitalize ${riskColor(station.observed_risk)}`}>
-                    {station.observed_risk}
+                  <td className={`py-2 capitalize ${riskColor(observed)}`}>
+                    {observed ?? '—'}
                   </td>
-                  <td className={`py-2 capitalize ${riskColor(station.screening_map)}`}>
-                    {station.screening_map}
+                  <td className={`py-2 capitalize ${riskColor(screeningMap)}`}>
+                    {screeningMap ?? '—'}
                   </td>
                   <td className="py-2">
-                    <span className={`capitalize ${riskColor(station.assessment_map)}`}>
-                      {station.assessment_map}
+                    <span className={`capitalize ${riskColor(assessmentMap)}`}>
+                      {assessmentMap ?? '—'}
                     </span>
-                    {station.changed && <PosteriorShiftBar station={station} />}
                   </td>
                   <td className="py-2 text-center">
-                    {station.changed ? (
+                    {changed ? (
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 text-xs font-bold">
                         &#8800;
                       </span>
@@ -224,7 +239,8 @@ export function EvidenceView() {
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
