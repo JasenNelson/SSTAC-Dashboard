@@ -135,8 +135,11 @@ export const usePackStore = create<PackState>()(
           selectedPackId: packId,  // Set immediately so UI reacts before fetch completes
           packLoading: true,
           packError: null,
-          packManifest: null,  // Clear stale manifest during fetch
-          // Clear cached artifacts from previous pack
+          // Keep packManifest from previous pack during fetch — clearing it causes
+          // artifact hooks to return "not available" and BNRRMClient to hit the
+          // legacy fallback path. The old manifest is harmless; it gets replaced
+          // when the fetch completes. Artifact cache IS cleared so stale data
+          // from the old pack won't be served.
           reviewArtifactCache: {},
           reviewArtifactLoading: {},
           reviewArtifactErrors: {},
