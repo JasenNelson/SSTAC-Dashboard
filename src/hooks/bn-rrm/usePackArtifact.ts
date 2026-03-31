@@ -25,11 +25,14 @@ export function usePackArtifact<T = unknown>(
   key: ReviewArtifactKey
 ): UsePackArtifactResult<T> {
   const selectedPackId = usePackStore((s) => s.selectedPackId);
-  const packManifest = usePackStore((s) => s.packManifest);
+  const packManifestId = usePackStore((s) => s.packManifest?.pack_id ?? null);
   const loadReviewArtifact = usePackStore((s) => s.loadReviewArtifact);
   const cachedData = usePackStore((s) => s.reviewArtifactCache[key]);
   const isLoading = usePackStore((s) => s.reviewArtifactLoading[key] ?? false);
   const artifactError = usePackStore((s) => s.reviewArtifactErrors[key] ?? null);
+
+  // Track whether the manifest matches the selected pack (stable primitive)
+  const manifestReady = selectedPackId != null && packManifestId === selectedPackId;
 
   const [localData, setLocalData] = useState<T | null>(null);
   const prevPackIdRef = useRef<string | null>(null);
@@ -50,14 +53,14 @@ export function usePackArtifact<T = unknown>(
     }
   }, [selectedPackId]);
 
-  // Load on mount, when pack changes, or when manifest arrives (after pack switch)
+  // Load on mount, when pack changes, or when manifest arrives for the new pack
   useEffect(() => {
     if (cachedData !== undefined) {
       setLocalData(cachedData as T);
-    } else {
+    } else if (manifestReady) {
       load();
     }
-  }, [selectedPackId, packManifest, cachedData, load]);
+  }, [selectedPackId, manifestReady, cachedData, load]);
 
   return {
     data: localData,
