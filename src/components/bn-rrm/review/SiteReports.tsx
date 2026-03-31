@@ -329,6 +329,14 @@ export function SiteReports() {
     return null;
   }, [selectedSite, activeDataTab]);
 
+  // Count missing coords for selected site (must be before early returns)
+  const coordStats = useMemo(() => {
+    if (!selectedSite?.station_details) return null;
+    const total = selectedSite.station_details.length;
+    const withCoords = selectedSite.station_details.filter((s: any) => s.latitude !== null && s.longitude !== null).length;
+    return { total, withCoords, missing: total - withCoords };
+  }, [selectedSite]);
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
@@ -364,14 +372,6 @@ export function SiteReports() {
       exportData(activeDataForExport, `${exportFilename}.${format}`, format);
     }
   };
-
-  // Count missing coords for selected site
-  const coordStats = useMemo(() => {
-    if (!selectedSite?.station_details) return null;
-    const total = selectedSite.station_details.length;
-    const withCoords = selectedSite.station_details.filter(s => s.latitude !== null && s.longitude !== null).length;
-    return { total, withCoords, missing: total - withCoords };
-  }, [selectedSite]);
 
   return (
     <div className="space-y-6">
