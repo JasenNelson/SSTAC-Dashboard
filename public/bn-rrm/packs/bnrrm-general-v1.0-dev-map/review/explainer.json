@@ -82,7 +82,7 @@
       "Organic pathway extremely sparse: only 4 PCB stations. General model's organic CPTs are almost entirely prior-driven (expert + BDeu).",
       "AVS/SEM missing at 32 stations (34%). All 8 CP Nelson stations and all high-toxicity stations lack AVS, creating a systematic gap.",
       "Geographic concentration: 4 of 8 sites are marine, 2 freshwater. No estuarine sites. Brunette River and CP Nelson are the only freshwater representatives.",
-      "Class imbalance: 61 Low / 15 Moderate / 17 High. Moderate class has very low recall (0.07) in screening LOO."
+      "Class imbalance: 61 Low / 15 Moderate / 17 High. Moderate class has very low recall (0.07) in LOO."
     ]
   },
 
@@ -147,7 +147,7 @@
       "station_id": "general-model",
       "observed": "moderate",
       "predicted": "low",
-      "explanation": "The general model has very low recall for the Moderate class (0.067 in screening LOO). This is a systematic pattern: class imbalance (61 Low vs 15 Moderate) combined with insufficient discriminative features causes the model to default to Low for ambiguous cases. 34 of 93 stations change prediction between screening and assessment mode (sensitivity report).",
+      "explanation": "The general model has very low recall for the Moderate class (0.067 in LOO). This is a systematic pattern: class imbalance (61 Low vs 15 Moderate) combined with insufficient discriminative features causes the model to default to Low for ambiguous cases. 34 of 93 stations change prediction between screening and the v1.0 model (sensitivity report).",
       "recommendation": "known_limitation"
     }
   ],
@@ -174,17 +174,17 @@
       }
     ],
     "applicability_notes": [
-      "Screening mode is the default. Assessment mode available when observed biological effects are entered.",
-      "The sensitivity report shows 34/93 stations change MAP prediction between screening and assessment mode (36.6% sensitivity).",
+      "Chemistry-only prediction is the default. The v1.0 model available when observed biological effects are entered.",
+      "The sensitivity report shows 34/93 stations change MAP prediction between screening and the v1.0 model (36.6% sensitivity).",
       "Moderate class recall is very low (0.067) -- the model tends to predict Low for ambiguous cases.",
-      "High class recall is 0.35 in screening LOO. Class-weighted BDeu is an open research lane for improvement.",
+      "High class recall is 0.35 in LOO. Class-weighted BDeu is an open research lane for improvement.",
       "Would NOT apply at: sites with dioxin/furan contamination (unmodeled), natural mineralization backgrounds, water-column-dominant exposure pathways."
     ]
   },
 
   "hitl_review_questions": [
     {
-      "question": "Is the 62.4% screening LOO accuracy acceptable for the general model's intended use as a prior-provider for site-specific packs?",
+      "question": "Is the 62.4% LOO accuracy acceptable for the general model's intended use as a prior-provider for site-specific packs?",
       "context": "The general model is not intended to be used directly for site-level decisions. Its primary role is providing CPT priors for hierarchical borrowing. Site-specific packs with sufficient data will diverge from the general model's predictions. The 62.4% accuracy reflects cross-site heterogeneity, not model deficiency.",
       "priority": "critical"
     },
@@ -194,8 +194,8 @@
       "priority": "important"
     },
     {
-      "question": "Does the sensitivity report (34/93 corrections in assessment mode) indicate that screening mode is unreliable?",
-      "context": "36.6% of stations change MAP prediction when biological effects are entered. This is expected -- assessment mode has strictly more information. The question is whether screening mode is reliable enough for initial triage before field data is collected.",
+      "question": "The sensitivity analysis shows 34/93 stations where including observed biological evidence changes the risk prediction. Does this indicate the model is appropriately weighting observed effects?",
+      "context": "When observed biological effects are available, the model uses them as the strongest evidence. At 36.6% of stations, this changes the final risk prediction — confirming that observed effects carry meaningful weight in the assessment.",
       "priority": "important"
     },
     {

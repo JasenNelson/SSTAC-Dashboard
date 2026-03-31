@@ -10,7 +10,7 @@
     "registry_id": "0331",
     "dominant_pathway": "organics",
     "contamination_profile": "Marine aluminum smelter -- PAH-dominant organic pathway (32,000-61,000 ug/kg total PAH), strong protective factors (high TOC, high AVS/SEM ratios), elevated metals secondary.",
-    "narrative": "ALCAN (Site 0331) is the Rio Tinto BC Works aluminum smelter in Kitimat, a marine site with a PAH-dominant organic pathway. Unlike Toquaht and CP Nelson, ALCAN has organic contaminant data at all stations, so no marginalization override is needed. The site has strong protective factors (high TOC, high AVS/SEM ratios) that attenuate both metal and organic bioavailability, yet still shows significant community impacts (taxa richness loss). The screening model predicts all-Low (0/5 correct) due to protective factors, while assessment mode correctly classifies 5/5 when biological effects are entered."
+    "narrative": "ALCAN (Site 0331) is the Rio Tinto BC Works aluminum smelter in Kitimat, a marine site with a PAH-dominant organic pathway. Unlike Toquaht and CP Nelson, ALCAN has organic contaminant data at all stations, so no marginalization override is needed. The site has strong protective factors (high TOC, high AVS/SEM ratios) that attenuate both metal and organic bioavailability, yet still shows significant community impacts (taxa richness loss). The chemistry-only model predicts all-Low (0/5 correct) due to protective factors, while the v1.0 model correctly classifies 5/5 when biological effects are entered."
   },
 
   "data_inventory": {
@@ -151,67 +151,67 @@
       "station_id": "SS-24",
       "observed": "high",
       "predicted": "low",
-      "explanation": "SS-24 has the most severe community impact at ALCAN (5 taxa, 10.5 abundance) and is correctly flagged as High in assessment mode (P=0.42). In screening mode, high protective factors (TOC, AVS at other stations) dominate, producing a near-uniform posterior that defaults to Low. SS-24 also lacks AVS/SEM data, compounding the screening-mode limitation.",
+      "explanation": "SS-24 has the most severe community impact at ALCAN (5 taxa, 10.5 abundance) and is correctly flagged as High in the v1.0 model (P=0.42). In chemistry-only inference, high protective factors (TOC, AVS at other stations) dominate, producing a near-uniform posterior that defaults to Low. SS-24 also lacks AVS/SEM data, compounding the chemistry-only limitation.",
       "recommendation": "flag_for_hitl"
     },
     {
       "station_id": "SS-2",
       "observed": "moderate",
       "predicted": "low",
-      "explanation": "Strong protective factors (high TOC, high AVS/SEM ratio) cause the screening model to predict Low despite significant taxa richness loss. Assessment mode correctly classifies as Moderate (P=0.43) when biological effects are entered.",
+      "explanation": "Strong protective factors (high TOC, high AVS/SEM ratio) cause the chemistry-only model to predict Low despite significant taxa richness loss. The v1.0 model correctly classifies as Moderate (P=0.43) when biological effects are entered.",
       "recommendation": "known_limitation"
     },
     {
       "station_id": "SS-23",
       "observed": "moderate",
       "predicted": "low",
-      "explanation": "Same pattern as SS-2: protective factors dominate screening mode. Assessment mode correctly classifies as Moderate.",
+      "explanation": "Same pattern as SS-2: protective factors dominate chemistry-only prediction. The v1.0 model correctly classifies as Moderate.",
       "recommendation": "known_limitation"
     },
     {
       "station_id": "SS-32",
       "observed": "moderate",
       "predicted": "low",
-      "explanation": "Same pattern as SS-2: protective factors dominate screening mode. Assessment mode correctly classifies as Moderate.",
+      "explanation": "Same pattern as SS-2: protective factors dominate chemistry-only prediction. The v1.0 model correctly classifies as Moderate.",
       "recommendation": "known_limitation"
     },
     {
       "station_id": "SS-46",
       "observed": "moderate",
       "predicted": "low",
-      "explanation": "Same pattern as SS-2: protective factors dominate screening mode. Assessment mode correctly classifies as Moderate.",
+      "explanation": "Same pattern as SS-2: protective factors dominate chemistry-only prediction. The v1.0 model correctly classifies as Moderate.",
       "recommendation": "known_limitation"
     }
   ],
 
   "governance": {
-    "scope_note": "No site-scoped overrides needed. The organic pathway is fully populated at ALCAN, so no marginalization applies. The screening-mode all-Low result reflects the strong protective factors at this site and is a genuine model interpretation, not a data gap artifact. Assessment mode demonstrates the model correctly integrates observed community impacts.",
+    "scope_note": "No site-scoped overrides needed. The organic pathway is fully populated at ALCAN, so no marginalization applies. The chemistry-only all-Low result reflects the strong protective factors at this site and is a genuine model interpretation, not a data gap artifact. The v1.0 model demonstrates the model correctly integrates observed community impacts.",
     "dag_unchanged": true,
     "general_model_unchanged": true,
     "hitl_decisions": [
       {
-        "decision": "Accepted ALCAN screening-mode result as a legitimate model interpretation of strong protective factors. Assessment mode (5/5 correct) validates the model's ability to integrate observed effects.",
+        "decision": "Accepted ALCAN chemistry-only result as a legitimate model interpretation of strong protective factors. The v1.0 model (5/5 correct) validates the model's ability to integrate observed effects.",
         "date": "2026-03-31",
         "reference": "MEMORY.md BN-RRM Site-Specific ALCAN Pack"
       }
     ],
     "applicability_notes": [
       "ALCAN is the primary discriminative case study: PAH-dominant pathway with fully populated organic data.",
-      "The screening-mode all-Low result is scientifically defensible (high TOC + high AVS = attenuated bioavailability) but fails to predict observed community impacts.",
-      "This highlights a known limitation of screening mode: it underestimates risk at sites with strong protective factors but real biological effects.",
+      "The chemistry-only all-Low result is scientifically defensible (high TOC + high AVS = attenuated bioavailability) but fails to predict observed community impacts.",
+      "This highlights a known limitation of chemistry-only prediction: it underestimates risk at sites with strong protective factors but real biological effects.",
       "The ALCAN pattern (screening underestimates, assessment corrects) is expected to be common at PAH-contaminated sites with high TOC."
     ]
   },
 
   "hitl_review_questions": [
     {
-      "question": "Is the screening-mode all-Low result (0/5 correct) an acceptable model behavior at sites with strong protective factors?",
+      "question": "Is the chemistry-only all-Low result (0/5 correct) an acceptable model behavior at sites with strong protective factors?",
       "context": "ALCAN has high TOC and high AVS/SEM ratios, which the model correctly interprets as attenuating both metal and organic bioavailability. But the site still shows significant community impacts (taxa richness loss at all 5 stations). This is the classic 'protective factors mask real effects' pattern.",
       "priority": "critical"
     },
     {
       "question": "Should SS-24 receive special attention given it is the only High-risk station?",
-      "context": "SS-24 has the most severe community impact (5 taxa, 10.5 abundance) and is the only station correctly flagged as High in assessment mode (P=0.42). It also uniquely lacks AVS/SEM data among ALCAN stations.",
+      "context": "SS-24 has the most severe community impact (5 taxa, 10.5 abundance) and is the only station correctly flagged as High in the v1.0 model (P=0.42). It also uniquely lacks AVS/SEM data among ALCAN stations.",
       "priority": "important"
     },
     {
@@ -220,8 +220,8 @@
       "priority": "important"
     },
     {
-      "question": "Is assessment mode sufficient for practical use at ALCAN, or does screening mode need to be improved?",
-      "context": "Assessment mode requires observed biological effects, which are available at ALCAN. For new stations without biological data, screening mode would predict Low regardless of contamination levels -- this may need a warning in the dashboard.",
+      "question": "Is the current model performance sufficient for practical use at ALCAN?",
+      "context": "All ALCAN stations have observed biological effects. For new stations without biological data, the model relies on chemistry and environmental conditions alone, which may underestimate risk at sites with strong protective factors.",
       "priority": "informational"
     }
   ]
