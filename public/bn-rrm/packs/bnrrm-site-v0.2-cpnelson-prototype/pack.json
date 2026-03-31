@@ -31,7 +31,7 @@
     "loo_accuracy": 0.2,
     "loo_kappa": -0.1765
   },
-  "release_stage": "prototype",
+  "release_stage": "review",
   "is_default": false,
   "parent_pack_id": "bnrrm-general-v1.0-dev-map",
   "applicability_boundaries": [
@@ -54,7 +54,9 @@
       "cpt_transparency": "review/cpt_transparency.json",
       "provenance": "review/provenance_registry.json",
       "site_reports": "review/site_reports.json",
-      "risk_comparison": "review/risk_comparison.json"
+      "risk_comparison": "review/risk_comparison.json",
+      "explainer": "review/explainer.json",
+      "sensitivity": "review/sensitivity.json"
     }
   }
 }

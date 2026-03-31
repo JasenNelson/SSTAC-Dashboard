@@ -5,6 +5,10 @@ import dynamic from 'next/dynamic';
 import { cn } from '@/utils/cn';
 import { useNetworkStore } from '@/stores/bn-rrm/networkStore';
 import { useSiteDataStore } from '@/stores/bn-rrm/siteDataStore';
+import { usePackStore } from '@/stores/bn-rrm/packStore';
+import { isReadOnlyPack } from '@/lib/bn-rrm/pack-types';
+import { PackSelector } from '@/components/bn-rrm/shared/PackSelector';
+import { PackBanner } from '@/components/bn-rrm/shared/PackBanner';
 import { NodeInspector } from '@/components/bn-rrm/panels/NodeInspector';
 import { ResultsPanel } from '@/components/bn-rrm/panels/ResultsPanel';
 import { DataUploader } from '@/components/bn-rrm/data/DataUploader';
@@ -68,12 +72,42 @@ export default function BNRRMClient() {
   const addAssessment = useSiteDataStore((state) => state.addAssessment);
 
   const loadTrainedModel = useNetworkStore((state) => state.loadTrainedModel);
+  const loadPackModel = useNetworkStore((state) => state.loadPackModel);
   const model = useNetworkStore((state) => state.model);
   const siteCount = Object.keys(sites).length;
 
+  // Pack store
+  const selectedPackId = usePackStore((state) => state.selectedPackId);
+  const loadRegistry = usePackStore((state) => state.loadRegistry);
+  const registryLoaded = usePackStore((state) => state.registryLoaded);
+  const registryError = usePackStore((state) => state.registryError);
+  const packManifest = usePackStore((state) => state.packManifest);
+  const packBaseUrl = usePackStore((state) => state.getPackBaseUrl());
+  const packLoading = usePackStore((state) => state.packLoading);
+  const packError = usePackStore((state) => state.packError);
+  const isReadOnly = packManifest ? isReadOnlyPack(packManifest) : false;
+
+  // Initialize: load pack registry on mount
   useEffect(() => {
-    loadTrainedModel();
-  }, [loadTrainedModel]);
+    loadRegistry();
+  }, [loadRegistry]);
+
+  // When pack is selected and manifest loaded, load the runtime model
+  useEffect(() => {
+    if (packManifest && packBaseUrl) {
+      loadPackModel(packBaseUrl, packManifest);
+    } else if (registryLoaded && !packManifest && !packLoading) {
+      // Fallback: if registry failed or no packs available, use legacy path
+      loadTrainedModel();
+    }
+  }, [packManifest, packBaseUrl, registryLoaded, packLoading, loadPackModel, loadTrainedModel]);
+
+  // If user is on Data tab and switches to a read-only pack, redirect to Review
+  useEffect(() => {
+    if (isReadOnly && activeTab === 'data') {
+      setActiveTab('review');
+    }
+  }, [isReadOnly, activeTab]);
 
   const handleViewOnMap = useCallback((siteId: string) => {
     selectSite(siteId);
@@ -216,8 +250,9 @@ export default function BNRRMClient() {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               const showBadge = tab.id === 'data' && siteCount > 0;
+              const isDataDisabled = tab.id === 'data' && isReadOnly;
               return (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={cn('relative flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200', isActive ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/50')} title={tab.description}>
+                <button key={tab.id} onClick={() => { if (!isDataDisabled) setActiveTab(tab.id); }} disabled={isDataDisabled} className={cn('relative flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200', isDataDisabled ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed' : isActive ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/50')} title={isDataDisabled ? 'Data upload disabled for benchmark packs' : tab.description}>
                   <Icon className="w-4 h-4" /><span className="hidden md:inline">{tab.label}</span>
                   {showBadge && <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{siteCount}</span>}
                 </button>
@@ -232,19 +267,31 @@ export default function BNRRMClient() {
               <button onClick={() => setShowRightPanel(!showRightPanel)} className={cn('p-2 rounded-lg transition-colors', showRightPanel ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showRightPanel ? 'Hide panel' : 'Show panel'}><PanelRightOpen className="w-5 h-5" /></button>
             </>
           )}
+          <PackSelector />
           <div className="text-xs text-slate-400 dark:text-slate-500 ml-2">
-            BN-RRM Causal Model — {model?.nodes.length ?? 20} nodes
+            {model?.nodes.length ?? 20} nodes
           </div>
         </div>
       </div>
 
+      <PackBanner />
+
+      {/* Pack system error banner */}
+      {(registryError || packError) && (
+        <div className="px-4 py-1.5 flex items-center gap-2 text-xs font-medium shrink-0 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-b border-red-200 dark:border-red-800">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+          <span>{registryError ? `Pack registry error: ${registryError}` : `Pack error: ${packError}`}</span>
+          {registryError && <span className="ml-auto text-[10px] opacity-70">Using legacy expert model</span>}
+        </div>
+      )}
+
       <main className="flex-1 overflow-hidden flex">
         {activeTab === 'gettingstarted' && <GettingStartedView />}
-        {activeTab === 'conceptual' && <ConceptualView />}
-        {activeTab === 'detailed' && <DetailedView showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} onCloseLeftPanel={() => setShowLeftPanel(false)} />}
-        {activeTab === 'cpt' && <CPTExplorer />}
+        {activeTab === 'conceptual' && <ConceptualView key={selectedPackId ?? 'default'} />}
+        {activeTab === 'detailed' && <DetailedView key={selectedPackId ?? 'default'} showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} onCloseLeftPanel={() => setShowLeftPanel(false)} />}
+        {activeTab === 'cpt' && <CPTExplorer key={selectedPackId ?? 'default'} />}
         {activeTab === 'map' && <MapView showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} onRunAssessment={handleRunAssessment} onRunBatchAssessment={handleRunBatchAssessment} />}
-        {activeTab === 'data' && <DataView onViewOnMap={handleViewOnMap} onRunAssessment={handleRunAssessment} />}
+        {activeTab === 'data' && <DataView onViewOnMap={handleViewOnMap} onRunAssessment={handleRunAssessment} isReadOnly={isReadOnly} />}
         {activeTab === 'review' && <ReviewView />}
         {activeTab === 'casestudies' && <CaseStudiesView />}
       </main>
@@ -273,10 +320,26 @@ function MapView({ showLeftPanel, showRightPanel, onRunAssessment, onRunBatchAss
   );
 }
 
-function DataView({ onViewOnMap, onRunAssessment }: { onViewOnMap: (siteId: string) => void; onRunAssessment: (siteId: string) => void }) {
+function DataView({ onViewOnMap, onRunAssessment, isReadOnly }: { onViewOnMap: (siteId: string) => void; onRunAssessment: (siteId: string) => void; isReadOnly?: boolean }) {
   const [activeSection, setActiveSection] = useState<'upload' | 'sites' | 'export'>('upload');
   const sites = useSiteDataStore((state) => state.sites);
   const siteCount = Object.keys(sites).length;
+
+  if (isReadOnly) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-center max-w-md">
+          <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mx-auto mb-3">
+            <Database className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Data Upload Disabled</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            This is a frozen benchmark pack. Data upload and site assessment are disabled to preserve comparison integrity. Switch to the General model pack to upload data.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex overflow-hidden">
