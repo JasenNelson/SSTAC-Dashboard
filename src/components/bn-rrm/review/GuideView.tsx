@@ -15,7 +15,7 @@ interface ContaminationProfile {
 interface SiteContextData {
   narrative: string;
   pathway: 'metals' | 'organic' | 'mixed';
-  contamination_profile?: ContaminationProfile[];
+  contamination_profile?: ContaminationProfile[] | string;
 }
 
 interface DataInventoryItem {
@@ -195,18 +195,22 @@ function SiteContextSection({ data }: { data: SiteContextData }) {
       >
         {badge.label}
       </span>
-      {data.contamination_profile && data.contamination_profile.length > 0 && (
-        <ul className="mt-3 space-y-1">
-          {data.contamination_profile.map((item, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
-              <span className="text-slate-400 mt-0.5">&#8226;</span>
-              <span>
-                <span className="font-medium text-slate-700 dark:text-slate-300">{item.label}</span>
-                {item.detail && <span className="ml-1">&#8212; {item.detail}</span>}
-              </span>
-            </li>
-          ))}
-        </ul>
+      {data.contamination_profile && (
+        typeof data.contamination_profile === 'string' ? (
+          <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">{data.contamination_profile}</p>
+        ) : Array.isArray(data.contamination_profile) && data.contamination_profile.length > 0 ? (
+          <ul className="mt-3 space-y-1">
+            {data.contamination_profile.map((item: any, i: number) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                <span className="text-slate-400 mt-0.5">&#8226;</span>
+                <span>
+                  <span className="font-medium text-slate-700 dark:text-slate-300">{item.label}</span>
+                  {item.detail && <span className="ml-1">&#8212; {item.detail}</span>}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null
       )}
     </SectionCard>
   );
