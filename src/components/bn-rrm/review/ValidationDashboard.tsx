@@ -28,8 +28,8 @@ function ConfusionMatrix({ predictions }: { predictions: Prediction[] }) {
       for (const cls2 of CLASSES) m[cls][cls2] = 0;
     }
     for (const p of predictions) {
-      const obs = p.observed.toLowerCase();
-      const pred = p.predicted.toLowerCase();
+      const obs = (p.observed ?? "").toLowerCase();
+      const pred = (p.predicted ?? "").toLowerCase();
       if (m[obs] && m[obs][pred] !== undefined) m[obs][pred]++;
     }
     return m;
@@ -273,9 +273,10 @@ export function ValidationDashboard() {
     );
   }
 
-  const predictions = validationData.predictions as Prediction[];
+  const predictions: Prediction[] = Array.isArray(validationData?.predictions) ? validationData.predictions : [];
 
   const correctCount = predictions.filter((p) => p.predicted === p.observed).length;
+  const nComplete = validationData?.n_complete ?? predictions.length;
 
   return (
     <div className="space-y-8">
@@ -283,9 +284,15 @@ export function ValidationDashboard() {
       <div>
         <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">QA/QC & Validation</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Leave-One-Out cross-validation results for {validationData?.n_complete ?? '?'} stations. {correctCount} correct ({validationData?.n_complete ? (correctCount / validationData.n_complete * 100).toFixed(1) : '?'}%).
+          Leave-One-Out cross-validation results{nComplete ? ` for ${nComplete} stations` : ''}. {correctCount} correct{nComplete ? ` (${(correctCount / nComplete * 100).toFixed(1)}%)` : ''}.
         </p>
       </div>
+
+      {predictions.length === 0 && (
+        <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+          <p className="text-sm text-slate-500 dark:text-slate-400">No station-level predictions available for this pack.</p>
+        </div>
+      )}
 
       {/* Confusion Matrix */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">

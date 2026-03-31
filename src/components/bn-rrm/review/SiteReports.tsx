@@ -316,7 +316,8 @@ export function SiteReports() {
   // ALL hooks before early returns (React Rules of Hooks)
   const selectedSite = useMemo(() => {
     if (!data?.sites || selectedSiteId === null) return null;
-    return data.sites.find(s => s.site_id === selectedSiteId) ?? null;
+    if (!Array.isArray(data?.sites) || selectedSiteId === null) return null;
+    return data.sites.find((s: any) => s.site_id === selectedSiteId) ?? null;
   }, [data?.sites, selectedSiteId]);
 
   const canExport = selectedSite !== null;
@@ -332,8 +333,8 @@ export function SiteReports() {
   // Count missing coords for selected site (must be before early returns)
   const coordStats = useMemo(() => {
     if (!selectedSite?.station_details) return null;
-    const total = selectedSite.station_details.length;
-    const withCoords = selectedSite.station_details.filter((s: any) => s.latitude !== null && s.longitude !== null).length;
+    const total = (selectedSite?.station_details ?? []).length;
+    const withCoords = (selectedSite?.station_details ?? []).filter((s: any) => s.latitude !== null && s.longitude !== null).length;
     return { total, withCoords, missing: total - withCoords };
   }, [selectedSite]);
 
@@ -355,6 +356,9 @@ export function SiteReports() {
       </div>
     );
   }
+
+  // Normalize sites array once — site packs may have different shapes
+  const sites: any[] = Array.isArray(data.sites) ? data.sites : [];
 
   const exportFilename = selectedSite
     ? `${selectedSite.name.replace(/\s/g, '_')}_${activeDataTab}`
@@ -380,7 +384,7 @@ export function SiteReports() {
         <div>
           <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Site Reports</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            {data.summary?.total_sites ?? data.sites?.length ?? '?'} sites &middot; {data.summary?.total_stations ?? '?'} stations
+            {data.summary?.total_sites ?? sites.length ?? '?'} sites &middot; {data.summary?.total_stations ?? '?'} stations
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0 ml-4">
@@ -411,16 +415,22 @@ export function SiteReports() {
       </div>
 
       {/* Site cards */}
-      <div className="grid grid-cols-2 gap-3">
-        {data.sites.map(site => (
-          <SiteCard
-            key={site.site_id}
-            site={site}
-            selected={selectedSiteId === site.site_id}
-            onClick={() => setSelectedSiteId(selectedSiteId === site.site_id ? null : site.site_id)}
-          />
-        ))}
-      </div>
+      {sites.length > 0 ? (
+        <div className="grid grid-cols-2 gap-3">
+          {sites.map((site: any) => (
+            <SiteCard
+              key={site.site_id}
+              site={site}
+              selected={selectedSiteId === site.site_id}
+              onClick={() => setSelectedSiteId(selectedSiteId === site.site_id ? null : site.site_id)}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-8 text-center">
+          <p className="text-sm text-slate-500 dark:text-slate-400">No site data available for this pack.</p>
+        </div>
+      )}
 
       {/* Selected site detail */}
       {selectedSite && (
@@ -802,7 +812,7 @@ export function SiteReports() {
                   </table>
                 </div>
                 <p className="text-xs text-slate-400">
-                  {selectedSite.station_details.length} stations
+                  {(selectedSite?.station_details ?? []).length} stations
                   {selectedSite.spatial_context?.spatial_summary ? (
                     <> &middot; {selectedSite.spatial_context.spatial_summary.georeferenced}/{selectedSite.spatial_context.spatial_summary.total_stations} georeferenced
                       {Object.entries(selectedSite.spatial_context.spatial_summary.by_class).map(([cls, n]) => (

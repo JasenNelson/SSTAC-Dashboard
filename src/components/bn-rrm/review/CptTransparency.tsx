@@ -204,7 +204,7 @@ export function CptTransparency() {
 
   const data = cptDataRaw as unknown as CptTransparencyData;
   const filteredNodes = filterTier !== null
-    ? data.nodes.filter(n => n.tier === filterTier)
+    ? (data.nodes ?? []).filter(n => n.tier === filterTier)
     : data.nodes;
 
   return (
@@ -230,7 +230,7 @@ export function CptTransparency() {
           <button
             onClick={() => {
               const header = 'id,label,tier,cpt_source,sample_count,parameter,unit,dr001_affected,config_observed,config_possible,config_pct\n';
-              const rows = data.nodes.map(n =>
+              const rows = (data.nodes ?? []).map(n =>
                 [n.id, `"${n.label}"`, n.tier, n.cpt_source, n.sample_count, n.parameter ?? '', n.unit ?? '', n.dr001_affected,
                   n.config_coverage?.observed ?? '', n.config_coverage?.possible ?? '', n.config_coverage?.coverage_pct ?? ''].join(',')
               ).join('\n');
@@ -265,7 +265,7 @@ export function CptTransparency() {
 
       {/* Tier summary cards */}
       <div className="grid grid-cols-5 gap-2">
-        {data.tier_summary.map(ts => (
+        {(data.tier_summary ?? []).map(ts => (
           <button
             key={ts.tier}
             onClick={() => setFilterTier(filterTier === ts.tier ? null : ts.tier)}

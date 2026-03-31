@@ -83,10 +83,10 @@ function DecisionCard({ decision }: { decision: DecisionRecord }) {
             <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Re-open Criteria</div>
             <p className="text-sm text-slate-700 dark:text-slate-300">{decision.reopen_criteria}</p>
           </div>
-          {decision.related_issues.length > 0 && (
+          {(decision.related_issues ?? []).length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-500 dark:text-slate-400">Related:</span>
-              {decision.related_issues.map((issue) => (
+              {(decision.related_issues ?? []).map((issue) => (
                 <span key={issue} className="px-1.5 py-0.5 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded">{issue}</span>
               ))}
             </div>
@@ -285,7 +285,7 @@ export function DecisionsAndLimitations() {
 
       {/* Export Metadata */}
       <div className="text-xs text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-700 pt-4">
-        Source: {decisionsData._meta.source_docs.join(' | ')} &middot; Export: {decisionsData._meta.export_date}
+        Source: {(decisionsData?._meta?.source_docs ?? []).join(' | ')} &middot; Export: {decisionsData?._meta?.export_date ?? ''}
       </div>
     </div>
   );
