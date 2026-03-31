@@ -20,13 +20,20 @@ interface SiteContextData {
 
 interface DataInventoryItem {
   data_type: string;
-  status: 'available' | 'missing' | 'partial';
+  status?: 'available' | 'missing' | 'partial' | string;
   notes?: string;
+  stations_with_data?: number;
+  total_stations?: number;
+  dag_nodes?: string[];
 }
 
 interface DataInventoryData {
   summary?: string;
-  items: DataInventoryItem[];
+  items?: DataInventoryItem[];
+  // Also accept the schema used by generate_explainer
+  station_count?: number;
+  coverage_table?: DataInventoryItem[];
+  key_gaps?: string[];
 }
 
 interface TierEntry {
@@ -217,33 +224,64 @@ function SiteContextSection({ data }: { data: SiteContextData }) {
 }
 
 function DataInventorySection({ data }: { data: DataInventoryData }) {
+  const rows = data.items ?? data.coverage_table ?? [];
+  const hasStationCounts = rows.some((r: any) => r.stations_with_data != null);
+
   return (
     <SectionCard title="Data Inventory">
       {data.summary && (
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{data.summary}</p>
       )}
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-slate-200 dark:border-slate-700">
-            <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Data Type</th>
-            <th className="text-center py-2 font-medium text-slate-500 dark:text-slate-400">Status</th>
-            <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Notes</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.items.map((item, i) => (
-            <tr key={i} className="border-b border-slate-100 dark:border-slate-800">
-              <td className="py-2 text-slate-700 dark:text-slate-300">{item.data_type}</td>
-              <td className="py-2 text-center">
-                <StatusDot status={item.status} />
-              </td>
-              <td className="py-2 text-slate-500 dark:text-slate-400 text-xs">
-                {item.notes ?? ''}
-              </td>
+      {data.station_count && (
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+          <span className="font-medium">{data.station_count} stations</span> in this model.
+        </p>
+      )}
+      {rows.length > 0 && (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 dark:border-slate-700">
+              <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Data Type</th>
+              {hasStationCounts && (
+                <th className="text-center py-2 font-medium text-slate-500 dark:text-slate-400">Coverage</th>
+              )}
+              <th className="text-center py-2 font-medium text-slate-500 dark:text-slate-400">Status</th>
+              <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Notes</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((item: any, i: number) => {
+              const status = item.status === 'complete' ? 'available' : item.status === 'not_applicable' ? 'missing' : (item.status ?? 'partial');
+              return (
+                <tr key={i} className="border-b border-slate-100 dark:border-slate-800">
+                  <td className="py-2 text-slate-700 dark:text-slate-300">{item.data_type}</td>
+                  {hasStationCounts && (
+                    <td className="py-2 text-center text-xs text-slate-500">
+                      {item.stations_with_data != null ? `${item.stations_with_data}/${item.total_stations}` : '—'}
+                    </td>
+                  )}
+                  <td className="py-2 text-center">
+                    <StatusDot status={status} />
+                  </td>
+                  <td className="py-2 text-slate-500 dark:text-slate-400 text-xs">
+                    {item.notes ?? ''}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+      {data.key_gaps && data.key_gaps.length > 0 && (
+        <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800">
+          <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-1">Key Gaps</p>
+          <ul className="space-y-1">
+            {data.key_gaps.map((gap: string, i: number) => (
+              <li key={i} className="text-xs text-amber-600 dark:text-amber-400">&#8226; {gap}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </SectionCard>
   );
 }
@@ -254,7 +292,7 @@ function FittingApproachSection({ data }: { data: FittingApproachData }) {
       <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-4">
         {data.summary}
       </p>
-      {data.tiers && data.tiers.length > 0 && (
+      {(data.tiers ?? data.cpt_tiers ?? []).length > 0 && (
         <table className="w-full text-sm mb-4">
           <thead>
             <tr className="border-b border-slate-200 dark:border-slate-700">
@@ -264,19 +302,19 @@ function FittingApproachSection({ data }: { data: FittingApproachData }) {
             </tr>
           </thead>
           <tbody>
-            {data.tiers.map((tier, i) => (
+            {(data.tiers ?? data.cpt_tiers ?? []).map((tier: any, i: number) => (
               <tr key={i} className="border-b border-slate-100 dark:border-slate-800">
                 <td className="py-2 text-slate-700 dark:text-slate-300 font-medium">T{tier.tier}</td>
-                <td className="py-2 text-slate-600 dark:text-slate-400">{tier.name}</td>
-                <td className="py-2 text-slate-600 dark:text-slate-400">{tier.cpt_method}</td>
+                <td className="py-2 text-slate-600 dark:text-slate-400">{tier.name ?? tier.nodes}</td>
+                <td className="py-2 text-slate-600 dark:text-slate-400">{tier.cpt_method ?? tier.method}</td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
-      {data.overrides && data.overrides.length > 0 && (
+      {(data.overrides ?? data.site_scoped_overrides ?? []).length > 0 && (
         <div className="space-y-2">
-          {data.overrides.map((ov, i) => (
+          {(data.overrides ?? data.site_scoped_overrides ?? []).map((ov: any, i: number) => (
             <div
               key={i}
               className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3"
@@ -332,7 +370,7 @@ function ResultsSummarySection({ data }: { data: ResultsSummaryData }) {
         </div>
       )}
       {/* Per-station prediction table */}
-      {data.predictions && data.predictions.length > 0 && (
+      {(data.predictions ?? data.station_predictions ?? []).length > 0 && (
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 dark:border-slate-700">
@@ -343,20 +381,26 @@ function ResultsSummarySection({ data }: { data: ResultsSummaryData }) {
             </tr>
           </thead>
           <tbody>
-            {data.predictions.map((p, i) => (
-              <tr key={i} className={`border-b border-slate-100 dark:border-slate-800 ${riskBg(p.predicted)}`}>
-                <td className="py-2 font-medium text-slate-700 dark:text-slate-300">{p.station}</td>
-                <td className={`py-2 capitalize ${riskColor(p.observed)}`}>{p.observed}</td>
-                <td className={`py-2 capitalize ${riskColor(p.predicted)}`}>{p.predicted}</td>
+            {(data.predictions ?? data.station_predictions ?? []).map((p: any, i: number) => {
+              const station = p.station ?? p.station_name ?? p.station_id;
+              const observed = p.observed ?? p.observed_risk;
+              const predicted = p.predicted ?? p.predicted_risk ?? p.map_prediction;
+              const correct = p.correct ?? (observed === predicted);
+              return (
+              <tr key={i} className={`border-b border-slate-100 dark:border-slate-800 ${riskBg(predicted)}`}>
+                <td className="py-2 font-medium text-slate-700 dark:text-slate-300">{station}</td>
+                <td className={`py-2 capitalize ${riskColor(observed)}`}>{observed}</td>
+                <td className={`py-2 capitalize ${riskColor(predicted)}`}>{predicted}</td>
                 <td className="py-2 text-center">
-                  {p.correct ? (
+                  {correct ? (
                     <span className="text-green-600 dark:text-green-400">&#10003;</span>
                   ) : (
                     <span className="text-red-500 dark:text-red-400">&#10007;</span>
                   )}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       )}
@@ -364,53 +408,72 @@ function ResultsSummarySection({ data }: { data: ResultsSummaryData }) {
   );
 }
 
-function BeforeAfterSection({ data }: { data: BeforeAfterData }) {
-  const beforeLabel = data.before_label ?? 'Before';
-  const afterLabel = data.after_label ?? 'After';
+function BeforeAfterSection({ data }: { data: any }) {
+  // Handle both formats: {metrics: [{label, before, after}]} and {before: {...}, after: {...}}
+  const beforeObj = data.before ?? {};
+  const afterObj = data.after ?? {};
+  const beforeLabel = beforeObj.label ?? data.before_label ?? 'Before';
+  const afterLabel = afterObj.label ?? data.after_label ?? 'After';
+
+  // Build metrics from either format
+  const metrics = data.metrics ?? (() => {
+    const m: { label: string; before: any; after: any }[] = [];
+    if (beforeObj.loo_accuracy != null) m.push({ label: 'LOO Accuracy', before: `${(beforeObj.loo_accuracy * 100).toFixed(1)}%`, after: `${(afterObj.loo_accuracy * 100).toFixed(1)}%` });
+    if (beforeObj.observations_used) {
+      for (const [k, v] of Object.entries(beforeObj.observations_used)) {
+        m.push({ label: k, before: String(v), after: String((afterObj.observations_used as any)?.[k] ?? '?') });
+      }
+    }
+    return m;
+  })();
 
   return (
     <SectionCard title="Before / After Comparison">
+      {data.change_description && (
+        <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">{data.change_description}</p>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Before panel */}
         <div className="rounded-xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-4">
           <h4 className="text-sm font-semibold text-red-700 dark:text-red-300 mb-3">{beforeLabel}</h4>
           <div className="space-y-2">
-            {data.metrics.map((m, i) => (
+            {metrics.map((m: any, i: number) => (
               <div key={i} className="flex justify-between text-sm">
                 <span className="text-red-600 dark:text-red-400">{m.label}</span>
                 <span className="font-mono font-medium text-red-700 dark:text-red-300">{String(m.before)}</span>
               </div>
             ))}
           </div>
+          {beforeObj.notes && <p className="text-xs text-red-500 mt-2 italic">{beforeObj.notes}</p>}
         </div>
-        {/* After panel */}
         <div className="rounded-xl border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 p-4">
           <h4 className="text-sm font-semibold text-green-700 dark:text-green-300 mb-3">{afterLabel}</h4>
           <div className="space-y-2">
-            {data.metrics.map((m, i) => (
+            {metrics.map((m: any, i: number) => (
               <div key={i} className="flex justify-between text-sm">
                 <span className="text-green-600 dark:text-green-400">{m.label}</span>
                 <span className="font-mono font-medium text-green-700 dark:text-green-300">{String(m.after)}</span>
               </div>
             ))}
           </div>
+          {afterObj.notes && <p className="text-xs text-green-500 mt-2 italic">{afterObj.notes}</p>}
         </div>
       </div>
     </SectionCard>
   );
 }
 
-function ResidualOutliersSection({ data }: { data: ResidualOutlier[] }) {
+function ResidualOutliersSection({ data }: { data: any[] }) {
+  if (!Array.isArray(data) || data.length === 0) return null;
   return (
     <SectionCard title="Residual Outliers">
       <div className="space-y-3">
-        {data.map((item, i) => (
+        {data.map((item: any, i: number) => (
           <div
             key={i}
             className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4"
           >
             <div className="text-sm font-semibold text-amber-800 dark:text-amber-200 mb-1">
-              {item.station}
+              {item.station ?? item.station_id ?? item.station_name ?? `Station ${i + 1}`}
             </div>
             <p className="text-sm text-amber-700 dark:text-amber-300 leading-relaxed">
               {item.explanation}
@@ -427,38 +490,48 @@ function ResidualOutliersSection({ data }: { data: ResidualOutlier[] }) {
   );
 }
 
-function GovernanceSection({ data }: { data: GovernanceData }) {
+function GovernanceSection({ data }: { data: any }) {
+  const decisions = data.decisions ?? data.hitl_decisions ?? [];
+  const scopeNotes = data.scope_notes ?? data.applicability_notes ?? [];
+  const scopeNote = data.scope_note;
+
   return (
     <SectionCard title="Governance">
-      {data.decisions && data.decisions.length > 0 && (
+      {scopeNote && (
+        <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">{scopeNote}</p>
+      )}
+      {data.dag_unchanged && (
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">DAG structure unchanged. General model unchanged.</p>
+      )}
+      {Array.isArray(decisions) && decisions.length > 0 && (
         <div className="mb-4">
           <h4 className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider mb-2">
             HITL Decisions
           </h4>
           <div className="space-y-2">
-            {data.decisions.map((d, i) => (
+            {decisions.map((d: any, i: number) => (
               <div
                 key={i}
                 className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200"
               >
-                {d}
+                {typeof d === 'string' ? d : d.description ?? d.title ?? JSON.stringify(d)}
               </div>
             ))}
           </div>
         </div>
       )}
-      {data.scope_notes && data.scope_notes.length > 0 && (
+      {Array.isArray(scopeNotes) && scopeNotes.length > 0 && (
         <div>
           <h4 className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider mb-2">
-            Scope Notes
+            Applicability Notes
           </h4>
           <div className="space-y-2">
-            {data.scope_notes.map((n, i) => (
+            {scopeNotes.map((n: any, i: number) => (
               <div
                 key={i}
                 className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200"
               >
-                {n}
+                {typeof n === 'string' ? n : n.description ?? JSON.stringify(n)}
               </div>
             ))}
           </div>
