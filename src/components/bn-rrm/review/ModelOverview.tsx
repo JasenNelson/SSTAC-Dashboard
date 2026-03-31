@@ -143,11 +143,11 @@ export function ModelOverview() {
         <div className="flex items-center gap-3 mb-2">
           <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">Model Overview</h2>
           <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 text-xs font-semibold rounded-full">
-            {overview._meta.dataset_status}
+            {overview?._meta?.dataset_status ?? ''}
           </span>
         </div>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          {overview.model_identity.framework} &mdash; {overview.model_identity.nodes} nodes, {overview.model_identity.edges} edges, {overview.model_identity.states_per_node} states/node
+          {overview?.model_identity?.framework ?? ''} &mdash; {overview?.model_identity?.nodes ?? ''} nodes, {overview?.model_identity?.edges ?? ''} edges, {overview?.model_identity?.states_per_node ?? ''} states/node
         </p>
       </div>
 
@@ -253,10 +253,10 @@ export function ModelOverview() {
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Training Data</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <MetricCard label="Sites" value={String(data.total_sites)} />
-          <MetricCard label="Stations" value={data.dataset_counts.stations.toLocaleString()} />
-          <MetricCard label="Co-located" value={String(data.dataset_counts.co_located)} subtitle="BDeu target: 50" />
-          <MetricCard label="Full Triads" value={`${data.dataset_counts.full_triads_effective}`} subtitle={`${data.dataset_counts.full_triads_native} raw + 8 Level C merged`} />
+          <MetricCard label="Sites" value={String(data?.total_sites ?? '\u2014')} />
+          <MetricCard label="Stations" value={data?.dataset_counts?.stations != null ? data.dataset_counts.stations.toLocaleString() : '\u2014'} />
+          <MetricCard label="Co-located" value={String(data?.dataset_counts?.co_located ?? '\u2014')} subtitle="BDeu target: 50" />
+          <MetricCard label="Full Triads" value={`${data?.dataset_counts?.full_triads_effective ?? '\u2014'}`} subtitle={`${data?.dataset_counts?.full_triads_native ?? '?'} raw + 8 Level C merged`} />
         </div>
         <div className="text-xs text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-1">
           <InfoTooltip {...TOOLTIP.triadReconciliation} />
@@ -315,7 +315,7 @@ export function ModelOverview() {
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-slate-700 dark:text-slate-200">{tier.name}</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">{tier.description}</div>
-                <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">CPT: {tier.cpt_method} &middot; {tier.nodes.length} nodes</div>
+                <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">CPT: {tier.cpt_method} &middot; {tier.nodes?.length ?? 0} nodes</div>
               </div>
             </div>
           ))}
@@ -326,7 +326,9 @@ export function ModelOverview() {
       {/* Intended Use */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Intended Use</h3>
-        <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">{overview.intended_use.primary}</p>
+        <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">{overview?.intended_use?.primary ?? ''}</p>
+        {overview?.intended_use?.not_suitable_for && (
+        <>
         <div className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Not suitable for:</div>
         <ul className="space-y-1">
           {overview.intended_use.not_suitable_for.map((item: any, i: number) => (
@@ -336,11 +338,13 @@ export function ModelOverview() {
             </li>
           ))}
         </ul>
+        </>
+        )}
       </div>
 
       {/* Export Metadata */}
       <div className="text-xs text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-700 pt-4">
-        Export: {overview._meta.export_date} &middot; DB hash: {overview._meta.db_hash.slice(0, 12)}... &middot; Model Card v{overview._meta.model_version} &middot; Handoff v{overview._meta.handoff_version}
+        Export: {overview?._meta?.export_date ?? ''} &middot; DB hash: {overview?._meta?.db_hash?.slice(0, 12) ?? ''}... &middot; Model Card v{overview?._meta?.model_version ?? ''} &middot; Handoff v{overview?._meta?.handoff_version ?? ''}
       </div>
     </div>
   );

@@ -69,7 +69,7 @@ export function ReviewView() {
             {packManifest?.version_history?.created
               ? new Date(packManifest.version_history.created).toLocaleDateString('en-CA')
               : ''}{' '}
-            {packManifest ? `\u00B7 ${packManifest.training_corpus.n_stations} stations` : ''}
+            {packManifest ? `\u00B7 ${packManifest.training_corpus?.n_stations ?? '?'} stations` : ''}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             {packManifest?.display_name ?? ''}

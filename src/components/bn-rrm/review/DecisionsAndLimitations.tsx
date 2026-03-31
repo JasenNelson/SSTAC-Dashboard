@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import decisionsData from '@/data/bn-rrm/transparency/decisions.json';
+import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 
 type DecisionRecord = {
   id: string;
@@ -184,6 +184,27 @@ function ExportButton({ data, filename }: { data: unknown; filename: string }) {
 }
 
 export function DecisionsAndLimitations() {
+  const { data: decisionsData, loading, error } = usePackArtifact<any>('decisions');
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex items-center gap-3 text-slate-400">
+          <div className="w-5 h-5 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !decisionsData) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-red-500 text-sm">{error ?? 'Failed to load data'}</div>
+      </div>
+    );
+  }
+
   const decisions = decisionsData.decision_records as DecisionRecord[];
   const limitations = decisionsData.known_limitations as Limitation[];
   const specs = decisionsData.spec_versions;
@@ -253,10 +274,10 @@ export function DecisionsAndLimitations() {
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Specification Versions</h3>
         <div className="grid grid-cols-2 gap-2">
-          {Object.entries(specs).map(([doc, version]) => (
+          {Object.entries(specs ?? {}).map(([doc, version]) => (
             <div key={doc} className="flex items-center justify-between py-1.5 px-3 rounded bg-slate-50 dark:bg-slate-700/50">
               <span className="text-xs font-medium text-slate-600 dark:text-slate-400">{doc.replace(/_/g, ' ')}</span>
-              <span className="text-xs font-mono text-slate-500 dark:text-slate-400">v{version}</span>
+              <span className="text-xs font-mono text-slate-500 dark:text-slate-400">v{String(version)}</span>
             </div>
           ))}
         </div>

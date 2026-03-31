@@ -279,7 +279,7 @@ export function CptTransparency() {
             <div className="text-sm font-medium text-slate-800 dark:text-slate-100 mt-0.5">{ts.name}</div>
             <div className="text-xs text-slate-400 mt-1">{ts.node_count} nodes</div>
             <div className="mt-1.5 flex flex-wrap gap-1">
-              {ts.cpt_methods.map(m => (
+              {(ts.cpt_methods ?? []).map(m => (
                 <span key={m} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
                   {m}
                 </span>

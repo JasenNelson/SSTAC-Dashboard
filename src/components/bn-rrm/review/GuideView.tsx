@@ -418,7 +418,7 @@ function BeforeAfterSection({ data }: { data: any }) {
   // Build metrics from either format
   const metrics = data.metrics ?? (() => {
     const m: { label: string; before: any; after: any }[] = [];
-    if (beforeObj.loo_accuracy != null) m.push({ label: 'LOO Accuracy', before: `${(beforeObj.loo_accuracy * 100).toFixed(1)}%`, after: `${(afterObj.loo_accuracy * 100).toFixed(1)}%` });
+    if (beforeObj.loo_accuracy != null) m.push({ label: 'LOO Accuracy', before: `${(beforeObj.loo_accuracy * 100).toFixed(1)}%`, after: afterObj.loo_accuracy != null ? `${(afterObj.loo_accuracy * 100).toFixed(1)}%` : '\u2014' });
     if (beforeObj.observations_used) {
       for (const [k, v] of Object.entries(beforeObj.observations_used)) {
         m.push({ label: k, before: String(v), after: String((afterObj.observations_used as any)?.[k] ?? '?') });

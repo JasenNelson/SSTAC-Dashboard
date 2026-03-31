@@ -193,9 +193,9 @@ export function DataProvenance() {
           ) : (
             <>
               <span className="text-xs text-slate-400 dark:text-slate-500 mr-1">
-                {filteredStations.length < data.stations.length
+                {filteredStations.length < (data?.stations?.length ?? 0)
                   ? `Exports ${filteredStations.length} filtered stations`
-                  : `Exports all ${data.stations.length} stations`}
+                  : `Exports all ${data?.stations?.length ?? 0} stations`}
               </span>
               <button
                 onClick={() => exportData(flatStationExport(filteredStations), 'station_provenance.json', 'json')}

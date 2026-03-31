@@ -149,11 +149,11 @@ export function RiskComparison() {
           (MAP state of the ecological_risk posterior) with report-stated WOE risk classifications
           mapped to the BN 3-class space. These are different assessment methods — agreement metrics
           measure consistency between methods, not accuracy against ground truth.
-          The {data._meta.modelVersion} model was not trained on WOE labels.
+          The {data?._meta?.modelVersion ?? ''} model was not trained on WOE labels.
         </p>
         <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
-          Governance: {data._meta.governanceSpec} &middot;
-          n = {report.n} matched stations across {data.summary.sitesWithWOE} sites &middot;
+          Governance: {data?._meta?.governanceSpec ?? ''} &middot;
+          n = {report.n} matched stations across {data?.summary?.sitesWithWOE ?? 0} sites &middot;
           {report.nExcludedNoLOO} excluded (WOE but no LOO) &middot;
           {report.nExcludedNoWOE} excluded (LOO but no WOE)
         </p>
@@ -307,7 +307,7 @@ export function RiskComparison() {
           >
             All sites ({report.n})
           </button>
-          {data.siteComparisons.map((site) => {
+          {(data?.siteComparisons ?? []).map((site) => {
             const n = site.stationComparisons.filter((s) => s.bnrrmPredicted && s.reportEstimate.mappedBNClass).length;
             return (
               <button
@@ -322,7 +322,7 @@ export function RiskComparison() {
           })}
         </div>
         <StationTable
-          sites={selectedSiteData ? [selectedSiteData] : data.siteComparisons}
+          sites={selectedSiteData ? [selectedSiteData] : (data?.siteComparisons ?? [])}
           showExclusions={showExclusions}
         />
         <label className="flex items-center gap-2 mt-2 text-xs text-slate-400 dark:text-slate-500 cursor-pointer">
@@ -333,9 +333,9 @@ export function RiskComparison() {
 
       {/* Exclusion transparency */}
       <div className="text-xs text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-700 pt-4 space-y-1">
-        <p>Sites without WOE data: {data.summary.sitesWithoutWOENames.join(', ')}</p>
-        <p>Governance: {data._meta.governanceSpec} &middot; Model: {data._meta.modelVersion}</p>
-        <p className="italic">{data._meta.note}</p>
+        <p>Sites without WOE data: {data?.summary?.sitesWithoutWOENames?.join(', ') ?? '\u2014'}</p>
+        <p>Governance: {data?._meta?.governanceSpec ?? ''} &middot; Model: {data?._meta?.modelVersion ?? ''}</p>
+        <p className="italic">{data?._meta?.note ?? ''}</p>
       </div>
     </div>
   );

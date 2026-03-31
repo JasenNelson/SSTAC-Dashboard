@@ -291,13 +291,13 @@ function SiteCard({ site, selected, onClick }: { site: Site; selected: boolean; 
       </div>
       <div className="flex gap-4 mt-2.5 text-xs">
         <span className={`${site.chemistry_summary ? 'text-green-600 dark:text-green-400' : 'text-slate-300'}`}>
-          Chem {site.chemistry_summary ? `(${site.chemistry_summary.length})` : '\u2014'}
+          Chem {site.chemistry_summary ? `(${site.chemistry_summary?.length ?? 0})` : '\u2014'}
         </span>
         <span className={`${site.toxicity_summary ? 'text-green-600 dark:text-green-400' : 'text-slate-300'}`}>
-          Tox {site.toxicity_summary ? `(${site.toxicity_summary.length})` : '\u2014'}
+          Tox {site.toxicity_summary ? `(${site.toxicity_summary?.length ?? 0})` : '\u2014'}
         </span>
         <span className={`${site.community_summary ? 'text-green-600 dark:text-green-400' : 'text-slate-300'}`}>
-          Comm {site.community_summary ? `(n=${site.community_summary.n})` : '\u2014'}
+          Comm {site.community_summary ? `(n=${site.community_summary?.n ?? '\u2014'})` : '\u2014'}
         </span>
       </div>
     </button>
@@ -705,7 +705,7 @@ export function SiteReports() {
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedSite.community_summary.metrics.map((m, i) => (
+                      {(selectedSite.community_summary?.metrics ?? []).map((m, i) => (
                         <tr key={i} className="border-b border-slate-100 dark:border-slate-700/50">
                           <td className="px-3 py-2 text-slate-800 dark:text-slate-200">{m.name}</td>
                           <td className="px-3 py-2 text-right font-mono text-slate-600 dark:text-slate-400">{m.min ?? '\u2014'}</td>

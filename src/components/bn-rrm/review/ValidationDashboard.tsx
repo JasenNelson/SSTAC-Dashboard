@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import validationData from '@/data/bn-rrm/transparency/validation_results.json';
-import modelComparisonData from '@/data/bn-rrm/transparency/model_comparison.json';
+import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
@@ -152,7 +151,7 @@ function PredictionsTable({ predictions, filter }: { predictions: Prediction[]; 
   );
 }
 
-function ModelComparisonTable() {
+function ModelComparisonTable({ modelComparisonData }: { modelComparisonData: any }) {
   const threeClass = (modelComparisonData as Record<string, unknown>).three_class as Record<string, {
     accuracy: number;
     n: number;
@@ -188,7 +187,7 @@ function ModelComparisonTable() {
             <td className="py-2 font-medium text-slate-700 dark:text-slate-300">{name.replace('_', ' ')}</td>
             <td className="text-right py-2 text-slate-600 dark:text-slate-400">{m.n}</td>
             <td className="text-right py-2 text-slate-600 dark:text-slate-400">{(m.accuracy * 100).toFixed(1)}%</td>
-            <td className="text-right py-2 text-slate-600 dark:text-slate-400">{m.cohen_kappa.toFixed(3)}</td>
+            <td className="text-right py-2 text-slate-600 dark:text-slate-400">{m.cohen_kappa != null ? m.cohen_kappa.toFixed(3) : '\u2014'}</td>
             <td className="text-right py-2 text-slate-600 dark:text-slate-400">{(m.per_class?.High?.recall ?? 0).toFixed(3)}</td>
           </tr>
         ))}
@@ -240,7 +239,40 @@ function ExportButton({ data, filename, label }: { data: unknown; filename: stri
 }
 
 export function ValidationDashboard() {
+  const { data: validationData, loading: loadingVal, error: errorVal } = usePackArtifact<any>('validation');
+  const { data: modelComparisonData, loading: loadingComp, error: errorComp } = usePackArtifact<any>('comparison');
   const [predFilter, setPredFilter] = useState('all');
+
+  const loading = loadingVal || loadingComp;
+  const error = errorVal || errorComp;
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex items-center gap-3 text-slate-400">
+          <div className="w-5 h-5 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !validationData) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-red-500 text-sm">{error ?? 'Failed to load data'}</div>
+      </div>
+    );
+  }
+
+  if (!modelComparisonData) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-red-500 text-sm">{errorComp ?? 'Failed to load comparison data'}</div>
+      </div>
+    );
+  }
+
   const predictions = validationData.predictions as Prediction[];
 
   const correctCount = predictions.filter((p) => p.predicted === p.observed).length;
@@ -251,7 +283,7 @@ export function ValidationDashboard() {
       <div>
         <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">QA/QC & Validation</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Leave-One-Out cross-validation results for {validationData.n_complete} stations. {correctCount} correct ({(correctCount / validationData.n_complete * 100).toFixed(1)}%).
+          Leave-One-Out cross-validation results for {validationData?.n_complete ?? '?'} stations. {correctCount} correct ({validationData?.n_complete ? (correctCount / validationData.n_complete * 100).toFixed(1) : '?'}%).
         </p>
       </div>
 
@@ -292,7 +324,7 @@ export function ValidationDashboard() {
       {/* Model Comparison */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Model Comparison (M1-M4)</h3>
-        <ModelComparisonTable />
+        <ModelComparisonTable modelComparisonData={modelComparisonData} />
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
           M1 Baseline uses raw WOE data. M2 Expert uses expert-elicited CPTs. M3 LoE uses harmonized ranks. M4 Split uses framework-specific models.
         </p>
