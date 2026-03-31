@@ -1,10 +1,15 @@
 {
-  "cpt_transparency.json": "7d894baa3518a01ff6ab21f760870dca6ba870a20757fa993f8a1bc4f9caed27",
-  "decisions.json": "0bd52f9d94fad415f846f84972c5c76f14179554ed89c88492a90c2da6a4195e",
-  "model-overview.json": "bc51504ded0488b086467bc8a33cccc52019246e67bf5a298877df92a0711ded",
-  "model_comparison.json": "d3b2dab6e6cb004e9026dd891e6f1221a2c6d6f7a6c6a49e73a140fd3d27e888",
-  "provenance_registry.json": "73d1b0757c9ad3204d187178f6960fa14aec25fce1d6a033a62c2e1a5c3989e4",
-  "risk_comparison.json": "f711b090c3d522966d3b0f1c3f407d530cf2aad6acb9bf3614619e3a7ae33fd4",
-  "site_reports.json": "80a2c6616bf323025b0749d6a95b112fd4f9891df08e154d0ef4b154949db6c6",
-  "validation_results.json": "4bac9fa5c18b9fbb06fa10b62b28598cbf2c28bc1be3be49f311ffba993995fa"
+  "generated": "2026-03-31",
+  "scope": "site_specific",
+  "site_id": "0311",
+  "files": {
+    "cpt_transparency.json": "20879f4c59da89041c6c644dd2336c7e5df7741a56063e02e729a7fabe513127",
+    "decisions.json": "551e776adfb098361ee4a342bb89705394d18fddd5885da972fef0dcf1017586",
+    "model-overview.json": "ff71d0f9bd787c9a9143446309c42286572345482c9cbefb9f36df648a4bfdde",
+    "model_comparison.json": "e301dd4f6757185fb8e6f46e1b1b482025b8b66c8166d4766299258cd20df10c",
+    "provenance_registry.json": "70be9bfa8c22bbd1d87f701916b827a8a705c21d1ade34b13f9c9232f5fcdba2",
+    "risk_comparison.json": "0050fa9868f8a323a02c0f76f7b55767b4777ee0d6bc07e27ff8ad1219673037",
+    "site_reports.json": "5bb26eae9e2ae7cc614fe5110f931479a5c6935b1c2c401fd1ba17cf544c28e5",
+    "validation_results.json": "f6eb7a71b99aad530773534129c5b880fb315949853f648859b381f777c759e5"
+  }
 }

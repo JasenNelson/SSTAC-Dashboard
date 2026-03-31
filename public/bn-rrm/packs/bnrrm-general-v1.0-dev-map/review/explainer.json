@@ -1,0 +1,207 @@
+{
+  "pack_id": "bnrrm-general-v1.0-dev-map",
+  "explainer_version": "1.0",
+  "generated_at": "2026-03-31",
+  "supersedes": null,
+
+  "site_context": {
+    "name": "General BN-RRM",
+    "scope_type": "general",
+    "registry_id": null,
+    "dominant_pathway": "not_applicable",
+    "contamination_profile": "Cross-site model trained on 8 BC contaminated sites spanning marine and freshwater environments with metals-dominant, organics-dominant, and mixed contamination profiles.",
+    "narrative": "The General BN-RRM is the canonical cross-site model trained on 84 co-located stations from 8 BC contaminated sites (Woodfibre, CP Nelson, Island Copper, Blue Water, IOCO, Toquaht, ALCAN, Brunette River). It uses a 20-node Landis causal DAG with 24 edges to model the chain from sediment contamination through environmental conditions and bioavailability to biological effects and ecological risk. This is the default model and the parent from which all site-specific packs borrow their CPT priors."
+  },
+
+  "data_inventory": {
+    "station_count": 93,
+    "coverage_table": [
+      {
+        "data_type": "7 Metals (Cu, Zn, Pb, Cd, Hg, As, Cr)",
+        "dag_nodes": ["sed_cu", "sed_zn", "sed_pb", "sed_cd", "sed_hg", "sed_as", "sed_cr"],
+        "stations_with_data": 93,
+        "stations_total": 93,
+        "status": "complete"
+      },
+      {
+        "data_type": "TOC",
+        "dag_nodes": ["toc"],
+        "stations_with_data": 93,
+        "stations_total": 93,
+        "status": "complete"
+      },
+      {
+        "data_type": "AVS / SEM",
+        "dag_nodes": ["metal_bioavail"],
+        "stations_with_data": 61,
+        "stations_total": 93,
+        "status": "partial",
+        "note": "61/93 stations have AVS/SEM. Missing at CP Nelson (8 stations), Brunette River, and others. This is the single largest data gap in the general model."
+      },
+      {
+        "data_type": "Grain Size",
+        "dag_nodes": ["grain_size"],
+        "stations_with_data": 93,
+        "stations_total": 93,
+        "status": "complete"
+      },
+      {
+        "data_type": "Amphipod Toxicity",
+        "dag_nodes": ["tox_amphipod"],
+        "stations_with_data": 88,
+        "stations_total": 93,
+        "status": "partial",
+        "note": "88/93 stations with amphipod toxicity data."
+      },
+      {
+        "data_type": "Taxa Richness",
+        "dag_nodes": ["taxa_richness"],
+        "stations_with_data": 85,
+        "stations_total": 93,
+        "status": "partial",
+        "note": "85/93 stations with benthic community data."
+      },
+      {
+        "data_type": "Shannon Diversity",
+        "dag_nodes": ["diversity"],
+        "stations_with_data": 53,
+        "stations_total": 93,
+        "status": "partial",
+        "note": "53/93 stations with diversity data. Missing at CP Nelson, ALCAN, and several other sites."
+      },
+      {
+        "data_type": "PAHs / PCBs (Organic Pathway)",
+        "dag_nodes": ["organic_contamination", "organic_bioavail"],
+        "stations_with_data": 4,
+        "stations_total": 93,
+        "status": "partial",
+        "note": "Only 4 stations (PCB data) contribute to the organic pathway. This extreme sparsity means the general model's organic CPTs are almost entirely prior-driven."
+      }
+    ],
+    "key_gaps": [
+      "Organic pathway extremely sparse: only 4 PCB stations. General model's organic CPTs are almost entirely prior-driven (expert + BDeu).",
+      "AVS/SEM missing at 32 stations (34%). All 8 CP Nelson stations and all high-toxicity stations lack AVS, creating a systematic gap.",
+      "Geographic concentration: 4 of 8 sites are marine, 2 freshwater. No estuarine sites. Brunette River and CP Nelson are the only freshwater representatives.",
+      "Class imbalance: 61 Low / 15 Moderate / 17 High. Moderate class has very low recall (0.07) in screening LOO."
+    ]
+  },
+
+  "fitting_approach": {
+    "summary": "Tiered expert priors + BDeu learning on the full 93-station cross-site corpus. v4.1 with soft evidence (c=0.60) for derived organic states. No marginalization at the general level -- row-dropping is the default fitting policy. Site-specific packs inherit these CPTs as priors and apply marginalization where justified.",
+    "hierarchical_borrowing": false,
+    "marginalization_applied": false,
+    "marginalization_scope": null,
+    "site_scoped_overrides": [],
+    "cpt_tiers": [
+      {
+        "tier": "Tier 1",
+        "nodes": ["sed_cu", "sed_zn", "sed_pb", "sed_cd", "sed_hg", "sed_as", "sed_cr", "toc", "grain_size"],
+        "method": "Expert priors (threshold-based discretization from ISQG/PEL values)",
+        "data_status": "Complete data. Deterministic mapping from continuous measurements to ordinal states."
+      },
+      {
+        "tier": "Tier 2",
+        "nodes": ["metal_bioavail", "organic_bioavail", "organic_contamination"],
+        "method": "BDeu + expert priors",
+        "data_status": "metal_bioavail: 61/93 stations. organic_bioavail: 4/93 stations (extremely sparse). Soft evidence (c=0.60) applied to derived organic states."
+      },
+      {
+        "tier": "Tier 3",
+        "nodes": ["tox_amphipod", "taxa_richness", "diversity"],
+        "method": "BDeu + expert priors",
+        "data_status": "88 amphipod, 85 taxa, 53 diversity observations. Row-dropping applied when parents are NULL."
+      },
+      {
+        "tier": "Tier 4",
+        "nodes": ["ecological_risk"],
+        "method": "Noisy-OR aggregation",
+        "data_status": "Deterministic aggregation of effect nodes."
+      }
+    ]
+  },
+
+  "results_summary": {
+    "loo_accuracy": 0.6237,
+    "loo_kappa": 0.1846,
+    "mean_entropy": null,
+    "class_distribution": {
+      "low": 61,
+      "moderate": 15,
+      "high": 17
+    },
+    "station_predictions": [
+      { "station_id": "SED06-103", "observed": "low", "predicted": "low", "correct": true },
+      { "station_id": "SED06-105", "observed": "moderate", "predicted": "low", "correct": false },
+      { "station_id": "SED06-116", "observed": "low", "predicted": "low", "correct": true },
+      { "station_id": "SED19-3", "observed": "high", "predicted": "low", "correct": false },
+      { "station_id": "SED19-5", "observed": "high", "predicted": "high", "correct": true },
+      { "station_id": "SS-24", "observed": "high", "predicted": "low", "correct": false },
+      { "station_id": "SED13-26b", "observed": "low", "predicted": "high", "correct": false }
+    ]
+  },
+
+  "before_after": null,
+
+  "residual_outliers": [
+    {
+      "station_id": "general-model",
+      "observed": "moderate",
+      "predicted": "low",
+      "explanation": "The general model has very low recall for the Moderate class (0.067 in screening LOO). This is a systematic pattern: class imbalance (61 Low vs 15 Moderate) combined with insufficient discriminative features causes the model to default to Low for ambiguous cases. 34 of 93 stations change prediction between screening and assessment mode (sensitivity report).",
+      "recommendation": "known_limitation"
+    }
+  ],
+
+  "governance": {
+    "scope_note": "This is the canonical general model. All site-specific packs inherit CPTs from this model as priors. Changes to the general model propagate to all site packs on rebuild. The general model uses row-dropping (not marginalization) as its default fitting policy -- marginalization is applied only at the site-specific level where justified by HITL review.",
+    "dag_unchanged": true,
+    "general_model_unchanged": true,
+    "hitl_decisions": [
+      {
+        "decision": "v4.1 soft evidence (c=0.60) for derived organic states approved for production merge.",
+        "date": "2026-03-27",
+        "reference": "Production merge commit 63be90d7; MEMORY.md BN-RRM v4.1 Soft Evidence"
+      },
+      {
+        "decision": "Row-dropping confirmed as default fitting policy for general model. Marginalization reserved for HITL-approved site-specific overrides only.",
+        "date": "2026-03-30",
+        "reference": "ISOLATION_STUDY_ATTRIBUTION.md; experiment/general-marginalization branch"
+      },
+      {
+        "decision": "Training dataset frozen (DR-003, 2026-03-09). 84 co-located stations from 8 sites. Known limitations: geographic gap (4/8 marine), organic sparsity (N=4 PCB), Woodfibre dioxin confound.",
+        "date": "2026-03-09",
+        "reference": "Training Set Assumption Audit (MEMORY.md)"
+      }
+    ],
+    "applicability_notes": [
+      "Screening mode is the default. Assessment mode available when observed biological effects are entered.",
+      "The sensitivity report shows 34/93 stations change MAP prediction between screening and assessment mode (36.6% sensitivity).",
+      "Moderate class recall is very low (0.067) -- the model tends to predict Low for ambiguous cases.",
+      "High class recall is 0.35 in screening LOO. Class-weighted BDeu is an open research lane for improvement.",
+      "Would NOT apply at: sites with dioxin/furan contamination (unmodeled), natural mineralization backgrounds, water-column-dominant exposure pathways."
+    ]
+  },
+
+  "hitl_review_questions": [
+    {
+      "question": "Is the 62.4% screening LOO accuracy acceptable for the general model's intended use as a prior-provider for site-specific packs?",
+      "context": "The general model is not intended to be used directly for site-level decisions. Its primary role is providing CPT priors for hierarchical borrowing. Site-specific packs with sufficient data will diverge from the general model's predictions. The 62.4% accuracy reflects cross-site heterogeneity, not model deficiency.",
+      "priority": "critical"
+    },
+    {
+      "question": "Should class-weighted BDeu be investigated to address the Moderate class recall problem (0.067)?",
+      "context": "The 61/15/17 class distribution means BDeu learning is dominated by Low-class examples. Class-weighted BDeu would upweight Moderate and High observations during CPT fitting. This is an open research lane identified in the isolation study.",
+      "priority": "important"
+    },
+    {
+      "question": "Does the sensitivity report (34/93 corrections in assessment mode) indicate that screening mode is unreliable?",
+      "context": "36.6% of stations change MAP prediction when biological effects are entered. This is expected -- assessment mode has strictly more information. The question is whether screening mode is reliable enough for initial triage before field data is collected.",
+      "priority": "important"
+    },
+    {
+      "question": "Should the organic pathway CPTs be treated as provisional given only 4 PCB training stations?",
+      "context": "The organic pathway is almost entirely prior-driven. Site packs like ALCAN with rich organic data may benefit from ignoring the general model's organic CPTs entirely rather than borrowing from them.",
+      "priority": "informational"
+    }
+  ]
+}

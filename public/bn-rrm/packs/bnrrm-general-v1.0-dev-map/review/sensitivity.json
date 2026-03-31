@@ -1,0 +1,3147 @@
+{
+  "inference_mode": "both",
+  "inference_mode_definition": {
+    "screening": "Evidence includes chemistry and environmental conditions only. Biological effects are inferred from CPTs.",
+    "assessment": "Evidence includes chemistry, conditions, and observed biological effects. Effects are hard evidence (P=1.0)."
+  },
+  "summary": {
+    "n_eligible": 93,
+    "n_map_changes": 34,
+    "n_high_to_low_flips": 0,
+    "pct_map_changed": 36.6
+  },
+  "stations": [
+    {
+      "station_id": 1,
+      "station_name": "SED06-103",
+      "site_name": "Woodfibre (Former Squamish Pulp Mill)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.371441,
+          "moderate": 0.337429,
+          "high": 0.29113
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.594116,
+          "moderate": 0.332103,
+          "high": 0.073781
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.222675,
+        "moderate": -0.005326,
+        "high": -0.217349
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 2,
+      "station_name": "SED06-104",
+      "site_name": "Woodfibre (Former Squamish Pulp Mill)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.371441,
+          "moderate": 0.337429,
+          "high": 0.29113
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.594116,
+          "moderate": 0.332103,
+          "high": 0.073781
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.222675,
+        "moderate": -0.005326,
+        "high": -0.217349
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 3,
+      "station_name": "SED06-105",
+      "site_name": "Woodfibre (Former Squamish Pulp Mill)",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.371441,
+          "moderate": 0.337429,
+          "high": 0.29113
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": -0.024241,
+        "moderate": 0.090731,
+        "high": -0.06649
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 4,
+      "station_name": "SED06-111",
+      "site_name": "Woodfibre (Former Squamish Pulp Mill)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.359848,
+          "moderate": 0.337965,
+          "high": 0.302187
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.594116,
+          "moderate": 0.332103,
+          "high": 0.073781
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.234267,
+        "moderate": -0.005862,
+        "high": -0.228406
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 6,
+      "station_name": "SED06-114",
+      "site_name": "Woodfibre (Former Squamish Pulp Mill)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.371441,
+          "moderate": 0.337429,
+          "high": 0.29113
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.594116,
+          "moderate": 0.332103,
+          "high": 0.073781
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.222675,
+        "moderate": -0.005326,
+        "high": -0.217349
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 8,
+      "station_name": "SED06-116",
+      "site_name": "Woodfibre (Former Squamish Pulp Mill)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.371441,
+          "moderate": 0.337429,
+          "high": 0.29113
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.594116,
+          "moderate": 0.332103,
+          "high": 0.073781
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.222675,
+        "moderate": -0.005326,
+        "high": -0.217349
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 10,
+      "station_name": "SED06-118",
+      "site_name": "Woodfibre (Former Squamish Pulp Mill)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.371414,
+          "moderate": 0.337431,
+          "high": 0.291155
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.594116,
+          "moderate": 0.332103,
+          "high": 0.073781
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.222702,
+        "moderate": -0.005328,
+        "high": -0.217374
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 11,
+      "station_name": "SED06-119",
+      "site_name": "Woodfibre (Former Squamish Pulp Mill)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.371441,
+          "moderate": 0.337429,
+          "high": 0.29113
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.594116,
+          "moderate": 0.332103,
+          "high": 0.073781
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.222675,
+        "moderate": -0.005326,
+        "high": -0.217349
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 199,
+      "station_name": "SED19-1",
+      "site_name": "CP Nelson Yard (Hall Mines Smelter)",
+      "observed_risk": "high",
+      "observed_effects": {
+        "tox_amphipod": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.335905,
+          "moderate": 0.337034,
+          "high": 0.327061
+        },
+        "map_prediction": "moderate"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.063594,
+          "moderate": 0.190795,
+          "high": 0.745611
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.272311,
+        "moderate": -0.146239,
+        "high": 0.41855
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 200,
+      "station_name": "SED19-2",
+      "site_name": "CP Nelson Yard (Hall Mines Smelter)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.246352,
+          "moderate": 0.316939,
+          "high": 0.436709
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.525928,
+          "moderate": 0.345754,
+          "high": 0.128318
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.279576,
+        "moderate": 0.028815,
+        "high": -0.308391
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 201,
+      "station_name": "SED19-3",
+      "site_name": "CP Nelson Yard (Hall Mines Smelter)",
+      "observed_risk": "high",
+      "observed_effects": {
+        "tox_amphipod": "high",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.35392,
+          "moderate": 0.338805,
+          "high": 0.307275
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.02113,
+          "moderate": 0.057386,
+          "high": 0.921484
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.33279,
+        "moderate": -0.281419,
+        "high": 0.614209
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 202,
+      "station_name": "SED19-4",
+      "site_name": "CP Nelson Yard (Hall Mines Smelter)",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.335918,
+          "moderate": 0.337034,
+          "high": 0.327047
+        },
+        "map_prediction": "moderate"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": 0.011282,
+        "moderate": 0.091126,
+        "high": -0.102407
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 203,
+      "station_name": "SED19-5",
+      "site_name": "CP Nelson Yard (Hall Mines Smelter)",
+      "observed_risk": "high",
+      "observed_effects": {
+        "tox_amphipod": "high",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.128334,
+          "moderate": 0.242933,
+          "high": 0.628733
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.02113,
+          "moderate": 0.057386,
+          "high": 0.921484
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.107205,
+        "moderate": -0.185547,
+        "high": 0.292752
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 204,
+      "station_name": "SED19-6",
+      "site_name": "CP Nelson Yard (Hall Mines Smelter)",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.252712,
+          "moderate": 0.318901,
+          "high": 0.428386
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": 0.094488,
+        "moderate": 0.109259,
+        "high": -0.203746
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 205,
+      "station_name": "SED19-REF1",
+      "site_name": "CP Nelson Yard (Hall Mines Smelter)",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.321125,
+          "moderate": 0.334026,
+          "high": 0.344849
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": 0.026075,
+        "moderate": 0.094134,
+        "high": -0.120209
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 206,
+      "station_name": "SED19-REF2",
+      "site_name": "CP Nelson Yard (Hall Mines Smelter)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.345715,
+          "moderate": 0.337332,
+          "high": 0.316954
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.570844,
+          "moderate": 0.319643,
+          "high": 0.109513
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.225129,
+        "moderate": -0.017688,
+        "high": -0.207441
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 207,
+      "station_name": "SED13-1",
+      "site_name": "Island Copper Mine (Foreshore)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.412694,
+          "moderate": 0.336963,
+          "high": 0.250343
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.598894,
+          "moderate": 0.303003,
+          "high": 0.098103
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.1862,
+        "moderate": -0.033961,
+        "high": -0.15224
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 208,
+      "station_name": "SED13-2",
+      "site_name": "Island Copper Mine (Foreshore)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.412694,
+          "moderate": 0.336963,
+          "high": 0.250343
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.598894,
+          "moderate": 0.303003,
+          "high": 0.098103
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.1862,
+        "moderate": -0.033961,
+        "high": -0.15224
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 209,
+      "station_name": "SED13-5",
+      "site_name": "Island Copper Mine (Foreshore)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.405997,
+          "moderate": 0.338031,
+          "high": 0.255972
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.596786,
+          "moderate": 0.304754,
+          "high": 0.09846
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.190789,
+        "moderate": -0.033277,
+        "high": -0.157512
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 210,
+      "station_name": "SED13-6",
+      "site_name": "Island Copper Mine (Foreshore)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.405997,
+          "moderate": 0.338031,
+          "high": 0.255972
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.596786,
+          "moderate": 0.304754,
+          "high": 0.09846
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.190789,
+        "moderate": -0.033277,
+        "high": -0.157512
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 211,
+      "station_name": "SED13-10",
+      "site_name": "Island Copper Mine (Foreshore)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.362548,
+          "moderate": 0.336883,
+          "high": 0.300569
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.578924,
+          "moderate": 0.314344,
+          "high": 0.106732
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.216376,
+        "moderate": -0.022539,
+        "high": -0.193837
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 212,
+      "station_name": "SED13-12",
+      "site_name": "Island Copper Mine (Foreshore)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.478457,
+          "moderate": 0.322476,
+          "high": 0.199067
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.619075,
+          "moderate": 0.286126,
+          "high": 0.094799
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.140618,
+        "moderate": -0.03635,
+        "high": -0.104268
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 213,
+      "station_name": "SED13-16",
+      "site_name": "Island Copper Mine (Foreshore)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.42131,
+          "moderate": 0.331896,
+          "high": 0.246794
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.601754,
+          "moderate": 0.297748,
+          "high": 0.100497
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.180444,
+        "moderate": -0.034147,
+        "high": -0.146297
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 214,
+      "station_name": "SED13-21",
+      "site_name": "Island Copper Mine (Foreshore)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.478457,
+          "moderate": 0.322476,
+          "high": 0.199067
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.619075,
+          "moderate": 0.286126,
+          "high": 0.094799
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.140618,
+        "moderate": -0.03635,
+        "high": -0.104268
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 215,
+      "station_name": "SED13-23",
+      "site_name": "Island Copper Mine (Foreshore)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.391523,
+          "moderate": 0.336678,
+          "high": 0.2718
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.589873,
+          "moderate": 0.307701,
+          "high": 0.102427
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.19835,
+        "moderate": -0.028977,
+        "high": -0.169373
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 216,
+      "station_name": "SED13-24",
+      "site_name": "Island Copper Mine (Foreshore)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.30564,
+          "moderate": 0.331359,
+          "high": 0.363001
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.559839,
+          "moderate": 0.324723,
+          "high": 0.115438
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.254199,
+        "moderate": -0.006636,
+        "high": -0.247563
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 222,
+      "station_name": "SED06-6",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.443185,
+          "moderate": 0.327845,
+          "high": 0.22897
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.609456,
+          "moderate": 0.292438,
+          "high": 0.098106
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.166271,
+        "moderate": -0.035407,
+        "high": -0.130864
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 223,
+      "station_name": "SED06-11",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.376238,
+          "moderate": 0.337049,
+          "high": 0.286713
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.583478,
+          "moderate": 0.311889,
+          "high": 0.104632
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.20724,
+        "moderate": -0.02516,
+        "high": -0.182081
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 224,
+      "station_name": "SED06-17",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.385973,
+          "moderate": 0.336244,
+          "high": 0.277783
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.587345,
+          "moderate": 0.309015,
+          "high": 0.10364
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.201372,
+        "moderate": -0.027229,
+        "high": -0.174143
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 225,
+      "station_name": "SED06-19",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.355183,
+          "moderate": 0.338121,
+          "high": 0.306696
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.575001,
+          "moderate": 0.318168,
+          "high": 0.106831
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.219818,
+        "moderate": -0.019953,
+        "high": -0.199865
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 227,
+      "station_name": "SED06-22",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.333435,
+          "moderate": 0.33667,
+          "high": 0.329895
+        },
+        "map_prediction": "moderate"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.56715,
+          "moderate": 0.322806,
+          "high": 0.110045
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.233715,
+        "moderate": -0.013865,
+        "high": -0.21985
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 228,
+      "station_name": "SED06-35",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.35587,
+          "moderate": 0.338101,
+          "high": 0.306029
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.57528,
+          "moderate": 0.317962,
+          "high": 0.106758
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.21941,
+        "moderate": -0.020139,
+        "high": -0.199271
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 229,
+      "station_name": "SED06-38",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.443185,
+          "moderate": 0.327845,
+          "high": 0.22897
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.609456,
+          "moderate": 0.292438,
+          "high": 0.098106
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.166271,
+        "moderate": -0.035407,
+        "high": -0.130864
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 230,
+      "station_name": "SED06-42",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.356757,
+          "moderate": 0.338073,
+          "high": 0.30517
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.57564,
+          "moderate": 0.317696,
+          "high": 0.106664
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.218883,
+        "moderate": -0.020377,
+        "high": -0.198506
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 231,
+      "station_name": "SED06-46",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.384697,
+          "moderate": 0.336361,
+          "high": 0.278942
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.58684,
+          "moderate": 0.309391,
+          "high": 0.103769
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.202143,
+        "moderate": -0.02697,
+        "high": -0.175173
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 232,
+      "station_name": "SED06-63",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.360991,
+          "moderate": 0.337917,
+          "high": 0.301093
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.577355,
+          "moderate": 0.316426,
+          "high": 0.106219
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.216364,
+        "moderate": -0.02149,
+        "high": -0.194874
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 233,
+      "station_name": "SED12-13",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.247546,
+          "moderate": 0.317317,
+          "high": 0.435137
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.526501,
+          "moderate": 0.345401,
+          "high": 0.128098
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.278955,
+        "moderate": 0.028084,
+        "high": -0.307039
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 234,
+      "station_name": "SED12-14",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.269978,
+          "moderate": 0.324842,
+          "high": 0.40518
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.536904,
+          "moderate": 0.339698,
+          "high": 0.123398
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.266926,
+        "moderate": 0.014856,
+        "high": -0.281782
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 235,
+      "station_name": "SED12-21",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.357292,
+          "moderate": 0.33877,
+          "high": 0.303938
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.575962,
+          "moderate": 0.316982,
+          "high": 0.107056
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.21867,
+        "moderate": -0.021788,
+        "high": -0.196882
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 236,
+      "station_name": "SED12-22",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.282076,
+          "moderate": 0.327453,
+          "high": 0.390471
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.231548,
+          "moderate": 0.376904,
+          "high": 0.391548
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.050528,
+        "moderate": 0.049451,
+        "high": 0.001077
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 237,
+      "station_name": "SED12-23",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.248939,
+          "moderate": 0.317754,
+          "high": 0.433307
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.527169,
+          "moderate": 0.344991,
+          "high": 0.12784
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.278229,
+        "moderate": 0.027237,
+        "high": -0.305466
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 238,
+      "station_name": "SED12-24",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.339384,
+          "moderate": 0.337166,
+          "high": 0.32345
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.568406,
+          "moderate": 0.32131,
+          "high": 0.110283
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.229022,
+        "moderate": -0.015855,
+        "high": -0.213167
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 240,
+      "station_name": "SED12-34",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.367331,
+          "moderate": 0.338528,
+          "high": 0.294141
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.579636,
+          "moderate": 0.314416,
+          "high": 0.105948
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.212305,
+        "moderate": -0.024112,
+        "high": -0.188193
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 241,
+      "station_name": "SED12-35",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.349091,
+          "moderate": 0.337393,
+          "high": 0.313517
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.572147,
+          "moderate": 0.318759,
+          "high": 0.109094
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.223056,
+        "moderate": -0.018633,
+        "high": -0.204423
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 242,
+      "station_name": "SED12-44",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.249402,
+          "moderate": 0.317898,
+          "high": 0.432699
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.527391,
+          "moderate": 0.344855,
+          "high": 0.127754
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.277988,
+        "moderate": 0.026957,
+        "high": -0.304945
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 243,
+      "station_name": "SED12-45",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.348105,
+          "moderate": 0.337378,
+          "high": 0.314517
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.571767,
+          "moderate": 0.319017,
+          "high": 0.109216
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.223662,
+        "moderate": -0.018361,
+        "high": -0.205302
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 244,
+      "station_name": "SED12-46",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.347224,
+          "moderate": 0.337364,
+          "high": 0.315411
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.571429,
+          "moderate": 0.319248,
+          "high": 0.109323
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.224205,
+        "moderate": -0.018116,
+        "high": -0.206089
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 245,
+      "station_name": "SED12-48",
+      "site_name": "Blue Water (855 Centennial Road)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.254888,
+          "moderate": 0.319548,
+          "high": 0.425564
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.530005,
+          "moderate": 0.343246,
+          "high": 0.126748
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.275118,
+        "moderate": 0.023698,
+        "high": -0.298816
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 246,
+      "station_name": "IRS-SD09-04",
+      "site_name": "IOCO Shoreline (2225 Ioco Road, Port Moody)",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.306691,
+          "moderate": 0.33189,
+          "high": 0.361419
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.553176,
+          "moderate": 0.329937,
+          "high": 0.116886
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.246485,
+        "moderate": -0.001952,
+        "high": -0.244533
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 247,
+      "station_name": "IRS-SD09-10",
+      "site_name": "IOCO Shoreline (2225 Ioco Road, Port Moody)",
+      "observed_risk": "high",
+      "observed_effects": {
+        "tox_amphipod": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.319979,
+          "moderate": 0.333307,
+          "high": 0.346713
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.061952,
+          "moderate": 0.186032,
+          "high": 0.752016
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.258027,
+        "moderate": -0.147275,
+        "high": 0.405302
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 248,
+      "station_name": "IRS-SD09-12",
+      "site_name": "IOCO Shoreline (2225 Ioco Road, Port Moody)",
+      "observed_risk": "high",
+      "observed_effects": {
+        "tox_amphipod": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.307703,
+          "moderate": 0.332013,
+          "high": 0.360284
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.06013,
+          "moderate": 0.182035,
+          "high": 0.757834
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.247573,
+        "moderate": -0.149978,
+        "high": 0.39755
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 249,
+      "station_name": "IRS-SD09-14",
+      "site_name": "IOCO Shoreline (2225 Ioco Road, Port Moody)",
+      "observed_risk": "high",
+      "observed_effects": {
+        "tox_amphipod": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.306148,
+          "moderate": 0.331822,
+          "high": 0.36203
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.059899,
+          "moderate": 0.181524,
+          "high": 0.758577
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.24625,
+        "moderate": -0.150298,
+        "high": 0.396548
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 250,
+      "station_name": "IRS-SD09-19",
+      "site_name": "IOCO Shoreline (2225 Ioco Road, Port Moody)",
+      "observed_risk": "high",
+      "observed_effects": {
+        "tox_amphipod": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.248018,
+          "moderate": 0.320392,
+          "high": 0.43159
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.054419,
+          "moderate": 0.168643,
+          "high": 0.776938
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.193599,
+        "moderate": -0.151749,
+        "high": 0.345348
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 251,
+      "station_name": "IRS-SD09-20",
+      "site_name": "IOCO Shoreline (2225 Ioco Road, Port Moody)",
+      "observed_risk": "high",
+      "observed_effects": {
+        "tox_amphipod": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.24746,
+          "moderate": 0.320193,
+          "high": 0.432347
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.054355,
+          "moderate": 0.168489,
+          "high": 0.777156
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.193105,
+        "moderate": -0.151704,
+        "high": 0.344809
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 252,
+      "station_name": "SED13-06",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.373219,
+          "moderate": 0.337085,
+          "high": 0.289696
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.931373,
+          "moderate": 0.04902,
+          "high": 0.019608
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.558154,
+        "moderate": -0.288065,
+        "high": -0.270088
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 253,
+      "station_name": "SED13-08",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.402351,
+          "moderate": 0.336206,
+          "high": 0.261443
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.931373,
+          "moderate": 0.04902,
+          "high": 0.019608
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.529022,
+        "moderate": -0.287187,
+        "high": -0.241835
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 254,
+      "station_name": "SED13-10",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.384089,
+          "moderate": 0.338505,
+          "high": 0.277406
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.7225,
+          "moderate": 0.2505,
+          "high": 0.027
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.338411,
+        "moderate": -0.088005,
+        "high": -0.250406
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 255,
+      "station_name": "SED13-12",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.371105,
+          "moderate": 0.337207,
+          "high": 0.291688
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.7225,
+          "moderate": 0.2505,
+          "high": 0.027
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.351395,
+        "moderate": -0.086707,
+        "high": -0.264688
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 256,
+      "station_name": "SED13-13",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.400878,
+          "moderate": 0.336415,
+          "high": 0.262707
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.931373,
+          "moderate": 0.04902,
+          "high": 0.019608
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.530495,
+        "moderate": -0.287396,
+        "high": -0.243099
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 257,
+      "station_name": "SED13-15b",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.384089,
+          "moderate": 0.338505,
+          "high": 0.277406
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.7225,
+          "moderate": 0.2505,
+          "high": 0.027
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.338411,
+        "moderate": -0.088005,
+        "high": -0.250406
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 258,
+      "station_name": "SED13-16",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.400878,
+          "moderate": 0.336415,
+          "high": 0.262707
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.7225,
+          "moderate": 0.2505,
+          "high": 0.027
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.321622,
+        "moderate": -0.085915,
+        "high": -0.235707
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 259,
+      "station_name": "SED13-18",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.400878,
+          "moderate": 0.336415,
+          "high": 0.262707
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.49,
+          "moderate": 0.402,
+          "high": 0.108
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.089122,
+        "moderate": 0.065585,
+        "high": -0.154707
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 260,
+      "station_name": "SED13-20",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.371105,
+          "moderate": 0.337207,
+          "high": 0.291688
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.931373,
+          "moderate": 0.04902,
+          "high": 0.019608
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.560267,
+        "moderate": -0.288187,
+        "high": -0.27208
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 261,
+      "station_name": "SED13-24",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.384089,
+          "moderate": 0.338505,
+          "high": 0.277406
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.7225,
+          "moderate": 0.2505,
+          "high": 0.027
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.338411,
+        "moderate": -0.088005,
+        "high": -0.250406
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 262,
+      "station_name": "SED13-26b",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.236089,
+          "moderate": 0.311378,
+          "high": 0.452533
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.931373,
+          "moderate": 0.04902,
+          "high": 0.019608
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.695283,
+        "moderate": -0.262358,
+        "high": -0.432925
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 263,
+      "station_name": "SED13-28",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.399221,
+          "moderate": 0.333972,
+          "high": 0.266807
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.931373,
+          "moderate": 0.04902,
+          "high": 0.019608
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.532151,
+        "moderate": -0.284952,
+        "high": -0.247199
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 264,
+      "station_name": "SED13-29",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "moderate",
+        "diversity": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.436499,
+          "moderate": 0.332672,
+          "high": 0.230829
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.49,
+          "moderate": 0.402,
+          "high": 0.108
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.053501,
+        "moderate": 0.069328,
+        "high": -0.122829
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 265,
+      "station_name": "SED13-31",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.421987,
+          "moderate": 0.331792,
+          "high": 0.246221
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.931373,
+          "moderate": 0.04902,
+          "high": 0.019608
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.509386,
+        "moderate": -0.282773,
+        "high": -0.226613
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 266,
+      "station_name": "SED13-36",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "moderate",
+        "diversity": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.384089,
+          "moderate": 0.338505,
+          "high": 0.277406
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.49,
+          "moderate": 0.402,
+          "high": 0.108
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.105911,
+        "moderate": 0.063495,
+        "high": -0.169406
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 267,
+      "station_name": "SED13-37",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "moderate",
+        "diversity": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.400878,
+          "moderate": 0.336415,
+          "high": 0.262707
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.49,
+          "moderate": 0.402,
+          "high": 0.108
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.089122,
+        "moderate": 0.065585,
+        "high": -0.154707
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 268,
+      "station_name": "SED13-38",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "moderate",
+        "diversity": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.371105,
+          "moderate": 0.337207,
+          "high": 0.291688
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.49,
+          "moderate": 0.402,
+          "high": 0.108
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.118895,
+        "moderate": 0.064793,
+        "high": -0.183688
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 269,
+      "station_name": "SED13-39",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "moderate",
+        "diversity": "moderate"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.384089,
+          "moderate": 0.338505,
+          "high": 0.277406
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.49,
+          "moderate": 0.402,
+          "high": 0.108
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.105911,
+        "moderate": 0.063495,
+        "high": -0.169406
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 270,
+      "station_name": "SED13-40",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.458264,
+          "moderate": 0.329687,
+          "high": 0.212049
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.931373,
+          "moderate": 0.04902,
+          "high": 0.019608
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.473109,
+        "moderate": -0.280668,
+        "high": -0.192441
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 271,
+      "station_name": "SED13-41",
+      "site_name": "Toquaht Bay Marina and Campground",
+      "observed_risk": "low",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "low",
+        "diversity": "low"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.458264,
+          "moderate": 0.329687,
+          "high": 0.212049
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.931373,
+          "moderate": 0.04902,
+          "high": 0.019608
+        },
+        "map_prediction": "low"
+      },
+      "posterior_shift": {
+        "low": 0.473109,
+        "moderate": -0.280668,
+        "high": -0.192441
+      },
+      "map_changed": false
+    },
+    {
+      "station_id": 272,
+      "station_name": "SS-2",
+      "site_name": "Rio Tinto BC Works (ALCAN Smelter), Kitimat",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.377137,
+          "moderate": 0.343375,
+          "high": 0.279488
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": -0.029937,
+        "moderate": 0.084785,
+        "high": -0.054848
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 273,
+      "station_name": "SS-23",
+      "site_name": "Rio Tinto BC Works (ALCAN Smelter), Kitimat",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.377137,
+          "moderate": 0.343375,
+          "high": 0.279488
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": -0.029937,
+        "moderate": 0.084785,
+        "high": -0.054848
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 274,
+      "station_name": "SS-24",
+      "site_name": "Rio Tinto BC Works (ALCAN Smelter), Kitimat",
+      "observed_risk": "high",
+      "observed_effects": {
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.377137,
+          "moderate": 0.343375,
+          "high": 0.279488
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.191922,
+          "moderate": 0.339056,
+          "high": 0.469022
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.185215,
+        "moderate": -0.004319,
+        "high": 0.189534
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 275,
+      "station_name": "SS-32",
+      "site_name": "Rio Tinto BC Works (ALCAN Smelter), Kitimat",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.370656,
+          "moderate": 0.343188,
+          "high": 0.286156
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": -0.023456,
+        "moderate": 0.084972,
+        "high": -0.061516
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 276,
+      "station_name": "SS-46",
+      "site_name": "Rio Tinto BC Works (ALCAN Smelter), Kitimat",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.377137,
+          "moderate": 0.343375,
+          "high": 0.279488
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": -0.029937,
+        "moderate": 0.084785,
+        "high": -0.054848
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 277,
+      "station_name": "PZ16-02",
+      "site_name": "Hercules Forwarding ULC (Brunette River)",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.391082,
+          "moderate": 0.333666,
+          "high": 0.275251
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": -0.043882,
+        "moderate": 0.094494,
+        "high": -0.050611
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 278,
+      "station_name": "PZ16-03",
+      "site_name": "Hercules Forwarding ULC (Brunette River)",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.338725,
+          "moderate": 0.33458,
+          "high": 0.326695
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": 0.008475,
+        "moderate": 0.09358,
+        "high": -0.102055
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 279,
+      "station_name": "PZ16-04",
+      "site_name": "Hercules Forwarding ULC (Brunette River)",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.303136,
+          "moderate": 0.330429,
+          "high": 0.366434
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": 0.044064,
+        "moderate": 0.097731,
+        "high": -0.141794
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 280,
+      "station_name": "PZ16-05",
+      "site_name": "Hercules Forwarding ULC (Brunette River)",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.434624,
+          "moderate": 0.329247,
+          "high": 0.23613
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": -0.087424,
+        "moderate": 0.098913,
+        "high": -0.01149
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 281,
+      "station_name": "PZ16-07",
+      "site_name": "Hercules Forwarding ULC (Brunette River)",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.434624,
+          "moderate": 0.329247,
+          "high": 0.23613
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": -0.087424,
+        "moderate": 0.098913,
+        "high": -0.01149
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 282,
+      "station_name": "PZ16-08",
+      "site_name": "Hercules Forwarding ULC (Brunette River)",
+      "observed_risk": "moderate",
+      "observed_effects": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.303136,
+          "moderate": 0.330429,
+          "high": 0.366434
+        },
+        "map_prediction": "high"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.42816,
+          "high": 0.22464
+        },
+        "map_prediction": "moderate"
+      },
+      "posterior_shift": {
+        "low": 0.044064,
+        "moderate": 0.097731,
+        "high": -0.141794
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 283,
+      "station_name": "PW5C",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "observed_risk": "high",
+      "observed_effects": {
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.354496,
+          "moderate": 0.338801,
+          "high": 0.306703
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.182056,
+          "moderate": 0.32394,
+          "high": 0.494003
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.17244,
+        "moderate": -0.01486,
+        "high": 0.1873
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 284,
+      "station_name": "PW5N",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "observed_risk": "high",
+      "observed_effects": {
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.354327,
+          "moderate": 0.338802,
+          "high": 0.306871
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.181975,
+          "moderate": 0.323865,
+          "high": 0.494161
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.172352,
+        "moderate": -0.014937,
+        "high": 0.187289
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 285,
+      "station_name": "PW5S",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "observed_risk": "high",
+      "observed_effects": {
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.354327,
+          "moderate": 0.338802,
+          "high": 0.306871
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.181975,
+          "moderate": 0.323865,
+          "high": 0.494161
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.172352,
+        "moderate": -0.014937,
+        "high": 0.187289
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 286,
+      "station_name": "PE5C",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "observed_risk": "high",
+      "observed_effects": {
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.359741,
+          "moderate": 0.338727,
+          "high": 0.301532
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.18458,
+          "moderate": 0.326269,
+          "high": 0.489151
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.175161,
+        "moderate": -0.012458,
+        "high": 0.187619
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 287,
+      "station_name": "PE5N",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "observed_risk": "high",
+      "observed_effects": {
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.354496,
+          "moderate": 0.338801,
+          "high": 0.306703
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.182056,
+          "moderate": 0.32394,
+          "high": 0.494003
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.17244,
+        "moderate": -0.01486,
+        "high": 0.1873
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 288,
+      "station_name": "PE5S",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "observed_risk": "high",
+      "observed_effects": {
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.359875,
+          "moderate": 0.338724,
+          "high": 0.301401
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.184645,
+          "moderate": 0.326328,
+          "high": 0.489027
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.17523,
+        "moderate": -0.012396,
+        "high": 0.187626
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 289,
+      "station_name": "CAL",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "observed_risk": "high",
+      "observed_effects": {
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.359741,
+          "moderate": 0.338727,
+          "high": 0.301532
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.18458,
+          "moderate": 0.326269,
+          "high": 0.489151
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.175161,
+        "moderate": -0.012458,
+        "high": 0.187619
+      },
+      "map_changed": true
+    },
+    {
+      "station_id": 290,
+      "station_name": "TEZZ",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "observed_risk": "high",
+      "observed_effects": {
+        "taxa_richness": "high"
+      },
+      "screening": {
+        "inference_mode": "screening",
+        "posterior": {
+          "low": 0.354472,
+          "moderate": 0.338801,
+          "high": 0.306727
+        },
+        "map_prediction": "low"
+      },
+      "assessment": {
+        "inference_mode": "assessment",
+        "posterior": {
+          "low": 0.182045,
+          "moderate": 0.32393,
+          "high": 0.494025
+        },
+        "map_prediction": "high"
+      },
+      "posterior_shift": {
+        "low": -0.172428,
+        "moderate": -0.014871,
+        "high": 0.187299
+      },
+      "map_changed": true
+    }
+  ]
+}

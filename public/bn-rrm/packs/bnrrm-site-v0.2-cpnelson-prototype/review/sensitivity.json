@@ -1,0 +1,336 @@
+{
+  "type": "dual_mode_comparison",
+  "evidence_modes": [
+    "screening",
+    "assessment"
+  ],
+  "site_id": "0311",
+  "site_name": "CP Nelson Yard (Hall Mines Smelter)",
+  "stations": [
+    {
+      "station_id": 199,
+      "station_name": "SED19-1",
+      "observed_risk": "high",
+      "effects_as_evidence": {
+        "tox_amphipod": "high"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.321,
+          "moderate": 0.3341,
+          "high": 0.3449
+        },
+        "map": "high"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.3359,
+          "moderate": 0.337,
+          "high": 0.3271
+        },
+        "map": "moderate"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.058,
+          "moderate": 0.1764,
+          "high": 0.7656
+        },
+        "map": "high"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.0636,
+          "moderate": 0.1908,
+          "high": 0.7456
+        },
+        "map": "high"
+      }
+    },
+    {
+      "station_id": 200,
+      "station_name": "SED19-2",
+      "observed_risk": "low",
+      "effects_as_evidence": {
+        "tox_amphipod": "low"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.2448,
+          "moderate": 0.315,
+          "high": 0.4401
+        },
+        "map": "high"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.2464,
+          "moderate": 0.3169,
+          "high": 0.4367
+        },
+        "map": "high"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.5077,
+          "moderate": 0.355,
+          "high": 0.1373
+        },
+        "map": "low"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.5259,
+          "moderate": 0.3458,
+          "high": 0.1283
+        },
+        "map": "low"
+      }
+    },
+    {
+      "station_id": 201,
+      "station_name": "SED19-3",
+      "observed_risk": "high",
+      "effects_as_evidence": {
+        "tox_amphipod": "high",
+        "taxa_richness": "high"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.3362,
+          "moderate": 0.3363,
+          "high": 0.3276
+        },
+        "map": "moderate"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.3539,
+          "moderate": 0.3388,
+          "high": 0.3073
+        },
+        "map": "low"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.0211,
+          "moderate": 0.0574,
+          "high": 0.9215
+        },
+        "map": "high"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.0211,
+          "moderate": 0.0574,
+          "high": 0.9215
+        },
+        "map": "high"
+      }
+    },
+    {
+      "station_id": 202,
+      "station_name": "SED19-4",
+      "observed_risk": "moderate",
+      "effects_as_evidence": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.321,
+          "moderate": 0.3341,
+          "high": 0.3449
+        },
+        "map": "high"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.3359,
+          "moderate": 0.337,
+          "high": 0.327
+        },
+        "map": "moderate"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      }
+    },
+    {
+      "station_id": 203,
+      "station_name": "SED19-5",
+      "observed_risk": "high",
+      "effects_as_evidence": {
+        "tox_amphipod": "high",
+        "taxa_richness": "high"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.1421,
+          "moderate": 0.2531,
+          "high": 0.6047
+        },
+        "map": "high"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.1283,
+          "moderate": 0.2429,
+          "high": 0.6287
+        },
+        "map": "high"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.0211,
+          "moderate": 0.0574,
+          "high": 0.9215
+        },
+        "map": "high"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.0211,
+          "moderate": 0.0574,
+          "high": 0.9215
+        },
+        "map": "high"
+      }
+    },
+    {
+      "station_id": 204,
+      "station_name": "SED19-6",
+      "observed_risk": "moderate",
+      "effects_as_evidence": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.2503,
+          "moderate": 0.3168,
+          "high": 0.4329
+        },
+        "map": "high"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.2527,
+          "moderate": 0.3189,
+          "high": 0.4284
+        },
+        "map": "high"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      }
+    },
+    {
+      "station_id": 205,
+      "station_name": "SED19-REF1",
+      "observed_risk": "moderate",
+      "effects_as_evidence": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.3085,
+          "moderate": 0.3311,
+          "high": 0.3604
+        },
+        "map": "high"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.3211,
+          "moderate": 0.334,
+          "high": 0.3448
+        },
+        "map": "high"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      }
+    },
+    {
+      "station_id": 206,
+      "station_name": "SED19-REF2",
+      "observed_risk": "low",
+      "effects_as_evidence": {
+        "tox_amphipod": "low"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.3293,
+          "moderate": 0.3347,
+          "high": 0.336
+        },
+        "map": "high"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.3457,
+          "moderate": 0.3373,
+          "high": 0.317
+        },
+        "map": "low"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.5479,
+          "moderate": 0.3321,
+          "high": 0.12
+        },
+        "map": "low"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.5708,
+          "moderate": 0.3196,
+          "high": 0.1095
+        },
+        "map": "low"
+      }
+    }
+  ]
+}

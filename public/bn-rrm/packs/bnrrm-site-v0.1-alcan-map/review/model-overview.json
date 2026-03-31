@@ -1,0 +1,165 @@
+{
+  "_meta": {
+    "export_date": "2026-03-31T16:00:09.575537+00:00",
+    "db_hash": "fb9486e22761a67c071e6f00e739859c776d0c6823c4af2595246567e4c23c21",
+    "scope": "site_specific",
+    "site_registry_id": "0331",
+    "model_version": "4.1-site"
+  },
+  "model_identity": {
+    "name": "BN-RRM Site: Rio Tinto BC Works (ALCAN Smelter), Kitimat",
+    "framework": "Landis (2021) Causal DAG",
+    "model_id": "bnrrm-landis-causal",
+    "version": "4.1-site",
+    "nodes": 20,
+    "edges": 24,
+    "states_per_node": 3,
+    "scope": "site_specific",
+    "parent_model": "bnrrm-general-v1.0-dev-map"
+  },
+  "training_data": {
+    "site": "Rio Tinto BC Works (ALCAN Smelter), Kitimat",
+    "registry_id": "0331",
+    "waterbody": "marine",
+    "n_stations": 5,
+    "record_counts": {
+      "sediment_chemistry": 0,
+      "env_modifiers": 0,
+      "toxicity_tests": 0,
+      "benthic_community": 0,
+      "extraction_provenance": 0
+    },
+    "stations": [
+      {
+        "station_id": 272,
+        "name": "SS-2",
+        "type": "near_field"
+      },
+      {
+        "station_id": 273,
+        "name": "SS-23",
+        "type": "near_field"
+      },
+      {
+        "station_id": 274,
+        "name": "SS-24",
+        "type": "near_field"
+      },
+      {
+        "station_id": 275,
+        "name": "SS-32",
+        "type": "near_field"
+      },
+      {
+        "station_id": 276,
+        "name": "SS-46",
+        "type": "near_field"
+      }
+    ],
+    "dataset_counts": {
+      "sites": 1,
+      "stations": 5,
+      "co_located": 5
+    },
+    "site_breakdown": [
+      {
+        "name": "Rio Tinto BC Works (ALCAN Smelter), Kitimat",
+        "registry_id": "0331",
+        "waterbody": "marine",
+        "total_stations": 5
+      }
+    ]
+  },
+  "diagnostic": {
+    "type": "diagnostic_replay",
+    "disclaimer": "NOT validation. Labels are derived from _determine_observed_risk() heuristic, not independent consultant assessments. LOO at N=5: approximate 95% CI width ~88%. This checks internal consistency only.",
+    "n_eligible": 5,
+    "accuracy": 0.0,
+    "kappa": 0.0,
+    "per_class": {
+      "low": {
+        "precision": 0.0,
+        "recall": 0,
+        "f1": 0,
+        "support": 0
+      },
+      "moderate": {
+        "precision": 0,
+        "recall": 0.0,
+        "f1": 0,
+        "support": 4
+      },
+      "high": {
+        "precision": 0,
+        "recall": 0.0,
+        "f1": 0,
+        "support": 1
+      }
+    }
+  },
+  "limitations": [
+    "N=5: CPTs are >80% expert-prior-dominated. This is a demonstration model.",
+    "Diagnostic replay is NOT validation (model-derived labels create circularity).",
+    "No spatial generalization within the site.",
+    "Marginals are site-specific; CPTs are not meaningfully data-learned at this sample size.",
+    "Any reported accuracy or kappa has confidence intervals wider than the estimate itself (N=5)."
+  ],
+  "anti_overclaim": "This site-specific BN-RRM applies the Landis (2021) 20-node causal DAG to Rio Tinto BC Works (ALCAN Smelter), Kitimat sediment data. With N=5 stations, conditional probability tables are dominated by expert priors (>80% expert contribution). Site-specific marginal distributions reflect the site's contamination profile. This model is an illustrative application suitable for demonstration / case study, not a validated predictive tool.",
+  "marginal_highlights": {
+    "sed_cu": {
+      "below_isqg": -0.1561,
+      "isqg_pel": 0.4,
+      "above_pel": -0.2439
+    },
+    "sed_zn": {
+      "below_isqg": 0.3232,
+      "isqg_pel": -0.2828,
+      "above_pel": -0.0404
+    },
+    "sed_pb": {
+      "below_isqg": 0.2118,
+      "isqg_pel": -0.1527,
+      "above_pel": -0.0591
+    },
+    "sed_cd": {
+      "below_isqg": 0.3102,
+      "isqg_pel": -0.2941,
+      "above_pel": -0.016
+    },
+    "sed_hg": {
+      "below_isqg": 0.1368,
+      "isqg_pel": -0.0789,
+      "above_pel": -0.0579
+    },
+    "sed_as": {
+      "below_isqg": 0.7705,
+      "isqg_pel": -0.6612,
+      "above_pel": -0.1093
+    },
+    "sed_cr": {
+      "below_isqg": 0.0656,
+      "isqg_pel": -0.0656,
+      "above_pel": 0.0
+    },
+    "sed_pahs": {
+      "below_isqg": -0.5669,
+      "isqg_pel": -0.2803,
+      "above_pel": 0.8471
+    },
+    "sed_pcbs": {
+      "below_isqg": 0.0,
+      "isqg_pel": 0.0,
+      "above_pel": 0.0
+    },
+    "toc": {
+      "low": -0.0459,
+      "moderate": -0.4862,
+      "high": 0.5321
+    },
+    "grain_size": {
+      "low": -0.0672,
+      "moderate": -0.4286,
+      "high": 0.4958
+    }
+  }
+}

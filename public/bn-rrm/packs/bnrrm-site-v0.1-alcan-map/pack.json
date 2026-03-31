@@ -1,25 +1,25 @@
 {
-  "pack_id": "bnrrm-site-v0.2-cpnelson-prototype",
-  "display_name": "BN-RRM Site: CP Nelson (Prototype, v1.0 REBUILD)",
+  "pack_id": "bnrrm-site-v0.1-alcan-map",
+  "display_name": "BN-RRM Site: ALCAN (Prototype, v1.0 REBUILD)",
   "model_family": "site",
   "scope_type": "site_specific",
   "site_scope": {
-    "registry_id": "0311",
-    "name": "CP Nelson",
-    "waterbody": "freshwater"
+    "registry_id": "0331",
+    "name": "ALCAN",
+    "waterbody": "marine"
   },
   "site_inventory": [
     {
-      "registry_id": "0311",
-      "name": "CP Nelson Yard (Hall Mines Smelter)",
-      "waterbody": "freshwater"
+      "registry_id": "0331",
+      "name": "Rio Tinto BC Works (ALCAN Smelter), Kitimat",
+      "waterbody": "marine"
     }
   ],
   "runtime_schema_version": "canonical-20node-v1",
   "dag_node_count": 20,
   "dag_edge_count": 24,
   "training_corpus": {
-    "n_stations": 7,
+    "n_stations": 5,
     "n_co_located": 5,
     "n_sites": 1,
     "cohort_rule": "T1+T2",
@@ -28,8 +28,8 @@
   "evaluation_profile": {
     "decision_rule": "MAP",
     "primary_metric": "weighted_kappa",
-    "loo_accuracy": 0.2,
-    "loo_kappa": -0.1765
+    "loo_accuracy": 0.0,
+    "loo_kappa": 0.0
   },
   "release_stage": "prototype",
   "is_default": false,

@@ -1,0 +1,87 @@
+{
+  "type": "diagnostic_replay",
+  "disclaimer": "NOT validation. Labels are derived from _determine_observed_risk() heuristic, not independent consultant assessments. LOO at N=5: approximate 95% CI width ~88%. This checks internal consistency only.",
+  "n_eligible": 5,
+  "n_complete": 5,
+  "accuracy": 0.0,
+  "kappa": 0.0,
+  "loo_accuracy": 0.0,
+  "loo_kappa": 0.0,
+  "per_class": {
+    "low": {
+      "precision": 0.0,
+      "recall": 0,
+      "f1": 0,
+      "support": 0
+    },
+    "moderate": {
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0,
+      "support": 4
+    },
+    "high": {
+      "precision": 0,
+      "recall": 0.0,
+      "f1": 0,
+      "support": 1
+    }
+  },
+  "station_results": [
+    {
+      "station_id": 272,
+      "station_name": "SS-2",
+      "predicted": "low",
+      "observed": "moderate",
+      "posterior": {
+        "low": 0.3617,
+        "moderate": 0.3472,
+        "high": 0.2911
+      }
+    },
+    {
+      "station_id": 273,
+      "station_name": "SS-23",
+      "predicted": "low",
+      "observed": "moderate",
+      "posterior": {
+        "low": 0.3617,
+        "moderate": 0.3472,
+        "high": 0.2911
+      }
+    },
+    {
+      "station_id": 274,
+      "station_name": "SS-24",
+      "predicted": "low",
+      "observed": "high",
+      "posterior": {
+        "low": 0.3696,
+        "moderate": 0.3473,
+        "high": 0.2831
+      }
+    },
+    {
+      "station_id": 275,
+      "station_name": "SS-32",
+      "predicted": "low",
+      "observed": "moderate",
+      "posterior": {
+        "low": 0.3548,
+        "moderate": 0.3472,
+        "high": 0.2981
+      }
+    },
+    {
+      "station_id": 276,
+      "station_name": "SS-46",
+      "predicted": "low",
+      "observed": "moderate",
+      "posterior": {
+        "low": 0.3617,
+        "moderate": 0.3472,
+        "high": 0.2911
+      }
+    }
+  ]
+}

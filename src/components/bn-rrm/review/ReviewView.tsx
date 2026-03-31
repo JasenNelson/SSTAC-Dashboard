@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { cn } from '@/utils/cn';
+import { usePackStore } from '@/stores/bn-rrm/packStore';
+import { GuideView } from './GuideView';
+import { EvidenceView } from './EvidenceView';
 import { ModelOverview } from './ModelOverview';
 import { ValidationDashboard } from './ValidationDashboard';
 import { DecisionsAndLimitations } from './DecisionsAndLimitations';
@@ -10,9 +13,11 @@ import { DataProvenance } from './DataProvenance';
 import { SiteReports } from './SiteReports';
 import { RiskComparison } from './RiskComparison';
 
-type ReviewSection = 'overview' | 'validation' | 'decisions' | 'cpt' | 'provenance' | 'sites' | 'comparison';
+type ReviewSection = 'guide' | 'evidence' | 'overview' | 'validation' | 'decisions' | 'cpt' | 'provenance' | 'sites' | 'comparison';
 
 const sections: { id: ReviewSection; label: string; description: string }[] = [
+  { id: 'guide', label: 'Guide', description: 'Step-by-step model review' },
+  { id: 'evidence', label: 'Evidence', description: 'Observed vs inferred nodes' },
   { id: 'overview', label: 'Model Overview', description: 'Architecture, metrics, training data' },
   { id: 'validation', label: 'QA/QC & Validation', description: 'LOO results, confusion matrix' },
   { id: 'decisions', label: 'Decisions & Limitations', description: 'DR records, known limitations' },
@@ -23,7 +28,8 @@ const sections: { id: ReviewSection; label: string; description: string }[] = [
 ];
 
 export function ReviewView() {
-  const [activeSection, setActiveSection] = useState<ReviewSection>('overview');
+  const [activeSection, setActiveSection] = useState<ReviewSection>('guide');
+  const packManifest = usePackStore((s) => s.packManifest);
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -57,13 +63,16 @@ export function ReviewView() {
         <div className="mt-6 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
           <div className="text-xs font-semibold text-amber-700 dark:text-amber-300 uppercase tracking-wider">Dataset Status</div>
           <div className="text-sm text-amber-600 dark:text-amber-400 mt-1 font-medium">
-            FROZEN (DR-003)
+            {packManifest?.training_corpus?.dataset_status ?? 'Loading...'}
           </div>
           <div className="text-xs text-amber-500 dark:text-amber-500 mt-0.5">
-            2026-03-09 &middot; 82 stations
+            {packManifest?.version_history?.created
+              ? new Date(packManifest.version_history.created).toLocaleDateString('en-CA')
+              : ''}{' '}
+            {packManifest ? `\u00B7 ${packManifest.training_corpus.n_stations} stations` : ''}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            v1.0 publication candidate uses same training data with decoupled evaluation pipeline
+            {packManifest?.display_name ?? ''}
           </div>
         </div>
       </div>
@@ -71,6 +80,8 @@ export function ReviewView() {
       {/* Content area */}
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-4xl mx-auto">
+          {activeSection === 'guide' && <GuideView />}
+          {activeSection === 'evidence' && <EvidenceView />}
           {activeSection === 'overview' && <ModelOverview />}
           {activeSection === 'validation' && <ValidationDashboard />}
           {activeSection === 'decisions' && <DecisionsAndLimitations />}

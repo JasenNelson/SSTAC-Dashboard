@@ -1,10 +1,10 @@
 {
   "_meta": {
-    "export_date": "2026-03-31T16:00:05.829057+00:00",
+    "export_date": "2026-03-31T16:00:09.577394+00:00",
     "scope": "site_specific",
-    "site_registry_id": "0311"
+    "site_registry_id": "0331"
   },
-  "expert_dominance_disclosure": "With N=8 site-only stations, all BDeu-blended CPTs are >70% expert-prior-dominated. The Noisy-OR tier has 8 pseudo-observations (minimum 5 required for fitting). This model demonstrates the BN-RRM framework applied to site-specific data, not data-learned parameters.",
+  "expert_dominance_disclosure": "With N=5 site-only stations, all BDeu-blended CPTs are >70% expert-prior-dominated. The Noisy-OR tier has 5 pseudo-observations (minimum 5 required for fitting). This model demonstrates the BN-RRM framework applied to site-specific data, not data-learned parameters.",
   "nodes": [
     {
       "node_id": "metal_contamination",
@@ -13,7 +13,7 @@
       "n_parent_configs": 2187,
       "data_weight_pct": null,
       "expert_weight_pct": null,
-      "n_site_stations": 8,
+      "n_site_stations": 5,
       "assessment": "Noisy-OR fitted"
     },
     {
@@ -23,7 +23,7 @@
       "n_parent_configs": 9,
       "data_weight_pct": null,
       "expert_weight_pct": null,
-      "n_site_stations": 8,
+      "n_site_stations": 5,
       "assessment": "Noisy-OR fitted"
     },
     {
@@ -31,9 +31,9 @@
       "method": "hierarchical_bdeu",
       "alpha": 3.0,
       "n_parent_configs": 36,
-      "data_weight_pct": 72.7,
-      "expert_weight_pct": 27.3,
-      "n_site_stations": 8,
+      "data_weight_pct": 62.5,
+      "expert_weight_pct": 37.5,
+      "n_site_stations": 5,
       "assessment": "Data-informed"
     },
     {
@@ -41,29 +41,29 @@
       "method": "hierarchical_bdeu",
       "alpha": 3.0,
       "n_parent_configs": 27,
-      "data_weight_pct": 72.7,
-      "expert_weight_pct": 27.3,
-      "n_site_stations": 8,
+      "data_weight_pct": 62.5,
+      "expert_weight_pct": 37.5,
+      "n_site_stations": 5,
       "assessment": "Data-informed"
     },
     {
       "node_id": "tox_amphipod",
-      "method": "hierarchical_bdeu_marginalized",
+      "method": "hierarchical_bdeu",
       "alpha": 5.0,
       "n_parent_configs": 9,
-      "data_weight_pct": 61.5,
-      "expert_weight_pct": 38.5,
-      "n_site_stations": 8,
+      "data_weight_pct": 50.0,
+      "expert_weight_pct": 50.0,
+      "n_site_stations": 5,
       "assessment": "Data-informed"
     },
     {
       "node_id": "taxa_richness",
-      "method": "hierarchical_bdeu_marginalized",
+      "method": "hierarchical_bdeu",
       "alpha": 5.0,
       "n_parent_configs": 9,
-      "data_weight_pct": 61.5,
-      "expert_weight_pct": 38.5,
-      "n_site_stations": 8,
+      "data_weight_pct": 50.0,
+      "expert_weight_pct": 50.0,
+      "n_site_stations": 5,
       "assessment": "Data-informed"
     },
     {
@@ -71,9 +71,9 @@
       "method": "hierarchical_bdeu",
       "alpha": 5.0,
       "n_parent_configs": 9,
-      "data_weight_pct": 61.5,
-      "expert_weight_pct": 38.5,
-      "n_site_stations": 8,
+      "data_weight_pct": 50.0,
+      "expert_weight_pct": 50.0,
+      "n_site_stations": 5,
       "assessment": "Data-informed"
     },
     {
@@ -81,9 +81,9 @@
       "method": "hierarchical_bdeu",
       "alpha": 4.0,
       "n_parent_configs": 27,
-      "data_weight_pct": 66.7,
-      "expert_weight_pct": 33.3,
-      "n_site_stations": 8,
+      "data_weight_pct": 55.6,
+      "expert_weight_pct": 44.4,
+      "n_site_stations": 5,
       "assessment": "Data-informed"
     }
   ]

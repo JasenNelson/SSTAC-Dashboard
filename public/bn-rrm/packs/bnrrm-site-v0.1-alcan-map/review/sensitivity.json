@@ -1,0 +1,215 @@
+{
+  "type": "dual_mode_comparison",
+  "evidence_modes": [
+    "screening",
+    "assessment"
+  ],
+  "site_id": "0331",
+  "site_name": "Rio Tinto BC Works (ALCAN Smelter), Kitimat",
+  "stations": [
+    {
+      "station_id": 272,
+      "station_name": "SS-2",
+      "observed_risk": "moderate",
+      "effects_as_evidence": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.3618,
+          "moderate": 0.3485,
+          "high": 0.2898
+        },
+        "map": "low"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.3771,
+          "moderate": 0.3434,
+          "high": 0.2795
+        },
+        "map": "low"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      }
+    },
+    {
+      "station_id": 273,
+      "station_name": "SS-23",
+      "observed_risk": "moderate",
+      "effects_as_evidence": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.3618,
+          "moderate": 0.3485,
+          "high": 0.2898
+        },
+        "map": "low"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.3771,
+          "moderate": 0.3434,
+          "high": 0.2795
+        },
+        "map": "low"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      }
+    },
+    {
+      "station_id": 274,
+      "station_name": "SS-24",
+      "observed_risk": "high",
+      "effects_as_evidence": {
+        "taxa_richness": "high"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.3618,
+          "moderate": 0.3485,
+          "high": 0.2898
+        },
+        "map": "low"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.3771,
+          "moderate": 0.3434,
+          "high": 0.2795
+        },
+        "map": "low"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.2191,
+          "moderate": 0.3581,
+          "high": 0.4228
+        },
+        "map": "high"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.1919,
+          "moderate": 0.3391,
+          "high": 0.469
+        },
+        "map": "high"
+      }
+    },
+    {
+      "station_id": 275,
+      "station_name": "SS-32",
+      "observed_risk": "moderate",
+      "effects_as_evidence": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.3548,
+          "moderate": 0.3472,
+          "high": 0.2981
+        },
+        "map": "low"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.3707,
+          "moderate": 0.3432,
+          "high": 0.2862
+        },
+        "map": "low"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      }
+    },
+    {
+      "station_id": 276,
+      "station_name": "SS-46",
+      "observed_risk": "moderate",
+      "effects_as_evidence": {
+        "tox_amphipod": "low",
+        "taxa_richness": "high"
+      },
+      "site_screening": {
+        "posterior": {
+          "low": 0.3618,
+          "moderate": 0.3485,
+          "high": 0.2898
+        },
+        "map": "low"
+      },
+      "general_screening": {
+        "posterior": {
+          "low": 0.3771,
+          "moderate": 0.3434,
+          "high": 0.2795
+        },
+        "map": "low"
+      },
+      "site_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      },
+      "general_assessment": {
+        "posterior": {
+          "low": 0.3472,
+          "moderate": 0.4282,
+          "high": 0.2246
+        },
+        "map": "moderate"
+      }
+    }
+  ]
+}

@@ -1,53 +1,53 @@
 {
   "type": "diagnostic_replay",
-  "disclaimer": "NOT validation. Labels are derived from _determine_observed_risk() heuristic, not independent consultant assessments. LOO at N=5 has no statistical power (~35% CI width). This checks internal consistency only.",
+  "disclaimer": "NOT validation. Labels are derived from _determine_observed_risk() heuristic, not independent consultant assessments. LOO at N=5: approximate 95% CI width ~88%. This checks internal consistency only.",
   "n_eligible": 5,
   "n_complete": 5,
-  "accuracy": 1.0,
-  "kappa": 1.0,
-  "loo_accuracy": 1.0,
-  "loo_kappa": 1.0,
+  "accuracy": 0.2,
+  "kappa": -0.1765,
+  "loo_accuracy": 0.2,
+  "loo_kappa": -0.1765,
   "per_class": {
     "low": {
-      "precision": 0,
+      "precision": 0.0,
       "recall": 0,
       "f1": 0,
       "support": 0
     },
     "moderate": {
       "precision": 0,
-      "recall": 0,
+      "recall": 0.0,
       "f1": 0,
-      "support": 0
+      "support": 3
     },
     "high": {
-      "precision": 1.0,
-      "recall": 1.0,
-      "f1": 1.0,
-      "support": 5
+      "precision": 0.25,
+      "recall": 0.5,
+      "f1": 0.3333,
+      "support": 2
     }
   },
   "station_results": [
     {
       "station_id": 201,
       "station_name": "SED19-3",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "high",
       "posterior": {
-        "low": 0.3092,
-        "moderate": 0.3442,
-        "high": 0.3465
+        "low": 0.3458,
+        "moderate": 0.3377,
+        "high": 0.3165
       }
     },
     {
       "station_id": 202,
       "station_name": "SED19-4",
       "predicted": "high",
-      "observed": "high",
+      "observed": "moderate",
       "posterior": {
-        "low": 0.2949,
-        "moderate": 0.3403,
-        "high": 0.3648
+        "low": 0.3201,
+        "moderate": 0.3337,
+        "high": 0.3462
       }
     },
     {
@@ -56,31 +56,31 @@
       "predicted": "high",
       "observed": "high",
       "posterior": {
-        "low": 0.1121,
-        "moderate": 0.2346,
-        "high": 0.6533
+        "low": 0.1456,
+        "moderate": 0.2563,
+        "high": 0.5981
       }
     },
     {
       "station_id": 204,
       "station_name": "SED19-6",
       "predicted": "high",
-      "observed": "high",
+      "observed": "moderate",
       "posterior": {
-        "low": 0.2132,
-        "moderate": 0.3136,
-        "high": 0.4732
+        "low": 0.2481,
+        "moderate": 0.3158,
+        "high": 0.4361
       }
     },
     {
       "station_id": 205,
       "station_name": "SED19-REF1",
       "predicted": "high",
-      "observed": "high",
+      "observed": "moderate",
       "posterior": {
-        "low": 0.2993,
-        "moderate": 0.3382,
-        "high": 0.3625
+        "low": 0.3074,
+        "moderate": 0.3306,
+        "high": 0.362
       }
     }
   ]

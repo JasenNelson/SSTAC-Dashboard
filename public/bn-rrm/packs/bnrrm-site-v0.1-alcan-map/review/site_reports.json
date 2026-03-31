@@ -1,0 +1,96 @@
+{
+  "_meta": {
+    "export_date": "2026-03-31T16:00:09.577921+00:00",
+    "scope": "site_specific",
+    "site_registry_id": "0331"
+  },
+  "site": "Rio Tinto BC Works (ALCAN Smelter), Kitimat",
+  "n_stations": 5,
+  "stations": [
+    {
+      "station_id": 272,
+      "station_name": "SS-2",
+      "observed_risk": "moderate",
+      "site_model_posterior": {
+        "low": 0.3618,
+        "moderate": 0.3485,
+        "high": 0.2898
+      },
+      "general_model_posterior": {
+        "low": 0.3771,
+        "moderate": 0.3434,
+        "high": 0.2795
+      },
+      "site_model_map": "low",
+      "general_model_map": "low"
+    },
+    {
+      "station_id": 273,
+      "station_name": "SS-23",
+      "observed_risk": "moderate",
+      "site_model_posterior": {
+        "low": 0.3618,
+        "moderate": 0.3485,
+        "high": 0.2898
+      },
+      "general_model_posterior": {
+        "low": 0.3771,
+        "moderate": 0.3434,
+        "high": 0.2795
+      },
+      "site_model_map": "low",
+      "general_model_map": "low"
+    },
+    {
+      "station_id": 274,
+      "station_name": "SS-24",
+      "observed_risk": "high",
+      "site_model_posterior": {
+        "low": 0.3618,
+        "moderate": 0.3485,
+        "high": 0.2898
+      },
+      "general_model_posterior": {
+        "low": 0.3771,
+        "moderate": 0.3434,
+        "high": 0.2795
+      },
+      "site_model_map": "low",
+      "general_model_map": "low"
+    },
+    {
+      "station_id": 275,
+      "station_name": "SS-32",
+      "observed_risk": "moderate",
+      "site_model_posterior": {
+        "low": 0.3548,
+        "moderate": 0.3472,
+        "high": 0.2981
+      },
+      "general_model_posterior": {
+        "low": 0.3707,
+        "moderate": 0.3432,
+        "high": 0.2862
+      },
+      "site_model_map": "low",
+      "general_model_map": "low"
+    },
+    {
+      "station_id": 276,
+      "station_name": "SS-46",
+      "observed_risk": "moderate",
+      "site_model_posterior": {
+        "low": 0.3618,
+        "moderate": 0.3485,
+        "high": 0.2898
+      },
+      "general_model_posterior": {
+        "low": 0.3771,
+        "moderate": 0.3434,
+        "high": 0.2795
+      },
+      "site_model_map": "low",
+      "general_model_map": "low"
+    }
+  ]
+}

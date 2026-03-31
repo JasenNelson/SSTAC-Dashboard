@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "export_date": "2026-03-30T20:49:33.126293+00:00",
-    "db_hash": "d88facb26e3f6a0f1840d5fd4c964af71bb57959d8fb8e302c57c5b87c003a13",
+    "export_date": "2026-03-31T16:00:05.827561+00:00",
+    "db_hash": "fb9486e22761a67c071e6f00e739859c776d0c6823c4af2595246567e4c23c21",
     "scope": "site_specific",
     "site_registry_id": "0311",
     "model_version": "4.1-site"
@@ -87,28 +87,28 @@
   },
   "diagnostic": {
     "type": "diagnostic_replay",
-    "disclaimer": "NOT validation. Labels are derived from _determine_observed_risk() heuristic, not independent consultant assessments. LOO at N=5 has no statistical power (~35% CI width). This checks internal consistency only.",
+    "disclaimer": "NOT validation. Labels are derived from _determine_observed_risk() heuristic, not independent consultant assessments. LOO at N=5: approximate 95% CI width ~88%. This checks internal consistency only.",
     "n_eligible": 5,
-    "accuracy": 1.0,
-    "kappa": 1.0,
+    "accuracy": 0.2,
+    "kappa": -0.1765,
     "per_class": {
       "low": {
-        "precision": 0,
+        "precision": 0.0,
         "recall": 0,
         "f1": 0,
         "support": 0
       },
       "moderate": {
         "precision": 0,
-        "recall": 0,
+        "recall": 0.0,
         "f1": 0,
-        "support": 0
+        "support": 3
       },
       "high": {
-        "precision": 1.0,
-        "recall": 1.0,
-        "f1": 1.0,
-        "support": 5
+        "precision": 0.25,
+        "recall": 0.5,
+        "f1": 0.3333,
+        "support": 2
       }
     }
   },

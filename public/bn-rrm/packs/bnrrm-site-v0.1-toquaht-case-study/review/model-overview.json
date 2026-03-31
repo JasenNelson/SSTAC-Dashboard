@@ -1,0 +1,240 @@
+{
+  "_meta": {
+    "export_date": "2026-03-31T16:00:02.676941+00:00",
+    "db_hash": "fb9486e22761a67c071e6f00e739859c776d0c6823c4af2595246567e4c23c21",
+    "scope": "site_specific",
+    "site_registry_id": "15184",
+    "model_version": "4.1-site"
+  },
+  "model_identity": {
+    "name": "BN-RRM Site: Toquaht Bay Marina and Campground",
+    "framework": "Landis (2021) Causal DAG",
+    "model_id": "bnrrm-landis-causal",
+    "version": "4.1-site",
+    "nodes": 20,
+    "edges": 24,
+    "states_per_node": 3,
+    "scope": "site_specific",
+    "parent_model": "bnrrm-general-v1.0-dev-map"
+  },
+  "training_data": {
+    "site": "Toquaht Bay Marina and Campground",
+    "registry_id": "15184",
+    "waterbody": "marine",
+    "n_stations": 20,
+    "record_counts": {
+      "sediment_chemistry": 0,
+      "env_modifiers": 0,
+      "toxicity_tests": 0,
+      "benthic_community": 0,
+      "extraction_provenance": 0
+    },
+    "stations": [
+      {
+        "station_id": 252,
+        "name": "SED13-06",
+        "type": "near_field"
+      },
+      {
+        "station_id": 253,
+        "name": "SED13-08",
+        "type": "near_field"
+      },
+      {
+        "station_id": 254,
+        "name": "SED13-10",
+        "type": "near_field"
+      },
+      {
+        "station_id": 255,
+        "name": "SED13-12",
+        "type": "near_field"
+      },
+      {
+        "station_id": 256,
+        "name": "SED13-13",
+        "type": "near_field"
+      },
+      {
+        "station_id": 257,
+        "name": "SED13-15b",
+        "type": "near_field"
+      },
+      {
+        "station_id": 258,
+        "name": "SED13-16",
+        "type": "near_field"
+      },
+      {
+        "station_id": 259,
+        "name": "SED13-18",
+        "type": "near_field"
+      },
+      {
+        "station_id": 260,
+        "name": "SED13-20",
+        "type": "near_field"
+      },
+      {
+        "station_id": 261,
+        "name": "SED13-24",
+        "type": "near_field"
+      },
+      {
+        "station_id": 262,
+        "name": "SED13-26b",
+        "type": "near_field"
+      },
+      {
+        "station_id": 263,
+        "name": "SED13-28",
+        "type": "near_field"
+      },
+      {
+        "station_id": 264,
+        "name": "SED13-29",
+        "type": "near_field"
+      },
+      {
+        "station_id": 265,
+        "name": "SED13-31",
+        "type": "near_field"
+      },
+      {
+        "station_id": 266,
+        "name": "SED13-36",
+        "type": "near_field"
+      },
+      {
+        "station_id": 267,
+        "name": "SED13-37",
+        "type": "near_field"
+      },
+      {
+        "station_id": 268,
+        "name": "SED13-38",
+        "type": "near_field"
+      },
+      {
+        "station_id": 269,
+        "name": "SED13-39",
+        "type": "near_field"
+      },
+      {
+        "station_id": 270,
+        "name": "SED13-40",
+        "type": "near_field"
+      },
+      {
+        "station_id": 271,
+        "name": "SED13-41",
+        "type": "near_field"
+      }
+    ],
+    "dataset_counts": {
+      "sites": 1,
+      "stations": 20,
+      "co_located": 20
+    },
+    "site_breakdown": [
+      {
+        "name": "Toquaht Bay Marina and Campground",
+        "registry_id": "15184",
+        "waterbody": "marine",
+        "total_stations": 20
+      }
+    ]
+  },
+  "diagnostic": {
+    "type": "diagnostic_replay",
+    "disclaimer": "NOT validation. Labels are derived from _determine_observed_risk() heuristic, not independent consultant assessments. LOO at N=20: approximate 95% CI width ~44%. This checks internal consistency only.",
+    "n_eligible": 20,
+    "accuracy": 0.95,
+    "kappa": 0.0,
+    "per_class": {
+      "low": {
+        "precision": 1.0,
+        "recall": 0.95,
+        "f1": 0.9744,
+        "support": 20
+      },
+      "moderate": {
+        "precision": 0,
+        "recall": 0,
+        "f1": 0,
+        "support": 0
+      },
+      "high": {
+        "precision": 0.0,
+        "recall": 0,
+        "f1": 0,
+        "support": 0
+      }
+    }
+  },
+  "limitations": [
+    "N=20: CPTs are >80% expert-prior-dominated. This is a demonstration model.",
+    "Diagnostic replay is NOT validation (model-derived labels create circularity).",
+    "No spatial generalization within the site.",
+    "Marginals are site-specific; CPTs are not meaningfully data-learned at this sample size.",
+    "Any reported accuracy or kappa has confidence intervals wider than the estimate itself (N=20)."
+  ],
+  "anti_overclaim": "This site-specific BN-RRM applies the Landis (2021) 20-node causal DAG to Toquaht Bay Marina and Campground sediment data. With N=20 stations, conditional probability tables are dominated by expert priors (>80% expert contribution). Site-specific marginal distributions reflect the site's contamination profile. This model is an illustrative application suitable for demonstration / case study, not a validated predictive tool.",
+  "marginal_highlights": {
+    "sed_cu": {
+      "below_isqg": -0.1061,
+      "isqg_pel": 0.35,
+      "above_pel": -0.2439
+    },
+    "sed_zn": {
+      "below_isqg": -0.2768,
+      "isqg_pel": 0.3172,
+      "above_pel": -0.0404
+    },
+    "sed_pb": {
+      "below_isqg": 0.2118,
+      "isqg_pel": -0.1527,
+      "above_pel": -0.0591
+    },
+    "sed_cd": {
+      "below_isqg": -0.2398,
+      "isqg_pel": 0.2559,
+      "above_pel": -0.016
+    },
+    "sed_hg": {
+      "below_isqg": 0.1368,
+      "isqg_pel": -0.0789,
+      "above_pel": -0.0579
+    },
+    "sed_as": {
+      "below_isqg": -0.2295,
+      "isqg_pel": -0.5612,
+      "above_pel": 0.7907
+    },
+    "sed_cr": {
+      "below_isqg": 0.0656,
+      "isqg_pel": -0.0656,
+      "above_pel": 0.0
+    },
+    "sed_pahs": {
+      "below_isqg": -0.2335,
+      "isqg_pel": 0.0531,
+      "above_pel": 0.1805
+    },
+    "sed_pcbs": {
+      "below_isqg": 0.3333,
+      "isqg_pel": -0.6667,
+      "above_pel": 0.3333
+    },
+    "toc": {
+      "low": -0.0459,
+      "moderate": 0.3638,
+      "high": -0.3179
+    },
+    "grain_size": {
+      "low": -0.0672,
+      "moderate": -0.0286,
+      "high": 0.0958
+    }
+  }
+}

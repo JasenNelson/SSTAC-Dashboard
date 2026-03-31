@@ -1,0 +1,154 @@
+{
+  "_meta": {
+    "export_date": "2026-03-31T16:00:09.577921+00:00",
+    "scope": "site_specific",
+    "site_registry_id": "0331"
+  },
+  "comparison_type": "general_vs_site_risk",
+  "site": "Rio Tinto BC Works (ALCAN Smelter), Kitimat",
+  "station_comparisons": [
+    {
+      "station_id": 272,
+      "station_name": "SS-2",
+      "observed_risk": "moderate",
+      "site_model_posterior": {
+        "low": 0.3618,
+        "moderate": 0.3485,
+        "high": 0.2898
+      },
+      "general_model_posterior": {
+        "low": 0.3771,
+        "moderate": 0.3434,
+        "high": 0.2795
+      },
+      "site_model_map": "low",
+      "general_model_map": "low"
+    },
+    {
+      "station_id": 273,
+      "station_name": "SS-23",
+      "observed_risk": "moderate",
+      "site_model_posterior": {
+        "low": 0.3618,
+        "moderate": 0.3485,
+        "high": 0.2898
+      },
+      "general_model_posterior": {
+        "low": 0.3771,
+        "moderate": 0.3434,
+        "high": 0.2795
+      },
+      "site_model_map": "low",
+      "general_model_map": "low"
+    },
+    {
+      "station_id": 274,
+      "station_name": "SS-24",
+      "observed_risk": "high",
+      "site_model_posterior": {
+        "low": 0.3618,
+        "moderate": 0.3485,
+        "high": 0.2898
+      },
+      "general_model_posterior": {
+        "low": 0.3771,
+        "moderate": 0.3434,
+        "high": 0.2795
+      },
+      "site_model_map": "low",
+      "general_model_map": "low"
+    },
+    {
+      "station_id": 275,
+      "station_name": "SS-32",
+      "observed_risk": "moderate",
+      "site_model_posterior": {
+        "low": 0.3548,
+        "moderate": 0.3472,
+        "high": 0.2981
+      },
+      "general_model_posterior": {
+        "low": 0.3707,
+        "moderate": 0.3432,
+        "high": 0.2862
+      },
+      "site_model_map": "low",
+      "general_model_map": "low"
+    },
+    {
+      "station_id": 276,
+      "station_name": "SS-46",
+      "observed_risk": "moderate",
+      "site_model_posterior": {
+        "low": 0.3618,
+        "moderate": 0.3485,
+        "high": 0.2898
+      },
+      "general_model_posterior": {
+        "low": 0.3771,
+        "moderate": 0.3434,
+        "high": 0.2795
+      },
+      "site_model_map": "low",
+      "general_model_map": "low"
+    }
+  ],
+  "marginal_deltas": {
+    "sed_cu": {
+      "below_isqg": -0.1561,
+      "isqg_pel": 0.4,
+      "above_pel": -0.2439
+    },
+    "sed_zn": {
+      "below_isqg": 0.3232,
+      "isqg_pel": -0.2828,
+      "above_pel": -0.0404
+    },
+    "sed_pb": {
+      "below_isqg": 0.2118,
+      "isqg_pel": -0.1527,
+      "above_pel": -0.0591
+    },
+    "sed_cd": {
+      "below_isqg": 0.3102,
+      "isqg_pel": -0.2941,
+      "above_pel": -0.016
+    },
+    "sed_hg": {
+      "below_isqg": 0.1368,
+      "isqg_pel": -0.0789,
+      "above_pel": -0.0579
+    },
+    "sed_as": {
+      "below_isqg": 0.7705,
+      "isqg_pel": -0.6612,
+      "above_pel": -0.1093
+    },
+    "sed_cr": {
+      "below_isqg": 0.0656,
+      "isqg_pel": -0.0656,
+      "above_pel": 0.0
+    },
+    "sed_pahs": {
+      "below_isqg": -0.5669,
+      "isqg_pel": -0.2803,
+      "above_pel": 0.8471
+    },
+    "sed_pcbs": {
+      "below_isqg": 0.0,
+      "isqg_pel": 0.0,
+      "above_pel": 0.0
+    },
+    "toc": {
+      "low": -0.0459,
+      "moderate": -0.4862,
+      "high": 0.5321
+    },
+    "grain_size": {
+      "low": -0.0672,
+      "moderate": -0.4286,
+      "high": 0.4958
+    }
+  },
+  "interpretation": "Both models share the same expert DAG architecture. Differences arise from: (1) site-specific marginals reflecting the contamination profile, and (2) minor CPT differences from site-only fitting. At N=5, CPT differences are negligible (>80% expert-dominated)."
+}

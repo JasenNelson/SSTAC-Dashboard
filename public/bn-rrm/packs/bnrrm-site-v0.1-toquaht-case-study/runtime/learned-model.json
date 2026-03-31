@@ -3,22 +3,22 @@
   "version": "4.1-site",
   "scope": "site_specific",
   "siteScope": {
-    "registryId": "0311",
-    "name": "CP Nelson Yard (Hall Mines Smelter)",
-    "waterbody": "freshwater"
+    "registryId": "15184",
+    "name": "Toquaht Bay Marina and Campground",
+    "waterbody": "marine"
   },
   "siteInventory": [
     {
-      "registry_id": "0311",
-      "name": "CP Nelson Yard (Hall Mines Smelter)",
-      "waterbody": "freshwater"
+      "registry_id": "15184",
+      "name": "Toquaht Bay Marina and Campground",
+      "waterbody": "marine"
     }
   ],
   "nSites": 1,
   "learnedFrom": "bnrrm_training.db",
-  "nStations": 8,
+  "nStations": 20,
   "createdAt": "2026-03-31",
-  "description": "Site-specific BN-RRM for CP Nelson Yard (Hall Mines Smelter) (registry_id=0311, freshwater). 20-node Landis causal DAG with hierarchical borrowing from general model. N=8 site stations. Tier 1 borrowed wholesale; Tiers 2-4 use general CPTs as priors.",
+  "description": "Site-specific BN-RRM for Toquaht Bay Marina and Campground (registry_id=15184, marine). 20-node Landis causal DAG with hierarchical borrowing from general model. N=20 site stations. Tier 1 borrowed wholesale; Tiers 2-4 use general CPTs as priors.",
   "softEvidence": {
     "enabled": true,
     "concentration": 0.6,
@@ -28,10 +28,10 @@
     ]
   },
   "limitations": [
-    "N=8: Hierarchical borrowing with ~27% general-model prior influence (Tier 2)",
+    "N=20: Hierarchical borrowing with ~13% general-model prior influence (Tier 2)",
     "Diagnostic replay is NOT validation (model-derived labels, circularity)",
     "No spatial generalization within the site",
-    "Tier 1 CPTs borrowed wholesale from general model; Tiers 2-4 are ~73% site-data-driven"
+    "Tier 1 CPTs borrowed wholesale from general model; Tiers 2-4 are ~87% site-data-driven"
   ],
   "nodes": [
     {
@@ -44,9 +44,9 @@
         "above_pel"
       ],
       "priors": {
-        "below_isqg": 0.25,
-        "isqg_pel": 0.375,
-        "above_pel": 0.375
+        "below_isqg": 0.05,
+        "isqg_pel": 0.95,
+        "above_pel": 0.0
       }
     },
     {
@@ -59,9 +59,9 @@
         "above_pel"
       ],
       "priors": {
-        "below_isqg": 0.0,
-        "isqg_pel": 0.25,
-        "above_pel": 0.75
+        "below_isqg": 0.4,
+        "isqg_pel": 0.6,
+        "above_pel": 0.0
       }
     },
     {
@@ -74,9 +74,9 @@
         "above_pel"
       ],
       "priors": {
-        "below_isqg": 0.125,
-        "isqg_pel": 0.125,
-        "above_pel": 0.75
+        "below_isqg": 1.0,
+        "isqg_pel": 0.0,
+        "above_pel": 0.0
       }
     },
     {
@@ -89,9 +89,9 @@
         "above_pel"
       ],
       "priors": {
-        "below_isqg": 0.125,
-        "isqg_pel": 0.5,
-        "above_pel": 0.375
+        "below_isqg": 0.45,
+        "isqg_pel": 0.55,
+        "above_pel": 0.0
       }
     },
     {
@@ -104,9 +104,9 @@
         "above_pel"
       ],
       "priors": {
-        "below_isqg": 0.625,
-        "isqg_pel": 0.125,
-        "above_pel": 0.25
+        "below_isqg": 1.0,
+        "isqg_pel": 0.0,
+        "above_pel": 0.0
       }
     },
     {
@@ -119,9 +119,9 @@
         "above_pel"
       ],
       "priors": {
-        "below_isqg": 0.5,
-        "isqg_pel": 0.25,
-        "above_pel": 0.25
+        "below_isqg": 0.0,
+        "isqg_pel": 0.1,
+        "above_pel": 0.9
       }
     },
     {
@@ -134,8 +134,8 @@
         "above_pel"
       ],
       "priors": {
-        "below_isqg": 0.875,
-        "isqg_pel": 0.125,
+        "below_isqg": 1.0,
+        "isqg_pel": 0.0,
         "above_pel": 0.0
       }
     },
@@ -179,9 +179,9 @@
         "high"
       ],
       "priors": {
-        "low": 0.125,
-        "moderate": 0.25,
-        "high": 0.625
+        "low": 0.0,
+        "moderate": 0.85,
+        "high": 0.15
       }
     },
     {
@@ -194,9 +194,9 @@
         "high"
       ],
       "priors": {
-        "low": 0.25,
-        "moderate": 0.625,
-        "high": 0.125
+        "low": 0.0,
+        "moderate": 0.4,
+        "high": 0.6
       }
     },
     {
@@ -11497,14 +11497,14 @@
           "high": 0.1388888888888889
         },
         "moderate|moderate|bound_measured": {
-          "low": 0.9192699192699193,
-          "moderate": 0.06669006669006675,
-          "high": 0.014040014040014039
+          "low": 0.9515619515619516,
+          "moderate": 0.04001404001404005,
+          "high": 0.008424008424008424
         },
         "moderate|moderate|excess_measured": {
-          "low": 0.35208333333333336,
-          "moderate": 0.5458333333333333,
-          "high": 0.10208333333333332
+          "low": 0.26406250000000003,
+          "moderate": 0.6593749999999999,
+          "high": 0.07656249999999999
         },
         "moderate|moderate|bound_proxy": {
           "low": 0.9050668908726724,
@@ -11557,14 +11557,14 @@
           "high": 0.9313725490196078
         },
         "high|moderate|bound_measured": {
-          "low": 0.05624999999999999,
-          "moderate": 0.8597222222222222,
-          "high": 0.08402777777777777
+          "low": 0.010546874999999999,
+          "moderate": 0.9736979166666667,
+          "high": 0.015755208333333336
         },
         "high|moderate|excess_measured": {
-          "low": 0.018750000000000006,
-          "moderate": 0.21250000000000005,
-          "high": 0.7687499999999999
+          "low": 0.014062500000000006,
+          "moderate": 0.15937500000000004,
+          "high": 0.8265625
         },
         "high|moderate|bound_proxy": {
           "low": 0.058580357142857156,
@@ -11577,9 +11577,9 @@
           "high": 0.7224999999999999
         },
         "high|high|bound_measured": {
-          "low": 0.225,
-          "moderate": 0.675,
-          "high": 0.09999999999999995
+          "low": 0.11250000000000003,
+          "moderate": 0.8375,
+          "high": 0.04999999999999999
         },
         "high|high|excess_measured": {
           "low": 0.09000000000000002,
@@ -11763,49 +11763,49 @@
       "method": "hierarchical_bdeu_marginalized",
       "table": {
         "low|low": {
-          "low": 0.8471942404431279,
-          "moderate": 0.03712451438850548,
-          "high": 0.11568124516836663
+          "low": 0.9000253871271722,
+          "moderate": 0.03858037769785864,
+          "high": 0.06139423517496924
         },
         "low|moderate": {
-          "low": 0.5825705952462102,
-          "moderate": 0.2693881636669205,
-          "high": 0.1480412410868694
+          "low": 0.6250243440793949,
+          "moderate": 0.27995240537934873,
+          "high": 0.09502325054125642
         },
         "low|high": {
-          "low": 0.1707547169811321,
-          "moderate": 0.3566037735849057,
-          "high": 0.47264150943396227
+          "low": 0.1970588235294118,
+          "moderate": 0.3705882352941177,
+          "high": 0.43235294117647055
         },
         "moderate|low": {
-          "low": 0.7702843656588275,
-          "moderate": 0.12385136159131689,
-          "high": 0.10586427274985569
+          "low": 0.9044278268741444,
+          "moderate": 0.06837627254520622,
+          "high": 0.027195900580649496
         },
         "moderate|moderate": {
-          "low": 0.49221022002059495,
-          "moderate": 0.27998533263609454,
-          "high": 0.22780444734331046
+          "low": 0.7509077256363701,
+          "moderate": 0.15457523572617723,
+          "high": 0.09451703863745267
         },
         "moderate|high": {
-          "low": 0.1134433962264151,
-          "moderate": 0.2165094339622642,
-          "high": 0.6700471698113207
+          "low": 0.541796875,
+          "moderate": 0.11953125000000006,
+          "high": 0.33867187500000007
         },
         "high|low": {
-          "low": 0.2861722958549214,
-          "moderate": 0.2730794269310404,
-          "high": 0.4407482772140382
+          "low": 0.27431524333980906,
+          "moderate": 0.3015252005696905,
+          "high": 0.4241595560905005
         },
         "high|moderate": {
-          "low": 0.1428575487465551,
-          "moderate": 0.1958885302847569,
-          "high": 0.6612539209686881
+          "low": 0.11607187674098787,
+          "moderate": 0.21629358552275238,
+          "high": 0.6676345377362597
         },
         "high|high": {
-          "low": 0.1109877913429523,
-          "moderate": 0.04162042175360715,
-          "high": 0.8473917869034406
+          "low": 0.08088235294117647,
+          "moderate": 0.04595588235294122,
+          "high": 0.8731617647058822
         }
       },
       "alpha": 5.0
@@ -11823,49 +11823,49 @@
       "method": "hierarchical_bdeu_marginalized",
       "table": {
         "low|low": {
-          "low": 0.502422537567493,
-          "moderate": 0.10183423375930287,
-          "high": 0.3957432286732041
+          "low": 0.6102181740857774,
+          "moderate": 0.0998374840777479,
+          "high": 0.2899443418364746
         },
         "low|moderate": {
-          "low": 0.27961845128784235,
-          "moderate": 0.2863574310770769,
-          "high": 0.4340241176350807
+          "low": 0.3917827953802376,
+          "moderate": 0.2807425794873303,
+          "high": 0.3274746251324321
         },
         "low|high": {
-          "low": 0.08100000000000002,
-          "moderate": 0.378,
-          "high": 0.541
+          "low": 0.1970588235294118,
+          "moderate": 0.3705882352941177,
+          "high": 0.43235294117647055
         },
         "moderate|low": {
-          "low": 0.33720863785195176,
-          "moderate": 0.35971110856657895,
-          "high": 0.3030802535814693
+          "low": 0.5506294988812249,
+          "moderate": 0.3435995357117599,
+          "high": 0.10577096540701525
         },
         "moderate|moderate": {
-          "low": 0.2780850868924851,
-          "moderate": 0.3876752689190802,
-          "high": 0.3342396441884346
+          "low": 0.5198359827565027,
+          "moderate": 0.358164202562021,
+          "high": 0.12199981468147636
         },
         "moderate|high": {
-          "low": 0.020250000000000004,
-          "moderate": 0.22950000000000007,
-          "high": 0.75025
+          "low": 0.385546875,
+          "moderate": 0.27578125000000003,
+          "high": 0.338671875
         },
         "high|low": {
-          "low": 0.09858014949883061,
-          "moderate": 0.2906013846682105,
-          "high": 0.6108184658329588
+          "low": 0.16518765572794855,
+          "moderate": 0.3027097756960526,
+          "high": 0.5321025685759988
         },
         "high|moderate": {
-          "low": 0.030971262556342073,
-          "moderate": 0.2127691011432951,
-          "high": 0.7562596363003629
+          "low": 0.094761731829523,
+          "moderate": 0.22163448035759903,
+          "high": 0.683603787812878
         },
         "high|high": {
-          "low": 0.01764705882352942,
-          "moderate": 0.044117647058823574,
-          "high": 0.9382352941176471
+          "low": 0.08088235294117647,
+          "moderate": 0.04595588235294122,
+          "high": 0.8731617647058822
         }
       },
       "alpha": 5.0
@@ -11883,14 +11883,14 @@
       "method": "hierarchical_bdeu",
       "table": {
         "low|low": {
-          "low": 0.7599729546991211,
-          "moderate": 0.19607843137254902,
-          "high": 0.04394861392832995
+          "low": 0.6399932386747802,
+          "moderate": 0.29901960784313725,
+          "high": 0.06098715348208249
         },
         "low|moderate": {
-          "low": 0.4715789473684212,
-          "moderate": 0.4989473684210525,
-          "high": 0.029473684210526326
+          "low": 0.2357894736842106,
+          "moderate": 0.7494736842105263,
+          "high": 0.014736842105263163
         },
         "low|high": {
           "low": 0.36,
@@ -12084,38 +12084,38 @@
   },
   "marginals": {
     "sed_cu": {
-      "below_isqg": 0.25,
-      "isqg_pel": 0.375,
-      "above_pel": 0.375
+      "below_isqg": 0.05,
+      "isqg_pel": 0.95,
+      "above_pel": 0.0
     },
     "sed_zn": {
-      "below_isqg": 0.0,
-      "isqg_pel": 0.25,
-      "above_pel": 0.75
+      "below_isqg": 0.4,
+      "isqg_pel": 0.6,
+      "above_pel": 0.0
     },
     "sed_pb": {
-      "below_isqg": 0.125,
-      "isqg_pel": 0.125,
-      "above_pel": 0.75
+      "below_isqg": 1.0,
+      "isqg_pel": 0.0,
+      "above_pel": 0.0
     },
     "sed_cd": {
-      "below_isqg": 0.125,
-      "isqg_pel": 0.5,
-      "above_pel": 0.375
+      "below_isqg": 0.45,
+      "isqg_pel": 0.55,
+      "above_pel": 0.0
     },
     "sed_hg": {
-      "below_isqg": 0.625,
-      "isqg_pel": 0.125,
-      "above_pel": 0.25
+      "below_isqg": 1.0,
+      "isqg_pel": 0.0,
+      "above_pel": 0.0
     },
     "sed_as": {
-      "below_isqg": 0.5,
-      "isqg_pel": 0.25,
-      "above_pel": 0.25
+      "below_isqg": 0.0,
+      "isqg_pel": 0.1,
+      "above_pel": 0.9
     },
     "sed_cr": {
-      "below_isqg": 0.875,
-      "isqg_pel": 0.125,
+      "below_isqg": 1.0,
+      "isqg_pel": 0.0,
       "above_pel": 0.0
     },
     "sed_pahs": {
@@ -12129,241 +12129,610 @@
       "above_pel": 0.333333
     },
     "toc": {
-      "low": 0.125,
-      "moderate": 0.25,
-      "high": 0.625
+      "low": 0.0,
+      "moderate": 0.85,
+      "high": 0.15
     },
     "grain_size": {
-      "low": 0.25,
-      "moderate": 0.625,
-      "high": 0.125
+      "low": 0.0,
+      "moderate": 0.4,
+      "high": 0.6
     }
   },
   "diagnostic": {
     "type": "diagnostic_replay",
-    "disclaimer": "NOT validation. Labels are derived from _determine_observed_risk() heuristic, not independent consultant assessments. LOO at N=5: approximate 95% CI width ~88%. This checks internal consistency only.",
-    "n_eligible": 5,
-    "n_complete": 5,
-    "accuracy": 0.2,
-    "kappa": -0.1765,
-    "loo_accuracy": 0.2,
-    "loo_kappa": -0.1765,
+    "disclaimer": "NOT validation. Labels are derived from _determine_observed_risk() heuristic, not independent consultant assessments. LOO at N=20: approximate 95% CI width ~44%. This checks internal consistency only.",
+    "n_eligible": 20,
+    "n_complete": 20,
+    "accuracy": 0.95,
+    "kappa": 0.0,
+    "loo_accuracy": 0.95,
+    "loo_kappa": 0.0,
     "per_class": {
       "low": {
-        "precision": 0.0,
+        "precision": 1.0,
+        "recall": 0.95,
+        "f1": 0.9744,
+        "support": 20
+      },
+      "moderate": {
+        "precision": 0,
         "recall": 0,
         "f1": 0,
         "support": 0
       },
-      "moderate": {
-        "precision": 0,
-        "recall": 0.0,
-        "f1": 0,
-        "support": 3
-      },
       "high": {
-        "precision": 0.25,
-        "recall": 0.5,
-        "f1": 0.3333,
-        "support": 2
+        "precision": 0.0,
+        "recall": 0,
+        "f1": 0,
+        "support": 0
       }
     },
     "station_results": [
       {
-        "station_id": 201,
-        "station_name": "SED19-3",
+        "station_id": 252,
+        "station_name": "SED13-06",
         "predicted": "low",
-        "observed": "high",
+        "observed": "low",
         "posterior": {
-          "low": 0.3458,
-          "moderate": 0.3377,
-          "high": 0.3165
+          "low": 0.5069,
+          "moderate": 0.3163,
+          "high": 0.1768
         }
       },
       {
-        "station_id": 202,
-        "station_name": "SED19-4",
-        "predicted": "high",
-        "observed": "moderate",
+        "station_id": 253,
+        "station_name": "SED13-08",
+        "predicted": "low",
+        "observed": "low",
         "posterior": {
-          "low": 0.3201,
-          "moderate": 0.3337,
-          "high": 0.3462
+          "low": 0.5297,
+          "moderate": 0.3103,
+          "high": 0.16
         }
       },
       {
-        "station_id": 203,
-        "station_name": "SED19-5",
-        "predicted": "high",
-        "observed": "high",
+        "station_id": 254,
+        "station_name": "SED13-10",
+        "predicted": "low",
+        "observed": "low",
         "posterior": {
-          "low": 0.1456,
-          "moderate": 0.2563,
-          "high": 0.5981
+          "low": 0.5497,
+          "moderate": 0.3039,
+          "high": 0.1464
         }
       },
       {
-        "station_id": 204,
-        "station_name": "SED19-6",
-        "predicted": "high",
-        "observed": "moderate",
+        "station_id": 255,
+        "station_name": "SED13-12",
+        "predicted": "low",
+        "observed": "low",
         "posterior": {
-          "low": 0.2481,
-          "moderate": 0.3158,
-          "high": 0.4361
+          "low": 0.5147,
+          "moderate": 0.3133,
+          "high": 0.172
         }
       },
       {
-        "station_id": 205,
-        "station_name": "SED19-REF1",
-        "predicted": "high",
-        "observed": "moderate",
+        "station_id": 256,
+        "station_name": "SED13-13",
+        "predicted": "low",
+        "observed": "low",
         "posterior": {
-          "low": 0.3074,
-          "moderate": 0.3306,
-          "high": 0.362
+          "low": 0.531,
+          "moderate": 0.31,
+          "high": 0.159
+        }
+      },
+      {
+        "station_id": 257,
+        "station_name": "SED13-15b",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.5497,
+          "moderate": 0.3039,
+          "high": 0.1464
+        }
+      },
+      {
+        "station_id": 258,
+        "station_name": "SED13-16",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.5348,
+          "moderate": 0.3078,
+          "high": 0.1574
+        }
+      },
+      {
+        "station_id": 259,
+        "station_name": "SED13-18",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.5383,
+          "moderate": 0.3071,
+          "high": 0.1546
+        }
+      },
+      {
+        "station_id": 260,
+        "station_name": "SED13-20",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.5112,
+          "moderate": 0.3152,
+          "high": 0.1736
+        }
+      },
+      {
+        "station_id": 261,
+        "station_name": "SED13-24",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.5497,
+          "moderate": 0.3039,
+          "high": 0.1464
+        }
+      },
+      {
+        "station_id": 262,
+        "station_name": "SED13-26b",
+        "predicted": "high",
+        "observed": "low",
+        "posterior": {
+          "low": 0.275,
+          "moderate": 0.3214,
+          "high": 0.4037
+        }
+      },
+      {
+        "station_id": 263,
+        "station_name": "SED13-28",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.4527,
+          "moderate": 0.3265,
+          "high": 0.2208
+        }
+      },
+      {
+        "station_id": 264,
+        "station_name": "SED13-29",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.5383,
+          "moderate": 0.3062,
+          "high": 0.1555
+        }
+      },
+      {
+        "station_id": 265,
+        "station_name": "SED13-31",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.4462,
+          "moderate": 0.3293,
+          "high": 0.2246
+        }
+      },
+      {
+        "station_id": 266,
+        "station_name": "SED13-36",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.556,
+          "moderate": 0.3002,
+          "high": 0.1438
+        }
+      },
+      {
+        "station_id": 267,
+        "station_name": "SED13-37",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.5392,
+          "moderate": 0.3054,
+          "high": 0.1554
+        }
+      },
+      {
+        "station_id": 268,
+        "station_name": "SED13-38",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.5192,
+          "moderate": 0.3109,
+          "high": 0.1698
+        }
+      },
+      {
+        "station_id": 269,
+        "station_name": "SED13-39",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.556,
+          "moderate": 0.3002,
+          "high": 0.1438
+        }
+      },
+      {
+        "station_id": 270,
+        "station_name": "SED13-40",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.5461,
+          "moderate": 0.3061,
+          "high": 0.1479
+        }
+      },
+      {
+        "station_id": 271,
+        "station_name": "SED13-41",
+        "predicted": "low",
+        "observed": "low",
+        "posterior": {
+          "low": 0.5461,
+          "moderate": 0.3061,
+          "high": 0.1479
         }
       }
     ]
   },
   "comparison": {
     "type": "general_vs_site_comparison",
-    "n_stations": 8,
+    "n_stations": 20,
     "stations": [
       {
-        "station_id": 199,
-        "station_name": "SED19-1",
-        "observed_risk": "high",
-        "site_model_posterior": {
-          "low": 0.321,
-          "moderate": 0.3341,
-          "high": 0.3449
-        },
-        "general_model_posterior": {
-          "low": 0.3359,
-          "moderate": 0.337,
-          "high": 0.3271
-        },
-        "site_model_map": "high",
-        "general_model_map": "moderate"
-      },
-      {
-        "station_id": 200,
-        "station_name": "SED19-2",
+        "station_id": 252,
+        "station_name": "SED13-06",
         "observed_risk": "low",
         "site_model_posterior": {
-          "low": 0.2448,
-          "moderate": 0.315,
-          "high": 0.4401
+          "low": 0.5163,
+          "moderate": 0.3129,
+          "high": 0.1708
         },
         "general_model_posterior": {
-          "low": 0.2464,
-          "moderate": 0.3169,
-          "high": 0.4367
+          "low": 0.3732,
+          "moderate": 0.3371,
+          "high": 0.2897
         },
-        "site_model_map": "high",
-        "general_model_map": "high"
-      },
-      {
-        "station_id": 201,
-        "station_name": "SED19-3",
-        "observed_risk": "high",
-        "site_model_posterior": {
-          "low": 0.3362,
-          "moderate": 0.3363,
-          "high": 0.3276
-        },
-        "general_model_posterior": {
-          "low": 0.3539,
-          "moderate": 0.3388,
-          "high": 0.3073
-        },
-        "site_model_map": "moderate",
+        "site_model_map": "low",
         "general_model_map": "low"
       },
       {
-        "station_id": 202,
-        "station_name": "SED19-4",
-        "observed_risk": "moderate",
-        "site_model_posterior": {
-          "low": 0.321,
-          "moderate": 0.3341,
-          "high": 0.3449
-        },
-        "general_model_posterior": {
-          "low": 0.3359,
-          "moderate": 0.337,
-          "high": 0.327
-        },
-        "site_model_map": "high",
-        "general_model_map": "moderate"
-      },
-      {
-        "station_id": 203,
-        "station_name": "SED19-5",
-        "observed_risk": "high",
-        "site_model_posterior": {
-          "low": 0.1421,
-          "moderate": 0.2531,
-          "high": 0.6047
-        },
-        "general_model_posterior": {
-          "low": 0.1283,
-          "moderate": 0.2429,
-          "high": 0.6287
-        },
-        "site_model_map": "high",
-        "general_model_map": "high"
-      },
-      {
-        "station_id": 204,
-        "station_name": "SED19-6",
-        "observed_risk": "moderate",
-        "site_model_posterior": {
-          "low": 0.2503,
-          "moderate": 0.3168,
-          "high": 0.4329
-        },
-        "general_model_posterior": {
-          "low": 0.2527,
-          "moderate": 0.3189,
-          "high": 0.4284
-        },
-        "site_model_map": "high",
-        "general_model_map": "high"
-      },
-      {
-        "station_id": 205,
-        "station_name": "SED19-REF1",
-        "observed_risk": "moderate",
-        "site_model_posterior": {
-          "low": 0.3085,
-          "moderate": 0.3311,
-          "high": 0.3604
-        },
-        "general_model_posterior": {
-          "low": 0.3211,
-          "moderate": 0.334,
-          "high": 0.3448
-        },
-        "site_model_map": "high",
-        "general_model_map": "high"
-      },
-      {
-        "station_id": 206,
-        "station_name": "SED19-REF2",
+        "station_id": 253,
+        "station_name": "SED13-08",
         "observed_risk": "low",
         "site_model_posterior": {
-          "low": 0.3293,
-          "moderate": 0.3347,
-          "high": 0.336
+          "low": 0.5367,
+          "moderate": 0.3073,
+          "high": 0.156
         },
         "general_model_posterior": {
-          "low": 0.3457,
-          "moderate": 0.3373,
-          "high": 0.317
+          "low": 0.4024,
+          "moderate": 0.3362,
+          "high": 0.2614
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 254,
+        "station_name": "SED13-10",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5548,
+          "moderate": 0.3022,
+          "high": 0.143
+        },
+        "general_model_posterior": {
+          "low": 0.3841,
+          "moderate": 0.3385,
+          "high": 0.2774
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 255,
+        "station_name": "SED13-12",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5185,
+          "moderate": 0.3123,
+          "high": 0.1692
+        },
+        "general_model_posterior": {
+          "low": 0.3711,
+          "moderate": 0.3372,
+          "high": 0.2917
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 256,
+        "station_name": "SED13-13",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5382,
+          "moderate": 0.3069,
+          "high": 0.1549
+        },
+        "general_model_posterior": {
+          "low": 0.4009,
+          "moderate": 0.3364,
+          "high": 0.2627
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 257,
+        "station_name": "SED13-15b",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5548,
+          "moderate": 0.3022,
+          "high": 0.143
+        },
+        "general_model_posterior": {
+          "low": 0.3841,
+          "moderate": 0.3385,
+          "high": 0.2774
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 258,
+        "station_name": "SED13-16",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5382,
+          "moderate": 0.3069,
+          "high": 0.1549
+        },
+        "general_model_posterior": {
+          "low": 0.4009,
+          "moderate": 0.3364,
+          "high": 0.2627
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 259,
+        "station_name": "SED13-18",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5382,
+          "moderate": 0.3069,
+          "high": 0.1549
+        },
+        "general_model_posterior": {
+          "low": 0.4009,
+          "moderate": 0.3364,
+          "high": 0.2627
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 260,
+        "station_name": "SED13-20",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5185,
+          "moderate": 0.3123,
+          "high": 0.1692
+        },
+        "general_model_posterior": {
+          "low": 0.3711,
+          "moderate": 0.3372,
+          "high": 0.2917
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 261,
+        "station_name": "SED13-24",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5548,
+          "moderate": 0.3022,
+          "high": 0.143
+        },
+        "general_model_posterior": {
+          "low": 0.3841,
+          "moderate": 0.3385,
+          "high": 0.2774
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 262,
+        "station_name": "SED13-26b",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.2813,
+          "moderate": 0.3219,
+          "high": 0.3968
+        },
+        "general_model_posterior": {
+          "low": 0.2361,
+          "moderate": 0.3114,
+          "high": 0.4525
         },
         "site_model_map": "high",
+        "general_model_map": "high"
+      },
+      {
+        "station_id": 263,
+        "station_name": "SED13-28",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.4591,
+          "moderate": 0.325,
+          "high": 0.2159
+        },
+        "general_model_posterior": {
+          "low": 0.3992,
+          "moderate": 0.334,
+          "high": 0.2668
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 264,
+        "station_name": "SED13-29",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5411,
+          "moderate": 0.3064,
+          "high": 0.1525
+        },
+        "general_model_posterior": {
+          "low": 0.4365,
+          "moderate": 0.3327,
+          "high": 0.2308
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 265,
+        "station_name": "SED13-31",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.4669,
+          "moderate": 0.3238,
+          "high": 0.2093
+        },
+        "general_model_posterior": {
+          "low": 0.422,
+          "moderate": 0.3318,
+          "high": 0.2462
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 266,
+        "station_name": "SED13-36",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5548,
+          "moderate": 0.3022,
+          "high": 0.143
+        },
+        "general_model_posterior": {
+          "low": 0.3841,
+          "moderate": 0.3385,
+          "high": 0.2774
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 267,
+        "station_name": "SED13-37",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5382,
+          "moderate": 0.3069,
+          "high": 0.1549
+        },
+        "general_model_posterior": {
+          "low": 0.4009,
+          "moderate": 0.3364,
+          "high": 0.2627
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 268,
+        "station_name": "SED13-38",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5185,
+          "moderate": 0.3123,
+          "high": 0.1692
+        },
+        "general_model_posterior": {
+          "low": 0.3711,
+          "moderate": 0.3372,
+          "high": 0.2917
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 269,
+        "station_name": "SED13-39",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5548,
+          "moderate": 0.3022,
+          "high": 0.143
+        },
+        "general_model_posterior": {
+          "low": 0.3841,
+          "moderate": 0.3385,
+          "high": 0.2774
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 270,
+        "station_name": "SED13-40",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5559,
+          "moderate": 0.3021,
+          "high": 0.1421
+        },
+        "general_model_posterior": {
+          "low": 0.4583,
+          "moderate": 0.3297,
+          "high": 0.212
+        },
+        "site_model_map": "low",
+        "general_model_map": "low"
+      },
+      {
+        "station_id": 271,
+        "station_name": "SED13-41",
+        "observed_risk": "low",
+        "site_model_posterior": {
+          "low": 0.5559,
+          "moderate": 0.3021,
+          "high": 0.1421
+        },
+        "general_model_posterior": {
+          "low": 0.4583,
+          "moderate": 0.3297,
+          "high": 0.212
+        },
+        "site_model_map": "low",
         "general_model_map": "low"
       }
     ]
