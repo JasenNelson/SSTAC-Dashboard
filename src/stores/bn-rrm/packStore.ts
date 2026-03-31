@@ -190,9 +190,11 @@ export const usePackStore = create<PackState>()(
         // Guard: manifest must belong to the currently selected pack.
         // During pack switching, selectedPackId updates immediately but
         // packManifest may still be the old pack's manifest until the
-        // new manifest fetch completes. Don't resolve artifact paths
-        // from a stale manifest.
-        if (packManifest.pack_id !== selectedPackId) {
+        // new manifest fetch completes. If mismatched, don't error —
+        // just return null so the hook retries when the manifest arrives.
+        if (packManifest.pack_id && packManifest.pack_id !== selectedPackId) {
+          // Not an error — just waiting for the new manifest to arrive.
+          // The hook will retry via its useEffect when packManifest updates.
           return null;
         }
 
