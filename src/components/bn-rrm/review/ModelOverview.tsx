@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import modelOverviewData from '@/data/bn-rrm/transparency/model-overview.json';
+// useMemo removed — siteRows computed inline
+import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
@@ -12,13 +12,9 @@ type PerClassMetrics = {
   support: number;
 };
 
-const kappaScale = modelOverviewData.performance.kappa_interpretation.scale as {
-  range: [number, number];
-  label: string;
-  color: string;
-}[];
 
-function KappaHealthMeter({ value }: { value: number }) {
+
+function KappaHealthMeter({ value, kappaScale }: { value: number; kappaScale: { range: [number, number]; label: string; color: string }[] }) {
   const bandColors: Record<string, string> = {
     red: 'bg-red-500',
     amber: 'bg-amber-500',
@@ -108,11 +104,37 @@ function PerClassTable({ perClass }: { perClass: Record<string, PerClassMetrics>
 }
 
 export function ModelOverview() {
+  const { data: modelOverviewData, loading, error } = usePackArtifact<any>('model_overview');
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex items-center gap-3 text-slate-400">
+          <div className="w-5 h-5 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !modelOverviewData) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-red-500 text-sm">{error ?? 'Failed to load data'}</div>
+      </div>
+    );
+  }
+
   const overview = modelOverviewData;
+  const kappaScale = modelOverviewData.performance.kappa_interpretation.scale as {
+    range: [number, number];
+    label: string;
+    color: string;
+  }[];
   const perf = overview.performance;
   const data = overview.training_data;
 
-  const siteRows = useMemo(() => data.site_breakdown, [data]);
+  const siteRows = data?.site_breakdown ?? [];
 
   return (
     <div className="space-y-8">
@@ -144,7 +166,7 @@ export function ModelOverview() {
       </div>
 
       {/* v1.0 Canonical Baseline */}
-      {(modelOverviewData as Record<string, unknown>).publication_baseline && (() => {
+      {!!(modelOverviewData as Record<string, unknown>).publication_baseline && (() => {
         const pub = (modelOverviewData as Record<string, unknown>).publication_baseline as {
           evaluation_set: string;
           loo_entropy_rule: { accuracy: number; kappa: number; low_recall: number; moderate_recall: number; high_recall: number };
@@ -196,7 +218,7 @@ export function ModelOverview() {
           Kappa Interpretation (Landis/Koch Scale)
           <InfoTooltip {...TOOLTIP.cohensKappa} />
         </h3>
-        <KappaHealthMeter value={perf.loo_kappa} />
+        <KappaHealthMeter value={perf.loo_kappa} kappaScale={kappaScale} />
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
             {perf.kappa_interpretation.narrative}
@@ -248,7 +270,7 @@ export function ModelOverview() {
             </tr>
           </thead>
           <tbody>
-            {siteRows.map((site) => (
+            {siteRows.map((site: any) => (
               <tr key={site.registry_id} className="border-b border-slate-100 dark:border-slate-800">
                 <td className="py-2 font-medium text-slate-700 dark:text-slate-300">{site.name}</td>
                 <td className="py-2 text-slate-500 dark:text-slate-400">{site.registry_id}</td>
@@ -278,7 +300,7 @@ export function ModelOverview() {
           <InfoTooltip {...TOOLTIP.dagArchitectureTiers} />
         </h3>
         <div className="space-y-3">
-          {overview.architecture.tiers.map((tier) => (
+          {overview.architecture.tiers.map((tier: any) => (
             <div key={tier.tier} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">
               <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 shrink-0">
                 T{tier.tier}
@@ -299,7 +321,7 @@ export function ModelOverview() {
         <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">{overview.intended_use.primary}</p>
         <div className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Not suitable for:</div>
         <ul className="space-y-1">
-          {overview.intended_use.not_suitable_for.map((item, i) => (
+          {overview.intended_use.not_suitable_for.map((item: any, i: number) => (
             <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
               <span className="text-red-400 mt-0.5">&#x2717;</span>
               {item}

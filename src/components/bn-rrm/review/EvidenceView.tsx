@@ -83,20 +83,22 @@ function PosteriorShiftBar({ station }: { station: StationSensitivity }) {
 // ---------------------------------------------------------------------------
 
 export function EvidenceView() {
-  const { data, loading, error } = usePackArtifact<SensitivityData>('sensitivity');
+  const { data: rawData, loading, error } = usePackArtifact<any>('sensitivity');
+
+  // Normalize: ensure stations is always an array
+  const stations: any[] = rawData?.stations ?? [];
 
   const stats = useMemo(() => {
-    if (!data?.stations) return null;
-    const total = data.stations?.length ?? 0;
-    const changed = (data.stations ?? []).filter((s: any) => {
+    if (stations.length === 0) return null;
+    const total = stations.length;
+    const changed = stations.filter((s: any) => {
       if (s.changed != null || s.map_changed != null) return s.changed ?? s.map_changed;
-      // Derive from nested structure
       const sMap = s.screening_map ?? s.screening?.map_prediction ?? s.site_screening?.map;
       const aMap = s.assessment_map ?? s.assessment?.map_prediction ?? s.site_assessment?.map;
       return sMap && aMap && sMap !== aMap;
     }).length;
     return { total, changed };
-  }, [data]);
+  }, [stations]);
 
   if (loading) {
     return (
@@ -109,7 +111,7 @@ export function EvidenceView() {
     );
   }
 
-  if (error || !data) {
+  if (error || !rawData) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-8 text-center max-w-md">
@@ -156,7 +158,7 @@ export function EvidenceView() {
               </div>
             </div>
             <div className="flex-1 text-sm text-slate-500 dark:text-slate-400">
-              {data.summary ??
+              {rawData?.summary ??
                 `${stats.changed} of ${stats.total} stations change prediction between screening and assessment mode.`}
             </div>
           </div>
@@ -202,7 +204,7 @@ export function EvidenceView() {
               </tr>
             </thead>
             <tbody>
-              {data.stations.map((raw: any, i: number) => {
+              {stations.map((raw: any, i: number) => {
                 // Normalize field names — handle both flat and nested JSON formats
                 const name = raw.station ?? raw.station_name ?? raw.station_id ?? `Station ${i}`;
                 const observed = raw.observed_risk;

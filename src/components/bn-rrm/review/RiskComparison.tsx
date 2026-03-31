@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import comparisonDataRaw from '@/data/bn-rrm/transparency/risk_comparison.json';
+import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 import { computeComparisonReport } from '@/lib/bn-rrm/comparison-stats';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { ExpandableSection } from '@/components/bn-rrm/shared/ExpandableSection';
@@ -64,12 +64,15 @@ type ComparisonData = {
 };
 
 export function RiskComparison() {
-  const data = comparisonDataRaw as unknown as ComparisonData;
+  const { data: comparisonDataRaw, loading, error } = usePackArtifact<any>('risk_comparison');
   const [selectedSite, setSelectedSite] = useState<number | null>(null);
   const [showExclusions, setShowExclusions] = useState(false);
 
-  // Extract matched pairs
+  const data = (comparisonDataRaw && !error) ? comparisonDataRaw as unknown as ComparisonData : null;
+
+  // ALL hooks must be called before any early return (React Rules of Hooks)
   const { pairs, bnrrm, woe } = useMemo(() => {
+    if (!data?.siteComparisons) return { pairs: [] as [string, string][], bnrrm: [] as string[], woe: [] as string[] };
     const p: [string, string][] = [];
     const bn: string[] = [];
     const w: string[] = [];
@@ -89,15 +92,35 @@ export function RiskComparison() {
 
   // Compute agreement report
   const report = useMemo(() => {
-    if (pairs.length === 0) return null;
+    if (pairs.length === 0 || !data) return null;
     return computeComparisonReport(
       bnrrm,
       woe,
-      data.summary.excludedNoLOO,
-      data.summary.excludedNoWOE,
+      data.summary?.excludedNoLOO,
+      data.summary?.excludedNoWOE,
       true
     );
-  }, [pairs, bnrrm, woe, data.summary]);
+  }, [pairs, bnrrm, woe, data]);
+
+  // Early returns AFTER all hooks
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex items-center gap-3 text-slate-400">
+          <div className="w-5 h-5 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-red-500 text-sm">{error ?? 'Failed to load data'}</div>
+      </div>
+    );
+  }
 
   if (!report) {
     return <div className="text-slate-400 p-8 text-center">No matched comparison data available.</div>;
