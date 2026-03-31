@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import siteDataRaw from '@/data/bn-rrm/transparency/site_reports.json';
+import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
@@ -307,14 +307,17 @@ function SiteCard({ site, selected, onClick }: { site: Site; selected: boolean; 
 type DataTab = 'chemistry' | 'toxicity' | 'community' | 'stations';
 
 export function SiteReports() {
+  const { data: siteDataRaw, loading, error } = usePackArtifact<any>('site_reports');
   const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
   const [activeDataTab, setActiveDataTab] = useState<DataTab>('chemistry');
 
-  const data = siteDataRaw as unknown as SiteReportsData;
-  const selectedSite = useMemo(() =>
-    selectedSiteId !== null ? data.sites.find(s => s.site_id === selectedSiteId) ?? null : null,
-    [data.sites, selectedSiteId]
-  );
+  const data = (!error && siteDataRaw) ? siteDataRaw as unknown as SiteReportsData : null;
+
+  // ALL hooks before early returns (React Rules of Hooks)
+  const selectedSite = useMemo(() => {
+    if (!data?.sites || selectedSiteId === null) return null;
+    return data.sites.find(s => s.site_id === selectedSiteId) ?? null;
+  }, [data?.sites, selectedSiteId]);
 
   const canExport = selectedSite !== null;
   const activeDataForExport = useMemo(() => {
@@ -325,6 +328,25 @@ export function SiteReports() {
     if (activeDataTab === 'stations') return selectedSite.station_details;
     return null;
   }, [selectedSite, activeDataTab]);
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex items-center gap-3 text-slate-400">
+          <div className="w-5 h-5 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-red-500 text-sm">{error ?? 'Failed to load data'}</div>
+      </div>
+    );
+  }
 
   const exportFilename = selectedSite
     ? `${selectedSite.name.replace(/\s/g, '_')}_${activeDataTab}`

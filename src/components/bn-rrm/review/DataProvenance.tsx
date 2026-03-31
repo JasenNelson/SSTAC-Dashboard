@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import provDataRaw from '@/data/bn-rrm/transparency/provenance_registry.json';
+import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 
 type Document = {
   doc_id: number;
@@ -96,19 +96,23 @@ function exportData(data: unknown, filename: string, type: 'json' | 'csv') {
 }
 
 export function DataProvenance() {
+  const { data: provDataRaw, loading, error } = usePackArtifact<any>('provenance');
   const [activeTab, setActiveTab] = useState<'registry' | 'stations'>('registry');
   const [selectedStation, setSelectedStation] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [siteFilter, setSiteFilter] = useState<string>('all');
 
-  const data = provDataRaw as unknown as ProvenanceRegistryData;
+  const data = (!error && provDataRaw) ? provDataRaw as unknown as ProvenanceRegistryData : null;
 
+  // ALL hooks must be called before early returns (React Rules of Hooks)
   const siteNames = useMemo(() => {
+    if (!data?.stations) return [];
     const names = new Set(data.stations.map(s => s.site_name));
     return Array.from(names).sort();
-  }, [data.stations]);
+  }, [data?.stations]);
 
   const filteredStations = useMemo(() => {
+    if (!data?.stations) return [];
     return data.stations.filter(s => {
       if (siteFilter !== 'all' && s.site_name !== siteFilter) return false;
       if (searchTerm) {
@@ -119,12 +123,31 @@ export function DataProvenance() {
       }
       return true;
     });
-  }, [data.stations, siteFilter, searchTerm]);
+  }, [data?.stations, siteFilter, searchTerm]);
 
   const selectedStationData = useMemo(() => {
-    if (selectedStation === null) return null;
+    if (!data?.stations || selectedStation === null) return null;
     return data.stations.find(s => s.station_id === selectedStation) ?? null;
-  }, [data.stations, selectedStation]);
+  }, [data?.stations, selectedStation]);
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="flex items-center gap-3 text-slate-400">
+          <div className="w-5 h-5 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin" />
+          <span>Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-red-500 text-sm">{error ?? 'Failed to load data'}</div>
+      </div>
+    );
+  }
 
   const flatStationExport = (stations: Station[]) => stations.map(s => ({
     station_id: s.station_id,
