@@ -1,5 +1,5 @@
 // src/app/(dashboard)/survey-results/tiered-framework/page.tsx
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type SetAllCookies } from '@supabase/ssr';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import TieredFrameworkClient from './TieredFrameworkClient';
@@ -15,7 +15,7 @@ export default async function TieredFrameworkPage() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: Parameters<SetAllCookies>[0]) {
           try {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
