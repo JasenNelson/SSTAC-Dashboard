@@ -3,10 +3,10 @@
  *
  * Each function takes raw JSON from a pack artifact (general OR site-specific)
  * and returns a stable typed object with safe defaults. Components consume ONLY
- * the normalized shape — all raw-shape detection lives here.
+ * the normalized shape - all raw-shape detection lives here.
  */
 
-// ─── Model Overview ─────────────────────────────────────────────────────────
+// Model Overview
 
 export interface NormalizedModelOverview {
   meta: {
@@ -24,11 +24,14 @@ export interface NormalizedModelOverview {
     nodes: number;
     edges: number;
     states_per_node: number;
+    parent_model: string;
   };
   performance: {
+    type: string;
     accuracy: number | null;
     kappa: number | null;
     n_complete: number | null;
+    disclaimer: string;
     per_class: Record<string, { precision: number; recall: number; f1: number; support: number }> | null;
     kappa_interpretation: {
       scale: Array<{ range: [number, number]; label: string; color: string }>;
@@ -43,11 +46,18 @@ export interface NormalizedModelOverview {
   training: {
     total_sites: number | null;
     dataset_counts: Record<string, any> | null;
+    site_name: string;
+    registry_id: string;
+    waterbody: string;
+    n_stations: number | null;
+    stations: Array<{ station_id: number; name: string; type: string }>;
     site_breakdown: any[];
   };
   architecture: { tiers: any[] } | null;
   intended_use: { primary: string; not_suitable_for: string[] } | null;
   limitations: string[];
+  anti_overclaim: string;
+  marginal_highlights: Array<{ node: string; states: Record<string, number> }>;
   publication_baseline: any | null;
 }
 
@@ -60,6 +70,7 @@ export function normalizeModelOverview(raw: any): NormalizedModelOverview {
   // General: performance; Site: diagnostic
   const perf = raw.performance ?? raw.diagnostic ?? {};
   const data = raw.training_data ?? {};
+  const datasetCounts = data.dataset_counts ?? data.record_counts ?? null;
 
   return {
     meta: {
@@ -77,11 +88,14 @@ export function normalizeModelOverview(raw: any): NormalizedModelOverview {
       nodes: raw.model_identity?.nodes ?? 0,
       edges: raw.model_identity?.edges ?? 0,
       states_per_node: raw.model_identity?.states_per_node ?? 0,
+      parent_model: raw.model_identity?.parent_model ?? '',
     },
     performance: {
+      type: raw.diagnostic?.type ?? 'loo_cross_validation',
       accuracy: perf.loo_accuracy ?? perf.accuracy ?? null,
       kappa: perf.loo_kappa ?? perf.kappa ?? null,
-      n_complete: perf.n_complete ?? null,
+      n_complete: perf.n_complete ?? perf.n_eligible ?? null,
+      disclaimer: perf.disclaimer ?? '',
       per_class: perf.per_class ?? null,
       kappa_interpretation: perf.kappa_interpretation
         ? {
@@ -98,9 +112,20 @@ export function normalizeModelOverview(raw: any): NormalizedModelOverview {
         : null,
     },
     training: {
-      total_sites: data.total_sites ?? data.n_stations ?? null,
-      dataset_counts: data.dataset_counts ?? data.record_counts ?? null,
-      site_breakdown: data.site_breakdown ?? [],
+      total_sites: data.total_sites ?? datasetCounts?.sites ?? null,
+      dataset_counts: datasetCounts,
+      site_name: data.site ?? '',
+      registry_id: data.registry_id ?? '',
+      waterbody: data.waterbody ?? '',
+      n_stations: data.n_stations ?? datasetCounts?.stations ?? null,
+      stations: Array.isArray(data.stations)
+        ? data.stations.map((station: any) => ({
+            station_id: station.station_id ?? 0,
+            name: station.name ?? '',
+            type: station.type ?? '',
+          }))
+        : [],
+      site_breakdown: Array.isArray(data.site_breakdown) ? data.site_breakdown : [],
     },
     architecture: raw.architecture?.tiers ? { tiers: raw.architecture.tiers } : null,
     intended_use: raw.intended_use
@@ -109,7 +134,12 @@ export function normalizeModelOverview(raw: any): NormalizedModelOverview {
           not_suitable_for: raw.intended_use.not_suitable_for ?? [],
         }
       : null,
-    limitations: raw.applicability_boundaries ?? [],
+    limitations: raw.limitations ?? raw.applicability_boundaries ?? [],
+    anti_overclaim: raw.anti_overclaim ?? '',
+    marginal_highlights: Object.entries(raw.marginal_highlights ?? {}).map(([node, states]) => ({
+      node,
+      states: typeof states === 'object' && states !== null ? states as Record<string, number> : {},
+    })),
     publication_baseline: raw.publication_baseline ?? null,
   };
 }
@@ -117,17 +147,19 @@ export function normalizeModelOverview(raw: any): NormalizedModelOverview {
 function emptyModelOverview(): NormalizedModelOverview {
   return {
     meta: { dataset_status: '', export_date: '', db_hash: '', model_version: '', handoff_version: '', scope: '', site_registry_id: '' },
-    identity: { name: '', framework: '', nodes: 0, edges: 0, states_per_node: 0 },
-    performance: { accuracy: null, kappa: null, n_complete: null, per_class: null, kappa_interpretation: null, performance_plateau: null },
-    training: { total_sites: null, dataset_counts: null, site_breakdown: [] },
+    identity: { name: '', framework: '', nodes: 0, edges: 0, states_per_node: 0, parent_model: '' },
+    performance: { type: '', accuracy: null, kappa: null, n_complete: null, disclaimer: '', per_class: null, kappa_interpretation: null, performance_plateau: null },
+    training: { total_sites: null, dataset_counts: null, site_name: '', registry_id: '', waterbody: '', n_stations: null, stations: [], site_breakdown: [] },
     architecture: null,
     intended_use: null,
     limitations: [],
+    anti_overclaim: '',
+    marginal_highlights: [],
     publication_baseline: null,
   };
 }
 
-// ─── Validation ─────────────────────────────────────────────────────────────
+// Validation
 
 export interface NormalizedPrediction {
   station_id: number;
@@ -173,7 +205,7 @@ export function normalizeValidation(raw: any): NormalizedValidation {
   };
 }
 
-// ─── Decisions ──────────────────────────────────────────────────────────────
+// Decisions
 
 export interface NormalizedDecisionRecord {
   id: string;
@@ -273,7 +305,7 @@ export function normalizeDecisions(raw: any): NormalizedDecisions {
   };
 }
 
-// ─── CPT Transparency ───────────────────────────────────────────────────────
+// CPT Transparency
 
 export interface NormalizedCptNode {
   id: string;
@@ -377,7 +409,7 @@ export function normalizeCptTransparency(raw: any): NormalizedCptTransparency {
   };
 }
 
-// ─── Provenance ─────────────────────────────────────────────────────────────
+// Provenance
 
 export interface NormalizedDocument {
   doc_id: number;
@@ -507,7 +539,7 @@ export function normalizeProvenance(raw: any): NormalizedProvenance {
   };
 }
 
-// ─── Site Reports ───────────────────────────────────────────────────────────
+// Site Reports
 
 export interface NormalizedSite {
   site_id: number;
@@ -637,7 +669,7 @@ function normalizeSingleSite(s: any): NormalizedSite {
   };
 }
 
-// ─── Risk Comparison ────────────────────────────────────────────────────────
+// Risk Comparison
 
 export interface NormalizedStationComparison {
   stationId: number;
