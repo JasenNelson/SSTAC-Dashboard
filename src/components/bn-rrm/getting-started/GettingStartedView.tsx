@@ -16,7 +16,6 @@ import {
 import { cn } from '@/utils/cn';
 import { ExpandableSection } from '@/components/bn-rrm/shared/ExpandableSection';
 import { usePackStore } from '@/stores/bn-rrm/packStore';
-import { getScopeBadge, getReleaseBadge } from '@/lib/bn-rrm/pack-types';
 
 type Audience = 'decision-maker' | 'technical' | null;
 
@@ -37,7 +36,7 @@ export function GettingStartedView() {
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
             {packManifest
-              ? `Model: ${packManifest?.pack_id ?? ''} (${packManifest?.version_history?.architecture_version ?? ''}) · ${packManifest?.display_name ?? ''} · ${packManifest?.dag_node_count ?? 20}-node causal DAG · 3 risk states`
+              ? `Model: ${packManifest?.display_name ?? ''} · Release v${packManifest?.version_history?.model_version ?? ''} · ${packManifest?.version_history?.architecture_version ?? ''} · ${packManifest?.dag_node_count ?? 20}-node causal DAG · 3 risk states`
               : 'Model: loading... · 20-node causal DAG · 3 risk states'
             }
           </p>
@@ -174,6 +173,9 @@ export function GettingStartedView() {
                 <p className="text-amber-600 dark:text-amber-400 font-medium">
                   BN-RRM v1.0 is the canonical development line, under active review and refinement. v0.4.1 is the legacy baseline.
                 </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Reviewer-facing release labels use v1.0. References to v4.0 or v4.1 describe the inherited DAG and inference lineage, not a separate public release.
+                </p>
                 {packManifest?.scope_type === 'site_specific' ? (
                   <>
                     <p>
@@ -198,8 +200,8 @@ export function GettingStartedView() {
                 ) : (
                   <>
                     <p>
-                      <strong>What changed:</strong> The v1.0 publication candidate uses
-                      the {packManifest?.version_history?.model_version ?? 'v1.0'} model ({packManifest?.version_history?.architecture_version ?? '20-node DAG'})
+                      <strong>What changed:</strong> The reviewer-facing v{packManifest?.version_history?.model_version ?? '1.0'} release uses
+                      the Landis causal stack ({packManifest?.version_history?.architecture_version ?? '20-node DAG'})
                       with a corrected evaluation pipeline: decoupled CPT fitting, adjudicated ground-truth labels,
                       ecological risk data injection, and entropy-aware classification for uncertain cases.
                     </p>

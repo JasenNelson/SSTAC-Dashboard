@@ -6,8 +6,9 @@
       "QA_QC_LOG.md v2.3",
       "MODEL_SPECIFICATION.md v1.9",
       "MODEL_CARD.md v4.3",
-      "BNRRM_HANDOFF.md v28.1"
-    ]
+      "BNRRM_HANDOFF.md v65.0"
+    ],
+    "metric_note": "Historical v4.1 benchmark figures are retained in the decision log for lineage. Current reviewer-facing pack summaries should cite pack.json/runtime metrics instead: LOO accuracy 0.6237 and kappa 0.1846."
   },
   "decision_records": [
     {
@@ -42,9 +43,9 @@
       "status": "ACTIVE",
       "date": "2026-03-09",
       "severity": "HIGH",
-      "summary": "Dataset frozen at 44 full triads / 82 co-located from 8 sites. Performance plateau confirmed: +19 stations (n=63->82). v4.1 accuracy 0.524, kappa 0.207 (with soft evidence c=0.60).",
-      "rationale": "Learning curve plateaued. Bottleneck is expert prior shape and config diversity (Tier 3 at 1/9 configs), not data volume. v4.1 soft evidence improved screening metrics without additional data.",
-      "impact": "No further BC site extraction. Next phase is model architecture work (expert prior shape investigation) or regulatory application.",
+      "summary": "Dataset frozen at 44 full triads / 82 co-located from 8 sites. Historical 82-station v4.1 soft-evidence benchmarking confirmed the lineage plateau (+19 stations, n=63->82) at accuracy 0.524 and kappa 0.207. Current reviewer-facing pack summaries use the refreshed pack metadata instead: accuracy 0.6237, kappa 0.1846.",
+      "rationale": "The historical 82-station benchmark showed that the bottleneck was expert prior shape and configuration diversity (Tier 3 at 1/9 configs), not data volume. The refreshed v1.0 pack summary uses a different current export surface, so the older v4.1 benchmark should be treated as lineage context rather than the headline reviewer metric.",
+      "impact": "No further BC site extraction. Reviewers should cite pack.json/runtime metrics for current pack summaries and use the retained v4.1 benchmark only to explain lineage and tradeoffs.",
       "reopen_criteria": "Novel contamination profile site identified, or expert prior recalibration unlocks accuracy gains benefiting from additional data.",
       "related_issues": [
         "I-018"
@@ -57,7 +58,7 @@
       "title": "Moderate recall = 0.250",
       "severity": "HIGH",
       "category": "structural",
-      "description": "Only 8/82 co-located samples are moderate-risk. v4.1 recall improved to 25% (2/8) from 12.5% (v4.0) and 0% (v3). Still a structural limitation due to class rarity.",
+      "description": "Historical 82-station benchmark context: only 8/82 co-located samples were moderate-risk. In that v4.1 lineage artifact, recall improved to 25% (2/8) from 12.5% (v4.0) and 0% (v3). The class-rarity limitation remains structural.",
       "mitigation": "Acceptable for screening tool (moderate predicted as high = conservative). Not suitable for balanced classification.",
       "related": "I-017"
     },
@@ -75,7 +76,7 @@
       "title": "Conservative over-prediction (FP rate ~51%)",
       "severity": "MEDIUM",
       "category": "model_behavior",
-      "description": "29/57 low-risk stations predicted as non-low (v4.1, up from 25/57 in v4.0). Screening-conservative tradeoff from soft evidence: improves high-risk recall (76.5%) and kappa (0.207) at cost of additional low-risk false positives.",
+      "description": "Historical 82-station benchmark context: 29/57 low-risk stations were predicted as non-low in the v4.1 lineage artifact, up from 25/57 in v4.0. That screening-conservative tradeoff improved high-risk recall (76.5%) and benchmark kappa (0.207) at the cost of additional low-risk false positives.",
       "mitigation": "Acceptable for regulatory screening (false positive = conservative). High recall (76.5%) means true high-risk sites are rarely missed. Tradeoff is by design.",
       "related": "I-018"
     },
@@ -84,7 +85,7 @@
       "title": "Performance plateau",
       "severity": "MEDIUM",
       "category": "data_saturation",
-      "description": "Adding 19 stations (n=63->82) produced accuracy/kappa plateau at v3 architecture. v4.0 broke plateau (accuracy 0.549, kappa 0.180). v4.1 further improved screening metrics (kappa 0.207, high recall 0.765) via inference enhancement, not additional data.",
+      "description": "Historical lineage context: adding 19 stations (n=63->82) produced an accuracy/kappa plateau at v3 architecture. v4.0 broke that plateau (accuracy 0.549, kappa 0.180), and v4.1 further improved benchmark screening metrics (kappa 0.207, high recall 0.765) via inference enhancement rather than additional data.",
       "mitigation": "Bottleneck is prior shape and config diversity, not data volume. Dataset frozen (DR-003).",
       "related": "DR-003"
     },

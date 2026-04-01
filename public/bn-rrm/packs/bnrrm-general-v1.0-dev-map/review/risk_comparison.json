@@ -5,7 +5,7 @@
     "modelVersion": "bnrrm-landis-causal v1.0",
     "comparatorType": "WOE",
     "note": "Comparator labels are external reference labels only. They are NEVER BN training targets.",
-    "evaluationRule": "entropy-aware (threshold=1.06, mod_floor=0.25)",
+    "evaluationRule": "mixed: entropy-aware v1.0 (9/59 stations, strict T1 subset) + v4.0 MAP (50/59 stations, non-T1)",
     "note_externalSites": "externalSites content is version-independent (factual report conclusions). siteComparisons refreshed to v1.0 entropy-aware LOO."
   },
   "summary": {
@@ -85,7 +85,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 2,
@@ -114,7 +115,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 3,
@@ -143,7 +145,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "moderate",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 4,
@@ -172,7 +175,8 @@
           },
           "bnrrmPredicted": "moderate",
           "bnrrmObserved": "moderate",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 5,
@@ -201,7 +205,8 @@
           },
           "bnrrmPredicted": null,
           "bnrrmObserved": null,
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 6,
@@ -230,7 +235,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 7,
@@ -259,7 +265,8 @@
           },
           "bnrrmPredicted": null,
           "bnrrmObserved": null,
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 8,
@@ -288,7 +295,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 9,
@@ -317,7 +325,8 @@
           },
           "bnrrmPredicted": null,
           "bnrrmObserved": null,
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 10,
@@ -346,7 +355,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 11,
@@ -375,7 +385,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "moderate",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         }
       ],
       "siteRiskNarrative": null,
@@ -421,7 +432,8 @@
           },
           "bnrrmPredicted": null,
           "bnrrmObserved": null,
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 200,
@@ -450,7 +462,8 @@
           },
           "bnrrmPredicted": null,
           "bnrrmObserved": null,
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 201,
@@ -483,7 +496,8 @@
             "low": 0.3595,
             "moderate": 0.3408,
             "high": 0.2997
-          }
+          },
+          "prediction_rule": "v1.0_entropy_1.06"
         },
         {
           "stationId": 202,
@@ -516,7 +530,8 @@
             "low": 0.3378,
             "moderate": 0.3385,
             "high": 0.3237
-          }
+          },
+          "prediction_rule": "v1.0_entropy_1.06"
         },
         {
           "stationId": 203,
@@ -549,7 +564,8 @@
             "low": 0.1306,
             "moderate": 0.2456,
             "high": 0.6238
-          }
+          },
+          "prediction_rule": "v1.0_entropy_1.06"
         },
         {
           "stationId": 204,
@@ -582,7 +598,8 @@
             "low": 0.2532,
             "moderate": 0.3197,
             "high": 0.427
-          }
+          },
+          "prediction_rule": "v1.0_entropy_1.06"
         }
       ],
       "siteRiskNarrative": null,
@@ -627,7 +644,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 208,
@@ -656,7 +674,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 209,
@@ -685,7 +704,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 210,
@@ -714,7 +734,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 211,
@@ -747,7 +768,8 @@
             "low": 0.3774,
             "moderate": 0.3419,
             "high": 0.2808
-          }
+          },
+          "prediction_rule": "v1.0_entropy_1.06"
         },
         {
           "stationId": 212,
@@ -780,7 +802,8 @@
             "low": 0.3716,
             "moderate": 0.3401,
             "high": 0.2883
-          }
+          },
+          "prediction_rule": "v1.0_entropy_1.06"
         },
         {
           "stationId": 213,
@@ -813,7 +836,8 @@
             "low": 0.401,
             "moderate": 0.3398,
             "high": 0.2592
-          }
+          },
+          "prediction_rule": "v1.0_entropy_1.06"
         },
         {
           "stationId": 214,
@@ -842,7 +866,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 215,
@@ -871,7 +896,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 216,
@@ -904,7 +930,8 @@
             "low": 0.3774,
             "moderate": 0.3419,
             "high": 0.2808
-          }
+          },
+          "prediction_rule": "v1.0_entropy_1.06"
         },
         {
           "stationId": 217,
@@ -933,7 +960,8 @@
           },
           "bnrrmPredicted": null,
           "bnrrmObserved": null,
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 218,
@@ -962,7 +990,8 @@
           },
           "bnrrmPredicted": null,
           "bnrrmObserved": null,
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 219,
@@ -991,7 +1020,8 @@
           },
           "bnrrmPredicted": null,
           "bnrrmObserved": null,
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 220,
@@ -1020,7 +1050,8 @@
           },
           "bnrrmPredicted": null,
           "bnrrmObserved": null,
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 221,
@@ -1049,7 +1080,8 @@
           },
           "bnrrmPredicted": null,
           "bnrrmObserved": null,
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         }
       ],
       "siteRiskNarrative": null,
@@ -1097,7 +1129,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 223,
@@ -1126,7 +1159,8 @@
           },
           "bnrrmPredicted": "moderate",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 224,
@@ -1155,7 +1189,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 225,
@@ -1184,7 +1219,8 @@
           },
           "bnrrmPredicted": "moderate",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 226,
@@ -1213,7 +1249,8 @@
           },
           "bnrrmPredicted": null,
           "bnrrmObserved": null,
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 227,
@@ -1242,7 +1279,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 228,
@@ -1271,7 +1309,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 229,
@@ -1300,7 +1339,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 230,
@@ -1329,7 +1369,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 231,
@@ -1358,7 +1399,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 232,
@@ -1387,7 +1429,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 233,
@@ -1416,7 +1459,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 234,
@@ -1445,7 +1489,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 235,
@@ -1474,7 +1519,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 236,
@@ -1503,7 +1549,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "moderate",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 237,
@@ -1532,7 +1579,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 238,
@@ -1561,7 +1609,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 240,
@@ -1590,7 +1639,8 @@
           },
           "bnrrmPredicted": "moderate",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 241,
@@ -1619,7 +1669,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 242,
@@ -1648,7 +1699,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 243,
@@ -1677,7 +1729,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 244,
@@ -1706,7 +1759,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 245,
@@ -1735,7 +1789,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         }
       ],
       "siteRiskNarrative": null,
@@ -1783,7 +1838,8 @@
             "low": 0.3718,
             "moderate": 0.3366,
             "high": 0.2916
-          }
+          },
+          "prediction_rule": "v1.0_entropy_1.06"
         },
         {
           "stationId": 278,
@@ -1812,7 +1868,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "high",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 279,
@@ -1841,7 +1898,8 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "high",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         },
         {
           "stationId": 280,
@@ -1870,7 +1928,8 @@
           },
           "bnrrmPredicted": "low",
           "bnrrmObserved": "high",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": null,
+          "prediction_rule": "v4.0_MAP"
         }
       ],
       "siteRiskNarrative": null,

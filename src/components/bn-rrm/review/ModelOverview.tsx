@@ -5,6 +5,7 @@ import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 import { normalizeModelOverview } from '@/lib/bn-rrm/normalize-artifacts';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
+import { usePackStore } from '@/stores/bn-rrm/packStore';
 
 type PerClassMetrics = {
   precision: number;
@@ -106,6 +107,7 @@ function PerClassTable({ perClass }: { perClass: Record<string, PerClassMetrics>
 
 export function ModelOverview() {
   const { data: rawData, loading, error } = usePackArtifact<any>('model_overview');
+  const packManifest = usePackStore((s) => s.packManifest);
 
   if (loading) {
     return (
@@ -131,6 +133,14 @@ export function ModelOverview() {
   const perf = data.performance;
   const kappaScale = perf.kappa_interpretation?.scale ?? [];
   const siteRows = data.training.site_breakdown;
+  const summaryAccuracy = packManifest?.evaluation_profile?.loo_accuracy ?? perf.accuracy;
+  const summaryKappa = packManifest?.evaluation_profile?.loo_kappa ?? perf.kappa;
+  const metricContextNote = typeof rawData?._meta?.metric_note === 'string' ? rawData._meta.metric_note : '';
+  const metricMismatch =
+    ((packManifest?.evaluation_profile?.loo_accuracy != null && perf.accuracy != null &&
+      Math.abs(packManifest.evaluation_profile.loo_accuracy - perf.accuracy) > 0.0001) ||
+    (packManifest?.evaluation_profile?.loo_kappa != null && perf.kappa != null &&
+      Math.abs(packManifest.evaluation_profile.loo_kappa - perf.kappa) > 0.0001));
 
   return (
     <div className="space-y-8">
@@ -156,11 +166,16 @@ export function ModelOverview() {
           <InfoTooltip {...TOOLTIP.looCrossValidation} />
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <MetricCard label="Accuracy" value={perf.accuracy != null ? `${(perf.accuracy * 100).toFixed(1)}%` : '\u2014'} subtitle="Combined (all sites)" />
-          <MetricCard label="Kappa" value={perf.kappa != null ? perf.kappa.toFixed(3) : '\u2014'} subtitle="Cohen's kappa (unweighted)" alert />
+          <MetricCard label="Accuracy" value={summaryAccuracy != null ? `${(summaryAccuracy * 100).toFixed(1)}%` : '\u2014'} subtitle="Current pack summary" />
+          <MetricCard label="Kappa" value={summaryKappa != null ? summaryKappa.toFixed(3) : '\u2014'} subtitle="Current pack summary" alert />
           <MetricCard label="High Recall" value={perf.per_class?.high?.recall != null ? `${(perf.per_class.high.recall * 100).toFixed(1)}%` : '\u2014'} subtitle="High-risk detection rate" />
           <MetricCard label="Moderate Recall" value={perf.per_class?.moderate?.recall != null ? `${(perf.per_class.moderate.recall * 100).toFixed(1)}%` : '\u2014'} subtitle="Moderate-risk detection rate" alert={perf.per_class?.moderate?.recall != null && perf.per_class.moderate.recall < 0.2} />
         </div>
+        {(metricMismatch || metricContextNote) && (
+          <div className="mt-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-800 dark:text-amber-200">
+            {metricContextNote || 'The headline accuracy and kappa above use the current pack manifest. The detailed narrative below is retained historical benchmark context from an earlier lineage artifact.'}
+          </div>
+        )}
       </div>
 
       {/* v1.0 Canonical Baseline */}
@@ -344,7 +359,7 @@ export function ModelOverview() {
 
       {/* Export Metadata */}
       <div className="text-xs text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-700 pt-4">
-        Export: {data.meta.export_date} &middot; DB hash: {data.meta.db_hash.slice(0, 12)}... &middot; Model Card v{data.meta.model_version} &middot; Handoff v{data.meta.handoff_version}
+        Export: {data.meta.export_date} &middot; DB hash: {data.meta.db_hash.slice(0, 12)}... &middot; Release v{data.meta.model_version} &middot; Handoff v{data.meta.handoff_version}
       </div>
     </div>
   );

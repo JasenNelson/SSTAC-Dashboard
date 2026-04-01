@@ -353,6 +353,15 @@ export function ValidationDashboard() {
       {/* Model Comparison */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
         <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Model Comparison (M1-M4)</h3>
+        {modelComparisonData?._meta?.status === 'legacy_evaluation_framework' && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-3">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              <strong>Legacy evaluation framework.</strong> M1-M4 model variants are from the v0.x
+              pipeline. Retained for historical comparison. Current evaluation uses the v1.0 causal
+              DAG with entropy-aware classification.
+            </p>
+          </div>
+        )}
         <ModelComparisonTable modelComparisonData={modelComparisonData} />
         <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
           M1 Baseline uses raw WOE data. M2 Expert uses expert-elicited CPTs. M3 LoE uses harmonized ranks. M4 Split uses framework-specific models.

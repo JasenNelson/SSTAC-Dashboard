@@ -1,10 +1,10 @@
 {
   "modelId": "bnrrm-landis-causal",
-  "version": "4.1",
+  "version": "1.0",
   "learnedFrom": "bnrrm_training.db",
   "nStations": 289,
   "createdAt": "2026-03-27",
-  "description": "20-node Landis BN-RRM causal DAG with data-learned CPTs. v4.1: soft evidence injection for derived organic states (c=0.60). Tier 1 (Noisy-OR) for contamination indices, Tier 2-3 (BDeu + expert blend) for bioavailability and effects, Tier 4 (expert-dominated) for ecological risk. Learned from 289 stations in bnrrm_training.db.",
+  "description": "BN-RRM release v1.0 on the 20-node Landis causal DAG (DAG lineage v4.0; inference lineage v4.1 with soft evidence injection for derived organic states, c=0.60). Tier 1 uses Noisy-OR for contamination indices, Tiers 2-3 use BDeu plus expert blend for bioavailability and effects, and Tier 4 remains expert-dominated for ecological risk. Learned from 289 stations in bnrrm_training.db.",
   "softEvidence": {
     "enabled": true,
     "concentration": 0.6,

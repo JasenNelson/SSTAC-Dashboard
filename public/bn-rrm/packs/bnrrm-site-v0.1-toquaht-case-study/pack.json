@@ -41,7 +41,7 @@
   ],
   "version_history": {
     "created": "2026-03-31",
-    "model_version": "4.1-site",
+    "model_version": "1.0-site",
     "architecture_version": "v4.0 (20-node DAG)"
   },
   "artifacts": {

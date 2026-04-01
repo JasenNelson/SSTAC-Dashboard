@@ -4,13 +4,13 @@
     "db_hash": "fb9486e22761a67c071e6f00e739859c776d0c6823c4af2595246567e4c23c21",
     "scope": "site_specific",
     "site_registry_id": "0311",
-    "model_version": "4.1-site"
+    "model_version": "1.0-site"
   },
   "model_identity": {
     "name": "BN-RRM Site: CP Nelson Yard (Hall Mines Smelter)",
     "framework": "Landis (2021) Causal DAG",
     "model_id": "bnrrm-landis-causal",
-    "version": "4.1-site",
+    "version": "1.0-site",
     "nodes": 20,
     "edges": 24,
     "states_per_node": 3,

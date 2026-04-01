@@ -73,7 +73,7 @@
   "version_history": {
     "created": "2026-03-31",
     "model_version": "1.0",
-    "architecture_version": "v4.0 (20-node DAG)"
+    "architecture_version": "DAG v4.0; inference lineage v4.1"
   },
   "artifacts": {
     "runtime_model": "runtime/learned-model.json",

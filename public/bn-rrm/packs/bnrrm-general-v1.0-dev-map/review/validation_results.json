@@ -1,5 +1,6 @@
 {
-  "inference_mode": "screening",
+  "inference_mode": "MAP",
+  "disclaimer": "Evaluation uses MAP (maximum a posteriori) decision rule on 93 co-located stations across training sites. This is the development-baseline view for the v1.0 dev MAP pack. The entropy-aware evaluation (strict Tier 1 subset, 33 stations, kappa 0.179) is the v1.0 publication baseline and appears separately in risk_comparison.json siteComparisons.",
   "loo_accuracy": 0.6237,
   "loo_kappa": 0.1846,
   "n_complete": 93,

@@ -4,8 +4,9 @@
     "db_hash": "9fbf0224e0aa9529011f8a93d2b5994c759171f309f9d25112edc3971cdf14dc",
     "model_version": "1.0",
     "dataset_status": "FROZEN (DR-003)",
-    "handoff_version": "28.1",
-    "release_packet_date": "2026-03-09"
+    "handoff_version": "65.0",
+    "release_packet_date": "2026-03-09",
+    "metric_note": "Current reviewer-facing pack summary metrics are the values in pack.json and runtime/learned-model.json (LOO accuracy 0.6237, kappa 0.1846). The class-level breakdown retained below is historical v4.1 soft-evidence benchmark context from the earlier 82-station artifact."
   },
   "model_identity": {
     "name": "BN-RRM (Bayesian Network Relative Risk Model)",
@@ -269,8 +270,8 @@
           "color": "emerald"
         }
       ],
-      "current_band": "Poor",
-      "narrative": "Kappa of 0.207 falls in the 'Poor' band on the Landis/Koch scale. This reflects three structural factors: (1) the moderate class has only 8 samples (25% recall  --  v4.1 improved from 12.5% in v4.0 via soft evidence, but remains limited by class rarity), (2) the model is intentionally conservative for regulatory screening (predicting high when uncertain), and (3) high-risk recall is 76.5%  --  the model correctly identifies most contaminated sites. For a protective screening tool, high recall matters more than balanced accuracy."
+      "current_band": "Fair",
+      "narrative": "Historical v4.1 soft-evidence benchmark context: kappa 0.207 sits at the low end of the 'Fair' band on the Landis/Koch scale. In that earlier 82-station artifact, moderate class rarity (8 samples), intentionally conservative screening behavior, and stronger high-risk recall (76.5%) limited balanced agreement. Reviewer-facing headline metrics for the current v1.0 pack are the pack manifest values: LOO accuracy 0.6237 and kappa 0.1846."
     },
     "performance_plateau": {
       "previous_n": 63,
@@ -281,7 +282,7 @@
       "v3_kappa": 0.033,
       "v4_kappa": 0.18,
       "v41_kappa": 0.207,
-      "interpretation": "v3.0 data plateau: adding 19 stations (n=63->82) produced zero gain at v3 architecture. v4.0 (sulfide_binding) broke the plateau: accuracy 0.427->0.549, kappa 0.033->0.180. v4.1 (soft evidence c=0.60) further improved screening metrics: kappa 0.180->0.207, high recall 0.706->0.765. Bottleneck was prior shape and inference method, not data volume."
+      "interpretation": "Historical lineage benchmark: adding 19 stations (n=63->82) produced zero gain at v3 architecture. v4.0 (sulfide_binding) broke that plateau, and v4.1 soft evidence (c=0.60) improved benchmark kappa from 0.180 to 0.207 while raising high-risk recall from 0.706 to 0.765. Those values explain model lineage only; the current v1.0 pack summary metrics remain 0.6237 accuracy and 0.1846 kappa in pack metadata."
     }
   },
   "intended_use": {
