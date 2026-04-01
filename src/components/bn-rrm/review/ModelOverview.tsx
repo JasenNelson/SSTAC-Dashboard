@@ -231,7 +231,7 @@ export function ModelOverview() {
           Kappa Interpretation (Landis/Koch Scale)
           <InfoTooltip {...TOOLTIP.cohensKappa} />
         </h3>
-        {perf.kappa != null && <KappaHealthMeter value={perf.kappa} kappaScale={kappaScale} />}
+        {summaryKappa != null && <KappaHealthMeter value={summaryKappa} kappaScale={kappaScale} />}
         {perf.kappa_interpretation?.narrative && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
