@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { usePackStore } from '@/stores/bn-rrm/packStore';
 import { normalizeValidation } from '@/lib/bn-rrm/normalize-artifacts';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
@@ -240,6 +241,7 @@ function ExportButton({ data, filename, label }: { data: unknown; filename: stri
 }
 
 export function ValidationDashboard() {
+  const packManifest = usePackStore((s) => s.packManifest);
   const { data: rawValData, loading: loadingVal, error: errorVal } = usePackArtifact<any>('validation');
   const { data: modelComparisonData, loading: loadingComp, error: errorComp } = usePackArtifact<any>('comparison');
   const [predFilter, setPredFilter] = useState('all');
@@ -289,6 +291,24 @@ export function ValidationDashboard() {
           Leave-One-Out cross-validation results{nComplete ? ` for ${nComplete} stations` : ''}. {correctCount} correct{nComplete ? ` (${(correctCount / nComplete * 100).toFixed(1)}%)` : ''}.
         </p>
       </div>
+
+      {/* Diagnostic replay disclaimer for site packs */}
+      {validationData.disclaimer && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">
+            Diagnostic Replay
+          </p>
+          <p className="text-sm text-amber-700 dark:text-amber-300">
+            {validationData.disclaimer}
+          </p>
+          {packManifest?.scope_type === 'site_specific' && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+              Site pack: {packManifest?.site_scope?.name ?? 'N/A'} ({packManifest?.training_corpus?.n_stations ?? 'N/A'} stations).
+              See the Decisions &amp; Limitations section for full context on applicability boundaries.
+            </p>
+          )}
+        </div>
+      )}
 
       {predictions.length === 0 && (
         <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-8 text-center">

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { usePackStore } from '@/stores/bn-rrm/packStore';
 import { normalizeRiskComparison, type NormalizedSiteComparison } from '@/lib/bn-rrm/normalize-artifacts';
 import { computeComparisonReport } from '@/lib/bn-rrm/comparison-stats';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
@@ -20,6 +21,7 @@ const CLASS_COLORS: Record<string, { bg: string; text: string }> = {
 // Types are now in normalize-artifacts.ts — using NormalizedRiskComparison and NormalizedSiteComparison
 
 export function RiskComparison() {
+  const packManifest = usePackStore((s) => s.packManifest);
   const { data: rawData, loading, error } = usePackArtifact<any>('risk_comparison');
   const [selectedSite, setSelectedSite] = useState<number | null>(null);
   const [showExclusions, setShowExclusions] = useState(false);
@@ -113,6 +115,14 @@ export function RiskComparison() {
           {report.nExcludedNoLOO} excluded (WOE but no LOO) &middot;
           {report.nExcludedNoWOE} excluded (LOO but no WOE)
         </p>
+        {packManifest?.version_history?.model_version &&
+          data.meta.modelVersion &&
+          !data.meta.modelVersion.includes(packManifest.version_history.model_version) && (
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+            Note: comparison data generated with {data.meta.modelVersion}. Current model
+            is {packManifest.version_history.model_version}. A data refresh is pending.
+          </p>
+        )}
       </div>
 
       {/* Agreement summary cards */}

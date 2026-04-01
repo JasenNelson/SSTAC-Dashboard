@@ -135,7 +135,10 @@ export function GettingStartedView() {
                     : "Performance at sites with very different contamination profiles has not been validated."
                   } />
                   <LimitationItem text="The organic pathway (PAH + PCB) relies primarily on expert judgment rather than training data. DR-001 reframed: PAH and PCB do not need co-location for candidacy — each needs its own conditions/effects evidence. Current code limitation: CPT fitting requires both parents observed, and jointly analyzed PAH+PCB data is scarce in BC sediment assessments (4 station-events from 1 site)." />
-                  <LimitationItem text="Moderate-risk detection is limited (12.5% recall). The model is better at identifying high-risk and low-risk stations than moderate-risk stations." />
+                  <LimitationItem text={packManifest
+                    ? `Model agreement with observed labels is modest (kappa ${packManifest?.evaluation_profile?.loo_kappa?.toFixed(3) ?? 'N/A'}). The model is better at identifying high-risk stations than moderate-risk stations.`
+                    : "Model agreement with observed labels is modest. The model is better at identifying high-risk stations than moderate-risk stations."
+                  } />
                   <LimitationItem text="Model outputs are posterior probability estimates, not measured environmental outcomes. They should inform professional judgment, not replace it." />
                 </div>
               </div>
@@ -171,27 +174,64 @@ export function GettingStartedView() {
                 <p className="text-amber-600 dark:text-amber-400 font-medium">
                   BN-RRM v1.0 is the canonical development line, under active review and refinement. v0.4.1 is the legacy baseline.
                 </p>
-                <p>
-                  <strong>What changed:</strong> The v1.0 publication candidate uses the same v4.0 architecture (20-node DAG)
-                  with a corrected evaluation pipeline: decoupled CPT fitting, adjudicated ground-truth labels,
-                  ecological risk data injection, and entropy-aware classification for uncertain cases.
-                </p>
-                <p>
-                  <strong>Evaluation:</strong> Strict Tier 1 &mdash; 33 full-triad stations across 5 sites
-                  (Toquaht, ALCAN, CP Nelson, Island Copper, Brunette River).
-                </p>
-                <p>
-                  <strong>Key metrics (entropy rule):</strong> Accuracy 0.515, Kappa 0.179,
-                  Moderate recall 0.750 (n=12), High recall 0.500 (n=2), Low recall 0.368 (n=19).
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Kappa 0.179 = &ldquo;slight&rdquo; agreement (Landis &amp; Koch 1977). High support = 2 (not statistically meaningful).
-                  See the Review tab for detailed validation results.
-                </p>
+                {packManifest?.scope_type === 'site_specific' ? (
+                  <>
+                    <p>
+                      <strong>Site pack:</strong> This is a site-specific model
+                      for {packManifest?.site_scope?.name ?? 'this site'} ({packManifest?.training_corpus?.n_stations ?? 'N/A'} stations).
+                      Site-specific CPTs are expert-prior-dominated at this sample size.
+                      Metrics below are from diagnostic replay, not independent validation.
+                    </p>
+                    <p>
+                      <strong>Key metrics (diagnostic replay):</strong> Accuracy{' '}
+                      {packManifest?.evaluation_profile?.loo_accuracy != null
+                        ? (packManifest.evaluation_profile.loo_accuracy * 100).toFixed(1) + '%'
+                        : 'N/A'
+                      }, Kappa{' '}
+                      {packManifest?.evaluation_profile?.loo_kappa?.toFixed(3) ?? 'N/A'}.
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Parent pack: {packManifest?.parent_pack_id ?? 'none'}.
+                      See the Review tab &gt; Decisions &amp; Limitations for full context.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      <strong>What changed:</strong> The v1.0 publication candidate uses
+                      the {packManifest?.version_history?.model_version ?? 'v4.1'} model ({packManifest?.version_history?.architecture_version ?? '20-node DAG'})
+                      with a corrected evaluation pipeline: decoupled CPT fitting, adjudicated ground-truth labels,
+                      ecological risk data injection, and entropy-aware classification for uncertain cases.
+                    </p>
+                    <p>
+                      <strong>Evaluation:</strong>{' '}
+                      {packManifest
+                        ? `${packManifest?.training_corpus?.n_co_located ?? 'N/A'} co-located stations across ${packManifest?.training_corpus?.n_sites ?? 'N/A'} sites.`
+                        : 'Strict Tier 1 evaluation across training sites.'
+                      }
+                    </p>
+                    <p>
+                      <strong>Key metrics (MAP rule):</strong> Accuracy{' '}
+                      {packManifest?.evaluation_profile?.loo_accuracy != null
+                        ? (packManifest.evaluation_profile.loo_accuracy * 100).toFixed(1) + '%'
+                        : 'N/A'
+                      }, Kappa{' '}
+                      {packManifest?.evaluation_profile?.loo_kappa?.toFixed(3) ?? 'N/A'}.
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Kappa {packManifest?.evaluation_profile?.loo_kappa?.toFixed(3) ?? '~0.2'} ={' '}
+                      {(packManifest?.evaluation_profile?.loo_kappa ?? 0) < 0.21
+                        ? '\u201Cslight\u201D'
+                        : '\u201Cfair\u201D'
+                      } agreement (Landis &amp; Koch 1977).
+                      See the Review tab for detailed validation results.
+                    </p>
+                  </>
+                )}
               </div>
             </ExpandableSection>
 
-            <ExpandableSection title="Model architecture (v4.0)" defaultOpen>
+            <ExpandableSection title={`Model architecture (${packManifest?.version_history?.architecture_version ?? 'v4.0'})`} defaultOpen>
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-3">
                 <p>
                   The BN-RRM is a <strong>Landis (2021) causal Bayesian Network</strong> with 20
@@ -210,7 +250,7 @@ export function GettingStartedView() {
                     items="ecological_risk (causal target)" />
                 </div>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                  v4.0 uses <code>sulfide_binding</code> (calibrated from AVS/SEM ratio) as the metal
+                  The model uses <code>sulfide_binding</code> (calibrated from AVS/SEM ratio) as the metal
                   bioavailability modifier. The <strong>Detailed BN</strong> tab shows the full DAG
                   with interactive inference.
                 </p>

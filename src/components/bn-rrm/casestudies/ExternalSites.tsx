@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 import { normalizeRiskComparison } from '@/lib/bn-rrm/normalize-artifacts';
 import type { NormalizedRiskComparison } from '@/lib/bn-rrm/normalize-artifacts';
+import { usePackStore } from '@/stores/bn-rrm/packStore';
 import { ExpandableSection } from '@/components/bn-rrm/shared/ExpandableSection';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { cn } from '@/utils/cn';
@@ -74,6 +75,7 @@ const CLASS_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export function ExternalSites() {
+  const packManifest = usePackStore((s) => s.packManifest);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: comparisonDataRaw, loading, error } = usePackArtifact<any>('risk_comparison');
 
@@ -132,8 +134,39 @@ export function ExternalSites() {
         </p>
       </div>
 
+      {/* Version mismatch warning */}
+      {(() => {
+        const artifactVersion = comparisonDataRaw?._meta?.modelVersion;
+        const packVersion = packManifest?.version_history?.model_version;
+        if (artifactVersion && packVersion && !artifactVersion.includes(packVersion)) {
+          return (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+              <p className="text-xs text-amber-700 dark:text-amber-300">
+                Comparison data generated with model {artifactVersion}. Current model
+                is {packVersion}. Predictions may differ slightly. A data refresh is pending.
+              </p>
+            </div>
+          );
+        }
+        return null;
+      })()}
+
       {externalSites.length === 0 ? (
-        <EmptyState />
+        packManifest?.scope_type === 'site_specific' ? (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 text-center">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              External site comparisons apply to the general model.
+              Switch to the <strong>General</strong> pack to see comparisons with BC contaminated sites
+              that were not part of BN-RRM training.
+            </p>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+              Site-specific packs compare the site model against the general model for the same stations.
+              See the <strong>Risk Comparison</strong> section in the Review tab.
+            </p>
+          </div>
+        ) : (
+          <EmptyState />
+        )
       ) : (
         <div className="space-y-4">
           {externalSites.map((site) => (

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { usePackStore } from '@/stores/bn-rrm/packStore';
 import { normalizeProvenance, type NormalizedStation } from '@/lib/bn-rrm/normalize-artifacts';
 
 type Document = {
@@ -97,6 +98,7 @@ function exportData(data: unknown, filename: string, type: 'json' | 'csv') {
 }
 
 export function DataProvenance() {
+  const packManifest = usePackStore((s) => s.packManifest);
   const { data: provDataRaw, loading, error } = usePackArtifact<any>('provenance');
   const [activeTab, setActiveTab] = useState<'registry' | 'stations'>('registry');
   const [selectedStation, setSelectedStation] = useState<number | null>(null);
@@ -143,6 +145,26 @@ export function DataProvenance() {
   }
 
   if (!data) {
+    if (packManifest?.scope_type === 'site_specific') {
+      return (
+        <div className="flex-1 p-8">
+          <div className="max-w-2xl mx-auto">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-4">Data &amp; Provenance</h2>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                Provenance records are maintained at the general model level.
+                This site pack ({packManifest?.site_scope?.name ?? 'site-specific'}) inherits
+                provenance from its parent pack.
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                Switch to the <strong>General</strong> pack for the full document registry
+                and station-level traceability ({packManifest?.parent_pack_id ?? 'bnrrm-general-v1.0-dev-map'}).
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-red-500 text-sm">{error ?? 'Failed to load data'}</div>
