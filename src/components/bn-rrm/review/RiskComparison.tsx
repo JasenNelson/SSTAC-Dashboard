@@ -29,11 +29,19 @@ export function RiskComparison() {
   const data = (rawData && !error) ? normalizeRiskComparison(rawData) : null;
 
   // ALL hooks must be called before any early return (React Rules of Hooks)
-  const { pairs, bnrrm, woe } = useMemo(() => {
-    if (!data?.siteComparisons) return { pairs: [] as [string, string][], bnrrm: [] as string[], woe: [] as string[] };
+  const { pairs, bnrrm, woe, predictionRuleCounts } = useMemo(() => {
+    if (!data?.siteComparisons) {
+      return {
+        pairs: [] as [string, string][],
+        bnrrm: [] as string[],
+        woe: [] as string[],
+        predictionRuleCounts: {} as Record<string, number>,
+      };
+    }
     const p: [string, string][] = [];
     const bn: string[] = [];
     const w: string[] = [];
+    const counts: Record<string, number> = {};
 
     for (const site of data.siteComparisons) {
       for (const sc of site.stationComparisons) {
@@ -42,10 +50,13 @@ export function RiskComparison() {
           bn.push(sc.bnrrmPredicted);
           w.push(sc.reportEstimate.mappedBNClass);
         }
+        if (sc.predictionRule) {
+          counts[sc.predictionRule] = (counts[sc.predictionRule] ?? 0) + 1;
+        }
       }
     }
 
-    return { pairs: p, bnrrm: bn, woe: w };
+    return { pairs: p, bnrrm: bn, woe: w, predictionRuleCounts: counts };
   }, [data]);
 
   // Compute agreement report
@@ -96,7 +107,7 @@ export function RiskComparison() {
           Risk Comparison
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          BN-RRM posterior MAP predictions compared with report-stated WOE classifications
+          BN-RRM station predictions compared with report-stated WOE classifications
         </p>
       </div>
 
@@ -104,7 +115,7 @@ export function RiskComparison() {
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
         <p className="text-sm text-blue-800 dark:text-blue-200">
           <strong>Inter-method comparison.</strong> This section compares BN-RRM LOO predictions
-          (MAP state of the ecological_risk posterior) with report-stated WOE risk classifications
+          with report-stated WOE risk classifications
           mapped to the BN 3-class space. These are different assessment methods — agreement metrics
           measure consistency between methods, not accuracy against ground truth.
           The {data.meta.modelVersion} model was not trained on WOE labels.
@@ -115,15 +126,41 @@ export function RiskComparison() {
           {report.nExcludedNoLOO} excluded (WOE but no LOO) &middot;
           {report.nExcludedNoWOE} excluded (LOO but no WOE)
         </p>
-        {packManifest?.version_history?.model_version &&
-          data.meta.modelVersion &&
-          !data.meta.modelVersion.includes(packManifest.version_history.model_version) && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-            Note: comparison data predates the current BN-RRM v1.0 model.
-            A refresh against v1.0 is pending.
+        {data.meta.evaluationRule && (
+          <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
+            Evaluation rule: {data.meta.evaluationRule}
           </p>
         )}
       </div>
+
+      {data.meta.status === 'mixed_evaluation_framework' && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <p className="text-sm text-amber-800 dark:text-amber-200">
+            <strong>Mixed-state comparison artifact.</strong> Only part of this comparison has been refreshed to the v1.0 entropy-aware rule. The remaining stations are still legacy v4.0 MAP outputs and must be read as pending a separate evaluation expansion lane.
+          </p>
+          <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
+            {Object.entries(predictionRuleCounts).map(([rule, count]) => `${rule}: ${count}`).join(' · ')}
+          </p>
+          <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
+            Rule counts are across all {data.summary.totalWOERecords ?? 59} WOE station records in the artifact. Agreement statistics below use only the matched subset ({report.n}) with both a BN-RRM prediction and a defensibly mapped WOE label.
+          </p>
+          {data.meta.noteExternalSites && (
+            <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
+              {data.meta.noteExternalSites}
+            </p>
+          )}
+        </div>
+      )}
+
+      {packManifest?.version_history?.model_version &&
+        data.meta.modelVersion &&
+        !data.meta.modelVersion.includes(packManifest.version_history.model_version) && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+          <p className="text-xs text-amber-700 dark:text-amber-300">
+            Comparison data predates the current BN-RRM v1.0 model. A refresh against v1.0 is pending.
+          </p>
+        </div>
+      )}
 
       {/* Agreement summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -328,9 +365,9 @@ function ComparisonMatrix({ matrix }: { matrix: number[][] }) {
   const maxCount = Math.max(...matrix.flat());
 
   return (
-    <div>
-      <div className="text-xs text-slate-500 dark:text-slate-400 text-center mb-2 font-medium">
-        BN-RRM Predicted (LOO MAP)
+      <div>
+        <div className="text-xs text-slate-500 dark:text-slate-400 text-center mb-2 font-medium">
+        BN-RRM Predicted
       </div>
       <div className="flex items-start gap-2">
         <div className="flex flex-col justify-center mt-7 mr-1">
@@ -393,6 +430,7 @@ function StationTable({ sites, showExclusions }: { sites: NormalizedSiteComparis
           <tr className="border-b border-slate-200 dark:border-slate-700">
             <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Station</th>
             <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">BN-RRM</th>
+            <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Rule</th>
             <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">WOE (original)</th>
             <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">WOE (mapped)</th>
             <th className="text-center py-2 font-medium text-slate-500 dark:text-slate-400">Match</th>
@@ -413,6 +451,15 @@ function StationTable({ sites, showExclusions }: { sites: NormalizedSiteComparis
                     </span>
                   ) : (
                     <span className="text-xs text-slate-400 italic">excluded</span>
+                  )}
+                </td>
+                <td className="py-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  {sc.predictionRule ? (
+                    <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                      {sc.predictionRule}
+                    </span>
+                  ) : (
+                    <span className="text-slate-300">—</span>
                   )}
                 </td>
                 <td className="py-1.5 text-xs text-slate-500 dark:text-slate-400">{sc.reportEstimate.originalLabel}</td>

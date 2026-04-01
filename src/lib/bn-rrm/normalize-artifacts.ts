@@ -176,11 +176,22 @@ export interface NormalizedValidation {
   predictions: NormalizedPrediction[];
   per_class: Record<string, { precision: number; recall: number; f1: number; support: number }> | null;
   disclaimer: string;
+  status: string;
+  semanticScope: string;
 }
 
 export function normalizeValidation(raw: any): NormalizedValidation {
   if (!raw) {
-    return { n_complete: 0, accuracy: null, kappa: null, predictions: [], per_class: null, disclaimer: '' };
+    return {
+      n_complete: 0,
+      accuracy: null,
+      kappa: null,
+      predictions: [],
+      per_class: null,
+      disclaimer: '',
+      status: '',
+      semanticScope: '',
+    };
   }
 
   // General: predictions; Site: station_results
@@ -202,6 +213,8 @@ export function normalizeValidation(raw: any): NormalizedValidation {
     predictions,
     per_class: raw.per_class ?? null,
     disclaimer: raw.disclaimer ?? '',
+    status: raw.status ?? '',
+    semanticScope: raw.semantic_scope ?? '',
   };
 }
 
@@ -676,6 +689,7 @@ export interface NormalizedStationComparison {
   stationName: string;
   bnrrmPredicted: string | null;
   bnrrmObserved: string | null;
+  predictionRule: string | null;
   reportEstimate: {
     originalLabel: string;
     mappedBNClass: string | null;
@@ -704,6 +718,7 @@ export interface NormalizedSiteComparison {
 export interface NormalizedRiskComparison {
   siteComparisons: NormalizedSiteComparison[];
   summary: {
+    totalWOERecords: number;
     matchedStations: number;
     excludedNoLOO: number;
     excludedNoWOE: number;
@@ -715,7 +730,16 @@ export interface NormalizedRiskComparison {
     source: string;
     mappings: Record<string, { mapped: string; confidence: string; justification: string }>;
   };
-  meta: { governanceSpec: string; modelVersion: string; note: string };
+  meta: {
+    governanceSpec: string;
+    modelVersion: string;
+    note: string;
+    status: string;
+    evaluationRule: string;
+    noteExternalSites: string;
+    externalSitesStatus: string;
+    externalSitesNote: string;
+  };
   // Site-specific fields
   comparisonType: string;
   site: string;
@@ -726,9 +750,26 @@ export function normalizeRiskComparison(raw: any): NormalizedRiskComparison {
   if (!raw) {
     return {
       siteComparisons: [],
-      summary: { matchedStations: 0, excludedNoLOO: 0, excludedNoWOE: 0, sitesWithWOE: 0, sitesWithoutWOE: 0, sitesWithoutWOENames: [] },
+      summary: {
+        totalWOERecords: 0,
+        matchedStations: 0,
+        excludedNoLOO: 0,
+        excludedNoWOE: 0,
+        sitesWithWOE: 0,
+        sitesWithoutWOE: 0,
+        sitesWithoutWOENames: [],
+      },
       mappingTable: { source: '', mappings: {} },
-      meta: { governanceSpec: '', modelVersion: '', note: '' },
+      meta: {
+        governanceSpec: '',
+        modelVersion: '',
+        note: '',
+        status: '',
+        evaluationRule: '',
+        noteExternalSites: '',
+        externalSitesStatus: '',
+        externalSitesNote: '',
+      },
       comparisonType: '',
       site: '',
       interpretation: '',
@@ -788,6 +829,7 @@ export function normalizeRiskComparison(raw: any): NormalizedRiskComparison {
   return {
     siteComparisons,
     summary: {
+      totalWOERecords: summary.totalWOERecords ?? 0,
       matchedStations: summary.matchedStations ?? 0,
       excludedNoLOO: summary.excludedNoLOO ?? 0,
       excludedNoWOE: summary.excludedNoWOE ?? 0,
@@ -800,6 +842,11 @@ export function normalizeRiskComparison(raw: any): NormalizedRiskComparison {
       governanceSpec: raw._meta?.governanceSpec ?? '',
       modelVersion: raw._meta?.modelVersion ?? raw._meta?.model_version ?? '',
       note: raw._meta?.note ?? '',
+      status: raw._meta?.status ?? '',
+      evaluationRule: raw._meta?.evaluationRule ?? '',
+      noteExternalSites: raw._meta?.note_externalSites ?? '',
+      externalSitesStatus: raw._meta?.externalSitesStatus ?? '',
+      externalSitesNote: raw._meta?.externalSitesNote ?? '',
     },
     comparisonType: raw.comparison_type ?? '',
     site: raw.site ?? '',
@@ -813,6 +860,7 @@ function normalizeStationComparison(sc: any): NormalizedStationComparison {
     stationName: sc.stationName ?? '',
     bnrrmPredicted: sc.bnrrmPredicted ?? null,
     bnrrmObserved: sc.bnrrmObserved ?? null,
+    predictionRule: sc.prediction_rule ?? sc.predictionRule ?? null,
     reportEstimate: {
       originalLabel: sc.reportEstimate?.originalLabel ?? '',
       mappedBNClass: sc.reportEstimate?.mappedBNClass ?? null,

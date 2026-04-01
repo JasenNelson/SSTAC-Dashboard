@@ -292,15 +292,22 @@ export function ValidationDashboard() {
         </p>
       </div>
 
-      {/* Diagnostic replay disclaimer for site packs */}
-      {validationData.disclaimer && (
+      {/* Validation semantics disclaimer */}
+      {(validationData.disclaimer || validationData.status) && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
           <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-1">
-            Diagnostic Replay
+            {validationData.status === 'development_baseline_map' ? 'Development-Baseline MAP View' : 'Diagnostic Replay'}
           </p>
-          <p className="text-sm text-amber-700 dark:text-amber-300">
-            {validationData.disclaimer}
-          </p>
+          {validationData.status === 'development_baseline_map' && (
+            <p className="text-sm text-amber-700 dark:text-amber-300 mb-2">
+              `validation_results.json` remains the development-baseline MAP evaluation artifact. The v1.0 publication-baseline entropy-aware evaluation is separate and must not be conflated with this table.
+            </p>
+          )}
+          {validationData.disclaimer && (
+            <p className="text-sm text-amber-700 dark:text-amber-300">
+              {validationData.disclaimer}
+            </p>
+          )}
           {packManifest?.scope_type === 'site_specific' && (
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
               Site pack: {packManifest?.site_scope?.name ?? 'N/A'} ({packManifest?.training_corpus?.n_stations ?? 'N/A'} stations).
@@ -325,6 +332,11 @@ export function ValidationDashboard() {
         <div className="flex justify-center">
           <ConfusionMatrix predictions={predictions} />
         </div>
+        {validationData.status === 'development_baseline_map' && (
+          <p className="text-xs text-amber-600 dark:text-amber-400 mt-3">
+            Confusion matrix and prediction table below reflect the MAP development baseline, not the publication-baseline entropy-aware rule.
+          </p>
+        )}
       </div>
 
       {/* LOO Predictions Table */}

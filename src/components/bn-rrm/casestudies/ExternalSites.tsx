@@ -134,7 +134,19 @@ export function ExternalSites() {
         </p>
       </div>
 
-      {/* Version mismatch warning */}
+      {normalized?.meta.externalSitesStatus === 'pending_v1_alignment' && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+          <p className="text-xs text-amber-700 dark:text-amber-300">
+            <strong>Pending against v1.0.</strong> External-site report conclusions are preserved as factual reference content, but BN-side v1.0 alignment is not being claimed in this tranche because these non-training sites do not have LOO coverage.
+          </p>
+          {normalized.meta.externalSitesNote && (
+            <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
+              {normalized.meta.externalSitesNote}
+            </p>
+          )}
+        </div>
+      )}
+
       {(() => {
         const artifactVersion = comparisonDataRaw?._meta?.modelVersion;
         const packVersion = packManifest?.version_history?.model_version;
@@ -142,8 +154,7 @@ export function ExternalSites() {
           return (
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
               <p className="text-xs text-amber-700 dark:text-amber-300">
-                Comparison data predates the current BN-RRM v1.0 model.
-                A refresh against v1.0 is pending.
+                Comparison data predates the current BN-RRM v1.0 model. A refresh against v1.0 is pending.
               </p>
             </div>
           );
