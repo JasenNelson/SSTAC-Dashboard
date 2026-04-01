@@ -2,7 +2,7 @@
   "_meta": {
     "export_date": "2026-03-27T15:18:30.140753+00:00",
     "db_hash": "9fbf0224e0aa9529011f8a93d2b5994c759171f309f9d25112edc3971cdf14dc",
-    "model_version": "4.1",
+    "model_version": "1.0",
     "dataset_status": "FROZEN (DR-003)",
     "handoff_version": "28.1",
     "release_packet_date": "2026-03-09"
@@ -11,7 +11,7 @@
     "name": "BN-RRM (Bayesian Network Relative Risk Model)",
     "framework": "Landis (2021) Causal DAG",
     "model_id": "bnrrm-landis-causal",
-    "version": "4.1",
+    "version": "1.0",
     "nodes": 20,
     "edges": 24,
     "states_per_node": 3,
@@ -270,7 +270,7 @@
         }
       ],
       "current_band": "Poor",
-      "narrative": "Kappa of 0.207 falls in the 'Poor' band on the Landis/Koch scale. This reflects three structural factors: (1) the moderate class has only 8 samples (25% recall \u2014 v4.1 improved from 12.5% in v4.0 via soft evidence, but remains limited by class rarity), (2) the model is intentionally conservative for regulatory screening (predicting high when uncertain), and (3) high-risk recall is 76.5% \u2014 the model correctly identifies most contaminated sites. For a protective screening tool, high recall matters more than balanced accuracy."
+      "narrative": "Kappa of 0.207 falls in the 'Poor' band on the Landis/Koch scale. This reflects three structural factors: (1) the moderate class has only 8 samples (25% recall  --  v4.1 improved from 12.5% in v4.0 via soft evidence, but remains limited by class rarity), (2) the model is intentionally conservative for regulatory screening (predicting high when uncertain), and (3) high-risk recall is 76.5%  --  the model correctly identifies most contaminated sites. For a protective screening tool, high recall matters more than balanced accuracy."
     },
     "performance_plateau": {
       "previous_n": 63,

@@ -1,10 +1,12 @@
 {
   "_meta": {
-    "generatedDate": "2026-03-26T01:34:22.081764Z",
+    "generatedDate": "2026-04-01T01:36:28.812374+00:00",
     "governanceSpec": "COMPARISON_GOVERNANCE.md v1.0",
-    "modelVersion": "bnrrm-landis-causal v4.0",
+    "modelVersion": "bnrrm-landis-causal v1.0",
     "comparatorType": "WOE",
-    "note": "Comparator labels are external reference labels only. They are NEVER BN training targets."
+    "note": "Comparator labels are external reference labels only. They are NEVER BN training targets.",
+    "evaluationRule": "entropy-aware (threshold=1.06, mod_floor=0.25)",
+    "note_externalSites": "externalSites content is version-independent (factual report conclusions). siteComparisons refreshed to v1.0 entropy-aware LOO."
   },
   "summary": {
     "totalWOERecords": 59,
@@ -475,9 +477,13 @@
             },
             "isTrainingTarget": false
           },
-          "bnrrmPredicted": "high",
+          "bnrrmPredicted": "moderate",
           "bnrrmObserved": "high",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": {
+            "low": 0.3595,
+            "moderate": 0.3408,
+            "high": 0.2997
+          }
         },
         {
           "stationId": 202,
@@ -504,9 +510,13 @@
             },
             "isTrainingTarget": false
           },
-          "bnrrmPredicted": "high",
+          "bnrrmPredicted": "moderate",
           "bnrrmObserved": "high",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": {
+            "low": 0.3378,
+            "moderate": 0.3385,
+            "high": 0.3237
+          }
         },
         {
           "stationId": 203,
@@ -535,7 +545,11 @@
           },
           "bnrrmPredicted": "high",
           "bnrrmObserved": "high",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": {
+            "low": 0.1306,
+            "moderate": 0.2456,
+            "high": 0.6238
+          }
         },
         {
           "stationId": 204,
@@ -562,9 +576,13 @@
             },
             "isTrainingTarget": false
           },
-          "bnrrmPredicted": "high",
+          "bnrrmPredicted": "moderate",
           "bnrrmObserved": "high",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": {
+            "low": 0.2532,
+            "moderate": 0.3197,
+            "high": 0.427
+          }
         }
       ],
       "siteRiskNarrative": null,
@@ -723,9 +741,13 @@
             },
             "isTrainingTarget": false
           },
-          "bnrrmPredicted": "low",
+          "bnrrmPredicted": "moderate",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": {
+            "low": 0.3774,
+            "moderate": 0.3419,
+            "high": 0.2808
+          }
         },
         {
           "stationId": 212,
@@ -752,9 +774,13 @@
             },
             "isTrainingTarget": false
           },
-          "bnrrmPredicted": "low",
+          "bnrrmPredicted": "moderate",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": {
+            "low": 0.3716,
+            "moderate": 0.3401,
+            "high": 0.2883
+          }
         },
         {
           "stationId": 213,
@@ -781,9 +807,13 @@
             },
             "isTrainingTarget": false
           },
-          "bnrrmPredicted": "low",
+          "bnrrmPredicted": "moderate",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": {
+            "low": 0.401,
+            "moderate": 0.3398,
+            "high": 0.2592
+          }
         },
         {
           "stationId": 214,
@@ -868,9 +898,13 @@
             },
             "isTrainingTarget": false
           },
-          "bnrrmPredicted": "low",
+          "bnrrmPredicted": "moderate",
           "bnrrmObserved": "low",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": {
+            "low": 0.3774,
+            "moderate": 0.3419,
+            "high": 0.2808
+          }
         },
         {
           "stationId": 217,
@@ -1743,9 +1777,13 @@
             },
             "isTrainingTarget": false
           },
-          "bnrrmPredicted": "low",
+          "bnrrmPredicted": "moderate",
           "bnrrmObserved": "high",
-          "bnrrmPosterior": null
+          "bnrrmPosterior": {
+            "low": 0.3718,
+            "moderate": 0.3366,
+            "high": 0.2916
+          }
         },
         {
           "stationId": 278,
@@ -1867,7 +1905,7 @@
         "sulfideBinding": false,
         "toxicity": true,
         "community": false,
-        "note": "Metals (mercury, arsenic confirmed as COPCs via fish ingestion pathway). PAHs confirmed (creosote-related COPCs, industrial foreshore). Aquatic toxicity testing (\u00c2\u00a717.2.1) and sediment toxicity testing (\u00c2\u00a717.2.2) conducted. Benthic/epibenthic invertebrates are ROPCs but community survey status unconfirmed from executive summary. BN-RRM inference is partial-evidence \u00e2\u20ac\u201d multiple substance nodes can be populated but condition nodes (TOC, grain size, AVS) are unconfirmed."
+        "note": "Metals (mercury, arsenic confirmed as COPCs via fish ingestion pathway). PAHs confirmed (creosote-related COPCs, industrial foreshore). Aquatic toxicity testing (§17.2.1) and sediment toxicity testing (§17.2.2) conducted. Benthic/epibenthic invertebrates are ROPCs but community survey status unconfirmed from executive summary. BN-RRM inference is partial-evidence — multiple substance nodes can be populated but condition nodes (TOC, grain size, AVS) are unconfirmed."
       },
       "reportConclusions": [
         {
@@ -1905,7 +1943,7 @@
           "woeConclusion": "Low risk (per-AEC conclusion)",
           "mappedBNClass": "low",
           "mappingConfidence": "approximate",
-          "mappingJustification": "Per-AEC conclusion from WOE integration. AEC 1B is the primary near-field assessment area. Mapping is approximate \u00e2\u20ac\u201d AEC is an area-level unit, not station-level.",
+          "mappingJustification": "Per-AEC conclusion from WOE integration. AEC 1B is the primary near-field assessment area. Mapping is approximate — AEC is an area-level unit, not station-level.",
           "comparisonLevel": "area",
           "provenance": {
             "sourceDocument": "WorleyParsons (2011). HHERA, 224 Front Street, New Westminster, BC.",
@@ -1988,7 +2026,7 @@
           "woeIntegrationNote": "Moderate chemistry hazard refuted by higher-weighted negligible toxicity and tissue LOEs.",
           "mappedBNClass": "low",
           "mappingConfidence": "approximate",
-          "mappingJustification": "Tetra Tech Negligible maps approximately to BN Low \u00e2\u20ac\u201d both indicate minimal ecological concern. Mapping is approximate because the frameworks use different conceptual bases and the WOE scale is a 3-level hazard scale, not a 3-class ecological risk scale.",
+          "mappingJustification": "Tetra Tech Negligible maps approximately to BN Low — both indicate minimal ecological concern. Mapping is approximate because the frameworks use different conceptual bases and the WOE scale is a 3-level hazard scale, not a 3-class ecological risk scale.",
           "comparisonLevel": "site",
           "provenance": {
             "sourceDocument": "Tetra Tech EBA Inc. (2015). Detailed Risk Assessment, Water Lot Portion of 1 Port Drive, Nanaimo, BC. File: ENVIND03511-02.",
@@ -2121,7 +2159,7 @@
         "sulfideBinding": false,
         "toxicity": false,
         "community": false,
-        "note": "Petroleum-dominant profile (LEPH, VPH, BTEX). Sediment COPCs are LEPH, VPH, benzene, ethylbenzene, xylenes \u00e2\u20ac\u201d none are BN-RRM canonical substance nodes. Cu and Zn appear only as porewater/prey-pathway COPCs, not sediment COPCs. No sediment metals, PAHs (as Total PAHs), PCBs, TOC, grain size, or AVS reported as COPCs. Benthic invertebrate sampling conducted (SLR field program) but not as formal toxicity testing or community survey \u00e2\u20ac\u201d used as supporting line of evidence only. BN-RRM inference would rely almost entirely on prior distributions."
+        "note": "Petroleum-dominant profile (LEPH, VPH, BTEX). Sediment COPCs are LEPH, VPH, benzene, ethylbenzene, xylenes — none are BN-RRM canonical substance nodes. Cu and Zn appear only as porewater/prey-pathway COPCs, not sediment COPCs. No sediment metals, PAHs (as Total PAHs), PCBs, TOC, grain size, or AVS reported as COPCs. Benthic invertebrate sampling conducted (SLR field program) but not as formal toxicity testing or community survey — used as supporting line of evidence only. BN-RRM inference would rely almost entirely on prior distributions."
       },
       "reportConclusions": [
         {
@@ -2131,7 +2169,7 @@
             "HQ Screening: LEPHw in porewater (HQ 3.76-5.92), benzo(a)pyrene in porewater (HQ evaluated), zinc in porewater (HQ 1.12)"
           ],
           "woeConclusion": "Low risk (acceptable)",
-          "woeIntegrationNote": "HQ > 1 for LEPHw and zinc in porewater, but risk considered low based on limited area of impact, intermittent tidal submergence, lower habitat suitability of mid/upper intertidal seep area, and low magnitude of HQs. Not a WOE integration \u00e2\u20ac\u201d professional judgment applied to HQ results with supporting site observations.",
+          "woeIntegrationNote": "HQ > 1 for LEPHw and zinc in porewater, but risk considered low based on limited area of impact, intermittent tidal submergence, lower habitat suitability of mid/upper intertidal seep area, and low magnitude of HQs. Not a WOE integration — professional judgment applied to HQ results with supporting site observations.",
           "mappedBNClass": "low",
           "mappingConfidence": "weak",
           "mappingJustification": "SLR 'low risk (acceptable)' maps weakly to BN Low. The consultant conclusion is based on HQ magnitude + area-of-impact argument, not an integrated multi-LoE framework. The mapping is weak because: (1) HQ screening is a single-pathway method, not comparable to multi-LoE ecological risk classification; (2) the petroleum COPCs do not overlap with BN-RRM substance nodes; (3) the 'acceptable' determination is partially based on remedial context (IRA barriers in place), not solely on ecological risk level.",
@@ -2140,7 +2178,7 @@
             "sourceDocument": "SLR Consulting (Canada) Ltd. (2014). HHERA of Seep Area, Foreshore Down Slope of the East Impounding Basin, Chevron Burnaby Refinery. SLR Project No. 201.00959.00001.",
             "sourcePage": 85,
             "sourceTableFigure": "Section 6.3.1",
-            "extractedLabel": "Low risk (acceptable) \u00e2\u20ac\u201d HQs for LEPHw and zinc > 1 but considered low based on limited impact area and low magnitude",
+            "extractedLabel": "Low risk (acceptable) — HQs for LEPHw and zinc > 1 but considered low based on limited impact area and low magnitude",
             "extractionMethod": "manual",
             "extractionDate": "2026-03-26",
             "extractor": "claude"
@@ -2151,7 +2189,7 @@
           "receptor": "Benthic Invertebrates (Sediment Contact, Pre-IRA)",
           "loeCount": 1,
           "loes": [
-            "HQ Screening: LEPH, VPH, benzene, ethylbenzene, xylenes in sediment (Pre-IRA barriers scenario only \u00e2\u20ac\u201d contaminated sediment removed during IRA installation)"
+            "HQ Screening: LEPH, VPH, benzene, ethylbenzene, xylenes in sediment (Pre-IRA barriers scenario only — contaminated sediment removed during IRA installation)"
           ],
           "woeConclusion": "Not a current concern (remediated)",
           "woeIntegrationNote": "Sediment COPCs (LEPH, VPH, xylenes) were identified under the pre-IRA scenario only. The contaminated sediment has been removed during IRA barrier installation. Risk from sediment COPCs is not a concern under the current IRA barriers scenario.",
@@ -2185,7 +2223,7 @@
             "sourceDocument": "SLR Consulting (Canada) Ltd. (2014). HHERA of Seep Area, Foreshore Down Slope of the East Impounding Basin, Chevron Burnaby Refinery.",
             "sourcePage": 85,
             "sourceTableFigure": "Section 6.3.1",
-            "extractedLabel": "Negligible \u00e2\u20ac\u201d all HQs < 1 for all scenarios",
+            "extractedLabel": "Negligible — all HQs < 1 for all scenarios",
             "extractionMethod": "manual",
             "extractionDate": "2026-03-26",
             "extractor": "claude"

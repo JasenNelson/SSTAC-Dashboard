@@ -1,4 +1,8 @@
 {
+  "_meta": {
+    "status": "legacy_evaluation_framework",
+    "note": "M1-M4 model variants are from the v0.x evaluation pipeline (compare_models.py). Retained for historical comparison. The v1.0 evaluation uses entropy-aware classification on the v4.0 causal DAG."
+  },
   "three_class": {
     "M1_Baseline": {
       "accuracy": 0.7454545454545455,

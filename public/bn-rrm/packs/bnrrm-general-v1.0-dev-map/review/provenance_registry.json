@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "export_date": "2026-03-18T05:03:05.571508+00:00",
-    "db_hash": "9fbf0224e0aa9529011f8a93d2b5994c759171f309f9d25112edc3971cdf14dc",
+    "export_date": "2026-04-01T01:37:01.660950+00:00",
+    "db_hash": "fb9486e22761a67c071e6f00e739859c776d0c6823c4af2595246567e4c23c21",
     "description": "Document registry and station-level provenance for data traceability"
   },
   "documents": [
@@ -2608,6 +2608,166 @@
       "provenance_quality": "legacy_no_provenance",
       "provenance_coverage": {
         "data_records": 11,
+        "provenance_linked": 0,
+        "coverage_pct": 0.0
+      },
+      "provenance_records": []
+    },
+    {
+      "station_id": 289,
+      "station_name": "CAL",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "registry_id": "5668",
+      "waterbody_type": "freshwater",
+      "data_counts": {
+        "chemistry": 8,
+        "toxicity": 0,
+        "community": 1
+      },
+      "co_location": "partial",
+      "provenance_quality": "legacy_no_provenance",
+      "provenance_coverage": {
+        "data_records": 9,
+        "provenance_linked": 0,
+        "coverage_pct": 0.0
+      },
+      "provenance_records": []
+    },
+    {
+      "station_id": 286,
+      "station_name": "PE5C",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "registry_id": "5668",
+      "waterbody_type": "freshwater",
+      "data_counts": {
+        "chemistry": 8,
+        "toxicity": 0,
+        "community": 1
+      },
+      "co_location": "partial",
+      "provenance_quality": "legacy_no_provenance",
+      "provenance_coverage": {
+        "data_records": 9,
+        "provenance_linked": 0,
+        "coverage_pct": 0.0
+      },
+      "provenance_records": []
+    },
+    {
+      "station_id": 287,
+      "station_name": "PE5N",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "registry_id": "5668",
+      "waterbody_type": "freshwater",
+      "data_counts": {
+        "chemistry": 8,
+        "toxicity": 0,
+        "community": 1
+      },
+      "co_location": "partial",
+      "provenance_quality": "legacy_no_provenance",
+      "provenance_coverage": {
+        "data_records": 9,
+        "provenance_linked": 0,
+        "coverage_pct": 0.0
+      },
+      "provenance_records": []
+    },
+    {
+      "station_id": 288,
+      "station_name": "PE5S",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "registry_id": "5668",
+      "waterbody_type": "freshwater",
+      "data_counts": {
+        "chemistry": 8,
+        "toxicity": 0,
+        "community": 1
+      },
+      "co_location": "partial",
+      "provenance_quality": "legacy_no_provenance",
+      "provenance_coverage": {
+        "data_records": 9,
+        "provenance_linked": 0,
+        "coverage_pct": 0.0
+      },
+      "provenance_records": []
+    },
+    {
+      "station_id": 283,
+      "station_name": "PW5C",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "registry_id": "5668",
+      "waterbody_type": "freshwater",
+      "data_counts": {
+        "chemistry": 8,
+        "toxicity": 0,
+        "community": 1
+      },
+      "co_location": "partial",
+      "provenance_quality": "legacy_no_provenance",
+      "provenance_coverage": {
+        "data_records": 9,
+        "provenance_linked": 0,
+        "coverage_pct": 0.0
+      },
+      "provenance_records": []
+    },
+    {
+      "station_id": 284,
+      "station_name": "PW5N",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "registry_id": "5668",
+      "waterbody_type": "freshwater",
+      "data_counts": {
+        "chemistry": 8,
+        "toxicity": 0,
+        "community": 1
+      },
+      "co_location": "partial",
+      "provenance_quality": "legacy_no_provenance",
+      "provenance_coverage": {
+        "data_records": 9,
+        "provenance_linked": 0,
+        "coverage_pct": 0.0
+      },
+      "provenance_records": []
+    },
+    {
+      "station_id": 285,
+      "station_name": "PW5S",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "registry_id": "5668",
+      "waterbody_type": "freshwater",
+      "data_counts": {
+        "chemistry": 8,
+        "toxicity": 0,
+        "community": 1
+      },
+      "co_location": "partial",
+      "provenance_quality": "legacy_no_provenance",
+      "provenance_coverage": {
+        "data_records": 9,
+        "provenance_linked": 0,
+        "coverage_pct": 0.0
+      },
+      "provenance_records": []
+    },
+    {
+      "station_id": 290,
+      "station_name": "TEZZ",
+      "site_name": "Pinchi Lake Mercury Mine",
+      "registry_id": "5668",
+      "waterbody_type": "freshwater",
+      "data_counts": {
+        "chemistry": 7,
+        "toxicity": 0,
+        "community": 1
+      },
+      "co_location": "partial",
+      "provenance_quality": "legacy_no_provenance",
+      "provenance_coverage": {
+        "data_records": 8,
         "provenance_linked": 0,
         "coverage_pct": 0.0
       },
@@ -15260,18 +15420,18 @@
   ],
   "summary": {
     "total_documents": 19,
-    "total_stations": 282,
+    "total_stations": 290,
     "stations_with_provenance": 216,
     "co_location_breakdown": {
       "full_triad": 47,
-      "partial": 46,
+      "partial": 54,
       "single_loe": 186,
       "no_data": 3
     },
     "provenance_quality_breakdown": {
       "full_provenance": 31,
       "partial_provenance": 185,
-      "legacy_no_provenance": 63,
+      "legacy_no_provenance": 71,
       "no_data": 3
     }
   }

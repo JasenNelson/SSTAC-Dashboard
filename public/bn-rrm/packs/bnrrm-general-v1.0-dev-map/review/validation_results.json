@@ -1,24 +1,25 @@
 {
-  "loo_accuracy": 0.5244,
-  "loo_kappa": 0.2072,
-  "n_complete": 82,
+  "inference_mode": "screening",
+  "loo_accuracy": 0.6237,
+  "loo_kappa": 0.1846,
+  "n_complete": 93,
   "per_class": {
     "low": {
-      "precision": 0.7778,
-      "recall": 0.4912,
-      "f1": 0.6022,
-      "support": 57
+      "precision": 0.7286,
+      "recall": 0.8361,
+      "f1": 0.7786,
+      "support": 61
     },
     "moderate": {
-      "precision": 0.125,
-      "recall": 0.25,
-      "f1": 0.1667,
-      "support": 8
+      "precision": 0.5,
+      "recall": 0.0667,
+      "f1": 0.1176,
+      "support": 15
     },
     "high": {
-      "precision": 0.4333,
-      "recall": 0.7647,
-      "f1": 0.5532,
+      "precision": 0.2857,
+      "recall": 0.3529,
+      "f1": 0.3158,
       "support": 17
     }
   },
@@ -26,62 +27,74 @@
     {
       "station_id": 1,
       "station_name": "SED06-103",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 2,
       "station_name": "SED06-104",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 3,
       "station_name": "SED06-105",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "moderate"
     },
     {
       "station_id": 4,
       "station_name": "SED06-111",
-      "predicted": "high",
-      "observed": "moderate"
+      "predicted": "low",
+      "observed": "low"
     },
     {
       "station_id": 6,
       "station_name": "SED06-114",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 8,
       "station_name": "SED06-116",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 10,
       "station_name": "SED06-118",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 11,
       "station_name": "SED06-119",
-      "predicted": "moderate",
-      "observed": "moderate"
+      "predicted": "low",
+      "observed": "low"
+    },
+    {
+      "station_id": 199,
+      "station_name": "SED19-1",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 200,
+      "station_name": "SED19-2",
+      "predicted": "high",
+      "observed": "low"
     },
     {
       "station_id": 201,
       "station_name": "SED19-3",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "high"
     },
     {
       "station_id": 202,
       "station_name": "SED19-4",
-      "predicted": "high",
-      "observed": "high"
+      "predicted": "moderate",
+      "observed": "moderate"
     },
     {
       "station_id": 203,
@@ -93,13 +106,19 @@
       "station_id": 204,
       "station_name": "SED19-6",
       "predicted": "high",
-      "observed": "high"
+      "observed": "moderate"
     },
     {
       "station_id": 205,
       "station_name": "SED19-REF1",
       "predicted": "high",
-      "observed": "high"
+      "observed": "moderate"
+    },
+    {
+      "station_id": 206,
+      "station_name": "SED19-REF2",
+      "predicted": "low",
+      "observed": "low"
     },
     {
       "station_id": 207,
@@ -158,7 +177,7 @@
     {
       "station_id": 216,
       "station_name": "SED13-24",
-      "predicted": "low",
+      "predicted": "high",
       "observed": "low"
     },
     {
@@ -182,19 +201,19 @@
     {
       "station_id": 225,
       "station_name": "SED06-19",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 227,
       "station_name": "SED06-22",
-      "predicted": "high",
+      "predicted": "moderate",
       "observed": "low"
     },
     {
       "station_id": 228,
       "station_name": "SED06-35",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -206,19 +225,19 @@
     {
       "station_id": 230,
       "station_name": "SED06-42",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 231,
       "station_name": "SED06-46",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 232,
       "station_name": "SED06-63",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -236,7 +255,7 @@
     {
       "station_id": 235,
       "station_name": "SED12-21",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -254,19 +273,19 @@
     {
       "station_id": 238,
       "station_name": "SED12-24",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 240,
       "station_name": "SED12-34",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 241,
       "station_name": "SED12-35",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -278,13 +297,13 @@
     {
       "station_id": 243,
       "station_name": "SED12-45",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
       "station_id": 244,
       "station_name": "SED12-46",
-      "predicted": "high",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -344,7 +363,7 @@
     {
       "station_id": 254,
       "station_name": "SED13-10",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -362,7 +381,7 @@
     {
       "station_id": 257,
       "station_name": "SED13-15b",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -386,7 +405,7 @@
     {
       "station_id": 261,
       "station_name": "SED13-24",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -416,7 +435,7 @@
     {
       "station_id": 266,
       "station_name": "SED13-36",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -434,7 +453,7 @@
     {
       "station_id": 269,
       "station_name": "SED13-39",
-      "predicted": "moderate",
+      "predicted": "low",
       "observed": "low"
     },
     {
@@ -483,37 +502,89 @@
       "station_id": 277,
       "station_name": "PZ16-02",
       "predicted": "low",
-      "observed": "high"
+      "observed": "moderate"
     },
     {
       "station_id": 278,
       "station_name": "PZ16-03",
       "predicted": "high",
-      "observed": "high"
+      "observed": "moderate"
     },
     {
       "station_id": 279,
       "station_name": "PZ16-04",
       "predicted": "high",
-      "observed": "high"
+      "observed": "moderate"
     },
     {
       "station_id": 280,
       "station_name": "PZ16-05",
       "predicted": "low",
-      "observed": "high"
+      "observed": "moderate"
     },
     {
       "station_id": 281,
       "station_name": "PZ16-07",
       "predicted": "low",
-      "observed": "high"
+      "observed": "moderate"
     },
     {
       "station_id": 282,
       "station_name": "PZ16-08",
       "predicted": "high",
+      "observed": "moderate"
+    },
+    {
+      "station_id": 283,
+      "station_name": "PW5C",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 284,
+      "station_name": "PW5N",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 285,
+      "station_name": "PW5S",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 286,
+      "station_name": "PE5C",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 287,
+      "station_name": "PE5N",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 288,
+      "station_name": "PE5S",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 289,
+      "station_name": "CAL",
+      "predicted": "low",
+      "observed": "high"
+    },
+    {
+      "station_id": 290,
+      "station_name": "TEZZ",
+      "predicted": "low",
       "observed": "high"
     }
-  ]
+  ],
+  "inference_mode_definition": {
+    "screening": "Evidence includes chemistry and environmental conditions only. Biological effects are inferred from CPTs.",
+    "assessment": "Evidence includes chemistry, conditions, and observed biological effects. Effects are hard evidence (P=1.0)."
+  }
 }

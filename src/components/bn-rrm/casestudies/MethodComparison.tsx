@@ -22,7 +22,7 @@ const METHODS = [
     limitations: [
       'Trained on 8 BC sites (82 co-located stations)',
       'Organic pathway expert-dominant (DR-001 reframed: PAH/PCB candidacy decoupled; CPT learning limited by jointly observed data)',
-      'Moderate-risk detection limited (12.5% recall in LOO)',
+      'Moderate-risk detection modest under MAP rule; entropy-aware classification improves recall at cost of overall accuracy',
       'Requires discretization of continuous measurements',
     ],
     color: 'blue',

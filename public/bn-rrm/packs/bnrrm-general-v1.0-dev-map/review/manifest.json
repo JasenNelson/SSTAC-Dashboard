@@ -3,8 +3,11 @@
   "db_hash": "9fbf0224e0aa9529011f8a93d2b5994c759171f309f9d25112edc3971cdf14dc",
   "dataset_status": "FROZEN (DR-003, 2026-03-09)",
   "files": {
-    "model-overview.json": "19b3db0529c02ffeec9f2ace01557c89cd96301b517d426962fb3c1b92a0979b",
-    "decisions.json": "ee71e8481d9211882bea05e3a7799d3819ed48e7cf9cea859a29d2620af3f669"
+    "model-overview.json": "a1b155a5c807b3ea2a8c6d02fe2cbbcc70dd497dd7e5378377298452c6232685",
+    "decisions.json": "ee71e8481d9211882bea05e3a7799d3819ed48e7cf9cea859a29d2620af3f669",
+    "cpt_transparency.json": "fc9756f67aa05d03c6b6a47d23354f03e44163a751e45670f0d3b4a213718712",
+    "provenance_registry.json": "edeb3411d882bbdb0e89d883a983415e1d4d6a8996e7c1845f9e0b093692dcb1",
+    "site_reports.json": "79400e8d4f6c9350a3f0ff3bc86637b11be21670cbcfdf7c534a9228c360d0aa"
   },
   "frozen_baseline": {
     "sites": 8,
@@ -21,5 +24,6 @@
     "views": 2,
     "sediment_guidelines": 42
   },
-  "validation": "PASSED"
+  "validation": "PASSED",
+  "phase2_export_date": "2026-04-01T01:37:01.714250+00:00"
 }

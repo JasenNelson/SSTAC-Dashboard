@@ -199,7 +199,7 @@ export function GettingStartedView() {
                   <>
                     <p>
                       <strong>What changed:</strong> The v1.0 publication candidate uses
-                      the {packManifest?.version_history?.model_version ?? 'v4.1'} model ({packManifest?.version_history?.architecture_version ?? '20-node DAG'})
+                      the {packManifest?.version_history?.model_version ?? 'v1.0'} model ({packManifest?.version_history?.architecture_version ?? '20-node DAG'})
                       with a corrected evaluation pipeline: decoupled CPT fitting, adjudicated ground-truth labels,
                       ecological risk data injection, and entropy-aware classification for uncertain cases.
                     </p>

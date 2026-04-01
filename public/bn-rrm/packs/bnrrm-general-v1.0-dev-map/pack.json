@@ -50,7 +50,7 @@
   "dag_node_count": 20,
   "dag_edge_count": 24,
   "training_corpus": {
-    "n_stations": 84,
+    "n_stations": 282,
     "n_co_located": 82,
     "n_sites": 8,
     "cohort_rule": "T1+T2",
@@ -59,8 +59,8 @@
   "evaluation_profile": {
     "decision_rule": "MAP",
     "primary_metric": "weighted_kappa",
-    "loo_accuracy": 0.5244,
-    "loo_kappa": 0.2072
+    "loo_accuracy": 0.6237,
+    "loo_kappa": 0.1846
   },
   "release_stage": "internal",
   "is_default": true,
@@ -71,8 +71,8 @@
     "Sullivan: water-column-dominant pathway boundary"
   ],
   "version_history": {
-    "created": "2026-03-30",
-    "model_version": "4.1",
+    "created": "2026-03-31",
+    "model_version": "1.0",
     "architecture_version": "v4.0 (20-node DAG)"
   },
   "artifacts": {
@@ -85,9 +85,7 @@
       "cpt_transparency": "review/cpt_transparency.json",
       "provenance": "review/provenance_registry.json",
       "site_reports": "review/site_reports.json",
-      "risk_comparison": "review/risk_comparison.json",
-      "explainer": "review/explainer.json",
-      "sensitivity": "review/sensitivity.json"
+      "risk_comparison": "review/risk_comparison.json"
     }
   }
 }
