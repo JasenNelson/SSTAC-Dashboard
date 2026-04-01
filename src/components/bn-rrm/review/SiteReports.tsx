@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
+import { usePackStore } from '@/stores/bn-rrm/packStore';
 import { normalizeSiteReports } from '@/lib/bn-rrm/normalize-artifacts';
+import type { PackManifest, PackRegistry, ReviewArtifactKey } from '@/lib/bn-rrm/pack-types';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
 
@@ -195,6 +197,8 @@ const WATERBODY_COLORS: Record<string, { bg: string; text: string }> = {
   freshwater: { bg: 'bg-emerald-100 dark:bg-emerald-900/30', text: 'text-emerald-700 dark:text-emerald-300' },
 };
 
+const PACK_BASE_URL = '/bn-rrm';
+
 function exportData(data: unknown, filename: string, type: 'json' | 'csv') {
   let content: string;
   let mimeType: string;
@@ -261,6 +265,82 @@ function formatDateRange(dates: CampaignDates): string {
   return `${startYear}\u2013${endYear}`;
 }
 
+function formatStationField(value: string | null | undefined): string {
+  if (!value) return '\u2014';
+  return value.replace(/_/g, ' ');
+}
+
+function hasNumericCoordinates<T extends { latitude?: number | null; longitude?: number | null }>(
+  station: T
+): station is T & { latitude: number; longitude: number } {
+  return typeof station.latitude === 'number' && typeof station.longitude === 'number';
+}
+
+function isSiteSpecificPack(manifest: PackManifest | null): boolean {
+  return manifest?.scope_type === 'site_specific';
+}
+
+function findPackEntry(registry: PackRegistry | null, packId: string | null | undefined) {
+  if (!registry || !packId) return null;
+  return registry.packs.find((pack) => pack.pack_id === packId) ?? null;
+}
+
+async function fetchPackReviewArtifact<T>(
+  registry: PackRegistry,
+  packId: string,
+  key: ReviewArtifactKey
+): Promise<T | null> {
+  const entry = findPackEntry(registry, packId);
+  if (!entry) return null;
+
+  const manifestResponse = await fetch(`${PACK_BASE_URL}/${entry.path}/pack.json`);
+  if (!manifestResponse.ok) {
+    throw new Error(`Failed to load pack manifest for '${packId}': ${manifestResponse.status}`);
+  }
+
+  const manifest: PackManifest = await manifestResponse.json();
+  const artifactPath = manifest.artifacts.review[key];
+  if (!artifactPath) return null;
+
+  const artifactResponse = await fetch(`${PACK_BASE_URL}/${entry.path}/${artifactPath}`);
+  if (!artifactResponse.ok) {
+    throw new Error(`Failed to load '${key}' for '${packId}': ${artifactResponse.status}`);
+  }
+
+  return artifactResponse.json() as Promise<T>;
+}
+
+function buildSingleSiteSummary(site: Site) {
+  return {
+    total_sites: 1,
+    total_stations: site.station_count,
+    sites_with_chemistry: site.chemistry_summary ? 1 : 0,
+    sites_with_toxicity: site.toxicity_summary ? 1 : 0,
+    sites_with_community: site.community_summary ? 1 : 0,
+  };
+}
+
+function findMatchingFallbackSite(
+  sites: Site[],
+  registryId: string | null | undefined,
+  siteName: string | null | undefined
+): Site | null {
+  if (!sites.length) return null;
+
+  if (registryId) {
+    const byRegistry = sites.find((site) => site.registry_id === registryId);
+    if (byRegistry) return byRegistry;
+  }
+
+  if (siteName) {
+    const normalizedName = siteName.trim().toLowerCase();
+    const byName = sites.find((site) => site.name.trim().toLowerCase() === normalizedName);
+    if (byName) return byName;
+  }
+
+  return null;
+}
+
 function SiteCard({ site, selected, onClick }: { site: Site; selected: boolean; onClick: () => void }) {
   const wb = WATERBODY_COLORS[site.waterbody_type.toLowerCase()] ?? WATERBODY_COLORS.marine;
   const triads = site.co_location_quality.full_triad ?? 0;
@@ -307,12 +387,85 @@ function SiteCard({ site, selected, onClick }: { site: Site; selected: boolean; 
 
 type DataTab = 'chemistry' | 'toxicity' | 'community' | 'stations';
 
+function getDefaultDataTab(site: Site | null): DataTab {
+  if (!site) return 'chemistry';
+  if (site.chemistry_summary) return 'chemistry';
+  if (site.toxicity_summary) return 'toxicity';
+  if (site.community_summary) return 'community';
+  if (site.station_details?.length) return 'stations';
+  return 'chemistry';
+}
+
 export function SiteReports() {
   const { data: siteDataRaw, loading, error } = usePackArtifact<any>('site_reports');
+  const registry = usePackStore((s) => s.registry);
+  const packManifest = usePackStore((s) => s.packManifest);
   const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
   const [activeDataTab, setActiveDataTab] = useState<DataTab>('chemistry');
+  const [fallbackSiteReportsRaw, setFallbackSiteReportsRaw] = useState<any | null>(null);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
 
-  const data = (!error && siteDataRaw) ? normalizeSiteReports(siteDataRaw) : null;
+  const baseData = (!error && siteDataRaw) ? normalizeSiteReports(siteDataRaw) : null;
+  const fallbackData = fallbackSiteReportsRaw ? normalizeSiteReports(fallbackSiteReportsRaw) : null;
+  const needsParentFallback = isSiteSpecificPack(packManifest) && !!packManifest?.parent_pack_id;
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (!needsParentFallback || !registry || !packManifest?.parent_pack_id) {
+      setFallbackSiteReportsRaw(null);
+      setFallbackLoading(false);
+      return;
+    }
+
+    setFallbackLoading(true);
+
+    fetchPackReviewArtifact(registry, packManifest.parent_pack_id, 'site_reports')
+      .then((raw) => {
+        if (!isCancelled) {
+          setFallbackSiteReportsRaw(raw);
+        }
+      })
+      .catch((err) => {
+        if (!isCancelled) {
+          console.warn('[SiteReports] Failed to load parent pack site reports:', err);
+          setFallbackSiteReportsRaw(null);
+        }
+      })
+      .finally(() => {
+        if (!isCancelled) {
+          setFallbackLoading(false);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [needsParentFallback, registry, packManifest?.parent_pack_id]);
+
+  const data = useMemo(() => {
+    if (!baseData) return null;
+    if (!needsParentFallback || !packManifest?.site_scope?.registry_id || !fallbackData) {
+      return baseData;
+    }
+
+    const baseSite = baseData.sites[0] ?? null;
+    const fallbackSite = findMatchingFallbackSite(
+      fallbackData.sites,
+      packManifest.site_scope.registry_id,
+      baseSite?.name ?? packManifest.site_scope.name
+    );
+
+    if (!fallbackSite) {
+      return baseData;
+    }
+
+    return {
+      ...fallbackData,
+      sites: [fallbackSite],
+      summary: buildSingleSiteSummary(fallbackSite),
+    };
+  }, [baseData, needsParentFallback, packManifest?.site_scope, fallbackData]);
 
   // ALL hooks before early returns (React Rules of Hooks)
   const selectedSite = useMemo(() => {
@@ -339,7 +492,19 @@ export function SiteReports() {
     return { total, withCoords, missing: total - withCoords };
   }, [selectedSite]);
 
-  if (loading) {
+  useEffect(() => {
+    setActiveDataTab(getDefaultDataTab(selectedSite));
+  }, [selectedSite]);
+
+  useEffect(() => {
+    if (!data?.sites?.length || selectedSiteId === null) return;
+    const selectionStillExists = data.sites.some((site) => site.site_id === selectedSiteId);
+    if (!selectionStillExists && data.sites.length === 1) {
+      setSelectedSiteId(data.sites[0].site_id);
+    }
+  }, [data?.sites, selectedSiteId]);
+
+  if (loading || (needsParentFallback && fallbackLoading && !fallbackData)) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="flex items-center gap-3 text-slate-400">
@@ -754,6 +919,11 @@ export function SiteReports() {
                         const dateLabel = s.date_earliest === s.date_latest
                           ? (s.date_earliest?.slice(0, 10) ?? '\u2014')
                           : `${s.date_earliest?.slice(0, 10) ?? '?'} \u2013 ${s.date_latest?.slice(0, 10) ?? '?'}`;
+                        const locationLabel = s.location_label ?? 'n/a';
+                        const accuracyLabel =
+                          s.estimated_accuracy_m !== null && s.estimated_accuracy_m !== undefined
+                            ? `(~${s.estimated_accuracy_m}m)`
+                            : null;
                         return (
                           <tr
                             key={s.station_id}
@@ -767,8 +937,8 @@ export function SiteReports() {
                                 </span>
                               )}
                             </td>
-                            <td className="px-3 py-2 text-slate-500 text-xs">{s.station_type.replace(/_/g, ' ')}</td>
-                            <td className="px-3 py-2 text-slate-500 text-xs">{s.co_location.replace(/_/g, ' ')}</td>
+                            <td className="px-3 py-2 text-slate-500 text-xs">{formatStationField(s.station_type)}</td>
+                            <td className="px-3 py-2 text-slate-500 text-xs">{formatStationField(s.co_location)}</td>
                             <td className="px-3 py-2 text-right text-slate-500 text-xs whitespace-nowrap">
                               {dateLabel}
                               {s.n_sample_dates > 1 && <span className="text-slate-400 ml-1">({s.n_sample_dates})</span>}
@@ -795,15 +965,15 @@ export function SiteReports() {
                               {/* ZONE stations: never display coordinates, show location label only */}
                               {s.spatial_class === 'ZONE' ? (
                                 <span className="truncate block">{s.location_label || 'Zone (no coordinates)'}</span>
-                              ) : s.latitude !== null && s.longitude !== null ? (
+                              ) : hasNumericCoordinates(s) ? (
                                 <>
                                   <span className="text-green-600 dark:text-green-400 font-mono">{s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}</span>
-                                  {s.estimated_accuracy_m !== null && s.estimated_accuracy_m !== undefined && (
-                                    <span className="ml-1 text-[10px] text-slate-400 dark:text-slate-500">(~{s.estimated_accuracy_m}m)</span>
+                                  {accuracyLabel && (
+                                    <span className="ml-1 text-[10px] text-slate-400 dark:text-slate-500">{accuracyLabel}</span>
                                   )}
                                 </>
                               ) : (
-                                <span className="truncate block">{s.location_label || 'n/a'}</span>
+                                <span className="truncate block">{locationLabel}</span>
                               )}
                             </td>
                           </tr>
