@@ -1,0 +1,4 @@
+## 2025-05-19 - [CRITICAL] Fix SQL injection in LIMIT/OFFSET and ORDER BY
+**Vulnerability:** The `getAssessments` and `getSubmissions` database query functions were using string interpolation for `LIMIT`, `OFFSET`, and `ORDER BY` clauses instead of parameterized queries. This made the application vulnerable to SQL injection attacks.
+**Learning:** `better-sqlite3` and SQL generally do not support parameterizing column names for `ORDER BY` directly. String interpolation should never be used, even for seemingly safe inputs like pagination numbers or sort column identifiers.
+**Prevention:** Always use parameterized queries (`?`) for variable data, including `LIMIT` and `OFFSET`. For dynamic clauses like `ORDER BY` that cannot be parameterized natively, enforce strict runtime whitelist validation against a known set of allowed column names before injecting them into the SQL string.
