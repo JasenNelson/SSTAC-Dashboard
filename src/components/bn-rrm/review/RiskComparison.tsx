@@ -119,8 +119,8 @@ export function RiskComparison() {
           data.meta.modelVersion &&
           !data.meta.modelVersion.includes(packManifest.version_history.model_version) && (
           <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-            Note: comparison data generated with {data.meta.modelVersion}. Current model
-            is {packManifest.version_history.model_version}. A data refresh is pending.
+            Note: comparison data predates the current BN-RRM v1.0 model.
+            A refresh against v1.0 is pending.
           </p>
         )}
       </div>
