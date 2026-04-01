@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useState, useId, type ReactNode } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -24,6 +24,7 @@ export function ExpandableSection({
   headerClassName,
 }: ExpandableSectionProps) {
   const [isExpanded, setIsExpanded] = useState(defaultOpen);
+  const contentId = useId();
 
   return (
     <div className={cn('border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden', className)}>
@@ -32,10 +33,11 @@ export function ExpandableSection({
         className={cn(
           'w-full flex items-center justify-between p-3 text-left',
           'bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800',
-          'transition-colors',
+          'transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset',
           headerClassName
         )}
         aria-expanded={isExpanded}
+        aria-controls={contentId}
       >
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -55,7 +57,7 @@ export function ExpandableSection({
       </button>
 
       {isExpanded && (
-        <div className="p-3 border-t border-slate-200 dark:border-slate-700">
+        <div id={contentId} className="p-3 border-t border-slate-200 dark:border-slate-700">
           {children}
         </div>
       )}
