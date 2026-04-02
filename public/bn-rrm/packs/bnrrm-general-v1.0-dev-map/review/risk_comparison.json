@@ -6,9 +6,20 @@
                   "comparatorType":  "WOE",
                   "note":  "Comparator labels are external reference labels only. They are NEVER BN training targets.",
                   "evaluationRule":  "mixed: entropy-aware v1.0 (9/59 stations, strict T1 subset) + v4.0 MAP (50/59 stations, non-T1)",
-                  "note_externalSites":  "externalSites preserve factual report conclusions, but BN-side v1.0 alignment remains pending for non-training sites without LOO coverage.",
-                  "externalSitesStatus":  "pending_v1_alignment",
-                  "externalSitesNote":  "No active v1.0 refresh path is claimed in this tranche. Treat externalSites as descriptive reference content pending any future science/evaluation lane for non-training sites.",
+                  "note_externalSites":  "externalSites now distinguish editorial-only records from BN-descriptive site-level cases. External outputs remain site-level only, non-pooled, and not benchmark-comparable.",
+                  "externalSitesStatus":  "site_level_semantics_operationalized",
+                  "externalSitesNote":  "Meaningful partial BN-domain overlap can support descriptive BN site-level semantics for selected non-training sites. No pooled agreement statistics or benchmark-comparable claims are authorized in this tranche.",
+                  "externalComparisonClassDefinitions":  {
+                                                           "editorial_only":  "Editorial or descriptive reference content only. No BN-side external inference/comparison claim is being made.",
+                                                           "bn_descriptive_site_level":  "Meaningful but partial BN-domain overlap supports descriptive BN-oriented site-level comparison only. Not pooled and not benchmark-comparable.",
+                                                           "bn_evaluative_not_pooled":  "External BN-oriented comparison is evaluative, but not authorized for pooled agreement statistics or benchmark-comparable interpretation."
+                                                       },
+                  "externalInterpretationRules":  {
+                                                      "defaultOutputGranularity":  "site_level_only",
+                                                      "pooledStatisticsAuthorized":  false,
+                                                      "benchmarkComparable":  false,
+                                                      "interpretationNote":  "External-site BN semantics are authorized for descriptive or evaluative-but-not-pooled use only. Missing trained contaminants, missing modifiers, and noncanonical contaminants must be represented explicitly as uncertainty."
+                                                  },
                   "status":  "mixed_evaluation_framework",
                   "comparisonClassDefinitions":  {
                                                      "causal_chain_complete":  "Comparator stations with the strongest evidentiary alignment to the BN-RRM causal chain; strongest interpretive weight.",
@@ -2167,6 +2178,22 @@
                               "reportTitle":  "Human Health and Detailed Ecological Risk Assessment, 224 Front Street, New Westminster, BC",
                               "reportFile":  "Project 09216, Rev 0",
                               "comparisonType":  "descriptive-integrated",
+                              "bnInferenceStatus":  "partial_evidence_site_level_ready",
+                              "externalComparisonClass":  "bn_descriptive_site_level",
+                              "outputGranularity":  "site_level_only",
+                              "interpretationAuthorization":  "descriptive_only",
+                              "contaminantOverlap":  "meaningful_partial",
+                              "modifierEffectsStatus":  {
+                                                            "modifiers":  "missing_or_unconfirmed",
+                                                            "effectsEvidence":  "available_but_partial"
+                                                        },
+                              "uncertaintyFlags":  [
+                                                       "partial_domain_overlap",
+                                                       "missing_environmental_modifiers",
+                                                       "estuarine_overlap_not_training_domain",
+                                                       "site_level_or_area_level_conclusions_only"
+                                                   ],
+                              "uncertaintyNote":  "Westminster Pier Park has meaningful BN-domain overlap through metals, PAHs, and toxicity evidence, but key condition/modifier inputs remain missing or unconfirmed. Consultant conclusions are area/site-level and should be interpreted as descriptive site-level BN context only.",
                               "bnInputCoverage":  {
                                                       "metals":  true,
                                                       "pahs":  true,
@@ -2273,6 +2300,22 @@
                               "reportTitle":  "Detailed Risk Assessment, Water Lot Portion of 1 Port Drive, Nanaimo, BC",
                               "reportFile":  "ENVIND03511-02",
                               "comparisonType":  "descriptive",
+                              "bnInferenceStatus":  "partial_evidence_site_level_ready",
+                              "externalComparisonClass":  "bn_descriptive_site_level",
+                              "outputGranularity":  "site_level_only",
+                              "interpretationAuthorization":  "descriptive_only",
+                              "contaminantOverlap":  "meaningful_partial",
+                              "modifierEffectsStatus":  {
+                                                            "modifiers":  "missing_or_unconfirmed",
+                                                            "effectsEvidence":  "available_but_partial"
+                                                        },
+                              "uncertaintyFlags":  [
+                                                       "partial_domain_overlap",
+                                                       "pah_dominant_profile",
+                                                       "missing_metals_and_modifier_inputs",
+                                                       "site_level_conclusions_only"
+                                                   ],
+                              "uncertaintyNote":  "Water Lot, 1 Port Drive has meaningful but PAH-dominant BN-domain overlap supported by toxicity evidence. Missing metals, modifier, and community inputs limit interpretation to descriptive site-level BN context only.",
                               "bnInputCoverage":  {
                                                       "metals":  false,
                                                       "pahs":  true,
@@ -2421,6 +2464,22 @@
                               "reportTitle":  "Human Health and Ecological Risk Assessment of Seep Area, Foreshore Down Slope of the East Impounding Basin, Chevron Burnaby Refinery, Burnaby, BC",
                               "reportFile":  "SLR Project No. 201.00959.00001",
                               "comparisonType":  "partial-method",
+                              "bnInferenceStatus":  "unsupported_noncanonical_profile",
+                              "externalComparisonClass":  "editorial_only",
+                              "outputGranularity":  "site_level_only",
+                              "interpretationAuthorization":  "descriptive_only",
+                              "contaminantOverlap":  "minimal_noncanonical",
+                              "modifierEffectsStatus":  {
+                                                            "modifiers":  "not_available",
+                                                            "effectsEvidence":  "limited_supporting_only"
+                                                        },
+                              "uncertaintyFlags":  [
+                                                       "noncanonical_petroleum_profile",
+                                                       "minimal_bn_domain_overlap",
+                                                       "professional_judgment_heavy_comparator",
+                                                       "no_supported_bn_side_external_comparison"
+                                                   ],
+                              "uncertaintyNote":  "Chevron Burnaby Refinery Seep Area is petroleum-dominant and falls largely outside the trained BN contaminant domain. Keep this entry editorial/descriptive only; BN-side external comparison is not currently supported.",
                               "bnInputCoverage":  {
                                                       "metals":  false,
                                                       "pahs":  false,

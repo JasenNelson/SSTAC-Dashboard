@@ -718,6 +718,77 @@ export interface NormalizedSiteComparison {
   };
 }
 
+export interface NormalizedExternalSite {
+  siteId: string;
+  siteName: string;
+  registryId: string;
+  region: string;
+  waterbody: string;
+  gateOutcome: string;
+  gateReason: string;
+  consultant: string;
+  reportDate: string;
+  reportTitle: string;
+  comparisonType: string;
+  bnInferenceStatus: string;
+  externalComparisonClass: string;
+  outputGranularity: string;
+  interpretationAuthorization: string;
+  contaminantOverlap: string;
+  modifierEffectsStatus: {
+    modifiers: string;
+    effectsEvidence: string;
+  } | null;
+  uncertaintyFlags: string[];
+  uncertaintyNote: string;
+  bnInputCoverage: {
+    metals: boolean;
+    pahs: boolean;
+    pcbs: boolean;
+    toc: boolean;
+    grainSize: boolean;
+    sulfideBinding: boolean;
+    toxicity: boolean;
+    community: boolean;
+    note: string;
+  };
+  reportConclusions: Array<{
+    receptor: string;
+    loeCount: number;
+    loes: string[];
+    woeConclusion: string;
+    woeIntegrationNote?: string;
+    mappedBNClass: string | null;
+    mappingConfidence: string;
+    mappingJustification: string;
+    comparisonLevel: string;
+    provenance: {
+      sourceDocument: string;
+      sourcePage: number | null;
+      sourceTableFigure?: string;
+      extractedLabel: string;
+      extractionMethod: string;
+      extractionDate: string;
+      extractor: string;
+    };
+    isTrainingTarget: boolean;
+  }>;
+  toxicityStations: Array<{
+    stationId: string;
+    amphipodSurvival: number;
+    polychaeteSurvival: number;
+    polychaeteGrowth: number;
+    bivalveDev: number;
+  }>;
+  statisticalAuthorization: {
+    kappa: boolean;
+    confusionMatrix: boolean;
+    agreement: boolean;
+    mcNemar: boolean;
+    reason: string;
+  };
+}
+
 export interface NormalizedRiskComparison {
   siteComparisons: NormalizedSiteComparison[];
   summary: {
@@ -742,6 +813,13 @@ export interface NormalizedRiskComparison {
     noteExternalSites: string;
     externalSitesStatus: string;
     externalSitesNote: string;
+    externalComparisonClassDefinitions: Record<string, string>;
+    externalInterpretationRules: {
+      defaultOutputGranularity: string;
+      pooledStatisticsAuthorized: boolean;
+      benchmarkComparable: boolean;
+      interpretationNote: string;
+    } | null;
     pooledStatsPolicy: {
       includedClasses: string[];
       excludedClasses: string[];
@@ -752,6 +830,7 @@ export interface NormalizedRiskComparison {
   comparisonType: string;
   site: string;
   interpretation: string;
+  externalSites: NormalizedExternalSite[];
 }
 
 export function normalizeRiskComparison(raw: any): NormalizedRiskComparison {
@@ -777,11 +856,14 @@ export function normalizeRiskComparison(raw: any): NormalizedRiskComparison {
         noteExternalSites: '',
         externalSitesStatus: '',
         externalSitesNote: '',
+        externalComparisonClassDefinitions: {},
+        externalInterpretationRules: null,
         pooledStatsPolicy: null,
       },
       comparisonType: '',
       site: '',
       interpretation: '',
+      externalSites: [],
     };
   }
 
@@ -835,6 +917,10 @@ export function normalizeRiskComparison(raw: any): NormalizedRiskComparison {
     sitesWithoutWOENames: [],
   };
 
+  const externalSites = Array.isArray(raw.externalSites)
+    ? raw.externalSites.map(normalizeExternalSite)
+    : [];
+
   return {
     siteComparisons,
     summary: {
@@ -856,6 +942,15 @@ export function normalizeRiskComparison(raw: any): NormalizedRiskComparison {
       noteExternalSites: raw._meta?.note_externalSites ?? '',
       externalSitesStatus: raw._meta?.externalSitesStatus ?? '',
       externalSitesNote: raw._meta?.externalSitesNote ?? '',
+      externalComparisonClassDefinitions: raw._meta?.externalComparisonClassDefinitions ?? {},
+      externalInterpretationRules: raw._meta?.externalInterpretationRules
+        ? {
+            defaultOutputGranularity: raw._meta.externalInterpretationRules.defaultOutputGranularity ?? '',
+            pooledStatisticsAuthorized: raw._meta.externalInterpretationRules.pooledStatisticsAuthorized ?? false,
+            benchmarkComparable: raw._meta.externalInterpretationRules.benchmarkComparable ?? false,
+            interpretationNote: raw._meta.externalInterpretationRules.interpretationNote ?? '',
+          }
+        : null,
       pooledStatsPolicy: raw._meta?.pooledStatsPolicy
         ? {
             includedClasses: raw._meta.pooledStatsPolicy.included_classes ?? [],
@@ -867,6 +962,86 @@ export function normalizeRiskComparison(raw: any): NormalizedRiskComparison {
     comparisonType: raw.comparison_type ?? '',
     site: raw.site ?? '',
     interpretation: raw.interpretation ?? '',
+    externalSites,
+  };
+}
+
+function normalizeExternalSite(site: any): NormalizedExternalSite {
+  return {
+    siteId: site.siteId ?? '',
+    siteName: site.siteName ?? '',
+    registryId: site.registryId ?? '',
+    region: site.region ?? '',
+    waterbody: site.waterbody ?? '',
+    gateOutcome: site.gateOutcome ?? '',
+    gateReason: site.gateReason ?? '',
+    consultant: site.consultant ?? '',
+    reportDate: site.reportDate ?? '',
+    reportTitle: site.reportTitle ?? '',
+    comparisonType: site.comparisonType ?? '',
+    bnInferenceStatus: site.bnInferenceStatus ?? '',
+    externalComparisonClass: site.externalComparisonClass ?? '',
+    outputGranularity: site.outputGranularity ?? '',
+    interpretationAuthorization: site.interpretationAuthorization ?? '',
+    contaminantOverlap: site.contaminantOverlap ?? '',
+    modifierEffectsStatus: site.modifierEffectsStatus
+      ? {
+          modifiers: site.modifierEffectsStatus.modifiers ?? '',
+          effectsEvidence: site.modifierEffectsStatus.effectsEvidence ?? '',
+        }
+      : null,
+    uncertaintyFlags: Array.isArray(site.uncertaintyFlags) ? site.uncertaintyFlags : [],
+    uncertaintyNote: site.uncertaintyNote ?? '',
+    bnInputCoverage: {
+      metals: site.bnInputCoverage?.metals ?? false,
+      pahs: site.bnInputCoverage?.pahs ?? false,
+      pcbs: site.bnInputCoverage?.pcbs ?? false,
+      toc: site.bnInputCoverage?.toc ?? false,
+      grainSize: site.bnInputCoverage?.grainSize ?? false,
+      sulfideBinding: site.bnInputCoverage?.sulfideBinding ?? false,
+      toxicity: site.bnInputCoverage?.toxicity ?? false,
+      community: site.bnInputCoverage?.community ?? false,
+      note: site.bnInputCoverage?.note ?? '',
+    },
+    reportConclusions: Array.isArray(site.reportConclusions)
+      ? site.reportConclusions.map((conclusion: any) => ({
+          receptor: conclusion.receptor ?? '',
+          loeCount: conclusion.loeCount ?? 0,
+          loes: Array.isArray(conclusion.loes) ? conclusion.loes : [],
+          woeConclusion: conclusion.woeConclusion ?? '',
+          woeIntegrationNote: conclusion.woeIntegrationNote ?? '',
+          mappedBNClass: conclusion.mappedBNClass ?? null,
+          mappingConfidence: conclusion.mappingConfidence ?? '',
+          mappingJustification: conclusion.mappingJustification ?? '',
+          comparisonLevel: conclusion.comparisonLevel ?? '',
+          provenance: {
+            sourceDocument: conclusion.provenance?.sourceDocument ?? '',
+            sourcePage: conclusion.provenance?.sourcePage ?? null,
+            sourceTableFigure: conclusion.provenance?.sourceTableFigure ?? '',
+            extractedLabel: conclusion.provenance?.extractedLabel ?? '',
+            extractionMethod: conclusion.provenance?.extractionMethod ?? '',
+            extractionDate: conclusion.provenance?.extractionDate ?? '',
+            extractor: conclusion.provenance?.extractor ?? '',
+          },
+          isTrainingTarget: conclusion.isTrainingTarget ?? false,
+        }))
+      : [],
+    toxicityStations: Array.isArray(site.toxicityStations)
+      ? site.toxicityStations.map((station: any) => ({
+          stationId: station.stationId ?? '',
+          amphipodSurvival: station.amphipodSurvival ?? 0,
+          polychaeteSurvival: station.polychaeteSurvival ?? 0,
+          polychaeteGrowth: station.polychaeteGrowth ?? 0,
+          bivalveDev: station.bivalveDev ?? 0,
+        }))
+      : [],
+    statisticalAuthorization: {
+      kappa: site.statisticalAuthorization?.kappa ?? false,
+      confusionMatrix: site.statisticalAuthorization?.confusionMatrix ?? false,
+      agreement: site.statisticalAuthorization?.agreement ?? false,
+      mcNemar: site.statisticalAuthorization?.mcNemar ?? false,
+      reason: site.statisticalAuthorization?.reason ?? '',
+    },
   };
 }
 

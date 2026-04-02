@@ -1,72 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 import { normalizeRiskComparison } from '@/lib/bn-rrm/normalize-artifacts';
-import type { NormalizedRiskComparison } from '@/lib/bn-rrm/normalize-artifacts';
+import type { NormalizedExternalSite, NormalizedRiskComparison } from '@/lib/bn-rrm/normalize-artifacts';
 import { usePackStore } from '@/stores/bn-rrm/packStore';
 import { ExpandableSection } from '@/components/bn-rrm/shared/ExpandableSection';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { cn } from '@/utils/cn';
-
-type ExternalSite = {
-  siteId: string;
-  siteName: string;
-  registryId: string;
-  region: string;
-  waterbody: string;
-  gateOutcome: string;
-  gateReason: string;
-  consultant: string;
-  reportDate: string;
-  reportTitle: string;
-  comparisonType: string;
-  bnInputCoverage: {
-    metals: boolean;
-    pahs: boolean;
-    pcbs: boolean;
-    toc: boolean;
-    grainSize: boolean;
-    sulfideBinding: boolean;
-    toxicity: boolean;
-    community: boolean;
-    note: string;
-  };
-  reportConclusions: {
-    receptor: string;
-    loeCount: number;
-    loes: string[];
-    woeConclusion: string;
-    woeIntegrationNote?: string;
-    mappedBNClass: string | null;
-    mappingConfidence: string;
-    mappingJustification: string;
-    comparisonLevel: string;
-    provenance: {
-      sourceDocument: string;
-      sourcePage: number;
-      sourceTableFigure?: string;
-      extractedLabel: string;
-      extractionMethod: string;
-      extractionDate: string;
-      extractor: string;
-    };
-    isTrainingTarget: false;
-  }[];
-  toxicityStations?: {
-    stationId: string;
-    amphipodSurvival: number;
-    polychaeteSurvival: number;
-    polychaeteGrowth: number;
-    bivalveDev: number;
-  }[];
-  statisticalAuthorization: {
-    kappa: boolean;
-    confusionMatrix: boolean;
-    agreement: boolean;
-    reason: string;
-  };
-};
 
 const CLASS_COLORS: Record<string, { bg: string; text: string }> = {
   low: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-300' },
@@ -74,27 +15,67 @@ const CLASS_COLORS: Record<string, { bg: string; text: string }> = {
   high: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-700 dark:text-red-300' },
 };
 
+const EXTERNAL_CLASS_STYLES: Record<string, string> = {
+  editorial_only: 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300',
+  bn_descriptive_site_level: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+  bn_evaluative_not_pooled: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300',
+};
+
+const EXTERNAL_CLASS_LABELS: Record<string, string> = {
+  editorial_only: 'Editorial only',
+  bn_descriptive_site_level: 'BN descriptive site-level',
+  bn_evaluative_not_pooled: 'BN evaluative, not pooled',
+};
+
+const INFERENCE_STATUS_LABELS: Record<string, string> = {
+  partial_evidence_site_level_ready: 'Partial-evidence site-level ready',
+  unsupported_noncanonical_profile: 'Unsupported noncanonical profile',
+};
+
+const AUTHORIZATION_LABELS: Record<string, string> = {
+  descriptive_only: 'Descriptive only',
+  evaluative_not_pooled: 'Evaluative, not pooled',
+};
+
+const OVERLAP_LABELS: Record<string, string> = {
+  meaningful_partial: 'Meaningful partial overlap',
+  minimal_noncanonical: 'Minimal noncanonical overlap',
+};
+
+const FLAG_LABELS: Record<string, string> = {
+  partial_domain_overlap: 'Partial domain overlap',
+  missing_environmental_modifiers: 'Missing environmental modifiers',
+  estuarine_overlap_not_training_domain: 'Estuarine overlap outside training domain',
+  site_level_or_area_level_conclusions_only: 'Area/site-level conclusions only',
+  pah_dominant_profile: 'PAH-dominant profile',
+  missing_metals_and_modifier_inputs: 'Missing metals and modifier inputs',
+  site_level_conclusions_only: 'Site-level conclusions only',
+  noncanonical_petroleum_profile: 'Noncanonical petroleum profile',
+  minimal_bn_domain_overlap: 'Minimal BN-domain overlap',
+  professional_judgment_heavy_comparator: 'Professional-judgment-heavy comparator',
+  no_supported_bn_side_external_comparison: 'No supported BN-side external comparison',
+};
+
+function humanizeToken(value: string) {
+  return value.replaceAll('_', ' ');
+}
+
 export function ExternalSites() {
   const packManifest = usePackStore((s) => s.packManifest);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: comparisonDataRaw, loading, error } = usePackArtifact<any>('risk_comparison');
 
-  // Normalize artifact through the standard normalizer layer
   const normalized: NormalizedRiskComparison | null = useMemo(
     () => comparisonDataRaw ? normalizeRiskComparison(comparisonDataRaw) : null,
     [comparisonDataRaw],
   );
 
-  // Extract external sites from the raw data (externalSites is not in normalized shape)
-  const rawData = comparisonDataRaw as { externalSites?: ExternalSite[] } | null;
-  const externalSites = rawData?.externalSites ?? [];
+  const externalSites = normalized?.externalSites ?? [];
 
-  // Hook: useState — must be above early returns
   const [expandedSite, setExpandedSite] = useState<string | null>(
-    externalSites.length === 1 ? externalSites[0].siteId : null
+    externalSites.length === 1 ? externalSites[0].siteId : null,
   );
 
-  // Early returns AFTER all hooks
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
@@ -116,34 +97,49 @@ export function ExternalSites() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">External Sites</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Non-training sites with descriptive comparison to report-stated risk assessments
+          Non-training sites with governed external comparison semantics and explicit uncertainty limits
         </p>
       </div>
 
-      {/* Boundary note */}
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
         <p className="text-sm text-blue-800 dark:text-blue-200">
-          <strong>Descriptive comparison only.</strong> External sites are not part of the BN-RRM
-          training dataset. Report-stated risk conclusions are external reference labels presented
-          alongside BN-RRM posterior estimates for comparison. No agreement statistics are shown
-          unless station-level paired labels exist with defensible mapping.
+          <strong>External comparison is governed and bounded.</strong> External sites are not part of
+          the BN-RRM training dataset. Current BN-oriented semantics are site-level only, non-pooled,
+          and not benchmark-comparable. Report-stated risk conclusions remain external reference labels
+          with explicit uncertainty and interpretation limits.
         </p>
       </div>
 
-      {normalized?.meta.externalSitesStatus === 'pending_v1_alignment' && (
+      {normalized?.meta.externalSitesStatus && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
           <p className="text-xs text-amber-700 dark:text-amber-300">
-            <strong>Pending against v1.0.</strong> External-site report conclusions are preserved as factual reference content, but BN-side v1.0 alignment is not being claimed in this tranche because these non-training sites do not have LOO coverage.
+            <strong>External semantics status:</strong>{' '}
+            {normalized.meta.externalSitesStatus === 'site_level_semantics_operationalized'
+              ? 'Site-level semantics operationalized'
+              : humanizeToken(normalized.meta.externalSitesStatus)}
           </p>
           {normalized.meta.externalSitesNote && (
             <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
               {normalized.meta.externalSitesNote}
             </p>
           )}
+        </div>
+      )}
+
+      {normalized?.meta.externalInterpretationRules && (
+        <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg p-3">
+          <p className="text-xs text-slate-700 dark:text-slate-300">
+            <strong>Authorized interpretation.</strong> Output granularity defaults to{' '}
+            <span className="font-mono">{normalized.meta.externalInterpretationRules.defaultOutputGranularity}</span>.
+            {' '}Pooled statistics: {normalized.meta.externalInterpretationRules.pooledStatisticsAuthorized ? 'allowed' : 'not allowed'}.
+            {' '}Benchmark comparable: {normalized.meta.externalInterpretationRules.benchmarkComparable ? 'yes' : 'no'}.
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+            {normalized.meta.externalInterpretationRules.interpretationNote}
+          </p>
         </div>
       )}
 
@@ -191,7 +187,6 @@ export function ExternalSites() {
         </div>
       )}
 
-      {/* Requirements */}
       <ExpandableSection title="Requirements for external case studies">
         <div className="text-sm text-slate-600 dark:text-slate-400 space-y-3">
           <p>Before a non-training site can be added as a case study:</p>
@@ -210,8 +205,6 @@ export function ExternalSites() {
   );
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
-
 function EmptyState() {
   return (
     <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-6 text-center">
@@ -228,36 +221,59 @@ function EmptyState() {
   );
 }
 
-function SiteCard({ site, expanded, onToggle }: { site: ExternalSite; expanded: boolean; onToggle: () => void }) {
+function SiteCard({
+  site,
+  expanded,
+  onToggle,
+}: {
+  site: NormalizedExternalSite;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   return (
-    <div className={cn(
-      'rounded-xl border-2 transition-all bg-white dark:bg-slate-800',
-      expanded ? 'border-blue-500 dark:border-blue-400' : 'border-slate-200 dark:border-slate-700'
-    )}>
-      {/* Header */}
+    <div
+      className={cn(
+        'rounded-xl border-2 transition-all bg-white dark:bg-slate-800',
+        expanded ? 'border-blue-500 dark:border-blue-400' : 'border-slate-200 dark:border-slate-700',
+      )}
+    >
       <button onClick={onToggle} className="w-full flex items-center justify-between p-4 text-left">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <span className="px-2 py-0.5 text-xs rounded font-mono bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
             {site.registryId}
           </span>
           <span className="font-medium text-slate-800 dark:text-slate-100">{site.siteName}</span>
-          <span className={cn(
-            'px-2 py-0.5 text-xs rounded font-medium',
-            site.gateOutcome === 'DESCRIPTIVE_ONLY'
-              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
-              : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-          )}>
+          <span
+            className={cn(
+              'px-2 py-0.5 text-xs rounded font-medium',
+              site.gateOutcome === 'DESCRIPTIVE_ONLY'
+                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300'
+                : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+            )}
+          >
             {site.gateOutcome.replace('_', ' ')}
           </span>
+          <span
+            className={cn(
+              'px-2 py-0.5 text-xs rounded font-medium',
+              EXTERNAL_CLASS_STYLES[site.externalComparisonClass] ?? EXTERNAL_CLASS_STYLES.editorial_only,
+            )}
+          >
+            {EXTERNAL_CLASS_LABELS[site.externalComparisonClass] ?? humanizeToken(site.externalComparisonClass)}
+          </span>
         </div>
-        <svg className={cn('w-4 h-4 text-slate-400 transition-transform', expanded && 'rotate-180')} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg
+          className={cn('w-4 h-4 text-slate-400 transition-transform', expanded && 'rotate-180')}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {expanded && (
         <div className="border-t border-slate-200 dark:border-slate-700 p-4 space-y-4">
-          {/* Site info */}
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">Consultant</span>
@@ -269,31 +285,86 @@ function SiteCard({ site, expanded, onToggle }: { site: ExternalSite; expanded: 
             </div>
           </div>
 
-          {/* Gate reason */}
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
             <p className="text-xs text-amber-700 dark:text-amber-300">
               <strong>Gate: {site.gateOutcome.replace('_', ' ')}.</strong> {site.gateReason}
             </p>
           </div>
 
-          {/* BN Input Coverage */}
+          <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
+            <SemanticCard
+              label="Comparison class"
+              value={EXTERNAL_CLASS_LABELS[site.externalComparisonClass] ?? humanizeToken(site.externalComparisonClass)}
+              tone={EXTERNAL_CLASS_STYLES[site.externalComparisonClass] ?? EXTERNAL_CLASS_STYLES.editorial_only}
+            />
+            <SemanticCard
+              label="BN inference"
+              value={INFERENCE_STATUS_LABELS[site.bnInferenceStatus] ?? humanizeToken(site.bnInferenceStatus)}
+              tone="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+            />
+            <SemanticCard
+              label="Authorization"
+              value={AUTHORIZATION_LABELS[site.interpretationAuthorization] ?? humanizeToken(site.interpretationAuthorization)}
+              tone="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+            />
+            <SemanticCard
+              label="Granularity"
+              value={humanizeToken(site.outputGranularity)}
+              tone="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+            />
+          </div>
+
+          <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg p-3">
+            <p className="text-xs text-slate-700 dark:text-slate-300">
+              <strong>Uncertainty and scope.</strong> {site.uncertaintyNote}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+              Contaminant overlap: {OVERLAP_LABELS[site.contaminantOverlap] ?? humanizeToken(site.contaminantOverlap)}
+              {' · '}
+              Modifiers: {site.modifierEffectsStatus ? humanizeToken(site.modifierEffectsStatus.modifiers) : 'not specified'}
+              {' · '}
+              Effects evidence: {site.modifierEffectsStatus ? humanizeToken(site.modifierEffectsStatus.effectsEvidence) : 'not specified'}
+            </p>
+            {site.uncertaintyFlags.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {site.uncertaintyFlags.map((flag) => (
+                  <span
+                    key={flag}
+                    className="px-2 py-0.5 text-[11px] rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                  >
+                    {FLAG_LABELS[flag] ?? humanizeToken(flag)}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
           <ExpandableSection title="BN-RRM Input Coverage" badge="Partial">
             <div className="space-y-2">
               <div className="grid grid-cols-4 gap-2 text-xs">
                 {(['metals', 'pahs', 'pcbs', 'toc', 'grainSize', 'sulfideBinding', 'toxicity', 'community'] as const).map((param) => {
                   const available = site.bnInputCoverage[param];
                   const labels: Record<string, string> = {
-                    metals: 'Metals (7)', pahs: 'PAHs', pcbs: 'PCBs', toc: 'TOC',
-                    grainSize: 'Grain Size', sulfideBinding: 'Sulfide Binding',
-                    toxicity: 'Toxicity', community: 'Community',
+                    metals: 'Metals (7)',
+                    pahs: 'PAHs',
+                    pcbs: 'PCBs',
+                    toc: 'TOC',
+                    grainSize: 'Grain Size',
+                    sulfideBinding: 'Sulfide Binding',
+                    toxicity: 'Toxicity',
+                    community: 'Community',
                   };
+
                   return (
-                    <div key={param} className={cn(
-                      'rounded px-2 py-1 text-center',
-                      available
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                        : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
-                    )}>
+                    <div
+                      key={param}
+                      className={cn(
+                        'rounded px-2 py-1 text-center',
+                        available
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500',
+                      )}
+                    >
                       {labels[param]}
                     </div>
                   );
@@ -303,13 +374,12 @@ function SiteCard({ site, expanded, onToggle }: { site: ExternalSite; expanded: 
             </div>
           </ExpandableSection>
 
-          {/* Report Conclusions */}
           <ExpandableSection title="Report-Stated Risk Conclusions (WOE)" defaultOpen>
             <div className="space-y-3">
               <div className="flex items-center gap-1 mb-1">
                 <InfoTooltip
                   title="External Reference Labels"
-                  description="These are the consultant's WOE conclusions from the DRA report. They are external reference labels, not BN training targets or ground truth. Presented alongside BN-RRM posterior estimates for descriptive comparison only."
+                  description="These are the consultant's WOE conclusions from the DRA report. They are external reference labels, not BN training targets or ground truth. Presented alongside BN-RRM-oriented semantics for descriptive site-level comparison only."
                 />
                 <span className="text-xs text-slate-400 dark:text-slate-500">Report: {site.reportTitle}</span>
               </div>
@@ -325,7 +395,7 @@ function SiteCard({ site, expanded, onToggle }: { site: ExternalSite; expanded: 
                 </thead>
                 <tbody>
                   {site.reportConclusions.map((rc) => (
-                    <tr key={rc.receptor} className="border-b border-slate-100 dark:border-slate-800">
+                    <tr key={`${site.siteId}-${rc.receptor}`} className="border-b border-slate-100 dark:border-slate-800">
                       <td className="py-2 text-slate-700 dark:text-slate-300">{rc.receptor}</td>
                       <td className="py-2">
                         <span className="px-1.5 py-0.5 text-xs rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
@@ -338,11 +408,13 @@ function SiteCard({ site, expanded, onToggle }: { site: ExternalSite; expanded: 
                             {rc.mappedBNClass} ({rc.mappingConfidence})
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-400 italic">{rc.mappingConfidence === 'not_mappable' ? 'Not mappable' : '—'}</span>
+                          <span className="text-xs text-slate-400 italic">
+                            {rc.mappingConfidence === 'not_mappable' ? 'Not mappable' : '-'}
+                          </span>
                         )}
                       </td>
                       <td className="py-2 text-xs text-slate-500 dark:text-slate-400">{rc.loeCount} LOE{rc.loeCount > 1 ? 's' : ''}</td>
-                      <td className="py-2 text-right text-xs text-slate-400">p{rc.provenance.sourcePage}</td>
+                      <td className="py-2 text-right text-xs text-slate-400">p{rc.provenance.sourcePage ?? '?'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -350,16 +422,17 @@ function SiteCard({ site, expanded, onToggle }: { site: ExternalSite; expanded: 
             </div>
           </ExpandableSection>
 
-          {/* LOE Detail for benthic */}
-          {site.reportConclusions.find(rc => rc.receptor === 'Benthic Invertebrates') && (
+          {site.reportConclusions.find((rc) => rc.receptor === 'Benthic Invertebrates') && (
             <ExpandableSection title="Benthic Invertebrate LOE Detail">
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
                 {site.reportConclusions
-                  .filter(rc => rc.receptor === 'Benthic Invertebrates')
-                  .map(rc => (
-                    <div key={rc.receptor}>
+                  .filter((rc) => rc.receptor === 'Benthic Invertebrates')
+                  .map((rc) => (
+                    <div key={`${site.siteId}-${rc.receptor}-detail`}>
                       <ul className="list-disc ml-5 space-y-1 text-xs">
-                        {rc.loes.map((loe, i) => <li key={i}>{loe}</li>)}
+                        {rc.loes.map((loe, index) => (
+                          <li key={`${site.siteId}-${rc.receptor}-${index}`}>{loe}</li>
+                        ))}
                       </ul>
                       {rc.woeIntegrationNote && (
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 italic">
@@ -372,8 +445,7 @@ function SiteCard({ site, expanded, onToggle }: { site: ExternalSite; expanded: 
             </ExpandableSection>
           )}
 
-          {/* Toxicity station data */}
-          {site.toxicityStations && site.toxicityStations.length > 0 && (
+          {site.toxicityStations.length > 0 && (
             <ExpandableSection title={`Toxicity Test Results (${site.toxicityStations.length} stations)`}>
               <table className="w-full text-xs">
                 <thead>
@@ -386,31 +458,41 @@ function SiteCard({ site, expanded, onToggle }: { site: ExternalSite; expanded: 
                   </tr>
                 </thead>
                 <tbody>
-                  {site.toxicityStations.map((st) => (
-                    <tr key={st.stationId} className="border-b border-slate-100 dark:border-slate-800">
-                      <td className="py-1.5 font-mono text-slate-700 dark:text-slate-300">{st.stationId}</td>
-                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-400">{st.amphipodSurvival}</td>
-                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-400">{st.polychaeteSurvival}</td>
-                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-400">{st.polychaeteGrowth.toFixed(2)}</td>
-                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-400">{st.bivalveDev}</td>
+                  {site.toxicityStations.map((station) => (
+                    <tr key={`${site.siteId}-${station.stationId}`} className="border-b border-slate-100 dark:border-slate-800">
+                      <td className="py-1.5 font-mono text-slate-700 dark:text-slate-300">{station.stationId}</td>
+                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-400">{station.amphipodSurvival}</td>
+                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-400">{station.polychaeteSurvival}</td>
+                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-400">{station.polychaeteGrowth.toFixed(2)}</td>
+                      <td className="py-1.5 text-right text-slate-600 dark:text-slate-400">{station.bivalveDev}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
-                Note: These are station-level toxicity results but the WOE risk conclusion is site-level, not per-station.
-                No station-level risk labels are available for paired comparison.
+                Note: These are station-level toxicity results but the consultant risk conclusion remains site-level.
+                No station-level paired risk labels are available for pooled or agreement interpretation.
               </p>
             </ExpandableSection>
           )}
 
-          {/* Statistical authorization */}
           <div className="text-xs text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-700 pt-3">
             <p><strong>Statistical authorization:</strong> {site.statisticalAuthorization.reason}</p>
             <p className="mt-1">Comparison type: {site.comparisonType} &middot; Gate: {site.gateOutcome}</p>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function SemanticCard({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/40">
+      <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</div>
+      <div className={cn('mt-2 inline-flex rounded px-2 py-1 text-xs font-medium', tone)}>
+        {value}
+      </div>
     </div>
   );
 }

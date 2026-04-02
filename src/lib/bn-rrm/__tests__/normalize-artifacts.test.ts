@@ -100,6 +100,74 @@ describe('normalizeRiskComparison', () => {
     expect(normalized.meta.externalSitesNote).toBe('');
     expect(normalized.summary.totalWOERecords).toBe(0);
   });
+
+  it('normalizes external site semantics and interpretation rules', () => {
+    const normalized = normalizeRiskComparison({
+      _meta: {
+        externalComparisonClassDefinitions: {
+          editorial_only: 'Editorial only.',
+          bn_descriptive_site_level: 'Descriptive site-level BN semantics.',
+        },
+        externalInterpretationRules: {
+          defaultOutputGranularity: 'site_level_only',
+          pooledStatisticsAuthorized: false,
+          benchmarkComparable: false,
+          interpretationNote: 'Not pooled and not benchmark comparable.',
+        },
+      },
+      externalSites: [
+        {
+          siteId: '0139',
+          siteName: 'Westminster Pier Park',
+          registryId: '0139',
+          region: 'Metro Vancouver',
+          waterbody: 'estuarine',
+          gateOutcome: 'DESCRIPTIVE_ONLY',
+          gateReason: 'Area-level only.',
+          consultant: 'Example',
+          reportDate: '2011-12',
+          reportTitle: 'Example report',
+          comparisonType: 'descriptive-integrated',
+          bnInferenceStatus: 'partial_evidence_site_level_ready',
+          externalComparisonClass: 'bn_descriptive_site_level',
+          outputGranularity: 'site_level_only',
+          interpretationAuthorization: 'descriptive_only',
+          contaminantOverlap: 'meaningful_partial',
+          modifierEffectsStatus: {
+            modifiers: 'missing_or_unconfirmed',
+            effectsEvidence: 'available_but_partial',
+          },
+          uncertaintyFlags: ['partial_domain_overlap'],
+          uncertaintyNote: 'Partial overlap only.',
+          bnInputCoverage: {
+            metals: true,
+            pahs: true,
+            pcbs: false,
+            toc: false,
+            grainSize: false,
+            sulfideBinding: false,
+            toxicity: true,
+            community: false,
+            note: 'Partial evidence.',
+          },
+          reportConclusions: [],
+          statisticalAuthorization: {
+            kappa: false,
+            confusionMatrix: false,
+            agreement: false,
+            mcNemar: false,
+            reason: 'Descriptive only.',
+          },
+        },
+      ],
+    });
+
+    expect(normalized.meta.externalComparisonClassDefinitions.bn_descriptive_site_level).toContain('Descriptive site-level');
+    expect(normalized.meta.externalInterpretationRules?.defaultOutputGranularity).toBe('site_level_only');
+    expect(normalized.externalSites).toHaveLength(1);
+    expect(normalized.externalSites[0].externalComparisonClass).toBe('bn_descriptive_site_level');
+    expect(normalized.externalSites[0].modifierEffectsStatus?.modifiers).toBe('missing_or_unconfirmed');
+  });
 });
 
 describe('normalizeValidation', () => {

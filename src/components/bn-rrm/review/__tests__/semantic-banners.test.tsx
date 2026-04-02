@@ -181,15 +181,21 @@ describe('BN-RRM semantic banners', () => {
     expect(screen.getByText(/Confusion matrix and prediction table below reflect the MAP development baseline/i)).toBeInTheDocument();
   });
 
-  it('renders the external-site pending-v1 banner in ExternalSites', () => {
+  it('renders the external-site semantics status banner in ExternalSites', () => {
     usePackArtifactMock.mockReturnValue({
       loading: false,
       error: null,
       data: {
         _meta: {
           modelVersion: 'bnrrm-landis-causal v1.0',
-          externalSitesStatus: 'pending_v1_alignment',
-          externalSitesNote: 'BN-side v1.0 alignment remains pending.',
+          externalSitesStatus: 'site_level_semantics_operationalized',
+          externalSitesNote: 'Meaningful partial BN-domain overlap can support descriptive BN site-level semantics.',
+          externalInterpretationRules: {
+            defaultOutputGranularity: 'site_level_only',
+            pooledStatisticsAuthorized: false,
+            benchmarkComparable: false,
+            interpretationNote: 'External outputs remain site-level only and not benchmark comparable.',
+          },
         },
         siteComparisons: [],
         summary: {},
@@ -200,7 +206,8 @@ describe('BN-RRM semantic banners', () => {
 
     render(<ExternalSites />);
 
-    expect(screen.getByText(/Pending against v1.0/i)).toBeInTheDocument();
-    expect(screen.getByText(/BN-side v1.0 alignment remains pending/i)).toBeInTheDocument();
+    expect(screen.getByText(/Site-level semantics operationalized/i)).toBeInTheDocument();
+    expect(screen.getByText(/Meaningful partial BN-domain overlap can support descriptive BN site-level semantics/i)).toBeInTheDocument();
+    expect(screen.getByText(/Output granularity defaults to/i)).toBeInTheDocument();
   });
 });
