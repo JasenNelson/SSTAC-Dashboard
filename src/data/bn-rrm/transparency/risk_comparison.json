@@ -1,11 +1,35 @@
-{
+﻿{
     "_meta":  {
-                  "generatedDate":  "2026-03-26T01:34:22.081764Z",
+                  "generatedDate":  "2026-04-01T01:36:28.812374+00:00",
                   "governanceSpec":  "COMPARISON_GOVERNANCE.md v1.0",
-                  "modelVersion":  "bnrrm-landis-causal v4.0",
+                  "modelVersion":  "bnrrm-landis-causal v1.0",
                   "comparatorType":  "WOE",
                   "note":  "Comparator labels are external reference labels only. They are NEVER BN training targets.",
-                  "status":  "mixed_evaluation_framework"
+                  "evaluationRule":  "mixed: entropy-aware v1.0 (9/59 stations, strict T1 subset) + v4.0 MAP (50/59 stations, non-T1)",
+                  "note_externalSites":  "externalSites preserve factual report conclusions, but BN-side v1.0 alignment remains pending for non-training sites without LOO coverage.",
+                  "externalSitesStatus":  "pending_v1_alignment",
+                  "externalSitesNote":  "No active v1.0 refresh path is claimed in this tranche. Treat externalSites as descriptive reference content pending any future science/evaluation lane for non-training sites.",
+                  "status":  "mixed_evaluation_framework",
+                  "comparisonClassDefinitions":  {
+                                                     "causal_chain_complete":  "Comparator stations with the strongest evidentiary alignment to the BN-RRM causal chain; strongest interpretive weight.",
+                                                     "partial_deterministic":  "Valid BN-vs-deterministic comparison context with weaker or incomplete evidentiary alignment; not equivalent to causal_chain_complete interpretation.",
+                                                     "descriptive_only":  "Contextual comparison only; excluded from pooled agreement interpretation."
+                                                 },
+                  "evaluationViewDefinitions":  {
+                                                    "strict_t1_entropy_publication":  "Strict Tier 1 publication subset evaluated under the entropy-aware v1.0 rule.",
+                                                    "broader_map_development":  "Broader development/canonical comparison context evaluated under MAP.",
+                                                    "descriptive_only":  "Descriptive-only comparison context without pooled agreement interpretation."
+                                                },
+                  "pooledStatsPolicy":  {
+                                            "included_classes":  [
+                                                                     "causal_chain_complete",
+                                                                     "partial_deterministic"
+                                                                 ],
+                                            "excluded_classes":  [
+                                                                     "descriptive_only"
+                                                                 ],
+                                            "interpretation_note":  "Pooled agreement statistics combine causal_chain_complete and partial_deterministic rows and are not equivalent to a causal_chain_complete-only benchmark."
+                                        }
               },
     "summary":  {
                     "totalWOERecords":  59,
@@ -84,7 +108,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  2,
@@ -113,7 +141,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  3,
@@ -142,7 +174,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "moderate",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  4,
@@ -171,7 +207,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "moderate",
                                                                "bnrrmObserved":  "moderate",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  5,
@@ -200,7 +240,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  null,
                                                                "bnrrmObserved":  null,
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  6,
@@ -229,7 +273,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  7,
@@ -258,7 +306,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  null,
                                                                "bnrrmObserved":  null,
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  8,
@@ -287,7 +339,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  9,
@@ -316,7 +372,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  null,
                                                                "bnrrmObserved":  null,
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  10,
@@ -345,7 +405,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  11,
@@ -374,7 +438,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "moderate",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            }
                                                        ],
                                 "siteRiskNarrative":  null,
@@ -422,7 +490,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  null,
                                                                "bnrrmObserved":  null,
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  200,
@@ -451,7 +523,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  null,
                                                                "bnrrmObserved":  null,
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  201,
@@ -478,9 +554,17 @@
                                                                                                      },
                                                                                       "isTrainingTarget":  false
                                                                                   },
-                                                               "bnrrmPredicted":  "high",
+                                                               "bnrrmPredicted":  "moderate",
                                                                "bnrrmObserved":  "high",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  {
+                                                                                      "low":  0.3595,
+                                                                                      "moderate":  0.3408,
+                                                                                      "high":  0.2997
+                                                                                  },
+                                                               "prediction_rule":  "v1.0_entropy_1.06",
+                                                               "comparison_class":  "causal_chain_complete",
+                                                               "evaluation_view":  "strict_t1_entropy_publication",
+                                                               "statistical_authorization":  "eligible_primary_interpretation"
                                                            },
                                                            {
                                                                "stationId":  202,
@@ -507,9 +591,17 @@
                                                                                                      },
                                                                                       "isTrainingTarget":  false
                                                                                   },
-                                                               "bnrrmPredicted":  "high",
+                                                               "bnrrmPredicted":  "moderate",
                                                                "bnrrmObserved":  "high",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  {
+                                                                                      "low":  0.3378,
+                                                                                      "moderate":  0.3385,
+                                                                                      "high":  0.3237
+                                                                                  },
+                                                               "prediction_rule":  "v1.0_entropy_1.06",
+                                                               "comparison_class":  "causal_chain_complete",
+                                                               "evaluation_view":  "strict_t1_entropy_publication",
+                                                               "statistical_authorization":  "eligible_primary_interpretation"
                                                            },
                                                            {
                                                                "stationId":  203,
@@ -538,7 +630,15 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "high",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  {
+                                                                                      "low":  0.1306,
+                                                                                      "moderate":  0.2456,
+                                                                                      "high":  0.6238
+                                                                                  },
+                                                               "prediction_rule":  "v1.0_entropy_1.06",
+                                                               "comparison_class":  "causal_chain_complete",
+                                                               "evaluation_view":  "strict_t1_entropy_publication",
+                                                               "statistical_authorization":  "eligible_primary_interpretation"
                                                            },
                                                            {
                                                                "stationId":  204,
@@ -565,9 +665,17 @@
                                                                                                      },
                                                                                       "isTrainingTarget":  false
                                                                                   },
-                                                               "bnrrmPredicted":  "high",
+                                                               "bnrrmPredicted":  "moderate",
                                                                "bnrrmObserved":  "high",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  {
+                                                                                      "low":  0.2532,
+                                                                                      "moderate":  0.3197,
+                                                                                      "high":  0.427
+                                                                                  },
+                                                               "prediction_rule":  "v1.0_entropy_1.06",
+                                                               "comparison_class":  "causal_chain_complete",
+                                                               "evaluation_view":  "strict_t1_entropy_publication",
+                                                               "statistical_authorization":  "eligible_primary_interpretation"
                                                            }
                                                        ],
                                 "siteRiskNarrative":  null,
@@ -614,7 +722,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  208,
@@ -643,7 +755,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  209,
@@ -672,7 +788,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  210,
@@ -701,7 +821,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  211,
@@ -728,9 +852,17 @@
                                                                                                      },
                                                                                       "isTrainingTarget":  false
                                                                                   },
-                                                               "bnrrmPredicted":  "low",
+                                                               "bnrrmPredicted":  "moderate",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  {
+                                                                                      "low":  0.3774,
+                                                                                      "moderate":  0.3419,
+                                                                                      "high":  0.2808
+                                                                                  },
+                                                               "prediction_rule":  "v1.0_entropy_1.06",
+                                                               "comparison_class":  "causal_chain_complete",
+                                                               "evaluation_view":  "strict_t1_entropy_publication",
+                                                               "statistical_authorization":  "eligible_primary_interpretation"
                                                            },
                                                            {
                                                                "stationId":  212,
@@ -757,9 +889,17 @@
                                                                                                      },
                                                                                       "isTrainingTarget":  false
                                                                                   },
-                                                               "bnrrmPredicted":  "low",
+                                                               "bnrrmPredicted":  "moderate",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  {
+                                                                                      "low":  0.3716,
+                                                                                      "moderate":  0.3401,
+                                                                                      "high":  0.2883
+                                                                                  },
+                                                               "prediction_rule":  "v1.0_entropy_1.06",
+                                                               "comparison_class":  "causal_chain_complete",
+                                                               "evaluation_view":  "strict_t1_entropy_publication",
+                                                               "statistical_authorization":  "eligible_primary_interpretation"
                                                            },
                                                            {
                                                                "stationId":  213,
@@ -786,9 +926,17 @@
                                                                                                      },
                                                                                       "isTrainingTarget":  false
                                                                                   },
-                                                               "bnrrmPredicted":  "low",
+                                                               "bnrrmPredicted":  "moderate",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  {
+                                                                                      "low":  0.401,
+                                                                                      "moderate":  0.3398,
+                                                                                      "high":  0.2592
+                                                                                  },
+                                                               "prediction_rule":  "v1.0_entropy_1.06",
+                                                               "comparison_class":  "causal_chain_complete",
+                                                               "evaluation_view":  "strict_t1_entropy_publication",
+                                                               "statistical_authorization":  "eligible_primary_interpretation"
                                                            },
                                                            {
                                                                "stationId":  214,
@@ -817,7 +965,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  215,
@@ -846,7 +998,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  216,
@@ -873,9 +1029,17 @@
                                                                                                      },
                                                                                       "isTrainingTarget":  false
                                                                                   },
-                                                               "bnrrmPredicted":  "low",
+                                                               "bnrrmPredicted":  "moderate",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  {
+                                                                                      "low":  0.3774,
+                                                                                      "moderate":  0.3419,
+                                                                                      "high":  0.2808
+                                                                                  },
+                                                               "prediction_rule":  "v1.0_entropy_1.06",
+                                                               "comparison_class":  "causal_chain_complete",
+                                                               "evaluation_view":  "strict_t1_entropy_publication",
+                                                               "statistical_authorization":  "eligible_primary_interpretation"
                                                            },
                                                            {
                                                                "stationId":  217,
@@ -904,7 +1068,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  null,
                                                                "bnrrmObserved":  null,
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  218,
@@ -933,7 +1101,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  null,
                                                                "bnrrmObserved":  null,
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  219,
@@ -962,7 +1134,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  null,
                                                                "bnrrmObserved":  null,
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  220,
@@ -991,7 +1167,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  null,
                                                                "bnrrmObserved":  null,
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  221,
@@ -1020,7 +1200,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  null,
                                                                "bnrrmObserved":  null,
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            }
                                                        ],
                                 "siteRiskNarrative":  null,
@@ -1070,7 +1254,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  223,
@@ -1099,7 +1287,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "moderate",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  224,
@@ -1128,7 +1320,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  225,
@@ -1157,7 +1353,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "moderate",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  226,
@@ -1186,7 +1386,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  null,
                                                                "bnrrmObserved":  null,
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  227,
@@ -1215,7 +1419,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  228,
@@ -1244,7 +1452,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  229,
@@ -1273,7 +1485,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  230,
@@ -1302,7 +1518,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  231,
@@ -1331,7 +1551,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  232,
@@ -1360,7 +1584,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  233,
@@ -1389,7 +1617,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  234,
@@ -1418,7 +1650,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  235,
@@ -1447,7 +1683,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  236,
@@ -1476,7 +1716,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "moderate",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  237,
@@ -1505,7 +1749,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  238,
@@ -1534,7 +1782,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  240,
@@ -1563,7 +1815,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "moderate",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  241,
@@ -1592,7 +1848,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  242,
@@ -1621,7 +1881,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  243,
@@ -1650,7 +1914,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  244,
@@ -1679,7 +1947,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  245,
@@ -1708,7 +1980,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "low",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            }
                                                        ],
                                 "siteRiskNarrative":  null,
@@ -1752,9 +2028,17 @@
                                                                                                      },
                                                                                       "isTrainingTarget":  false
                                                                                   },
-                                                               "bnrrmPredicted":  "low",
+                                                               "bnrrmPredicted":  "moderate",
                                                                "bnrrmObserved":  "high",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  {
+                                                                                      "low":  0.3718,
+                                                                                      "moderate":  0.3366,
+                                                                                      "high":  0.2916
+                                                                                  },
+                                                               "prediction_rule":  "v1.0_entropy_1.06",
+                                                               "comparison_class":  "causal_chain_complete",
+                                                               "evaluation_view":  "strict_t1_entropy_publication",
+                                                               "statistical_authorization":  "eligible_primary_interpretation"
                                                            },
                                                            {
                                                                "stationId":  278,
@@ -1783,7 +2067,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "high",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  279,
@@ -1812,7 +2100,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "high",
                                                                "bnrrmObserved":  "high",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            },
                                                            {
                                                                "stationId":  280,
@@ -1841,7 +2133,11 @@
                                                                                   },
                                                                "bnrrmPredicted":  "low",
                                                                "bnrrmObserved":  "high",
-                                                               "bnrrmPosterior":  null
+                                                               "bnrrmPosterior":  null,
+                                                               "prediction_rule":  "v4.0_MAP",
+                                                               "comparison_class":  "partial_deterministic",
+                                                               "evaluation_view":  "broader_map_development",
+                                                               "statistical_authorization":  "eligible_with_caveat"
                                                            }
                                                        ],
                                 "siteRiskNarrative":  null,

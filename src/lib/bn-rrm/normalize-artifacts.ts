@@ -690,6 +690,9 @@ export interface NormalizedStationComparison {
   bnrrmPredicted: string | null;
   bnrrmObserved: string | null;
   predictionRule: string | null;
+  comparisonClass: string | null;
+  evaluationView: string | null;
+  statisticalAuthorization: string | null;
   reportEstimate: {
     originalLabel: string;
     mappedBNClass: string | null;
@@ -739,6 +742,11 @@ export interface NormalizedRiskComparison {
     noteExternalSites: string;
     externalSitesStatus: string;
     externalSitesNote: string;
+    pooledStatsPolicy: {
+      includedClasses: string[];
+      excludedClasses: string[];
+      interpretationNote: string;
+    } | null;
   };
   // Site-specific fields
   comparisonType: string;
@@ -769,6 +777,7 @@ export function normalizeRiskComparison(raw: any): NormalizedRiskComparison {
         noteExternalSites: '',
         externalSitesStatus: '',
         externalSitesNote: '',
+        pooledStatsPolicy: null,
       },
       comparisonType: '',
       site: '',
@@ -847,6 +856,13 @@ export function normalizeRiskComparison(raw: any): NormalizedRiskComparison {
       noteExternalSites: raw._meta?.note_externalSites ?? '',
       externalSitesStatus: raw._meta?.externalSitesStatus ?? '',
       externalSitesNote: raw._meta?.externalSitesNote ?? '',
+      pooledStatsPolicy: raw._meta?.pooledStatsPolicy
+        ? {
+            includedClasses: raw._meta.pooledStatsPolicy.included_classes ?? [],
+            excludedClasses: raw._meta.pooledStatsPolicy.excluded_classes ?? [],
+            interpretationNote: raw._meta.pooledStatsPolicy.interpretation_note ?? '',
+          }
+        : null,
     },
     comparisonType: raw.comparison_type ?? '',
     site: raw.site ?? '',
@@ -861,6 +877,9 @@ function normalizeStationComparison(sc: any): NormalizedStationComparison {
     bnrrmPredicted: sc.bnrrmPredicted ?? null,
     bnrrmObserved: sc.bnrrmObserved ?? null,
     predictionRule: sc.prediction_rule ?? sc.predictionRule ?? null,
+    comparisonClass: sc.comparison_class ?? sc.comparisonClass ?? null,
+    evaluationView: sc.evaluation_view ?? sc.evaluationView ?? null,
+    statisticalAuthorization: sc.statistical_authorization ?? sc.statisticalAuthorization ?? null,
     reportEstimate: {
       originalLabel: sc.reportEstimate?.originalLabel ?? '',
       mappedBNClass: sc.reportEstimate?.mappedBNClass ?? null,

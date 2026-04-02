@@ -29,26 +29,36 @@ export function RiskComparison() {
   const data = (rawData && !error) ? normalizeRiskComparison(rawData) : null;
 
   // ALL hooks must be called before any early return (React Rules of Hooks)
-  const { pairs, bnrrm, woe, predictionRuleCounts } = useMemo(() => {
+  const { pairs, bnrrm, woe, predictionRuleCounts, totalClassCounts, matchedClassCounts } = useMemo(() => {
     if (!data?.siteComparisons) {
       return {
         pairs: [] as [string, string][],
         bnrrm: [] as string[],
         woe: [] as string[],
         predictionRuleCounts: {} as Record<string, number>,
+        totalClassCounts: {} as Record<string, number>,
+        matchedClassCounts: {} as Record<string, number>,
       };
     }
     const p: [string, string][] = [];
     const bn: string[] = [];
     const w: string[] = [];
     const counts: Record<string, number> = {};
+    const totalClasses: Record<string, number> = {};
+    const matchedClasses: Record<string, number> = {};
 
     for (const site of data.siteComparisons) {
       for (const sc of site.stationComparisons) {
+        if (sc.comparisonClass) {
+          totalClasses[sc.comparisonClass] = (totalClasses[sc.comparisonClass] ?? 0) + 1;
+        }
         if (sc.bnrrmPredicted && sc.reportEstimate.mappedBNClass) {
           p.push([sc.bnrrmPredicted, sc.reportEstimate.mappedBNClass]);
           bn.push(sc.bnrrmPredicted);
           w.push(sc.reportEstimate.mappedBNClass);
+          if (sc.comparisonClass) {
+            matchedClasses[sc.comparisonClass] = (matchedClasses[sc.comparisonClass] ?? 0) + 1;
+          }
         }
         if (sc.predictionRule) {
           counts[sc.predictionRule] = (counts[sc.predictionRule] ?? 0) + 1;
@@ -56,7 +66,14 @@ export function RiskComparison() {
       }
     }
 
-    return { pairs: p, bnrrm: bn, woe: w, predictionRuleCounts: counts };
+    return {
+      pairs: p,
+      bnrrm: bn,
+      woe: w,
+      predictionRuleCounts: counts,
+      totalClassCounts: totalClasses,
+      matchedClassCounts: matchedClasses,
+    };
   }, [data]);
 
   // Compute agreement report
@@ -131,6 +148,11 @@ export function RiskComparison() {
             Evaluation rule: {data.meta.evaluationRule}
           </p>
         )}
+        {Object.keys(matchedClassCounts).length > 0 && (
+          <p className="text-xs text-blue-600 dark:text-blue-300 mt-2">
+            Matched comparison classes: {Object.entries(matchedClassCounts).map(([comparisonClass, count]) => `${comparisonClass}: ${count}`).join(' · ')}
+          </p>
+        )}
       </div>
 
       {data.meta.status === 'mixed_evaluation_framework' && (
@@ -141,9 +163,19 @@ export function RiskComparison() {
           <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
             {Object.entries(predictionRuleCounts).map(([rule, count]) => `${rule}: ${count}`).join(' · ')}
           </p>
+          {Object.keys(totalClassCounts).length > 0 && (
+            <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
+              Comparison classes across all {data.summary.totalWOERecords ?? 59} WOE rows: {Object.entries(totalClassCounts).map(([comparisonClass, count]) => `${comparisonClass}: ${count}`).join(' · ')}
+            </p>
+          )}
           <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
             Rule counts are across all {data.summary.totalWOERecords ?? 59} WOE station records in the artifact. Agreement statistics below use only the matched subset ({report.n}) with both a BN-RRM prediction and a defensibly mapped WOE label.
           </p>
+          {data.meta.pooledStatsPolicy?.interpretationNote && (
+            <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
+              {data.meta.pooledStatsPolicy.interpretationNote}
+            </p>
+          )}
           {data.meta.noteExternalSites && (
             <p className="text-xs text-amber-700 dark:text-amber-300 mt-2">
               {data.meta.noteExternalSites}
@@ -185,7 +217,11 @@ export function RiskComparison() {
         <MetricCard
           label="Matched Stations"
           value={String(report.n)}
-          subtitle={`${data.summary.sitesWithWOE} of 8 training sites`}
+          subtitle={
+            Object.keys(matchedClassCounts).length > 0
+              ? Object.entries(matchedClassCounts).map(([comparisonClass, count]) => `${comparisonClass}: ${count}`).join(' · ')
+              : `${data.summary.sitesWithWOE} of 8 training sites`
+          }
           tooltip={`${report.n} stations have both a LOO prediction and a WOE record with defensible mapping. ${report.nExcludedNoLOO + report.nExcludedNoWOE} stations excluded.`}
         />
       </div>
@@ -431,6 +467,7 @@ function StationTable({ sites, showExclusions }: { sites: NormalizedSiteComparis
             <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Station</th>
             <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">BN-RRM</th>
             <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Rule</th>
+            <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">Class</th>
             <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">WOE (original)</th>
             <th className="text-left py-2 font-medium text-slate-500 dark:text-slate-400">WOE (mapped)</th>
             <th className="text-center py-2 font-medium text-slate-500 dark:text-slate-400">Match</th>
@@ -457,6 +494,15 @@ function StationTable({ sites, showExclusions }: { sites: NormalizedSiteComparis
                   {sc.predictionRule ? (
                     <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                       {sc.predictionRule}
+                    </span>
+                  ) : (
+                    <span className="text-slate-300">—</span>
+                  )}
+                </td>
+                <td className="py-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  {sc.comparisonClass ? (
+                    <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                      {sc.comparisonClass}
                     </span>
                   ) : (
                     <span className="text-slate-300">—</span>
