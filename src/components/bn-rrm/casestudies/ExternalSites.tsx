@@ -29,6 +29,7 @@ const EXTERNAL_CLASS_LABELS: Record<string, string> = {
 
 const INFERENCE_STATUS_LABELS: Record<string, string> = {
   partial_evidence_site_level_ready: 'Partial-evidence site-level ready',
+  site_level_run_complete: 'Site-level run complete',
   unsupported_noncanonical_profile: 'Unsupported noncanonical profile',
 };
 
@@ -47,6 +48,8 @@ const FLAG_LABELS: Record<string, string> = {
   missing_environmental_modifiers: 'Missing environmental modifiers',
   estuarine_overlap_not_training_domain: 'Estuarine overlap outside training domain',
   site_level_or_area_level_conclusions_only: 'Area/site-level conclusions only',
+  toxicity_and_community_not_encoded_as_bn_inputs: 'Toxicity and community not encoded as BN inputs',
+  aec_1b_profile_only: 'AEC 1B profile only',
   pah_dominant_profile: 'PAH-dominant profile',
   missing_metals_and_modifier_inputs: 'Missing metals and modifier inputs',
   site_level_conclusions_only: 'Site-level conclusions only',
@@ -374,6 +377,61 @@ function SiteCard({
             </div>
           </ExpandableSection>
 
+          {site.bnRunRecord?.posteriorSummary && (
+            <ExpandableSection title="BN Run Record" badge="Run complete" defaultOpen>
+              <div className="space-y-3">
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <p className="text-xs text-blue-800 dark:text-blue-200">
+                    <strong>Descriptive BN run only.</strong> This 0139 record uses the existing v1.0 screening path
+                    with an explicit AEC 1B input profile. It is not validation evidence, not pooled, and not
+                    benchmark-comparable.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-5">
+                  <SemanticCard
+                    label="Spatial unit"
+                    value={site.bnInputAssembly?.authorizedSpatialUnit?.id ?? humanizeToken(site.outputGranularity)}
+                    tone="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                  />
+                  <SemanticCard
+                    label="MAP class"
+                    value={site.bnRunRecord.posteriorSummary.map}
+                    tone={cn(
+                      CLASS_COLORS[site.bnRunRecord.posteriorSummary.map]?.bg ?? 'bg-slate-100 dark:bg-slate-700',
+                      CLASS_COLORS[site.bnRunRecord.posteriorSummary.map]?.text ?? 'text-slate-700 dark:text-slate-300',
+                    )}
+                  />
+                  <PosteriorMetric label="Low" value={site.bnRunRecord.posteriorSummary.low} />
+                  <PosteriorMetric label="Moderate" value={site.bnRunRecord.posteriorSummary.moderate} />
+                  <PosteriorMetric label="High" value={site.bnRunRecord.posteriorSummary.high} />
+                </div>
+
+                <div className="text-xs text-slate-600 dark:text-slate-400 space-y-2">
+                  <p><strong>Run date:</strong> {site.bnRunRecord.runDate || 'not recorded'}</p>
+                  <p><strong>Evidence source:</strong> {site.bnRunRecord.evidenceSourceSummary}</p>
+                  <p><strong>Encoding basis:</strong> {site.bnRunRecord.encodingBasis}</p>
+                  <p><strong>Method:</strong> {site.bnRunRecord.runMethod}</p>
+                  <p>
+                    <strong>Authorization guardrails:</strong> pooled stats eligible = {site.pooledStatsEligible ? 'yes' : 'no'} /
+                    benchmark comparable = {site.benchmarkComparable ? 'yes' : 'no'}.
+                  </p>
+                </div>
+
+                {site.bnRunRecord.limitations.length > 0 && (
+                  <div>
+                    <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Limitations</div>
+                    <ul className="list-disc ml-5 mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-400">
+                      {site.bnRunRecord.limitations.map((item, index) => (
+                        <li key={`${site.siteId}-limit-${index}`}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </ExpandableSection>
+          )}
+
           <ExpandableSection title="Report-Stated Risk Conclusions (WOE)" defaultOpen>
             <div className="space-y-3">
               <div className="flex items-center gap-1 mb-1">
@@ -482,6 +540,15 @@ function SiteCard({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function PosteriorMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/40">
+      <div className="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</div>
+      <div className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-300">{value.toFixed(3)}</div>
     </div>
   );
 }

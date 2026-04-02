@@ -2165,128 +2165,662 @@
                         ],
     "externalSites":  [
                           {
-                              "siteId":  "0139",
-                              "siteName":  "Westminster Pier Park, 224 Front Street, New Westminster",
-                              "registryId":  "0139",
-                              "region":  "Metro Vancouver",
-                              "waterbody":  "estuarine",
-                              "isTrainingSite":  false,
-                              "gateOutcome":  "DESCRIPTIVE_ONLY",
-                              "gateReason":  "Class 2 descriptive integrated comparison. Genuine Aquatic DERA with WOE approach integrating multiple LOEs per AEC. Area-level conclusions (per-AEC: AEC 1B, AEC 22A/B, AEC 2/16B/17A/B). No station-level risk classifications. Sediment + groundwater + porewater assessed. Fraser River foreshore (tidally influenced).",
-                              "consultant":  "WorleyParsons Canada Services Ltd.",
-                              "reportDate":  "2011-12",
-                              "reportTitle":  "Human Health and Detailed Ecological Risk Assessment, 224 Front Street, New Westminster, BC",
-                              "reportFile":  "Project 09216, Rev 0",
-                              "comparisonType":  "descriptive-integrated",
-                              "bnInferenceStatus":  "partial_evidence_site_level_ready",
-                              "externalComparisonClass":  "bn_descriptive_site_level",
-                              "outputGranularity":  "site_level_only",
-                              "interpretationAuthorization":  "descriptive_only",
-                              "contaminantOverlap":  "meaningful_partial",
-                              "modifierEffectsStatus":  {
-                                                            "modifiers":  "missing_or_unconfirmed",
-                                                            "effectsEvidence":  "available_but_partial"
-                                                        },
-                              "uncertaintyFlags":  [
-                                                       "partial_domain_overlap",
-                                                       "missing_environmental_modifiers",
-                                                       "estuarine_overlap_not_training_domain",
-                                                       "site_level_or_area_level_conclusions_only"
-                                                   ],
-                              "uncertaintyNote":  "Westminster Pier Park has meaningful BN-domain overlap through metals, PAHs, and toxicity evidence, but key condition/modifier inputs remain missing or unconfirmed. Consultant conclusions are area/site-level and should be interpreted as descriptive site-level BN context only.",
-                              "bnInputCoverage":  {
-                                                      "metals":  true,
-                                                      "pahs":  true,
-                                                      "pcbs":  false,
-                                                      "toc":  false,
-                                                      "grainSize":  false,
-                                                      "sulfideBinding":  false,
-                                                      "toxicity":  true,
-                                                      "community":  false,
-                                                      "note":  "Metals (mercury, arsenic confirmed as COPCs via fish ingestion pathway). PAHs confirmed (creosote-related COPCs, industrial foreshore). Aquatic toxicity testing (§17.2.1) and sediment toxicity testing (§17.2.2) conducted. Benthic/epibenthic invertebrates are ROPCs but community survey status unconfirmed from executive summary. BN-RRM inference is partial-evidence — multiple substance nodes can be populated but condition nodes (TOC, grain size, AVS) are unconfirmed."
-                                                  },
-                              "reportConclusions":  [
-                                                        {
-                                                            "receptor":  "Aquatic Life (Site-Wide WOE)",
-                                                            "loeCount":  3,
-                                                            "loes":  [
-                                                                         "Multiple LOE within each AEC (sediment chemistry, groundwater/porewater chemistry, toxicity testing)",
-                                                                         "Site-specific physico-chemical data and observations",
-                                                                         "Engineering controls and anticipated post-remediation improvements"
-                                                                     ],
-                                                            "woeConclusion":  "Low overall risk",
-                                                            "woeIntegrationNote":  "WOE approach integrating multiple LOE per AEC. Conclusion considers probability, magnitude and scale of harm, and ecological relevance. Engineering controls (Jet Grout containment wall, sediment capping) contribute to the low-risk determination.",
-                                                            "mappedBNClass":  "low",
-                                                            "mappingConfidence":  "approximate",
-                                                            "mappingJustification":  "WorleyParsons \u0027low overall risk\u0027 maps approximately to BN Low. Mapping is approximate because: (1) the WOE integrates remediation context (engineering controls) alongside ecological evidence, making it partially a managed-risk conclusion; (2) the conclusion is site-wide, not per-station; (3) the Fraser River foreshore is estuarine/tidal, overlapping with but not identical to the BN-RRM marine training domain.",
-                                                            "comparisonLevel":  "site",
-                                                            "provenance":  {
-                                                                               "sourceDocument":  "WorleyParsons Canada Services Ltd. (2011). Human Health and Detailed Ecological Risk Assessment, 224 Front Street, New Westminster, BC. Project 09216, Rev 0.",
-                                                                               "sourcePage":  6,
-                                                                               "sourceTableFigure":  "Executive Summary, Aquatic DERA section (p. vi)",
-                                                                               "extractedLabel":  "Low overall risk to aquatic ROPCs",
-                                                                               "extractionMethod":  "manual",
-                                                                               "extractionDate":  "2026-03-26",
-                                                                               "extractor":  "claude"
-                                                                           },
-                                                            "isTrainingTarget":  false
-                                                        },
-                                                        {
-                                                            "receptor":  "Aquatic Life (AEC 1B)",
-                                                            "loeCount":  2,
-                                                            "loes":  [
-                                                                         "Per-AEC LOE integration (Section 18.2)",
-                                                                         "Sediment and groundwater chemistry + toxicity testing within AEC 1B"
-                                                                     ],
-                                                            "woeConclusion":  "Low risk (per-AEC conclusion)",
-                                                            "mappedBNClass":  "low",
-                                                            "mappingConfidence":  "approximate",
-                                                            "mappingJustification":  "Per-AEC conclusion from WOE integration. AEC 1B is the primary near-field assessment area. Mapping is approximate — AEC is an area-level unit, not station-level.",
-                                                            "comparisonLevel":  "area",
-                                                            "provenance":  {
-                                                                               "sourceDocument":  "WorleyParsons (2011). HHERA, 224 Front Street, New Westminster, BC.",
-                                                                               "sourcePage":  124,
-                                                                               "sourceTableFigure":  "Section 18.2 (AEC 1B)",
-                                                                               "extractedLabel":  "Per-AEC risk characterization",
-                                                                               "extractionMethod":  "manual",
-                                                                               "extractionDate":  "2026-03-26",
-                                                                               "extractor":  "claude"
-                                                                           },
-                                                            "isTrainingTarget":  false
-                                                        },
-                                                        {
-                                                            "receptor":  "Aquatic Life (AEC 22A/B)",
-                                                            "loeCount":  2,
-                                                            "loes":  [
-                                                                         "Per-AEC LOE integration (Section 18.3)",
-                                                                         "Sediment and groundwater chemistry within AEC 22A/B"
-                                                                     ],
-                                                            "woeConclusion":  "Low risk (per-AEC conclusion)",
-                                                            "mappedBNClass":  "low",
-                                                            "mappingConfidence":  "approximate",
-                                                            "mappingJustification":  "Per-AEC conclusion. AEC 22A/B is an area-level assessment unit covering a defined portion of the foreshore.",
-                                                            "comparisonLevel":  "area",
-                                                            "provenance":  {
-                                                                               "sourceDocument":  "WorleyParsons (2011). HHERA, 224 Front Street, New Westminster, BC.",
-                                                                               "sourcePage":  126,
-                                                                               "sourceTableFigure":  "Section 18.3 (AEC 22A/B)",
-                                                                               "extractedLabel":  "Per-AEC risk characterization",
-                                                                               "extractionMethod":  "manual",
-                                                                               "extractionDate":  "2026-03-26",
-                                                                               "extractor":  "claude"
-                                                                           },
-                                                            "isTrainingTarget":  false
-                                                        }
-                                                    ],
-                              "statisticalAuthorization":  {
-                                                               "kappa":  false,
-                                                               "confusionMatrix":  false,
-                                                               "agreement":  false,
-                                                               "mcNemar":  false,
-                                                               "reason":  "Class 2 descriptive integrated only. WOE conclusions are area-level per AEC, not station-level. No station-level paired labels exist. Descriptive comparison authorized: BN-RRM area-level posterior distribution presented alongside consultant per-AEC WOE conclusion. No agreement statistics."
-                                                           }
+                              "siteId": "0139",
+                              "siteName": "Westminster Pier Park, 224 Front Street, New Westminster",
+                              "registryId": "0139",
+                              "region": "Metro Vancouver",
+                              "waterbody": "estuarine",
+                              "isTrainingSite": false,
+                              "gateOutcome": "DESCRIPTIVE_ONLY",
+                              "gateReason": "Class 2 descriptive integrated comparison. Genuine Aquatic DERA with WOE approach integrating multiple LOEs per AEC. Area-level conclusions (per-AEC: AEC 1B, AEC 22A/B, AEC 2/16B/17A/B). No station-level risk classifications. Sediment + groundwater + porewater assessed. Fraser River foreshore (tidally influenced).",
+                              "consultant": "WorleyParsons Canada Services Ltd.",
+                              "reportDate": "2011-12",
+                              "reportTitle": "Human Health and Detailed Ecological Risk Assessment, 224 Front Street, New Westminster, BC",
+                              "reportFile": "Project 09216, Rev 0",
+                              "comparisonType": "descriptive-integrated",
+                              "bnInferenceStatus": "site_level_run_complete",
+                              "externalComparisonClass": "bn_descriptive_site_level",
+                              "outputGranularity": "site_level_only",
+                              "interpretationAuthorization": "descriptive_only",
+                              "contaminantOverlap": "meaningful_partial",
+                              "modifierEffectsStatus": {
+                                  "modifiers": "toc_available_other_modifiers_missing",
+                                  "effectsEvidence": "interpretation_only_not_encoded"
+                              },
+                              "uncertaintyFlags": [
+                                  "partial_domain_overlap",
+                                  "missing_environmental_modifiers",
+                                  "estuarine_overlap_not_training_domain",
+                                  "site_level_or_area_level_conclusions_only",
+                                  "toxicity_and_community_not_encoded_as_bn_inputs",
+                                  "aec_1b_profile_only"
+                              ],
+                              "uncertaintyNote": "The 0139 BN run uses a single AEC 1B descriptive profile assembled from explicit AEC 1B sediment chemistry and TOC values only. PCB, grain-size, and sulfide-binding inputs remain missing, while toxicity and community evidence remain interpretation-only. The resulting posterior is descriptive site-level context only and is not pooled, benchmark-comparable, or validation evidence.",
+                              "bnInputCoverage": {
+                                  "metals": true,
+                                  "pahs": true,
+                                  "pcbs": false,
+                                  "toc": true,
+                                  "grainSize": false,
+                                  "sulfideBinding": false,
+                                  "toxicity": false,
+                                  "community": false,
+                                  "note": "AEC 1B chemistry nodes are populated from explicit SED10-49 and SED10-51 sediment values (Appendix 2 Tables 2-58 and 2-63). TOC is populated directly from Appendix 2 Table 2-55. PCB, grain-size, sulfide-binding, and effect nodes remain missing or interpretation-only in this MVP."
+                              },
+                              "reportConclusions": [
+                                  {
+                                      "receptor": "Aquatic Life (Site-Wide WOE)",
+                                      "loeCount": 3,
+                                      "loes": [
+                                          "Multiple LOE within each AEC (sediment chemistry, groundwater/porewater chemistry, toxicity testing)",
+                                          "Site-specific physico-chemical data and observations",
+                                          "Engineering controls and anticipated post-remediation improvements"
+                                      ],
+                                      "woeConclusion": "Low overall risk",
+                                      "woeIntegrationNote": "WOE approach integrating multiple LOE per AEC. Conclusion considers probability, magnitude and scale of harm, and ecological relevance. Engineering controls (Jet Grout containment wall, sediment capping) contribute to the low-risk determination.",
+                                      "mappedBNClass": "low",
+                                      "mappingConfidence": "approximate",
+                                      "mappingJustification": "WorleyParsons 'low overall risk' maps approximately to BN Low. Mapping is approximate because: (1) the WOE integrates remediation context (engineering controls) alongside ecological evidence, making it partially a managed-risk conclusion; (2) the conclusion is site-wide, not per-station; (3) the Fraser River foreshore is estuarine/tidal, overlapping with but not identical to the BN-RRM marine training domain.",
+                                      "comparisonLevel": "site",
+                                      "provenance": {
+                                          "sourceDocument": "WorleyParsons Canada Services Ltd. (2011). Human Health and Detailed Ecological Risk Assessment, 224 Front Street, New Westminster, BC. Project 09216, Rev 0.",
+                                          "sourcePage": 6,
+                                          "sourceTableFigure": "Executive Summary, Aquatic DERA section (p. vi)",
+                                          "extractedLabel": "Low overall risk to aquatic ROPCs",
+                                          "extractionMethod": "manual",
+                                          "extractionDate": "2026-03-26",
+                                          "extractor": "claude"
+                                      },
+                                      "isTrainingTarget": false
+                                  },
+                                  {
+                                      "receptor": "Aquatic Life (AEC 1B)",
+                                      "loeCount": 2,
+                                      "loes": [
+                                          "Per-AEC LOE integration (Section 18.2)",
+                                          "Sediment and groundwater chemistry + toxicity testing within AEC 1B"
+                                      ],
+                                      "woeConclusion": "Low risk (per-AEC conclusion)",
+                                      "mappedBNClass": "low",
+                                      "mappingConfidence": "approximate",
+                                      "mappingJustification": "Per-AEC conclusion from WOE integration. AEC 1B is the primary near-field assessment area. Mapping is approximate — AEC is an area-level unit, not station-level.",
+                                      "comparisonLevel": "area",
+                                      "provenance": {
+                                          "sourceDocument": "WorleyParsons (2011). HHERA, 224 Front Street, New Westminster, BC.",
+                                          "sourcePage": 124,
+                                          "sourceTableFigure": "Section 18.2 (AEC 1B)",
+                                          "extractedLabel": "Per-AEC risk characterization",
+                                          "extractionMethod": "manual",
+                                          "extractionDate": "2026-03-26",
+                                          "extractor": "claude"
+                                      },
+                                      "isTrainingTarget": false
+                                  },
+                                  {
+                                      "receptor": "Aquatic Life (AEC 22A/B)",
+                                      "loeCount": 2,
+                                      "loes": [
+                                          "Per-AEC LOE integration (Section 18.3)",
+                                          "Sediment and groundwater chemistry within AEC 22A/B"
+                                      ],
+                                      "woeConclusion": "Low risk (per-AEC conclusion)",
+                                      "mappedBNClass": "low",
+                                      "mappingConfidence": "approximate",
+                                      "mappingJustification": "Per-AEC conclusion. AEC 22A/B is an area-level assessment unit covering a defined portion of the foreshore.",
+                                      "comparisonLevel": "area",
+                                      "provenance": {
+                                          "sourceDocument": "WorleyParsons (2011). HHERA, 224 Front Street, New Westminster, BC.",
+                                          "sourcePage": 126,
+                                          "sourceTableFigure": "Section 18.3 (AEC 22A/B)",
+                                          "extractedLabel": "Per-AEC risk characterization",
+                                          "extractionMethod": "manual",
+                                          "extractionDate": "2026-03-26",
+                                          "extractor": "claude"
+                                      },
+                                      "isTrainingTarget": false
+                                  }
+                              ],
+                              "statisticalAuthorization": {
+                                  "kappa": false,
+                                  "confusionMatrix": false,
+                                  "agreement": false,
+                                  "mcNemar": false,
+                                  "reason": "A governed AEC 1B descriptive BN run is now available for 0139, but it remains site-level only, non-pooled, and non-benchmark-comparable. Consultant WOE conclusions are still external reference labels and no station-level paired labels exist for agreement statistics."
+                              },
+                              "pooledStatsEligible": false,
+                              "benchmarkComparable": false,
+                              "bnInputAssembly": {
+                                  "assemblySpecVersion": "0139-aec1b-v1",
+                                  "authorizedSpatialUnit": {
+                                      "type": "area",
+                                      "id": "AEC 1B",
+                                      "basis": "primary_near_field_assessment_area"
+                                  },
+                                  "assemblyPolicy": {
+                                      "chemistry": "max_explicit_aec1b_concern_state",
+                                      "modifiers": "explicit_or_missing_only",
+                                      "effects": "interpretation_only_unless_direct_numeric_existing_node"
+                                  },
+                                  "chemistryNodes": {
+                                      "sed_cu": {
+                                          "state": "isqg_pel",
+                                          "selectionRule": "max_explicit_aec1b_concern_state",
+                                          "selectedMeasurement": {
+                                              "state": "isqg_pel",
+                                              "sampleId": "SED10-51",
+                                              "sampleDepth": "0.00 - 0.46m",
+                                              "sampleName": "SED10-51-SA1",
+                                              "rawValue": 35.1,
+                                              "rawUnit": "ug/g",
+                                              "rawValueQualifier": null,
+                                              "convertedValue": 35.1,
+                                              "convertedUnit": "mg/kg",
+                                              "sourcePage": 163,
+                                              "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                              "encodingRule": "fit_causal_model.discretize_substance"
+                                          },
+                                          "allCandidateMeasurements": [
+                                              {
+                                                  "state": "isqg_pel",
+                                                  "sampleId": "SED10-49",
+                                                  "sampleDepth": "0.00 - 0.60m",
+                                                  "sampleName": "SED10-49-SA1",
+                                                  "rawValue": 27.8,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 27.8,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              },
+                                              {
+                                                  "state": "isqg_pel",
+                                                  "sampleId": "SED10-51",
+                                                  "sampleDepth": "0.00 - 0.46m",
+                                                  "sampleName": "SED10-51-SA1",
+                                                  "rawValue": 35.1,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 35.1,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              }
+                                          ]
+                                      },
+                                      "sed_zn": {
+                                          "state": "below_isqg",
+                                          "selectionRule": "max_explicit_aec1b_concern_state",
+                                          "selectedMeasurement": {
+                                              "state": "below_isqg",
+                                              "sampleId": "SED10-49",
+                                              "sampleDepth": "0.00 - 0.60m",
+                                              "sampleName": "SED10-49-SA1",
+                                              "rawValue": 94.0,
+                                              "rawUnit": "ug/g",
+                                              "rawValueQualifier": null,
+                                              "convertedValue": 94.0,
+                                              "convertedUnit": "mg/kg",
+                                              "sourcePage": 163,
+                                              "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                              "encodingRule": "fit_causal_model.discretize_substance"
+                                          },
+                                          "allCandidateMeasurements": [
+                                              {
+                                                  "state": "below_isqg",
+                                                  "sampleId": "SED10-49",
+                                                  "sampleDepth": "0.00 - 0.60m",
+                                                  "sampleName": "SED10-49-SA1",
+                                                  "rawValue": 94.0,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 94.0,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              },
+                                              {
+                                                  "state": "below_isqg",
+                                                  "sampleId": "SED10-51",
+                                                  "sampleDepth": "0.00 - 0.46m",
+                                                  "sampleName": "SED10-51-SA1",
+                                                  "rawValue": 79.0,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 79.0,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              }
+                                          ]
+                                      },
+                                      "sed_pb": {
+                                          "state": "isqg_pel",
+                                          "selectionRule": "max_explicit_aec1b_concern_state",
+                                          "selectedMeasurement": {
+                                              "state": "isqg_pel",
+                                              "sampleId": "SED10-49",
+                                              "sampleDepth": "0.00 - 0.60m",
+                                              "sampleName": "SED10-49-SA1",
+                                              "rawValue": 31.1,
+                                              "rawUnit": "ug/g",
+                                              "rawValueQualifier": null,
+                                              "convertedValue": 31.1,
+                                              "convertedUnit": "mg/kg",
+                                              "sourcePage": 163,
+                                              "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                              "encodingRule": "fit_causal_model.discretize_substance"
+                                          },
+                                          "allCandidateMeasurements": [
+                                              {
+                                                  "state": "isqg_pel",
+                                                  "sampleId": "SED10-49",
+                                                  "sampleDepth": "0.00 - 0.60m",
+                                                  "sampleName": "SED10-49-SA1",
+                                                  "rawValue": 31.1,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 31.1,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              },
+                                              {
+                                                  "state": "below_isqg",
+                                                  "sampleId": "SED10-51",
+                                                  "sampleDepth": "0.00 - 0.46m",
+                                                  "sampleName": "SED10-51-SA1",
+                                                  "rawValue": 20.1,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 20.1,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              }
+                                          ]
+                                      },
+                                      "sed_cd": {
+                                          "state": "below_isqg",
+                                          "selectionRule": "max_explicit_aec1b_concern_state",
+                                          "selectedMeasurement": {
+                                              "state": "below_isqg",
+                                              "sampleId": "SED10-49",
+                                              "sampleDepth": "0.00 - 0.60m",
+                                              "sampleName": "SED10-49-SA1",
+                                              "rawValue": 0.27,
+                                              "rawUnit": "ug/g",
+                                              "rawValueQualifier": null,
+                                              "convertedValue": 0.27,
+                                              "convertedUnit": "mg/kg",
+                                              "sourcePage": 163,
+                                              "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                              "encodingRule": "fit_causal_model.discretize_substance"
+                                          },
+                                          "allCandidateMeasurements": [
+                                              {
+                                                  "state": "below_isqg",
+                                                  "sampleId": "SED10-49",
+                                                  "sampleDepth": "0.00 - 0.60m",
+                                                  "sampleName": "SED10-49-SA1",
+                                                  "rawValue": 0.27,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 0.27,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              },
+                                              {
+                                                  "state": "below_isqg",
+                                                  "sampleId": "SED10-51",
+                                                  "sampleDepth": "0.00 - 0.46m",
+                                                  "sampleName": "SED10-51-SA1",
+                                                  "rawValue": 0.25,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 0.25,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              }
+                                          ]
+                                      },
+                                      "sed_hg": {
+                                          "state": "below_isqg",
+                                          "selectionRule": "max_explicit_aec1b_concern_state",
+                                          "selectedMeasurement": {
+                                              "state": "below_isqg",
+                                              "sampleId": "SED10-49",
+                                              "sampleDepth": "0.00 - 0.60m",
+                                              "sampleName": "SED10-49-SA1",
+                                              "rawValue": 0.06,
+                                              "rawUnit": "ug/g",
+                                              "rawValueQualifier": null,
+                                              "convertedValue": 0.06,
+                                              "convertedUnit": "mg/kg",
+                                              "sourcePage": 163,
+                                              "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                              "encodingRule": "fit_causal_model.discretize_substance"
+                                          },
+                                          "allCandidateMeasurements": [
+                                              {
+                                                  "state": "below_isqg",
+                                                  "sampleId": "SED10-49",
+                                                  "sampleDepth": "0.00 - 0.60m",
+                                                  "sampleName": "SED10-49-SA1",
+                                                  "rawValue": 0.06,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 0.06,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              },
+                                              {
+                                                  "state": "below_isqg",
+                                                  "sampleId": "SED10-51",
+                                                  "sampleDepth": "0.00 - 0.46m",
+                                                  "sampleName": "SED10-51-SA1",
+                                                  "rawValue": 0.05,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": "<",
+                                                  "convertedValue": 0.05,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              }
+                                          ]
+                                      },
+                                      "sed_as": {
+                                          "state": "below_isqg",
+                                          "selectionRule": "max_explicit_aec1b_concern_state",
+                                          "selectedMeasurement": {
+                                              "state": "below_isqg",
+                                              "sampleId": "SED10-49",
+                                              "sampleDepth": "0.00 - 0.60m",
+                                              "sampleName": "SED10-49-SA1",
+                                              "rawValue": 5.1,
+                                              "rawUnit": "ug/g",
+                                              "rawValueQualifier": null,
+                                              "convertedValue": 5.1,
+                                              "convertedUnit": "mg/kg",
+                                              "sourcePage": 163,
+                                              "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                              "encodingRule": "fit_causal_model.discretize_substance"
+                                          },
+                                          "allCandidateMeasurements": [
+                                              {
+                                                  "state": "below_isqg",
+                                                  "sampleId": "SED10-49",
+                                                  "sampleDepth": "0.00 - 0.60m",
+                                                  "sampleName": "SED10-49-SA1",
+                                                  "rawValue": 5.1,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 5.1,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              },
+                                              {
+                                                  "state": "below_isqg",
+                                                  "sampleId": "SED10-51",
+                                                  "sampleDepth": "0.00 - 0.46m",
+                                                  "sampleName": "SED10-51-SA1",
+                                                  "rawValue": 4.1,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 4.1,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              }
+                                          ]
+                                      },
+                                      "sed_cr": {
+                                          "state": "below_isqg",
+                                          "selectionRule": "max_explicit_aec1b_concern_state",
+                                          "selectedMeasurement": {
+                                              "state": "below_isqg",
+                                              "sampleId": "SED10-49",
+                                              "sampleDepth": "0.00 - 0.60m",
+                                              "sampleName": "SED10-49-SA1",
+                                              "rawValue": 31.0,
+                                              "rawUnit": "ug/g",
+                                              "rawValueQualifier": null,
+                                              "convertedValue": 31.0,
+                                              "convertedUnit": "mg/kg",
+                                              "sourcePage": 163,
+                                              "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                              "encodingRule": "fit_causal_model.discretize_substance"
+                                          },
+                                          "allCandidateMeasurements": [
+                                              {
+                                                  "state": "below_isqg",
+                                                  "sampleId": "SED10-49",
+                                                  "sampleDepth": "0.00 - 0.60m",
+                                                  "sampleName": "SED10-49-SA1",
+                                                  "rawValue": 31.0,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 31.0,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              },
+                                              {
+                                                  "state": "below_isqg",
+                                                  "sampleId": "SED10-51",
+                                                  "sampleDepth": "0.00 - 0.46m",
+                                                  "sampleName": "SED10-51-SA1",
+                                                  "rawValue": 28.0,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 28.0,
+                                                  "convertedUnit": "mg/kg",
+                                                  "sourcePage": 163,
+                                                  "sourceTableFigure": "Table 2-58 Sediment Quality Analytical Results: Total Metals and Trace Elements - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              }
+                                          ]
+                                      },
+                                      "sed_pahs": {
+                                          "state": "isqg_pel",
+                                          "selectionRule": "max_explicit_aec1b_concern_state",
+                                          "selectedMeasurement": {
+                                              "state": "isqg_pel",
+                                              "sampleId": "SED10-49",
+                                              "sampleDepth": "0.00 - 0.60m",
+                                              "sampleName": "SED10-49-SA1",
+                                              "rawValue": 7.7,
+                                              "rawUnit": "ug/g",
+                                              "rawValueQualifier": null,
+                                              "convertedValue": 7700.0,
+                                              "convertedUnit": "ug/kg",
+                                              "sourcePage": 168,
+                                              "sourceTableFigure": "Table 2-63 Sediment Quality Analytical Results: Polycyclic Aromatic Hydrocarbons - Sensitive Standards",
+                                              "encodingRule": "fit_causal_model.discretize_substance"
+                                          },
+                                          "allCandidateMeasurements": [
+                                              {
+                                                  "state": "isqg_pel",
+                                                  "sampleId": "SED10-49",
+                                                  "sampleDepth": "0.00 - 0.60m",
+                                                  "sampleName": "SED10-49-SA1",
+                                                  "rawValue": 7.7,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 7700.0,
+                                                  "convertedUnit": "ug/kg",
+                                                  "sourcePage": 168,
+                                                  "sourceTableFigure": "Table 2-63 Sediment Quality Analytical Results: Polycyclic Aromatic Hydrocarbons - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              },
+                                              {
+                                                  "state": "isqg_pel",
+                                                  "sampleId": "SED10-51",
+                                                  "sampleDepth": "0.00 - 0.46m",
+                                                  "sampleName": "SED10-51-SA1",
+                                                  "rawValue": 4.5,
+                                                  "rawUnit": "ug/g",
+                                                  "rawValueQualifier": null,
+                                                  "convertedValue": 4500.0,
+                                                  "convertedUnit": "ug/kg",
+                                                  "sourcePage": 168,
+                                                  "sourceTableFigure": "Table 2-63 Sediment Quality Analytical Results: Polycyclic Aromatic Hydrocarbons - Sensitive Standards",
+                                                  "encodingRule": "fit_causal_model.discretize_substance"
+                                              }
+                                          ]
+                                      },
+                                      "sed_pcbs": {
+                                          "state": null,
+                                          "missingReason": "no_explicit_aec1b_value_sourced"
+                                      }
+                                  },
+                                  "modifierNodes": {
+                                      "toc": {
+                                          "state": "moderate",
+                                          "selectionRule": "consistent_explicit_aec1b_toc_state",
+                                          "allCandidateMeasurements": [
+                                              {
+                                                  "state": "moderate",
+                                                  "sampleId": "SED10-49",
+                                                  "sampleDepth": "0.00 - 0.60m",
+                                                  "sampleName": "SED10-49-SA1",
+                                                  "rawValue": 1.5,
+                                                  "rawUnit": "%",
+                                                  "sourcePage": 157,
+                                                  "sourceTableFigure": "Table 2-55 Sediment Quality Analytical Results: Routine Parameters",
+                                                  "encodingRule": "fit_causal_model.discretize_toc"
+                                              },
+                                              {
+                                                  "state": "moderate",
+                                                  "sampleId": "SED10-51",
+                                                  "sampleDepth": "0.00 - 0.46m",
+                                                  "sampleName": "SED10-51-SA1",
+                                                  "rawValue": 0.9,
+                                                  "rawUnit": "%",
+                                                  "sourcePage": 157,
+                                                  "sourceTableFigure": "Table 2-55 Sediment Quality Analytical Results: Routine Parameters",
+                                                  "encodingRule": "fit_causal_model.discretize_toc"
+                                              }
+                                          ]
+                                      },
+                                      "grain_size": {
+                                          "state": null,
+                                          "missingReason": "no_explicit_aec1b_grain_size_value_sourced"
+                                      },
+                                      "sulfide_binding": {
+                                          "state": null,
+                                          "missingReason": "no_explicit_aec1b_avs_or_sem_value_sourced"
+                                      }
+                                  },
+                                  "effectNodes": {
+                                      "tox_amphipod": {
+                                          "state": null,
+                                          "status": "interpretation_only",
+                                          "reason": "Numeric AEC 1B effect endpoint not injected in this MVP."
+                                      },
+                                      "taxa_richness": {
+                                          "state": null,
+                                          "status": "interpretation_only",
+                                          "reason": "Community metrics were not sourced as existing-node numeric inputs."
+                                      },
+                                      "diversity": {
+                                          "state": null,
+                                          "status": "interpretation_only",
+                                          "reason": "Community metrics were not sourced as existing-node numeric inputs."
+                                      }
+                                  },
+                                  "extraNonCanonicalContaminants": [
+                                      "HEPH"
+                                  ],
+                                  "aecContext": {
+                                      "sourcePage": 288,
+                                      "sourceTableFigure": "Appendix 17 Table B Overview of AEC 1B",
+                                      "note": "AEC 1B sediment samples within the ecologically active zone are SED10-49 and SED10-51. These are the authorized AEC 1B chemistry samples for the descriptive BN run."
+                                  },
+                                  "interpretationOnlyContext": {
+                                      "toxicity": {
+                                          "sourcePage": 304,
+                                          "sourceTableFigure": "Appendix 17 Table F Summary of Toxicity Test Effects Levels",
+                                          "note": "Toxicity is available as an interpretation anchor for SED10-49 and SED10-51, but not injected as a BN input in this MVP."
+                                      },
+                                      "community": {
+                                          "sourcePage": 125,
+                                          "sourceTableFigure": "Table Y Summary of Management Goals, Assessment and Measurement Endpoints and Risk Hypotheses for the Aquatic DERA",
+                                          "note": "Community evidence remains qualitative and interpretation-only for this MVP."
+                                      }
+                                  }
+                              },
+                              "bnRunRecord": {
+                                  "runMethod": "Existing v1.0 screening inference via fit_causal_model.expand_organic_for_inference -> _build_evidence -> _build_soft_evidence -> forward_inference using learned-model.json.",
+                                  "evidenceSourceSummary": "Explicit AEC 1B sediment values from Appendix 2 Tables 2-55, 2-58, and 2-63 for SED10-49 and SED10-51, with AEC 1B sample scope confirmed in Appendix 17 Table B.",
+                                  "encodingBasis": "Chemistry nodes populated from explicit AEC 1B sample values using existing discretizers. TOC populated directly. sed_pcbs, grain_size, sulfide_binding, and all effect nodes remain missing or interpretation-only.",
+                                  "runDate": "2026-04-02",
+                                  "limitations": [
+                                      "This intake is AEC 1B-specific and not a whole-site Westminster rollup.",
+                                      "sed_pcbs is left missing because no explicit AEC 1B PCB result was identified for SED10-49 or SED10-51 in the appendix tables used here.",
+                                      "grain_size and sulfide_binding remain missing because no explicit AEC 1B values were sourced for the adopted MVP rule.",
+                                      "toxicity and community evidence remain interpretation-only unless directly numeric and directly encodable into existing BN nodes.",
+                                      "The posterior is descriptive-only and must not be interpreted as validation, pooled agreement, or benchmark comparability.",
+                                      "Organic inference uses existing v4.1 soft-evidence handling for PAH-only organic evidence with sed_pcbs left unobserved."
+                                  ],
+                                  "evidenceMode": "screening",
+                                  "modelPackId": "bnrrm-general-v1.0-dev-map",
+                                  "modelVersion": "1.0",
+                                  "softEvidenceApplied": {
+                                      "organic_contamination": {
+                                          "low": 0.2,
+                                          "moderate": 0.6,
+                                          "high": 0.2
+                                      }
+                                  },
+                                  "posteriorSummary": {
+                                      "low": 0.419754,
+                                      "moderate": 0.331609,
+                                      "high": 0.248638,
+                                      "map": "low"
+                                  },
+                                  "beliefs": {
+                                      "tox_amphipod": {
+                                          "low": 0.6227360276856149,
+                                          "moderate": 0.18044840840193738,
+                                          "high": 0.1968155639124478
+                                      },
+                                      "taxa_richness": {
+                                          "low": 0.3685649988441287,
+                                          "moderate": 0.24840760390619115,
+                                          "high": 0.38302739724968027
+                                      },
+                                      "diversity": {
+                                          "low": 0.3983018237253646,
+                                          "moderate": 0.3702125202887252,
+                                          "high": 0.23148565598591025
+                                      },
+                                      "ecological_risk": {
+                                          "low": 0.4197535450474617,
+                                          "moderate": 0.3316087059899423,
+                                          "high": 0.24863774896259597
+                                      }
+                                  }
+                              }
                           },
-                          {
+{
                               "siteId":  "11687",
                               "siteName":  "Water Lot, 1 Port Drive, Nanaimo",
                               "registryId":  "11687",

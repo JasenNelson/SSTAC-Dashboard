@@ -128,27 +128,53 @@ describe('normalizeRiskComparison', () => {
           reportDate: '2011-12',
           reportTitle: 'Example report',
           comparisonType: 'descriptive-integrated',
-          bnInferenceStatus: 'partial_evidence_site_level_ready',
+          bnInferenceStatus: 'site_level_run_complete',
           externalComparisonClass: 'bn_descriptive_site_level',
           outputGranularity: 'site_level_only',
           interpretationAuthorization: 'descriptive_only',
           contaminantOverlap: 'meaningful_partial',
           modifierEffectsStatus: {
-            modifiers: 'missing_or_unconfirmed',
-            effectsEvidence: 'available_but_partial',
+            modifiers: 'toc_available_other_modifiers_missing',
+            effectsEvidence: 'interpretation_only_not_encoded',
           },
-          uncertaintyFlags: ['partial_domain_overlap'],
-          uncertaintyNote: 'Partial overlap only.',
+          uncertaintyFlags: ['partial_domain_overlap', 'aec_1b_profile_only'],
+          uncertaintyNote: 'AEC 1B descriptive run only.',
           bnInputCoverage: {
             metals: true,
             pahs: true,
             pcbs: false,
-            toc: false,
+            toc: true,
             grainSize: false,
             sulfideBinding: false,
-            toxicity: true,
+            toxicity: false,
             community: false,
-            note: 'Partial evidence.',
+            note: 'AEC 1B chemistry and TOC only.',
+          },
+          pooledStatsEligible: false,
+          benchmarkComparable: false,
+          bnInputAssembly: {
+            assemblySpecVersion: '0139-aec1b-v1',
+            authorizedSpatialUnit: {
+              type: 'area',
+              id: 'AEC 1B',
+              basis: 'primary_near_field_assessment_area',
+            },
+          },
+          bnRunRecord: {
+            runMethod: 'existing v1.0 screening path',
+            evidenceSourceSummary: 'Appendix 2 Tables 2-55, 2-58, and 2-63 for SED10-49 and SED10-51.',
+            encodingBasis: 'Existing discretizers only.',
+            runDate: '2026-04-02',
+            limitations: ['Descriptive only.'],
+            evidenceMode: 'screening',
+            modelPackId: 'bnrrm-general-v1.0-dev-map',
+            modelVersion: '1.0',
+            posteriorSummary: {
+              low: 0.419754,
+              moderate: 0.331609,
+              high: 0.248638,
+              map: 'low',
+            },
           },
           reportConclusions: [],
           statisticalAuthorization: {
@@ -166,7 +192,11 @@ describe('normalizeRiskComparison', () => {
     expect(normalized.meta.externalInterpretationRules?.defaultOutputGranularity).toBe('site_level_only');
     expect(normalized.externalSites).toHaveLength(1);
     expect(normalized.externalSites[0].externalComparisonClass).toBe('bn_descriptive_site_level');
-    expect(normalized.externalSites[0].modifierEffectsStatus?.modifiers).toBe('missing_or_unconfirmed');
+    expect(normalized.externalSites[0].modifierEffectsStatus?.modifiers).toBe('toc_available_other_modifiers_missing');
+    expect(normalized.externalSites[0].bnInputAssembly?.authorizedSpatialUnit?.id).toBe('AEC 1B');
+    expect(normalized.externalSites[0].bnRunRecord?.posteriorSummary?.map).toBe('low');
+    expect(normalized.externalSites[0].pooledStatsEligible).toBe(false);
+    expect(normalized.externalSites[0].benchmarkComparable).toBe(false);
   });
 });
 

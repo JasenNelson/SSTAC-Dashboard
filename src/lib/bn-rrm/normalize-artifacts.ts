@@ -752,6 +752,32 @@ export interface NormalizedExternalSite {
     community: boolean;
     note: string;
   };
+  pooledStatsEligible: boolean;
+  benchmarkComparable: boolean;
+  bnInputAssembly: {
+    assemblySpecVersion: string;
+    authorizedSpatialUnit: {
+      type: string;
+      id: string;
+      basis: string;
+    } | null;
+  } | null;
+  bnRunRecord: {
+    runMethod: string;
+    evidenceSourceSummary: string;
+    encodingBasis: string;
+    runDate: string;
+    limitations: string[];
+    evidenceMode: string;
+    modelPackId: string;
+    modelVersion: string;
+    posteriorSummary: {
+      low: number;
+      moderate: number;
+      high: number;
+      map: string;
+    } | null;
+  } | null;
   reportConclusions: Array<{
     receptor: string;
     loeCount: number;
@@ -1003,6 +1029,40 @@ function normalizeExternalSite(site: any): NormalizedExternalSite {
       community: site.bnInputCoverage?.community ?? false,
       note: site.bnInputCoverage?.note ?? '',
     },
+    pooledStatsEligible: site.pooledStatsEligible ?? false,
+    benchmarkComparable: site.benchmarkComparable ?? false,
+    bnInputAssembly: site.bnInputAssembly
+      ? {
+          assemblySpecVersion: site.bnInputAssembly.assemblySpecVersion ?? '',
+          authorizedSpatialUnit: site.bnInputAssembly.authorizedSpatialUnit
+            ? {
+                type: site.bnInputAssembly.authorizedSpatialUnit.type ?? '',
+                id: site.bnInputAssembly.authorizedSpatialUnit.id ?? '',
+                basis: site.bnInputAssembly.authorizedSpatialUnit.basis ?? '',
+              }
+            : null,
+        }
+      : null,
+    bnRunRecord: site.bnRunRecord
+      ? {
+          runMethod: site.bnRunRecord.runMethod ?? '',
+          evidenceSourceSummary: site.bnRunRecord.evidenceSourceSummary ?? '',
+          encodingBasis: site.bnRunRecord.encodingBasis ?? '',
+          runDate: site.bnRunRecord.runDate ?? '',
+          limitations: Array.isArray(site.bnRunRecord.limitations) ? site.bnRunRecord.limitations : [],
+          evidenceMode: site.bnRunRecord.evidenceMode ?? '',
+          modelPackId: site.bnRunRecord.modelPackId ?? '',
+          modelVersion: site.bnRunRecord.modelVersion ?? '',
+          posteriorSummary: site.bnRunRecord.posteriorSummary
+            ? {
+                low: site.bnRunRecord.posteriorSummary.low ?? 0,
+                moderate: site.bnRunRecord.posteriorSummary.moderate ?? 0,
+                high: site.bnRunRecord.posteriorSummary.high ?? 0,
+                map: site.bnRunRecord.posteriorSummary.map ?? '',
+              }
+            : null,
+        }
+      : null,
     reportConclusions: Array.isArray(site.reportConclusions)
       ? site.reportConclusions.map((conclusion: any) => ({
           receptor: conclusion.receptor ?? '',
