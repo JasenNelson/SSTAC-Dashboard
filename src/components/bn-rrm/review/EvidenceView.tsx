@@ -16,7 +16,7 @@ function riskColor(risk: string | null | undefined): string {
   return 'text-slate-600 dark:text-slate-400';
 }
 
-function riskBg(risk: string | null | undefined): string {
+function _riskBg(risk: string | null | undefined): string {
   if (!risk) return '';
   const r = risk.toLowerCase();
   if (r === 'low') return 'bg-green-50 dark:bg-green-900/10';

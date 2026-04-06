@@ -1,7 +1,8 @@
 'use client';
 
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
-import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
+// InfoTooltip available if needed for future guide sections
+// import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 
 // ---------------------------------------------------------------------------
 // Types for the explainer artifact

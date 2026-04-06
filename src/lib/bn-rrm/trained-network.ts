@@ -804,7 +804,7 @@ function loadLearnedCPTs(model: LearnedModelJSON): ConditionalProbabilityTable[]
  */
 function loadLearnedEdges(model: LearnedModelJSON): NetworkEdge[] {
   const rawEdges = model.structure?.edges ?? model.edges ?? [];
-  return rawEdges.map((e: any, i: number) => ({
+  return rawEdges.map((e: any, _i: number) => ({
     id: e.id ?? `${e.source}_${e.target}`,
     source: e.source,
     target: e.target,

@@ -119,7 +119,7 @@ type Site = {
   community_summary: { n: number; metrics: CommunityMetric[] } | null;
 };
 
-type SiteReportsData = {
+type _SiteReportsData = {
   _meta: { export_date: string; db_hash: string };
   sites: Site[];
   summary: {

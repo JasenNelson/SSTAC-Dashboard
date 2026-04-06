@@ -1,7 +1,7 @@
 {
   "pack_id": "bnrrm-casestudy-jermilova2025-mackenzie-hg",
   "display_name": "Jermilova 2025 Mackenzie Mercury BN-RRM",
-  "model_family": "mackenzie-hg",
+  "model_family": "benchmark",
   "scope_type": "benchmark",
   "site_scope": null,
   "site_inventory": [],
@@ -9,15 +9,19 @@
   "dag_node_count": 14,
   "dag_edge_count": 15,
   "training_corpus": {
+    "n_stations": 1459,
+    "n_co_located": 604,
+    "n_sites": 4,
     "n_fish_cases": 604,
     "n_water_cases": 855,
-    "n_regions": 4,
     "cohort_rule": "GSL sub-model (Great Slave Lake)",
     "dataset_status": "Independent reconstruction from Jermilova et al. 2025 FRDR data"
   },
   "evaluation_profile": {
     "decision_rule": "MAP",
     "primary_metric": "weighted_kappa",
+    "loo_accuracy": 0.6866,
+    "loo_kappa": 0.466,
     "loo_accuracy_fish": 0.6866,
     "loo_kappa_fish": 0.466,
     "loo_accuracy_water": 0.945,

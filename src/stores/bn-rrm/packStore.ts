@@ -17,7 +17,7 @@ import type {
   PackRegistryEntry,
   ReviewArtifactKey,
 } from '@/lib/bn-rrm/pack-types';
-import { assertCanonicalSchema, CANONICAL_SCHEMA_VERSION } from '@/lib/bn-rrm/pack-types';
+import { assertCanonicalSchema } from '@/lib/bn-rrm/pack-types';
 
 // =============================================================================
 // CONSTANTS

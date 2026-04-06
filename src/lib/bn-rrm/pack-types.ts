@@ -49,6 +49,10 @@ export interface TrainingCorpus {
   n_stations: number;
   n_co_located: number;
   n_sites: number;
+  /** Benchmark packs: fish tissue sample count */
+  n_fish_cases?: number;
+  /** Benchmark packs: water sample count */
+  n_water_cases?: number;
   cohort_rule: string;
   dataset_status: string;
 }
@@ -58,6 +62,12 @@ export interface EvaluationProfile {
   primary_metric: string;
   loo_accuracy?: number;
   loo_kappa?: number;
+  /** Benchmark packs: fish-specific LOO metrics */
+  loo_accuracy_fish?: number;
+  loo_kappa_fish?: number;
+  /** Benchmark packs: water-specific LOO metrics */
+  loo_accuracy_water?: number;
+  loo_kappa_water?: number;
 }
 
 export interface VersionHistory {

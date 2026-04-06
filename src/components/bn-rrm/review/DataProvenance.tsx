@@ -42,7 +42,7 @@ type Station = {
   provenance_records: ProvenanceRecord[];
 };
 
-type ProvenanceRegistryData = {
+type _ProvenanceRegistryData = {
   _meta: { export_date: string; db_hash: string };
   documents: Document[];
   stations: Station[];
