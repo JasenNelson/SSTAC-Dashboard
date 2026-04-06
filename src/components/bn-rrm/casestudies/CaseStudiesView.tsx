@@ -7,14 +7,21 @@ import { TrainingSites } from './TrainingSites';
 import { ExternalSites } from './ExternalSites';
 import { MethodComparison } from './MethodComparison';
 import { PublishedComparison } from './PublishedComparison';
+import { HowItWorksView } from './HowItWorksView';
 
-type CaseStudySection = 'training' | 'external' | 'methods' | 'benchmark';
+type CaseStudySection = 'training' | 'external' | 'methods' | 'benchmark' | 'how-it-works';
 
 const baseSections: { id: CaseStudySection; label: string; description: string }[] = [
   { id: 'training', label: 'Training Sites', description: 'BN-RRM vs WOE for 8 training sites' },
   { id: 'external', label: 'External Sites', description: 'Non-training site comparisons' },
   { id: 'methods', label: 'Method Comparison', description: 'BN-RRM vs WOE, SQT, SQG approaches' },
 ];
+
+const howItWorksSection: { id: CaseStudySection; label: string; description: string } = {
+  id: 'how-it-works',
+  label: 'How It Works',
+  description: 'Understand the Mackenzie Mercury model',
+};
 
 const benchmarkSection: { id: CaseStudySection; label: string; description: string } = {
   id: 'benchmark',
@@ -26,14 +33,14 @@ export function CaseStudiesView() {
   const packManifest = usePackStore((s) => s.packManifest);
   const isBenchmark = packManifest?.scope_type === 'benchmark';
 
-  // For benchmark packs, default to the benchmark section
+  // For benchmark packs, default to the how-it-works section
   const [activeSection, setActiveSection] = useState<CaseStudySection>(
-    isBenchmark ? 'benchmark' : 'training'
+    isBenchmark ? 'how-it-works' : 'training'
   );
 
-  // Build section list: include benchmark section for benchmark packs
+  // Build section list: include how-it-works and benchmark sections for benchmark packs
   const sections = isBenchmark
-    ? [benchmarkSection, ...baseSections]
+    ? [howItWorksSection, benchmarkSection, ...baseSections]
     : baseSections;
 
   return (
@@ -77,6 +84,7 @@ export function CaseStudiesView() {
       {/* Content area */}
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-4xl mx-auto">
+          {activeSection === 'how-it-works' && <HowItWorksView />}
           {activeSection === 'benchmark' && <PublishedComparison />}
           {activeSection === 'training' && <TrainingSites />}
           {activeSection === 'external' && <ExternalSites />}
