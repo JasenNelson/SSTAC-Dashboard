@@ -38,9 +38,10 @@ export function CaseStudiesView() {
     isBenchmark ? 'how-it-works' : 'training'
   );
 
-  // Build section list: include how-it-works and benchmark sections for benchmark packs
+  // Build section list: benchmark packs show only how-it-works and published benchmark
+  // (Training Sites, External Sites, and Method Comparison are sediment-model-specific)
   const sections = isBenchmark
-    ? [howItWorksSection, benchmarkSection, ...baseSections]
+    ? [howItWorksSection, benchmarkSection]
     : baseSections;
 
   return (
