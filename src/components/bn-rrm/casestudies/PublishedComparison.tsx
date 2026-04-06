@@ -4,7 +4,6 @@ import { useMemo } from 'react';
 import { usePackStore } from '@/stores/bn-rrm/packStore';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 import { ExpandableSection } from '@/components/bn-rrm/shared/ExpandableSection';
-import { cn } from '@/utils/cn';
 
 // ---------------------------------------------------------------------------
 // Data types for the three JSON artifacts
