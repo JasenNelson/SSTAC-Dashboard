@@ -1,0 +1,76 @@
+{
+  "n_total": 55,
+  "n_chapman": 32,
+  "n_keystone": 23,
+  "variable_stats": {
+    "chem_exceedance": {
+      "distribution": {
+        "Moderate": 26,
+        "High": 27,
+        "Low": 1
+      },
+      "null_count": 1,
+      "completeness": 0.9818181818181818
+    },
+    "tox_effect": {
+      "distribution": {
+        "Low": 39,
+        "Moderate": 12,
+        "High": 4
+      },
+      "null_count": 0,
+      "completeness": 1.0
+    },
+    "community_effect": {
+      "distribution": {
+        "Low": 13,
+        "High": 1,
+        "Moderate": 1
+      },
+      "null_count": 40,
+      "completeness": 0.2727272727272727
+    },
+    "woe_risk": {
+      "distribution": {
+        "Low": 43,
+        "High": 5,
+        "Moderate": 7
+      },
+      "null_count": 0,
+      "completeness": 1.0
+    },
+    "woe_framework": {
+      "distribution": {
+        "Chapman": 32,
+        "Keystone": 23
+      },
+      "null_count": 0,
+      "completeness": 1.0
+    }
+  },
+  "cramers_v": {
+    "chem_exceedance_vs_tox_effect": 0.2523,
+    "chem_exceedance_vs_community_effect": 0.3203,
+    "chem_exceedance_vs_woe_risk": 0.1417,
+    "chem_exceedance_vs_woe_framework": 0.7564,
+    "tox_effect_vs_community_effect": 0.4961,
+    "tox_effect_vs_woe_risk": 0.4496,
+    "tox_effect_vs_woe_framework": 0.3331,
+    "community_effect_vs_woe_risk": 0.3955,
+    "community_effect_vs_woe_framework": 0.0,
+    "woe_risk_vs_woe_framework": 0.1734
+  },
+  "chi_squared_pvalues": {
+    "chem_exceedance_vs_tox_effect": 0.142801,
+    "chem_exceedance_vs_community_effect": 0.463369,
+    "chem_exceedance_vs_woe_risk": 0.704765,
+    "chem_exceedance_vs_woe_framework": 0.0,
+    "tox_effect_vs_community_effect": 0.116906,
+    "tox_effect_vs_woe_risk": 0.00018,
+    "tox_effect_vs_woe_framework": 0.047338,
+    "community_effect_vs_woe_risk": 0.32035,
+    "community_effect_vs_woe_framework": 1.0,
+    "woe_risk_vs_woe_framework": 0.43737
+  },
+  "key_metric_chem_vs_risk_cramers_v": 0.1417
+}

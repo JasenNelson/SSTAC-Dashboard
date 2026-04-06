@@ -15,6 +15,7 @@ import { DataUploader } from '@/components/bn-rrm/data/DataUploader';
 import { ReferenceDataImporter } from '@/components/bn-rrm/data/ReferenceDataImporter';
 import { SiteDataTable } from '@/components/bn-rrm/data/SiteDataTable';
 import { ExportPanel } from '@/components/bn-rrm/data/ExportPanel';
+import { BenchmarkDataViewer } from '@/components/bn-rrm/data/BenchmarkDataViewer';
 import { SiteDetails } from '@/components/bn-rrm/map/SiteDetails';
 import { classifyRawSiteData, dagForwardInference } from '@/lib/bn-rrm/bn-inference';
 import { createTrainedNetwork } from '@/lib/bn-rrm/trained-network';
@@ -105,12 +106,8 @@ export default function BNRRMClient() {
     }
   }, [packManifest, packBaseUrl, selectedPackId, registryLoaded, packLoading, loadPackModel, loadTrainedModel]);
 
-  // If user is on Data tab and switches to a read-only pack, redirect to Review
-  useEffect(() => {
-    if (isReadOnly && activeTab === 'data') {
-      setActiveTab('review');
-    }
-  }, [isReadOnly, activeTab]);
+  // Benchmark packs now show BenchmarkDataViewer in the Data tab (read-only).
+  // No redirect needed.
 
   const handleViewOnMap = useCallback((siteId: string) => {
     selectSite(siteId);
@@ -253,9 +250,8 @@ export default function BNRRMClient() {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               const showBadge = tab.id === 'data' && siteCount > 0;
-              const isDataDisabled = tab.id === 'data' && isReadOnly;
               return (
-                <button key={tab.id} onClick={() => { if (!isDataDisabled) setActiveTab(tab.id); }} disabled={isDataDisabled} className={cn('relative flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200', isDataDisabled ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed' : isActive ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/50')} title={isDataDisabled ? 'Data upload disabled for benchmark packs' : tab.description}>
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={cn('relative flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200', isActive ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/50')} title={tab.description}>
                   <Icon className="w-4 h-4" /><span className="hidden md:inline">{tab.label}</span>
                   {showBadge && <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{siteCount}</span>}
                 </button>
@@ -329,19 +325,7 @@ function DataView({ onViewOnMap, onRunAssessment, isReadOnly }: { onViewOnMap: (
   const siteCount = Object.keys(sites).length;
 
   if (isReadOnly) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center max-w-md">
-          <div className="w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center mx-auto mb-3">
-            <Database className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Data Upload Disabled</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            This is a frozen benchmark pack. Data upload and site assessment are disabled to preserve comparison integrity. Switch to the General model pack to upload data.
-          </p>
-        </div>
-      </div>
-    );
+    return <BenchmarkDataViewer />;
   }
 
   return (

@@ -1,0 +1,311 @@
+{
+  "three_class": {
+    "M1_Baseline": {
+      "accuracy": 0.7454545454545455,
+      "n": 55,
+      "per_class": {
+        "Low": {
+          "precision": 0.8636,
+          "recall": 0.8837,
+          "f1": 0.8736,
+          "tp": 38,
+          "fp": 6,
+          "fn": 5
+        },
+        "Moderate": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0,
+          "tp": 0,
+          "fp": 1,
+          "fn": 7
+        },
+        "High": {
+          "precision": 0.3,
+          "recall": 0.6,
+          "f1": 0.4,
+          "tp": 3,
+          "fp": 7,
+          "fn": 2
+        }
+      },
+      "cohen_kappa": 0.2844,
+      "brier_score": 0.1223,
+      "per_framework": {
+        "Chapman": 0.7812,
+        "Keystone": 0.6957
+      }
+    },
+    "M2_Expert": {
+      "accuracy": 0.7454545454545455,
+      "n": 55,
+      "per_class": {
+        "Low": {
+          "precision": 0.9211,
+          "recall": 0.814,
+          "f1": 0.8642,
+          "tp": 35,
+          "fp": 3,
+          "fn": 8
+        },
+        "Moderate": {
+          "precision": 0.3333,
+          "recall": 0.7143,
+          "f1": 0.4545,
+          "tp": 5,
+          "fp": 10,
+          "fn": 2
+        },
+        "High": {
+          "precision": 0.5,
+          "recall": 0.2,
+          "f1": 0.2857,
+          "tp": 1,
+          "fp": 1,
+          "fn": 4
+        }
+      },
+      "cohen_kappa": 0.3966,
+      "brier_score": 0.1282,
+      "per_framework": {
+        "Chapman": 0.7812,
+        "Keystone": 0.6957
+      }
+    },
+    "M3_LoE": {
+      "accuracy": 0.8727272727272727,
+      "n": 55,
+      "per_class": {
+        "Low": {
+          "precision": 0.875,
+          "recall": 0.9767,
+          "f1": 0.9231,
+          "tp": 42,
+          "fp": 6,
+          "fn": 1
+        },
+        "Moderate": {
+          "precision": 1.0,
+          "recall": 0.2857,
+          "f1": 0.4444,
+          "tp": 2,
+          "fp": 0,
+          "fn": 5
+        },
+        "High": {
+          "precision": 0.8,
+          "recall": 0.8,
+          "f1": 0.8,
+          "tp": 4,
+          "fp": 1,
+          "fn": 1
+        }
+      },
+      "cohen_kappa": 0.5824,
+      "brier_score": 0.0794,
+      "per_framework": {
+        "Chapman": 0.9375,
+        "Keystone": 0.7826
+      }
+    },
+    "M4_Split": {
+      "accuracy": 0.7818181818181819,
+      "n": 55,
+      "per_class": {
+        "Low": {
+          "precision": 0.8696,
+          "recall": 0.9302,
+          "f1": 0.8989,
+          "tp": 40,
+          "fp": 6,
+          "fn": 3
+        },
+        "Moderate": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0,
+          "tp": 0,
+          "fp": 1,
+          "fn": 7
+        },
+        "High": {
+          "precision": 0.375,
+          "recall": 0.6,
+          "f1": 0.4615,
+          "tp": 3,
+          "fp": 5,
+          "fn": 2
+        }
+      },
+      "cohen_kappa": 0.34,
+      "brier_score": 0.1132,
+      "per_framework": {
+        "Chapman": 0.7812,
+        "Keystone": 0.7826
+      }
+    },
+    "Chapman": {
+      "accuracy": 0.7454545454545455,
+      "n": 55,
+      "per_class": {
+        "Low": {
+          "precision": 0.9211,
+          "recall": 0.814,
+          "f1": 0.8642,
+          "tp": 35,
+          "fp": 3,
+          "fn": 8
+        },
+        "Moderate": {
+          "precision": 0.3333,
+          "recall": 0.7143,
+          "f1": 0.4545,
+          "tp": 5,
+          "fp": 10,
+          "fn": 2
+        },
+        "High": {
+          "precision": 0.5,
+          "recall": 0.2,
+          "f1": 0.2857,
+          "tp": 1,
+          "fp": 1,
+          "fn": 4
+        }
+      },
+      "cohen_kappa": 0.3966
+    },
+    "Majority_Baseline": {
+      "accuracy": 0.7818,
+      "cohen_kappa": 0,
+      "majority_class": "Low"
+    }
+  },
+  "binary": {
+    "M1_Baseline": {
+      "accuracy": 0.8,
+      "n": 55,
+      "per_class": {
+        "Low": {
+          "precision": 0.8636,
+          "recall": 0.8837,
+          "f1": 0.8736,
+          "tp": 38,
+          "fp": 6,
+          "fn": 5
+        },
+        "Non-Low": {
+          "precision": 0.5455,
+          "recall": 0.5,
+          "f1": 0.5217,
+          "tp": 6,
+          "fp": 5,
+          "fn": 6
+        }
+      },
+      "cohen_kappa": 0.3956,
+      "brier_score": 0.1599
+    },
+    "M2_Expert": {
+      "accuracy": 0.8,
+      "n": 55,
+      "per_class": {
+        "Low": {
+          "precision": 0.9211,
+          "recall": 0.814,
+          "f1": 0.8642,
+          "tp": 35,
+          "fp": 3,
+          "fn": 8
+        },
+        "Non-Low": {
+          "precision": 0.5294,
+          "recall": 0.75,
+          "f1": 0.6207,
+          "tp": 9,
+          "fp": 8,
+          "fn": 3
+        }
+      },
+      "cohen_kappa": 0.4903,
+      "brier_score": 0.1555
+    },
+    "M3_LoE": {
+      "accuracy": 0.8727272727272727,
+      "n": 55,
+      "per_class": {
+        "Low": {
+          "precision": 0.875,
+          "recall": 0.9767,
+          "f1": 0.9231,
+          "tp": 42,
+          "fp": 6,
+          "fn": 1
+        },
+        "Non-Low": {
+          "precision": 0.8571,
+          "recall": 0.5,
+          "f1": 0.6316,
+          "tp": 6,
+          "fp": 1,
+          "fn": 6
+        }
+      },
+      "cohen_kappa": 0.561,
+      "brier_score": 0.1038
+    },
+    "M4_Split": {
+      "accuracy": 0.8363636363636363,
+      "n": 55,
+      "per_class": {
+        "Low": {
+          "precision": 0.8696,
+          "recall": 0.9302,
+          "f1": 0.8989,
+          "tp": 40,
+          "fp": 6,
+          "fn": 3
+        },
+        "Non-Low": {
+          "precision": 0.6667,
+          "recall": 0.5,
+          "f1": 0.5714,
+          "tp": 6,
+          "fp": 3,
+          "fn": 6
+        }
+      },
+      "cohen_kappa": 0.4728,
+      "brier_score": 0.1436
+    },
+    "Chapman": {
+      "accuracy": 0.8,
+      "n": 55,
+      "per_class": {
+        "Low": {
+          "precision": 0.9211,
+          "recall": 0.814,
+          "f1": 0.8642,
+          "tp": 35,
+          "fp": 3,
+          "fn": 8
+        },
+        "Non-Low": {
+          "precision": 0.5294,
+          "recall": 0.75,
+          "f1": 0.6207,
+          "tp": 9,
+          "fp": 8,
+          "fn": 3
+        }
+      },
+      "cohen_kappa": 0.4903
+    },
+    "Majority_Baseline": {
+      "accuracy": 0.7818,
+      "cohen_kappa": 0
+    }
+  },
+  "majority_baseline_3class": 0.7818,
+  "majority_baseline_binary": 0.7818
+}

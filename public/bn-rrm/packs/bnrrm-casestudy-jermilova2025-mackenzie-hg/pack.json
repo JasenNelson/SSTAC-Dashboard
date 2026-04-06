@@ -45,6 +45,7 @@
   "description": "Independent reconstruction of the Jermilova et al. 2025 Bayesian Network Relative Risk Model for mercury in the Mackenzie River basin. The GSL (Great Slave Lake) sub-model is the default runtime model. This pack serves as a benchmark to validate that our BN-RRM platform can faithfully represent published models beyond the original 20-node Landis sediment DAG.",
   "artifacts": {
     "runtime_model": "runtime/learned-model.json",
+    "training_data": "training_data.json",
     "review": {
       "model_overview": "review/model_overview.json",
       "validation": "review/validation.json",

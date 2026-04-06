@@ -1,0 +1,168 @@
+{
+  "M1_ESS_grid": {
+    "1": {
+      "accuracy": 0.7454545454545455,
+      "cohen_kappa": 0.2844,
+      "brier_score": 0.124,
+      "mod_recall": 0.0,
+      "high_recall": 0.6
+    },
+    "3": {
+      "accuracy": 0.7454545454545455,
+      "cohen_kappa": 0.2844,
+      "brier_score": 0.1235,
+      "mod_recall": 0.0,
+      "high_recall": 0.6
+    },
+    "5": {
+      "accuracy": 0.7454545454545455,
+      "cohen_kappa": 0.2844,
+      "brier_score": 0.1231,
+      "mod_recall": 0.0,
+      "high_recall": 0.6
+    },
+    "9": {
+      "accuracy": 0.7454545454545455,
+      "cohen_kappa": 0.2844,
+      "brier_score": 0.1223,
+      "mod_recall": 0.0,
+      "high_recall": 0.6
+    },
+    "15": {
+      "accuracy": 0.7454545454545455,
+      "cohen_kappa": 0.2844,
+      "brier_score": 0.1212,
+      "mod_recall": 0.0,
+      "high_recall": 0.6
+    },
+    "20": {
+      "accuracy": 0.7454545454545455,
+      "cohen_kappa": 0.2844,
+      "brier_score": 0.1205,
+      "mod_recall": 0.0,
+      "high_recall": 0.6
+    },
+    "30": {
+      "accuracy": 0.7454545454545455,
+      "cohen_kappa": 0.2844,
+      "brier_score": 0.1193,
+      "mod_recall": 0.0,
+      "high_recall": 0.6
+    }
+  },
+  "M2_prior_weight_grid": {
+    "5": {
+      "accuracy": 0.6909090909090909,
+      "cohen_kappa": 0.1995,
+      "brier_score": 0.1222,
+      "mod_recall": 0.2857,
+      "high_recall": 0.2
+    },
+    "10": {
+      "accuracy": 0.7454545454545455,
+      "cohen_kappa": 0.3966,
+      "brier_score": 0.1251,
+      "mod_recall": 0.7143,
+      "high_recall": 0.2
+    },
+    "15": {
+      "accuracy": 0.7454545454545455,
+      "cohen_kappa": 0.3966,
+      "brier_score": 0.127,
+      "mod_recall": 0.7143,
+      "high_recall": 0.2
+    },
+    "20": {
+      "accuracy": 0.7454545454545455,
+      "cohen_kappa": 0.3966,
+      "brier_score": 0.1282,
+      "mod_recall": 0.7143,
+      "high_recall": 0.2
+    },
+    "30": {
+      "accuracy": 0.7454545454545455,
+      "cohen_kappa": 0.3966,
+      "brier_score": 0.1297,
+      "mod_recall": 0.7143,
+      "high_recall": 0.2
+    },
+    "50": {
+      "accuracy": 0.7454545454545455,
+      "cohen_kappa": 0.3966,
+      "brier_score": 0.1313,
+      "mod_recall": 0.7143,
+      "high_recall": 0.2
+    }
+  },
+  "M3_ESS_grid": {
+    "1": {
+      "accuracy": 0.8727272727272727,
+      "cohen_kappa": 0.5824,
+      "brier_score": 0.079,
+      "mod_recall": 0.2857,
+      "high_recall": 0.8
+    },
+    "3": {
+      "accuracy": 0.8727272727272727,
+      "cohen_kappa": 0.5824,
+      "brier_score": 0.079,
+      "mod_recall": 0.2857,
+      "high_recall": 0.8
+    },
+    "5": {
+      "accuracy": 0.8727272727272727,
+      "cohen_kappa": 0.5824,
+      "brier_score": 0.0791,
+      "mod_recall": 0.2857,
+      "high_recall": 0.8
+    },
+    "9": {
+      "accuracy": 0.8727272727272727,
+      "cohen_kappa": 0.5824,
+      "brier_score": 0.0794,
+      "mod_recall": 0.2857,
+      "high_recall": 0.8
+    },
+    "15": {
+      "accuracy": 0.8727272727272727,
+      "cohen_kappa": 0.5824,
+      "brier_score": 0.0801,
+      "mod_recall": 0.2857,
+      "high_recall": 0.8
+    },
+    "20": {
+      "accuracy": 0.8727272727272727,
+      "cohen_kappa": 0.5824,
+      "brier_score": 0.0808,
+      "mod_recall": 0.2857,
+      "high_recall": 0.8
+    },
+    "30": {
+      "accuracy": 0.8727272727272727,
+      "cohen_kappa": 0.5824,
+      "brier_score": 0.0822,
+      "mod_recall": 0.2857,
+      "high_recall": 0.8
+    }
+  },
+  "optimal": {
+    "M1_best_ess": 1,
+    "M2_best_weight": 10,
+    "M3_best_ess": 1
+  },
+  "m3_stability": {
+    "kappa_range": [
+      0.5824,
+      0.5824
+    ],
+    "ess_with_kappa_gt_05": [
+      1,
+      3,
+      5,
+      9,
+      15,
+      20,
+      30
+    ]
+  }
+}

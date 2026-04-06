@@ -1,6 +1,6 @@
 {
   "pack_id": "bnrrm-site-v0.1-alcan-map",
-  "display_name": "BN-RRM Site: ALCAN (v1.0 REBUILD Review)",
+  "display_name": "BN-RRM Site: ALCAN (Prototype, v1.0 REBUILD)",
   "model_family": "site",
   "scope_type": "site_specific",
   "site_scope": {
@@ -31,7 +31,7 @@
     "loo_accuracy": 0.0,
     "loo_kappa": 0.0
   },
-  "release_stage": "review",
+  "release_stage": "prototype",
   "is_default": false,
   "parent_pack_id": "bnrrm-general-v1.0-dev-map",
   "applicability_boundaries": [
@@ -54,9 +54,7 @@
       "cpt_transparency": "review/cpt_transparency.json",
       "provenance": "review/provenance_registry.json",
       "site_reports": "review/site_reports.json",
-      "risk_comparison": "review/risk_comparison.json",
-      "explainer": "review/explainer.json",
-      "sensitivity": "review/sensitivity.json"
+      "risk_comparison": "review/risk_comparison.json"
     }
   }
 }

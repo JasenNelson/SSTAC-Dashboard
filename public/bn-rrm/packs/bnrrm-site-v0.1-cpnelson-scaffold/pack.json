@@ -1,48 +1,17 @@
 {
-  "pack_id": "bnrrm-general-v1.0-dev-map",
-  "display_name": "BN-RRM General v1.0 (Development, MAP)",
-  "model_family": "general",
-  "scope_type": "general",
-  "site_scope": null,
+  "pack_id": "bnrrm-site-v0.1-cpnelson-scaffold",
+  "display_name": "BN-RRM Site: CP Nelson (Scaffold)",
+  "model_family": "site",
+  "scope_type": "site_specific",
+  "site_scope": {
+    "registry_id": "0311",
+    "name": "CP Nelson",
+    "waterbody": "freshwater"
+  },
   "site_inventory": [
-    {
-      "registry_id": "9930",
-      "name": "Woodfibre",
-      "waterbody": "marine"
-    },
     {
       "registry_id": "0311",
       "name": "CP Nelson",
-      "waterbody": "freshwater"
-    },
-    {
-      "registry_id": "4205",
-      "name": "Island Copper",
-      "waterbody": "marine"
-    },
-    {
-      "registry_id": "15125",
-      "name": "Blue Water",
-      "waterbody": "marine"
-    },
-    {
-      "registry_id": "3130",
-      "name": "IOCO",
-      "waterbody": "marine"
-    },
-    {
-      "registry_id": "15184",
-      "name": "Toquaht",
-      "waterbody": "marine"
-    },
-    {
-      "registry_id": "0331",
-      "name": "ALCAN",
-      "waterbody": "marine"
-    },
-    {
-      "registry_id": "16029",
-      "name": "Brunette River",
       "waterbody": "freshwater"
     }
   ],
@@ -50,8 +19,8 @@
   "dag_node_count": 20,
   "dag_edge_count": 24,
   "training_corpus": {
-    "n_stations": 282,
-    "n_co_located": 82,
+    "n_stations": 7,
+    "n_co_located": 5,
     "n_sites": 8,
     "cohort_rule": "T1+T2",
     "dataset_status": "FROZEN (DR-003, 2026-03-09)"
@@ -59,20 +28,20 @@
   "evaluation_profile": {
     "decision_rule": "MAP",
     "primary_metric": "weighted_kappa",
-    "loo_accuracy": 0.6237,
-    "loo_kappa": 0.1846
+    "loo_accuracy": 0.5244,
+    "loo_kappa": 0.2072
   },
-  "release_stage": "internal",
-  "is_default": true,
-  "parent_pack_id": null,
+  "release_stage": "scaffold",
+  "is_default": false,
+  "parent_pack_id": "bnrrm-general-v1.0-dev-map",
   "applicability_boundaries": [
     "Woodfibre: dioxin/furan unmodeled contaminant boundary",
     "Pinchi: natural mineralization / regional-background boundary",
     "Sullivan: water-column-dominant pathway boundary"
   ],
   "version_history": {
-    "created": "2026-03-31",
-    "model_version": "1.0",
+    "created": "2026-03-30",
+    "model_version": "4.1",
     "architecture_version": "v4.0 (20-node DAG)"
   },
   "artifacts": {

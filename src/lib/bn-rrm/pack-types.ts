@@ -85,6 +85,8 @@ export interface ReviewArtifacts {
 
 export interface PackArtifacts {
   runtime_model: string;
+  /** Benchmark packs: combined training data for read-only data viewer */
+  training_data?: string;
   review: ReviewArtifacts;
 }
 

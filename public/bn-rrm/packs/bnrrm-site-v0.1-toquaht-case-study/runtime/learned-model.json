@@ -1,6 +1,6 @@
 {
   "modelId": "bnrrm-landis-causal",
-  "version": "4.1-site",
+  "version": "1.0-site",
   "scope": "site_specific",
   "siteScope": {
     "registryId": "15184",
@@ -18,7 +18,7 @@
   "learnedFrom": "bnrrm_training.db",
   "nStations": 20,
   "createdAt": "2026-03-31",
-  "description": "Site-specific BN-RRM for Toquaht Bay Marina and Campground (registry_id=15184, marine). 20-node Landis causal DAG with hierarchical borrowing from general model. N=20 site stations. Tier 1 borrowed wholesale; Tiers 2-4 use general CPTs as priors.",
+  "description": "Site-specific BN-RRM release v1.0-site for Toquaht Bay Marina and Campground (registry_id=15184, marine). It inherits the 20-node Landis causal DAG (DAG lineage v4.0; inference lineage v4.1) with hierarchical borrowing from the general model. N=20 site stations. Tier 1 is borrowed wholesale; Tiers 2-4 use general CPTs as priors.",
   "softEvidence": {
     "enabled": true,
     "concentration": 0.6,
