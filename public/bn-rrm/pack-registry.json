@@ -33,6 +33,14 @@
       "release_stage": "review",
       "is_default": false,
       "path": "packs/bnrrm-site-v0.2-cpnelson-prototype"
+    },
+    {
+      "pack_id": "bnrrm-casestudy-jermilova2025-mackenzie-hg",
+      "display_name": "Jermilova 2025 Mackenzie Mercury BN-RRM",
+      "scope_type": "benchmark",
+      "release_stage": "prototype",
+      "is_default": false,
+      "path": "packs/bnrrm-casestudy-jermilova2025-mackenzie-hg"
     }
   ]
 }

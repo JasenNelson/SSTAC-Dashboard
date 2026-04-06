@@ -1,0 +1,6214 @@
+{
+  "modelId": "bnrrm-mackenzie-hg-gsl",
+  "version": "1.0",
+  "description": "Mackenzie Mercury BN-RRM (GSL) with data-learned CPTs. BDeu (ESS=1.0) for stressor nodes, deterministic for effect/endpoint nodes. Learned from 604 fish cases and 855 water cases.",
+  "source": "Jermilova et al. 2025, IEAM 21(2):396-413",
+  "doi": "10.1093/inteam/vjae011",
+  "createdAt": "2026-04-06T18:01:36Z",
+  "nodes": [
+    {
+      "id": "atmospheric_hg_deposition",
+      "label": "Atmospheric Hg Deposition",
+      "category": "substance",
+      "states": [
+        {
+          "id": "very_low",
+          "label": "Very Low",
+          "color": "#22c55e"
+        },
+        {
+          "id": "low",
+          "label": "Low",
+          "color": "#a3e635"
+        },
+        {
+          "id": "medium",
+          "label": "Medium",
+          "color": "#eab308"
+        },
+        {
+          "id": "high",
+          "label": "High",
+          "color": "#f97316"
+        },
+        {
+          "id": "very_high",
+          "label": "Very High",
+          "color": "#ef4444"
+        }
+      ],
+      "beliefs": {
+        "very_low": 0.046027,
+        "low": 0.209041,
+        "medium": 0.598082,
+        "high": 0.146712,
+        "very_high": 0.000137
+      },
+      "description": "GEM-MACH-Hg annual average (ug THg/m2/yr). Breaks: 0/3/9/12/15/>15",
+      "position": {
+        "x": 90,
+        "y": 290
+      }
+    },
+    {
+      "id": "permafrost_hg_release",
+      "label": "Permafrost Thaw Hg Release",
+      "category": "substance",
+      "states": [
+        {
+          "id": "none",
+          "label": "None",
+          "color": "#22c55e"
+        },
+        {
+          "id": "very_low",
+          "label": "Very Low",
+          "color": "#86efac"
+        },
+        {
+          "id": "low",
+          "label": "Low",
+          "color": "#a3e635"
+        },
+        {
+          "id": "medium",
+          "label": "Medium",
+          "color": "#eab308"
+        },
+        {
+          "id": "high",
+          "label": "High",
+          "color": "#f97316"
+        },
+        {
+          "id": "very_high",
+          "label": "Very High",
+          "color": "#ef4444"
+        }
+      ],
+      "beliefs": {
+        "none": 0.585046,
+        "very_low": 0.000114,
+        "low": 0.410388,
+        "medium": 0.000114,
+        "high": 0.004224,
+        "very_high": 0.000114
+      },
+      "description": "SiBCASA model output (ug DHg/m2/yr). Breaks: 0/2/4/6/10/>10",
+      "position": {
+        "x": 290,
+        "y": 290
+      }
+    },
+    {
+      "id": "soil_erosion_hg_release",
+      "label": "Soil Erosion Hg Release",
+      "category": "substance",
+      "states": [
+        {
+          "id": "low",
+          "label": "Low",
+          "color": "#22c55e"
+        },
+        {
+          "id": "medium",
+          "label": "Medium",
+          "color": "#a3e635"
+        },
+        {
+          "id": "high",
+          "label": "High",
+          "color": "#eab308"
+        },
+        {
+          "id": "very_high",
+          "label": "Very High",
+          "color": "#ef4444"
+        }
+      ],
+      "beliefs": {
+        "low": 0.999486,
+        "medium": 0.000171,
+        "high": 0.000171,
+        "very_high": 0.000171
+      },
+      "description": "RUSLE-derived (ug THg/m2/yr). Breaks: 0/5/10/20/>20",
+      "position": {
+        "x": 490,
+        "y": 290
+      }
+    },
+    {
+      "id": "total_hg_deposition",
+      "label": "Total Hg Deposition (Nonpoint)",
+      "category": "substance",
+      "states": [
+        {
+          "id": "low",
+          "label": "Low",
+          "color": "#22c55e"
+        },
+        {
+          "id": "moderate_low",
+          "label": "Moderate Low",
+          "color": "#a3e635"
+        },
+        {
+          "id": "moderate_high",
+          "label": "Moderate High",
+          "color": "#eab308"
+        },
+        {
+          "id": "high",
+          "label": "High",
+          "color": "#f97316"
+        },
+        {
+          "id": "very_high",
+          "label": "Very High",
+          "color": "#ef4444"
+        }
+      ],
+      "beliefs": {
+        "low": 0.224826,
+        "moderate_low": 0.736707,
+        "moderate_high": 0.028442,
+        "high": 0.005322,
+        "very_high": 0.004703
+      },
+      "description": "Sum: atmospheric + permafrost + soil erosion. Breaks: 0/10/15/20/50/>50 ug/m2/yr",
+      "position": {
+        "x": 90,
+        "y": 490
+      }
+    },
+    {
+      "id": "fish_species",
+      "label": "Freshwater Fish Species",
+      "category": "condition",
+      "states": [
+        {
+          "id": "lake_whitefish",
+          "label": "Lake Whitefish",
+          "color": "#dbeafe"
+        },
+        {
+          "id": "burbot",
+          "label": "Burbot",
+          "color": "#bfdbfe"
+        },
+        {
+          "id": "walleye",
+          "label": "Walleye",
+          "color": "#93c5fd"
+        },
+        {
+          "id": "lake_trout",
+          "label": "Lake Trout",
+          "color": "#60a5fa"
+        },
+        {
+          "id": "northern_pike",
+          "label": "Northern Pike",
+          "color": "#3b82f6"
+        }
+      ],
+      "beliefs": {
+        "lake_whitefish": 0.397025,
+        "burbot": 0.155702,
+        "walleye": 0.04,
+        "lake_trout": 0.078017,
+        "northern_pike": 0.329256
+      },
+      "description": "Five Indigenous food fish species in Mackenzie basin",
+      "position": {
+        "x": 90,
+        "y": 690
+      }
+    },
+    {
+      "id": "fish_length",
+      "label": "Fish Length",
+      "category": "condition",
+      "states": [
+        {
+          "id": "small",
+          "label": "Small",
+          "color": "#60a5fa"
+        },
+        {
+          "id": "large",
+          "label": "Large",
+          "color": "#3b82f6"
+        }
+      ],
+      "beliefs": {
+        "small": 0.751282,
+        "large": 0.248718
+      },
+      "description": "Small/large cutoff: 600mm (BU/LT/NP) or 450mm (LW/WA)",
+      "position": {
+        "x": 290,
+        "y": 690
+      }
+    },
+    {
+      "id": "freshwater_thg",
+      "label": "Freshwater THg (ng/L)",
+      "category": "effect",
+      "states": [
+        {
+          "id": "low",
+          "label": "Low",
+          "color": "#22c55e"
+        },
+        {
+          "id": "medium",
+          "label": "Medium",
+          "color": "#eab308"
+        },
+        {
+          "id": "high",
+          "label": "High",
+          "color": "#ef4444"
+        }
+      ],
+      "beliefs": {
+        "low": 0.718406,
+        "medium": 0.144969,
+        "high": 0.136625
+      },
+      "description": "Total mercury in water. Breaks: 0/10/26/>26 ng/L. CCME aquatic life = 26 ng/L",
+      "position": {
+        "x": 90,
+        "y": 890
+      }
+    },
+    {
+      "id": "fish_tissue_hg",
+      "label": "Fish Tissue Hg (ug/g ww)",
+      "category": "effect",
+      "states": [
+        {
+          "id": "low",
+          "label": "Low",
+          "color": "#22c55e"
+        },
+        {
+          "id": "subsistence",
+          "label": "Subsistence",
+          "color": "#a3e635"
+        },
+        {
+          "id": "ec20",
+          "label": "Ec20",
+          "color": "#eab308"
+        },
+        {
+          "id": "ec50",
+          "label": "Ec50",
+          "color": "#f97316"
+        },
+        {
+          "id": "above_ec50",
+          "label": "Above Ec50",
+          "color": "#ef4444"
+        }
+      ],
+      "beliefs": {
+        "low": 0.434007,
+        "subsistence": 0.2549,
+        "ec20": 0.120449,
+        "ec50": 0.108227,
+        "above_ec50": 0.082417
+      },
+      "description": "Mercury in fish tissue. Breaks: 0/0.2/0.5/0.77/3/>3. Dillon 2010 dose-response",
+      "position": {
+        "x": 290,
+        "y": 890
+      }
+    },
+    {
+      "id": "degree_of_injury",
+      "label": "Degree of Injury (%)",
+      "category": "effect",
+      "states": [
+        {
+          "id": "low",
+          "label": "Low",
+          "color": "#22c55e"
+        },
+        {
+          "id": "moderate",
+          "label": "Moderate",
+          "color": "#a3e635"
+        },
+        {
+          "id": "high",
+          "label": "High",
+          "color": "#eab308"
+        },
+        {
+          "id": "very_high",
+          "label": "Very High",
+          "color": "#ef4444"
+        }
+      ],
+      "beliefs": {
+        "low": 0.409472,
+        "moderate": 0.358636,
+        "high": 0.12713,
+        "very_high": 0.104762
+      },
+      "description": "Fish injury from Hg exposure. LL.3 model: 0-25/25-50/50-75/75-100%",
+      "position": {
+        "x": 90,
+        "y": 1090
+      }
+    },
+    {
+      "id": "eligible_commercial_catch",
+      "label": "Eligible Commercial Catch",
+      "category": "impact",
+      "states": [
+        {
+          "id": "eligible",
+          "label": "Eligible",
+          "color": "#22c55e"
+        },
+        {
+          "id": "not_eligible",
+          "label": "Not Eligible",
+          "color": "#ef4444"
+        }
+      ],
+      "beliefs": {
+        "eligible": 0.670016,
+        "not_eligible": 0.329984
+      },
+      "description": "Fish tissue Hg below 0.5 ug/g Canadian guideline for commercial sale",
+      "position": {
+        "x": 290,
+        "y": 1090
+      }
+    },
+    {
+      "id": "mehg_ingested",
+      "label": "MeHg Ingested (ug Hg/kgbw/wk)",
+      "category": "impact",
+      "states": [
+        {
+          "id": "none",
+          "label": "None",
+          "color": "#22c55e"
+        },
+        {
+          "id": "low",
+          "label": "Low",
+          "color": "#86efac"
+        },
+        {
+          "id": "moderate_low",
+          "label": "Moderate Low",
+          "color": "#a3e635"
+        },
+        {
+          "id": "moderate_mid",
+          "label": "Moderate Mid",
+          "color": "#eab308"
+        },
+        {
+          "id": "moderate_high",
+          "label": "Moderate High",
+          "color": "#f97316"
+        },
+        {
+          "id": "high",
+          "label": "High",
+          "color": "#ef4444"
+        }
+      ],
+      "beliefs": {
+        "none": 0.02,
+        "low": 0.02,
+        "moderate_low": 0.401926,
+        "moderate_mid": 0.02,
+        "moderate_high": 0.02,
+        "high": 0.518074
+      },
+      "description": "Weekly methylmercury intake. Breaks: 0/1/1.4/2.5/3.3/>3.3",
+      "position": {
+        "x": 90,
+        "y": 1290
+      }
+    },
+    {
+      "id": "ptwi_exceedance",
+      "label": "pTWI Exceedance",
+      "category": "impact",
+      "states": [
+        {
+          "id": "does_not_exceed",
+          "label": "Does Not Exceed",
+          "color": "#22c55e"
+        },
+        {
+          "id": "exceeds",
+          "label": "Exceeds",
+          "color": "#ef4444"
+        }
+      ],
+      "beliefs": {
+        "does_not_exceed": 0.086,
+        "exceeds": 0.914
+      },
+      "description": "Provisional tolerable weekly intake exceeded. Thresholds: 0.7/1.4/3.3 ug/kgbw/wk",
+      "position": {
+        "x": 290,
+        "y": 1290
+      }
+    },
+    {
+      "id": "proximity_mine_gsl",
+      "label": "Proximity to Mine Development (15 km)",
+      "category": "substance",
+      "states": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "color": "#22c55e"
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "color": "#ef4444"
+        }
+      ],
+      "beliefs": {
+        "yes": 0.275685,
+        "no": 0.724315
+      },
+      "description": "Within 15 km of active mine development. GSL point source.",
+      "position": {
+        "x": 90,
+        "y": 90
+      }
+    },
+    {
+      "id": "proximity_historic_mine",
+      "label": "Proximity to Historic Mine (15 km)",
+      "category": "substance",
+      "states": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "color": "#22c55e"
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "color": "#ef4444"
+        }
+      ],
+      "beliefs": {
+        "yes": 0.460616,
+        "no": 0.539384
+      },
+      "description": "Within 15 km of a historic mine site. GSL-only per R code formulas.",
+      "position": {
+        "x": 290,
+        "y": 90
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "atmospheric_hg_deposition",
+      "target": "total_hg_deposition"
+    },
+    {
+      "source": "permafrost_hg_release",
+      "target": "total_hg_deposition"
+    },
+    {
+      "source": "soil_erosion_hg_release",
+      "target": "total_hg_deposition"
+    },
+    {
+      "source": "proximity_mine_gsl",
+      "target": "freshwater_thg"
+    },
+    {
+      "source": "proximity_historic_mine",
+      "target": "freshwater_thg"
+    },
+    {
+      "source": "total_hg_deposition",
+      "target": "freshwater_thg"
+    },
+    {
+      "source": "fish_species",
+      "target": "fish_tissue_hg"
+    },
+    {
+      "source": "fish_length",
+      "target": "fish_tissue_hg"
+    },
+    {
+      "source": "proximity_mine_gsl",
+      "target": "fish_tissue_hg"
+    },
+    {
+      "source": "proximity_historic_mine",
+      "target": "fish_tissue_hg"
+    },
+    {
+      "source": "total_hg_deposition",
+      "target": "fish_tissue_hg"
+    },
+    {
+      "source": "fish_tissue_hg",
+      "target": "degree_of_injury"
+    },
+    {
+      "source": "fish_tissue_hg",
+      "target": "eligible_commercial_catch"
+    },
+    {
+      "source": "fish_tissue_hg",
+      "target": "mehg_ingested"
+    },
+    {
+      "source": "mehg_ingested",
+      "target": "ptwi_exceedance"
+    }
+  ],
+  "containers": [
+    {
+      "id": "container_0",
+      "label": "Point Sources",
+      "nodeIds": [
+        "proximity_mine_gsl",
+        "proximity_historic_mine"
+      ],
+      "position": {
+        "x": 30,
+        "y": 30
+      },
+      "size": {
+        "width": 480,
+        "height": 220
+      }
+    },
+    {
+      "id": "container_1",
+      "label": "Nonpoint Sources",
+      "nodeIds": [
+        "atmospheric_hg_deposition",
+        "permafrost_hg_release",
+        "soil_erosion_hg_release"
+      ],
+      "position": {
+        "x": 30,
+        "y": 230
+      },
+      "size": {
+        "width": 680,
+        "height": 220
+      }
+    },
+    {
+      "id": "container_2",
+      "label": "Hg Deposition",
+      "nodeIds": [
+        "total_hg_deposition"
+      ],
+      "position": {
+        "x": 30,
+        "y": 430
+      },
+      "size": {
+        "width": 280,
+        "height": 220
+      }
+    },
+    {
+      "id": "container_3",
+      "label": "Exposure Factors",
+      "nodeIds": [
+        "fish_species",
+        "fish_length"
+      ],
+      "position": {
+        "x": 30,
+        "y": 630
+      },
+      "size": {
+        "width": 480,
+        "height": 220
+      }
+    },
+    {
+      "id": "container_4",
+      "label": "Stressors",
+      "nodeIds": [
+        "freshwater_thg",
+        "fish_tissue_hg"
+      ],
+      "position": {
+        "x": 30,
+        "y": 830
+      },
+      "size": {
+        "width": 480,
+        "height": 220
+      }
+    },
+    {
+      "id": "container_5",
+      "label": "Effects",
+      "nodeIds": [
+        "degree_of_injury",
+        "eligible_commercial_catch"
+      ],
+      "position": {
+        "x": 30,
+        "y": 1030
+      },
+      "size": {
+        "width": 480,
+        "height": 220
+      }
+    },
+    {
+      "id": "container_6",
+      "label": "Human Health",
+      "nodeIds": [
+        "mehg_ingested",
+        "ptwi_exceedance"
+      ],
+      "position": {
+        "x": 30,
+        "y": 1230
+      },
+      "size": {
+        "width": 480,
+        "height": 220
+      }
+    }
+  ],
+  "cpts": [
+    {
+      "nodeId": "total_hg_deposition",
+      "parentIds": [
+        "atmospheric_hg_deposition",
+        "permafrost_hg_release",
+        "soil_erosion_hg_release"
+      ],
+      "table": [
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.99990050988683,
+            "moderate_low": 2.4872528292500934e-05,
+            "moderate_high": 2.4872528292500934e-05,
+            "high": 2.4872528292500934e-05,
+            "very_high": 2.4872528292500934e-05
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_low",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.999928321834961,
+            "moderate_low": 1.7919541259743753e-05,
+            "moderate_high": 1.7919541259743753e-05,
+            "high": 1.7919541259743753e-05,
+            "very_high": 1.7919541259743753e-05
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.38678511064816634,
+            "moderate_low": 0.6131913053732164,
+            "moderate_high": 7.861326205730908e-06,
+            "high": 7.861326205730908e-06,
+            "very_high": 7.861326205730908e-06
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "low",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.10815435171447983,
+            "moderate_low": 0.8918373289333204,
+            "moderate_high": 2.773117399925126e-06,
+            "high": 2.773117399925126e-06,
+            "very_high": 2.773117399925126e-06
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 6.127263257865875e-06,
+            "moderate_low": 0.9117429000337,
+            "moderate_high": 0.08823871817652645,
+            "high": 6.127263257865875e-06,
+            "very_high": 6.127263257865875e-06
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "medium",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 1.7919541259743753e-05,
+            "moderate_low": 0.999928321834961,
+            "moderate_high": 1.7919541259743753e-05,
+            "high": 1.7919541259743753e-05,
+            "very_high": 1.7919541259743753e-05
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 1.4491703499746397e-05,
+            "moderate_low": 0.9651619447866097,
+            "moderate_high": 0.034794580102891104,
+            "high": 1.4491703499746397e-05,
+            "very_high": 1.4491703499746397e-05
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.0002773925104022192,
+            "moderate_low": 0.0002773925104022192,
+            "moderate_high": 0.0002773925104022192,
+            "high": 0.9988904299583912,
+            "very_high": 0.0002773925104022192
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "high",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "none",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "very_low",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "low",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "medium",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "high",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "medium"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "atmospheric_hg_deposition": "very_high",
+            "permafrost_hg_release": "very_high",
+            "soil_erosion_hg_release": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "moderate_low": 0.2,
+            "moderate_high": 0.2,
+            "high": 0.2,
+            "very_high": 0.2
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "freshwater_thg",
+      "parentIds": [
+        "proximity_mine_gsl",
+        "proximity_historic_mine",
+        "total_hg_deposition"
+      ],
+      "table": [
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.9524795425416543,
+            "medium": 0.01784481908705511,
+            "high": 0.029675638371290544
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.9966832504145937,
+            "medium": 0.0016583747927031507,
+            "high": 0.0016583747927031507
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.9551699204627622,
+            "medium": 0.044107013738250184,
+            "high": 0.000723065798987708
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.918721152763706,
+            "medium": 0.05414837329730947,
+            "high": 0.027130473938984576
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.9474127192539474,
+            "medium": 0.030333636333030337,
+            "high": 0.022253644413022258
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.9917695473251029,
+            "medium": 0.00411522633744856,
+            "high": 0.00411522633744856
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.9944903581267218,
+            "medium": 0.0027548209366391185,
+            "high": 0.0027548209366391185
+          }
+        },
+        {
+          "parentStates": {
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.3333333333333333,
+            "medium": 0.3333333333333333,
+            "high": 0.3333333333333333
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "fish_tissue_hg",
+      "parentIds": [
+        "fish_species",
+        "fish_length",
+        "proximity_mine_gsl",
+        "proximity_historic_mine",
+        "total_hg_deposition"
+      ],
+      "table": [
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.6884845504466847,
+            "subsistence": 0.31146627325629045,
+            "ec20": 1.6392099008278008e-05,
+            "ec50": 1.6392099008278008e-05,
+            "above_ec50": 1.6392099008278008e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.9554716142650816,
+            "subsistence": 0.04446172647483613,
+            "ec20": 2.2219753360737697e-05,
+            "ec50": 2.2219753360737697e-05,
+            "above_ec50": 2.2219753360737697e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.9999230843188155,
+            "subsistence": 1.9228920296125374e-05,
+            "ec20": 1.9228920296125374e-05,
+            "ec50": 1.9228920296125374e-05,
+            "above_ec50": 1.9228920296125374e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.9995558023320378,
+            "subsistence": 0.00011104941699056081,
+            "ec20": 0.00011104941699056081,
+            "ec50": 0.00011104941699056081,
+            "above_ec50": 0.00011104941699056081
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.9163681799250313,
+            "subsistence": 0.08338192419825073,
+            "ec20": 8.329862557267806e-05,
+            "ec50": 8.329862557267806e-05,
+            "above_ec50": 8.329862557267806e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.12502343017806936,
+            "subsistence": 0.812308653545767,
+            "ec20": 0.06254295532646048,
+            "ec50": 6.248047485160888e-05,
+            "above_ec50": 6.248047485160888e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.9995003123048095,
+            "subsistence": 0.0001249219237976265,
+            "ec20": 0.0001249219237976265,
+            "ec50": 0.0001249219237976265,
+            "above_ec50": 0.0001249219237976265
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.6189478695548679,
+            "subsistence": 0.3333015948583671,
+            "ec20": 0.047655320161866216,
+            "ec50": 4.760771244941681e-05,
+            "above_ec50": 4.760771244941681e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.9992007992007993,
+            "subsistence": 0.0001998001998001998,
+            "ec20": 0.0001998001998001998,
+            "ec50": 0.0001998001998001998,
+            "above_ec50": 0.0001998001998001998
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.9993338884263114,
+            "subsistence": 0.00016652789342214822,
+            "ec20": 0.00016652789342214822,
+            "ec50": 0.00016652789342214822,
+            "above_ec50": 0.00016652789342214822
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_whitefish",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.1632690541781451,
+            "subsistence": 0.24489337822671156,
+            "ec20": 0.40814202632384455,
+            "ec50": 0.18367513519028672,
+            "above_ec50": 2.040608101214162e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.9993338884263114,
+            "subsistence": 0.00016652789342214822,
+            "ec20": 0.00016652789342214822,
+            "ec50": 0.00016652789342214822,
+            "above_ec50": 0.00016652789342214822
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 5.2617732175743226e-05,
+            "subsistence": 0.15790581425940542,
+            "ec20": 0.3683767429623784,
+            "ec50": 0.4736122073138648,
+            "above_ec50": 5.2617732175743226e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.7331556147950683,
+            "ec20": 0.06671109630123292,
+            "ec50": 6.664445184938355e-05,
+            "above_ec50": 6.664445184938355e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "burbot",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.23528374007644814,
+            "subsistence": 0.7645398412231696,
+            "ec20": 5.880623346074684e-05,
+            "ec50": 5.880623346074684e-05,
+            "above_ec50": 5.880623346074684e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.0004987531172069827,
+            "subsistence": 0.0004987531172069827,
+            "ec20": 0.49925187032418955,
+            "ec50": 0.49925187032418955,
+            "above_ec50": 0.0004987531172069827
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "walleye",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.8747891283973759,
+            "subsistence": 0.12502343017806936,
+            "ec20": 6.248047485160888e-05,
+            "ec50": 6.248047485160888e-05,
+            "above_ec50": 6.248047485160888e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 7.140307033202428e-05,
+            "subsistence": 0.8569082470546234,
+            "ec20": 0.14287754373438058,
+            "ec50": 7.140307033202428e-05,
+            "above_ec50": 7.140307033202428e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.0003327787021630616,
+            "subsistence": 0.0003327787021630616,
+            "ec20": 0.33311148086522463,
+            "ec50": 0.6658901830282863,
+            "above_ec50": 0.0003327787021630616
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.6152249134948097,
+            "subsistence": 0.38454440599769324,
+            "ec20": 7.689350249903884e-05,
+            "ec50": 7.689350249903884e-05,
+            "above_ec50": 7.689350249903884e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.0009950248756218907,
+            "subsistence": 0.0009950248756218907,
+            "ec20": 0.9960199004975124,
+            "ec50": 0.0009950248756218907,
+            "above_ec50": 0.0009950248756218907
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "lake_trout",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.18750195281987192,
+            "subsistence": 0.31248242462115294,
+            "ec20": 0.18750195281987192,
+            "ec50": 0.31248242462115294,
+            "above_ec50": 3.124511795032027e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.5535398625122757,
+            "subsistence": 0.428551022230158,
+            "ec20": 0.017873404160342825,
+            "ec50": 1.7855548611731094e-05,
+            "above_ec50": 1.7855548611731094e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.8399360063993601,
+            "subsistence": 0.16000399960004,
+            "ec20": 1.9998000199980004e-05,
+            "ec50": 1.9998000199980004e-05,
+            "above_ec50": 1.9998000199980004e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.7997001499250375,
+            "ec20": 9.995002498750625e-05,
+            "ec50": 9.995002498750625e-05,
+            "above_ec50": 9.995002498750625e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.10004997501249374,
+            "subsistence": 0.8996501749125437,
+            "ec20": 9.995002498750625e-05,
+            "ec50": 9.995002498750625e-05,
+            "above_ec50": 9.995002498750625e-05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "small",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 5.5540127742293814e-05,
+            "subsistence": 5.5540127742293814e-05,
+            "ec20": 0.0555956678700361,
+            "ec50": 0.8886975840044433,
+            "above_ec50": 0.0555956678700361
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "yes",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.3998001998001998,
+            "ec20": 0.3998001998001998,
+            "ec50": 0.00019980019980019983,
+            "above_ec50": 0.00019980019980019983
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.2856531049250535,
+            "subsistence": 0.2856531049250535,
+            "ec20": 0.2856531049250535,
+            "ec50": 0.1428979300499643,
+            "above_ec50": 0.00014275517487508923
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "yes",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "low"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_low"
+          },
+          "probabilities": {
+            "low": 0.16669442131557033,
+            "subsistence": 0.3332223147377186,
+            "ec20": 0.3332223147377186,
+            "ec50": 0.16669442131557033,
+            "above_ec50": 0.00016652789342214822
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "moderate_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        },
+        {
+          "parentStates": {
+            "fish_species": "northern_pike",
+            "fish_length": "large",
+            "proximity_mine_gsl": "no",
+            "proximity_historic_mine": "no",
+            "total_hg_deposition": "very_high"
+          },
+          "probabilities": {
+            "low": 0.2,
+            "subsistence": 0.2,
+            "ec20": 0.2,
+            "ec50": 0.2,
+            "above_ec50": 0.2
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "degree_of_injury",
+      "parentIds": [
+        "fish_tissue_hg"
+      ],
+      "table": [
+        {
+          "parentStates": {
+            "fish_tissue_hg": "low"
+          },
+          "probabilities": {
+            "low": 0.9,
+            "moderate": 0.03333333333333333,
+            "high": 0.03333333333333333,
+            "very_high": 0.03333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "fish_tissue_hg": "subsistence"
+          },
+          "probabilities": {
+            "low": 0.03333333333333333,
+            "moderate": 0.9,
+            "high": 0.03333333333333333,
+            "very_high": 0.03333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "fish_tissue_hg": "ec20"
+          },
+          "probabilities": {
+            "low": 0.03333333333333333,
+            "moderate": 0.9,
+            "high": 0.03333333333333333,
+            "very_high": 0.03333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "fish_tissue_hg": "ec50"
+          },
+          "probabilities": {
+            "low": 0.03333333333333333,
+            "moderate": 0.03333333333333333,
+            "high": 0.9,
+            "very_high": 0.03333333333333333
+          }
+        },
+        {
+          "parentStates": {
+            "fish_tissue_hg": "above_ec50"
+          },
+          "probabilities": {
+            "low": 0.03333333333333333,
+            "moderate": 0.03333333333333333,
+            "high": 0.03333333333333333,
+            "very_high": 0.9
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "eligible_commercial_catch",
+      "parentIds": [
+        "fish_tissue_hg"
+      ],
+      "table": [
+        {
+          "parentStates": {
+            "fish_tissue_hg": "low"
+          },
+          "probabilities": {
+            "eligible": 0.95,
+            "not_eligible": 0.05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_tissue_hg": "subsistence"
+          },
+          "probabilities": {
+            "eligible": 0.95,
+            "not_eligible": 0.05
+          }
+        },
+        {
+          "parentStates": {
+            "fish_tissue_hg": "ec20"
+          },
+          "probabilities": {
+            "eligible": 0.05,
+            "not_eligible": 0.95
+          }
+        },
+        {
+          "parentStates": {
+            "fish_tissue_hg": "ec50"
+          },
+          "probabilities": {
+            "eligible": 0.05,
+            "not_eligible": 0.95
+          }
+        },
+        {
+          "parentStates": {
+            "fish_tissue_hg": "above_ec50"
+          },
+          "probabilities": {
+            "eligible": 0.05,
+            "not_eligible": 0.95
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "mehg_ingested",
+      "parentIds": [
+        "fish_tissue_hg"
+      ],
+      "table": [
+        {
+          "parentStates": {
+            "fish_tissue_hg": "low"
+          },
+          "probabilities": {
+            "none": 0.02,
+            "low": 0.02,
+            "moderate_low": 0.9,
+            "moderate_mid": 0.02,
+            "moderate_high": 0.02,
+            "high": 0.02
+          }
+        },
+        {
+          "parentStates": {
+            "fish_tissue_hg": "subsistence"
+          },
+          "probabilities": {
+            "none": 0.02,
+            "low": 0.02,
+            "moderate_low": 0.02,
+            "moderate_mid": 0.02,
+            "moderate_high": 0.02,
+            "high": 0.9
+          }
+        },
+        {
+          "parentStates": {
+            "fish_tissue_hg": "ec20"
+          },
+          "probabilities": {
+            "none": 0.02,
+            "low": 0.02,
+            "moderate_low": 0.02,
+            "moderate_mid": 0.02,
+            "moderate_high": 0.02,
+            "high": 0.9
+          }
+        },
+        {
+          "parentStates": {
+            "fish_tissue_hg": "ec50"
+          },
+          "probabilities": {
+            "none": 0.02,
+            "low": 0.02,
+            "moderate_low": 0.02,
+            "moderate_mid": 0.02,
+            "moderate_high": 0.02,
+            "high": 0.9
+          }
+        },
+        {
+          "parentStates": {
+            "fish_tissue_hg": "above_ec50"
+          },
+          "probabilities": {
+            "none": 0.02,
+            "low": 0.02,
+            "moderate_low": 0.02,
+            "moderate_mid": 0.02,
+            "moderate_high": 0.02,
+            "high": 0.9
+          }
+        }
+      ]
+    },
+    {
+      "nodeId": "ptwi_exceedance",
+      "parentIds": [
+        "mehg_ingested"
+      ],
+      "table": [
+        {
+          "parentStates": {
+            "mehg_ingested": "none"
+          },
+          "probabilities": {
+            "does_not_exceed": 0.95,
+            "exceeds": 0.05
+          }
+        },
+        {
+          "parentStates": {
+            "mehg_ingested": "low"
+          },
+          "probabilities": {
+            "does_not_exceed": 0.95,
+            "exceeds": 0.05
+          }
+        },
+        {
+          "parentStates": {
+            "mehg_ingested": "moderate_low"
+          },
+          "probabilities": {
+            "does_not_exceed": 0.05,
+            "exceeds": 0.95
+          }
+        },
+        {
+          "parentStates": {
+            "mehg_ingested": "moderate_mid"
+          },
+          "probabilities": {
+            "does_not_exceed": 0.05,
+            "exceeds": 0.95
+          }
+        },
+        {
+          "parentStates": {
+            "mehg_ingested": "moderate_high"
+          },
+          "probabilities": {
+            "does_not_exceed": 0.05,
+            "exceeds": 0.95
+          }
+        },
+        {
+          "parentStates": {
+            "mehg_ingested": "high"
+          },
+          "probabilities": {
+            "does_not_exceed": 0.05,
+            "exceeds": 0.95
+          }
+        }
+      ]
+    }
+  ],
+  "marginals": {
+    "atmospheric_hg_deposition": {
+      "very_low": 0.046027,
+      "low": 0.209041,
+      "medium": 0.598082,
+      "high": 0.146712,
+      "very_high": 0.000137
+    },
+    "permafrost_hg_release": {
+      "none": 0.585046,
+      "very_low": 0.000114,
+      "low": 0.410388,
+      "medium": 0.000114,
+      "high": 0.004224,
+      "very_high": 0.000114
+    },
+    "soil_erosion_hg_release": {
+      "low": 0.999486,
+      "medium": 0.000171,
+      "high": 0.000171,
+      "very_high": 0.000171
+    },
+    "proximity_mine_gsl": {
+      "yes": 0.275685,
+      "no": 0.724315
+    },
+    "proximity_historic_mine": {
+      "yes": 0.460616,
+      "no": 0.539384
+    },
+    "fish_species": {
+      "lake_whitefish": 0.397025,
+      "burbot": 0.155702,
+      "walleye": 0.04,
+      "lake_trout": 0.078017,
+      "northern_pike": 0.329256
+    },
+    "fish_length": {
+      "small": 0.751282,
+      "large": 0.248718
+    }
+  },
+  "dataCoverage": {
+    "fish_cases": 604,
+    "water_cases": 855,
+    "atmospheric_hg_deposition": {
+      "n": 1459,
+      "pct_of_total": 100.0
+    },
+    "permafrost_hg_release": {
+      "n": 1459,
+      "pct_of_total": 100.0
+    },
+    "soil_erosion_hg_release": {
+      "n": 1459,
+      "pct_of_total": 100.0
+    },
+    "total_hg_deposition": {
+      "n": 1459,
+      "pct_of_total": 100.0
+    },
+    "fish_species": {
+      "n": 604,
+      "pct_of_total": 41.4
+    },
+    "fish_length": {
+      "n": 584,
+      "pct_of_total": 40.0
+    },
+    "freshwater_thg": {
+      "n": 855,
+      "pct_of_total": 58.6
+    },
+    "fish_tissue_hg": {
+      "n": 604,
+      "pct_of_total": 41.4
+    },
+    "degree_of_injury": {
+      "n": 0,
+      "pct_of_total": 0.0
+    },
+    "eligible_commercial_catch": {
+      "n": 604,
+      "pct_of_total": 41.4
+    },
+    "mehg_ingested": {
+      "n": 0,
+      "pct_of_total": 0.0
+    },
+    "ptwi_exceedance": {
+      "n": 0,
+      "pct_of_total": 0.0
+    },
+    "proximity_mine_gsl": {
+      "n": 1459,
+      "pct_of_total": 100.0
+    },
+    "proximity_historic_mine": {
+      "n": 1459,
+      "pct_of_total": 100.0
+    }
+  },
+  "validation": {},
+  "regions": [
+    "outlet",
+    "middle",
+    "north_arm",
+    "east_arm"
+  ]
+}

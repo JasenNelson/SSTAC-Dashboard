@@ -8,7 +8,7 @@
 
 'use client';
 
-import { memo, useState, useMemo } from 'react';
+import { memo, useState, useMemo, useEffect } from 'react';
 import { useNetworkStore } from '@/stores/bn-rrm/networkStore';
 import { cn } from '@/utils/cn';
 import {
@@ -460,7 +460,7 @@ function ForwardInferenceView({
 
 function BackwardInferenceView() {
   const { model, evidence } = useNetworkStore();
-  const [queryParameter, setQueryParameter] = useState('sed_cu');
+  const [queryParameter, setQueryParameter] = useState('');
   const [targetRisk, setTargetRisk] = useState<string>('low');
   const [targetProbability, setTargetProbability] = useState(85);
   const [dagResult, setDagResult] = useState<BackwardInferenceResult | null>(null);
@@ -470,6 +470,13 @@ function BackwardInferenceView() {
     if (!model) return [];
     return model.nodes.filter(n => n.category === 'substance');
   }, [model]);
+
+  // Default to first substance node when model changes (replaces hardcoded sed_cu)
+  useEffect(() => {
+    if (substanceNodes.length > 0 && !substanceNodes.some(n => n.id === queryParameter)) {
+      setQueryParameter(substanceNodes[0].id);
+    }
+  }, [substanceNodes, queryParameter]);
 
   // Find impact node
   const impactNode = useMemo(() => {

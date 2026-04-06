@@ -2,20 +2,39 @@
 
 import { useState } from 'react';
 import { cn } from '@/utils/cn';
+import { usePackStore } from '@/stores/bn-rrm/packStore';
 import { TrainingSites } from './TrainingSites';
 import { ExternalSites } from './ExternalSites';
 import { MethodComparison } from './MethodComparison';
+import { PublishedComparison } from './PublishedComparison';
 
-type CaseStudySection = 'training' | 'external' | 'methods';
+type CaseStudySection = 'training' | 'external' | 'methods' | 'benchmark';
 
-const sections: { id: CaseStudySection; label: string; description: string }[] = [
+const baseSections: { id: CaseStudySection; label: string; description: string }[] = [
   { id: 'training', label: 'Training Sites', description: 'BN-RRM vs WOE for 8 training sites' },
   { id: 'external', label: 'External Sites', description: 'Non-training site comparisons' },
   { id: 'methods', label: 'Method Comparison', description: 'BN-RRM vs WOE, SQT, SQG approaches' },
 ];
 
+const benchmarkSection: { id: CaseStudySection; label: string; description: string } = {
+  id: 'benchmark',
+  label: 'Published Benchmark',
+  description: 'Comparison with Jermilova et al. 2025',
+};
+
 export function CaseStudiesView() {
-  const [activeSection, setActiveSection] = useState<CaseStudySection>('training');
+  const packManifest = usePackStore((s) => s.packManifest);
+  const isBenchmark = packManifest?.scope_type === 'benchmark';
+
+  // For benchmark packs, default to the benchmark section
+  const [activeSection, setActiveSection] = useState<CaseStudySection>(
+    isBenchmark ? 'benchmark' : 'training'
+  );
+
+  // Build section list: include benchmark section for benchmark packs
+  const sections = isBenchmark
+    ? [benchmarkSection, ...baseSections]
+    : baseSections;
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -58,6 +77,7 @@ export function CaseStudiesView() {
       {/* Content area */}
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-4xl mx-auto">
+          {activeSection === 'benchmark' && <PublishedComparison />}
           {activeSection === 'training' && <TrainingSites />}
           {activeSection === 'external' && <ExternalSites />}
           {activeSection === 'methods' && <MethodComparison />}

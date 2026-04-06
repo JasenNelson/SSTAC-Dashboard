@@ -16,7 +16,7 @@ import type {
   NodeCategory,
 } from '@/types/bn-rrm/network';
 import { createDummyNetwork } from '@/lib/bn-rrm/dummy-data';
-import { createTrainedNetwork } from '@/lib/bn-rrm/trained-network';
+import { createTrainedNetwork, createGenericNetwork } from '@/lib/bn-rrm/trained-network';
 import { dagForwardInference, dagBackwardInference } from '@/lib/bn-rrm/bn-inference';
 import type { PackManifest } from '@/lib/bn-rrm/pack-types';
 
@@ -156,12 +156,18 @@ export const useNetworkStore = create<NetworkState>()(
           const learnedJson = await res.json();
           // Guard against stale fetch: if another loadPackModel was called, discard this result
           if (get()._loadGeneration !== generation) return;
-          const trainedModel = createTrainedNetwork('learned', learnedJson);
-          get().loadModel(trainedModel);
+
+          // Dispatch: generic packs build entirely from JSON; canonical packs
+          // use the hardcoded 20-node skeleton with learned CPTs overlaid.
+          const model = manifest.runtime_schema_version === 'generic-bn-rrm-v1'
+            ? createGenericNetwork(learnedJson)
+            : createTrainedNetwork('learned', learnedJson);
+
+          get().loadModel(model);
         } catch (err) {
           if (get()._loadGeneration !== generation) return;
           console.error('[NetworkStore] Pack model load failed:', err);
-          // Fallback to expert model
+          // Fallback to expert model (only meaningful for canonical packs)
           const trainedModel = createTrainedNetwork('expert');
           get().loadModel(trainedModel);
         } finally {

@@ -1,0 +1,74 @@
+{
+  "model_name": "Mackenzie Mercury BN-RRM (GSL)",
+  "source_paper": {
+    "authors": "Jermilova, U., Macdonell, C., Chapman, P.M., Vander Meulen, I.J., et al.",
+    "year": 2025,
+    "title": "Bayesian Network Relative Risk Model for Mercury in the Mackenzie River Basin",
+    "journal": "Integrated Environmental Assessment and Management",
+    "volume": "21(2)",
+    "pages": "396-413",
+    "doi": "10.1093/inteam/vjae011"
+  },
+  "reconstruction_method": {
+    "summary": "Independent reconstruction from published data, R code, and supplementary materials. DAG structure from Figure 2, CPTs learned via BDeu (ESS=1.0) from FRDR training data, deterministic nodes from Dillon 2010 dose-response and Canadian dietary guidelines.",
+    "dag_source": "Figure 2 + Manuscript_RCode.R lme() formulas",
+    "cpt_learning": "BDeu (ESS=1.0) for stressor nodes; deterministic mappings for effect/endpoint nodes",
+    "discretization_source": "Table S4 (supplementary) + R code breakpoint definitions",
+    "training_data": "FRDR repository (doi: 10.20383/103.0945)"
+  },
+  "sub_models": {
+    "GSL": {
+      "name": "Great Slave Lake",
+      "regions": ["Outlet", "Middle", "North Arm", "East Arm"],
+      "n_nodes": 14,
+      "n_edges": 15,
+      "n_fish_cases": 604,
+      "n_water_cases": 855,
+      "point_sources": ["Proximity to mine development (15 km)", "Proximity to historic mine (15 km)"],
+      "is_default": true
+    },
+    "GBS": {
+      "name": "Great Bear Subbasin",
+      "regions": ["North", "West", "East", "South"],
+      "n_nodes": 14,
+      "n_edges": 15,
+      "n_fish_cases": 258,
+      "n_water_cases": 1271,
+      "point_sources": ["Proximity to oil development (50 km)", "Proximity to RPTS (10 km)"],
+      "is_default": false
+    }
+  },
+  "node_categories": {
+    "substance": {
+      "count": 6,
+      "nodes": [
+        "atmospheric_hg_deposition",
+        "permafrost_hg_release",
+        "soil_erosion_hg_release",
+        "total_hg_deposition",
+        "proximity_mine_gsl",
+        "proximity_historic_mine"
+      ]
+    },
+    "condition": {
+      "count": 2,
+      "nodes": ["fish_species", "fish_length"]
+    },
+    "effect": {
+      "count": 3,
+      "nodes": ["freshwater_thg", "fish_tissue_hg", "degree_of_injury"]
+    },
+    "impact": {
+      "count": 3,
+      "nodes": ["eligible_commercial_catch", "mehg_ingested", "ptwi_exceedance"]
+    }
+  },
+  "key_differences_from_canonical": [
+    "14 nodes (vs 20 in Landis sediment model)",
+    "Mercury-only pathway (vs multi-metal + organic in Landis)",
+    "Fish tissue and human health endpoints (vs benthic community in Landis)",
+    "Freshwater system (vs marine/estuarine sediment in Landis)",
+    "Region-specific point sources (mine proximity vs direct contamination levels)",
+    "Dietary exposure and pTWI exceedance endpoints (not present in Landis)"
+  ]
+}

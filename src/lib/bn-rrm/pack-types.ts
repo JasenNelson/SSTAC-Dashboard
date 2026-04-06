@@ -23,8 +23,11 @@ export type DecisionRule = 'MAP' | 'entropy';
 
 export type WaterbodyType = 'marine' | 'freshwater';
 
-/** MVP: all packs use this schema version */
+/** Canonical 20-node schema version (original BN-RRM sediment model) */
 export const CANONICAL_SCHEMA_VERSION = 'canonical-20node-v1' as const;
+
+/** Supported runtime schema versions */
+export type RuntimeSchemaVersion = 'canonical-20node-v1' | 'generic-bn-rrm-v1';
 
 // ---------------------------------------------------------------------------
 // Pack Manifest (pack.json)
@@ -74,6 +77,10 @@ export interface ReviewArtifacts {
   risk_comparison: string;
   explainer: string;
   sensitivity: string;
+  /** Benchmark packs: digitized published CPTs, sensitivity rankings, predictions */
+  published_reference: string;
+  /** Benchmark packs: structural comparison, sensitivity ranking comparison, LOO summary */
+  comparison_results: string;
 }
 
 export interface PackArtifacts {
@@ -88,9 +95,9 @@ export interface PackManifest {
   scope_type: ScopeType;
   site_scope: SiteScope | null;
   site_inventory: SiteEntry[];
-  runtime_schema_version: typeof CANONICAL_SCHEMA_VERSION;
-  dag_node_count: 20;
-  dag_edge_count: 24;
+  runtime_schema_version: RuntimeSchemaVersion;
+  dag_node_count: number;
+  dag_edge_count: number;
   training_corpus: TrainingCorpus;
   evaluation_profile: EvaluationProfile;
   release_stage: ReleaseStage;
@@ -137,6 +144,8 @@ export const REVIEW_ARTIFACT_KEYS: ReviewArtifactKey[] = [
   'risk_comparison',
   'explainer',
   'sensitivity',
+  'published_reference',
+  'comparison_results',
 ];
 
 // ---------------------------------------------------------------------------
@@ -205,24 +214,55 @@ export function getReleaseBadge(stage: ReleaseStage): ReleaseBadge {
 // Validation helpers
 // ---------------------------------------------------------------------------
 
-/** Assert that a pack uses the canonical 20-node schema. Throws if not. */
+/**
+ * Validate a pack's schema version and structural counts.
+ * - For 'canonical-20node-v1': enforces exactly 20 nodes / 24 edges.
+ * - For 'generic-bn-rrm-v1': validates node_count > 0 and edge_count > 0.
+ * - Throws for unknown schema versions.
+ *
+ * Backward-compatible: replaces assertCanonicalSchema with broader dispatch.
+ */
+export function validatePackSchema(manifest: PackManifest): void {
+  switch (manifest.runtime_schema_version) {
+    case 'canonical-20node-v1':
+      if (manifest.dag_node_count !== 20) {
+        throw new Error(
+          `Pack '${manifest.pack_id}' has ${manifest.dag_node_count} nodes, expected 20.`
+        );
+      }
+      if (manifest.dag_edge_count !== 24) {
+        throw new Error(
+          `Pack '${manifest.pack_id}' has ${manifest.dag_edge_count} edges, expected 24.`
+        );
+      }
+      break;
+
+    case 'generic-bn-rrm-v1':
+      if (manifest.dag_node_count <= 0) {
+        throw new Error(
+          `Pack '${manifest.pack_id}' has ${manifest.dag_node_count} nodes, expected > 0.`
+        );
+      }
+      if (manifest.dag_edge_count <= 0) {
+        throw new Error(
+          `Pack '${manifest.pack_id}' has ${manifest.dag_edge_count} edges, expected > 0.`
+        );
+      }
+      break;
+
+    default:
+      throw new Error(
+        `Pack '${manifest.pack_id}' uses unsupported schema version ` +
+        `'${manifest.runtime_schema_version}'.`
+      );
+  }
+}
+
+/**
+ * @deprecated Use validatePackSchema instead. Kept for backward compatibility.
+ */
 export function assertCanonicalSchema(manifest: PackManifest): void {
-  if (manifest.runtime_schema_version !== CANONICAL_SCHEMA_VERSION) {
-    throw new Error(
-      `Pack '${manifest.pack_id}' uses schema '${manifest.runtime_schema_version}', ` +
-      `but only '${CANONICAL_SCHEMA_VERSION}' is supported.`
-    );
-  }
-  if (manifest.dag_node_count !== 20) {
-    throw new Error(
-      `Pack '${manifest.pack_id}' has ${manifest.dag_node_count} nodes, expected 20.`
-    );
-  }
-  if (manifest.dag_edge_count !== 24) {
-    throw new Error(
-      `Pack '${manifest.pack_id}' has ${manifest.dag_edge_count} edges, expected 24.`
-    );
-  }
+  validatePackSchema(manifest);
 }
 
 /** Check if a pack is read-only (benchmark packs) */

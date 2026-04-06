@@ -1,0 +1,160 @@
+{
+  "_metadata": {
+    "source": "Jermilova et al. 2025, IEAM 21(2):396-413",
+    "doi": "10.1093/inteam/vjae011",
+    "digitized_date": "2026-04-06",
+    "notes": "Values extracted from main paper text, tables, and figures. Supplementary tables S1-S18 not yet obtained."
+  },
+  "models": {
+    "GBS": {
+      "name": "Great Bear Subbasin",
+      "regions": ["North", "West", "East", "South"],
+      "source_variables": [
+        "Proximity to historic mine",
+        "Proximity to mine development",
+        "Atmospheric Hg deposition",
+        "Permafrost thaw Hg release",
+        "Soil erosion Hg release",
+        "Nonpoint THg deposition",
+        "Proximity to RPTSs"
+      ],
+      "fish_monitoring_samples": 276,
+      "freshwater_THg_samples": 1271
+    },
+    "GSL": {
+      "name": "Great Slave Lake",
+      "regions": ["Outlet", "Middle", "North Arm", "East Arm"],
+      "source_variables": [
+        "Proximity to historic mine",
+        "Proximity to mine development",
+        "Atmospheric Hg deposition",
+        "Proximity to fossil fuel",
+        "Soil erosion Hg release",
+        "Proximity to RPTSs"
+      ],
+      "fish_monitoring_samples": 768,
+      "freshwater_THg_samples": 855
+    }
+  },
+  "node_discretization": {
+    "_note": "From Figure 2 (GSL North Arm model) and paper text. Full discretization in supplementary Table S4.",
+    "freshwater_THg_ngL": {
+      "states": ["0 to 0.24", "0.24 to 10", "10 to 26", "26 to 100", ">100"],
+      "unit": "ng/L",
+      "note": "From Figure 2 bar labels. 5 states."
+    },
+    "nonpoint_THg_deposition": {
+      "states": ["0 to 15", "15 to 18", "18 to 30", "30 to 36", ">36"],
+      "unit": "ug/m2/yr",
+      "note": "From Figure 2"
+    },
+    "fish_tissue_Hg_whitefish": {
+      "states": ["0 to 0.24", "0.24 to 0.5", "0.5 to 1", "1 to 2", ">2"],
+      "unit": "ug/g ww",
+      "threshold_commercial_sale": 0.5
+    },
+    "fish_tissue_Hg_lake_trout": {
+      "states": ["0 to 0.24", "0.24 to 0.5", "0.5 to 1", ">1"],
+      "unit": "ug/g ww"
+    },
+    "fish_tissue_Hg_northern_pike": {
+      "states": ["0 to 0.3", "0.3 to 0.5", "0.5 to 1", ">1"],
+      "unit": "ug/g ww",
+      "note": "From Figure 2. 0.064 to 0.54 range noted."
+    },
+    "degree_of_injury": {
+      "states": ["Low (0-25%)", "Medium (25-50%)", "High (50-75%)", "Extreme (>75%)"],
+      "note": "From Dillon et al. 2010 dose-response curves. Based on lethality-equivalent endpoints.",
+      "source": "Dillon, Beckvar & Kern (2010). Environ Chem Toxicol 29:2559-2565"
+    },
+    "eligible_commercial_catch": {
+      "states": ["Eligible", "Not eligible"],
+      "threshold": "0.5 ug Hg/g tissue (Canadian guideline)",
+      "note": "Lake whitefish or lake trout exceeding commercial sale guideline"
+    },
+    "pTWI_exceedance": {
+      "states": ["Exceeds", "Does not exceed"],
+      "thresholds": {
+        "adult_male": "3.3 ug Hg/kg bw (pTWI, Health Canada 2007)",
+        "child_bearing_female": "1.4 ug Hg/kg bw (pTWI, WHO 1990)",
+        "child": "0.7 ug Hg/kg bw (pTWI, USEPA 2000)"
+      }
+    },
+    "proximity_to_historic_mine": {
+      "states": ["Yes (within threshold)", "No"],
+      "note": "From Figure 2. Binary presence indicator per sub-subbasin."
+    },
+    "soil_organic_carbon": {
+      "states_from_figure_2": ["0 to 0.2", "0.2 to 1", "1 to 2", "2 to 6"],
+      "unit": "g C/g soil"
+    }
+  },
+  "sensitivity_rankings": {
+    "_source": "Table 2 (composite sensitivity values, ranked 1-4)",
+    "GSL_fish_Hg": {
+      "Total Hg input": {"rank": 1, "slope_coefficient": "1.1 +/- 0.45"},
+      "Proximity to historic mining": {"rank": 2, "slope_coefficient": "2.4 +/- 3.7e-2"},
+      "Proximity to mining": {"rank": 3},
+      "Fish length": {"rank": 4, "slope_coefficient": "8.5 +/- 0.7e-4"}
+    },
+    "GSL_water_THg": {
+      "Total Hg input": {"rank": 2, "slope_coefficient": "6.4"},
+      "Proximity to historic mining": {"rank": 2},
+      "Proximity to mining": {"rank": 1, "slope_coefficient": "0.22 +/- 0.031"},
+      "Fish length": {"rank": 1}
+    },
+    "GBS_fish_Hg": {
+      "Total Hg input": {"rank": 2, "slope_coefficient": "2 +/- 0.3e-2"},
+      "Proximity to RPTS": {"rank": 1, "slope_coefficient": "-0.21 +/- 0.028"},
+      "Proximity to fossil fuel": {"rank": 3, "slope_coefficient": "2.9 +/- 7.0 8e-3"},
+      "Fish length": {"rank": 4, "slope_coefficient": "2.6 +/- 0.71 e-4"}
+    },
+    "GBS_water_THg": {
+      "Total Hg input": {"rank": 3, "slope_coefficient": "0.43"},
+      "Proximity to RPTS": {"rank": 1, "slope_coefficient": "2.1 +/- 3.2"},
+      "Proximity to fossil fuel": {"rank": 2, "slope_coefficient": "1.6"},
+      "Fish length": {"rank": 3, "slope_coefficient": "0.13"}
+    }
+  },
+  "risk_predictions_from_figure_3": {
+    "_note": "Approximate values read from Figure 3 bar charts. Exact values require supplementary figures.",
+    "eligible_commercial_catch": {
+      "_description": "Probability of exceeding commercial sale Hg guideline",
+      "GSL_North_Arm": 0.30,
+      "GSL_East_Arm": {"note": "lowest among GSL regions"},
+      "GSL_Middle": 0.17,
+      "GSL_Outlet": {"note": "moderate"},
+      "GBS_South": 0.28,
+      "GBS_North": 0.19,
+      "GBS_West": {"note": "moderate-low"},
+      "GBS_East": {"note": "low"}
+    },
+    "counterfactual_minamata": {
+      "scenario": "35-60% reduction in atmospheric Hg deposition (450 ppm GHG scenario)",
+      "predicted_fish_Hg_reduction": "~1.2-fold across all regions and species",
+      "whitefish_Hg_change": "0.332 +/- 0.32 to 0.231 +/- 0.28 (450 ppm scenario)",
+      "northern_pike_Hg_change": "0.938 +/- 0.61 to 0.72 +/- 0.54 (450 ppm scenario)"
+    }
+  },
+  "diet_scenarios": {
+    "_source": "Table 3",
+    "Light_diet_1": {"whitefish": 2, "trout": 0, "pike": 0, "walleye": 0, "burbot": 0},
+    "Light_diet_2": {"whitefish": 0, "trout": 1, "pike": 0, "walleye": 0, "burbot": 0},
+    "Moderate_diet_1": {"whitefish": 2, "trout": 0.5, "pike": 0.5, "walleye": 0, "burbot": 0.5},
+    "Moderate_diet_2": {"whitefish": 0, "trout": 2, "pike": 0, "walleye": 0, "burbot": 0},
+    "Moderate_diet_3": {"whitefish": 4, "trout": 0, "pike": 0, "walleye": 0, "burbot": 0},
+    "Heavy_diet_1": {"whitefish": 2, "trout": 1, "pike": 1, "walleye": 0, "burbot": 1},
+    "Heavy_diet_2": {"whitefish": 3, "trout": 3, "pike": 0, "walleye": 0, "burbot": 0},
+    "_note": "Portions per week. 1 portion = 150g fish.",
+    "body_weight_assumption_kg": 60,
+    "portion_size_g": 150,
+    "bw_to_fish_ratio": 0.4
+  },
+  "linear_mixed_effect_models": {
+    "_source": "Table 2 and paper text (p.400-401)",
+    "fish_tissue_Hg_formula": "Tissue_Hg ~ Fish_Species + Fork_length + NearHistoricMine_15km + NearMine_15km + Total_Hg_Input + random = ~1|Sample_FishID",
+    "freshwater_THg_formula": "Water_THg ~ NearOil_50km + NearMine_15km + Total_Hg_Input + random = ~1|Sample_WaterID",
+    "R_packages": ["nlme (lme function)", "AICcmodavg (predictSE.lme function)"],
+    "note": "CPTs were generated by predicting Hg concentrations for all parent state combinations using predictSE.lme()"
+  }
+}

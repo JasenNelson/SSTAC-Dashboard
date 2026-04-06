@@ -1,0 +1,55 @@
+{
+  "pack_id": "bnrrm-casestudy-jermilova2025-mackenzie-hg",
+  "display_name": "Jermilova 2025 Mackenzie Mercury BN-RRM",
+  "model_family": "mackenzie-hg",
+  "scope_type": "benchmark",
+  "site_scope": null,
+  "site_inventory": [],
+  "runtime_schema_version": "generic-bn-rrm-v1",
+  "dag_node_count": 14,
+  "dag_edge_count": 15,
+  "training_corpus": {
+    "n_fish_cases": 604,
+    "n_water_cases": 855,
+    "n_regions": 4,
+    "cohort_rule": "GSL sub-model (Great Slave Lake)",
+    "dataset_status": "Independent reconstruction from Jermilova et al. 2025 FRDR data"
+  },
+  "evaluation_profile": {
+    "decision_rule": "MAP",
+    "primary_metric": "weighted_kappa",
+    "loo_accuracy_fish": 0.6866,
+    "loo_kappa_fish": 0.466,
+    "loo_accuracy_water": 0.945,
+    "loo_kappa_water": 0.0
+  },
+  "release_stage": "prototype",
+  "is_default": false,
+  "parent_pack_id": null,
+  "applicability_boundaries": [
+    "Freshwater mercury pathway only (not sediment metals/organics)",
+    "Mackenzie River basin geography (NWT, Canada)",
+    "Fish tissue Hg and water THg endpoints (no benthic community endpoints)",
+    "GSL sub-model shown by default; GBS sub-model available separately"
+  ],
+  "version_history": {
+    "created": "2026-04-06",
+    "model_version": "1.0",
+    "architecture_version": "14-node Mackenzie Hg DAG (Jermilova et al. 2025)"
+  },
+  "reference": {
+    "citation": "Jermilova et al. 2025, IEAM 21(2):396-413",
+    "doi": "10.1093/inteam/vjae011",
+    "data_repository": "FRDR (https://doi.org/10.20383/103.0945)"
+  },
+  "description": "Independent reconstruction of the Jermilova et al. 2025 Bayesian Network Relative Risk Model for mercury in the Mackenzie River basin. The GSL (Great Slave Lake) sub-model is the default runtime model. This pack serves as a benchmark to validate that our BN-RRM platform can faithfully represent published models beyond the original 20-node Landis sediment DAG.",
+  "artifacts": {
+    "runtime_model": "runtime/learned-model.json",
+    "review": {
+      "model_overview": "review/model_overview.json",
+      "validation": "review/validation.json",
+      "published_reference": "review/published_reference.json",
+      "comparison_results": "review/comparison_results.json"
+    }
+  }
+}

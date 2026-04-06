@@ -1,0 +1,236 @@
+{
+  "method": "leave_one_out",
+  "ess": 1.0,
+  "models": {
+    "GSL": {
+      "fish_tissue_hg": {
+        "n": 584,
+        "accuracy": 0.6866,
+        "kappa": 0.466,
+        "per_class": {
+          "low": {
+            "n": 320,
+            "accuracy": 0.9062
+          },
+          "subsistence": {
+            "n": 165,
+            "accuracy": 0.4
+          },
+          "ec20": {
+            "n": 49,
+            "accuracy": 0.4082
+          },
+          "ec50": {
+            "n": 49,
+            "accuracy": 0.5102
+          },
+          "above_ec50": {
+            "n": 1,
+            "accuracy": 0.0
+          }
+        },
+        "confusion_matrix": {
+          "low": {
+            "low": 290,
+            "subsistence": 22,
+            "ec20": 8,
+            "ec50": 0,
+            "above_ec50": 0
+          },
+          "subsistence": {
+            "low": 70,
+            "subsistence": 66,
+            "ec20": 16,
+            "ec50": 13,
+            "above_ec50": 0
+          },
+          "ec20": {
+            "low": 5,
+            "subsistence": 14,
+            "ec20": 20,
+            "ec50": 10,
+            "above_ec50": 0
+          },
+          "ec50": {
+            "low": 1,
+            "subsistence": 11,
+            "ec20": 12,
+            "ec50": 25,
+            "above_ec50": 0
+          },
+          "above_ec50": {
+            "low": 0,
+            "subsistence": 0,
+            "ec20": 0,
+            "ec50": 1,
+            "above_ec50": 0
+          }
+        }
+      },
+      "freshwater_thg": {
+        "n": 855,
+        "accuracy": 0.945,
+        "kappa": 0.0,
+        "per_class": {
+          "low": {
+            "n": 808,
+            "accuracy": 1.0
+          },
+          "medium": {
+            "n": 27,
+            "accuracy": 0.0
+          },
+          "high": {
+            "n": 20,
+            "accuracy": 0.0
+          }
+        },
+        "confusion_matrix": {
+          "low": {
+            "low": 808,
+            "medium": 0,
+            "high": 0
+          },
+          "medium": {
+            "low": 27,
+            "medium": 0,
+            "high": 0
+          },
+          "high": {
+            "low": 20,
+            "medium": 0,
+            "high": 0
+          }
+        }
+      }
+    },
+    "GBS": {
+      "fish_tissue_hg": {
+        "n": 258,
+        "accuracy": 0.6667,
+        "kappa": 0.489,
+        "per_class": {
+          "low": {
+            "n": 95,
+            "accuracy": 0.7579
+          },
+          "subsistence": {
+            "n": 110,
+            "accuracy": 0.7364
+          },
+          "ec20": {
+            "n": 30,
+            "accuracy": 0.4667
+          },
+          "ec50": {
+            "n": 23,
+            "accuracy": 0.2174
+          },
+          "above_ec50": {
+            "n": 0,
+            "accuracy": null
+          }
+        },
+        "confusion_matrix": {
+          "low": {
+            "low": 72,
+            "subsistence": 22,
+            "ec20": 1,
+            "ec50": 0,
+            "above_ec50": 0
+          },
+          "subsistence": {
+            "low": 19,
+            "subsistence": 81,
+            "ec20": 8,
+            "ec50": 2,
+            "above_ec50": 0
+          },
+          "ec20": {
+            "low": 1,
+            "subsistence": 10,
+            "ec20": 14,
+            "ec50": 5,
+            "above_ec50": 0
+          },
+          "ec50": {
+            "low": 1,
+            "subsistence": 5,
+            "ec20": 12,
+            "ec50": 5,
+            "above_ec50": 0
+          },
+          "above_ec50": {
+            "low": 0,
+            "subsistence": 0,
+            "ec20": 0,
+            "ec50": 0,
+            "above_ec50": 0
+          }
+        }
+      },
+      "freshwater_thg": {
+        "n": 1589,
+        "accuracy": 0.8464,
+        "kappa": 0.0,
+        "per_class": {
+          "low": {
+            "n": 1345,
+            "accuracy": 1.0
+          },
+          "medium": {
+            "n": 131,
+            "accuracy": 0.0
+          },
+          "high": {
+            "n": 113,
+            "accuracy": 0.0
+          }
+        },
+        "confusion_matrix": {
+          "low": {
+            "low": 1345,
+            "medium": 0,
+            "high": 0
+          },
+          "medium": {
+            "low": 131,
+            "medium": 0,
+            "high": 0
+          },
+          "high": {
+            "low": 113,
+            "medium": 0,
+            "high": 0
+          }
+        }
+      }
+    }
+  },
+  "summary": {
+    "GSL": {
+      "fish_tissue_hg": {
+        "n": 584,
+        "accuracy": 0.6866,
+        "kappa": 0.466
+      },
+      "freshwater_thg": {
+        "n": 855,
+        "accuracy": 0.945,
+        "kappa": 0.0
+      }
+    },
+    "GBS": {
+      "fish_tissue_hg": {
+        "n": 258,
+        "accuracy": 0.6667,
+        "kappa": 0.489
+      },
+      "freshwater_thg": {
+        "n": 1589,
+        "accuracy": 0.8464,
+        "kappa": 0.0
+      }
+    }
+  }
+}

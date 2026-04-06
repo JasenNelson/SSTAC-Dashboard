@@ -22,6 +22,7 @@
 
 import type {
   NetworkModel,
+  NetworkNodeData,
   SubstanceNodeData,
   ConditionNodeData,
   EffectNodeData,
@@ -889,5 +890,83 @@ export function createTrainedNetwork(
     createdAt: '2026-03-07',
     updatedAt: new Date().toISOString(),
     author: 'Expert Elicitation (interim)',
+  };
+}
+
+// =============================================================================
+// GENERIC NETWORK BUILDER (for non-canonical packs like generic-bn-rrm-v1)
+// =============================================================================
+
+/**
+ * Build a NetworkModel entirely from a JSON object.
+ * Used for generic-bn-rrm-v1 packs where nodes, edges, containers, and CPTs
+ * are all supplied in the runtime model JSON rather than hardcoded.
+ *
+ * The JSON must contain: nodes[], edges[], containers[], cpts[].
+ * Node objects must satisfy the NetworkNodeData union (have category, states, beliefs, etc.).
+ *
+ * Existing createDefaultNetwork() and loadLearnedCPTs() are NOT modified.
+ */
+export function createGenericNetwork(json: LearnedModelJSON): NetworkModel {
+  // --- Nodes ---
+  const rawNodes = (json.structure?.nodes ?? json.nodes ?? []) as any[];
+  if (rawNodes.length === 0) {
+    throw new Error('Generic network JSON must contain at least one node.');
+  }
+  const nodes: NetworkNodeData[] = rawNodes.map((n: any) => ({
+    ...n,
+    beliefs: { ...(n.beliefs ?? n.priors ?? {}) },
+    evidence: n.evidence ?? null,
+  }));
+
+  // --- Edges ---
+  const learnedEdges = loadLearnedEdges(json);
+  if (learnedEdges.length === 0) {
+    throw new Error('Generic network JSON must contain at least one edge.');
+  }
+
+  // --- Containers ---
+  const rawContainers = (json.containers ?? []) as any[];
+  const containerData: ContainerData[] = rawContainers.map((c: any) => ({
+    id: c.id,
+    label: c.label,
+    category: c.category,
+    collapsed: c.collapsed ?? true,
+    childNodeIds: c.childNodeIds ?? c.child_node_ids ?? [],
+    position: c.position ?? { x: 0, y: 0 },
+    summaryBelief: c.summaryBelief,
+  }));
+
+  // --- CPTs ---
+  const learnedCPTs = loadLearnedCPTs(json);
+
+  // --- Validate: every CPT parent references an existing node ---
+  const nodeIdSet = new Set(nodes.map(n => n.id));
+  for (const cpt of learnedCPTs) {
+    if (!nodeIdSet.has(cpt.nodeId)) {
+      console.warn(`[createGenericNetwork] CPT references unknown node '${cpt.nodeId}'`);
+    }
+    for (const pid of cpt.parentNodeIds) {
+      if (!nodeIdSet.has(pid)) {
+        console.warn(`[createGenericNetwork] CPT for '${cpt.nodeId}' references unknown parent '${pid}'`);
+      }
+    }
+  }
+
+  const modelName = json.name ?? json.display_name ?? 'Generic BN-RRM Model';
+  const modelDesc = json.description ?? `${nodes.length}-node causal DAG (generic pack).`;
+
+  return {
+    id: json.id ?? json.pack_id ?? 'generic-bnrrm',
+    name: modelName,
+    description: modelDesc,
+    version: json.version ?? '1.0',
+    nodes,
+    edges: learnedEdges,
+    containers: containerData,
+    cpts: learnedCPTs,
+    createdAt: json.createdAt ?? json.created_at ?? new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    author: json.author ?? 'Generic pack',
   };
 }
