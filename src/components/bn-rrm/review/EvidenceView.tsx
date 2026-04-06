@@ -37,7 +37,7 @@ function agreementIcon(predicted: string | null, observed: string | null): React
 // Normalize station data from various sensitivity JSON formats
 // ---------------------------------------------------------------------------
 
-function normalizeStation(raw: any): {
+function normalizeStation(raw: Record<string, unknown>): {
   name: string;
   observed: string | null;
   predicted: string | null;
@@ -45,23 +45,28 @@ function normalizeStation(raw: any): {
   evidenceNodes: string[];
   inferredNodes: string[];
 } {
-  const name = raw.station_name ?? raw.station ?? raw.station_id ?? '?';
-  const observed = raw.observed_risk ?? null;
+  const name = (raw.station_name ?? raw.station ?? raw.station_id ?? '?') as string;
+  const observed = (raw.observed_risk ?? null) as string | null;
 
   // Get the model prediction — prefer assessment (observed-evidence) result
-  const predicted =
-    raw.site_assessment?.map ??
-    raw.assessment?.map_prediction ??
+  const siteAssessment = raw.site_assessment as Record<string, unknown> | undefined;
+  const assessment = raw.assessment as Record<string, unknown> | undefined;
+  const siteScreening = raw.site_screening as Record<string, unknown> | undefined;
+  const screening = raw.screening as Record<string, unknown> | undefined;
+  const predicted = (
+    siteAssessment?.map ??
+    assessment?.map_prediction ??
     raw.assessment_map ??
-    raw.site_screening?.map ??
-    raw.screening?.map_prediction ??
+    siteScreening?.map ??
+    screening?.map_prediction ??
     raw.screening_map ??
-    null;
+    null
+  ) as string | null;
 
   const correct = observed && predicted ? observed.toLowerCase() === predicted.toLowerCase() : false;
 
   // Determine which effect nodes had observed evidence
-  const effects = raw.effects_as_evidence ?? raw.observed_effects ?? {};
+  const effects = (raw.effects_as_evidence ?? raw.observed_effects ?? {}) as Record<string, unknown>;
   const evidenceNodes: string[] = [];
   const inferredNodes: string[] = [];
 
@@ -88,9 +93,12 @@ const NODE_LABELS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 export function EvidenceView() {
-  const { data: rawData, loading, error } = usePackArtifact<any>('sensitivity');
+  const { data: rawData, loading, error } = usePackArtifact<Record<string, unknown>>('sensitivity');
 
-  const stations: any[] = rawData?.stations ?? [];
+  const stations = useMemo(
+    () => (rawData?.stations ?? []) as Record<string, unknown>[],
+    [rawData?.stations],
+  );
 
   const { total, correct, withEvidence } = useMemo(() => {
     if (stations.length === 0) return { total: 0, correct: 0, withEvidence: 0 };
@@ -206,7 +214,7 @@ export function EvidenceView() {
               </tr>
             </thead>
             <tbody>
-              {stations.map((raw: any, i: number) => {
+              {stations.map((raw: Record<string, unknown>, i: number) => {
                 const s = normalizeStation(raw);
                 return (
                   <tr

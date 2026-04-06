@@ -154,7 +154,7 @@ function NodeCard({ node }: { node: NormalizedCptNode }) {
 }
 
 export function CptTransparency() {
-  const { data: rawData, loading, error } = usePackArtifact<any>('cpt_transparency');
+  const { data: rawData, loading, error } = usePackArtifact<unknown>('cpt_transparency');
   const [filterTier, setFilterTier] = useState<number | null>(null);
 
   if (loading) {

@@ -15,6 +15,24 @@ type PerClassMetrics = {
   support: number;
 };
 
+type SiteBreakdownRow = {
+  registry_id: string;
+  name: string;
+  triads: number | null;
+  triads_effective: number | null;
+  co_located: number | null;
+  total_stations: number | null;
+  waterbody: string | null;
+};
+
+type ArchitectureTier = {
+  tier: number;
+  name: string;
+  description: string;
+  cpt_method: string;
+  nodes?: unknown[];
+};
+
 type SiteStation = {
   station_id: number;
   name: string;
@@ -140,12 +158,12 @@ function PerClassTable({ perClass }: { perClass: Record<string, PerClassMetrics>
 }
 
 export function ModelOverview() {
-  const { data: rawData, loading, error } = usePackArtifact<any>('model_overview');
+  const { data: rawData, loading, error } = usePackArtifact<Record<string, unknown>>('model_overview');
   const packManifest = usePackStore((s) => s.packManifest);
   const [inheritedOverview, setInheritedOverview] = useState<NormalizedModelOverview | null>(null);
 
-  const parentPackId = packManifest?.parent_pack_id ?? rawData?.model_identity?.parent_model ?? null;
-  const rawScope = rawData?._meta?.scope ?? packManifest?.scope_type ?? null;
+  const parentPackId = packManifest?.parent_pack_id ?? (rawData?.model_identity as Record<string, unknown> | undefined)?.parent_model ?? null;
+  const rawScope = (rawData?._meta as Record<string, unknown> | undefined)?.scope ?? packManifest?.scope_type ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -214,7 +232,8 @@ export function ModelOverview() {
   const marginalHighlights = data.marginal_highlights;
   const summaryAccuracy = packManifest?.evaluation_profile?.loo_accuracy ?? perf.accuracy;
   const summaryKappa = packManifest?.evaluation_profile?.loo_kappa ?? perf.kappa;
-  const metricContextNote = typeof rawData?._meta?.metric_note === 'string' ? rawData._meta.metric_note : '';
+  const rawMeta = rawData?._meta as Record<string, unknown> | undefined;
+  const metricContextNote = typeof rawMeta?.metric_note === 'string' ? rawMeta.metric_note : '';
   const metricMismatch =
     ((packManifest?.evaluation_profile?.loo_accuracy != null && perf.accuracy != null &&
       Math.abs(packManifest.evaluation_profile.loo_accuracy - perf.accuracy) > 0.0001) ||
@@ -447,7 +466,7 @@ export function ModelOverview() {
               </tr>
             </thead>
             <tbody>
-              {siteRows.map((site: any) => (
+              {(siteRows as SiteBreakdownRow[]).map((site) => (
                 <tr key={site.registry_id} className="border-b border-slate-100 dark:border-slate-800">
                   <td className="py-2 font-medium text-slate-700 dark:text-slate-300">{site.name}</td>
                   <td className="py-2 text-slate-500 dark:text-slate-400">{site.registry_id}</td>
@@ -539,7 +558,7 @@ export function ModelOverview() {
           )}
         </h3>
         <div className="space-y-3">
-          {inheritedArchitecture.tiers.map((tier: any) => (
+          {(inheritedArchitecture.tiers as ArchitectureTier[]).map((tier) => (
             <div key={tier.tier} className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">
               <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300 shrink-0">
                 T{tier.tier}
@@ -571,7 +590,7 @@ export function ModelOverview() {
         <>
         <div className="text-sm font-medium text-red-600 dark:text-red-400 mb-2">Not suitable for:</div>
         <ul className="space-y-1">
-          {inheritedIntendedUse.not_suitable_for.map((item: any, i: number) => (
+          {inheritedIntendedUse.not_suitable_for.map((item: string, i: number) => (
             <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
               <span className="text-red-400 mt-0.5">&#x2717;</span>
               {item}

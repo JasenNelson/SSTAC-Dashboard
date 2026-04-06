@@ -11,14 +11,14 @@ import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 interface ContaminationProfile {
   label: string;
   detail?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface SiteContextData {
   narrative: string;
   pathway: 'metals' | 'organic' | 'mixed';
   contamination_profile?: ContaminationProfile[] | string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface DataInventoryItem {
@@ -28,7 +28,7 @@ interface DataInventoryItem {
   stations_with_data?: number;
   total_stations?: number;
   dag_nodes?: string[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface DataInventoryData {
@@ -38,21 +38,22 @@ interface DataInventoryData {
   station_count?: number;
   coverage_table?: DataInventoryItem[];
   key_gaps?: string[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface TierEntry {
   tier: number | string;
   name: string;
   cpt_method: string;
+  method?: string;
   nodes?: string[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface OverrideCallout {
   label: string;
   description: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface FittingApproachData {
@@ -61,15 +62,20 @@ interface FittingApproachData {
   cpt_tiers?: TierEntry[];
   overrides?: OverrideCallout[];
   site_scoped_overrides?: OverrideCallout[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface StationPrediction {
-  station: string;
-  observed: string;
-  predicted: string;
-  correct: boolean;
-  [key: string]: any;
+  station?: string;
+  station_name?: string;
+  station_id?: string;
+  observed?: string;
+  observed_risk?: string;
+  predicted?: string;
+  predicted_risk?: string;
+  map_prediction?: string;
+  correct?: boolean;
+  [key: string]: unknown;
 }
 
 interface ResultsSummaryData {
@@ -77,7 +83,8 @@ interface ResultsSummaryData {
   loo_kappa?: number;
   loo_n?: number;
   predictions?: StationPrediction[];
-  [key: string]: any;
+  station_predictions?: StationPrediction[];
+  [key: string]: unknown;
 }
 
 interface MetricComparison {
@@ -86,30 +93,59 @@ interface MetricComparison {
   after: string | number;
 }
 
+interface BeforeAfterPhaseData {
+  label?: string;
+  loo_accuracy?: number;
+  observations_used?: Record<string, unknown>;
+  notes?: string;
+  [key: string]: unknown;
+}
+
 interface BeforeAfterData {
   before_label?: string;
   after_label?: string;
-  metrics: MetricComparison[];
-  [key: string]: any;
+  before?: BeforeAfterPhaseData;
+  after?: BeforeAfterPhaseData;
+  metrics?: MetricComparison[];
+  change_description?: string;
+  dag_unchanged?: boolean;
+  [key: string]: unknown;
 }
 
 interface ResidualOutlier {
-  station: string;
+  station?: string;
+  station_id?: string;
+  station_name?: string;
   explanation: string;
   recommendation?: string;
-  [key: string]: any;
+  [key: string]: unknown;
+}
+
+interface GovernanceDecision {
+  description?: string;
+  title?: string;
+  [key: string]: unknown;
+}
+
+interface GovernanceScopeNote {
+  description?: string;
+  [key: string]: unknown;
 }
 
 interface GovernanceData {
-  decisions?: string[];
-  scope_notes?: string[];
-  [key: string]: any;
+  decisions?: (string | GovernanceDecision)[];
+  expert_decisions?: (string | GovernanceDecision)[];
+  scope_notes?: (string | GovernanceScopeNote)[];
+  applicability_notes?: (string | GovernanceScopeNote)[];
+  scope_note?: string;
+  dag_unchanged?: boolean;
+  [key: string]: unknown;
 }
 
 interface ExpertReviewQuestion {
   question: string;
   context?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface ExplainerData {
@@ -223,7 +259,7 @@ function SiteContextSection({ data }: { data: SiteContextData }) {
           <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">{data.contamination_profile}</p>
         ) : Array.isArray(data.contamination_profile) && data.contamination_profile.length > 0 ? (
           <ul className="mt-3 space-y-1">
-            {data.contamination_profile.map((item: any, i: number) => (
+            {data.contamination_profile.map((item: ContaminationProfile, i: number) => (
               <li key={i} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
                 <span className="text-slate-400 mt-0.5">&#8226;</span>
                 <span>
@@ -241,7 +277,7 @@ function SiteContextSection({ data }: { data: SiteContextData }) {
 
 function DataInventorySection({ data }: { data: DataInventoryData }) {
   const rows = data.items ?? data.coverage_table ?? [];
-  const hasStationCounts = rows.some((r: any) => r.stations_with_data != null);
+  const hasStationCounts = rows.some((r: DataInventoryItem) => r.stations_with_data != null);
 
   return (
     <SectionCard title="Data Inventory">
@@ -266,7 +302,7 @@ function DataInventorySection({ data }: { data: DataInventoryData }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((item: any, i: number) => {
+            {rows.map((item: DataInventoryItem, i: number) => {
               const status = item.status === 'complete' ? 'available' : item.status === 'not_applicable' ? 'missing' : (item.status ?? 'partial');
               return (
                 <tr key={i} className="border-b border-slate-100 dark:border-slate-800">
@@ -318,7 +354,7 @@ function FittingApproachSection({ data }: { data: FittingApproachData }) {
             </tr>
           </thead>
           <tbody>
-            {(data.tiers ?? data.cpt_tiers ?? []).map((tier: any, i: number) => (
+            {(data.tiers ?? data.cpt_tiers ?? []).map((tier: TierEntry, i: number) => (
               <tr key={i} className="border-b border-slate-100 dark:border-slate-800">
                 <td className="py-2 text-slate-700 dark:text-slate-300 font-medium">T{tier.tier}</td>
                 <td className="py-2 text-slate-600 dark:text-slate-400">{tier.name ?? tier.nodes}</td>
@@ -330,7 +366,7 @@ function FittingApproachSection({ data }: { data: FittingApproachData }) {
       )}
       {(data.overrides ?? data.site_scoped_overrides ?? []).length > 0 && (
         <div className="space-y-2">
-          {(data.overrides ?? data.site_scoped_overrides ?? []).map((ov: any, i: number) => (
+          {(data.overrides ?? data.site_scoped_overrides ?? []).map((ov: OverrideCallout, i: number) => (
             <div
               key={i}
               className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3"
@@ -397,10 +433,10 @@ function ResultsSummarySection({ data }: { data: ResultsSummaryData }) {
             </tr>
           </thead>
           <tbody>
-            {(data.predictions ?? data.station_predictions ?? []).map((p: any, i: number) => {
-              const station = p.station ?? p.station_name ?? p.station_id;
-              const observed = p.observed ?? p.observed_risk;
-              const predicted = p.predicted ?? p.predicted_risk ?? p.map_prediction;
+            {(data.predictions ?? data.station_predictions ?? []).map((p: StationPrediction, i: number) => {
+              const station = p.station ?? p.station_name ?? p.station_id ?? '';
+              const observed = p.observed ?? p.observed_risk ?? '';
+              const predicted = p.predicted ?? p.predicted_risk ?? p.map_prediction ?? '';
               const correct = p.correct ?? (observed === predicted);
               return (
               <tr key={i} className={`border-b border-slate-100 dark:border-slate-800 ${riskBg(predicted)}`}>
@@ -424,20 +460,20 @@ function ResultsSummarySection({ data }: { data: ResultsSummaryData }) {
   );
 }
 
-function BeforeAfterSection({ data }: { data: any }) {
+function BeforeAfterSection({ data }: { data: BeforeAfterData }) {
   // Handle both formats: {metrics: [{label, before, after}]} and {before: {...}, after: {...}}
-  const beforeObj = data.before ?? {};
-  const afterObj = data.after ?? {};
+  const beforeObj: BeforeAfterPhaseData = data.before ?? {};
+  const afterObj: BeforeAfterPhaseData = data.after ?? {};
   const beforeLabel = beforeObj.label ?? data.before_label ?? 'Before';
   const afterLabel = afterObj.label ?? data.after_label ?? 'After';
 
   // Build metrics from either format
-  const metrics = data.metrics ?? (() => {
-    const m: { label: string; before: any; after: any }[] = [];
+  const metrics: MetricComparison[] = data.metrics ?? (() => {
+    const m: MetricComparison[] = [];
     if (beforeObj.loo_accuracy != null) m.push({ label: 'LOO Accuracy', before: `${(beforeObj.loo_accuracy * 100).toFixed(1)}%`, after: afterObj.loo_accuracy != null ? `${(afterObj.loo_accuracy * 100).toFixed(1)}%` : '\u2014' });
     if (beforeObj.observations_used) {
       for (const [k, v] of Object.entries(beforeObj.observations_used)) {
-        m.push({ label: k, before: String(v), after: String((afterObj.observations_used as any)?.[k] ?? '?') });
+        m.push({ label: k, before: String(v), after: String(afterObj.observations_used?.[k] ?? '?') });
       }
     }
     return m;
@@ -452,7 +488,7 @@ function BeforeAfterSection({ data }: { data: any }) {
         <div className="rounded-xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/10 p-4">
           <h4 className="text-sm font-semibold text-red-700 dark:text-red-300 mb-3">{beforeLabel}</h4>
           <div className="space-y-2">
-            {metrics.map((m: any, i: number) => (
+            {metrics.map((m: MetricComparison, i: number) => (
               <div key={i} className="flex justify-between text-sm">
                 <span className="text-red-600 dark:text-red-400">{m.label}</span>
                 <span className="font-mono font-medium text-red-700 dark:text-red-300">{String(m.before)}</span>
@@ -464,7 +500,7 @@ function BeforeAfterSection({ data }: { data: any }) {
         <div className="rounded-xl border-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/10 p-4">
           <h4 className="text-sm font-semibold text-green-700 dark:text-green-300 mb-3">{afterLabel}</h4>
           <div className="space-y-2">
-            {metrics.map((m: any, i: number) => (
+            {metrics.map((m: MetricComparison, i: number) => (
               <div key={i} className="flex justify-between text-sm">
                 <span className="text-green-600 dark:text-green-400">{m.label}</span>
                 <span className="font-mono font-medium text-green-700 dark:text-green-300">{String(m.after)}</span>
@@ -478,12 +514,12 @@ function BeforeAfterSection({ data }: { data: any }) {
   );
 }
 
-function ResidualOutliersSection({ data }: { data: any[] }) {
+function ResidualOutliersSection({ data }: { data: ResidualOutlier[] }) {
   if (!Array.isArray(data) || data.length === 0) return null;
   return (
     <SectionCard title="Residual Outliers">
       <div className="space-y-3">
-        {data.map((item: any, i: number) => (
+        {data.map((item: ResidualOutlier, i: number) => (
           <div
             key={i}
             className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4"
@@ -506,7 +542,7 @@ function ResidualOutliersSection({ data }: { data: any[] }) {
   );
 }
 
-function GovernanceSection({ data }: { data: any }) {
+function GovernanceSection({ data }: { data: GovernanceData }) {
   const decisions = data.decisions ?? data.expert_decisions ?? [];
   const scopeNotes = data.scope_notes ?? data.applicability_notes ?? [];
   const scopeNote = data.scope_note;
@@ -525,7 +561,7 @@ function GovernanceSection({ data }: { data: any }) {
             Expert Decisions
           </h4>
           <div className="space-y-2">
-            {decisions.map((d: any, i: number) => (
+            {decisions.map((d: string | GovernanceDecision, i: number) => (
               <div
                 key={i}
                 className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200"
@@ -542,7 +578,7 @@ function GovernanceSection({ data }: { data: any }) {
             Applicability Notes
           </h4>
           <div className="space-y-2">
-            {scopeNotes.map((n: any, i: number) => (
+            {scopeNotes.map((n: string | GovernanceScopeNote, i: number) => (
               <div
                 key={i}
                 className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200"

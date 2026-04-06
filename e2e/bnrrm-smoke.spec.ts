@@ -5,6 +5,7 @@ const PACKS = [
   'bnrrm-site-v0.1-toquaht-case-study',
   'bnrrm-site-v0.2-cpnelson-prototype',
   'bnrrm-site-v0.1-alcan-map',
+  'bnrrm-casestudy-jermilova2025-mackenzie-hg',
 ];
 
 const REVIEW_SECTIONS = [
@@ -120,6 +121,32 @@ test.describe('BN-RRM Frontend Smoke Tests', () => {
     await page.waitForTimeout(3000);
 
     expect(errors, `Console errors found: ${errors.join('; ')}`).toHaveLength(0);
+  });
+
+  test('Data tab shows BenchmarkDataViewer for benchmark pack', async ({ page }) => {
+    // Switch to the benchmark pack (Mackenzie)
+    const packSelector = page.locator('button, select, [role="combobox"]').filter({ hasText: /Mackenzie|Jermilova/i }).first();
+    if (!(await packSelector.isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip(true, 'Benchmark pack not found in selector');
+      return;
+    }
+    await packSelector.click();
+    await page.waitForTimeout(1000);
+
+    // Click on Data tab
+    const dataTab = page.locator('button, a').filter({ hasText: /^Data$/i }).first();
+    if (await dataTab.isVisible()) {
+      await dataTab.click();
+      await page.waitForTimeout(1000);
+
+      // Should show training data viewer elements
+      await expect(page.locator('body')).not.toContainText('Unhandled Runtime Error');
+
+      // Look for dataset toggle or model selector
+      const fishToggle = page.locator('button').filter({ hasText: /Fish Tissue/i }).first();
+      const hasFishToggle = await fishToggle.isVisible().catch(() => false);
+      expect(hasFishToggle, 'BenchmarkDataViewer should show Fish Tissue toggle').toBe(true);
+    }
   });
 
   test('No console errors when switching to Review tab', async ({ page }) => {

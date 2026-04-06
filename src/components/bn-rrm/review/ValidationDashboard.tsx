@@ -14,6 +14,18 @@ type Prediction = {
   observed: string;
 };
 
+interface ModelComparisonData {
+  three_class?: Record<string, {
+    accuracy: number;
+    n: number;
+    cohen_kappa: number;
+    brier_score?: number;
+    per_class: Record<string, { precision: number; recall: number; f1: number }>;
+  }>;
+  _meta?: { status?: string };
+  [key: string]: unknown;
+}
+
 const CLASSES = ['low', 'moderate', 'high'] as const;
 
 const CLASS_COLORS: Record<string, { bg: string; text: string }> = {
@@ -153,14 +165,8 @@ function PredictionsTable({ predictions, filter }: { predictions: Prediction[]; 
   );
 }
 
-function ModelComparisonTable({ modelComparisonData }: { modelComparisonData: any }) {
-  const threeClass = (modelComparisonData as Record<string, unknown>).three_class as Record<string, {
-    accuracy: number;
-    n: number;
-    cohen_kappa: number;
-    brier_score?: number;
-    per_class: Record<string, { precision: number; recall: number; f1: number }>;
-  }>;
+function ModelComparisonTable({ modelComparisonData }: { modelComparisonData: ModelComparisonData }) {
+  const threeClass = modelComparisonData.three_class;
 
   if (!threeClass) return null;
 
@@ -242,8 +248,8 @@ function ExportButton({ data, filename, label }: { data: unknown; filename: stri
 
 export function ValidationDashboard() {
   const packManifest = usePackStore((s) => s.packManifest);
-  const { data: rawValData, loading: loadingVal, error: errorVal } = usePackArtifact<any>('validation');
-  const { data: modelComparisonData, loading: loadingComp, error: errorComp } = usePackArtifact<any>('comparison');
+  const { data: rawValData, loading: loadingVal, error: errorVal } = usePackArtifact<unknown>('validation');
+  const { data: modelComparisonData, loading: loadingComp, error: errorComp } = usePackArtifact<ModelComparisonData>('comparison');
   const [predFilter, setPredFilter] = useState('all');
 
   const loading = loadingVal || loadingComp;

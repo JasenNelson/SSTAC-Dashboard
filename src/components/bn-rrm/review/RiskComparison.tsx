@@ -22,7 +22,7 @@ const CLASS_COLORS: Record<string, { bg: string; text: string }> = {
 
 export function RiskComparison() {
   const packManifest = usePackStore((s) => s.packManifest);
-  const { data: rawData, loading, error } = usePackArtifact<any>('risk_comparison');
+  const { data: rawData, loading, error } = usePackArtifact<unknown>('risk_comparison');
   const [selectedSite, setSelectedSite] = useState<number | null>(null);
   const [showExclusions, setShowExclusions] = useState(false);
 

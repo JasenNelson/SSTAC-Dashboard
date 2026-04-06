@@ -99,7 +99,7 @@ function exportData(data: unknown, filename: string, type: 'json' | 'csv') {
 
 export function DataProvenance() {
   const packManifest = usePackStore((s) => s.packManifest);
-  const { data: provDataRaw, loading, error } = usePackArtifact<any>('provenance');
+  const { data: provDataRaw, loading, error } = usePackArtifact<unknown>('provenance');
   const [activeTab, setActiveTab] = useState<'registry' | 'stations'>('registry');
   const [selectedStation, setSelectedStation] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');

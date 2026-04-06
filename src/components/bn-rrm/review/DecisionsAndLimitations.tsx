@@ -185,7 +185,7 @@ function ExportButton({ data, filename }: { data: unknown; filename: string }) {
 }
 
 export function DecisionsAndLimitations() {
-  const { data: rawData, loading, error } = usePackArtifact<any>('decisions');
+  const { data: rawData, loading, error } = usePackArtifact<unknown>('decisions');
 
   if (loading) {
     return (
@@ -221,11 +221,15 @@ export function DecisionsAndLimitations() {
         <p className="text-sm text-slate-500 dark:text-slate-400">
           Formal decision records, known limitations, and specification versions for the frozen BN-RRM dataset.
         </p>
-        {typeof rawData?._meta?.metric_note === 'string' && rawData._meta.metric_note && (
-          <div className="mt-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-800 dark:text-amber-200">
-            {rawData._meta.metric_note}
-          </div>
-        )}
+        {(() => {
+          const meta = (rawData as Record<string, unknown> | null)?._meta as Record<string, unknown> | undefined;
+          const note = meta?.metric_note;
+          return typeof note === 'string' && note ? (
+            <div className="mt-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3 text-xs text-amber-800 dark:text-amber-200">
+              {note}
+            </div>
+          ) : null;
+        })()}
       </div>
 
       {/* Known Limitations (Lead with these per risk mitigation) */}

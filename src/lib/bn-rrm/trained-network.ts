@@ -759,8 +759,42 @@ const expertCPTs: ConditionalProbabilityTable[] = [
 // LEARNED CPT LOADER
 // =============================================================================
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type LearnedModelJSON = any;
+interface LearnedCptObject {
+  parents: string[];
+  states?: string[];
+  method?: string;
+  table: Record<string, Record<string, number>>;
+}
+
+interface LearnedModelJSON {
+  cpts: Array<{
+    nodeId: string;
+    parentNodeIds: string[];
+    entries: Array<{
+      parentStates: Record<string, string>;
+      distribution: Record<string, number>;
+    }>;
+  }> | Record<string, LearnedCptObject>;
+  structure?: {
+    nodes?: Array<Record<string, unknown>>;
+    edges?: Array<Record<string, unknown>>;
+  };
+  nodes?: Array<Record<string, unknown>>;
+  edges?: Array<Record<string, unknown>>;
+  containers?: Array<Record<string, unknown>>;
+  scope?: string;
+  siteScope?: { name?: string };
+  name?: string;
+  display_name?: string;
+  id?: string;
+  pack_id?: string;
+  description?: string;
+  nStations?: number;
+  version?: string;
+  createdAt?: string;
+  created_at?: string;
+  author?: string;
+}
 
 /**
  * Load data-learned CPTs from the exported JSON model.
@@ -785,7 +819,7 @@ function loadLearnedCPTs(model: LearnedModelJSON): ConditionalProbabilityTable[]
   }
   // Object-keyed format from fit_causal_model.py / fit_site_model.py
   // Shape: {node_id: {parents: string[], states: string[], method: string, table: {config_key: {state: prob}}}}
-  return Object.entries(model.cpts as Record<string, any>).map(([nodeId, cptData]) => ({
+  return Object.entries(model.cpts as Record<string, { parents: string[]; states?: string[]; method?: string; table: Record<string, Record<string, number>> }>).map(([nodeId, cptData]) => ({
     nodeId,
     parentNodeIds: cptData.parents as string[],
     entries: Object.entries(cptData.table as Record<string, Record<string, number>>).map(
@@ -804,11 +838,14 @@ function loadLearnedCPTs(model: LearnedModelJSON): ConditionalProbabilityTable[]
  */
 function loadLearnedEdges(model: LearnedModelJSON): NetworkEdge[] {
   const rawEdges = model.structure?.edges ?? model.edges ?? [];
-  return rawEdges.map((e: any, _i: number) => ({
-    id: e.id ?? `${e.source}_${e.target}`,
-    source: e.source,
-    target: e.target,
-  }));
+  return rawEdges.map((raw, _i: number) => {
+    const e = raw as unknown as { id?: string; source: string; target: string };
+    return {
+      id: e.id ?? `${e.source}_${e.target}`,
+      source: e.source,
+      target: e.target,
+    };
+  });
 }
 
 // =============================================================================
@@ -909,11 +946,11 @@ export function createTrainedNetwork(
  */
 export function createGenericNetwork(json: LearnedModelJSON): NetworkModel {
   // --- Nodes ---
-  const rawNodes = (json.structure?.nodes ?? json.nodes ?? []) as any[];
+  const rawNodes = (json.structure?.nodes ?? json.nodes ?? []) as unknown as (NetworkNodeData & { priors?: Record<string, number> })[];
   if (rawNodes.length === 0) {
     throw new Error('Generic network JSON must contain at least one node.');
   }
-  const nodes: NetworkNodeData[] = rawNodes.map((n: any) => ({
+  const nodes: NetworkNodeData[] = rawNodes.map((n) => ({
     ...n,
     beliefs: { ...(n.beliefs ?? n.priors ?? {}) },
     evidence: n.evidence ?? null,
@@ -926,8 +963,8 @@ export function createGenericNetwork(json: LearnedModelJSON): NetworkModel {
   }
 
   // --- Containers ---
-  const rawContainers = (json.containers ?? []) as any[];
-  const containerData: ContainerData[] = rawContainers.map((c: any) => ({
+  const rawContainers = (json.containers ?? []) as unknown as (ContainerData & { child_node_ids?: string[] })[];
+  const containerData: ContainerData[] = rawContainers.map((c) => ({
     id: c.id,
     label: c.label,
     category: c.category,

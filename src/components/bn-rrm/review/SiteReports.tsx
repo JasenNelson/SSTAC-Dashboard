@@ -3,43 +3,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 import { usePackStore } from '@/stores/bn-rrm/packStore';
-import { normalizeSiteReports } from '@/lib/bn-rrm/normalize-artifacts';
+import { normalizeSiteReports, type NormalizedSite, type NormalizedStationDetail, type NormalizedSpatialContext } from '@/lib/bn-rrm/normalize-artifacts';
 import type { PackManifest, PackRegistry, ReviewArtifactKey } from '@/lib/bn-rrm/pack-types';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { TOOLTIP } from '@/components/bn-rrm/shared/tooltip-definitions';
-
-type ChemRow = {
-  parameter: string;
-  group: string | null;
-  unit: string;
-  min: number | null;
-  max: number | null;
-  mean: number | null;
-  n: number;
-  isqg: number | null;
-  pel: number | null;
-  exceed_isqg: number;
-  exceed_pel: number;
-};
-
-type ToxRow = {
-  test_type: string;
-  species: string;
-  endpoint: string;
-  unit: string;
-  min: number | null;
-  max: number | null;
-  mean: number | null;
-  n: number;
-  sig_different_count: number;
-};
-
-type CommunityMetric = {
-  name: string;
-  min: number | null;
-  max: number | null;
-  mean: number | null;
-};
 
 type CampaignDates = {
   earliest: string;
@@ -49,75 +16,11 @@ type CampaignDates = {
   cross_year: boolean;
 };
 
-type SourceDocument = {
-  doc_id: number;
-  title: string;
-  author: string;
-  date: string;
-  type: string;
-};
+type SpatialContext = NormalizedSpatialContext;
 
-type SpatialSummary = {
-  total_stations: number;
-  georeferenced: number;
-  by_class: Record<string, number>;
-  methods_used: string[];
-  accuracy_range_m: [number, number] | null;
-  confidence_range: [number, number] | null;
-};
+type StationDetail = NormalizedStationDetail;
 
-type SpatialContext = {
-  location_label: string;
-  spatial_reference_type: string;
-  spatial_source_ref: string;
-  spatial_audit_note: string;
-  spatial_summary?: SpatialSummary | null;
-};
-
-type StationDetail = {
-  station_id: number;
-  station_name: string;
-  station_type: string;
-  depth_m: number | null;
-  latitude: number | null;
-  longitude: number | null;
-  date_earliest: string | null;
-  date_latest: string | null;
-  n_sample_dates: number;
-  chemistry_records: number;
-  toxicity_records: number;
-  community_records: number;
-  co_location: string;
-  cross_year_merge: boolean;
-  spatial_reference_type?: string;
-  location_label?: string;
-  spatial_audit_note?: string;
-  spatial_class?: 'EXACT' | 'APPROXIMATE' | 'RELATIVE' | 'ZONE' | null;
-  extraction_method?: string | null;
-  confidence?: number | null;
-  estimated_accuracy_m?: number | null;
-  source_reference?: string | null;
-  upgrade_path?: string | null;
-};
-
-type Site = {
-  site_id: number;
-  name: string;
-  registry_id: string;
-  waterbody_type: string;
-  region: string | null;
-  station_count: number;
-  campaign_dates: CampaignDates | null;
-  temporal_note: string | null;
-  spatial_context: SpatialContext | null;
-  source_documents: SourceDocument[] | null;
-  station_details: StationDetail[] | null;
-  co_location_quality: Record<string, number>;
-  woe_risk_distribution: Record<string, number>;
-  chemistry_summary: ChemRow[] | null;
-  toxicity_summary: ToxRow[] | null;
-  community_summary: { n: number; metrics: CommunityMetric[] } | null;
-};
+type Site = NormalizedSite;
 
 type _SiteReportsData = {
   _meta: { export_date: string; db_hash: string };
@@ -397,12 +300,12 @@ function getDefaultDataTab(site: Site | null): DataTab {
 }
 
 export function SiteReports() {
-  const { data: siteDataRaw, loading, error } = usePackArtifact<any>('site_reports');
+  const { data: siteDataRaw, loading, error } = usePackArtifact<unknown>('site_reports');
   const registry = usePackStore((s) => s.registry);
   const packManifest = usePackStore((s) => s.packManifest);
   const [selectedSiteId, setSelectedSiteId] = useState<number | null>(null);
   const [activeDataTab, setActiveDataTab] = useState<DataTab>('chemistry');
-  const [fallbackSiteReportsRaw, setFallbackSiteReportsRaw] = useState<any | null>(null);
+  const [fallbackSiteReportsRaw, setFallbackSiteReportsRaw] = useState<unknown>(null);
   const [fallbackLoading, setFallbackLoading] = useState(false);
 
   const baseData = (!error && siteDataRaw) ? normalizeSiteReports(siteDataRaw) : null;
@@ -471,7 +374,7 @@ export function SiteReports() {
   const selectedSite = useMemo(() => {
     if (!data?.sites || selectedSiteId === null) return null;
     if (!Array.isArray(data?.sites) || selectedSiteId === null) return null;
-    return data.sites.find((s: any) => s.site_id === selectedSiteId) ?? null;
+    return data.sites.find((s) => s.site_id === selectedSiteId) ?? null;
   }, [data?.sites, selectedSiteId]);
 
   const canExport = selectedSite !== null;
@@ -488,7 +391,7 @@ export function SiteReports() {
   const coordStats = useMemo(() => {
     if (!selectedSite?.station_details) return null;
     const total = (selectedSite?.station_details ?? []).length;
-    const withCoords = (selectedSite?.station_details ?? []).filter((s: any) => s.latitude !== null && s.longitude !== null).length;
+    const withCoords = (selectedSite?.station_details ?? []).filter((s) => s.latitude !== null && s.longitude !== null).length;
     return { total, withCoords, missing: total - withCoords };
   }, [selectedSite]);
 
@@ -583,7 +486,7 @@ export function SiteReports() {
       {/* Site cards */}
       {sites.length > 0 ? (
         <div className="grid grid-cols-2 gap-3">
-          {sites.map((site: any) => (
+          {sites.map((site) => (
             <SiteCard
               key={site.site_id}
               site={site}
@@ -986,7 +889,7 @@ export function SiteReports() {
                   {(selectedSite?.station_details ?? []).length} stations
                   {selectedSite.spatial_context?.spatial_summary ? (
                     <> &middot; {selectedSite.spatial_context.spatial_summary.georeferenced}/{selectedSite.spatial_context.spatial_summary.total_stations} georeferenced
-                      {Object.entries(selectedSite.spatial_context.spatial_summary.by_class).map(([cls, n]: [string, any]) => (
+                      {Object.entries(selectedSite.spatial_context.spatial_summary.by_class).map(([cls, n]: [string, unknown]) => (
                         <span key={cls}> &middot; {String(n)} {cls.toLowerCase()}</span>
                       ))}
                     </>
