@@ -1,0 +1,3 @@
+## 2024-04-07 - Custom Interactive Elements Missing Keyboard & ARIA Support
+**Learning:** Found that custom clickable `div` elements used for expanding/collapsing sections in `SiteDataTable.tsx` lacked proper keyboard accessibility and ARIA state synchronization (`aria-expanded`, `aria-controls`), a common anti-pattern when building fast React UIs. Icon-only buttons were also missing `aria-label`s.
+**Action:** Always verify that interactive `div`s have `role="button"`, `tabIndex={0}`, and an `onKeyDown` handler. Pair stateful visual changes with appropriate ARIA attributes. Ensure all icon-only action buttons are explicitly labeled for screen readers.
