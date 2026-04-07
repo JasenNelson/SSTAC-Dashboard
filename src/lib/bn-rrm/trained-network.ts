@@ -30,6 +30,7 @@ import type {
   ContainerData,
   NetworkEdge,
   ConditionalProbabilityTable,
+  NodeCategory,
 } from '@/types/bn-rrm/network';
 
 // =============================================================================
@@ -941,16 +942,56 @@ export function createTrainedNetwork(
  *
  * Existing createDefaultNetwork() and loadLearnedCPTs() are NOT modified.
  */
+/**
+ * Infer container category from its child nodes when the JSON doesn't specify one.
+ * Uses majority vote of child node categories, falling back to 'substance'.
+ */
+function inferContainerCategory(
+  label: string,
+  childNodeIds: string[],
+  nodes: NetworkNodeData[],
+): NodeCategory {
+  const nodeMap = new Map(nodes.map(n => [n.id, n]));
+  const counts: Partial<Record<NodeCategory, number>> = {};
+  for (const nid of childNodeIds) {
+    const cat = nodeMap.get(nid)?.category;
+    if (cat) counts[cat] = (counts[cat] ?? 0) + 1;
+  }
+  let best: NodeCategory = 'substance';
+  let bestCount = 0;
+  for (const [cat, count] of Object.entries(counts)) {
+    if ((count ?? 0) > bestCount) { best = cat as NodeCategory; bestCount = count ?? 0; }
+  }
+  return best;
+}
+
 export function createGenericNetwork(json: LearnedModelJSON): NetworkModel {
   // --- Nodes ---
   const rawNodes = (json.structure?.nodes ?? json.nodes ?? []) as unknown as (NetworkNodeData & { priors?: Record<string, number> })[];
   if (rawNodes.length === 0) {
     throw new Error('Generic network JSON must contain at least one node.');
   }
+  // --- Containers (parse first to build nodeId->containerId map) ---
+  const rawContainers = (json.containers ?? []) as unknown as (ContainerData & {
+    child_node_ids?: string[];
+    nodeIds?: string[];
+    size?: { width: number; height: number };
+  })[];
+
+  // Build reverse map: nodeId -> containerId
+  const nodeToContainer = new Map<string, string>();
+  rawContainers.forEach((c) => {
+    const childIds = c.childNodeIds ?? c.child_node_ids ?? c.nodeIds ?? [];
+    for (const nid of childIds) {
+      nodeToContainer.set(nid as string, c.id as string);
+    }
+  });
+
   const nodes: NetworkNodeData[] = rawNodes.map((n) => ({
     ...n,
     beliefs: { ...(n.beliefs ?? n.priors ?? {}) },
     evidence: n.evidence ?? null,
+    containerId: n.containerId ?? nodeToContainer.get(n.id) ?? undefined,
   }));
 
   // --- Edges ---
@@ -959,14 +1000,12 @@ export function createGenericNetwork(json: LearnedModelJSON): NetworkModel {
     throw new Error('Generic network JSON must contain at least one edge.');
   }
 
-  // --- Containers ---
-  const rawContainers = (json.containers ?? []) as unknown as (ContainerData & { child_node_ids?: string[] })[];
   const containerData: ContainerData[] = rawContainers.map((c) => ({
     id: c.id,
     label: c.label,
-    category: c.category,
-    collapsed: c.collapsed ?? true,
-    childNodeIds: c.childNodeIds ?? c.child_node_ids ?? [],
+    category: c.category ?? inferContainerCategory(c.label, c.childNodeIds ?? c.child_node_ids ?? c.nodeIds ?? [], nodes),
+    collapsed: c.collapsed ?? false,
+    childNodeIds: c.childNodeIds ?? c.child_node_ids ?? c.nodeIds ?? [],
     position: c.position ?? { x: 0, y: 0 },
     summaryBelief: c.summaryBelief,
   }));

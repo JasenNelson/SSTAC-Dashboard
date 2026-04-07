@@ -24,7 +24,7 @@ const containerSummaryNode: Record<string, string> = {
 export const ContainerNode = memo(function ContainerNode({ data, selected }: { data: ContainerData; selected?: boolean }) {
   const { toggleContainer, getNodesInContainer, nodeMap } = useNetworkStore();
 
-  const config = categoryConfig[data.category];
+  const config = categoryConfig[data.category] ?? categoryConfig.substance;
   const Icon = config.icon;
 
   const childNodes = useMemo(() => getNodesInContainer(data.id), [data.id, getNodesInContainer]);

@@ -445,9 +445,11 @@ function ForwardInferenceView({
           <p className="text-xs text-blue-700 dark:text-blue-300">
             <strong>{model.name ?? 'BN-RRM Causal Model'}</strong> — {model.nodes.length} nodes, {model.cpts.length} CPTs, {model.edges.length} causal edges
           </p>
-          <p className="text-[10px] text-blue-500 dark:text-blue-400 mt-1 line-clamp-3">
-            {model.description}
-          </p>
+          {model.description && (
+            <p className="text-[10px] text-blue-500 dark:text-blue-400 mt-1 line-clamp-3">
+              {model.description}
+            </p>
+          )}
         </div>
       )}
     </div>

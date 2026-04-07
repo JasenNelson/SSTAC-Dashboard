@@ -39,7 +39,7 @@ export interface BaseNodeData {
   evidence: string | null;
   isHighlighted?: boolean;
   containerId?: string;
-
+  position?: { x: number; y: number };
 }
 
 export interface SubstanceNodeData extends BaseNodeData {

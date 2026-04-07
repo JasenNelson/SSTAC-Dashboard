@@ -74,10 +74,11 @@ export function BenchmarkDataViewer() {
       return;
     }
 
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
 
-    fetch(`${packBaseUrl}/${trainingDataPath}`)
+    fetch(`${packBaseUrl}/${trainingDataPath}`, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
@@ -89,8 +90,12 @@ export function BenchmarkDataViewer() {
           setSelectedModel(modelKeys[0]);
         }
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => {
+        if (err.name !== 'AbortError') setError(err.message);
+      })
       .finally(() => setLoading(false));
+
+    return () => controller.abort();
   }, [packBaseUrl, packManifest]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Current model + dataset

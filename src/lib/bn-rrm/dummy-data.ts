@@ -277,11 +277,48 @@ export function createDummyNetwork(): NetworkModel {
 export function calculateNodePositions(model: NetworkModel): Record<string, { x: number; y: number }> {
   const positions: Record<string, { x: number; y: number }> = {};
   const nodeSpacing = 160;
+  const nodeMap = new Map(model.nodes.map(n => [n.id, n]));
+  const containerMap = new Map(model.containers.map(c => [c.id, c]));
 
+  // For contained nodes: Canvas adds containerOffset (container.position + {30, 60})
+  // so we need to return positions RELATIVE to that offset.
+  // If node has absolute JSON position, subtract the container offset.
   model.containers.forEach((container) => {
     container.childNodeIds.forEach((nodeId, nodeIndex) => {
-      positions[nodeId] = { x: 0, y: nodeIndex * nodeSpacing };
+      const node = nodeMap.get(nodeId);
+      const nodePos = node?.position;
+      if (nodePos && (nodePos.x !== 0 || nodePos.y !== 0)) {
+        // Node has absolute position in JSON; convert to container-relative
+        // Canvas adds (container.x + 30, container.y + 60), so subtract that
+        positions[nodeId] = {
+          x: nodePos.x - container.position.x - 30,
+          y: nodePos.y - container.position.y - 60,
+        };
+      } else {
+        // Fallback: stack vertically within container
+        positions[nodeId] = { x: 0, y: nodeIndex * nodeSpacing };
+      }
     });
+  });
+
+  // Nodes with containerId but not in any container's childNodeIds
+  // (shouldn't happen but handle gracefully)
+  model.nodes.forEach((node) => {
+    if (positions[node.id]) return;
+    const container = node.containerId ? containerMap.get(node.containerId) : null;
+    const nodePos = node.position;
+    if (container && nodePos && (nodePos.x !== 0 || nodePos.y !== 0)) {
+      positions[node.id] = {
+        x: nodePos.x - container.position.x - 30,
+        y: nodePos.y - container.position.y - 60,
+      };
+    } else if (nodePos && (nodePos.x !== 0 || nodePos.y !== 0)) {
+      // Uncontained node with position
+      positions[node.id] = { x: nodePos.x, y: nodePos.y };
+    } else {
+      // Fallback
+      positions[node.id] = { x: 0, y: 0 };
+    }
   });
 
   return positions;
