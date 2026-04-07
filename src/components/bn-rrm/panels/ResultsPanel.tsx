@@ -443,10 +443,10 @@ function ForwardInferenceView({
       {model && (
         <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-3 border border-blue-100 dark:border-blue-900/40">
           <p className="text-xs text-blue-700 dark:text-blue-300">
-            <strong>BN-RRM Causal Model</strong> — {model.nodes.length} nodes, {model.cpts.length} CPTs, {model.edges.length} causal edges
+            <strong>{model.name ?? 'BN-RRM Causal Model'}</strong> — {model.nodes.length} nodes, {model.cpts.length} CPTs, {model.edges.length} causal edges
           </p>
-          <p className="text-[10px] text-blue-500 dark:text-blue-400 mt-1">
-            Hybrid CPTs: Noisy-OR (Tier 1), BDeu+Expert blend (Tiers 2-3), Expert-dominated (Tier 4)
+          <p className="text-[10px] text-blue-500 dark:text-blue-400 mt-1 line-clamp-3">
+            {model.description}
           </p>
         </div>
       )}

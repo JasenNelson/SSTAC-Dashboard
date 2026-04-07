@@ -767,14 +767,7 @@ interface LearnedCptObject {
 }
 
 interface LearnedModelJSON {
-  cpts: Array<{
-    nodeId: string;
-    parentNodeIds: string[];
-    entries: Array<{
-      parentStates: Record<string, string>;
-      distribution: Record<string, number>;
-    }>;
-  }> | Record<string, LearnedCptObject>;
+  cpts: Array<Record<string, unknown>> | Record<string, LearnedCptObject>;
   structure?: {
     nodes?: Array<Record<string, unknown>>;
     edges?: Array<Record<string, unknown>>;
@@ -787,8 +780,11 @@ interface LearnedModelJSON {
   name?: string;
   display_name?: string;
   id?: string;
+  modelId?: string;
   pack_id?: string;
   description?: string;
+  source?: string;
+  doi?: string;
   nStations?: number;
   version?: string;
   createdAt?: string;
@@ -802,20 +798,21 @@ interface LearnedModelJSON {
  * expected by the DAG inference engine.
  */
 function loadLearnedCPTs(model: LearnedModelJSON): ConditionalProbabilityTable[] {
-  // Array format from export_for_frontend.py
+  // Array format from export_for_frontend.py / fit_site_model.py
+  // Handles two naming conventions:
+  //   Canonical: {nodeId, parentNodeIds, entries[{parentStates, distribution}]}
+  //   Alternate: {nodeId, parentIds,     table[{parentStates, probabilities}]}
   if (Array.isArray(model.cpts)) {
-    return (model.cpts as Array<{
-      nodeId: string;
-      parentNodeIds: string[];
-      entries: Array<{
-        parentStates: Record<string, string>;
-        distribution: Record<string, number>;
-      }>;
-    }>).map((cpt) => ({
-      nodeId: cpt.nodeId,
-      parentNodeIds: cpt.parentNodeIds,
-      entries: cpt.entries,
-    }));
+    return (model.cpts as Array<Record<string, unknown>>).map((raw) => {
+      const nodeId = raw.nodeId as string;
+      const parentNodeIds = (raw.parentNodeIds ?? raw.parentIds ?? []) as string[];
+      const rawEntries = (raw.entries ?? raw.table ?? []) as Array<Record<string, unknown>>;
+      const entries = rawEntries.map((e) => ({
+        parentStates: (e.parentStates ?? {}) as Record<string, string>,
+        distribution: (e.distribution ?? e.probabilities ?? {}) as Record<string, number>,
+      }));
+      return { nodeId, parentNodeIds, entries };
+    });
   }
   // Object-keyed format from fit_causal_model.py / fit_site_model.py
   // Shape: {node_id: {parents: string[], states: string[], method: string, table: {config_key: {state: prob}}}}
@@ -990,11 +987,11 @@ export function createGenericNetwork(json: LearnedModelJSON): NetworkModel {
     }
   }
 
-  const modelName = json.name ?? json.display_name ?? 'Generic BN-RRM Model';
+  const modelName = json.name ?? json.display_name ?? json.source ?? 'Generic BN-RRM Model';
   const modelDesc = json.description ?? `${nodes.length}-node causal DAG (generic pack).`;
 
   return {
-    id: json.id ?? json.pack_id ?? 'generic-bnrrm',
+    id: json.id ?? json.modelId ?? json.pack_id ?? 'generic-bnrrm',
     name: modelName,
     description: modelDesc,
     version: json.version ?? '1.0',
