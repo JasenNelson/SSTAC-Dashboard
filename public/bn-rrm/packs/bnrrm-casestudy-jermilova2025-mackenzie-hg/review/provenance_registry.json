@@ -1,0 +1,122 @@
+{
+  "_meta": {
+    "export_date": "2026-04-06",
+    "db_hash": "jermilova2025-gsl-v1.0",
+    "description": "Data provenance for Jermilova 2025 Mackenzie Mercury BN-RRM. All data sourced from the FRDR repository and published paper."
+  },
+  "documents": [
+    {
+      "doc_id": 1,
+      "site_id": 1,
+      "filename": "Manuscript_RCode.R",
+      "title": "Jermilova et al. 2025 - R Analysis Code",
+      "author": "Jermilova, U. et al.",
+      "date": "2024",
+      "type": "code",
+      "pages": null
+    },
+    {
+      "doc_id": 2,
+      "site_id": 1,
+      "filename": null,
+      "title": "Bayesian Network Relative Risk Model for Mercury in the Mackenzie River Basin",
+      "author": "Jermilova, U., Macdonell, C., Chapman, P.M., Vander Meulen, I.J., et al.",
+      "date": "2025",
+      "type": "journal_article",
+      "pages": 18
+    },
+    {
+      "doc_id": 3,
+      "site_id": 1,
+      "filename": null,
+      "title": "FRDR Repository Dataset (doi: 10.20383/103.0945)",
+      "author": "Jermilova, U. et al.",
+      "date": "2024",
+      "type": "data_repository",
+      "pages": null
+    }
+  ],
+  "stations": [
+    {
+      "station_id": 1,
+      "station_name": "GSL Outlet Region (aggregated)",
+      "site_name": "Great Slave Lake",
+      "registry_id": "GSL",
+      "waterbody_type": "freshwater_lake",
+      "data_counts": { "chemistry": 0, "toxicity": 0, "community": 0 },
+      "co_location": "single_loe",
+      "provenance_quality": "full_provenance",
+      "provenance_coverage": { "data_records": 1459, "provenance_linked": 1459, "coverage_pct": 100.0 },
+      "provenance_records": [
+        {
+          "target_table": "fish_tissue_hg",
+          "page_number": null,
+          "table_number": null,
+          "figure_number": null,
+          "extraction_method": "FRDR CSV import",
+          "confidence": 0.95,
+          "reviewer_verified": true,
+          "doc_title": "FRDR Repository Dataset",
+          "doc_author": "Jermilova, U. et al.",
+          "doc_type": "data_repository"
+        },
+        {
+          "target_table": "freshwater_thg",
+          "page_number": null,
+          "table_number": null,
+          "figure_number": null,
+          "extraction_method": "FRDR CSV import",
+          "confidence": 0.95,
+          "reviewer_verified": true,
+          "doc_title": "FRDR Repository Dataset",
+          "doc_author": "Jermilova, U. et al.",
+          "doc_type": "data_repository"
+        }
+      ]
+    },
+    {
+      "station_id": 2,
+      "station_name": "GSL Middle Region (aggregated)",
+      "site_name": "Great Slave Lake",
+      "registry_id": "GSL",
+      "waterbody_type": "freshwater_lake",
+      "data_counts": { "chemistry": 0, "toxicity": 0, "community": 0 },
+      "co_location": "single_loe",
+      "provenance_quality": "full_provenance",
+      "provenance_coverage": null,
+      "provenance_records": []
+    },
+    {
+      "station_id": 3,
+      "station_name": "GSL North Arm Region (aggregated)",
+      "site_name": "Great Slave Lake",
+      "registry_id": "GSL",
+      "waterbody_type": "freshwater_lake",
+      "data_counts": { "chemistry": 0, "toxicity": 0, "community": 0 },
+      "co_location": "single_loe",
+      "provenance_quality": "full_provenance",
+      "provenance_coverage": null,
+      "provenance_records": []
+    },
+    {
+      "station_id": 4,
+      "station_name": "GSL East Arm Region (aggregated)",
+      "site_name": "Great Slave Lake",
+      "registry_id": "GSL",
+      "waterbody_type": "freshwater_lake",
+      "data_counts": { "chemistry": 0, "toxicity": 0, "community": 0 },
+      "co_location": "single_loe",
+      "provenance_quality": "full_provenance",
+      "provenance_coverage": null,
+      "provenance_records": []
+    }
+  ],
+  "summary": {
+    "total_documents": 3,
+    "total_stations": 4,
+    "stations_with_provenance": 4,
+    "co_location_breakdown": { "single_loe": 4 }
+  },
+  "n_provenance_records": 2,
+  "coverage": "All training data sourced from FRDR repository (doi: 10.20383/103.0945). 604 fish tissue Hg cases and 855 freshwater THg cases across 4 GSL regions."
+}

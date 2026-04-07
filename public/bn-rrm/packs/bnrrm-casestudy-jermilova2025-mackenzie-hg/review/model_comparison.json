@@ -1,0 +1,32 @@
+{
+  "_meta": {
+    "status": "benchmark_comparison",
+    "description": "Model comparison for Jermilova 2025 Mackenzie Mercury BN-RRM. This benchmark pack compares our reconstruction against the published model rather than comparing multiple model variants (M1-M4). See comparison_results.json for the detailed structural and sensitivity comparison."
+  },
+  "three_class": {
+    "Our_Reconstruction_GSL": {
+      "accuracy": 0.6866,
+      "n": 584,
+      "cohen_kappa": 0.466,
+      "per_class": {
+        "low": { "precision": 0.793, "recall": 0.906, "f1": 0.846 },
+        "subsistence": { "precision": 0.584, "recall": 0.400, "f1": 0.475 },
+        "ec20": { "precision": 0.357, "recall": 0.408, "f1": 0.381 },
+        "ec50": { "precision": 0.510, "recall": 0.510, "f1": 0.510 },
+        "above_ec50": { "precision": 0.0, "recall": 0.0, "f1": 0.0 }
+      }
+    },
+    "Our_Reconstruction_GBS": {
+      "accuracy": 0.6667,
+      "n": 258,
+      "cohen_kappa": 0.489,
+      "per_class": {
+        "low": { "precision": 0.774, "recall": 0.758, "f1": 0.766 },
+        "subsistence": { "precision": 0.686, "recall": 0.736, "f1": 0.710 },
+        "ec20": { "precision": 0.400, "recall": 0.467, "f1": 0.431 },
+        "ec50": { "precision": 0.417, "recall": 0.217, "f1": 0.286 },
+        "above_ec50": { "precision": 0.0, "recall": 0.0, "f1": 0.0 }
+      }
+    }
+  }
+}

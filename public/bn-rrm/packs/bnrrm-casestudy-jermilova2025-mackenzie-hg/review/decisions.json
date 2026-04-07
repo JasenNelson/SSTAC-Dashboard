@@ -1,0 +1,100 @@
+{
+  "_meta": {
+    "export_date": "2026-04-06",
+    "source_docs": ["model_overview.json", "comparison_results.json", "published_reference.json"]
+  },
+  "decision_records": [
+    {
+      "id": "DR-J01",
+      "title": "GSL as Default Sub-Model",
+      "status": "accepted",
+      "date": "2026-04-06",
+      "severity": "MEDIUM",
+      "summary": "Selected GSL (Great Slave Lake) as the default runtime model over GBS (Great Bear Subbasin) for the benchmark pack.",
+      "rationale": "GSL has more fish tissue data (604 vs 258 cases) and better kappa for fish Hg prediction (0.466 vs 0.489 but with larger N). GSL also has more diverse point source coverage and a clearer fish species composition. The GBS sub-model remains available as a separate configuration.",
+      "impact": "Users see GSL by default in the Detailed BN tab. GBS comparison is available in the Case Studies and Published Reference artifacts.",
+      "reopen_criteria": "If GBS proves more representative for future Mackenzie basin analyses.",
+      "related_issues": []
+    },
+    {
+      "id": "DR-J02",
+      "title": "BDeu ESS=1.0 for All Learned CPTs",
+      "status": "accepted",
+      "date": "2026-04-06",
+      "severity": "LOW",
+      "summary": "Used equivalent sample size (ESS) of 1.0 for BDeu parameter learning, matching the published methodology.",
+      "rationale": "The original paper used BDeu with ESS=1.0. Using the same hyperparameter ensures our reconstruction is a faithful reproduction. ESS=1.0 is weakly informative, appropriate for the large sample sizes (604-855 cases).",
+      "impact": "CPTs closely match published results. No expert prior influence on stressor nodes.",
+      "reopen_criteria": "If validation shows systematic over/under-fitting in specific parent configurations.",
+      "related_issues": []
+    },
+    {
+      "id": "DR-J03",
+      "title": "R Code Filter Recycling Bug Acknowledged",
+      "status": "accepted",
+      "date": "2026-04-06",
+      "severity": "LOW",
+      "summary": "The published R code uses == instead of %in% for multi-value filtering (lines 66, 69, 72, 75), which silently recycles in R and may produce incorrect fish subsets.",
+      "rationale": "Our reconstruction uses all matching records from the FRDR data rather than replicating the potentially buggy filter. This means our CPTs may differ slightly from the published CPTs for size-specific fish species groupings. The difference is expected to be minor given the large sample sizes.",
+      "impact": "Minor CPT differences between our reconstruction and the published model for fish species/length interactions.",
+      "reopen_criteria": "If exact CPT reproduction is required for a specific validation purpose.",
+      "related_issues": ["R1 in comparison_results.json published_code_notes"]
+    }
+  ],
+  "known_limitations": [
+    {
+      "id": "L-J01",
+      "title": "Water THg Trivial Kappa (Class Imbalance)",
+      "severity": "MEDIUM",
+      "category": "data_gap",
+      "description": "Freshwater THg LOO shows 94.5% accuracy but kappa=0.0. The model predicts all-low for water THg because 94.5% of observations are in the low class. This is an artifact of extreme class imbalance, not model error.",
+      "mitigation": "Document the imbalance clearly. Fish tissue Hg (kappa=0.466) is the discriminative endpoint. Water THg priors are still useful for understanding the marginal distribution.",
+      "related": "validation.json GSL freshwater_thg"
+    },
+    {
+      "id": "L-J02",
+      "title": "No Sediment or Benthic Community Endpoints",
+      "severity": "LOW",
+      "category": "structural",
+      "description": "This model addresses freshwater mercury pathways to fish tissue and human health endpoints. It does not include sediment contamination, benthic toxicity, or community structure endpoints present in the Landis sediment model.",
+      "mitigation": "Clearly documented as a mercury-pathway-specific model. Not comparable to the 20-node Landis sediment model for benthic assessment.",
+      "related": "model_overview.json key_differences_from_canonical"
+    },
+    {
+      "id": "L-J03",
+      "title": "Supplementary Tables S1-S18 Not Yet Obtained",
+      "severity": "LOW",
+      "category": "data_gap",
+      "description": "The full supplementary material (Tables S1-S18) from the published paper has not been obtained. These tables contain detailed discretization breakpoints and additional validation data.",
+      "mitigation": "Discretization was reconstructed from Figure 2, paper text, and R code definitions. Core breakpoints are verified against multiple sources in the paper.",
+      "related": "published_reference.json _metadata.notes"
+    },
+    {
+      "id": "L-J04",
+      "title": "Deterministic Effect/Impact Nodes",
+      "severity": "LOW",
+      "category": "structural",
+      "description": "Three impact nodes (eligible_commercial_catch, mehg_ingested, ptwi_exceedance) and one effect node (degree_of_injury) use deterministic CPTs based on regulatory thresholds and dose-response curves, not learned from data. This means they have no uncertainty in their conditional distributions.",
+      "mitigation": "This is by design -- these nodes represent regulatory thresholds and published dose-response relationships that should not be learned from observational data. The deterministic mappings are scientifically appropriate.",
+      "related": "cpt_transparency.json nodes with cpt_source=Deterministic"
+    }
+  ],
+  "issue_summary": {
+    "total_issues": 4,
+    "fixed": 0,
+    "active_limitations": 4,
+    "accepted": 4,
+    "note": "All issues are accepted limitations inherent to the benchmark model reconstruction. None require remediation."
+  },
+  "spec_versions": {
+    "model_version": "1.0",
+    "architecture_version": "14-node Mackenzie Hg DAG",
+    "source_paper": "Jermilova et al. 2025, IEAM 21(2):396-413"
+  },
+  "applicability_boundaries": [
+    "Freshwater mercury pathway only (not sediment metals/organics)",
+    "Mackenzie River basin geography (NWT, Canada)",
+    "Fish tissue Hg and water THg endpoints (no benthic community endpoints)",
+    "GSL sub-model shown by default; GBS sub-model available separately"
+  ]
+}

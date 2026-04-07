@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "governanceSpec": "N/A - Benchmark pack",
+    "modelVersion": "1.0",
+    "note": "Risk comparison for Jermilova 2025 benchmark. This model uses fish tissue Hg and water THg endpoints rather than the WOE sediment risk framework used by the general model. No direct WOE comparison is applicable.",
+    "status": "benchmark_not_applicable",
+    "evaluationRule": "Not applicable - no WOE comparator for mercury pathway model",
+    "noteExternalSites": "No external site comparisons. This is a published benchmark model.",
+    "externalSitesStatus": "not_applicable",
+    "externalSitesNote": "The Jermilova model evaluates mercury risk through dietary exposure endpoints (pTWI exceedance, commercial catch eligibility), not sediment ecological risk categories.",
+    "externalComparisonClassDefinitions": {},
+    "externalInterpretationRules": null,
+    "pooledStatsPolicy": null
+  },
+  "summary": {
+    "totalWOERecords": 0,
+    "matchedStations": 0,
+    "excludedNoLOO": 0,
+    "excludedNoWOE": 4,
+    "sitesWithWOE": 0,
+    "sitesWithoutWOE": 1,
+    "sitesWithoutWOENames": ["Great Slave Lake (GSL)"]
+  },
+  "mappingTable": {
+    "source": "N/A",
+    "mappings": {}
+  },
+  "siteComparisons": [],
+  "comparisonType": "not_applicable",
+  "site": "Great Slave Lake (GSL)",
+  "interpretation": "This benchmark model uses mercury-specific endpoints (fish tissue Hg, pTWI exceedance, commercial catch eligibility) rather than the ecological risk categories (Low/Moderate/High) used in sediment WOE comparisons. Risk comparison with WOE assessments is not applicable to this model type. See the Case Studies tab for the published model comparison and validation results.",
+  "externalSites": []
+}

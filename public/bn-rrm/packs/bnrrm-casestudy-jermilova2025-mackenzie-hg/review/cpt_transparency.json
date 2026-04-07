@@ -1,0 +1,255 @@
+{
+  "_meta": {
+    "export_date": "2026-04-06",
+    "db_hash": "jermilova2025-gsl-v1.0",
+    "description": "CPT transparency for Jermilova 2025 Mackenzie Mercury BN-RRM (GSL sub-model). CPTs were learned via BDeu (ESS=1.0) from FRDR training data. Deterministic mappings used for effect/endpoint nodes based on Dillon 2010 dose-response curves and Canadian dietary guidelines."
+  },
+  "nodes": [
+    {
+      "id": "atmospheric_hg_deposition",
+      "label": "Atmospheric Hg Deposition",
+      "tier": 1,
+      "cpt_source": "Data-Learned",
+      "sample_count": 855,
+      "parameter": "GEM-MACH-Hg annual average",
+      "unit": "ug THg/m2/yr",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["very_low", "low", "medium", "high", "very_high"],
+        "marginal": { "very_low": 0.046, "low": 0.209, "medium": 0.598, "high": 0.147, "very_high": 0.0001 }
+      },
+      "ess_prior_weight": { "ess": 1.0, "method": "BDeu", "note": "Equivalent sample size 1.0 (weakly informative prior)" }
+    },
+    {
+      "id": "permafrost_hg_release",
+      "label": "Permafrost Thaw Hg Release",
+      "tier": 1,
+      "cpt_source": "Data-Learned",
+      "sample_count": 855,
+      "parameter": "SiBCASA model output",
+      "unit": "ug DHg/m2/yr",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["none", "very_low", "low", "medium", "high", "very_high"],
+        "marginal": { "none": 0.585, "very_low": 0.0001, "low": 0.410, "medium": 0.0001, "high": 0.004, "very_high": 0.0001 }
+      },
+      "ess_prior_weight": { "ess": 1.0, "method": "BDeu", "note": "Equivalent sample size 1.0" }
+    },
+    {
+      "id": "soil_erosion_hg_release",
+      "label": "Soil Erosion Hg Release",
+      "tier": 1,
+      "cpt_source": "Data-Learned",
+      "sample_count": 855,
+      "parameter": "RUSLE-derived",
+      "unit": "ug THg/m2/yr",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["low", "medium", "high", "very_high"],
+        "marginal": { "low": 0.999, "medium": 0.0002, "high": 0.0002, "very_high": 0.0002 }
+      },
+      "ess_prior_weight": { "ess": 1.0, "method": "BDeu", "note": "Equivalent sample size 1.0" }
+    },
+    {
+      "id": "total_hg_deposition",
+      "label": "Total Hg Deposition (Nonpoint)",
+      "tier": 1,
+      "cpt_source": "Data-Learned",
+      "sample_count": 855,
+      "parameter": "Sum: atmospheric + permafrost + soil erosion",
+      "unit": "ug/m2/yr",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["low", "moderate_low", "moderate_high", "high", "very_high"],
+        "marginal": { "low": 0.225, "moderate_low": 0.737, "moderate_high": 0.028, "high": 0.005, "very_high": 0.005 }
+      },
+      "ess_prior_weight": { "ess": 1.0, "method": "BDeu", "note": "Equivalent sample size 1.0" }
+    },
+    {
+      "id": "proximity_mine_gsl",
+      "label": "Proximity to Mine Development (15 km)",
+      "tier": 1,
+      "cpt_source": "Data-Learned",
+      "sample_count": 855,
+      "parameter": "Binary proximity indicator",
+      "unit": "km threshold",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["yes", "no"],
+        "marginal": { "yes": 0.276, "no": 0.724 }
+      },
+      "ess_prior_weight": { "ess": 1.0, "method": "BDeu", "note": "Equivalent sample size 1.0" }
+    },
+    {
+      "id": "proximity_historic_mine",
+      "label": "Proximity to Historic Mine (15 km)",
+      "tier": 1,
+      "cpt_source": "Data-Learned",
+      "sample_count": 855,
+      "parameter": "Binary proximity indicator",
+      "unit": "km threshold",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["yes", "no"],
+        "marginal": { "yes": 0.276, "no": 0.724 }
+      },
+      "ess_prior_weight": { "ess": 1.0, "method": "BDeu", "note": "Equivalent sample size 1.0" }
+    },
+    {
+      "id": "fish_species",
+      "label": "Freshwater Fish Species",
+      "tier": 2,
+      "cpt_source": "Data-Learned",
+      "sample_count": 604,
+      "parameter": "Fish species",
+      "unit": null,
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["lake_whitefish", "burbot", "walleye", "lake_trout", "northern_pike"],
+        "marginal": { "lake_whitefish": 0.397, "burbot": 0.156, "walleye": 0.040, "lake_trout": 0.078, "northern_pike": 0.329 }
+      },
+      "ess_prior_weight": { "ess": 1.0, "method": "BDeu", "note": "Root node (no parents). Distribution reflects sample composition." }
+    },
+    {
+      "id": "fish_length",
+      "label": "Fish Length",
+      "tier": 2,
+      "cpt_source": "Data-Learned",
+      "sample_count": 604,
+      "parameter": "Fork length",
+      "unit": "mm",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["small", "large"],
+        "marginal": { "small": 0.751, "large": 0.249 }
+      },
+      "ess_prior_weight": { "ess": 1.0, "method": "BDeu", "note": "Cutoffs: 600mm (BU/LT/NP) or 450mm (LW/WA)" }
+    },
+    {
+      "id": "freshwater_thg",
+      "label": "Freshwater THg (ng/L)",
+      "tier": 3,
+      "cpt_source": "Data-Learned",
+      "sample_count": 855,
+      "parameter": "Total mercury in water",
+      "unit": "ng/L",
+      "dr001_affected": false,
+      "config_coverage": { "observed": 12, "possible": 50, "coverage_pct": 24.0 },
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["low", "medium", "high"],
+        "marginal": { "low": 0.718, "medium": 0.145, "high": 0.137 }
+      },
+      "ess_prior_weight": { "ess": 1.0, "method": "BDeu", "note": "CCME aquatic life guideline = 26 ng/L. Breaks: 0/10/26/>26" }
+    },
+    {
+      "id": "fish_tissue_hg",
+      "label": "Fish Tissue Hg (ug/g ww)",
+      "tier": 3,
+      "cpt_source": "Data-Learned",
+      "sample_count": 604,
+      "parameter": "Mercury in fish tissue",
+      "unit": "ug/g ww",
+      "dr001_affected": false,
+      "config_coverage": { "observed": 40, "possible": 200, "coverage_pct": 20.0 },
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["low", "subsistence", "ec20", "ec50", "above_ec50"],
+        "marginal": { "low": 0.434, "subsistence": 0.255, "ec20": 0.120, "ec50": 0.108, "above_ec50": 0.082 }
+      },
+      "ess_prior_weight": { "ess": 1.0, "method": "BDeu", "note": "Dillon 2010 dose-response breakpoints: 0/0.2/0.5/0.77/3/>3" }
+    },
+    {
+      "id": "degree_of_injury",
+      "label": "Degree of Injury (%)",
+      "tier": 3,
+      "cpt_source": "Deterministic",
+      "sample_count": 604,
+      "parameter": "Fish injury from Hg exposure",
+      "unit": "%",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["low", "moderate", "high", "very_high"],
+        "marginal": { "low": 0.409, "moderate": 0.359, "high": 0.127, "very_high": 0.105 }
+      },
+      "ess_prior_weight": { "ess": null, "method": "Deterministic", "note": "LL.3 model from Dillon, Beckvar & Kern (2010). Breakpoints: 0-25/25-50/50-75/75-100%" }
+    },
+    {
+      "id": "eligible_commercial_catch",
+      "label": "Eligible Commercial Catch",
+      "tier": 4,
+      "cpt_source": "Deterministic",
+      "sample_count": 604,
+      "parameter": "Canadian guideline exceedance",
+      "unit": "ug Hg/g tissue",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["eligible", "not_eligible"],
+        "marginal": { "eligible": 0.670, "not_eligible": 0.330 }
+      },
+      "ess_prior_weight": { "ess": null, "method": "Deterministic", "note": "Threshold: 0.5 ug Hg/g tissue (Canadian guideline for commercial sale)" }
+    },
+    {
+      "id": "mehg_ingested",
+      "label": "MeHg Ingested (ug Hg/kgbw/wk)",
+      "tier": 4,
+      "cpt_source": "Deterministic",
+      "sample_count": 604,
+      "parameter": "Weekly methylmercury intake",
+      "unit": "ug Hg/kgbw/wk",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["none", "low", "moderate_low", "moderate_mid", "moderate_high", "high"],
+        "marginal": { "none": 0.020, "low": 0.020, "moderate_low": 0.402, "moderate_mid": 0.020, "moderate_high": 0.020, "high": 0.518 }
+      },
+      "ess_prior_weight": { "ess": null, "method": "Deterministic", "note": "Diet scenario calculation. Breaks: 0/1/1.4/2.5/3.3/>3.3" }
+    },
+    {
+      "id": "ptwi_exceedance",
+      "label": "pTWI Exceedance",
+      "tier": 4,
+      "cpt_source": "Deterministic",
+      "sample_count": 604,
+      "parameter": "Provisional tolerable weekly intake",
+      "unit": "ug/kgbw/wk",
+      "dr001_affected": false,
+      "config_coverage": null,
+      "expert_distribution": null,
+      "learned_distribution": {
+        "states": ["does_not_exceed", "exceeds"],
+        "marginal": { "does_not_exceed": 0.086, "exceeds": 0.914 }
+      },
+      "ess_prior_weight": { "ess": null, "method": "Deterministic", "note": "Health Canada pTWI thresholds: adult male 3.3, childbearing female 1.4, child 0.7 ug/kgbw/wk" }
+    }
+  ],
+  "tier_summary": [
+    { "tier": 1, "name": "Sources", "node_count": 6, "cpt_methods": ["Data-Learned (BDeu ESS=1.0)"] },
+    { "tier": 2, "name": "Conditions", "node_count": 2, "cpt_methods": ["Data-Learned (BDeu ESS=1.0)"] },
+    { "tier": 3, "name": "Effects", "node_count": 3, "cpt_methods": ["Data-Learned (BDeu ESS=1.0)", "Deterministic (Dillon 2010)"] },
+    { "tier": 4, "name": "Impacts", "node_count": 3, "cpt_methods": ["Deterministic (Canadian guidelines, diet scenarios)"] }
+  ],
+  "dr001_callout": null,
+  "expert_dominance_disclosure": "This model uses no expert-elicited CPTs. All stressor and condition nodes are learned from data (BDeu ESS=1.0). Effect and impact nodes use deterministic mappings from published dose-response relationships and regulatory thresholds."
+}

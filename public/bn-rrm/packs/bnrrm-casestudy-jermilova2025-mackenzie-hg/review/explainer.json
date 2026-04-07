@@ -1,0 +1,68 @@
+{
+  "site_context": {
+    "narrative": "The Mackenzie River basin in Canada's Northwest Territories (NWT) is a critical freshwater ecosystem where mercury contamination poses risks to Indigenous food fish species and human health through dietary exposure. This BN-RRM reconstructs the Jermilova et al. 2025 published model to evaluate mercury pathways from atmospheric deposition, permafrost thaw, and soil erosion through freshwater concentrations to fish tissue accumulation and human dietary risk endpoints.",
+    "pathway": "metals",
+    "contamination_profile": [
+      { "label": "Atmospheric Hg Deposition", "detail": "GEM-MACH-Hg modeled annual average (ug THg/m2/yr)" },
+      { "label": "Permafrost Thaw Hg Release", "detail": "SiBCASA model output for permafrost-bound mercury mobilization" },
+      { "label": "Soil Erosion Hg Release", "detail": "RUSLE-derived mercury transport via erosion" },
+      { "label": "Point Sources", "detail": "Proximity to active mines (15 km) and historic mining operations (15 km)" }
+    ]
+  },
+  "data_inventory": {
+    "summary": "Training data from FRDR repository (doi: 10.20383/103.0945). GSL sub-model uses 604 fish tissue cases and 855 water THg cases across 4 regions.",
+    "items": [
+      { "data_type": "Fish tissue mercury", "status": "available", "notes": "604 observations, 5 species (lake whitefish, burbot, walleye, lake trout, northern pike)", "dag_nodes": ["fish_tissue_hg", "fish_species", "fish_length"] },
+      { "data_type": "Freshwater total Hg", "status": "available", "notes": "855 observations across 4 GSL regions", "dag_nodes": ["freshwater_thg"] },
+      { "data_type": "Atmospheric deposition", "status": "available", "notes": "GEM-MACH-Hg model output", "dag_nodes": ["atmospheric_hg_deposition"] },
+      { "data_type": "Permafrost Hg", "status": "available", "notes": "SiBCASA model output", "dag_nodes": ["permafrost_hg_release"] },
+      { "data_type": "Soil erosion Hg", "status": "available", "notes": "RUSLE-derived estimates", "dag_nodes": ["soil_erosion_hg_release"] },
+      { "data_type": "Mine proximity", "status": "available", "notes": "Binary flags within 15 km threshold", "dag_nodes": ["proximity_mine_gsl", "proximity_historic_mine"] },
+      { "data_type": "Dose-response curves", "status": "available", "notes": "Dillon, Beckvar & Kern (2010) LL.3 model", "dag_nodes": ["degree_of_injury"] },
+      { "data_type": "Dietary guidelines", "status": "available", "notes": "Health Canada pTWI thresholds", "dag_nodes": ["ptwi_exceedance", "mehg_ingested"] }
+    ],
+    "key_gaps": [
+      "Supplementary tables S1-S18 not yet obtained from journal",
+      "No station-level coordinates (only region-level aggregation)",
+      "No sediment or benthic community data (mercury pathway model only)"
+    ]
+  },
+  "fitting_approach": {
+    "summary": "CPTs learned via BDeu (ESS=1.0) from FRDR training data for stressor and condition nodes. Effect/impact nodes use deterministic mappings from published dose-response relationships and Canadian dietary guidelines.",
+    "cpt_tiers": [
+      { "tier": 1, "name": "Sources", "method": "BDeu (ESS=1.0)", "nodes": ["atmospheric_hg_deposition", "permafrost_hg_release", "soil_erosion_hg_release", "total_hg_deposition", "proximity_mine_gsl", "proximity_historic_mine"] },
+      { "tier": 2, "name": "Conditions", "method": "BDeu (ESS=1.0)", "nodes": ["fish_species", "fish_length"] },
+      { "tier": 3, "name": "Effects", "method": "BDeu + Deterministic", "nodes": ["freshwater_thg", "fish_tissue_hg", "degree_of_injury"] },
+      { "tier": 4, "name": "Impacts", "method": "Deterministic (thresholds)", "nodes": ["eligible_commercial_catch", "mehg_ingested", "ptwi_exceedance"] }
+    ],
+    "overrides": [
+      { "label": "Degree of Injury", "description": "Deterministic mapping from Dillon et al. (2010) LL.3 dose-response model. 4 injury classes: 0-25%, 25-50%, 50-75%, 75-100%." },
+      { "label": "Commercial Catch Eligibility", "description": "Deterministic threshold at 0.5 ug Hg/g tissue (Canadian guideline for commercial fish sale)." },
+      { "label": "pTWI Exceedance", "description": "Deterministic threshold comparison against Health Canada provisional tolerable weekly intake values (0.7-3.3 ug/kgbw/wk depending on age/sex)." }
+    ]
+  },
+  "results_summary": {
+    "loo_accuracy": 0.6866,
+    "loo_kappa": 0.466,
+    "loo_n": 584,
+    "predictions": []
+  },
+  "governance": {
+    "expert_decisions": [
+      { "title": "GSL selected as default sub-model", "description": "Greater data availability (604 fish, 855 water) and more diverse point source coverage than GBS." },
+      { "title": "BDeu ESS=1.0 matching published methodology", "description": "Faithful reproduction of published hyperparameter choice. ESS=1.0 is weakly informative, appropriate for large samples." },
+      { "title": "R code filter recycling acknowledged", "description": "Published R code uses == instead of %in% for multi-value filtering. Our reconstruction uses all matching records, producing slightly different CPTs." }
+    ],
+    "applicability_notes": [
+      { "description": "Mercury-pathway-only model. Not applicable to sediment contamination or benthic community assessment." },
+      { "description": "Mackenzie River basin geography (NWT, Canada). Not validated for other freshwater systems." },
+      { "description": "Human health endpoints (pTWI, commercial catch eligibility) based on Canadian regulatory thresholds." }
+    ]
+  },
+  "expert_review_questions": [
+    { "question": "Does the 14-node DAG structure faithfully represent the mercury exposure pathways described in the published paper?", "context": "Compare our Figure 2 reconstruction against the published DAG structure." },
+    { "question": "Are the deterministic dose-response mappings (Dillon 2010) appropriate for the Mackenzie basin fish species?", "context": "The LL.3 model was developed for general fish mercury toxicity, not specifically for Mackenzie species." },
+    { "question": "Is the class imbalance in freshwater THg (94.5% low) a data quality issue or does it reflect genuine low mercury concentrations?", "context": "Water THg kappa=0.0 despite 94.5% accuracy. The model predicts all-low for water." },
+    { "question": "Should the diet scenarios (Table 3) be incorporated into the interactive model as evidence-setting presets?", "context": "Currently the 7 diet profiles are documented in the Published Reference but not interactive." }
+  ]
+}

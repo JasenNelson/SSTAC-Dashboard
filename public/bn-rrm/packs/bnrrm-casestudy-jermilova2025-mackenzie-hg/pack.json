@@ -53,6 +53,14 @@
     "review": {
       "model_overview": "review/model_overview.json",
       "validation": "review/validation.json",
+      "comparison": "review/model_comparison.json",
+      "decisions": "review/decisions.json",
+      "cpt_transparency": "review/cpt_transparency.json",
+      "provenance": "review/provenance_registry.json",
+      "site_reports": "review/site_reports.json",
+      "risk_comparison": "review/risk_comparison.json",
+      "explainer": "review/explainer.json",
+      "sensitivity": "review/sensitivity.json",
       "published_reference": "review/published_reference.json",
       "comparison_results": "review/comparison_results.json"
     }

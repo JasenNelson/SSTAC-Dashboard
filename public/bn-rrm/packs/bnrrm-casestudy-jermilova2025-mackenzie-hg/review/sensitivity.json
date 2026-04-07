@@ -1,0 +1,36 @@
+{
+  "_meta": {
+    "description": "Sensitivity analysis for Jermilova 2025 Mackenzie Mercury BN-RRM (GSL). Station-level predictions not available for this benchmark -- data is region-aggregated. See comparison_results.json for sensitivity ranking comparison.",
+    "export_date": "2026-04-06"
+  },
+  "stations": [
+    {
+      "station_name": "GSL Outlet Region",
+      "observed_risk": null,
+      "site_assessment": { "map": null },
+      "observed_effects": {},
+      "effects_as_evidence": {}
+    },
+    {
+      "station_name": "GSL Middle Region",
+      "observed_risk": null,
+      "site_assessment": { "map": null },
+      "observed_effects": {},
+      "effects_as_evidence": {}
+    },
+    {
+      "station_name": "GSL North Arm Region",
+      "observed_risk": null,
+      "site_assessment": { "map": null },
+      "observed_effects": {},
+      "effects_as_evidence": {}
+    },
+    {
+      "station_name": "GSL East Arm Region",
+      "observed_risk": null,
+      "site_assessment": { "map": null },
+      "observed_effects": {},
+      "effects_as_evidence": {}
+    }
+  ]
+}
