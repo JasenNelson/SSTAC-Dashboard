@@ -76,11 +76,18 @@ export async function middleware(request: NextRequest) {
 
   // Handle authentication errors (like invalid refresh token)
   if (error) {
-    console.error('[Middleware] Auth error:', {
-      message: error.message,
-      status: error.status,
-      path: request.nextUrl.pathname
-    })
+    // "Auth session missing!" is the expected response when an anonymous
+    // user hits a protected route (no session cookie present). The middleware
+    // handles it correctly by redirecting to /login below, so it should not
+    // be logged as an error. Only log unexpected auth failures.
+    const isExpectedAnonymous = error.message === 'Auth session missing!'
+    if (!isExpectedAnonymous) {
+      console.error('[Middleware] Auth error:', {
+        message: error.message,
+        status: error.status,
+        path: request.nextUrl.pathname
+      })
+    }
 
     // If it's a refresh token error or any auth error, sign out and redirect to login
     // This ensures clean state and forces user to re-authenticate
