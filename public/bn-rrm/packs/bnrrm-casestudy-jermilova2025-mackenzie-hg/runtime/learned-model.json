@@ -668,8 +668,7 @@
       "id": "container_5",
       "label": "Effects",
       "nodeIds": [
-        "degree_of_injury",
-        "eligible_commercial_catch"
+        "degree_of_injury"
       ],
       "position": {
         "x": 30,
@@ -684,6 +683,7 @@
       "id": "container_6",
       "label": "Human Health",
       "nodeIds": [
+        "eligible_commercial_catch",
         "mehg_ingested",
         "ptwi_exceedance"
       ],
