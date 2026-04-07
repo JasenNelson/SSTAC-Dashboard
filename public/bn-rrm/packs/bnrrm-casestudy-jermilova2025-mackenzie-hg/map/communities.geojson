@@ -1,0 +1,711 @@
+{
+  "type": "FeatureCollection",
+  "name": "communities",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "bbox": [
+    -135.0078,
+    60.0055,
+    -110.7369,
+    71.9851
+  ],
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -135.0078,
+          68.2199
+        ]
+      },
+      "properties": {
+        "community": "Aklavik",
+        "lat": 68.2199,
+        "lon": -135.0078,
+        "population_total": 684,
+        "pop_dene": 176,
+        "pop_inuit": 448,
+        "pop_non_indigenous": 38,
+        "ratio_indigenous_to_non": 35,
+        "pop_metis": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -116.0256,
+          62.494
+        ]
+      },
+      "properties": {
+        "community": "Behchokǫ̀",
+        "lat": 62.494,
+        "lon": -116.0256,
+        "population_total": 1952,
+        "pop_dene": 1827,
+        "pop_inuit": "x",
+        "pop_non_indigenous": 101,
+        "ratio_indigenous_to_non": 38,
+        "pop_metis": 14
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -126.0881,
+          67.0368
+        ]
+      },
+      "properties": {
+        "community": "Colville Lake",
+        "lat": 67.0368,
+        "lon": -126.0881,
+        "population_total": 159,
+        "pop_dene": 141,
+        "pop_inuit": "x",
+        "pop_non_indigenous": 17,
+        "ratio_indigenous_to_non": 18,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.3095,
+          62.4129
+        ]
+      },
+      "properties": {
+        "community": "Dettah",
+        "lat": 62.4129,
+        "lon": -114.3095,
+        "population_total": 226,
+        "pop_dene": 216,
+        "pop_inuit": "x",
+        "pop_non_indigenous": "x",
+        "ratio_indigenous_to_non": Infinity,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.4228,
+          65.1889
+        ]
+      },
+      "properties": {
+        "community": "Délı̨nę",
+        "lat": 65.1889,
+        "lon": -123.4228,
+        "population_total": 627,
+        "pop_dene": 551,
+        "pop_inuit": 11,
+        "pop_non_indigenous": 59,
+        "ratio_indigenous_to_non": 20,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -116.1399,
+          60.557
+        ]
+      },
+      "properties": {
+        "community": "Enterprise",
+        "lat": 60.557,
+        "lon": -116.1399,
+        "population_total": 116,
+        "pop_dene": 19,
+        "pop_inuit": 13,
+        "pop_non_indigenous": 71,
+        "ratio_indigenous_to_non": 2,
+        "pop_metis": 13
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -128.634,
+          66.2557
+        ]
+      },
+      "properties": {
+        "community": "Fort Good Hope",
+        "lat": 66.2557,
+        "lon": -128.634,
+        "population_total": 601,
+        "pop_dene": 503,
+        "pop_inuit": "x",
+        "pop_non_indigenous": 56,
+        "ratio_indigenous_to_non": 20,
+        "pop_metis": 32
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.4733,
+          60.2396
+        ]
+      },
+      "properties": {
+        "community": "Fort Liard",
+        "lat": 60.2396,
+        "lon": -123.4733,
+        "population_total": 558,
+        "pop_dene": 482,
+        "pop_inuit": "x",
+        "pop_non_indigenous": 61,
+        "ratio_indigenous_to_non": 17,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -134.8808,
+          67.4364
+        ]
+      },
+      "properties": {
+        "community": "Fort McPherson",
+        "lat": 67.4364,
+        "lon": -134.8808,
+        "population_total": 737,
+        "pop_dene": 576,
+        "pop_inuit": 52,
+        "pop_non_indigenous": 87,
+        "ratio_indigenous_to_non": 16,
+        "pop_metis": 22
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.6607,
+          61.3576
+        ]
+      },
+      "properties": {
+        "community": "Fort Providence",
+        "lat": 61.3576,
+        "lon": -117.6607,
+        "population_total": 753,
+        "pop_dene": 617,
+        "pop_inuit": "x",
+        "pop_non_indigenous": 96,
+        "ratio_indigenous_to_non": 15,
+        "pop_metis": 34
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.6738,
+          61.1721
+        ]
+      },
+      "properties": {
+        "community": "Fort Resolution",
+        "lat": 61.1721,
+        "lon": -113.6738,
+        "population_total": 548,
+        "pop_dene": 331,
+        "pop_inuit": 15,
+        "pop_non_indigenous": 60,
+        "ratio_indigenous_to_non": 17,
+        "pop_metis": 142
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.353,
+          61.8628
+        ]
+      },
+      "properties": {
+        "community": "Fort Simpson",
+        "lat": 61.8628,
+        "lon": -121.353,
+        "population_total": 1214,
+        "pop_dene": 759,
+        "pop_inuit": 37,
+        "pop_non_indigenous": 335,
+        "ratio_indigenous_to_non": 6,
+        "pop_metis": 83
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.8849,
+          60.0055
+        ]
+      },
+      "properties": {
+        "community": "Fort Smith",
+        "lat": 60.0055,
+        "lon": -111.8849,
+        "population_total": 2579,
+        "pop_dene": 833,
+        "pop_inuit": 146,
+        "pop_non_indigenous": 1041,
+        "ratio_indigenous_to_non": 4,
+        "pop_metis": 559
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.354,
+          64.1122
+        ]
+      },
+      "properties": {
+        "community": "Gamètı̀",
+        "lat": 64.1122,
+        "lon": -117.354,
+        "population_total": 280,
+        "pop_dene": 269,
+        "pop_inuit": "x",
+        "pop_non_indigenous": 11,
+        "ratio_indigenous_to_non": 50,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.7854,
+          60.8162
+        ]
+      },
+      "properties": {
+        "community": "Hay River",
+        "lat": 60.8162,
+        "lon": -115.7854,
+        "population_total": 3823,
+        "pop_dene": 960,
+        "pop_inuit": 144,
+        "pop_non_indigenous": 2103,
+        "ratio_indigenous_to_non": 3,
+        "pop_metis": 616
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.6853,
+          60.8067
+        ]
+      },
+      "properties": {
+        "community": "Hay River Dene Reserve",
+        "lat": 60.8067,
+        "lon": -115.6853,
+        "population_total": 338,
+        "pop_dene": 315,
+        "pop_inuit": "x",
+        "pop_non_indigenous": "x",
+        "ratio_indigenous_to_non": Infinity,
+        "pop_metis": 15
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -133.723,
+          68.3607
+        ]
+      },
+      "properties": {
+        "community": "Inuvik",
+        "lat": 68.3607,
+        "lon": -133.723,
+        "population_total": 3303,
+        "pop_dene": 568,
+        "pop_inuit": 1502,
+        "pop_non_indigenous": 1126,
+        "ratio_indigenous_to_non": 5,
+        "pop_metis": 107
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.6347,
+          61.5329
+        ]
+      },
+      "properties": {
+        "community": "Jean Marie River",
+        "lat": 61.5329,
+        "lon": -120.6347,
+        "population_total": "x",
+        "pop_dene": "x",
+        "pop_inuit": "x",
+        "pop_non_indigenous": "x",
+        "ratio_indigenous_to_non": Infinity,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.4211,
+          60.9325
+        ]
+      },
+      "properties": {
+        "community": "Kakisa",
+        "lat": 60.9325,
+        "lon": -117.4211,
+        "population_total": "x",
+        "pop_dene": "x",
+        "pop_inuit": "x",
+        "pop_non_indigenous": "x",
+        "ratio_indigenous_to_non": Infinity,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.3834,
+          61.0335
+        ]
+      },
+      "properties": {
+        "community": "Nahanni Butte",
+        "lat": 61.0335,
+        "lon": -123.3834,
+        "population_total": 101,
+        "pop_dene": 92,
+        "pop_inuit": "x",
+        "pop_non_indigenous": "x",
+        "ratio_indigenous_to_non": Infinity,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -126.8287,
+          65.2815
+        ]
+      },
+      "properties": {
+        "community": "Norman Wells",
+        "lat": 65.2815,
+        "lon": -126.8287,
+        "population_total": 768,
+        "pop_dene": 219,
+        "pop_inuit": 24,
+        "pop_non_indigenous": 468,
+        "ratio_indigenous_to_non": 2,
+        "pop_metis": 57
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -124.0712,
+          69.3509
+        ]
+      },
+      "properties": {
+        "community": "Paulatuk",
+        "lat": 69.3509,
+        "lon": -124.0712,
+        "population_total": 311,
+        "pop_dene": "x",
+        "pop_inuit": 295,
+        "pop_non_indigenous": 13,
+        "ratio_indigenous_to_non": 47,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -125.2465,
+          71.9851
+        ]
+      },
+      "properties": {
+        "community": "Sachs Harbour",
+        "lat": 71.9851,
+        "lon": -125.2465,
+        "population_total": 109,
+        "pop_dene": "x",
+        "pop_inuit": 91,
+        "pop_non_indigenous": 17,
+        "ratio_indigenous_to_non": 12,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.2445,
+          60.4407
+        ]
+      },
+      "properties": {
+        "community": "Sambaa K’e (Trout Lake)",
+        "lat": 60.4407,
+        "lon": -121.2445,
+        "population_total": "x",
+        "pop_dene": "x",
+        "pop_inuit": "x",
+        "pop_non_indigenous": "x",
+        "ratio_indigenous_to_non": Infinity,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -133.7429,
+          67.4418
+        ]
+      },
+      "properties": {
+        "community": "Tsiigehtchic",
+        "lat": 67.4418,
+        "lon": -133.7429,
+        "population_total": 190,
+        "pop_dene": 122,
+        "pop_inuit": 38,
+        "pop_non_indigenous": 25,
+        "ratio_indigenous_to_non": 14,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -133.0342,
+          69.4454
+        ]
+      },
+      "properties": {
+        "community": "Tuktoyaktuk",
+        "lat": 69.4454,
+        "lon": -133.0342,
+        "population_total": 1023,
+        "pop_dene": 25,
+        "pop_inuit": 945,
+        "pop_non_indigenous": 52,
+        "ratio_indigenous_to_non": 38,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -125.5733,
+          64.9034
+        ]
+      },
+      "properties": {
+        "community": "Tulita",
+        "lat": 64.9034,
+        "lon": -125.5733,
+        "population_total": 513,
+        "pop_dene": 413,
+        "pop_inuit": 15,
+        "pop_non_indigenous": 40,
+        "ratio_indigenous_to_non": 25,
+        "pop_metis": 45
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.7704,
+          70.7368
+        ]
+      },
+      "properties": {
+        "community": "Ulukhaktok",
+        "lat": 70.7368,
+        "lon": -117.7704,
+        "population_total": 489,
+        "pop_dene": "x",
+        "pop_inuit": 450,
+        "pop_non_indigenous": 36,
+        "ratio_indigenous_to_non": 26,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.1841,
+          64.1904
+        ]
+      },
+      "properties": {
+        "community": "Wekweètı̀",
+        "lat": 64.1904,
+        "lon": -114.1841,
+        "population_total": 150,
+        "pop_dene": 127,
+        "pop_inuit": "x",
+        "pop_non_indigenous": 21,
+        "ratio_indigenous_to_non": 13,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.2693,
+          63.144
+        ]
+      },
+      "properties": {
+        "community": "Whatı̀",
+        "lat": 63.144,
+        "lon": -117.2693,
+        "population_total": 519,
+        "pop_dene": 494,
+        "pop_inuit": "x",
+        "pop_non_indigenous": 23,
+        "ratio_indigenous_to_non": 44,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.4548,
+          63.2215
+        ]
+      },
+      "properties": {
+        "community": "Wrigley",
+        "lat": 63.2215,
+        "lon": -123.4548,
+        "population_total": 122,
+        "pop_dene": 112,
+        "pop_inuit": "x",
+        "pop_non_indigenous": "x",
+        "ratio_indigenous_to_non": Infinity,
+        "pop_metis": "x"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.3718,
+          62.454
+        ]
+      },
+      "properties": {
+        "community": "Yellowknife",
+        "lat": 62.454,
+        "lon": -114.3718,
+        "population_total": 21775,
+        "pop_dene": 3455,
+        "pop_inuit": 1003,
+        "pop_non_indigenous": 16527,
+        "ratio_indigenous_to_non": 2,
+        "pop_metis": 790
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.7369,
+          62.4055
+        ]
+      },
+      "properties": {
+        "community": "Łutselk’e",
+        "lat": 62.4055,
+        "lon": -110.7369,
+        "population_total": 335,
+        "pop_dene": 293,
+        "pop_inuit": "x",
+        "pop_non_indigenous": 38,
+        "ratio_indigenous_to_non": 17,
+        "pop_metis": "x"
+      }
+    }
+  ]
+}

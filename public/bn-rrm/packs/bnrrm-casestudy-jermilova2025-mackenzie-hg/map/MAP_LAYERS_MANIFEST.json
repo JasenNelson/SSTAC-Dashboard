@@ -1,0 +1,272 @@
+{
+  "generated_utc": "2026-04-07T03:03:58.808371Z",
+  "source_gdb": "C:\\Users\\jasen\\Downloads\\frdr_extracted\\ManuscriptData\\UJermilova_SpatialData.gdb",
+  "target_crs": "EPSG:4326",
+  "total_bytes": 2670198,
+  "total_mb": 2.546,
+  "layers": [
+    {
+      "id": "basins_gsl",
+      "layer": "GreatSlaveLake_Buffer50km",
+      "file": "gsl_basins.geojson",
+      "category": "basins",
+      "geometry_type": "Polygon",
+      "features_in": 4,
+      "features_out": 4,
+      "dropped": 0,
+      "geom_drops": 0,
+      "simplify_tolerance_deg": 0.002,
+      "file_size_bytes": 22750,
+      "crs": "EPSG:4326",
+      "bbox": [
+        -118.437751,
+        60.364585,
+        -107.909886,
+        63.522371
+      ],
+      "spot_check_notes": []
+    },
+    {
+      "id": "basins_gbs",
+      "layer": "GBS1to4",
+      "file": "gbs_basins.geojson",
+      "category": "basins",
+      "geometry_type": "Polygon",
+      "features_in": 4,
+      "features_out": 4,
+      "dropped": 0,
+      "geom_drops": 0,
+      "simplify_tolerance_deg": 0.01,
+      "file_size_bytes": 224835,
+      "crs": "EPSG:4326",
+      "bbox": [
+        -137.052212,
+        59.865953,
+        -114.710461,
+        69.986502
+      ],
+      "spot_check_notes": []
+    },
+    {
+      "id": "advisory_lakes",
+      "layer": "Lakes_with_Consumption_Advisories",
+      "file": "advisory_lakes.geojson",
+      "category": "advisories",
+      "geometry_type": "Point",
+      "features_in": 28,
+      "features_out": 28,
+      "dropped": 0,
+      "geom_drops": 0,
+      "simplify_tolerance_deg": null,
+      "file_size_bytes": 15345,
+      "crs": "EPSG:4326",
+      "bbox": [
+        -126.09,
+        60.52,
+        120.9159,
+        65.38
+      ],
+      "spot_check_notes": []
+    },
+    {
+      "id": "commercial_fisheries",
+      "layer": "NWT_Commercial_Fisheries",
+      "file": "commercial_fisheries.geojson",
+      "category": "fisheries",
+      "geometry_type": "Point",
+      "features_in": 110,
+      "features_out": 110,
+      "dropped": 0,
+      "geom_drops": 0,
+      "simplify_tolerance_deg": null,
+      "file_size_bytes": 61496,
+      "crs": "EPSG:4326",
+      "bbox": [
+        -135.7237,
+        60.05,
+        -11.45,
+        70.5
+      ],
+      "spot_check_notes": []
+    },
+    {
+      "id": "historic_mines",
+      "layer": "Historic_Mining_NWT",
+      "file": "historic_mines.geojson",
+      "category": "mining",
+      "geometry_type": "Point",
+      "features_in": 80,
+      "features_out": 80,
+      "dropped": 0,
+      "geom_drops": 0,
+      "simplify_tolerance_deg": null,
+      "file_size_bytes": 48040,
+      "crs": "EPSG:4326",
+      "bbox": [
+        -130.166667,
+        60.833333,
+        -109.516667,
+        66.095833
+      ],
+      "spot_check_notes": []
+    },
+    {
+      "id": "large_mines",
+      "layer": "Large_Mining_Operations",
+      "file": "large_mines.geojson",
+      "category": "mining",
+      "geometry_type": "Point",
+      "features_in": 14,
+      "features_out": 14,
+      "dropped": 0,
+      "geom_drops": 0,
+      "simplify_tolerance_deg": null,
+      "file_size_bytes": 4941,
+      "crs": "EPSG:4326",
+      "bbox": [
+        -128.232079,
+        61.968627,
+        -109.200562,
+        64.714641
+      ],
+      "spot_check_notes": []
+    },
+    {
+      "id": "mineral_claims",
+      "layer": "Active_Mineral_Claims",
+      "file": "mineral_claims.geojson",
+      "category": "mining",
+      "geometry_type": "Polygon",
+      "features_in": 1070,
+      "features_out": 1070,
+      "dropped": 0,
+      "geom_drops": 0,
+      "simplify_tolerance_deg": 0.005,
+      "file_size_bytes": 420595,
+      "crs": "EPSG:4326",
+      "bbox": [
+        -131.387934,
+        60.682494,
+        -106.573801,
+        67.124411
+      ],
+      "spot_check_notes": []
+    },
+    {
+      "id": "oil_gas_claims",
+      "layer": "Active_Oil_and_Natural_Gas_Claim_50km",
+      "file": "oil_gas_claims.geojson",
+      "category": "energy",
+      "geometry_type": "Polygon",
+      "features_in": 257,
+      "features_out": 257,
+      "dropped": 0,
+      "geom_drops": 0,
+      "simplify_tolerance_deg": 0.002,
+      "file_size_bytes": 400538,
+      "crs": "EPSG:4326",
+      "bbox": [
+        -138.002808,
+        59.833195,
+        -62.873658,
+        79.884338
+      ],
+      "spot_check_notes": []
+    },
+    {
+      "id": "hydro_facilities",
+      "layer": "Hydroelectric_Facilities",
+      "file": "hydro_facilities.geojson",
+      "category": "energy",
+      "geometry_type": "Point",
+      "features_in": 6,
+      "features_out": 6,
+      "dropped": 0,
+      "geom_drops": 0,
+      "simplify_tolerance_deg": null,
+      "file_size_bytes": 2707,
+      "crs": "EPSG:4326",
+      "bbox": [
+        -116.33002,
+        60.419259,
+        -111.390666,
+        63.520007
+      ],
+      "spot_check_notes": []
+    },
+    {
+      "id": "communities",
+      "layer": "NWT_PopulationEstimate_2021",
+      "file": "communities.geojson",
+      "category": "communities",
+      "geometry_type": "Point",
+      "features_in": 33,
+      "features_out": 33,
+      "dropped": 0,
+      "geom_drops": 0,
+      "simplify_tolerance_deg": null,
+      "file_size_bytes": 16327,
+      "crs": "EPSG:4326",
+      "bbox": [
+        -135.0078,
+        60.0055,
+        -110.7369,
+        71.9851
+      ],
+      "spot_check_notes": []
+    },
+    {
+      "id": "climate_stations",
+      "layer": "Climate_Stations_Modern",
+      "file": "climate_stations.geojson",
+      "category": "climate",
+      "geometry_type": "Point",
+      "features_in": 390,
+      "features_out": 390,
+      "dropped": 0,
+      "geom_drops": 0,
+      "simplify_tolerance_deg": null,
+      "file_size_bytes": 162269,
+      "crs": "EPSG:4326",
+      "bbox": [
+        -139.1333,
+        52.01667,
+        77.9667,
+        72.68333
+      ],
+      "spot_check_notes": []
+    },
+    {
+      "id": "thaw_slumps",
+      "layer": "Thaw_Slump_Impacted_Waters",
+      "file": "thaw_slumps.geojson",
+      "category": "permafrost",
+      "geometry_type": "Polygon",
+      "features_in": 3980,
+      "features_out": 3980,
+      "dropped": 0,
+      "geom_drops": 0,
+      "simplify_tolerance_deg": 0.015,
+      "file_size_bytes": 1290355,
+      "crs": "EPSG:4326",
+      "bbox": [
+        -139.094708,
+        62.786875,
+        -104.868647,
+        71.394211
+      ],
+      "spot_check_notes": []
+    }
+  ],
+  "recompacted": [
+    "thaw_slumps.geojson",
+    "mineral_claims.geojson"
+  ],
+  "notes": [
+    "Geometries reprojected to EPSG:4326 before simplification.",
+    "Simplification tolerances are in degrees (Douglas-Peucker, preserve_topology=True).",
+    "Thaw_Slump_Impacted_Waters Z dimension stripped.",
+    "NWT_PopulationEstimate_2021 Metis field decoded from mojibake source key.",
+    "Sorted features per layer by sort_key for stable diffs."
+  ]
+}

@@ -14,6 +14,28 @@ import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { cn } from '@/utils/cn';
 import { useSiteDataStore } from '@/stores/bn-rrm/siteDataStore';
 import type { SiteLocation, SiteAssessment, SiteData } from '@/types/bn-rrm/site-data';
+import { usePackStore } from '@/stores/bn-rrm/packStore';
+import {
+  MAP_ARTIFACT_KEYS,
+  MAP_ARTIFACT_CATEGORIES,
+  type MapArtifactKey,
+} from '@/lib/bn-rrm/pack-types';
+import {
+  loadMapArtifact,
+  clearMapArtifactCacheForPack,
+} from '@/hooks/bn-rrm/usePackMapArtifact';
+import {
+  ALL_CATEGORIES,
+  CATEGORY_LABELS,
+  CATEGORY_STYLES,
+  DEFAULT_ON_CATEGORIES,
+  HEAVY_LAYERS,
+  formatFeaturePopup,
+  getStyleForKey,
+  packHasMapArtifacts,
+  type GeoJsonFeature,
+  type GeoJsonFeatureCollection,
+} from '@/lib/bn-rrm/map-overlay-helpers';
 import {
   ZoomIn,
   ZoomOut,
@@ -168,6 +190,28 @@ export function SiteMap({
   const [activeOverlays, setActiveOverlays] = useState<Set<string>>(new Set());
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const overlayLayersRef = useRef<Map<string, any>>(new Map());
+
+  // Pack-supplied GeoJSON overlay state. SEPARATE from WMS overlayLayersRef so
+  // the two systems never collide on layer keys.
+  const [activeGeoCategories, setActiveGeoCategories] = useState<Set<string>>(
+    () => new Set(DEFAULT_ON_CATEGORIES),
+  );
+  const [loadingGeoKeys, setLoadingGeoKeys] = useState<Set<MapArtifactKey>>(
+    () => new Set(),
+  );
+  // Map of MapArtifactKey -> Leaflet layer (untyped Leaflet API)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const geojsonOverlayLayersRef = useRef<Map<MapArtifactKey, any>>(new Map());
+  // Track basins fitBounds so we only auto-fit once per pack switch
+  const basinsFittedForPackRef = useRef<string | null>(null);
+
+  const packManifest = usePackStore((s) => s.packManifest);
+  const selectedPackId = usePackStore((s) => s.selectedPackId);
+  const getPackBaseUrl = usePackStore((s) => s.getPackBaseUrl);
+  const hasMapArtifacts = useMemo(
+    () => packHasMapArtifacts(packManifest?.artifacts ?? null),
+    [packManifest],
+  );
   const [siteListExpanded, setSiteListExpanded] = useState(true);
   const [interactionMode, setInteractionMode] = useState<'pan' | 'select-individual' | 'select-area'>('pan');
   const interactionModeRef = useRef(interactionMode);
@@ -357,6 +401,192 @@ export function SiteMap({
       return next;
     });
   }, []);
+
+  const toggleGeoCategory = useCallback((category: string) => {
+    setActiveGeoCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  }, []);
+
+  // Pack switch cleanup: drop all GeoJSON layers from the map and clear the
+  // ref Map so we never leak Leaflet layers across pack switches. Also clear
+  // the module-level fetch cache for the prior pack base URL.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const layers = geojsonOverlayLayersRef.current;
+    if (map) {
+      for (const [, layer] of layers.entries()) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        map.removeLayer(layer as any);
+      }
+    }
+    layers.clear();
+    basinsFittedForPackRef.current = null;
+    // Drop module cache for the OLD pack so a re-select forces a fresh fetch.
+    // We do not know the old base URL here without tracking it; clearing all
+    // is acceptable since this only fires on pack change.
+    clearMapArtifactCacheForPack(null);
+    // Reset toggles to default-on for the new pack
+    setActiveGeoCategories(new Set(DEFAULT_ON_CATEGORIES));
+    setLoadingGeoKeys(new Set());
+  }, [selectedPackId]);
+
+  // Manage pack-supplied GeoJSON overlays. Mirrors the WMS effect but uses a
+  // SEPARATE ref store and lazy-fetches per category toggle. Heavy layers are
+  // gated behind their category being active.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !leaflet || !packManifest || !selectedPackId) return;
+    if (packManifest.pack_id !== selectedPackId) return;
+    const mapBlock = packManifest.artifacts.map;
+    if (!mapBlock) return;
+    const baseUrl = getPackBaseUrl();
+    if (!baseUrl) return;
+
+    const L = leaflet;
+    const layers = geojsonOverlayLayersRef.current;
+    let cancelled = false;
+
+    // Determine which keys should currently be present
+    const desiredKeys = new Set<MapArtifactKey>();
+    for (const key of MAP_ARTIFACT_KEYS) {
+      const relPath = mapBlock[key];
+      if (!relPath) continue;
+      const cat = MAP_ARTIFACT_CATEGORIES[key];
+      if (!activeGeoCategories.has(cat)) continue;
+      // Heavy layers only load once their category is active (already implied
+      // by the activeGeoCategories check above). The HEAVY_LAYERS set is kept
+      // for documentation and possible future deferral within an active cat.
+      desiredKeys.add(key);
+    }
+
+    // Remove layers no longer desired
+    for (const [key, layer] of Array.from(layers.entries())) {
+      if (!desiredKeys.has(key)) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        map.removeLayer(layer as any);
+        layers.delete(key);
+      }
+    }
+
+    // Add newly desired layers
+    for (const key of desiredKeys) {
+      if (layers.has(key)) continue;
+      const relPath = mapBlock[key];
+      if (!relPath) continue;
+      const isHeavy = HEAVY_LAYERS.has(key);
+      // Mark loading so the toggle can show a spinner
+      setLoadingGeoKeys((prev) => {
+        if (prev.has(key)) return prev;
+        const next = new Set(prev);
+        next.add(key);
+        return next;
+      });
+
+      loadMapArtifact(baseUrl, relPath, key)
+        .then((data: GeoJsonFeatureCollection | null) => {
+          if (cancelled) return;
+          // Pack may have switched while we were fetching
+          const currentManifest = usePackStore.getState().packManifest;
+          if (
+            !currentManifest ||
+            currentManifest.pack_id !== selectedPackId ||
+            usePackStore.getState().selectedPackId !== selectedPackId
+          ) {
+            return;
+          }
+          if (!data || !Array.isArray(data.features)) {
+            // Graceful skip on 404 or malformed payload
+            console.warn(
+              `[SiteMap] Skipping map layer ${key}: artifact not loadable`,
+            );
+            return;
+          }
+          const style = getStyleForKey(key);
+          // Leaflet's GeoJSON API is largely untyped at our import path.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const geoLayer = L.geoJSON(data as any, {
+            style: () => ({
+              color: style.color,
+              weight: style.strokeWeight,
+              opacity: style.strokeOpacity,
+              fillColor: style.color,
+              fillOpacity: style.fillOpacity,
+            }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            pointToLayer: (_feature: GeoJsonFeature, latlng: any) => {
+              return L.circleMarker(latlng, {
+                radius: style.pointRadius,
+                fillColor: style.color,
+                color: 'white',
+                weight: 1.5,
+                opacity: 1,
+                fillOpacity: 0.9,
+              });
+            },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onEachFeature: (feature: GeoJsonFeature, layer: any) => {
+              try {
+                const html = formatFeaturePopup(key, feature);
+                layer.bindPopup(html, { maxWidth: 320 });
+              } catch (err) {
+                console.warn(`[SiteMap] popup formatter failed for ${key}`, err);
+              }
+            },
+          });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (geoLayer as any).addTo(map);
+          layers.set(key, geoLayer);
+
+          // Auto-fit to basins_gsl bounds once per pack
+          if (
+            key === 'basins_gsl' &&
+            basinsFittedForPackRef.current !== selectedPackId
+          ) {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const bounds = (geoLayer as any).getBounds?.();
+              if (bounds && bounds.isValid && bounds.isValid()) {
+                map.fitBounds(bounds, { padding: [40, 40] });
+                basinsFittedForPackRef.current = selectedPackId;
+              }
+            } catch (err) {
+              console.warn('[SiteMap] basins fitBounds failed', err);
+            }
+          }
+
+          // Heavy layer log for observability (avoid lint warning on isHeavy)
+          if (isHeavy) {
+            console.debug(`[SiteMap] heavy layer ${key} loaded`);
+          }
+        })
+        .finally(() => {
+          if (cancelled) return;
+          setLoadingGeoKeys((prev) => {
+            if (!prev.has(key)) return prev;
+            const next = new Set(prev);
+            next.delete(key);
+            return next;
+          });
+        });
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeGeoCategories,
+    leaflet,
+    packManifest,
+    selectedPackId,
+    getPackBaseUrl,
+  ]);
 
   // Track individual markers by location ID so selection updates don't destroy cluster/spiderfy state
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -648,6 +878,53 @@ export function SiteMap({
                   {layer.name}
                 </button>
               ))}
+
+              {/* Pack-supplied Jermilova study area overlays */}
+              {hasMapArtifacts && (
+                <div>
+                  <div className="border-t border-slate-200 dark:border-slate-700 mt-1" />
+                  <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Jermilova Study Area</p>
+                  {ALL_CATEGORIES.map((cat) => {
+                    // Skip categories with no defined keys in this pack
+                    const mapBlock = packManifest?.artifacts?.map;
+                    if (!mapBlock) return null;
+                    const keysInCat = MAP_ARTIFACT_KEYS.filter(
+                      (k) => MAP_ARTIFACT_CATEGORIES[k] === cat && !!mapBlock[k],
+                    );
+                    if (keysInCat.length === 0) return null;
+                    const isActive = activeGeoCategories.has(cat);
+                    const anyLoading = keysInCat.some((k) => loadingGeoKeys.has(k));
+                    const swatch = CATEGORY_STYLES[cat]?.color ?? '#64748b';
+                    return (
+                      <button
+                        key={`geo-${cat}`}
+                        onClick={() => toggleGeoCategory(cat)}
+                        className={cn(
+                          'w-full px-3 py-1.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2',
+                          isActive && 'bg-blue-50 dark:bg-blue-900/20',
+                        )}
+                        aria-pressed={isActive}
+                        aria-label={`Toggle ${CATEGORY_LABELS[cat] ?? cat}`}
+                      >
+                        <div className={cn(
+                          'w-3 h-3 rounded-sm border-2 transition-colors',
+                          isActive
+                            ? 'border-blue-500 bg-blue-500'
+                            : 'border-slate-300 dark:border-slate-600',
+                        )} />
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: swatch, opacity: 0.8 }} />
+                        <span className="truncate flex-1">{CATEGORY_LABELS[cat] ?? cat}</span>
+                        {anyLoading && (
+                          <div
+                            className="w-3 h-3 border-2 border-slate-300 border-t-blue-500 rounded-full animate-spin flex-shrink-0"
+                            aria-label="Loading"
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Overlay layers by category */}
               {OVERLAY_CATEGORIES.map(({ key: catKey, label }) => {

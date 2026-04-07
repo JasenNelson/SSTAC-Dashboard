@@ -91,6 +91,45 @@ export default function ProcessLauncher({
   const totalFileSize = wizardState.files.reduce((sum, f) => sum + f.size, 0);
 
   /**
+   * Poll evaluate-status until evaluation completes or fails.
+   *
+   * Does NOT start evaluation — the server already did that via the
+   * extract-status auto-chain.  This only tracks progress for UI display.
+   *
+   * Defined before startExtraction so startExtraction can list it as a
+   * stable dependency without hitting a temporal dead zone.
+   */
+  const pollEvaluation = useCallback((pid: string) => {
+    setPhase('evaluating');
+    setEvalStatus(null);
+    setFailedPhase(null);
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const statusRes = await fetch(
+          `/api/regulatory-review/projects/${pid}/evaluate-status`,
+        );
+        if (!statusRes.ok) return;
+
+        const status: EvalStatus = await statusRes.json();
+        setEvalStatus(status);
+
+        if (status.status === 'completed') {
+          if (pollRef.current) clearInterval(pollRef.current);
+          setPhase('done');
+        } else if (status.status === 'error' || status.status === 'import_failed') {
+          if (pollRef.current) clearInterval(pollRef.current);
+          setPhase('error');
+          setFailedPhase('evaluating');
+          setError(status.error || 'Evaluation failed');
+        }
+      } catch {
+        // Ignore transient poll errors
+      }
+    }, 5000);
+  }, []);
+
+  /**
    * Start extraction for an existing project.
    * Triggers POST to extract route, then polls extract-status.
    *
@@ -156,43 +195,7 @@ export default function ProcessLauncher({
       setError(err instanceof Error ? err.message : 'Failed to start extraction');
       if (pollRef.current) clearInterval(pollRef.current);
     }
-  }, []);
-
-  /**
-   * Poll evaluate-status until evaluation completes or fails.
-   *
-   * Does NOT start evaluation — the server already did that via the
-   * extract-status auto-chain.  This only tracks progress for UI display.
-   */
-  const pollEvaluation = useCallback((pid: string) => {
-    setPhase('evaluating');
-    setEvalStatus(null);
-    setFailedPhase(null);
-
-    pollRef.current = setInterval(async () => {
-      try {
-        const statusRes = await fetch(
-          `/api/regulatory-review/projects/${pid}/evaluate-status`,
-        );
-        if (!statusRes.ok) return;
-
-        const status: EvalStatus = await statusRes.json();
-        setEvalStatus(status);
-
-        if (status.status === 'completed') {
-          if (pollRef.current) clearInterval(pollRef.current);
-          setPhase('done');
-        } else if (status.status === 'error' || status.status === 'import_failed') {
-          if (pollRef.current) clearInterval(pollRef.current);
-          setPhase('error');
-          setFailedPhase('evaluating');
-          setError(status.error || 'Evaluation failed');
-        }
-      } catch {
-        // Ignore transient poll errors
-      }
-    }, 5000);
-  }, []);
+  }, [pollEvaluation]);
 
   /**
    * Retry evaluation after a failure.  POSTs to the evaluate route

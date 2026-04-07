@@ -7,6 +7,7 @@ import { useNetworkStore } from '@/stores/bn-rrm/networkStore';
 import { useSiteDataStore } from '@/stores/bn-rrm/siteDataStore';
 import { usePackStore } from '@/stores/bn-rrm/packStore';
 import { isReadOnlyPack } from '@/lib/bn-rrm/pack-types';
+import { useAutoLoadPackSites } from '@/hooks/bn-rrm/useAutoLoadPackSites';
 import { PackSelector } from '@/components/bn-rrm/shared/PackSelector';
 import { PackBanner } from '@/components/bn-rrm/shared/PackBanner';
 import { NodeInspector } from '@/components/bn-rrm/panels/NodeInspector';
@@ -114,6 +115,11 @@ export default function BNRRMClient() {
       loadTrainedModel();
     }
   }, [packManifest, packBaseUrl, selectedPackId, registryLoaded, packLoading, loadPackModel, loadTrainedModel]);
+
+  // Auto-load pack reference sites (training/comparison) on pack switch.
+  // Race-safe, tag-scoped, preserves user-uploaded sites. See
+  // useAutoLoadPackSites for the full contract.
+  useAutoLoadPackSites();
 
   // Benchmark packs now show BenchmarkDataViewer in the Data tab (read-only).
   // No redirect needed.
@@ -398,24 +404,41 @@ function ConceptualView() {
   const manifest = usePackStore((state) => state.packManifest);
   const isGeneric = manifest?.runtime_schema_version === 'generic-bn-rrm-v1';
 
-  // For generic packs, build conceptual boxes from model containers
+  // For generic packs, build conceptual boxes from model data
   if (isGeneric && model) {
     const colorOrder: ('blue' | 'violet' | 'amber' | 'red')[] = ['blue', 'violet', 'amber', 'red'];
     const iconOrder = [Beaker, Thermometer, Activity, AlertTriangle];
     const nodeMap = new globalThis.Map(model.nodes.map(n => [n.id, n] as const));
+    const containerMap = new globalThis.Map(model.containers.map(c => [c.id, c] as const));
 
-    const boxes = model.containers.map((container, i) => {
-      const items = container.childNodeIds
-        .map(id => nodeMap.get(id)?.label ?? id)
-        .slice(0, 8); // cap display at 8 items
-      return {
-        title: container.label,
-        description: `${items.length} node${items.length !== 1 ? 's' : ''}`,
-        icon: iconOrder[i % iconOrder.length],
-        color: colorOrder[i % colorOrder.length],
-        items,
-      };
-    });
+    // If model defines conceptualTiers, group containers into high-level boxes.
+    // Otherwise fall back to one box per container.
+    const boxes = model.conceptualTiers
+      ? model.conceptualTiers.map((tier, i) => {
+          const items = tier.containerIds.flatMap(cid => {
+            const c = containerMap.get(cid);
+            return c ? c.childNodeIds.map(nid => nodeMap.get(nid)?.label ?? nid) : [];
+          }).slice(0, 8);
+          return {
+            title: tier.label,
+            description: tier.description,
+            icon: iconOrder[i % iconOrder.length],
+            color: colorOrder[i % colorOrder.length],
+            items,
+          };
+        })
+      : model.containers.map((container, i) => {
+          const items = container.childNodeIds
+            .map(id => nodeMap.get(id)?.label ?? id)
+            .slice(0, 8);
+          return {
+            title: container.label,
+            description: `${items.length} node${items.length !== 1 ? 's' : ''}`,
+            icon: iconOrder[i % iconOrder.length],
+            color: colorOrder[i % colorOrder.length],
+            items,
+          };
+        });
 
     return (
       <div className="flex-1 p-8 overflow-auto">
@@ -424,9 +447,9 @@ function ConceptualView() {
             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{model.name}</h2>
             <p className="text-slate-500 dark:text-slate-400 mt-2">{model.description ?? 'Causal pathway conceptual model'}</p>
           </div>
-          <div className="flex items-stretch justify-center gap-4 flex-wrap mb-8">
+          <div className="flex items-stretch justify-center gap-4 mb-8">
             {boxes.map((box, i) => (
-              <div key={box.title} className="flex items-stretch gap-4">
+              <div key={box.title} className="flex items-stretch gap-4 min-w-0">
                 {i > 0 && <Arrow />}
                 <ConceptualBox {...box} />
               </div>
@@ -472,7 +495,7 @@ function ConceptualBox({ title, description, icon: Icon, color, items }: { title
   const colors = { blue: { bg: 'bg-blue-50 dark:bg-blue-900/30', border: 'border-blue-200 dark:border-blue-700', header: 'bg-blue-500', text: 'text-blue-800 dark:text-blue-200', icon: 'text-blue-600 dark:text-blue-400' }, violet: { bg: 'bg-violet-50 dark:bg-violet-900/30', border: 'border-violet-200 dark:border-violet-700', header: 'bg-violet-500', text: 'text-violet-800 dark:text-violet-200', icon: 'text-violet-600 dark:text-violet-400' }, amber: { bg: 'bg-amber-50 dark:bg-amber-900/30', border: 'border-amber-200 dark:border-amber-700', header: 'bg-amber-500', text: 'text-amber-800 dark:text-amber-200', icon: 'text-amber-600 dark:text-amber-400' }, red: { bg: 'bg-red-50 dark:bg-red-900/30', border: 'border-red-200 dark:border-red-700', header: 'bg-red-500', text: 'text-red-800 dark:text-red-200', icon: 'text-red-600 dark:text-red-400' } };
   const c = colors[color];
   return (
-    <div className={cn('rounded-xl border-2 overflow-hidden w-52 transition-all duration-200 hover:shadow-lg hover:scale-[1.02]', c.bg, c.border)}>
+    <div className={cn('rounded-xl border-2 overflow-hidden w-52 min-w-0 shrink transition-all duration-200 hover:shadow-lg hover:scale-[1.02]', c.bg, c.border)}>
       <div className={cn('px-4 py-3 flex items-center gap-2', c.header)}><Icon className="w-5 h-5 text-white" /><h3 className="font-bold text-white">{title}</h3></div>
       <div className="p-4"><p className="text-xs text-slate-600 dark:text-slate-400 mb-3">{description}</p><ul className="space-y-1.5">{items.map((item, idx) => <li key={idx} className="flex items-start gap-2 text-xs"><ChevronRight className={cn('w-3 h-3 mt-0.5 shrink-0', c.icon)} /><span className={c.text}>{item}</span></li>)}</ul></div>
     </div>

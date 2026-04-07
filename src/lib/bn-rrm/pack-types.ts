@@ -93,11 +93,28 @@ export interface ReviewArtifacts {
   comparison_results: string;
 }
 
+export interface MapArtifacts {
+  basins_gsl?: string;
+  basins_gbs?: string;
+  advisory_lakes?: string;
+  commercial_fisheries?: string;
+  historic_mines?: string;
+  large_mines?: string;
+  mineral_claims?: string;
+  oil_gas_claims?: string;
+  hydro_facilities?: string;
+  communities?: string;
+  climate_stations?: string;
+  thaw_slumps?: string;
+}
+
 export interface PackArtifacts {
   runtime_model: string;
   /** Benchmark packs: combined training data for read-only data viewer */
   training_data?: string;
   review: ReviewArtifacts;
+  /** Optional pack-native map overlays (GeoJSON paths relative to pack base URL) */
+  map?: MapArtifacts;
 }
 
 export interface PackManifest {
@@ -159,6 +176,42 @@ export const REVIEW_ARTIFACT_KEYS: ReviewArtifactKey[] = [
   'published_reference',
   'comparison_results',
 ];
+
+// ---------------------------------------------------------------------------
+// Map artifact key type (for pack-native map overlays)
+// ---------------------------------------------------------------------------
+
+export type MapArtifactKey = keyof MapArtifacts;
+
+export const MAP_ARTIFACT_KEYS: MapArtifactKey[] = [
+  'basins_gsl',
+  'basins_gbs',
+  'advisory_lakes',
+  'commercial_fisheries',
+  'historic_mines',
+  'large_mines',
+  'mineral_claims',
+  'oil_gas_claims',
+  'hydro_facilities',
+  'communities',
+  'climate_stations',
+  'thaw_slumps',
+];
+
+export const MAP_ARTIFACT_CATEGORIES: Record<MapArtifactKey, string> = {
+  basins_gsl: 'basins',
+  basins_gbs: 'basins',
+  advisory_lakes: 'advisories',
+  commercial_fisheries: 'fisheries',
+  historic_mines: 'mining',
+  large_mines: 'mining',
+  mineral_claims: 'mining',
+  oil_gas_claims: 'energy',
+  hydro_facilities: 'energy',
+  communities: 'communities',
+  climate_stations: 'climate',
+  thaw_slumps: 'permafrost',
+};
 
 // ---------------------------------------------------------------------------
 // Badge helpers

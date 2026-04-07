@@ -63,6 +63,20 @@
       "sensitivity": "review/sensitivity.json",
       "published_reference": "review/published_reference.json",
       "comparison_results": "review/comparison_results.json"
+    },
+    "map": {
+      "basins_gsl": "map/gsl_basins.geojson",
+      "basins_gbs": "map/gbs_basins.geojson",
+      "advisory_lakes": "map/advisory_lakes.geojson",
+      "commercial_fisheries": "map/commercial_fisheries.geojson",
+      "historic_mines": "map/historic_mines.geojson",
+      "large_mines": "map/large_mines.geojson",
+      "mineral_claims": "map/mineral_claims.geojson",
+      "oil_gas_claims": "map/oil_gas_claims.geojson",
+      "hydro_facilities": "map/hydro_facilities.geojson",
+      "communities": "map/communities.geojson",
+      "climate_stations": "map/climate_stations.geojson",
+      "thaw_slumps": "map/thaw_slumps.geojson"
     }
   }
 }

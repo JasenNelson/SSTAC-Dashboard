@@ -1,0 +1,634 @@
+{
+  "type": "FeatureCollection",
+  "name": "advisory_lakes",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "bbox": [
+    -126.09,
+    60.52,
+    120.9159,
+    65.38
+  ],
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.31,
+          61.97
+        ]
+      },
+      "properties": {
+        "location": "Cli Lake",
+        "lat": 61.97,
+        "lon": -123.31,
+        "species": "Lake Trout",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "60",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.9159,
+          61.2117
+        ]
+      },
+      "properties": {
+        "location": "Deep Lake",
+        "lat": 61.2117,
+        "lon": 120.9159,
+        "species": "Northern Pike",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "50",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          120.9159,
+          61.2117
+        ]
+      },
+      "properties": {
+        "location": "Deep Lake",
+        "lat": 61.2117,
+        "lon": 120.9159,
+        "species": "Walleye",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "37",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.589,
+          61.2933
+        ]
+      },
+      "properties": {
+        "location": "Ekali Lake",
+        "lat": 61.2933,
+        "lon": -120.589,
+        "species": "Northern Pike",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "NA",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.589,
+          61.2933
+        ]
+      },
+      "properties": {
+        "location": "Ekali Lake",
+        "lat": 61.2933,
+        "lon": -120.589,
+        "species": "Walleye",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "NA",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.5,
+          63.2
+        ]
+      },
+      "properties": {
+        "location": "Fish Lake",
+        "lat": 63.2,
+        "lon": -122.5,
+        "species": "Northern Pike",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "60",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.5,
+          63.2
+        ]
+      },
+      "properties": {
+        "location": "Fish Lake",
+        "lat": 63.2,
+        "lon": -122.5,
+        "species": "Lake Trout",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "60",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.5,
+          63.2
+        ]
+      },
+      "properties": {
+        "location": "Fish Lake",
+        "lat": 63.2,
+        "lon": -122.5,
+        "species": "Walleye",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "47",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.38191,
+          61.24866
+        ]
+      },
+      "properties": {
+        "location": "Gargan Lake",
+        "lat": 61.248658,
+        "lon": -120.381911,
+        "species": "Northern Pike",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "60",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.8273,
+          63.1779
+        ]
+      },
+      "properties": {
+        "location": "Giauque Lake",
+        "lat": 63.1779,
+        "lon": -113.8273,
+        "species": "Northern Pike",
+        "advisory_pregnant_servings_per_wk": 0,
+        "advisory_child_5_11": 0.0,
+        "advisory_child_1_4": 0,
+        "advisory_adult": 0,
+        "fish_size_cm": "NA",
+        "serving_size_g": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -126.09,
+          65.38
+        ]
+      },
+      "properties": {
+        "location": "Kelly Lake (Sahtu)",
+        "lat": 65.38,
+        "lon": -126.09,
+        "species": "Lake Trout",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "NA",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.58,
+          64.63
+        ]
+      },
+      "properties": {
+        "location": "Lac Ste. Therese",
+        "lat": 64.63,
+        "lon": -121.58,
+        "species": "Walleye",
+        "advisory_pregnant_servings_per_wk": 0,
+        "advisory_child_5_11": 0.0,
+        "advisory_child_1_4": 0,
+        "advisory_adult": 0,
+        "fish_size_cm": "NA",
+        "serving_size_g": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.25,
+          61.8833
+        ]
+      },
+      "properties": {
+        "location": "Little Doctor Lake",
+        "lat": 61.8833,
+        "lon": -123.25,
+        "species": "Walleye",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "45",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.25,
+          61.8833
+        ]
+      },
+      "properties": {
+        "location": "Little Doctor Lake",
+        "lat": 61.8833,
+        "lon": -123.25,
+        "species": "Burbot",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "60",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.4358,
+          62.5331
+        ]
+      },
+      "properties": {
+        "location": "Lower Martin Lake",
+        "lat": 62.5331,
+        "lon": -114.4358,
+        "species": "Northern Pike",
+        "advisory_pregnant_servings_per_wk": 0,
+        "advisory_child_5_11": 3.0,
+        "advisory_child_1_4": 0,
+        "advisory_adult": 17,
+        "fish_size_cm": "NA",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.0077,
+          61.3039
+        ]
+      },
+      "properties": {
+        "location": "McGill Lake",
+        "lat": 61.3039,
+        "lon": -121.0077,
+        "species": "Northern Pike",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "74",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.0077,
+          61.3039
+        ]
+      },
+      "properties": {
+        "location": "McGill Lake",
+        "lat": 61.3039,
+        "lon": -121.0077,
+        "species": "Walleye",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "38",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.5,
+          61.75
+        ]
+      },
+      "properties": {
+        "location": "Nonacho Lake",
+        "lat": 61.75,
+        "lon": -109.5,
+        "species": "Lake Trout",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "60",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.49407,
+          61.25671
+        ]
+      },
+      "properties": {
+        "location": "Sanguez Lake",
+        "lat": 61.256713,
+        "lon": -120.494067,
+        "species": "Northern Pike",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "NA",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.49407,
+          61.25671
+        ]
+      },
+      "properties": {
+        "location": "Sanguez Lake",
+        "lat": 61.256713,
+        "lon": -120.494067,
+        "species": "Walleye",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "NA",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.33,
+          62.46
+        ]
+      },
+      "properties": {
+        "location": "Stark Lake",
+        "lat": 62.46,
+        "lon": -110.33,
+        "species": "Lake Trout",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "60",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.6425,
+          60.5421
+        ]
+      },
+      "properties": {
+        "location": "Tathlina Lake",
+        "lat": 60.5421,
+        "lon": -117.6425,
+        "species": "Northern Pike",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "NA",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.6425,
+          60.5421
+        ]
+      },
+      "properties": {
+        "location": "Tathlina Lake",
+        "lat": 60.5421,
+        "lon": -117.6425,
+        "species": "Walleye",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "NA",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.17,
+          60.52
+        ]
+      },
+      "properties": {
+        "location": "Trout Lake",
+        "lat": 60.52,
+        "lon": -121.17,
+        "species": "Walleye",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "45",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.17,
+          60.52
+        ]
+      },
+      "properties": {
+        "location": "Trout Lake",
+        "lat": 60.52,
+        "lon": -121.17,
+        "species": "Lake Trout",
+        "advisory_pregnant_servings_per_wk": 2,
+        "advisory_child_5_11": 1.667,
+        "advisory_child_1_4": 1,
+        "advisory_adult": 8,
+        "fish_size_cm": "60",
+        "serving_size_g": 75
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.58,
+          64.63
+        ]
+      },
+      "properties": {
+        "location": null,
+        "lat": 64.63,
+        "lon": -121.58,
+        "species": "Northern Pike",
+        "advisory_pregnant_servings_per_wk": 0,
+        "advisory_child_5_11": 0.0,
+        "advisory_child_1_4": 0,
+        "advisory_adult": 0,
+        "fish_size_cm": "NA",
+        "serving_size_g": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.58,
+          64.63
+        ]
+      },
+      "properties": {
+        "location": null,
+        "lat": 64.63,
+        "lon": -121.58,
+        "species": "Lake Trout",
+        "advisory_pregnant_servings_per_wk": 0,
+        "advisory_child_5_11": 0.0,
+        "advisory_child_1_4": 0,
+        "advisory_adult": 0,
+        "fish_size_cm": "NA",
+        "serving_size_g": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.8273,
+          63.1779
+        ]
+      },
+      "properties": {
+        "location": null,
+        "lat": 63.1779,
+        "lon": -113.8273,
+        "species": "Lake Trout",
+        "advisory_pregnant_servings_per_wk": 0,
+        "advisory_child_5_11": 0.0,
+        "advisory_child_1_4": 0,
+        "advisory_adult": 0,
+        "fish_size_cm": "NA",
+        "serving_size_g": 0
+      }
+    }
+  ]
+}
