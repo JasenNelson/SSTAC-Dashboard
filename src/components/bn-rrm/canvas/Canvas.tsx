@@ -95,12 +95,53 @@ export function Canvas({
     const positions = calculateNodePositions(model);
     const nodes: Node[] = [];
 
+    // Dynamic container positioning: recalculate vertical stacking per tier
+    // based on current collapsed/expanded state.
+    const tierX: Record<NodeCategory, number> = { substance: 50, condition: 500, effect: 950, impact: 1400 };
+    const COLLAPSED_H = 90;
+    const NODE_SPACING = 160;
+    const GAP = 20;
+
+    // Group containers by category tier
+    const tierContainers: Record<NodeCategory, typeof model.containers> = {
+      substance: [], condition: [], effect: [], impact: [],
+    };
+    for (const c of model.containers) {
+      tierContainers[c.category]?.push(c);
+    }
+
+    // Compute per-container height (collapsed vs expanded based on child count)
+    function containerHeight(c: import('@/types/bn-rrm/network').ContainerData): number {
+      if (c.collapsed) return COLLAPSED_H;
+      return 60 + c.childNodeIds.length * NODE_SPACING + 20; // header + nodes + padding
+    }
+
+    // Compute total height per tier, then center vertically
+    const tierTotalH: Record<NodeCategory, number> = { substance: 0, condition: 0, effect: 0, impact: 0 };
+    for (const cat of Object.keys(tierContainers) as NodeCategory[]) {
+      const containers = tierContainers[cat];
+      const n = containers.length;
+      tierTotalH[cat] = containers.reduce((sum, c) => sum + containerHeight(c), 0) + (n > 0 ? (n - 1) * GAP : 0);
+    }
+    const maxTierH = Math.max(...Object.values(tierTotalH));
+
+    // Build dynamic positions per container
+    const dynamicPos = new Map<string, { x: number; y: number }>();
+    for (const cat of Object.keys(tierContainers) as NodeCategory[]) {
+      let y = 50 + (maxTierH - tierTotalH[cat]) / 2;
+      for (const c of tierContainers[cat]) {
+        dynamicPos.set(c.id, { x: tierX[cat] ?? c.position.x, y });
+        y += containerHeight(c) + GAP;
+      }
+    }
+
     // Add container nodes — always visible for both collapsed and expanded states
     model.containers.forEach((container) => {
+      const pos = dynamicPos.get(container.id) ?? container.position;
       nodes.push({
         id: container.id,
         type: 'containerNode',
-        position: { x: container.position.x, y: container.position.y },
+        position: { x: pos.x, y: pos.y },
         data: container as unknown as Record<string, unknown>,
         selected: false,
         ...(container.collapsed ? {} : { zIndex: -1 }), // Expanded containers behind child nodes
@@ -114,8 +155,9 @@ export function Canvas({
       if (isContainerCollapsed) return;
 
       const position = positions[node.id] || { x: 0, y: 0 };
-      const containerOffset = container
-        ? { x: container.position.x + 30, y: container.position.y + 60 }
+      const containerPos = container ? (dynamicPos.get(container.id) ?? container.position) : null;
+      const containerOffset = containerPos
+        ? { x: containerPos.x + 30, y: containerPos.y + 60 }
         : { x: 0, y: 0 };
 
       nodes.push({
