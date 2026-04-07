@@ -583,6 +583,28 @@
       "target": "ptwi_exceedance"
     }
   ],
+  "conceptualTiers": [
+    {
+      "label": "Sources of Stressors",
+      "description": "Point and nonpoint mercury inputs to the watershed",
+      "containerIds": ["container_0", "container_1", "container_2"]
+    },
+    {
+      "label": "Exposure Factors",
+      "description": "Biotic factors controlling mercury uptake in fish",
+      "containerIds": ["container_3"]
+    },
+    {
+      "label": "Stressors",
+      "description": "Mercury concentrations in water and fish tissue",
+      "containerIds": ["container_4"]
+    },
+    {
+      "label": "Human Health",
+      "description": "Dietary exposure endpoints and management decisions",
+      "containerIds": ["container_5", "container_6"]
+    }
+  ],
   "containers": [
     {
       "id": "container_0",

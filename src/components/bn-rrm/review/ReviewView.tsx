@@ -15,7 +15,7 @@ import { RiskComparison } from './RiskComparison';
 
 type ReviewSection = 'guide' | 'evidence' | 'overview' | 'validation' | 'decisions' | 'cpt' | 'provenance' | 'sites' | 'comparison';
 
-const sections: { id: ReviewSection; label: string; description: string }[] = [
+const ALL_SECTIONS: { id: ReviewSection; label: string; description: string }[] = [
   { id: 'guide', label: 'Guide', description: 'Step-by-step model review' },
   { id: 'evidence', label: 'Evidence', description: 'Observed vs inferred nodes' },
   { id: 'overview', label: 'Model Overview', description: 'Architecture, metrics, training data' },
@@ -27,9 +27,26 @@ const sections: { id: ReviewSection; label: string; description: string }[] = [
   { id: 'comparison', label: 'Risk Comparison', description: 'BN-RRM vs report-stated WOE' },
 ];
 
+// Sections hidden per scope_type when artifact data is not meaningful.
+// Benchmark packs use mercury/fish-tissue endpoints -- sediment-specific
+// views (evidence, site reports, risk comparison) have no applicable data.
+const HIDDEN_BY_SCOPE: Partial<Record<string, Set<ReviewSection>>> = {
+  benchmark: new Set<ReviewSection>(['evidence', 'sites', 'comparison']),
+};
+
 export function ReviewView() {
   const [activeSection, setActiveSection] = useState<ReviewSection>('guide');
   const packManifest = usePackStore((s) => s.packManifest);
+
+  const hidden = HIDDEN_BY_SCOPE[packManifest?.scope_type ?? ''];
+  const sections = hidden
+    ? ALL_SECTIONS.filter((s) => !hidden.has(s.id))
+    : ALL_SECTIONS;
+
+  // Reset to 'guide' if active section was hidden by a pack switch
+  const resolvedSection = sections.some((s) => s.id === activeSection)
+    ? activeSection
+    : 'guide';
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -48,7 +65,7 @@ export function ReviewView() {
               onClick={() => setActiveSection(section.id)}
               className={cn(
                 'w-full flex flex-col px-3 py-2.5 rounded-lg text-left transition-colors',
-                activeSection === section.id
+                resolvedSection === section.id
                   ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
               )}
@@ -80,15 +97,15 @@ export function ReviewView() {
       {/* Content area */}
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-4xl mx-auto">
-          {activeSection === 'guide' && <GuideView />}
-          {activeSection === 'evidence' && <EvidenceView />}
-          {activeSection === 'overview' && <ModelOverview />}
-          {activeSection === 'validation' && <ValidationDashboard />}
-          {activeSection === 'decisions' && <DecisionsAndLimitations />}
-          {activeSection === 'cpt' && <CptTransparency />}
-          {activeSection === 'provenance' && <DataProvenance />}
-          {activeSection === 'sites' && <SiteReports />}
-          {activeSection === 'comparison' && <RiskComparison />}
+          {resolvedSection === 'guide' && <GuideView />}
+          {resolvedSection === 'evidence' && <EvidenceView />}
+          {resolvedSection === 'overview' && <ModelOverview />}
+          {resolvedSection === 'validation' && <ValidationDashboard />}
+          {resolvedSection === 'decisions' && <DecisionsAndLimitations />}
+          {resolvedSection === 'cpt' && <CptTransparency />}
+          {resolvedSection === 'provenance' && <DataProvenance />}
+          {resolvedSection === 'sites' && <SiteReports />}
+          {resolvedSection === 'comparison' && <RiskComparison />}
         </div>
       </div>
     </div>

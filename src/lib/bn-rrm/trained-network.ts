@@ -1067,6 +1067,11 @@ export function createGenericNetwork(json: LearnedModelJSON): NetworkModel {
   const modelName = json.name ?? json.display_name ?? json.source ?? 'Generic BN-RRM Model';
   const modelDesc = json.description ?? `${nodes.length}-node causal DAG (generic pack).`;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawTiers = (json as any).conceptualTiers as
+    | { label: string; description: string; containerIds: string[] }[]
+    | undefined;
+
   return {
     id: json.id ?? json.modelId ?? json.pack_id ?? 'generic-bnrrm',
     name: modelName,
@@ -1076,6 +1081,7 @@ export function createGenericNetwork(json: LearnedModelJSON): NetworkModel {
     edges: learnedEdges,
     containers: containerData,
     cpts: learnedCPTs,
+    ...(rawTiers ? { conceptualTiers: rawTiers } : {}),
     createdAt: json.createdAt ?? json.created_at ?? new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     author: json.author ?? 'Generic pack',

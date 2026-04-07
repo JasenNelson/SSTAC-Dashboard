@@ -130,6 +130,12 @@ export interface ConditionalProbabilityTable {
 // NETWORK MODEL
 // =============================================================================
 
+export interface ConceptualTier {
+  label: string;
+  description: string;
+  containerIds: string[];
+}
+
 export interface NetworkModel {
   id: string;
   name: string;
@@ -139,6 +145,7 @@ export interface NetworkModel {
   edges: NetworkEdge[];
   containers: ContainerData[];
   cpts: ConditionalProbabilityTable[];
+  conceptualTiers?: ConceptualTier[];
   createdAt: string;
   updatedAt: string;
   author?: string;
