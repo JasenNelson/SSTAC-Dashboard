@@ -1015,19 +1015,38 @@ export function createGenericNetwork(json: LearnedModelJSON): NetworkModel {
   }));
 
   // Auto-layout containers left-to-right by category tier
-  // (like the general model: substance→condition→effect→impact)
+  // (like the general model: substance->condition->effect->impact)
   const tierX: Record<NodeCategory, number> = { substance: 50, condition: 500, effect: 950, impact: 1400 };
-  const tierYCounters: Record<NodeCategory, number> = { substance: 50, condition: 50, effect: 50, impact: 50 };
-  const containerData: ContainerData[] = containersParsed.map((c) => {
-    const nChildren = c.childNodeIds.length;
-    const height = Math.max(200, nChildren * 160 + 80);
-    const y = tierYCounters[c.category];
-    tierYCounters[c.category] += height + 30;
-    return {
-      ...c,
-      position: { x: tierX[c.category], y },
-    };
-  });
+  const collapsedHeight = 90;
+  const gap = 20;
+
+  // Group containers by category to compute per-tier vertical layout
+  const tierContainers: Record<NodeCategory, typeof containersParsed> = {
+    substance: [], condition: [], effect: [], impact: [],
+  };
+  for (const c of containersParsed) {
+    tierContainers[c.category].push(c);
+  }
+
+  // Find the tallest tier's total height to center others vertically
+  const tierHeights: Record<NodeCategory, number> = { substance: 0, condition: 0, effect: 0, impact: 0 };
+  for (const cat of Object.keys(tierContainers) as NodeCategory[]) {
+    const n = tierContainers[cat].length;
+    tierHeights[cat] = n > 0 ? n * collapsedHeight + (n - 1) * gap : 0;
+  }
+  const maxHeight = Math.max(...Object.values(tierHeights));
+
+  // Assign positions: centered vertically within the tallest tier
+  const containerData: ContainerData[] = [];
+  for (const cat of Object.keys(tierContainers) as NodeCategory[]) {
+    const startY = 50 + (maxHeight - tierHeights[cat]) / 2;
+    tierContainers[cat].forEach((c, i) => {
+      containerData.push({
+        ...c,
+        position: { x: tierX[cat], y: startY + i * (collapsedHeight + gap) },
+      });
+    });
+  }
 
   // --- CPTs ---
   const learnedCPTs = loadLearnedCPTs(json);
