@@ -1009,7 +1009,7 @@ export function createGenericNetwork(json: LearnedModelJSON): NetworkModel {
       (c.childNodeIds ?? c.child_node_ids ?? c.nodeIds ?? []) as string[],
       nodes,
     )) as NodeCategory,
-    collapsed: c.collapsed ?? false,
+    collapsed: c.collapsed ?? true,
     childNodeIds: (c.childNodeIds ?? c.child_node_ids ?? c.nodeIds ?? []) as string[],
     summaryBelief: c.summaryBelief,
   }));
