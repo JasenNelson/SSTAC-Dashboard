@@ -16,6 +16,7 @@ import { ReferenceDataImporter } from '@/components/bn-rrm/data/ReferenceDataImp
 import { SiteDataTable } from '@/components/bn-rrm/data/SiteDataTable';
 import { ExportPanel } from '@/components/bn-rrm/data/ExportPanel';
 import { BenchmarkDataViewer } from '@/components/bn-rrm/data/BenchmarkDataViewer';
+import { ReferenceDataBrowser } from '@/components/bn-rrm/data/ReferenceDataBrowser';
 import { SiteDetails } from '@/components/bn-rrm/map/SiteDetails';
 import { classifyRawSiteData, dagForwardInference } from '@/lib/bn-rrm/bn-inference';
 import { createTrainedNetwork } from '@/lib/bn-rrm/trained-network';
@@ -86,7 +87,15 @@ export default function BNRRMClient() {
   const packBaseUrl = usePackStore((state) => state.getPackBaseUrl());
   const packLoading = usePackStore((state) => state.packLoading);
   const packError = usePackStore((state) => state.packError);
-  const isReadOnly = packManifest ? isReadOnlyPack(packManifest) : false;
+  // Determine read-only from registry entry (instant) OR manifest (after load).
+  // During pack switching, packManifest may briefly be stale (old pack's manifest),
+  // so checking the registry entry for the selectedPackId avoids a flash of the
+  // upload UI before the new manifest arrives.
+  const registryEntry = usePackStore((state) =>
+    state.registry?.packs.find(p => p.pack_id === state.selectedPackId)
+  );
+  const isReadOnly = registryEntry?.scope_type === 'benchmark'
+    || (packManifest ? isReadOnlyPack(packManifest) : false);
 
   // Initialize: load pack registry on mount
   useEffect(() => {
@@ -320,7 +329,7 @@ function MapView({ showLeftPanel, showRightPanel, onRunAssessment, onRunBatchAss
 }
 
 function DataView({ onViewOnMap, onRunAssessment, isReadOnly }: { onViewOnMap: (siteId: string) => void; onRunAssessment: (siteId: string) => void; isReadOnly?: boolean }) {
-  const [activeSection, setActiveSection] = useState<'upload' | 'sites' | 'export'>('upload');
+  const [activeSection, setActiveSection] = useState<'upload' | 'sites' | 'export' | 'reference'>('upload');
   const sites = useSiteDataStore((state) => state.sites);
   const siteCount = Object.keys(sites).length;
 
@@ -336,6 +345,7 @@ function DataView({ onViewOnMap, onRunAssessment, isReadOnly }: { onViewOnMap: (
           <NavButton icon={Upload} label="Upload Data" active={activeSection === 'upload'} onClick={() => setActiveSection('upload')} />
           <NavButton icon={Table} label="Site Data" active={activeSection === 'sites'} onClick={() => setActiveSection('sites')} badge={siteCount > 0 ? siteCount.toString() : undefined} />
           <NavButton icon={Download} label="Export" active={activeSection === 'export'} onClick={() => setActiveSection('export')} />
+          <NavButton icon={BookOpen} label="Reference Data" active={activeSection === 'reference'} onClick={() => setActiveSection('reference')} />
         </nav>
       </div>
       <div className="flex-1 overflow-auto p-6">
@@ -363,6 +373,9 @@ function DataView({ onViewOnMap, onRunAssessment, isReadOnly }: { onViewOnMap: (
               <p className="text-slate-500 dark:text-slate-400 mb-6">Download site data and assessment results in various formats.</p>
               <ExportPanel />
             </div>
+          )}
+          {activeSection === 'reference' && (
+            <ReferenceDataBrowser />
           )}
         </div>
       </div>

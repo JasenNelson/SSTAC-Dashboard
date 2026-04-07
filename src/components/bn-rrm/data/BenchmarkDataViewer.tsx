@@ -191,7 +191,21 @@ export function BenchmarkDataViewer() {
   }
 
   if (!data || !model) {
-    return null;
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-center max-w-md">
+          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
+            <Database className="w-6 h-6 text-slate-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-2">Published Training Data</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {!packBaseUrl || !packManifest
+              ? 'Select a benchmark pack to view its published training data.'
+              : 'Loading training data...'}
+          </p>
+        </div>
+      </div>
+    );
   }
 
   const modelKeys = Object.keys(data.models);

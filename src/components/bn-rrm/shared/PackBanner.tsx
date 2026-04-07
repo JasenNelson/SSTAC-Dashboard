@@ -25,7 +25,7 @@ export function PackBanner() {
 
   const Icon = readOnly ? Lock : isWarning ? AlertTriangle : Info;
   const text = readOnly
-    ? 'Frozen benchmark — comparison only. Data upload and site assessment are disabled.'
+    ? 'Frozen benchmark — comparison only. Use the Data tab to browse published training data.'
     : releaseBadge.bannerText ?? '';
 
   if (!text) return null;

@@ -104,12 +104,13 @@ describe('BenchmarkDataViewer', () => {
     vi.clearAllMocks();
   });
 
-  it('renders nothing when no manifest', () => {
+  it('renders empty state when no manifest', () => {
     mockGetPackBaseUrl.mockReturnValue(null);
     mockPackManifest.mockReturnValue(null);
 
-    const { container } = render(<BenchmarkDataViewer />);
-    expect(container.innerHTML).toBe('');
+    render(<BenchmarkDataViewer />);
+    expect(screen.getByText('Published Training Data')).toBeTruthy();
+    expect(screen.getByText('Select a benchmark pack to view its published training data.')).toBeTruthy();
   });
 
   it('shows error when no training_data artifact in manifest', async () => {
