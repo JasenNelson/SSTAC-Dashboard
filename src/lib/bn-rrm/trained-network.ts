@@ -1000,15 +1000,34 @@ export function createGenericNetwork(json: LearnedModelJSON): NetworkModel {
     throw new Error('Generic network JSON must contain at least one edge.');
   }
 
-  const containerData: ContainerData[] = rawContainers.map((c) => ({
-    id: c.id,
-    label: c.label,
-    category: c.category ?? inferContainerCategory(c.label, c.childNodeIds ?? c.child_node_ids ?? c.nodeIds ?? [], nodes),
+  // Build containers with inferred categories
+  const containersParsed = rawContainers.map((c) => ({
+    id: c.id as string,
+    label: c.label as string,
+    category: (c.category ?? inferContainerCategory(
+      c.label as string,
+      (c.childNodeIds ?? c.child_node_ids ?? c.nodeIds ?? []) as string[],
+      nodes,
+    )) as NodeCategory,
     collapsed: c.collapsed ?? false,
-    childNodeIds: c.childNodeIds ?? c.child_node_ids ?? c.nodeIds ?? [],
-    position: c.position ?? { x: 0, y: 0 },
+    childNodeIds: (c.childNodeIds ?? c.child_node_ids ?? c.nodeIds ?? []) as string[],
     summaryBelief: c.summaryBelief,
   }));
+
+  // Auto-layout containers left-to-right by category tier
+  // (like the general model: substance→condition→effect→impact)
+  const tierX: Record<NodeCategory, number> = { substance: 50, condition: 500, effect: 950, impact: 1400 };
+  const tierYCounters: Record<NodeCategory, number> = { substance: 50, condition: 50, effect: 50, impact: 50 };
+  const containerData: ContainerData[] = containersParsed.map((c) => {
+    const nChildren = c.childNodeIds.length;
+    const height = Math.max(200, nChildren * 160 + 80);
+    const y = tierYCounters[c.category];
+    tierYCounters[c.category] += height + 30;
+    return {
+      ...c,
+      position: { x: tierX[c.category], y },
+    };
+  });
 
   // --- CPTs ---
   const learnedCPTs = loadLearnedCPTs(json);
