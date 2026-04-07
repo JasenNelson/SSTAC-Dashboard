@@ -198,11 +198,23 @@ export function SiteDataTable({ onRunAssessment, onViewOnMap }: SiteDataTablePro
                 toggleExpand(siteId);
                 selectSite(siteId);
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleExpand(siteId);
+                  selectSite(siteId);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-expanded={isExpanded}
+              aria-controls={`site-details-${siteId}`}
             >
               <button
                 className="p-1 hover:bg-slate-200 dark:hover:bg-slate-600 rounded"
                 onClick={(e) => { e.stopPropagation(); toggleSiteSelection(siteId); }}
                 title={isChecked ? 'Deselect' : 'Select'}
+                aria-label={isChecked ? `Deselect site ${site.location.name}` : `Select site ${site.location.name}`}
               >
                 {isChecked ? (
                   <CheckSquare className="w-4 h-4 text-blue-500" />
@@ -211,7 +223,10 @@ export function SiteDataTable({ onRunAssessment, onViewOnMap }: SiteDataTablePro
                 )}
               </button>
 
-              <button className="p-1 hover:bg-slate-200 dark:hover:bg-slate-600 rounded">
+              <button
+                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-600 rounded"
+                aria-label={isExpanded ? "Collapse site details" : "Expand site details"}
+              >
                 {isExpanded ? <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />}
               </button>
 
@@ -249,6 +264,7 @@ export function SiteDataTable({ onRunAssessment, onViewOnMap }: SiteDataTablePro
                     onClick={(e) => { e.stopPropagation(); onViewOnMap(siteId); }}
                     className="p-2 text-slate-400 dark:text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                     title="View on map"
+                    aria-label={`View ${site.location.name} on map`}
                   >
                     <MapPin className="w-4 h-4" />
                   </button>
@@ -258,6 +274,7 @@ export function SiteDataTable({ onRunAssessment, onViewOnMap }: SiteDataTablePro
                     onClick={(e) => { e.stopPropagation(); onRunAssessment(siteId); }}
                     className="p-2 text-slate-400 dark:text-slate-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
                     title="Run assessment"
+                    aria-label={`Run assessment for ${site.location.name}`}
                   >
                     <Play className="w-4 h-4" />
                   </button>
@@ -266,6 +283,7 @@ export function SiteDataTable({ onRunAssessment, onViewOnMap }: SiteDataTablePro
                   onClick={(e) => { e.stopPropagation(); removeSite(siteId); }}
                   className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                   title="Remove site"
+                  aria-label={`Remove site ${site.location.name}`}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -273,7 +291,7 @@ export function SiteDataTable({ onRunAssessment, onViewOnMap }: SiteDataTablePro
             </div>
 
             {isExpanded && (
-              <div className="p-4 bg-slate-50 dark:bg-slate-700/50">
+              <div id={`site-details-${siteId}`} className="p-4 bg-slate-50 dark:bg-slate-700/50">
                 <div className="grid grid-cols-4 gap-4 mb-4 text-sm">
                   <div>
                     <p className="text-slate-500 dark:text-slate-400">Coordinates</p>
