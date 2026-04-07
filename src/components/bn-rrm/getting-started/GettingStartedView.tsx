@@ -16,12 +16,25 @@ import {
 import { cn } from '@/utils/cn';
 import { ExpandableSection } from '@/components/bn-rrm/shared/ExpandableSection';
 import { usePackStore } from '@/stores/bn-rrm/packStore';
+import { useNetworkStore } from '@/stores/bn-rrm/networkStore';
 
 type Audience = 'decision-maker' | 'technical' | null;
 
 export function GettingStartedView() {
   const [audience, setAudience] = useState<Audience>(null);
   const packManifest = usePackStore((s) => s.packManifest);
+  const model = useNetworkStore((s) => s.model);
+
+  // Dynamic model stats
+  const nodeCount = model?.nodes.length ?? packManifest?.dag_node_count ?? 20;
+  const edgeCount = model?.edges.length ?? 24;
+  const substanceCount = model?.nodes.filter(n => n.category === 'substance').length ?? 9;
+  const conditionCount = model?.nodes.filter(n => n.category === 'condition').length ?? 3;
+  const effectCount = model?.nodes.filter(n => n.category === 'effect').length ?? 7;
+  const impactCount = model?.nodes.filter(n => n.category === 'impact').length ?? 1;
+  const impactNode = model?.nodes.find(n => n.category === 'impact');
+  const stateCount = impactNode?.states.length ?? 3;
+  const riskStates = impactNode?.states.map(s => s.label).join(' / ') ?? 'Low / Moderate / High';
 
   return (
     <div className="flex-1 p-8 overflow-auto">
@@ -36,8 +49,8 @@ export function GettingStartedView() {
           </p>
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
             {packManifest
-              ? `Model: ${packManifest?.display_name ?? ''} · Release v${packManifest?.version_history?.model_version ?? ''} · ${packManifest?.version_history?.architecture_version ?? ''} · ${packManifest?.dag_node_count ?? 20}-node causal DAG · 3 risk states`
-              : 'Model: loading... · 20-node causal DAG · 3 risk states'
+              ? `Model: ${packManifest?.display_name ?? ''} · Release v${packManifest?.version_history?.model_version ?? ''} · ${packManifest?.version_history?.architecture_version ?? ''} · ${nodeCount}-node causal DAG · ${stateCount} risk states`
+              : `Model: loading... · ${nodeCount}-node causal DAG · ${stateCount} risk states`
             }
           </p>
         </div>
@@ -236,20 +249,20 @@ export function GettingStartedView() {
             <ExpandableSection title={`Model architecture (${packManifest?.version_history?.architecture_version ?? 'v4.0'})`} defaultOpen>
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-3">
                 <p>
-                  The BN-RRM is a <strong>Landis (2021) causal Bayesian Network</strong> with 20
-                  nodes, 24 directed edges, and 3 states per node (low / moderate / high). The
-                  training target is <code>ecological_risk</code>, derived from causal propagation
+                  The BN-RRM is a <strong>causal Bayesian Network</strong> with {nodeCount} nodes,
+                  {' '}{edgeCount} directed edges, and {stateCount} risk states ({riskStates}). The
+                  training target is the impact node, derived from causal propagation
                   through the DAG — not from any external classification such as WOE scenario numbers.
                 </p>
                 <div className="grid grid-cols-4 gap-2 mt-3">
-                  <NodeGroupCard icon={Beaker} label="Substances" count={9} color="blue"
-                    items="Cu, Zn, Pb, Cd, Hg, As, Cr, PAHs, PCBs" />
-                  <NodeGroupCard icon={Thermometer} label="Conditions" count={3} color="violet"
-                    items="TOC, grain size, sulfide_binding" />
-                  <NodeGroupCard icon={Activity} label="Effects" count={7} color="amber"
-                    items="Contamination, bioavailability, toxicity, community" />
-                  <NodeGroupCard icon={AlertTriangle} label="Risk" count={1} color="red"
-                    items="ecological_risk (causal target)" />
+                  <NodeGroupCard icon={Beaker} label="Substances" count={substanceCount} color="blue"
+                    items={model ? model.nodes.filter(n => n.category === 'substance').map(n => n.label).join(', ') : 'Cu, Zn, Pb, Cd, Hg, As, Cr, PAHs, PCBs'} />
+                  <NodeGroupCard icon={Thermometer} label="Conditions" count={conditionCount} color="violet"
+                    items={model ? model.nodes.filter(n => n.category === 'condition').map(n => n.label).join(', ') : 'TOC, grain size, sulfide_binding'} />
+                  <NodeGroupCard icon={Activity} label="Effects" count={effectCount} color="amber"
+                    items={model ? model.nodes.filter(n => n.category === 'effect').map(n => n.label).join(', ') : 'Contamination, bioavailability, toxicity, community'} />
+                  <NodeGroupCard icon={AlertTriangle} label="Risk" count={impactCount} color="red"
+                    items={model ? model.nodes.filter(n => n.category === 'impact').map(n => n.label).join(', ') : 'ecological_risk (causal target)'} />
                 </div>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
                   The model uses <code>sulfide_binding</code> (calibrated from AVS/SEM ratio) as the metal

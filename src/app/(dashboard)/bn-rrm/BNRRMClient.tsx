@@ -394,6 +394,56 @@ function NavButton({ icon: Icon, label, active, onClick, badge }: { icon: typeof
 }
 
 function ConceptualView() {
+  const model = useNetworkStore((state) => state.model);
+  const manifest = usePackStore((state) => state.packManifest);
+  const isGeneric = manifest?.runtime_schema_version === 'generic-bn-rrm-v1';
+
+  // For generic packs, build conceptual boxes from model containers
+  if (isGeneric && model) {
+    const colorOrder: ('blue' | 'violet' | 'amber' | 'red')[] = ['blue', 'violet', 'amber', 'red'];
+    const iconOrder = [Beaker, Thermometer, Activity, AlertTriangle];
+    const nodeMap = new globalThis.Map(model.nodes.map(n => [n.id, n] as const));
+
+    const boxes = model.containers.map((container, i) => {
+      const items = container.childNodeIds
+        .map(id => nodeMap.get(id)?.label ?? id)
+        .slice(0, 8); // cap display at 8 items
+      return {
+        title: container.label,
+        description: `${items.length} node${items.length !== 1 ? 's' : ''}`,
+        icon: iconOrder[i % iconOrder.length],
+        color: colorOrder[i % colorOrder.length],
+        items,
+      };
+    });
+
+    return (
+      <div className="flex-1 p-8 overflow-auto">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{model.name}</h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-2">{model.description ?? 'Causal pathway conceptual model'}</p>
+          </div>
+          <div className="flex items-stretch justify-center gap-4 flex-wrap mb-8">
+            {boxes.map((box, i) => (
+              <div key={box.title} className="flex items-stretch gap-4">
+                {i > 0 && <Arrow />}
+                <ConceptualBox {...box} />
+              </div>
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-4 mt-12">
+            <FeatureCard title="Forward Inference" description="Set node states and observe how risk propagates through causal pathways." icon="&#8594;" />
+            <FeatureCard title="Backward Inference" description="Set target protection level and derive protective concentrations through causal chain." icon="&#8592;" />
+            <FeatureCard title="Sensitivity Analysis" description="Identify which nodes most influence the risk outcome." icon="&#9889;" />
+          </div>
+          <div className="text-center mt-8"><p className="text-sm text-slate-500 dark:text-slate-400">Click the <strong>Detailed BN</strong> tab to explore the full causal network</p></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Default: hardcoded benthic sediment conceptual model
   return (
     <div className="flex-1 p-8 overflow-auto">
       <div className="max-w-5xl mx-auto">

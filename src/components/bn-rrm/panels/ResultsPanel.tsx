@@ -88,24 +88,52 @@ export const ResultsPanel = memo(function ResultsPanel({
 }: ResultsPanelProps) {
   const [mode, setMode] = useState<InferenceMode>('forward');
   const [isExpanded, setIsExpanded] = useState(true);
+  const [selectedImpactId, setSelectedImpactId] = useState<string | null>(null);
 
   const { model, evidence, clearAllEvidence } = useNetworkStore();
 
-  // Find the impact node (ecological_risk for trained, benthic_impact for dummy)
-  const riskNode = useMemo(() => {
-    if (!model) return null;
-    return model.nodes.find((n) => n.category === 'impact');
+  // Find all impact nodes (may be multiple in generic networks)
+  const impactNodes = useMemo(() => {
+    if (!model) return [];
+    return model.nodes.filter((n) => n.category === 'impact');
   }, [model]);
+
+  // Auto-select first impact node when model changes
+  useEffect(() => {
+    if (impactNodes.length > 0 && !impactNodes.some(n => n.id === selectedImpactId)) {
+      setSelectedImpactId(impactNodes[0].id);
+    }
+  }, [impactNodes, selectedImpactId]);
+
+  const riskNode = useMemo(() => {
+    return impactNodes.find(n => n.id === selectedImpactId) ?? impactNodes[0] ?? null;
+  }, [impactNodes, selectedImpactId]);
 
   const evidenceCount = Object.keys(evidence).length;
 
-  // Determine which risk config to use based on the impact node states
+  // Build risk config dynamically from the impact node's actual states.
+  // Falls back to hardcoded configs for known patterns (backward compat).
   const riskConfigMap = useMemo(() => {
     if (!riskNode) return RISK_CONFIG;
-    // Check if states match 3-class (low/moderate/high) or 4-class (none/minor/moderate/severe)
     const stateIds = riskNode.states.map(s => s.id);
-    if (stateIds.includes('none') || stateIds.includes('severe')) return DUMMY_RISK_CONFIG;
-    return RISK_CONFIG;
+    // Known 3-class pattern
+    if (stateIds.length === 3 && stateIds.includes('low') && stateIds.includes('high')) return RISK_CONFIG;
+    // Known 4-class pattern
+    if (stateIds.includes('none') && stateIds.includes('severe')) return DUMMY_RISK_CONFIG;
+    // Generic: build from node states (use inline style colors, not Tailwind classes)
+    const dynamic: Record<string, { label: string; color: string; bgColor: string; description: string; inlineColor?: string; inlineBg?: string }> = {};
+    for (const state of riskNode.states) {
+      const fg = state.color ?? '#64748b';
+      dynamic[state.id] = {
+        label: state.label,
+        color: '', // handled by inlineColor
+        bgColor: '', // handled by inlineBg
+        description: riskNode.description ?? state.label,
+        inlineColor: fg,
+        inlineBg: `${fg}33`, // ~20% opacity
+      };
+    }
+    return dynamic;
   }, [riskNode]);
 
   // Calculate risk level based on impact node beliefs
@@ -195,6 +223,9 @@ export const ResultsPanel = memo(function ResultsPanel({
               evidenceCount={evidenceCount}
               riskConfigMap={riskConfigMap}
               model={model}
+              impactNodes={impactNodes}
+              selectedImpactId={selectedImpactId}
+              onSelectImpact={setSelectedImpactId}
             />
           ) : (
             <BackwardInferenceView />
@@ -252,6 +283,9 @@ interface ForwardInferenceViewProps {
   evidenceCount: number;
   riskConfigMap: Record<string, { label: string; color: string; bgColor: string; description: string }>;
   model: import('@/types/bn-rrm/network').NetworkModel | null;
+  impactNodes: import('@/types/bn-rrm/network').NetworkNodeData[];
+  selectedImpactId: string | null;
+  onSelectImpact: (id: string) => void;
 }
 
 function ForwardInferenceView({
@@ -259,6 +293,9 @@ function ForwardInferenceView({
   evidenceCount,
   riskConfigMap,
   model,
+  impactNodes,
+  selectedImpactId,
+  onSelectImpact,
 }: ForwardInferenceViewProps) {
   if (!riskAssessment) {
     return (
@@ -301,6 +338,22 @@ function ForwardInferenceView({
 
   return (
     <div className="p-4 space-y-4">
+      {/* Impact node selector (only shown when multiple impact nodes exist) */}
+      {impactNodes.length > 1 && (
+        <div>
+          <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Impact Endpoint</label>
+          <select
+            className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
+            value={selectedImpactId ?? ''}
+            onChange={(e) => onSelectImpact(e.target.value)}
+          >
+            {impactNodes.map(n => (
+              <option key={n.id} value={n.id}>{n.label}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Inference basis */}
       <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 space-y-2">
         <div className="flex items-center gap-2 text-sm">
@@ -365,11 +418,15 @@ function ForwardInferenceView({
         <div className="space-y-2">
           {Object.entries(riskConfigMap).map(([key, riskConf]) => {
             const probability = riskAssessment.probabilities[key] ?? 0;
+            const conf = riskConf as typeof riskConf & { inlineColor?: string; inlineBg?: string };
 
             return (
               <div key={key} className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
-                  <span className={cn('font-medium', riskConf.color)}>
+                  <span
+                    className={cn('font-medium', conf.color || undefined)}
+                    style={conf.inlineColor ? { color: conf.inlineColor } : undefined}
+                  >
                     {riskConf.label}
                   </span>
                   <span className="text-slate-600 dark:text-slate-400 tabular-nums">
@@ -378,8 +435,11 @@ function ForwardInferenceView({
                 </div>
                 <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                   <div
-                    className={cn('h-full rounded-full transition-all duration-500', riskConf.bgColor)}
-                    style={{ width: `${probability * 100}%` }}
+                    className={cn('h-full rounded-full transition-all duration-500', conf.bgColor || undefined)}
+                    style={{
+                      width: `${probability * 100}%`,
+                      ...(conf.inlineBg ? { backgroundColor: conf.inlineBg } : {}),
+                    }}
                   />
                 </div>
                 <p className="text-xs text-slate-400 dark:text-slate-500">{riskConf.description}</p>
@@ -419,18 +479,41 @@ function ForwardInferenceView({
               );
             }
             // For 4-class: P(<=minor) and P(>=moderate)
+            if (stateKeys.includes('none') && stateKeys.includes('severe')) {
+              return (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-400">P(Impact &le; Minor)</span>
+                    <span className="font-medium text-green-600 dark:text-green-400">
+                      {(((probs.none ?? 0) + (probs.minor ?? 0)) * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600 dark:text-slate-400">P(Impact &ge; Moderate)</span>
+                    <span className="font-medium text-orange-600 dark:text-orange-400">
+                      {(((probs.moderate ?? 0) + (probs.severe ?? 0)) * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                </>
+              );
+            }
+            // Generic: P(first state) vs P(last state)
+            const firstKey = stateKeys[0];
+            const lastKey = stateKeys[stateKeys.length - 1];
+            const firstLabel = riskConfigMap[firstKey]?.label ?? firstKey;
+            const lastLabel = riskConfigMap[lastKey]?.label ?? lastKey;
             return (
               <>
                 <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">P(Impact &le; Minor)</span>
+                  <span className="text-slate-600 dark:text-slate-400">P({firstLabel})</span>
                   <span className="font-medium text-green-600 dark:text-green-400">
-                    {(((probs.none ?? 0) + (probs.minor ?? 0)) * 100).toFixed(1)}%
+                    {((probs[firstKey] ?? 0) * 100).toFixed(1)}%
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-600 dark:text-slate-400">P(Impact &ge; Moderate)</span>
+                  <span className="text-slate-600 dark:text-slate-400">P({lastLabel})</span>
                   <span className="font-medium text-orange-600 dark:text-orange-400">
-                    {(((probs.moderate ?? 0) + (probs.severe ?? 0)) * 100).toFixed(1)}%
+                    {((probs[lastKey] ?? 0) * 100).toFixed(1)}%
                   </span>
                 </div>
               </>

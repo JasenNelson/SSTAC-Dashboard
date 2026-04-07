@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { cn } from '@/utils/cn';
 import { usePackStore } from '@/stores/bn-rrm/packStore';
 import type { PackManifest, PackRegistryEntry } from '@/lib/bn-rrm/pack-types';
@@ -520,24 +520,33 @@ export function ReferenceDataBrowser() {
     return registry.packs.filter((p) => p.scope_type === 'benchmark');
   }, [registry]);
 
-  // Fetch manifests for all benchmark packs on mount
+  // Fetch manifests for all benchmark packs on mount.
+  // Uses a ref to track which pack IDs have already been fetched, avoiding
+  // stale closure over manifests/manifestLoading state.
+  const fetchedRef = useRef(new Set<string>());
+
   useEffect(() => {
+    const controller = new AbortController();
+
     benchmarkEntries.forEach((entry) => {
-      if (manifests[entry.pack_id] !== undefined || manifestLoading[entry.pack_id]) return;
+      if (fetchedRef.current.has(entry.pack_id)) return;
+      fetchedRef.current.add(entry.pack_id);
 
       setManifestLoading((prev) => ({ ...prev, [entry.pack_id]: true }));
 
       const url = `${PACK_BASE_URL}/${entry.path}/pack.json`;
-      fetch(url)
+      fetch(url, { signal: controller.signal })
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.json();
         })
         .then((manifest: PackManifest) => {
+          if (controller.signal.aborted) return;
           setManifests((prev) => ({ ...prev, [entry.pack_id]: manifest }));
           setManifestErrors((prev) => ({ ...prev, [entry.pack_id]: null }));
         })
         .catch((err) => {
+          if (controller.signal.aborted) return;
           setManifests((prev) => ({ ...prev, [entry.pack_id]: null }));
           setManifestErrors((prev) => ({
             ...prev,
@@ -545,10 +554,14 @@ export function ReferenceDataBrowser() {
           }));
         })
         .finally(() => {
-          setManifestLoading((prev) => ({ ...prev, [entry.pack_id]: false }));
+          if (!controller.signal.aborted) {
+            setManifestLoading((prev) => ({ ...prev, [entry.pack_id]: false }));
+          }
         });
     });
-  }, [benchmarkEntries]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    return () => controller.abort();
+  }, [benchmarkEntries]);
 
   // Fetch training data when a pack is selected
   useEffect(() => {
@@ -566,24 +579,28 @@ export function ReferenceDataBrowser() {
       return;
     }
 
+    const controller = new AbortController();
     setDataLoading(true);
     setDataError(null);
 
     const url = `${PACK_BASE_URL}/${selectedEntry.path}/${trainingDataPath}`;
-    fetch(url)
+    fetch(url, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then((json: TrainingData) => {
-        setTrainingData(json);
+        if (!controller.signal.aborted) setTrainingData(json);
       })
       .catch((err) => {
+        if (controller.signal.aborted) return;
         setDataError(err instanceof Error ? err.message : String(err));
       })
       .finally(() => {
-        setDataLoading(false);
+        if (!controller.signal.aborted) setDataLoading(false);
       });
+
+    return () => controller.abort();
   }, [selectedEntry, manifests]);
 
   // Build pack info list for the list view
