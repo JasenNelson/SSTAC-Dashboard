@@ -23,6 +23,8 @@ export default function ProjectPhases() {
                 <div className="flex-1">
                   <button 
                     onClick={() => setExpandedWhitePaper(!expandedWhitePaper)}
+                    aria-expanded={expandedWhitePaper}
+                    aria-controls="white-paper-details"
                     className="flex items-center space-x-2 text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
                   >
                     <span>SABCS White Paper (&apos;High-Level Summary&apos;)</span>
@@ -33,7 +35,7 @@ export default function ProjectPhases() {
                   
                   {/* Expandable Sub-bullets */}
                   {expandedWhitePaper && (
-                    <div className="mt-3 ml-6 space-y-2">
+                    <div id="white-paper-details" className="mt-3 ml-6 space-y-2">
                       {[
                         'Preliminary Scientific Review',
                         'Jurisdictional Scan', 
