@@ -96,27 +96,24 @@ export async function POST(
     );
     await mkdir(sourceDir, { recursive: true });
 
-    const newFiles = [];
+    const newFiles = await Promise.all(
+      uploadedFiles
+        .filter((entry): entry is File => entry instanceof File)
+        .map(async (entry) => {
+          const filename = entry.name;
+          const buffer = Buffer.from(await entry.arrayBuffer());
+          const filePath = path.join(sourceDir, filename);
 
-    for (const entry of uploadedFiles) {
-      if (!(entry instanceof File)) {
-        continue;
-      }
+          await writeFile(filePath, buffer);
 
-      const filename = entry.name;
-      const buffer = Buffer.from(await entry.arrayBuffer());
-      const filePath = path.join(sourceDir, filename);
-
-      await writeFile(filePath, buffer);
-
-      const fileRecord = addProjectFile(
-        id,
-        filename,
-        entry.size,
-        entry.type || 'application/octet-stream'
-      );
-      newFiles.push(fileRecord);
-    }
+          return addProjectFile(
+            id,
+            filename,
+            entry.size,
+            entry.type || 'application/octet-stream'
+          );
+        })
+    );
 
     return NextResponse.json({ files: newFiles }, { status: 201 });
   } catch (error) {
