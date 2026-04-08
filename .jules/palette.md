@@ -1,0 +1,3 @@
+## 2024-03-10 - Missing ARIA Labels on Icon-only Table/Panel Buttons
+**Learning:** The application frequently uses Lucide icons inside interactive `<button>` elements without accessible names or `aria-expanded` states (e.g., expand rows, open maps, close panels in `SiteDataTable` and `SiteDetails`). This makes navigation very confusing for screen reader users traversing complex table/panel UIs.
+**Action:** When adding interactive icons (especially for expand/collapse and selection toggles), ensure both `aria-label` (or visually hidden text) and `aria-expanded` attributes are provided, along with `focus-visible` styles for clear keyboard navigation cues.
