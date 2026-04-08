@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/api-guards';
+import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth';
 import path from 'path';
 import { getAssessmentById } from '@/lib/sqlite/queries';
 import {
@@ -436,13 +437,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get reviewer info from session/auth
+    const supabase = await createAuthenticatedClient();
+    const user = await getAuthenticatedUser(supabase);
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found in session' },
+        { status: 401 }
+      );
+    }
+
+    const reviewerName = (user.user_metadata?.full_name as string) || user.email || 'Unknown Reviewer';
+
     // Save the validation
     const validationData: BaselineValidationData = {
       validation_type: validation.assessment,
       notes: validation.notes,
-      // TODO: Get reviewer info from session/auth
-      reviewer_id: 'system',
-      reviewer_name: 'System User',
+      reviewer_id: user.id,
+      reviewer_name: reviewerName,
     };
 
     const savedValidation = upsertBaselineValidation(assessmentId, validationData);
