@@ -1,0 +1,4 @@
+## 2026-04-08 - [SQL Injection Prevention in LIMIT/OFFSET]
+**Vulnerability:** LIMIT and OFFSET values from the `filters` parameter were directly interpolated into SQL queries in `src/lib/sqlite/queries/index.ts` (e.g., `sql += \` LIMIT ${filters.limit}\``). The `orderBy` field was also directly interpolated.
+**Learning:** Even if TypeScript types restrict inputs (e.g., `number`), untrusted upstream inputs can bypass these at runtime if API boundaries don't strictly validate or serialize them, potentially causing SQL injection or syntax failures.
+**Prevention:** Always use parameterized queries (`?`) for `LIMIT` and `OFFSET` values when building dynamic SQL strings. For dynamic identifiers like `ORDER BY` columns that cannot be parameterized, validate them against a strict allowlist at runtime before interpolating.
