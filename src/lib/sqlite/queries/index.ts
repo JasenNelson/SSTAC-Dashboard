@@ -250,10 +250,12 @@ export function getAssessments(submissionId: string, filters: AssessmentFilters 
     ORDER BY a.item_number ASC, a.id ASC
   `;
 
-  if (filters.limit) {
-    sql += ` LIMIT ${filters.limit}`;
-    if (filters.offset) {
-      sql += ` OFFSET ${filters.offset}`;
+  if (filters.limit !== undefined) {
+    sql += ` LIMIT ?`;
+    params.push(filters.limit);
+    if (filters.offset !== undefined) {
+      sql += ` OFFSET ?`;
+      params.push(filters.offset);
     }
   }
 
