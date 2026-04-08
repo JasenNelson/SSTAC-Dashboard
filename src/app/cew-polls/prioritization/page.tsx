@@ -146,8 +146,8 @@ export default function CEWPrioritizationPage() {
                     questionNumber={poll.questionNumber}
                     authCode={authCode}
                     predefinedOptions={poll.predefinedOptions}
-                    onVote={(pollIndex, words) => {
-                      console.log(`Words submitted for poll ${pollIndex}:`, words);
+                    onVote={(_pollIndex, _words) => {
+                      // Vote submitted
                     }}
                   />
                 </div>
@@ -163,8 +163,8 @@ export default function CEWPrioritizationPage() {
                     pagePath="/cew-polls/prioritization"
                     questionNumber={poll.questionNumber}
                     authCode={authCode}
-                    onVote={(pollIndex, rankings) => {
-                      console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
+                    onVote={(_pollIndex, _rankings) => {
+                      // Vote submitted
                     }}
                   />
                 </div>
@@ -180,8 +180,8 @@ export default function CEWPrioritizationPage() {
                     pagePath="/cew-polls/prioritization"
                     questionNumber={poll.questionNumber}
                     authCode={authCode}
-                    onVote={(pollIndex, optionIndex, otherText) => {
-                      console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}`);
+                    onVote={(_pollIndex, _optionIndex, _otherText) => {
+                      // Vote submitted
                     }}
                   />
                 </div>
