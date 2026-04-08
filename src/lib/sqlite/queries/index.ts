@@ -251,9 +251,11 @@ export function getAssessments(submissionId: string, filters: AssessmentFilters 
   `;
 
   if (filters.limit) {
-    sql += ` LIMIT ${filters.limit}`;
+    sql += ` LIMIT ?`;
+    params.push(filters.limit);
     if (filters.offset) {
-      sql += ` OFFSET ${filters.offset}`;
+      sql += ` OFFSET ?`;
+      params.push(filters.offset);
     }
   }
 
