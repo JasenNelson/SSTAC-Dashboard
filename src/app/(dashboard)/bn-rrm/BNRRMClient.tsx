@@ -1,7 +1,5 @@
 'use client';
 
-import DOMPurify from 'isomorphic-dompurify';
-
 import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { cn } from '@/utils/cn';
@@ -458,9 +456,9 @@ function ConceptualView() {
             ))}
           </div>
           <div className="grid grid-cols-3 gap-4 mt-12">
-            <FeatureCard title="Forward Inference" description="Set node states and observe how risk propagates through causal pathways." icon="&#8594;" />
-            <FeatureCard title="Backward Inference" description="Set target protection level and derive protective concentrations through causal chain." icon="&#8592;" />
-            <FeatureCard title="Sensitivity Analysis" description="Identify which nodes most influence the risk outcome." icon="&#9889;" />
+            <FeatureCard title="Forward Inference" description="Set node states and observe how risk propagates through causal pathways." icon="→" />
+            <FeatureCard title="Backward Inference" description="Set target protection level and derive protective concentrations through causal chain." icon="←" />
+            <FeatureCard title="Sensitivity Analysis" description="Identify which nodes most influence the risk outcome." icon="⚡" />
           </div>
           <div className="text-center mt-8"><p className="text-sm text-slate-500 dark:text-slate-400">Click the <strong>Detailed BN</strong> tab to explore the full causal network</p></div>
         </div>
@@ -483,9 +481,9 @@ function ConceptualView() {
           <ConceptualBox title="Risk" description="Integrated ecological risk from causal chain" icon={AlertTriangle} color="red" items={['Low — Reference-like', 'Moderate — Some concern', 'High — Significant impact']} />
         </div>
         <div className="grid grid-cols-3 gap-4 mt-12">
-          <FeatureCard title="Forward Inference" description="Set contaminant concentrations and site conditions — risk propagates through causal pathways." icon="&#8594;" />
-          <FeatureCard title="Backward Inference" description="Set target protection level — derive site-specific protective concentrations through causal chain." icon="&#8592;" />
-          <FeatureCard title="Sensitivity Analysis" description="Identify which contaminants and conditions most influence the risk outcome." icon="&#9889;" />
+          <FeatureCard title="Forward Inference" description="Set contaminant concentrations and site conditions — risk propagates through causal pathways." icon="→" />
+          <FeatureCard title="Backward Inference" description="Set target protection level — derive site-specific protective concentrations through causal chain." icon="←" />
+          <FeatureCard title="Sensitivity Analysis" description="Identify which contaminants and conditions most influence the risk outcome." icon="⚡" />
         </div>
         <div className="text-center mt-8"><p className="text-sm text-slate-500 dark:text-slate-400">Click the <strong>Detailed BN</strong> tab to explore the full causal network</p></div>
       </div>
@@ -509,7 +507,5 @@ function Arrow() {
 }
 
 function FeatureCard({ title, description, icon }: { title: string; description: string; icon: string }) {
-  // Security fix: sanitize icon input before rendering as HTML to prevent XSS
-  const sanitizedIcon = DOMPurify.sanitize(icon);
-  return <div className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow"><div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center text-xl mb-3" dangerouslySetInnerHTML={{ __html: sanitizedIcon }} /><h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-1">{title}</h4><p className="text-sm text-slate-500 dark:text-slate-400">{description}</p></div>;
+  return <div className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow"><div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center text-xl mb-3">{icon}</div><h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-1">{title}</h4><p className="text-sm text-slate-500 dark:text-slate-400">{description}</p></div>;
 }
