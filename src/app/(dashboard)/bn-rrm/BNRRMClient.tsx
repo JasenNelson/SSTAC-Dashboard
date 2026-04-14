@@ -1,5 +1,7 @@
 'use client';
 
+import DOMPurify from 'isomorphic-dompurify';
+
 import { useState, useCallback, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { cn } from '@/utils/cn';
@@ -507,5 +509,7 @@ function Arrow() {
 }
 
 function FeatureCard({ title, description, icon }: { title: string; description: string; icon: string }) {
-  return <div className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow"><div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center text-xl mb-3" dangerouslySetInnerHTML={{ __html: icon }} /><h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-1">{title}</h4><p className="text-sm text-slate-500 dark:text-slate-400">{description}</p></div>;
+  // Security fix: sanitize icon input before rendering as HTML to prevent XSS
+  const sanitizedIcon = DOMPurify.sanitize(icon);
+  return <div className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700 hover:shadow-md transition-shadow"><div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center text-xl mb-3" dangerouslySetInnerHTML={{ __html: sanitizedIcon }} /><h4 className="font-semibold text-slate-800 dark:text-slate-100 mb-1">{title}</h4><p className="text-sm text-slate-500 dark:text-slate-400">{description}</p></div>;
 }
