@@ -1,0 +1,3 @@
+## 2025-02-12 - Results Panel Disclosure & Toggle Groups
+**Learning:** Segmented controls built using Tailwind utility classes (`flex`, `bg-slate-100`) often omit necessary ARIA roles making them confusing for screen readers. Using `role="group"` with an `aria-label` provides the structure, while `aria-pressed` states on the child buttons clearly identify the selected option. Icon-only buttons mapping to disclosure widgets must have dynamic `aria-expanded` attributes combined with `aria-label` or `title` attributes indicating the action.
+**Action:** Always implement `role="group"` with `aria-pressed` for custom toggle button groups, and always ensure icon-only disclosure buttons specify `aria-expanded` along with their labels.
