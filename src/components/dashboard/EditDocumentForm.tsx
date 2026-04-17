@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/Toast';
 import TagSelector from './TagSelector';
@@ -59,12 +60,14 @@ export default function EditDocumentForm({ document }: EditDocumentFormProps) {
 
   // Submit button component for forms
   function SubmitButton({ children }: { children: React.ReactNode }) {
+    const { pending } = useFormStatus();
     return (
       <button
         type="submit"
-        className="w-full px-4 py-2 font-medium text-white bg-sky-700 rounded-md hover:bg-sky-800 transition-colors"
+        disabled={pending}
+        className="w-full px-4 py-2 font-medium text-white bg-sky-700 rounded-md hover:bg-sky-800 disabled:bg-sky-300 disabled:cursor-not-allowed transition-colors"
       >
-        {children}
+        {pending ? 'Saving Changes...' : children}
       </button>
     );
   }
