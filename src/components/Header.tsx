@@ -193,6 +193,9 @@ export default function Header() {
                 <button
                   onClick={() => setIsDesktopMenuOpen(!isDesktopMenuOpen)}
                   className="flex items-center px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+                  aria-expanded={isDesktopMenuOpen}
+                  aria-haspopup="true"
+                  aria-controls="desktop-menu-dropdown"
                 >
                   <span className="mr-2">☰</span>
                   Menu
@@ -200,7 +203,7 @@ export default function Header() {
 
                 {/* Desktop Dropdown Menu */}
                 {isDesktopMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-slate-600 z-50">
+                  <div id="desktop-menu-dropdown" className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-slate-600 z-50">
                     <div className="py-1 max-h-96 overflow-y-auto">
                       {MENU_CATEGORIES.map((category) => (
                         <div key={category}>
@@ -265,6 +268,9 @@ export default function Header() {
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   className="md:hidden p-2 rounded-md text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+                  aria-label="Toggle mobile menu"
+                  aria-expanded={isMobileMenuOpen}
+                  aria-controls="mobile-menu-dropdown"
                 >
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     {isMobileMenuOpen ? (
@@ -296,7 +302,7 @@ export default function Header() {
 
         {/* Mobile Navigation Menu */}
         {session && isMobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-200 dark:border-slate-700 py-4">
+          <div id="mobile-menu-dropdown" className="md:hidden border-t border-slate-200 dark:border-slate-700 py-4">
             <nav className="space-y-1">
               {MENU_CATEGORIES.map((category) => (
                 <div key={category}>
