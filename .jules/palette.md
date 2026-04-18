@@ -1,0 +1,3 @@
+## 2024-05-18 - Header Dropdown Accessibility
+**Learning:** Proper linking of trigger buttons to their dropdown content using `aria-controls`, `aria-expanded`, and `aria-haspopup` is vital for screen readers, as well as providing explicit `aria-label`s for icon-only toggles. Also learned to ensure I don't accidentally commit `.patch` temporary scratchpads or large `pnpm-lock.yaml` file churn from standard installs in my submissions.
+**Action:** Always verify `git status` explicitly to ensure ONLY the desired UI component files are staged for commit, dropping stray test or lock files. Ensure ARIA patterns for dropdowns use both state (`expanded`) and relationships (`controls`, `id`).
