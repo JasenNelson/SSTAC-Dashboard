@@ -16,18 +16,11 @@ New to the project? Read these in order:
 3. **[Core Guidelines](AGENTS.md)** - Essential development rules
 4. **[Project Status](PROJECT_STATUS.md)** - Reference snapshot (non-canonical)
 
-### **🚀 Quick Start Templates**
+### **🚀 Developer Quickstart**
 
-**[QUICK_START_TEMPLATES.md](QUICK_START_TEMPLATES.md)** - AI Chat Templates  
-*Copy-paste templates to quickly orient AI assistants to specific topics*
+See **[`docs/DEVELOPER_QUICKSTART.md`](DEVELOPER_QUICKSTART.md)** for the 30-minute onboarding guide.
 
-Use these templates in fresh AI chats to provide instant context for:
-- Project assessment & improvement planning
-- Poll system work
-- Testing infrastructure
-- Architecture & design patterns
-- Debugging sessions
-- Complete project review
+The earlier `QUICK_START_TEMPLATES.md` AI-chat template file has been superseded by `DEVELOPER_QUICKSTART.md` and the canonical `docs/INDEX.md`. Prior copy-paste templates covered project assessment, poll system work, testing infrastructure, architecture, debugging, and full project review — the same topics are now addressed via the canonical index plus per-topic docs it references.
 
 ---
 

@@ -508,7 +508,7 @@ Phase 3 addressed these gaps with a systematic 6-category approach.
   - OWASP Top 10: SQL injection, XSS, CSRF prevention
 
 **Files Created:**
-- `docs/SECURITY_TESTING.md` (1,100+ lines)
+- `docs/archive/2026-04-20_phase3-session-reports/SECURITY_TESTING.md` (1,100+ lines — archived 2026-04-20, superseded by `docs/SECURITY_BEST_PRACTICES.md`)
 - `src/__tests__/security-validation.test.ts` (55 tests, 500+ lines)
 
 **Task 3.6: Performance Testing**
@@ -523,7 +523,7 @@ Phase 3 addressed these gaps with a systematic 6-category approach.
   - Image optimization opportunities
 
 **Files Created:**
-- `docs/PERFORMANCE_TESTING.md` (1,200+ lines with bundle analysis and optimization recommendations)
+- `docs/archive/2026-04-20_phase3-session-reports/PERFORMANCE_TESTING.md` (1,200+ lines with bundle analysis and optimization recommendations — archived 2026-04-20, superseded by `docs/PERFORMANCE_TUNING_GUIDE.md`)
 - `src/__tests__/performance.test.ts` (33 tests, 500+ lines)
 
 ### File References
@@ -548,11 +548,11 @@ Phase 3 addressed these gaps with a systematic 6-category approach.
 
 **Security Tests:**
 - `src/__tests__/security-validation.test.ts:1-500` - 55 tests
-- `docs/SECURITY_TESTING.md:1-1100` - Full security audit report
+- `docs/archive/2026-04-20_phase3-session-reports/SECURITY_TESTING.md:1-1100` - Full security audit report (archived; current guidance in `docs/SECURITY_BEST_PRACTICES.md`)
 
 **Performance Tests:**
 - `src/__tests__/performance.test.ts:1-500` - 33 tests
-- `docs/PERFORMANCE_TESTING.md:1-1200` - Bundle analysis and optimization plan
+- `docs/archive/2026-04-20_phase3-session-reports/PERFORMANCE_TESTING.md:1-1200` - Bundle analysis and optimization plan (archived; current guidance in `docs/PERFORMANCE_TUNING_GUIDE.md`)
 
 **Test Execution Results:**
 - Total new tests created: 305+

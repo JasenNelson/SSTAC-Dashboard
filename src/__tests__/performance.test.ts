@@ -514,14 +514,12 @@ describe.skipIf(!buildExists)('Performance Testing - SSTAC Dashboard (Phase 3.6)
 
   describe('Performance Metrics Summary', () => {
     test('should document all performance findings', () => {
-      // Phase 3.6 deliverables:
-      // 1. docs/PERFORMANCE_TESTING.md with bundle analysis ✓
-      // 2. src/__tests__/performance.test.ts with tests ✓
-      // 3. Bundle size metrics captured ✓
-      // 4. Core Web Vitals targets defined ✓
-      // 5. Optimization opportunities identified ✓
+      // Invariant: repository must ship a current performance-tuning guide.
+      // The original Phase 3.6 deliverable (docs/PERFORMANCE_TESTING.md) was
+      // superseded by docs/PERFORMANCE_TUNING_GUIDE.md; the historical report
+      // is archived under docs/archive/2026-04-20_phase3-session-reports/.
 
-      const docsPath = join(projectRoot, 'docs/PERFORMANCE_TESTING.md');
+      const docsPath = join(projectRoot, 'docs/PERFORMANCE_TUNING_GUIDE.md');
       const docsExist = statSync(docsPath).isFile();
 
       expect(docsExist).toBe(true);
