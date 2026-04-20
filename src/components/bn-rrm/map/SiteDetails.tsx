@@ -107,8 +107,12 @@ export function SiteDetails({ className, onClose, onRunAssessment, onRunBatchAss
             )}
           </div>
           {onClose && (
-            <button onClick={() => { selectSite(null); onClose(); }} className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600">
-              <X className="w-5 h-5" />
+            <button
+              onClick={() => { selectSite(null); onClose(); }}
+              className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              aria-label="Close site details"
+            >
+              <X className="w-5 h-5" aria-hidden="true" />
             </button>
           )}
         </div>
