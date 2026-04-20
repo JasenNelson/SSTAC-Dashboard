@@ -200,19 +200,24 @@ export function SiteDataTable({ onRunAssessment, onViewOnMap }: SiteDataTablePro
               }}
             >
               <button
-                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-600 rounded"
+                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 onClick={(e) => { e.stopPropagation(); toggleSiteSelection(siteId); }}
                 title={isChecked ? 'Deselect' : 'Select'}
+                aria-label={isChecked ? 'Deselect site' : 'Select site'}
               >
                 {isChecked ? (
-                  <CheckSquare className="w-4 h-4 text-blue-500" />
+                  <CheckSquare className="w-4 h-4 text-blue-500" aria-hidden="true" />
                 ) : (
-                  <Square className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                  <Square className="w-4 h-4 text-slate-400 dark:text-slate-500" aria-hidden="true" />
                 )}
               </button>
 
-              <button className="p-1 hover:bg-slate-200 dark:hover:bg-slate-600 rounded">
-                {isExpanded ? <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-500 dark:text-slate-400" />}
+              <button
+                className="p-1 hover:bg-slate-200 dark:hover:bg-slate-600 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                aria-expanded={isExpanded}
+                aria-label={isExpanded ? 'Collapse site details' : 'Expand site details'}
+              >
+                {isExpanded ? <ChevronDown className="w-4 h-4 text-slate-500 dark:text-slate-400" aria-hidden="true" /> : <ChevronRight className="w-4 h-4 text-slate-500 dark:text-slate-400" aria-hidden="true" />}
               </button>
 
               <StatusIcon status={status} />
@@ -249,6 +254,7 @@ export function SiteDataTable({ onRunAssessment, onViewOnMap }: SiteDataTablePro
                     onClick={(e) => { e.stopPropagation(); onViewOnMap(siteId); }}
                     className="p-2 text-slate-400 dark:text-slate-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                     title="View on map"
+                    aria-label="View on map"
                   >
                     <MapPin className="w-4 h-4" />
                   </button>
@@ -258,6 +264,7 @@ export function SiteDataTable({ onRunAssessment, onViewOnMap }: SiteDataTablePro
                     onClick={(e) => { e.stopPropagation(); onRunAssessment(siteId); }}
                     className="p-2 text-slate-400 dark:text-slate-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
                     title="Run assessment"
+                    aria-label="Run assessment"
                   >
                     <Play className="w-4 h-4" />
                   </button>
@@ -266,6 +273,7 @@ export function SiteDataTable({ onRunAssessment, onViewOnMap }: SiteDataTablePro
                   onClick={(e) => { e.stopPropagation(); removeSite(siteId); }}
                   className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                   title="Remove site"
+                  aria-label="Remove site"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
