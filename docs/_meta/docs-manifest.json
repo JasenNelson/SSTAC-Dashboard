@@ -384,7 +384,7 @@
         "status": "complete",
         "tests_added": 55,
         "new_files": [
-          "docs/SECURITY_TESTING.md (1100+ lines)",
+          "docs/archive/2026-04-20_phase3-session-reports/SECURITY_TESTING.md (1100+ lines)",
           "src/__tests__/security-validation.test.ts (55 tests)"
         ],
         "passing": 55,
@@ -394,7 +394,7 @@
         "status": "complete",
         "tests_added": 33,
         "new_files": [
-          "docs/PERFORMANCE_TESTING.md (1200+ lines)",
+          "docs/archive/2026-04-20_phase3-session-reports/PERFORMANCE_TESTING.md (1200+ lines)",
           "src/__tests__/performance.test.ts (33 tests)"
         ],
         "passing": 33,
@@ -437,7 +437,7 @@
         "6889e66 - security: remove localStorage admin bypass in AdminContext (Phase 2.1 follow-up)"
       ],
       "deliverables": [
-        "docs/PHASE3_TESTING_REPORT.md"
+        "docs/archive/2026-04-20_phase3-session-reports/PHASE3_TESTING_REPORT.md"
       ],
       "last_verified": "2026-01-25"
     },
@@ -1046,6 +1046,64 @@
         "coordination",
         "archive"
       ]
+    },
+    {
+      "id": "archive.phase3_session_reports_readme",
+      "path": "docs/archive/2026-04-20_phase3-session-reports/README.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "testing",
+        "archive"
+      ],
+      "notes": "Index/README for the 2026-04-20 Batch A archive of Phase 3 session reports; documents source, replacement, and originating commits."
+    },
+    {
+      "id": "archive.phase3_testing_report",
+      "path": "docs/archive/2026-04-20_phase3-session-reports/PHASE3_TESTING_REPORT.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "testing",
+        "phase3",
+        "archive"
+      ],
+      "notes": "Phase 3 testing session closeout (2026-01-25); embeds stale grade claim A-(92) → A(93). Superseded by docs/LESSONS.md and docs/SECURITY_BEST_PRACTICES.md."
+    },
+    {
+      "id": "archive.phase3_security_testing",
+      "path": "docs/archive/2026-04-20_phase3-session-reports/SECURITY_TESTING.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "security",
+        "testing",
+        "archive"
+      ],
+      "notes": "Phase 3 security testing report (2026-01-25, ~1,100 lines); embeds stale grade claim A (93/100). Superseded by docs/SECURITY_BEST_PRACTICES.md."
+    },
+    {
+      "id": "archive.phase3_performance_testing",
+      "path": "docs/archive/2026-04-20_phase3-session-reports/PERFORMANCE_TESTING.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "performance",
+        "testing",
+        "archive"
+      ],
+      "notes": "Phase 3 performance testing + bundle analysis report (2026-01-25, ~1,200 lines); embeds stale grade claim A (93/100). Superseded by docs/PERFORMANCE_TUNING_GUIDE.md."
+    },
+    {
+      "id": "archive.phase3_quick_start_templates",
+      "path": "docs/archive/2026-04-20_phase3-session-reports/QUICK_START_TEMPLATES.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "history",
+        "onboarding",
+        "archive"
+      ],
+      "notes": "AI-chat prompt templates (2025-11-02); cite Phase 3 completion framing that is no longer current. Superseded by docs/DEVELOPER_QUICKSTART.md and the canonical docs/INDEX.md."
     },
     {
       "id": "archive.master_completion",
