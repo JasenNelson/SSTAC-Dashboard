@@ -845,6 +845,16 @@
       "notes": "Legacy index; should point to docs/INDEX.md and avoid volatile metrics."
     },
     {
+      "id": "docs.audit_2026_04",
+      "path": "docs/_meta/DOCUMENTATION_AUDIT_2026-04.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "docs-system",
+        "audit"
+      ],
+      "notes": "2026-04 documentation audit deliverable (Phase 1a). Informs Phase 2/3 doc updates; do not treat as current-status source."
+    },
+    {
       "id": "ops.vercel_setup",
       "path": "docs/operations/VERCEL_SETUP.md",
       "lifecycle": "REFERENCE",

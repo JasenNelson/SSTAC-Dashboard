@@ -122,6 +122,9 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
   - Includes: data ownership rules, synchronization points, session resumption instructions, risk assessment
 - Archived snapshots: `docs/archive/2026-01-27_multi-project-coordination/`
 
+### Documentation audits (reference)
+- `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` - 2026-04 documentation audit (Phase 1a deliverable). Inventory, gate-coverage matrix, gap register, cross-repo integration review, manifest fact provenance check, path canonicalization, and prioritized P0/P1/P2 fixes that drive subsequent doc updates. Not a current-status source.
+
 ## Legacy index
 
 - `docs/README.md` is a legacy index. It should not be treated as canonical.
