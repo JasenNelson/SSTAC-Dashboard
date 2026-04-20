@@ -2,7 +2,7 @@
   "manifest_version": 1,
   "repo": {
     "name": "SSTAC-Dashboard",
-    "workspace_root": "F:/SSTAC-Dashboard"
+    "workspace_root": "C:/Projects/SSTAC-Dashboard"
   },
   "policies": {
     "lifecycle_definitions": {

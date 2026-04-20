@@ -533,6 +533,7 @@ WHERE tablename IN ('user_roles', 'discussions', 'likes');
 - **Role-based access control** for admin functions
 - **Session management** with proper cleanup
 - **Input sanitization** for all user inputs
+- **Middleware request flow**: see `docs/operations/MIDDLEWARE_GUIDE.md` for `src/middleware.ts` matcher, security headers, "Auth session missing" silencing rationale, and refresh-token redirect behavior.
 
 ### Data Protection
 - **Row level security** on all database tables
@@ -627,24 +628,21 @@ WHERE tablename IN ('user_roles', 'discussions', 'likes');
 - **`README.md`**: Project overview and feature descriptions
 - **`PROJECT_MEMORY.md`**: Critical knowledge and troubleshooting history
 
-## 🎯 Current Development Phase
+## 🎯 Development Phase History (snapshot)
 
-### ✅ Completed Phases
-- **Phase 1**: Basic dashboard and authentication
-- **Phase 2**: Admin management system (mostly complete - 4/5 items)
-- **Enhanced User Engagement**: Like system, user management (completed previously)
-- **Phase 3**: Validation & Security (November 2025) - Zod validation, structured logging, rate limiting, authorization review, ErrorBoundary
+> **Canonical current status lives in `docs/INDEX.md` and the manifest `facts` block.**
+> The bullets below are a dated historical snapshot — they describe phases that had been completed as of the dates noted, not the present state of the project. Do not cite this section for "current" grade, "production ready," or roadmap claims.
 
-### 🎯 Current Status
-- **Status**: See `docs/INDEX.md` / manifest `facts` for canonical current status and metrics.
-- **Production Ready**: All security, validation, and logging infrastructure complete
-- **Recent Work**: CEW & TWG Results pages recovered and deployed (November 18, 2025)
-- **Next Steps**: See `docs/review-analysis/A_MINUS_ACHIEVEMENT_PLAN.md` for current roadmap
+### Completed phases (historical, as of the listed dates)
+- **Phase 1**: Basic dashboard and authentication.
+- **Phase 2**: Admin management system (4/5 items complete at the time of this snapshot).
+- **Enhanced User Engagement**: Like system and user management (completed prior to Phase 3).
+- **Phase 3** (November 2025): Validation & Security — Zod validation, structured logging, rate limiting, authorization review, ErrorBoundary.
 
-### 🚀 Next Steps
-- Optional TypeScript cleanup in non-poll areas
-- Redis-based rate limiting (for multi-instance deployments)
-- Component refactoring (deferred to maintenance window)
+### Status pointers (do not embed metrics here)
+- For canonical current status, grade, and metrics: see `docs/INDEX.md` and `docs/_meta/docs-manifest.json` `facts`.
+- For the most recent documentation audit: see `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md`.
+- For deferred / next-step work: see `docs/NEXT_STEPS.md` (treat with the same date-stamp scrutiny).
 
 ## 🚫 What NOT to Debug or Fix
 
@@ -786,9 +784,12 @@ WHERE tablename IN ('user_roles', 'discussions', 'likes');
 - ❌ **Ignoring duplicate data cleanup**
 - ❌ **Not testing with known data sets**
 
-## 🎉 Success Metrics
+## 🎉 Historical Achievements (snapshot)
 
-### Phase 3 Achievements
+> Dated achievement snapshot — kept for context, not as a current-status assertion.
+> For canonical current status and metrics, see `docs/INDEX.md` and `docs/_meta/docs-manifest.json` `facts`.
+
+### Phase 3 achievements (as of November 2025)
 - **User Visibility**: Admin dashboard shows all authenticated users
 - **Email Addresses**: No more "User 1234..." display
 - **Automatic Role Assignment**: New signups get 'member' role automatically
@@ -796,14 +797,13 @@ WHERE tablename IN ('user_roles', 'discussions', 'likes');
 - **Admin Badge Persistence**: Robust system preventing badge disappearance
 - **Complete Theme System**: Dark/light mode with CSS specificity solution
 
-### System Capabilities
-- **Enterprise-level user management** with complete visibility
-- **Professional discussion forum** with engagement tracking
-- **Comprehensive content management** with tagging system
-- **Secure authentication** with role-based access control
-- **Complete theme system** with dark/light mode support
-- **Performance optimized** with efficient queries and responsive UI
+### System capability themes (descriptive, not graded)
+- User management with role-based visibility
+- Discussion forum with engagement tracking
+- Content management with tagging
+- Supabase-Auth-backed authentication with role-based access control
+- Dark/light theme system
 
 ---
 
-**Remember**: This system is **production-ready** and **fully functional**. Most "problems" are actually working features. Always verify before suggesting changes, and never break what's already working perfectly.
+**Remember**: This file is a behavioral safety guide, not a current-status source. Many subsystems are stable and should not be edited speculatively, but "production-ready" / "fully functional" / grade-style claims belong only in `docs/INDEX.md` and the manifest `facts` block, with provenance. Always verify before suggesting changes, and never break what's already working.

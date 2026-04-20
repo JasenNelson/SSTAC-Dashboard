@@ -86,7 +86,7 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 ### Developer Experience & Operations (Phase 5 - NEW)
 **Critical documentation for development, deployment, and maintenance**
 - `docs/DEVELOPER_QUICKSTART.md` - 30-minute onboarding guide for new developers
-- `docs/API_REFERENCE.md` - Complete API documentation with examples for all 28 endpoints
+- `docs/API_REFERENCE.md` - REST API endpoint reference. Endpoint count and per-route freshness are tracked through the audit (`docs/_meta/DOCUMENTATION_AUDIT_2026-04.md`) rather than hardcoded here.
 - `docs/OPERATIONS_RUNBOOK.md` - Deployment procedures, incident response, monitoring checklist
 - `docs/DATABASE_SCHEMA.md` - Database structure, relationships, query optimization, migration procedures
 - `docs/ARCHITECTURE_DECISIONS.md` - 10 ADRs explaining why key technologies/patterns were chosen
@@ -97,15 +97,17 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 ### Lessons & Patterns (reference; updated via /update-docs skill)
 - `docs/LESSONS.md` - Reusable patterns, architectural decisions, and deployment insights
 
-### A+ Grade Upgrade (reference; 20-week comprehensive upgrade plan)
-- `UPGRADE_PLAN_A_GRADE.md` - Full 40-page plan for B+ → A+ upgrade
-- `UPGRADE_QUICK_START.md` - 7-week accelerated track
-- `EXECUTIVE_SUMMARY.md` - Business case and ROI analysis
-- `ROADMAP.md` - Visual 20-week timeline
-- `STATUS_REVIEW_2026-01-25.md` - Current state (A grade 93/100)
-- `.github/PHASE_CHECKLIST.md` - Completion criteria for all 7 phases
-- `.github/UPGRADE_TRACKING.md` - Weekly progress reports
-- `IMPLEMENTATION_LOG.md` - Session-by-session tracking
+### Grade upgrade plan (reference; multi-week roadmap, treat as historical unless re-verified)
+The repo-root upgrade-plan files were authored mid-roadmap and embed grades, week counts, and "current state" claims. They are kept as historical planning artifacts; do not cite their grades or progress numbers as current truth without re-verifying against the manifest `facts` and the latest audit.
+
+- `UPGRADE_PLAN_A_GRADE.md` - Full multi-phase upgrade plan (planning artifact)
+- `UPGRADE_QUICK_START.md` - Accelerated track (planning artifact)
+- `EXECUTIVE_SUMMARY.md` - Business case and ROI analysis (planning artifact)
+- `ROADMAP.md` - Visual timeline (planning artifact)
+- `STATUS_REVIEW_2026-01-25.md` - Dated status snapshot from 2026-01-25; do not treat as current
+- `.github/PHASE_CHECKLIST.md` - Completion criteria per phase (planning artifact)
+- `.github/UPGRADE_TRACKING.md` - Weekly progress reports (historical)
+- `IMPLEMENTATION_LOG.md` - Session-by-session tracking (historical)
 - GitHub Project: https://github.com/users/JasenNelson/projects/2/views/1
 
 
@@ -122,11 +124,7 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 - Archived pre-correction copies live under `docs/regulatory-review/archive/`
 
 ### Multi-Project Coordination (reference)
-- `MULTI_PROJECT_COORDINATION.md` - Unified coordination for three concurrent development projects:
-  - **SSTAC Dashboard** (this project) - Phase 3 testing complete, Phase 4 optimization ready, Grade A (93/100)
-  - **Regulatory-Review** - Tier 2 evaluation complete, 5,809 policies evaluated, results synced to Dashboard
-  - **Database Cleanup** - Phase 1 planning, scope definition needed
-  - Includes: data ownership rules, synchronization points, session resumption instructions, risk assessment
+- `MULTI_PROJECT_COORDINATION.md` - Unified coordination for the SSTAC Dashboard, Regulatory-Review, and Database Cleanup workstreams. Phase/status claims inside that file are snapshots; check commit date and re-verify against current code before citing. Structural content (data ownership rules, synchronization points, session resumption instructions, risk assessment) remains the useful contribution.
 - Archived snapshots: `docs/archive/2026-01-27_multi-project-coordination/`
 
 ### Documentation audits (reference)
