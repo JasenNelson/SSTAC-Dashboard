@@ -132,13 +132,19 @@ export interface UpdateJudgmentData extends Partial<CreateJudgmentData> {
 // Submission Queries
 // =============================================================================
 
+const ALLOWED_SUBMISSION_ORDER_COLUMNS = ['imported_at', 'evaluation_completed'] as const;
+type SubmissionOrderColumn = (typeof ALLOWED_SUBMISSION_ORDER_COLUMNS)[number];
+
 /**
  * Get all submissions with optional ordering
  */
-export function getSubmissions(orderBy: 'imported_at' | 'evaluation_completed' = 'imported_at'): Submission[] {
+export function getSubmissions(orderBy: SubmissionOrderColumn = 'imported_at'): Submission[] {
+  const safeOrderBy = (ALLOWED_SUBMISSION_ORDER_COLUMNS as readonly string[]).includes(orderBy)
+    ? orderBy
+    : 'imported_at';
   const sql = `
     SELECT * FROM submissions
-    ORDER BY ${orderBy} DESC
+    ORDER BY ${safeOrderBy} DESC
   `;
   return executeQuery<Submission>(sql);
 }
@@ -251,9 +257,11 @@ export function getAssessments(submissionId: string, filters: AssessmentFilters 
   `;
 
   if (filters.limit) {
-    sql += ` LIMIT ${filters.limit}`;
+    sql += ' LIMIT ?';
+    params.push(filters.limit);
     if (filters.offset) {
-      sql += ` OFFSET ${filters.offset}`;
+      sql += ' OFFSET ?';
+      params.push(filters.offset);
     }
   }
 
