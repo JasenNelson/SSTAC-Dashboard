@@ -180,18 +180,26 @@ export const ResultsPanel = memo(function ResultsPanel({
           <h3 className="font-semibold text-slate-800 dark:text-slate-100">Inference Results</h3>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"
+            className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? "Collapse inference results" : "Expand inference results"}
+            title={isExpanded ? "Collapse inference results" : "Expand inference results"}
           >
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </div>
 
         {/* Mode toggle */}
-        <div className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+        <div
+          className="flex bg-slate-100 dark:bg-slate-700 rounded-lg p-1"
+          role="group"
+          aria-label="Inference mode"
+        >
           <button
             onClick={() => setMode('forward')}
+            aria-pressed={mode === 'forward'}
             className={cn(
-              'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors',
+              'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
               mode === 'forward'
                 ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
@@ -202,8 +210,9 @@ export const ResultsPanel = memo(function ResultsPanel({
           </button>
           <button
             onClick={() => setMode('backward')}
+            aria-pressed={mode === 'backward'}
             className={cn(
-              'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors',
+              'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
               mode === 'backward'
                 ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'

@@ -838,14 +838,15 @@ export function SiteMap({
 
       {/* Zoom Controls */}
       <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
-        <button onClick={handleZoomIn} className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700" title="Zoom in">
+        <button aria-label="Zoom in" onClick={handleZoomIn} className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700" title="Zoom in">
           <ZoomIn className="w-5 h-5 text-slate-600 dark:text-slate-400" />
         </button>
-        <button onClick={handleZoomOut} className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700" title="Zoom out">
+        <button aria-label="Zoom out" onClick={handleZoomOut} className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700" title="Zoom out">
           <ZoomOut className="w-5 h-5 text-slate-600 dark:text-slate-400" />
         </button>
         <div className="h-px bg-slate-200 dark:bg-slate-600 my-1" />
         <button
+          aria-label="Fit to sites"
           onClick={handleFitToSites}
           className={cn("p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700", siteCount > 0 ? "hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600" : "opacity-50 cursor-not-allowed")}
           disabled={siteCount === 0}
@@ -857,6 +858,8 @@ export function SiteMap({
         {/* Layer switcher */}
         <div className="relative">
           <button
+            aria-label="Change map layer"
+            aria-expanded={showLayerMenu}
             onClick={() => setShowLayerMenu(!showLayerMenu)}
             className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
             title="Change map layer"
@@ -959,6 +962,7 @@ export function SiteMap({
 
         <div className="h-px bg-slate-200 dark:bg-slate-600 my-1" />
         <button
+          aria-label="Export map image"
           onClick={handleExportMap}
           className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
           title="Export map image"
@@ -1042,6 +1046,8 @@ export function SiteMap({
       {siteCount > 0 && (
         <div className="absolute bottom-4 right-4 z-[1000] bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 w-64">
           <button
+            aria-label={siteListExpanded ? "Collapse site list" : "Expand site list"}
+            aria-expanded={siteListExpanded}
             onClick={() => setSiteListExpanded(!siteListExpanded)}
             className="w-full px-3 py-2 flex items-center justify-between border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
           >
