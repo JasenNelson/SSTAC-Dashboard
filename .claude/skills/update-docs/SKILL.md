@@ -81,11 +81,11 @@ Shall I proceed?
 ### Key Documents
 | Document | Purpose | Location | Lifecycle |
 |----------|---------|----------|-----------|
-| docs/INDEX.md | Canonical entrypoint, system overview | `F:\sstac-dashboard\docs\INDEX.md` | AUTHORITATIVE |
-| docs/_meta/docs-manifest.json | Gate definitions, lifecycle policies, facts | `F:\sstac-dashboard\docs\_meta\docs-manifest.json` | AUTHORITATIVE |
-| docs/LESSONS.md | Lessons learned during development | `F:\sstac-dashboard\docs\LESSONS.md` | REFERENCE |
-| docs/NEXT_STEPS.md | Plan for future work | `F:\sstac-dashboard\docs\NEXT_STEPS.md` | REFERENCE |
-| docs/ARCHITECTURE.md | System design and patterns | `F:\sstac-dashboard\docs\ARCHITECTURE.md` | REFERENCE |
+| docs/INDEX.md | Canonical entrypoint, system overview | `C:/Projects/SSTAC-Dashboard/docs/INDEX.md` | AUTHORITATIVE |
+| docs/_meta/docs-manifest.json | Gate definitions, lifecycle policies, facts | `C:/Projects/SSTAC-Dashboard/docs/_meta/docs-manifest.json` | AUTHORITATIVE |
+| docs/LESSONS.md | Lessons learned during development | `C:/Projects/SSTAC-Dashboard/docs/LESSONS.md` | REFERENCE |
+| docs/NEXT_STEPS.md | Plan for future work | `C:/Projects/SSTAC-Dashboard/docs/NEXT_STEPS.md` | REFERENCE |
+| docs/ARCHITECTURE_DECISIONS.md | Architecture Decision Records | `C:/Projects/SSTAC-Dashboard/docs/ARCHITECTURE_DECISIONS.md` | REFERENCE |
 
 ### Lifecycle Policies
 - **AUTHORITATIVE**: Required documentation; gates enforce these; changes blocked if requirements missing
@@ -161,7 +161,7 @@ Add to the appropriate section or create new section:
 [What worked, code examples if applicable]
 
 ### File References
-- File path with line numbers: `F:\sstac-dashboard\src\...:line_number`
+- File path with line numbers: `C:/Projects/SSTAC-Dashboard/src/...:line_number`
 - Related files that implement this pattern
 
 ### Key Takeaway
@@ -194,11 +194,11 @@ Three-pronged approach:
 3. Add conditional imports to API routes: `src/app/api/regulatory-review/search/route.ts:14-19`
 
 ### File References
-- Configuration: `F:\sstac-dashboard\next.config.ts:12-18`
-- Client init: `F:\sstac-dashboard\src\lib\sqlite\client.ts:25-36`
+- Configuration: `C:/Projects/SSTAC-Dashboard/next.config.ts:12-18`
+- Client init: `C:/Projects/SSTAC-Dashboard/src/lib/sqlite/client.ts:25-36`
 - API routes using pattern:
-  - `F:\sstac-dashboard\src\app\api\regulatory-review\search\route.ts:14-19`
-  - `F:\sstac-dashboard\src\app\api\regulatory-review\submission-search\route.ts:14-19`
+  - `C:/Projects/SSTAC-Dashboard/src/app/api/regulatory-review/search/route.ts:14-19`
+  - `C:/Projects/SSTAC-Dashboard/src/app/api/regulatory-review/submission-search/route.ts:14-19`
 
 ### Key Takeaway
 For any feature requiring native modules, use lazy loading + webpack externals to support both local dev (with module) and serverless (without module).
@@ -216,9 +216,9 @@ For any feature requiring native modules, use lazy loading + webpack externals t
 
 **Step 3.1: Read Current Manifest**
 
-```powershell
-# View current manifest
-Get-Content 'F:\sstac-dashboard\docs\_meta\docs-manifest.json' | ConvertFrom-Json | ConvertTo-Json -Depth 10
+```bash
+# View current manifest (cross-shell — works in bash and PowerShell)
+node -e "console.log(JSON.stringify(require('./docs/_meta/docs-manifest.json'), null, 2))"
 ```
 
 **Step 3.2: Update Facts Section**
@@ -249,9 +249,9 @@ Example: If you modified `src/app/api/regulatory-review/**`:
 2. Verify all required sections in docs/INDEX.md exist
 3. Confirm documentation describes the API changes
 
-```powershell
-# Quick validation: search for gate definitions
-Select-String -Path 'F:\sstac-dashboard\docs\_meta\docs-manifest.json' -Pattern '"API_GATE"' -Context 5
+```bash
+# Quick validation: list gate bundle ids and required docs
+node -e "const m=require('./docs/_meta/docs-manifest.json'); for (const [k,v] of Object.entries(m.bundles||{})) { console.log(k, '->', v.requires_docs||v.requires||'(no docs key)'); }"
 ```
 
 ---
@@ -293,22 +293,32 @@ Check that:
 - Gate bundles reference existing sections
 - Facts are accurate and current
 - No circular dependencies in gate definitions
+- No duplicate `documents[].id` values
 
-```powershell
+```bash
 # Validate JSON syntax
-Test-Json -Path 'F:\sstac-dashboard\docs\_meta\docs-manifest.json'
+node -e "JSON.parse(require('fs').readFileSync('docs/_meta/docs-manifest.json','utf8')); console.log('manifest JSON parses OK')"
 
 # Count documents
-(Get-Content 'F:\sstac-dashboard\docs\_meta\docs-manifest.json' | ConvertFrom-Json).documents.Count
+node -e "console.log(require('./docs/_meta/docs-manifest.json').documents.length)"
+
+# Check for duplicate ids
+node -e "const ids=require('./docs/_meta/docs-manifest.json').documents.map(d=>d.id); const dups=ids.filter((id,i)=>ids.indexOf(id)!==i); console.log(dups.length?('DUPLICATES: '+dups.join(', ')):'no duplicate ids')"
 ```
 
 **Step 5.2: Check for Gate Compliance**
 
-If code changes affected gated paths:
-```powershell
-# Example: if you modified regulatory-review API
-Select-String -Path 'F:\sstac-dashboard\docs\INDEX.md' -Pattern 'API.*regulatory.*review' -Context 3
+If code changes affected gated paths, run the dashboard's gate runner directly:
+
+```bash
+# Authoritative gate check — uses the manifest's path-glob triggers
+npm run docs:gate -- --base origin/main --head HEAD
+
+# Or, for a forced check against specific files
+npm run docs:gate -- --files src/app/api/regulatory-review/projects/route.ts
 ```
+
+`docs:gate` is necessary but not sufficient — doc-only diffs may not trigger any gate. Always also run the validation commands in 5.1 and 5.3.
 
 **Step 5.3: Verify Lifecycle Compliance**
 
@@ -361,7 +371,7 @@ Before completing `/update-docs`:
 | Forgetting to update manifest | Next session doesn't know what changed | Always update facts section |
 | Circular gate dependencies | Impossible to satisfy all requirements | Validate gate bundles in manifest |
 | Empty lesson entries | Wastes documentation space | Only add lessons worth capturing |
-| Not validating JSON after edits | Manifest becomes invalid, gates fail | Always run Test-Json |
+| Not validating JSON after edits | Manifest becomes invalid, gates fail | Always parse via `node -e "JSON.parse(...)"` after edits |
 
 ---
 
@@ -422,25 +432,20 @@ Shall I proceed with /update-docs?
 ## Phase-Specific Commands
 
 ### Validate Manifest JSON
-```powershell
-$manifest = Get-Content 'F:\sstac-dashboard\docs\_meta\docs-manifest.json' | ConvertFrom-Json
-$manifest | ConvertTo-Json -Depth 20 | Out-Null
-Write-Host "✓ Manifest is valid JSON"
+```bash
+node -e "JSON.parse(require('fs').readFileSync('docs/_meta/docs-manifest.json','utf8')); console.log('Manifest is valid JSON')"
 ```
 
 ### List All Gates
-```powershell
-$manifest = Get-Content 'F:\sstac-dashboard\docs\_meta\docs-manifest.json' | ConvertFrom-Json
-$manifest.bundles | Format-Table -AutoSize
+```bash
+node -e "const m=require('./docs/_meta/docs-manifest.json'); console.log(Object.keys(m.bundles||{}).join('\n'))"
 ```
 
 ### Check Document Existence
-```powershell
-$manifest = Get-Content 'F:\sstac-dashboard\docs\_meta\docs-manifest.json' | ConvertFrom-Json
-foreach ($doc in $manifest.documents) {
-    $exists = Test-Path $doc.path
-    Write-Host "$($doc.name): $exists"
-}
+The manifest schema uses `id` and `path` (not `name`). The example below walks `documents[]` and reports any missing files:
+
+```bash
+node -e "const fs=require('fs'); const m=require('./docs/_meta/docs-manifest.json'); let missing=0; for (const d of m.documents) { if (!fs.existsSync(d.path)) { console.log('MISSING:', d.id, '->', d.path); missing++; } } console.log(missing? (missing+' missing'):'all '+m.documents.length+' document paths exist'); process.exit(missing?1:0)"
 ```
 
 ---
@@ -490,13 +495,12 @@ For native modules, use lazy loading + webpack externals for multi-environment s
 ```
 
 ### Step 3: Validate
-```powershell
-# Test manifest is valid
-Test-Json -Path 'F:\sstac-dashboard\docs\_meta\docs-manifest.json'
+```bash
+# Test manifest is valid JSON
+node -e "JSON.parse(require('fs').readFileSync('docs/_meta/docs-manifest.json','utf8'))"
 
-# Verify all documents exist
-$manifest = Get-Content 'F:\sstac-dashboard\docs\_meta\docs-manifest.json' | ConvertFrom-Json
-$manifest.documents | Where-Object {-not (Test-Path $_.path)} | ForEach-Object { Write-Warning "Missing: $($_.name)" }
+# Verify all documents[].path entries exist on disk
+node -e "const fs=require('fs'); for (const d of require('./docs/_meta/docs-manifest.json').documents) { if (!fs.existsSync(d.path)) console.warn('Missing:', d.id, '->', d.path); }"
 ```
 
 ---

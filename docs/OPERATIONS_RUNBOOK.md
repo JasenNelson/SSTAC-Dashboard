@@ -29,6 +29,10 @@
 - **Upstash Redis:** https://console.upstash.com
 - **Sentry Error Tracking:** https://sentry.io
 
+### Related Operational Docs
+- `docs/operations/MIDDLEWARE_GUIDE.md` — `src/middleware.ts` request flow, security headers, "Auth session missing" log silencing, refresh-token redirect path.
+- `docs/ENVIRONMENT_REFERENCE.md` — every env var read by `src/` and `scripts/`, including the local-engine and Supabase variables referenced below.
+
 ---
 
 ## Daily Checks (5 minutes)
@@ -394,6 +398,43 @@ git push origin main
 # Option 3: Skip Vercel cache (last resort)
 # Vercel dashboard → Project settings → Deployments → "Redeploy"
 ```
+
+---
+
+## Local-Engine SQLite Fallback
+
+The Regulatory Review feature reads/writes a local SQLite database via `better-sqlite3`. That native module cannot compile in Vercel's serverless build, so the codebase ships a graceful-fallback pattern. Operators should know what users see in each environment so dashboard "broken page" reports can be triaged correctly.
+
+### How the fallback is wired
+
+- **Webpack external** — `next.config.ts` marks `better-sqlite3` as external so the build does not try to bundle the native module.
+- **Lazy load with try/catch** — `src/lib/sqlite/client.ts` calls `require('better-sqlite3')` inside `loadDatabase()` and swallows the failure. When the module is absent, `getDatabase()` throws a controlled error: *"SQLite database is not available in this environment. better-sqlite3 is required for local development only. This feature is not supported in serverless/Vercel deployments."*
+- **Server-side feature gate** — engine-only API routes call `requireLocalEngine()` (`src/lib/api-guards.ts`) and return HTTP 503 when `LOCAL_ENGINE_ENABLED !== 'true'`. This short-circuits the request before any SQLite read is attempted.
+- **Client-side feature gate** — UI surfaces that depend on the engine read `NEXT_PUBLIC_LOCAL_ENGINE` (build-time inlined) via `src/lib/feature-flags.ts` and render an "under construction" state when the flag is falsy.
+
+See `docs/ENVIRONMENT_REFERENCE.md` for the per-variable definitions of `LOCAL_ENGINE_ENABLED` and `NEXT_PUBLIC_LOCAL_ENGINE`.
+
+### What operators should expect
+
+Three distinct behaviour classes apply to Regulatory-Review API routes when SQLite / the engine gate are in different states. The per-route guard assignment is in the **Authentication model** table of `docs/API_REFERENCE.md`; the failure mode for each class on Vercel is different and matters for triage.
+
+- **Class A — `requireLocalEngine()`-guarded routes:** projects CRUD, files upload/delete, extract/extract-status, evaluate/evaluate-status, assistant chat, assistant models. Return a clean 503 from the guard when `LOCAL_ENGINE_ENABLED !== 'true'`, before any SQLite call.
+- **Class B — admin-only routes with an inline `better-sqlite3` availability check:** `search`, `submission-search`. Return a clean 503 with `{ error: '... only available in local development' }` when the module fails to load.
+- **Class C — admin-only routes that call the shared `@/lib/sqlite/queries` client:** `assessments`, `assessments/[csapId]`, `judgments`, `progress`, `validation-stats`, `submissions`, `matching-detail`. On Vercel these catch the shared client's *"SQLite database is not available in this environment"* error in their generic `try/catch` and return **HTTP 500**, not 503.
+
+| Environment | `LOCAL_ENGINE_ENABLED` | SQLite available | Class A routes | Class B routes | Class C routes | Engine UI |
+|---|---|---|---|---|---|---|
+| Vercel production / preview | unset | no (`better-sqlite3` not installed) | 503 from `requireLocalEngine()` | 503 with local-dev error string | 500 from caught SQLite-not-available exception | Hidden via falsy `NEXT_PUBLIC_LOCAL_ENGINE` |
+| Local dev (engine off) | unset / `false` | yes (module installed) | 503 from `requireLocalEngine()` | Execute normally for admins | Execute normally for admins | Hidden via falsy `NEXT_PUBLIC_LOCAL_ENGINE` |
+| Local dev (engine on) | `true` | yes | Execute | Execute | Execute | Visible |
+
+### Recovery / triage
+
+1. **User reports "503 from /api/regulatory-review/*"** → Class A (engine-gated) or Class B (search/submission-search). Confirm `LOCAL_ENGINE_ENABLED` env var in cloud deployments — by design.
+2. **User reports 500 from an admin-only regulatory-review route in production** (e.g. assessments, judgments, progress, validation-stats, submissions, matching-detail) → Class C behaviour. Vercel logs will show the caught "SQLite database is not available in this environment" exception. Not a runtime regression — the feature simply cannot run where `better-sqlite3` is absent.
+3. **User reports SQLite-not-available error in local dev** → run `npm install` to rebuild `better-sqlite3` against the current Node version. If the install fails, check Node toolchain (Windows Build Tools / Xcode CLT).
+4. **Migration corruption suspected** → `src/lib/sqlite/client.ts` runs migrations from `src/lib/sqlite/migrations/` on first connection and tracks them in a `_migrations` table. Inspect that table directly with the SQLite CLI before deleting the database.
+5. **Do not delete `src/data/regulatory-review.db` blindly** — it contains evaluated submission data. Back up first.
 
 ---
 

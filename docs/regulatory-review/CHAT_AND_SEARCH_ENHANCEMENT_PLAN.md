@@ -4,6 +4,8 @@
 **Status:** v1.1 — Decisions locked after Claude + Codex review
 **Primary Repo:** `C:\Projects\SSTAC-Dashboard`
 
+> **Implementation status (2026-04-20):** Phase A assistant routes described in this plan are now implemented under `src/app/api/regulatory-review/assistant/chat/route.ts` and `src/app/api/regulatory-review/assistant/models/route.ts`, with SSE streaming, `requireAdmin()` + `requireLocalEngine()` guards, hybrid policy/submission scope, and Indigenous/TIER_3 hard-stop as described in §5 of this plan. See `docs/API_REFERENCE.md` "Regulatory Review — assistant" and `docs/API_REFERENCE.md` "Regulatory Review — search" for the current runtime contract. Phase B items (explicit model selector, denormalized submission-search index) remain deferred — see `docs/NEXT_STEPS.md`.
+
 ---
 
 ## Delta from v1.0

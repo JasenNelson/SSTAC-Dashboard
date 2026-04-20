@@ -1,386 +1,116 @@
 # Multi-Project Coordination: SSTAC Dashboard + Regulatory Review + Database Cleanup
 
-**Version:** 1.3
-**Created:** January 25, 2026
-**Last Updated:** January 27, 2026 (v1.3 - UI/UX corrections complete, ready for approval)
-**Purpose:** Unified session continuity for three concurrent development initiatives
+**Lifecycle:** REFERENCE (dated coordination snapshot)
+**Last reframed:** 2026-04-20
+**Purpose:** Coordination reference for three concurrent workstreams that share code, data, or deployment surface.
 
 ---
 
-## Executive Summary
+## About this document
 
-Three development projects are running concurrently with shared database and frontend:
+This file has two jobs:
 
-| Project | Status | Phase | Next Action |
-|---------|--------|-------|-------------|
-| **SSTAC Dashboard** | ✅ 7 PHASES COMPLETE + ✅ UI/UX CORRECTIONS | Regulatory Review Redesign | Get user approval, implement Phase 1 |
-| **Regulatory-Review** | ⏳ Tier 2 Rerun 78% COMPLETE | 467/598 batches | Complete remaining 131 batches (Sessions A/B/C) |
-| **Database Cleanup** | ⏸️ ON HOLD | Crash Recovery | Resume after Tier 2 rerun complete |
+1. **Structural reference** — data-ownership rules, synchronization points, session-resumption instructions, risk assessment across the three workstreams. These are stable and should be kept current.
+2. **Dated status snapshots** — point-in-time narrative about what each workstream was doing. Snapshots are preserved with their original dates and should not be treated as current truth without re-verification (`git log`, the current state of each repo, or the dashboard's `docs/_meta/docs-manifest.json`).
 
----
+Canonical workspace paths used in this document:
 
-## Task 1: SSTAC Dashboard Upgrading
+- SSTAC Dashboard: `C:/Projects/SSTAC-Dashboard`
+- Regulatory-Review: `C:/Projects/Regulatory-Review` *(flagged; cross-repo path, verify casing on each operator's machine)*
 
-### Status: ✅ ALL 7 PHASES COMPLETE
-- **Grade:** A+ (95+/100) - TARGET ACHIEVED
-- **Branch:** `docs/archive-and-lint-fix`
-- **Tests:** 536/536 passing (up from 246)
-- **CI/CD:** All gates passing (Lint, TypeScript, Tests, Build)
-- **Latest Commit:** `afc0eff` - Poll-results type safety improvements
-- **Checkpoint:** `F:\sstac-dashboard\.claude\SESSION_CHECKPOINT_2026-01-25-PHASE2-COMPLETE.md`
-
-### Completed Phases Summary
-✅ **Phase 0:** Infrastructure Setup (GitHub Project, Issues, Documentation)
-✅ **Phase 1:** Architecture & Type Safety (+1 point to 88/100)
-✅ **Phase 2:** Security Hardening (+2 points to 90/100)
-✅ **Phase 3:** Comprehensive Testing (+3 points to 93/100)
-✅ **Phase 4:** Performance Optimization
-✅ **Phase 5:** Documentation & Examples
-✅ **Phase 6:** Accessibility & UX Polish
-✅ **Phase 7:** Final Review & Deployment
-
-### Recent Work (January 27, 2026)
-- Poll-results page: Broken during refactoring, reverted to previous version
-- Type safety improvements: Committed (afc0eff) - replaced `any` with proper types
-- Working tree: Clean, all changes committed and pushed
-- Deployment: Page restored and working in production
-- **NEW:** Regulatory-review UI/UX redesign proposal created
-
-### UI/UX Improvement Initiative (NEW - January 27, 2026)
-
-**Problem Identified:**
-- Current regulatory-review interface too technical for executive presentations
-- Database-style layout overwhelming for non-technical users
-- Left panel uses confusing acronyms (STG1PSI, STG2PSIDSI, RAPG)
-- Dense table view efficient for developers but not demo-friendly
-
-**Solution Designed:**
-- **Proposal Document:** `F:\sstac-dashboard\docs\REGULATORY_REVIEW_UX_PROPOSAL.md` (5,700+ words)
-- **Visual Mockups:** `F:\sstac-dashboard\docs\REGULATORY_REVIEW_MOCKUPS.md` (2,500+ words)
-
-**Key Features:**
-1. **Pyramid Topic Hierarchy** - Replace technical sheet codes with workflow stages:
-   - Stage 1: Preliminary Investigation (not "STG1PSI")
-   - Stage 2: Detailed Investigation (not "STG2PSIDSI")
-   - Stage 3: Risk Assessment (not "RAPG")
-   - Stage 4: Remediation Planning (not "REMPLAN")
-
-2. **Two-Mode Interface:**
-   - Executive Summary View: Card-based, visual, generous spacing (default for demos)
-   - Database Power View: Current dense table (retained for technical users)
-   - Toggle button to switch modes, preference persisted
-
-3. **WCAG 2.1 AA Compliance:** Meeting April 2026 government accessibility requirements
-   - Keyboard navigation
-   - Screen reader support
-   - Proper color contrast
-   - Semantic HTML
-
-**Research Foundation:**
-- Industry best practices for compliance dashboards
-- Hierarchical navigation patterns for complex systems
-- Government accessibility standards (mandatory by April 2026)
-
-**Implementation Roadmap:**
-- Phase 1: Pyramid navigation (1-2 weeks)
-- Phase 2: Executive card view (2-3 weeks)
-- Phase 3: Accessibility & polish (1-2 weeks)
-- Phase 4: Testing & refinement (1-2 weeks)
-
-**Current Status:** ✅ **CORRECTIONS COMPLETE - READY FOR APPROVAL**
-- Codex and ChatGPT review complete (4 specialized agents)
-- All 24 terminology/capitalization corrections applied
-- 1 missing URL parameter added
-- Documents archived: `docs/regulatory-review/archive/REGULATORY_REVIEW_UX_PROPOSAL_PRE_CORRECTIONS.md`, `docs/regulatory-review/archive/REGULATORY_REVIEW_MOCKUPS_PRE_CORRECTIONS.md`
-- Corrections summary: `docs/REGULATORY_REVIEW_UX_PROPOSAL_CORRECTIONS_APPLIED.md`
-
-### Known Issues
-⚠️ **Poll-Results Revert:** Some frontend improvements may have been lost when page was reverted after refactoring broke it. Type safety work preserved.
-
-### Next Steps
-1. ✅ ~~Review and incorporate Codex/ChatGPT feedback on UI/UX proposal~~ **COMPLETE**
-2. ⏸️ Get user approval on refined proposal
-3. ⏸️ Begin Phase 1 implementation (pyramid navigation refactor)
-4. ⏸️ Integrate Tier 2 rerun evaluation data into frontend
-5. ⏸️ Load submission content into regulatory review frontend (currently empty)
-6. ⏸️ Monitor production deployment for any regressions
-
-**Blocker:** Waiting for user approval of refined proposal. Tier 2 rerun also in progress (78% done, 131 batches remaining)
+If a path in a dated snapshot references `F:\sstac-dashboard` or any other legacy drive/case variant, treat it as historical evidence of where a file *was* said to be at the time the snapshot was written — not as a current location.
 
 ---
 
-## Task 2: Regulatory-Review Development
+## Workstream summaries (structural)
 
-### Status: ⏳ Tier 2 Rerun 78% COMPLETE (In Progress)
-- **Version:** 131.0
-- **Architecture:** v2.0 (Direct API, Ralph Loop IPC deprecated)
-- **Rerun Progress:** 467/598 batches complete (78%)
-- **Previous Simulation:** 5,979 policies across 355 batch files (synced to dashboard)
+### Workstream 1 — SSTAC Dashboard (this repo)
 
-### Tier 2 Rerun Status (Updated January 27, 2026 11:10 AM)
-**4 Parallel Claude Code Sessions:**
-- **Session A:** 104/149 batches (70%) - Working on batch 105
-- **Session B:** 111/150 batches (74%) - Working on batch 261
-- **Session C:** 102/149 batches (68%) - Working on batch 401
-- **Session D:** ✅ 150/150 batches (100%) - COMPLETE
+- **Primary repo:** `C:/Projects/SSTAC-Dashboard`
+- **Data ownership:** Supabase (polls, discussions, announcements, tags, milestones, documents metadata, review submissions, user roles) and a local SQLite database at `src/data/regulatory-review.db` (regulatory-review feature only — present in local dev, intentionally absent in Vercel builds; see `docs/OPERATIONS_RUNBOOK.md` "Local-Engine SQLite Fallback").
+- **Deployment:** Vercel. Regulatory-review features gated by `LOCAL_ENGINE_ENABLED` (server) and `NEXT_PUBLIC_LOCAL_ENGINE` (client); see `docs/ENVIRONMENT_REFERENCE.md`.
+- **Canonical entrypoint:** `docs/INDEX.md`.
+- **Status/metrics:** do not embed here — route to `docs/INDEX.md` (narrative) and `docs/_meta/docs-manifest.json` `facts` (numbers).
 
-**Remaining Work:** 131 batches (22%) across Sessions A, B, and C
+### Workstream 2 — Regulatory-Review (sibling repo)
 
-### Previous Tier 2 Simulation (Complete)
-- **Policies Evaluated:** 5,979 across 355 batch files
-- **Semantic Matches:** 5,825 loaded to engine database
-- **Evaluation Records:** 5,810 synced to dashboard databases
-- **Method:** External Claude Opus prompts (24x faster than Ralph Loop IPC)
+- **Primary repo:** `C:/Projects/Regulatory-Review` (separate git repo, not a submodule).
+- **What it owns:** the evaluation engine (Python + docling + embeddings + Ollama), the policy knowledge base (`engine/data/rraa_v3_2.db` — opened by the dashboard at `{cwd}/../Regulatory-Review/engine/data/rraa_v3_2.db`), submission source documents (`1_Active_Reviews/<project>/0_Source_Documents/`), extractions (`1_Extractions/`), evaluation outputs (`2_Evaluation_Output/`), HITL packets.
+- **Dashboard's view of it:** read-only at runtime. The dashboard reads the engine DB (via `better-sqlite3`) and the RR folder tree (via filesystem reads in engine-gated API routes). The dashboard **launches** extract/evaluate subprocesses via `src/lib/regulatory-review/launch-evaluation.ts` when `LOCAL_ENGINE_ENABLED=true`.
+- **Contract files to read before making cross-repo claims:**
+  - `C:/Projects/Regulatory-Review/CLAUDE.md`
+  - `C:/Projects/Regulatory-Review/engine/docs/_INDEX.md`
+  - `C:/Projects/Regulatory-Review/engine/docs/active/development/ACTIVE_DOCS.md`
+  - Topology / BN-RRM handoff files — locate with `rg --files C:/Projects/Regulatory-Review` before referencing; names and locations have shifted between revisions.
+- **RR-side stale paths / internal contradictions:** flagged in the 2026-04 dashboard audit (`docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` §1.4). Do **not** cite stale RR `F:\` paths or RR `_INDEX.md` content that was superseded by `engine/docs/_INDEX.md` without re-reading the current file.
 
-### Frontend Sync Status
-- Development DB: `SSTAC-Dashboard/server/regulatory-review.db` (synced)
-- Production DB: `SSTAC-Dashboard/dist/server/regulatory-review.db` (synced)
-- Sync script: `engine/scripts/sync_tier2_to_dashboard.py`
-- **Issue:** Dashboard frontend currently has no submission loaded (needs integration work)
+### Workstream 3 — Database Cleanup (sibling initiative)
 
-### Next Steps
-1. ⏳ Complete Tier 2 rerun (131 batches remaining)
-2. Load new evaluation data to engine database (`rraa_v3_2.db`)
-3. Sync new data to dashboard databases
-4. Integrate submission content into dashboard frontend
-5. Human review of AI-proposed statuses
-
-**Blockers:** None - sessions progressing steadily, ~22% remaining
+- Ongoing cleanup of historical poll/survey and assessment data. Not currently reflected in a dedicated repo path; coordination happens primarily in Supabase migrations and ad-hoc scripts under `C:/Projects/SSTAC-Dashboard/scripts/`.
+- **Dependency:** most cleanup steps want the Regulatory-Review evaluation engine to be quiescent (no partially-written tier results). Schedule accordingly.
 
 ---
 
-## Task 3: Database Cleanup
+## Shared-state boundaries
 
-### Status: ⏸️ ON HOLD (Crash Recovery)
-- **Database:** `F:\Regulatory-Review\engine\data\rraa_v3_2.db`
-- **Total Policies:** 14,614 (6,036 policies + 8,578 standards)
-- **Reason for Pause:** Windows 11 Pro crash/corruption caused by Claude Code memory issues
-
-### Incident Summary (January 27, 2026)
-**What Happened:**
-- Claude Code memory/cache issues caused Windows 11 crash
-- System corruption occurred
-- User recovered from corruption
-- Database cleanup work paused to prevent further instability
-
-**Data Protection Status:**
-- Tier 2 simulation data (5,979 policies, 5,825 semantic_matches) - PRESERVED
-- Tier 2 rerun data (467/598 batches) - IN PROGRESS, must protect
-- Engine database appears intact post-recovery
-
-### Phase 1: Scope Definition (Still Needed)
-**User must specify:** What constitutes "non-policy items"?
-- Orphaned records without associations?
-- Test/sample data from development?
-- Superseded metadata versions?
-- Temporary processing artifacts?
-
-### Next Steps (After Tier 2 Rerun Complete)
-1. ⏸️ **WAIT** for Tier 2 rerun completion (131 batches remaining)
-2. ⏸️ **WAIT** for system stability confirmation
-3. Create comprehensive database backup before any work
-4. Define cleanup scope with user approval
-5. Identify and explicitly protect all evaluation data
-6. Execute deletions with rollback procedure documented
-
-**Blockers:**
-- System stability (Windows crash recovery)
-- Tier 2 rerun completion (78% done)
-- Scope definition needed
+| Boundary | Owner | Consumer | Notes |
+|---|---|---|---|
+| Supabase tables (polls, discussions, review submissions, documents metadata, user roles) | Dashboard | Dashboard | RLS enforces access; see `docs/DATABASE_SCHEMA.md`. |
+| Engine SQLite DB (`rraa_v3_2.db`) | Regulatory-Review | Dashboard (read) via `src/lib/sqlite/queries/**` | Lazy-loaded; absent in serverless. |
+| Submission SQLite DB (`src/data/regulatory-review.db`) | Dashboard | Dashboard (read/write); RR may sync into it | Not in serverless. |
+| Evaluation output folder (`2_Evaluation_Output/<project>/<session>/`) | Regulatory-Review (engine process) | Dashboard HITL packet routes; dashboard auto-import on completion | Path-traversal guard enforced in `src/lib/hitl-packets/discovery.ts`. |
+| Source documents (`0_Source_Documents/`) | User (uploads via dashboard) | Regulatory-Review engine | Upload goes through `projects/[id]/files` route (engine-gated). |
+| Ollama model server | Operator's machine | Dashboard assistant routes (`/api/regulatory-review/assistant/*`) | Base URL configurable via `OLLAMA_BASE_URL`; see `docs/ENVIRONMENT_REFERENCE.md`. |
 
 ---
 
-## Data Ownership & Synchronization
+## Session resumption (how to pick up across all three)
 
-### Database Architecture
-
-```
-Regulatory-Review Engine (Source)          SSTAC Dashboard (Display)
-    │                                              │
-    ├── rraa_v3_2.db (Primary)                   │
-    │    ├── policies (14,614)                   │
-    │    ├── semantic_matches (5,825) ◄──────────┤── PROTECTED (Tier 2)
-    │    └── evaluation_records (5,810) ◄────────┤── PROTECTED (Tier 2)
-    │                                             │
-    └── sync_tier2_to_dashboard.py ─────────────►├── regulatory-review.db
-                                                 │   (dev + prod copies)
-                                                 │
-Database Cleanup (Operations)  ────────────────►└── MUST NOT DELETE Tier 2 data
-```
-
-### Data Ownership Rules
-
-| Table | Owner | Read By | Write Rules |
-|-------|-------|---------|-------------|
-| policies | Regulatory-Review | Dashboard, Cleanup | Only Reg-Review writes |
-| semantic_matches | Regulatory-Review | Dashboard | Tier 2 results only |
-| evaluation_records | Regulatory-Review | Dashboard | Tier 2 results only |
-| regulatory-review.db (dev) | Dashboard | Dashboard | Synced from engine DB |
-| regulatory-review.db (prod) | Dashboard | Dashboard | Synced from engine DB |
+1. **Confirm which repo you are in** (`git rev-parse --show-toplevel`) — prompts and paths differ across dashboard vs RR vs cleanup.
+2. **Read the canonical entrypoint for that repo first.** Dashboard: `docs/INDEX.md`. RR: `CLAUDE.md` + `engine/docs/_INDEX.md`.
+3. **Re-verify any dated claim before acting on it.** Snapshots in this file, in PROJECT_STATUS.md, and in archived docs are evidence of past state, not current truth. Use `git log` and current code as authority.
+4. **Before touching cross-repo contract surfaces** (engine DB schema, pack artifact contract, HITL packet layout, Python subprocess invocation), read the corresponding RR contract file explicitly — do not rely on dashboard-side summaries.
+5. **Pre-existing dirty files** such as `.claude/settings.local.json` (modified) and `.claude/pending-commit-message.txt` (untracked) in the dashboard repo are developer scratch. Do not stage or commit them unless that is the actual task.
 
 ---
 
-## Critical Coordination Points
+## Risks at the boundary
 
-### 1. Vercel Deployment Verification
-**Dashboard Phase 2 → Phase 3 blocker**
-```bash
-# Check deployment
-curl -I https://sstac-dashboard.vercel.app/
-
-# Verify security headers present
-# - Content-Security-Policy
-# - X-Frame-Options
-# - X-Content-Type-Options
-```
-
-### 2. Frontend Display of Tier 2 Results
-**Regulatory-Review Tier 2 → Human Review blocker**
-- Dashboard must display all 5,825 semantic_matches
-- Dashboard must show PASS/FAIL/NOT_FOUND/ESCALATE statuses
-- Sync script must run successfully
-
-### 3. Database Cleanup Timing
-**All projects depend on data integrity**
-- Cannot proceed with cleanup until scope defined
-- Must create backup before any deletions
-- Must explicitly protect Tier 2 evaluation data
+| Risk | Blast radius | Mitigation |
+|---|---|---|
+| Engine DB schema change | Breaks dashboard read queries | Coordinate via `C:/Projects/Regulatory-Review/engine/docs/active/development/ACTIVE_DOCS.md`; dashboard tests include schema expectations in `src/lib/sqlite/queries/__tests__/`. |
+| Folder structure change in `1_Active_Reviews/` | Breaks HITL discovery and extract/evaluate subprocess launch | `HITL_PACKET_DIR` env var can relocate discovery root; subprocess launch path is hardcoded in `src/lib/regulatory-review/launch-evaluation.ts` (deferred item — see NEXT_STEPS.md). |
+| BN-RRM pack contract change | Breaks dashboard `public/bn-rrm/packs/` readers | Pack contract documented in `docs/bn-rrm/README.md`; changes require a dashboard-side version bump. |
+| Python interpreter not found | Extract/evaluate subprocess launch fails at runtime | `REG_REVIEW_PYTHON_PATH` env var must point at a full `python.exe` path; see `docs/ENVIRONMENT_REFERENCE.md`. |
+| Ollama not running | Assistant chat returns SSE error; `/assistant/models` returns empty list with error string | UI surfaces connection status; no silent degradation. |
+| Vercel build fails because of `better-sqlite3` | Dashboard cannot deploy | `next.config.ts` marks module external; lazy-load pattern in `src/lib/sqlite/client.ts`; see `docs/OPERATIONS_RUNBOOK.md` "Local-Engine SQLite Fallback". |
+| Shared Supabase project misconfiguration | All dashboard reads/writes fail | Supabase env vars documented in `docs/ENVIRONMENT_REFERENCE.md`; middleware handles expired tokens gracefully per `docs/operations/MIDDLEWARE_GUIDE.md`. |
 
 ---
 
-## Session Resumption Instructions
+## Dated coordination snapshots (historical)
 
-### For Next Claude Session
+The entries below are preserved point-in-time descriptions. Dates are verbatim from when each snapshot was written. Verify with `git log` and current code state before acting on anything here.
 
-**1. Ask User: Which task to work on?**
-```
-User choices:
-(A) Dashboard Phase 3 - Verify Vercel, expand testing
-(B) Regulatory-Review - Review AI-proposed statuses
-(C) Database Cleanup - Define scope for Phase 1
-(D) Continue all three
-```
+### 2026-01-27 — Coordination snapshot (verbatim from v1.3 of this file)
 
-**2. Load Appropriate Handoff**
-- Dashboard: `F:\sstac-dashboard\.claude\SESSION_CHECKPOINT_2026-01-25-PHASE2-COMPLETE.md`
-- Reg-Review: `F:\Regulatory-Review\engine\docs\active\development\DEV_MANAGER_HANDOFF.md`
-- Cleanup: Ask user for scope clarification
+*Preserved for audit-trail continuity. Numbers and "complete" claims below reflect state at the time of writing, not current truth.*
 
-**3. Verify State**
-```bash
-# Dashboard
-cd F:\sstac-dashboard && git status && npm test
+- **SSTAC Dashboard:** 7 phases reported complete; UI/UX corrections for regulatory-review reported complete at commit `afc0eff`. Regulatory-review UI/UX proposal stored at `docs/regulatory-review/REGULATORY_REVIEW_UX_PROPOSAL.md` and mockups at `docs/regulatory-review/REGULATORY_REVIEW_MOCKUPS.md` (both still present as of 2026-04-20).
+- **Regulatory-Review:** Tier 2 rerun reported at 467 of 598 batches (~78%). Verify against the engine's current progress tracker before citing.
+- **Database Cleanup:** On hold pending Tier 2 rerun completion.
+- **Source path for this snapshot:** v1.3 of this file, January 27, 2026. Legacy `F:\sstac-dashboard` and `F:\Regulatory-Review` paths that appeared in v1.3 have been rewritten to canonical `C:/Projects/...` paths in the structural sections above; the snapshot itself is preserved in prose.
 
-# Regulatory-Review
-cd F:\Regulatory-Review && git status
-# Check DEV_PLAN.md version (should be 3.22)
-```
+### 2026-04-20 — Coordination snapshot (documentation audit pass)
 
-**4. Confirm Work Direction**
-Use AskUserQuestion before starting implementation on any task.
+- **SSTAC Dashboard:** documentation audit (`docs/_meta/DOCUMENTATION_AUDIT_2026-04.md`) completed. Phases 1–3 of the doc pass landed (audit + registration, new-doc additions, authoritative + reference cleanup). Code unchanged. Pre-existing dirty files (`.claude/settings.local.json`, `.claude/pending-commit-message.txt`) preserved untouched throughout the pass.
+- **Regulatory-Review:** no dashboard-side changes to the cross-repo contract. RR-side stale paths and internal contradictions flagged in audit §1.4 remain deferred (see `docs/NEXT_STEPS.md`).
+- **Database Cleanup:** no change in status captured during the doc pass.
 
 ---
 
-## Risk & Dependency Map
+## How to update this file
 
-### What Could Block Progress
-
-| Risk | Impact | Mitigation |
-|------|--------|-----------|
-| Vercel deployment fails | Dashboard Phase 3 blocked | Manual testing fallback available |
-| Frontend can't display Tier 2 results | Human review blocked | Data is in DB; alternative display possible |
-| Cleanup scope undefined | Phase 1 blocked | Define with user first |
-| Cleanup accidentally deletes Tier 2 data | CRITICAL | Explicitly protect semantic_matches/evaluation_records |
-
-### Dependencies Between Tasks
-
-1. **Dashboard → Regulatory-Review**: Displays evaluation results (depends on sync)
-2. **Regulatory-Review → Dashboard**: Data sync provides frontend content
-3. **Cleanup → Both**: Must preserve all active data from both projects
-
----
-
-## Quick Reference: File Locations
-
-### SSTAC Dashboard
-```
-F:\sstac-dashboard\
-├── MULTI_PROJECT_COORDINATION.md (this file)
-├── NEXT_STEPS.md (Phase 2 → 3 transition)
-├── docs\
-│   ├── INDEX.md (canonical)
-│   ├── LESSONS.md (patterns from Phase 1-2)
-│   └── _meta\docs-manifest.json (grade tracking)
-└── .claude\
-    └── SESSION_CHECKPOINT_2026-01-25-PHASE2-COMPLETE.md
-```
-
-### Regulatory-Review
-```
-F:\Regulatory-Review\
-├── engine\
-│   ├── MASTER_PRD_v4.md (product requirements)
-│   ├── docs\
-│   │   ├── active\development\
-│   │   │   ├── DEV_MANAGER_HANDOFF.md (v129.0)
-│   │   │   ├── DEV_PLAN.md (v3.22)
-│   │   │   └── ENGINE_SPECS.md (v1.7)
-│   │   ├── LESSONS_LEARNED.md (261KB incident history)
-│   │   └── archive\2026-01\ (versioned docs)
-│   ├── data\
-│   │   └── rraa_v3_2.db (14,614 policies + Tier 2 results)
-│   └── scripts\
-│       └── sync_tier2_to_dashboard.py
-```
-
----
-
-## Archive Before Editing
-
-Following Regulatory-Review best practices:
-```bash
-# Before modifying this file
-copy "MULTI_PROJECT_COORDINATION.md" "archive\MULTI_PROJECT_COORDINATION_v1.0_ARCHIVED.md"
-
-# Then edit and increment version
-# MULTI_PROJECT_COORDINATION_v1.1.md
-```
-
----
-
-## Summary
-
-**Three concurrent initiatives, one integrated workflow:**
-
-1. **SSTAC Dashboard**: ✅ ALL 7 PHASES COMPLETE, A+ grade achieved (95+/100), 536 tests passing. ✅ Regulatory-review UI/UX redesign: 4-agent review complete, 24 corrections applied (pyramid navigation, executive-friendly cards, WCAG 2.1 AA). Ready for user approval.
-2. **Regulatory-Review**: ⏳ Tier 2 rerun 78% complete (467/598 batches), Session D done, Sessions A/B/C active, ~131 batches remaining
-3. **Database Cleanup**: ⏸️ ON HOLD due to Windows 11 crash/corruption recovery, awaiting Tier 2 completion and stability
-
-**Key Principle:** Regulatory-Review owns database writes. Dashboard reads. Cleanup must preserve evaluation data.
-
-**Current Priority:**
-- Complete Tier 2 rerun (22% remaining)
-- Review and refine UI/UX proposal based on AI feedback
-- Implement Phase 1 (pyramid navigation) after approval
-- Integrate evaluation data into Dashboard frontend
-
-**Known Issues:**
-- Dashboard poll-results: Some improvements lost in revert after refactoring broke page
-- Dashboard frontend: No submission currently loaded, needs integration work
-- System stability: Recent Windows crash, monitoring for memory issues
-
-**New Work - UI/UX Redesign:**
-- **Goal:** Transform regulatory-review interface from "database dump" to executive-friendly presentation
-- **Documents:** `REGULATORY_REVIEW_UX_PROPOSAL.md` + `REGULATORY_REVIEW_MOCKUPS.md`
-- **Features:** Pyramid topic hierarchy, two-mode interface (Executive/Database), accessibility compliance
-- **Review:** 4-agent review complete, 24 corrections applied
-- **Status:** ✅ Corrections complete, ready for user approval before Phase 1 implementation
-
-**Next Session:** Await user approval of refined proposal, then begin Phase 1 (pyramid navigation). Monitor Tier 2 rerun progress.
-
----
-
-**Coordination Document Version:** 1.3
-**Created:** January 25, 2026
-**Last Updated:** January 27, 2026 (v1.3 - UI/UX corrections complete, ready for approval)
-**Status:** UPDATED - TIER 2 RERUN 78% + UI/UX CORRECTIONS COMPLETE
+- **Structural sections** (workstream summaries, shared-state boundaries, session resumption, risks) should be kept current by editing in place. Changes land in the next commit that touches this file.
+- **Dated snapshots** are append-only — add a new `### YYYY-MM-DD — …` section at the bottom of the snapshots list. Do not rewrite older snapshots; mark claims as historical if they become stale.
+- Do not embed grades, "production ready" claims, or rolling test counts here. Route metrics to `docs/_meta/docs-manifest.json` `facts` and narrative to `docs/INDEX.md`.

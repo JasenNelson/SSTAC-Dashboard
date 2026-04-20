@@ -1516,6 +1516,50 @@
       "notes": "Corrections log for proposal and mockups; historical record."
     },
     {
+      "id": "regulatory.local_engine_routing_plan",
+      "path": "docs/regulatory-review/LOCAL_ENGINE_ROUTING_PLAN.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "regulatory-review",
+        "routing",
+        "plan"
+      ],
+      "notes": "Local-engine gating and routing plan v3.1.1 (2026-02-19). Design artifact for the requireAdmin()+requireLocalEngine() pattern and /regulatory-review middleware matcher now in production."
+    },
+    {
+      "id": "regulatory.chat_and_search_plan",
+      "path": "docs/regulatory-review/CHAT_AND_SEARCH_ENHANCEMENT_PLAN.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "regulatory-review",
+        "assistant",
+        "plan"
+      ],
+      "notes": "Chat+search assistant plan v1.1 (2026-02-21). Phase A routes are implemented under src/app/api/regulatory-review/assistant/; Phase B items remain deferred per docs/NEXT_STEPS.md."
+    },
+    {
+      "id": "regulatory.phase1_pyramid_navigation",
+      "path": "docs/regulatory-review/PHASE1_PYRAMID_NAVIGATION_IMPLEMENTATION.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "regulatory-review",
+        "ui",
+        "plan"
+      ],
+      "notes": "Pyramid navigation implementation proposal (2026-01-27). Target files pyramidHierarchy.ts and PyramidNavigation.tsx do not exist in src/ as of 2026-04-20 — status unresolved, tracked in docs/NEXT_STEPS.md."
+    },
+    {
+      "id": "regulatory.codex_review_prompt",
+      "path": "docs/regulatory-review/CODEX_REVIEW_PROMPT.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "regulatory-review",
+        "review",
+        "history"
+      ],
+      "notes": "One-shot Codex review prompt for LOCAL_ENGINE_ROUTING_PLAN v3.1. Historical artifact."
+    },
+    {
       "id": "regulatory.ux_proposal_pre_corrections",
       "path": "docs/regulatory-review/archive/REGULATORY_REVIEW_UX_PROPOSAL_PRE_CORRECTIONS.md",
       "lifecycle": "HISTORICAL",

@@ -121,6 +121,10 @@ The repo-root upgrade-plan files were authored mid-roadmap and embed grades, wee
 - `docs/regulatory-review/REGULATORY_REVIEW_MOCKUPS.md` - ASCII mockups and UX behavior examples
 - `docs/regulatory-review/REGULATORY_REVIEW_UX_PROPOSAL_REVIEW.md` - Review notes and validation checklist (historical)
 - `docs/regulatory-review/REGULATORY_REVIEW_UX_PROPOSAL_CORRECTIONS_APPLIED.md` - Corrections log (historical)
+- `docs/regulatory-review/LOCAL_ENGINE_ROUTING_PLAN.md` - Local-engine gating plan v3.1.1 (2026-02-19). Design artifact behind the current `requireAdmin()`/`requireLocalEngine()` guards and `/regulatory-review/:path*` middleware matcher.
+- `docs/regulatory-review/CHAT_AND_SEARCH_ENHANCEMENT_PLAN.md` - Chat+search assistant plan v1.1 (2026-02-21). Phase A routes are implemented under `src/app/api/regulatory-review/assistant/`; Phase B items remain deferred per `docs/NEXT_STEPS.md`.
+- `docs/regulatory-review/PHASE1_PYRAMID_NAVIGATION_IMPLEMENTATION.md` - Pyramid-navigation implementation proposal. Status unresolved — target files not in `src/` as of 2026-04-20; tracked in `docs/NEXT_STEPS.md`.
+- `docs/regulatory-review/CODEX_REVIEW_PROMPT.md` - One-shot Codex review prompt for the Local-Engine Routing Plan (historical).
 - Archived pre-correction copies live under `docs/regulatory-review/archive/`
 
 ### Multi-Project Coordination (reference)
@@ -129,6 +133,10 @@ The repo-root upgrade-plan files were authored mid-roadmap and embed grades, wee
 
 ### Documentation audits (reference)
 - `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` - 2026-04 documentation audit (Phase 1a deliverable). Inventory, gate-coverage matrix, gap register, cross-repo integration review, manifest fact provenance check, path canonicalization, and prioritized P0/P1/P2 fixes that drive subsequent doc updates. Not a current-status source.
+
+### Redirects and deferred items (reference)
+- `docs/PROJECT_STATUS.md` - Redirect to INDEX (narrative) + manifest `facts` (metrics), with a bounded historical snapshot of 2025 development phases. Not a current-state dashboard.
+- `docs/NEXT_STEPS.md` - Dated, append-only list of deferred items surfaced by past sessions. Not a status dashboard.
 
 ### Local Claude tooling (reference; outside docs/)
 - `.claude/README.md` - Navigation for `.claude/skills/` (safe-exit, update-docs), `/update-docs` invocation guidance, gate-failure remediation pointer, authority hierarchy. Not part of the gate system.
