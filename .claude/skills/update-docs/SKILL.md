@@ -1,7 +1,7 @@
 ---
 name: update-docs
-version: 1.0
-last_updated: 2026-01-24
+version: 1.1
+last_updated: 2026-04-20
 description: Session documentation update skill for SSTAC-Dashboard. Captures lessons learned, updates manifest facts, validates documentation gates, and ensures lifecycle policy compliance. Auto-suggest at session end after significant work.
 triggers:
   - pattern: "update.*docs"
@@ -229,15 +229,46 @@ If session involved:
 - Grade/quality metric changes
 - New patterns discovered
 
-Update `docs/_meta/docs-manifest.json:policies.facts` to reflect:
+The manifest separates live metrics from frozen snapshots:
+
+- **`facts`** holds live/current values only. Nested category → key → provenance object (`{ status, value, source, last_verified }`). Today only `facts.testing.*` (auto-written by `scripts/verify/update-manifest-facts.mjs`) and `facts.grades.*` (human-curated, read by `scripts/analyze-grade.ps1`) live here.
+- **`facts_history`** holds session-closeout / phase-complete snapshots. Read-only history; never cite as "current".
+
+Do not add flat `facts.last_session` / `facts.deployment_status` / `facts.updated_by` keys. Live facts must fit the nested provenance shape; session blobs go into `facts_history` instead.
+
+Example — live test count (auto-updated):
 ```json
 "facts": {
-  "last_session": "2026-01-24 - Deployment fix for native module handling",
-  "deployment_status": "Vercel: SUCCESS",
-  "multi_environment_support": "local (SQLite) + serverless (graceful fallback)",
-  "critical_lessons_count": 1,
-  "updated_by": "Claude Session 2026-01-24"
+  "testing": {
+    "vitest_test_count": {
+      "status": "verified",
+      "value": 481,
+      "source": "npm run test:unit output (2026-01-25)",
+      "last_verified": "2026-01-25"
+    }
+  }
 }
+```
+
+Example — session-closeout snapshot moved into history:
+```json
+"facts_history": {
+  "session_2026_04_20_batch_b": {
+    "status": "complete",
+    "session_date": "2026-04-20",
+    "work_summary": "Moved historical phase/session blobs from facts to facts_history.",
+    "last_verified": "2026-04-20"
+  }
+}
+```
+
+`last_verified` must be strict ISO `YYYY-MM-DD` in both buckets — no `(FINAL)` or session-label annotations.
+
+To update live test counts, prefer the automated writer:
+```bash
+npm run docs:manifest:update -- --vitest
+npm run docs:manifest:update -- --playwright
+npm run docs:manifest:update -- --k6
 ```
 
 **Step 3.3: Validate Gate Bundles**
@@ -481,18 +512,25 @@ Three-pronged approach:
 For native modules, use lazy loading + webpack externals for multi-environment support.
 ```
 
-### Step 2: Update Manifest Facts
+### Step 2: Update Manifest (if applicable)
+
+If the session produced a session-closeout snapshot worth preserving, add it under `facts_history` (not `facts`). Example:
+
 ```json
 {
-  "facts": {
-    "last_session": "2026-01-24 - Fixed Vercel deployment, discovered multi-environment pattern",
-    "deployment_status": "Vercel: ✓ SUCCESS",
-    "sqlite_approach": "lazy loading + webpack externals",
-    "multi_environment_tested": "local (SQLite) + serverless (graceful fallback)",
-    "critical_lessons": 1
+  "facts_history": {
+    "session_2026_01_24_vercel_native_module_fix": {
+      "status": "complete",
+      "session_date": "2026-01-24",
+      "work_summary": "Fixed Vercel deployment; established lazy-load + webpack-externals pattern for native modules.",
+      "deployment_status": "Vercel: SUCCESS",
+      "last_verified": "2026-01-24"
+    }
   }
 }
 ```
+
+Live metrics (test counts, current grade) stay under `facts` with the nested provenance shape — typically updated by `npm run docs:manifest:update` rather than by hand.
 
 ### Step 3: Validate
 ```bash
@@ -506,6 +544,6 @@ node -e "const fs=require('fs'); for (const d of require('./docs/_meta/docs-mani
 ---
 
 **Created:** 2026-01-24
-**Updated:** 2026-01-24
+**Updated:** 2026-04-20 (v1.1 — nested facts schema + facts_history split)
 **Purpose:** End-of-session documentation and lesson capture for SSTAC-Dashboard
 **Framework:** Adapted from Regulatory-Review /update-docs skill with manifest-based modifications

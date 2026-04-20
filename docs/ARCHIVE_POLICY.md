@@ -70,6 +70,17 @@ Every archive move requires, in the same commit or change set:
 3. Sweep for internal links that resolved to the pre-archive path. Either update them to the new path or confirm `docs:archive:investigate:all` flags them for follow-up.
 4. Commit the move, the manifest update, and the INDEX update together.
 
+## Facts vs facts_history
+
+`docs/_meta/docs-manifest.json` separates live metrics from frozen snapshots:
+
+- **`facts`** — live/current values only. Either auto-written by tooling (`facts.testing.*` via `scripts/verify/update-manifest-facts.mjs`) or human-curated canonical truth (`facts.grades.*` read by `scripts/analyze-grade.ps1`). Must carry provenance (`source`, `last_verified`).
+- **`facts_history`** — frozen session-closeout / phase-complete snapshots. Read-only history. Must never be cited as "current".
+
+When a live fact is superseded by a new session, move the prior entry into `facts_history` (optionally suffixing the key with the session date) rather than overwriting it in place. Do not introduce new top-level `facts.*` keys for historical work; add them to `facts_history`.
+
+`last_verified` must be strict ISO `YYYY-MM-DD` in both buckets — no `(FINAL)` or session-label annotations.
+
 ## Stale-current-status banner (required for HISTORICAL-IN-PLACE)
 
 When a document is kept in place but contains time-bound claims — "current grade", "phase complete", "production ready", rolling test counts, status dates — it must carry a banner stanza inside the first 20 lines:

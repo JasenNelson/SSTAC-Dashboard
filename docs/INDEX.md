@@ -3,7 +3,7 @@
 This file is the **single canonical entrypoint** for project documentation.
 
 - **Docs manifest (authoritative)**: `docs/_meta/docs-manifest.json`
-- **Facts policy (volatile metrics)**: Volatile metrics (test counts, grades, etc.) must live in the manifest under `facts`.
+- **Facts policy (volatile metrics)**: Volatile metrics (test counts, grades, etc.) must live in the manifest under `facts` (live/current) or `facts_history` (frozen session-closeout snapshots). Only `facts` is canonical truth; `facts_history` is read-only history and must not be cited as "current".
 
 ## How to use this repo’s docs (humans + AI)
 

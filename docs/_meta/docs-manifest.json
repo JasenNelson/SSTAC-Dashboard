@@ -24,7 +24,10 @@
       "required_provenance_fields": [
         "source",
         "last_verified"
-      ]
+      ],
+      "history_store": "docs/_meta/docs-manifest.json:facts_history",
+      "live_vs_history_rule": "facts holds current/live values only (auto-updated or human-curated canonical truth). Session-closeout or phase-complete snapshots belong in facts_history. When a live fact is superseded by a new session, move the prior entry into facts_history with its key optionally suffixed by session date.",
+      "last_verified_format": "Strict ISO YYYY-MM-DD. Do not append annotations such as (FINAL) or session labels."
     },
     "archive_policy": {
       "rule": "Do not move/archive/delete docs until the archive investigation gates pass (link graph, duplication clusters, unique-value extraction, inbound reference checks)."
@@ -42,6 +45,66 @@
     }
   },
   "facts": {
+    "grades": {
+      "starting_grade": {
+        "status": "verified",
+        "value": "C (66%)",
+        "source": "Initial project assessment (August 2025)",
+        "last_verified": "2025-12-18"
+      },
+      "previous_grade": {
+        "status": "verified",
+        "value": "A- (85-89%)",
+        "source": "Achieved November 17, 2025 through TypeScript type safety improvements (commit d285cbd)",
+        "last_verified": "2025-12-18"
+      },
+      "current_grade": {
+        "status": "verified",
+        "value": "A (90%)",
+        "source": "Achieved January 25, 2026 through Phase 2 Security Hardening completion: 3 vulnerabilities fixed, 6 security headers added, 246/246 tests passing, all CI/CD gates passing. Verified by full test suite execution and GitHub CI/CD validation.",
+        "calculation_basis": {
+          "security_posture": "95% (3 critical vulnerabilities fixed, 6 security headers, cryptographic ID generation, file upload validation, Redis rate limiting)",
+          "type_safety": "85% (Phase 1 type work in progress, but critical paths secured)",
+          "test_coverage": "100% (246/246 tests passing, 0 failures)",
+          "documentation": "90% (LESSONS.md updated with 2 critical lessons, manifest facts current)",
+          "code_quality": "88% (Build succeeds, linting warnings only, no errors)"
+        },
+        "weighted_average": "90%",
+        "commits_contributed": "commit 1511fd8 (test fixes), phase2_security_hardening verified at last_verified 2026-01-25",
+        "staleness_note": "Value (A 90%) was last verified 2026-01-25 and contradicts the historical facts_history.current_session_2026_01_26.final_grade (97.5/100 A++++). Retained here for scripts/analyze-grade.ps1 compatibility. Treat as stale_unreconciled pending a fresh grade re-analysis.",
+        "last_verified": "2026-01-25"
+      },
+      "target_grade": {
+        "status": "in_progress",
+        "value": "A+ (95%+)",
+        "source": "Next target after A achievement",
+        "next_milestones": "Phase 1 (Type Safety), Phase 3 (Testing Expansion), Phase 4 (Performance)",
+        "last_verified": "2026-01-25"
+      }
+    },
+    "testing": {
+      "vitest_test_count": {
+        "status": "verified",
+        "value": 481,
+        "source": "npm run test output - Phase 3 comprehensive testing completion (2026-01-25)",
+        "last_verified": "2026-01-25",
+        "note": "Increased from 246 to 481 (+235 tests from Phase 3 unit/integration expansion, 305+ total new tests across all 6 categories). Phase 3 breakdown: Unit expansion 218 (+tier logic 94, +rate-limit 48, +rate-limit-redis 43), Integration 50, E2E 37, Load 14 scenarios, Security 55, Performance 33. ALL TESTS PASSING: 0 failures."
+      },
+      "playwright_test_count": {
+        "status": "verified",
+        "value": 6,
+        "source": "playwright test --list output (2025-12-18)",
+        "last_verified": "2025-12-18"
+      },
+      "k6_script_count": {
+        "status": "verified",
+        "value": 6,
+        "source": "tests/k6-*.js inventory (2026-04-20)",
+        "last_verified": "2026-04-20"
+      }
+    }
+  },
+  "facts_history": {
     "phase4_performance_optimization": {
       "status": "COMPLETE",
       "session_date": "2026-01-26",
@@ -57,9 +120,9 @@
         "a362b5d - test: update ResultsDisplay test for lazy-loaded QRCodeModal"
       ],
       "branch": "docs/archive-and-lint-fix",
-      "build_status": "\u2705 SUCCESS (13.5s, 0 errors)",
-      "typescript_status": "\u2705 0 TypeScript errors (npx tsc --noEmit)",
-      "test_status": "\u2705 504+ tests PASSING, all Phase 4 changes validated, ResultsDisplay (23 tests) all green",
+      "build_status": "✅ SUCCESS (13.5s, 0 errors)",
+      "typescript_status": "✅ 0 TypeScript errors (npx tsc --noEmit)",
+      "test_status": "✅ 504+ tests PASSING, all Phase 4 changes validated, ResultsDisplay (23 tests) all green",
       "npm_audit_status": "0 HIGH/CRITICAL vulnerabilities",
       "type_safety_improvements": {
         "any_types_before": 53,
@@ -78,15 +141,15 @@
         "estimated_tti_improvement_ms": "200-300"
       },
       "core_web_vitals_targets": {
-        "lcp": "2.5-3s \u2192 1.5-2s",
-        "inp": "150-200ms \u2192 50-100ms",
-        "cls": "0.1-0.15 \u2192 0.05-0.08"
+        "lcp": "2.5-3s → 1.5-2s",
+        "inp": "150-200ms → 50-100ms",
+        "cls": "0.1-0.15 → 0.05-0.08"
       },
       "bundle_size": "219KB (maintained, no growth)",
       "grade_impact": "+2-3 points",
       "current_grade_before": "93/100 (A)",
       "current_grade_after": "95-96/100 (A+)",
-      "grade_achieved": "A+ threshold (95+/100) \u2705",
+      "grade_achieved": "A+ threshold (95+/100) ✅",
       "lessons_added": 1,
       "lesson_topic": "Advanced Lazy Loading with Suspense for Performance Optimization",
       "github_issues_closed": 1,
@@ -134,8 +197,8 @@
       "manifest_updated": true,
       "manifest_entries_added": 8,
       "index_section_added": "Developer Experience & Operations (Phase 5 - NEW)",
-      "build_status": "\u2705 All docs created and validated",
-      "links_verified": "\u2705 All internal cross-references working",
+      "build_status": "✅ All docs created and validated",
+      "links_verified": "✅ All internal cross-references working",
       "next_action": "Phase 6: DevOps & Monitoring or Final Validation (Phase 7)",
       "blockers": "None - Phase 5 complete, A++ documentation achieved",
       "last_verified": "2026-01-26"
@@ -188,7 +251,7 @@
       "grade_impact": "+2 points (from operational/monitoring improvements)",
       "current_grade_before": "96-98/100 (A++)",
       "current_grade_after": "98-100/100 (A+++)",
-      "production_readiness": "\u2705 All systems tested and validated, production deployment ready",
+      "production_readiness": "✅ All systems tested and validated, production deployment ready",
       "performance_improvements": {
         "mttr_reduction": "Error to alert time: <2 minutes (vs. manual detection)",
         "visibility_improvement": "Real-time metrics for Core Web Vitals, API performance, errors",
@@ -200,9 +263,9 @@
         "Access control configured",
         "Encryption in transit"
       ],
-      "integration_validation": "\u2705 Error propagation flow tested (Error \u2192 Logger \u2192 Sentry \u2192 Dashboard \u2192 Slack)",
-      "build_status": "\u2705 All new code valid, no build errors",
-      "test_status": "\u2705 504+ tests maintained, all passing",
+      "integration_validation": "✅ Error propagation flow tested (Error → Logger → Sentry → Dashboard → Slack)",
+      "build_status": "✅ All new code valid, no build errors",
+      "test_status": "✅ 504+ tests maintained, all passing",
       "npm_audit_status": "0 HIGH/CRITICAL vulnerabilities",
       "team_training_items": [
         "Sentry error tracking",
@@ -221,7 +284,7 @@
       "github_issues_closed": 0,
       "next_action": "Phase 7: Final Validation & Closure or Full Production Deployment",
       "blockers": "None - Phase 6 complete, all systems operational and tested",
-      "deployment_readiness": "\u2705 PRODUCTION READY - All monitoring and alerting functional",
+      "deployment_readiness": "✅ PRODUCTION READY - All monitoring and alerting functional",
       "last_verified": "2026-01-26"
     },
     "phase7_final_validation": {
@@ -229,10 +292,10 @@
       "session_date": "2026-01-26",
       "phase": "Phase 7: Comprehensive System Review & Validation",
       "phase_status": "COMPLETE - All validation tasks finished, project ready for production",
-      "work_completed": "Task 7.1 (E2E Testing) IN PROGRESS: (1) Linting validation \u2705 PASSED - 50+ warnings (unused variables, some any-types) but 0 blocking errors; (2) Unit tests \u2705 PASSED - 536 tests across 23 test files in 6.05s, 0 failures; (3) E2E tests \u274c BLOCKED - Port 3000 conflict with orphaned Next.js process",
+      "work_completed": "Task 7.1 (E2E Testing) IN PROGRESS: (1) Linting validation ✅ PASSED - 50+ warnings (unused variables, some any-types) but 0 blocking errors; (2) Unit tests ✅ PASSED - 536 tests across 23 test files in 6.05s, 0 failures; (3) E2E tests ❌ BLOCKED - Port 3000 conflict with orphaned Next.js process",
       "testing_status": {
         "eslint_linting": {
-          "status": "\u2705 PASSED",
+          "status": "✅ PASSED",
           "result": "0 errors, 50+ warnings (non-blocking)",
           "warnings_categories": [
             "unused-variables (~30)",
@@ -240,7 +303,7 @@
           ]
         },
         "unit_tests": {
-          "status": "\u2705 PASSED",
+          "status": "✅ PASSED",
           "test_count": 536,
           "test_files": 23,
           "execution_time": "6.05 seconds",
@@ -260,7 +323,7 @@
           ]
         },
         "e2e_tests": {
-          "status": "\u274c BLOCKED",
+          "status": "❌ BLOCKED",
           "blocker": "Port 3000 conflict - orphaned Next.js dev server from previous session",
           "error_message": "Timed out waiting 120000ms from config.webServer",
           "root_cause": "Process 28548 (next/dist/server/lib/start-server.js) still holding port 3000",
@@ -275,7 +338,7 @@
         "action_required": "None - linting warnings do not block build or tests"
       },
       "branch": "docs/archive-and-lint-fix",
-      "build_status": "\u2705 npm run build SUCCESSFUL (13.5s, 0 errors)",
+      "build_status": "✅ npm run build SUCCESSFUL (13.5s, 0 errors)",
       "npm_audit_status": "0 HIGH/CRITICAL vulnerabilities",
       "current_grade_baseline": "98-100/100 (A+++)",
       "expected_grade_after_phase7": "99-100/100 (A++++)",
@@ -289,31 +352,32 @@
       "next_action": "Complete E2E test execution (Task 7.1), then proceed with performance benchmarking (Task 7.2)",
       "last_verified": "2026-01-26"
     },
-    "current_session": {
+    "current_session_2026_01_26": {
+      "original_key": "current_session",
       "status": "Phase 7 COMPLETE - All phases finished, project production-ready",
       "session_date": "2026-01-26 (FINAL)",
       "phase": "Phase 7: Comprehensive System Review & Validation",
       "phase_status": "COMPLETE - All 7 phases verified and working together",
-      "work_completed": "Task 7.1: Linting \u2705 (0 errors), Unit tests \u2705 (536/536), E2E tests \u2705 (via subagent a62f381). Task 7.2: Performance verified \u2705 (all CVW targets met, bundle sizes maintained). Task 7.3: Grade calculated \u2705 (97.5/100 = A++++). Task 7.4: Project closure \u2705 (checkpoint created, manifest updated, all docs linked)",
+      "work_completed": "Task 7.1: Linting ✅ (0 errors), Unit tests ✅ (536/536), E2E tests ✅ (via subagent a62f381). Task 7.2: Performance verified ✅ (all CVW targets met, bundle sizes maintained). Task 7.3: Grade calculated ✅ (97.5/100 = A++++). Task 7.4: Project closure ✅ (checkpoint created, manifest updated, all docs linked)",
       "final_grade": "97.5/100 (A++++)",
-      "grade_progression": "B+ (87) \u2192 A+ (95) \u2192 A++++ (97.5) = +10.5 point improvement",
+      "grade_progression": "B+ (87) → A+ (95) → A++++ (97.5) = +10.5 point improvement",
       "task_7_1_status": "COMPLETE",
       "task_7_2_status": "COMPLETE",
       "task_7_3_status": "COMPLETE",
       "task_7_4_status": "COMPLETE",
       "testing_results": {
-        "linting": "\u2705 0 errors, 50 warnings (non-blocking)",
-        "unit_tests": "\u2705 536/536 PASSING",
-        "e2e_tests": "\u2705 PASSED (subagent a62f381)",
-        "security_audit": "\u2705 0 HIGH/CRITICAL vulnerabilities",
-        "build": "\u2705 SUCCESS (13.5s, 0 errors)"
+        "linting": "✅ 0 errors, 50 warnings (non-blocking)",
+        "unit_tests": "✅ 536/536 PASSING",
+        "e2e_tests": "✅ PASSED (subagent a62f381)",
+        "security_audit": "✅ 0 HIGH/CRITICAL vulnerabilities",
+        "build": "✅ SUCCESS (13.5s, 0 errors)"
       },
       "performance_validation": {
-        "lcp": "\u2705 1.5-2.0s (target met)",
-        "inp": "\u2705 50-100ms (target met)",
-        "cls": "\u2705 0.05-0.08 (target met)",
-        "bundle_shared_js": "\u2705 219KB (<250KB target)",
-        "bundle_max_page": "\u2705 330KB (<500KB target)"
+        "lcp": "✅ 1.5-2.0s (target met)",
+        "inp": "✅ 50-100ms (target met)",
+        "cls": "✅ 0.05-0.08 (target met)",
+        "bundle_shared_js": "✅ 219KB (<250KB target)",
+        "bundle_max_page": "✅ 330KB (<500KB target)"
       },
       "lessons_documented": 2,
       "lessons_added": [
@@ -329,12 +393,12 @@
         ".claude/SESSION_CHECKPOINT_PHASE_7_FINAL.md (NEW - final checkpoint)"
       ],
       "branch": "docs/archive-and-lint-fix",
-      "production_status": "\u2705 READY FOR PRODUCTION DEPLOYMENT",
-      "deployment_verified": "Vercel: \u2705 SUCCESS, Database: \u2705 READY, Cache: \u2705 CONFIGURED",
+      "production_status": "✅ READY FOR PRODUCTION DEPLOYMENT",
+      "deployment_verified": "Vercel: ✅ SUCCESS, Database: ✅ READY, Cache: ✅ CONFIGURED",
       "next_phase": "Production Operations & Quarterly Maintenance",
       "all_phases_complete": true,
       "project_status": "DELIVERED",
-      "last_verified": "2026-01-26 (FINAL)"
+      "last_verified": "2026-01-26"
     },
     "phase3_testing_completion": {
       "status": "complete",
@@ -594,42 +658,6 @@
       "lesson_captured": "docs/LESSONS.md - Incremental Component Extraction Pattern (HIGH impact)",
       "last_verified": "2026-01-24"
     },
-    "grades": {
-      "starting_grade": {
-        "status": "verified",
-        "value": "C (66%)",
-        "source": "Initial project assessment (August 2025)",
-        "last_verified": "2025-12-18"
-      },
-      "previous_grade": {
-        "status": "verified",
-        "value": "A- (85-89%)",
-        "source": "Achieved November 17, 2025 through TypeScript type safety improvements (commit d285cbd)",
-        "last_verified": "2025-12-18"
-      },
-      "current_grade": {
-        "status": "verified",
-        "value": "A (90%)",
-        "source": "Achieved January 25, 2026 through Phase 2 Security Hardening completion: 3 vulnerabilities fixed, 6 security headers added, 246/246 tests passing, all CI/CD gates passing. Verified by full test suite execution and GitHub CI/CD validation.",
-        "calculation_basis": {
-          "security_posture": "95% (3 critical vulnerabilities fixed, 6 security headers, cryptographic ID generation, file upload validation, Redis rate limiting)",
-          "type_safety": "85% (Phase 1 type work in progress, but critical paths secured)",
-          "test_coverage": "100% (246/246 tests passing, 0 failures)",
-          "documentation": "90% (LESSONS.md updated with 2 critical lessons, manifest facts current)",
-          "code_quality": "88% (Build succeeds, linting warnings only, no errors)"
-        },
-        "weighted_average": "90%",
-        "commits_contributed": "commit 1511fd8 (test fixes), phase2_security_hardening verified at last_verified 2026-01-25",
-        "last_verified": "2026-01-25"
-      },
-      "target_grade": {
-        "status": "in_progress",
-        "value": "A+ (95%+)",
-        "source": "Next target after A achievement",
-        "next_milestones": "Phase 1 (Type Safety), Phase 3 (Testing Expansion), Phase 4 (Performance)",
-        "last_verified": "2026-01-25"
-      }
-    },
     "performance_optimization_2026_01_24": {
       "status": "completed",
       "phase": "Performance Optimization: Caching & Lazy Loading",
@@ -718,7 +746,7 @@
       "session_date": "2026-01-25",
       "branch": "docs/archive-and-lint-fix",
       "checkpoint_file": ".claude/SESSION_CHECKPOINT_2026-01-25.md",
-      "push_status": "\u2705 COMPLETE (6ca5d16..e5dd237)",
+      "push_status": "✅ COMPLETE (6ca5d16..e5dd237)",
       "commits_pushed": 14
     },
     "phase2_security_hardening": {
@@ -777,27 +805,6 @@
       "regressions": 0,
       "estimated_hours": "40-50",
       "last_verified": "2026-01-25"
-    },
-    "testing": {
-      "vitest_test_count": {
-        "status": "verified",
-        "value": 481,
-        "source": "npm run test output - Phase 3 comprehensive testing completion (2026-01-25)",
-        "last_verified": "2026-01-25",
-        "note": "Increased from 246 to 481 (+235 tests from Phase 3 unit/integration expansion, 305+ total new tests across all 6 categories). Phase 3 breakdown: Unit expansion 218 (+tier logic 94, +rate-limit 48, +rate-limit-redis 43), Integration 50, E2E 37, Load 14 scenarios, Security 55, Performance 33. ALL TESTS PASSING: 0 failures."
-      },
-      "playwright_test_count": {
-        "status": "verified",
-        "value": 6,
-        "source": "playwright test --list output (2025-12-18)",
-        "last_verified": "2025-12-18"
-      },
-      "k6_script_count": {
-        "status": "verified",
-        "value": 6,
-        "source": "tests/k6-*.js inventory (2025-12-18)",
-        "last_verified": "2025-12-18"
-      }
     }
   },
   "known_issues": {
@@ -2100,7 +2107,7 @@
   "section_catalog": {
     "pcg.actual_db_structure": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
-      "heading_text_exact": "\ud83d\udcca **ACTUAL Database Structure (Based on CSV Analysis)**"
+      "heading_text_exact": "📊 **ACTUAL Database Structure (Based on CSV Analysis)**"
     },
     "pcg.three_separate_systems": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
@@ -2116,11 +2123,11 @@
     },
     "pcg.wordcloud_system": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
-      "heading_text_exact": "**3. Wordcloud Polls System** \u2705 **COMPLETED (2025)**"
+      "heading_text_exact": "**3. Wordcloud Polls System** ✅ **COMPLETED (2025)**"
     },
     "pcg.system_architecture": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
-      "heading_text_exact": "\ud83c\udfd7\ufe0f **System Architecture**"
+      "heading_text_exact": "🏗️ **System Architecture**"
     },
     "pcg.critical_data_flow": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
@@ -2136,7 +2143,7 @@
     },
     "pcg.key_system_rules": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
-      "heading_text_exact": "\ud83c\udfaf **Key System Rules**"
+      "heading_text_exact": "🎯 **Key System Rules**"
     },
     "pcg.never_mix_poll_types": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
@@ -2156,7 +2163,7 @@
     },
     "pcg.verification_queries": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
-      "heading_text_exact": "\ud83d\udcca **Verification Queries**"
+      "heading_text_exact": "📊 **Verification Queries**"
     },
     "pcg.check_current_poll_state": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
@@ -2168,7 +2175,7 @@
     },
     "pcg.wordcloud_critical": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
-      "heading_text_exact": "\ud83d\udea8 **CRITICAL: Wordcloud System Implementation (2025)**"
+      "heading_text_exact": "🚨 **CRITICAL: Wordcloud System Implementation (2025)**"
     },
     "pcg.wordcloud_div0": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
@@ -2176,7 +2183,7 @@
     },
     "pcg.k6_enhancements": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
-      "heading_text_exact": "\ud83e\uddea **K6 Testing System Enhancements (2025)**"
+      "heading_text_exact": "🧪 **K6 Testing System Enhancements (2025)**"
     },
     "pcg.k6_user_id_fix": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
@@ -2188,7 +2195,7 @@
     },
     "sup.pre_update_checklist": {
       "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
-      "heading_text_exact": "\ud83d\udccb **Pre-Update Checklist**"
+      "heading_text_exact": "📋 **Pre-Update Checklist**"
     },
     "sup.verify_current_state": {
       "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
@@ -2200,7 +2207,7 @@
     },
     "sup.update_by_type": {
       "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
-      "heading_text_exact": "\ud83d\udd04 **Update Protocol by Poll Type**"
+      "heading_text_exact": "🔄 **Update Protocol by Poll Type**"
     },
     "sup.single_choice_section": {
       "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
@@ -2216,7 +2223,7 @@
     },
     "sup.three_way_sync": {
       "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
-      "heading_text_exact": "\ud83c\udfaf **Three-Way Synchronization Requirements**"
+      "heading_text_exact": "🎯 **Three-Way Synchronization Requirements**"
     },
     "sup.critical_rule_three_places": {
       "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
@@ -2228,11 +2235,11 @@
     },
     "sup.emergency_rollback": {
       "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
-      "heading_text_exact": "\ud83d\udea8 **Emergency Rollback Procedure**"
+      "heading_text_exact": "🚨 **Emergency Rollback Procedure**"
     },
     "sup.question_text_protocol": {
       "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
-      "heading_text_exact": "\ud83d\udea8 **CRITICAL: Question Text Update Protocol (ENHANCED)**"
+      "heading_text_exact": "🚨 **CRITICAL: Question Text Update Protocol (ENHANCED)**"
     },
     "sup.question_text_sync_requirements": {
       "path": "docs/poll-system/SAFE_POLL_UPDATE_PROTOCOL.md",
@@ -2240,7 +2247,7 @@
     },
     "dbg.cew_multiple_submissions": {
       "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
-      "heading_text_exact": "\ud83d\udea8 CRITICAL: CEW Poll Multiple Submissions (2025)"
+      "heading_text_exact": "🚨 CRITICAL: CEW Poll Multiple Submissions (2025)"
     },
     "dbg.cew_behavior_requirements": {
       "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
@@ -2248,7 +2255,7 @@
     },
     "dbg.wordcloud_div0": {
       "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
-      "heading_text_exact": "\ud83d\udea8 CRITICAL: Wordcloud Division by Zero Error (2025)"
+      "heading_text_exact": "🚨 CRITICAL: Wordcloud Division by Zero Error (2025)"
     },
     "dbg.wordcloud_results_div0": {
       "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
@@ -2276,7 +2283,7 @@
     },
     "dbg.poll_question_option_updates": {
       "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
-      "heading_text_exact": "\ud83d\udea8 CRITICAL: Poll Question & Option Updates (2025)"
+      "heading_text_exact": "🚨 CRITICAL: Poll Question & Option Updates (2025)"
     },
     "dbg.mandatory_update_protocol": {
       "path": "docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md",
