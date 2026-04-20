@@ -133,6 +133,7 @@ The repo-root upgrade-plan files were authored mid-roadmap and embed grades, wee
 
 ### Documentation audits (reference)
 - `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` - 2026-04 documentation audit (Phase 1a deliverable). Inventory, gate-coverage matrix, gap register, cross-repo integration review, manifest fact provenance check, path canonicalization, and prioritized P0/P1/P2 fixes that drive subsequent doc updates. Not a current-status source.
+- `docs/_meta/DOCUMENTATION_ARCHIVE_LIFECYCLE_AUDIT_2026-04.md` - 2026-04 archive/lifecycle audit. Classifies repo markdown by lifecycle state (ACTIVE / REFERENCE / HISTORICAL-IN-PLACE / ARCHIVE-CANDIDATE / REVIEW-NEEDED), flags stale current-status claims (including inside manifest `facts`), proposes batched archive remediation, and records the policy/tooling changes applied alongside it. Not a current-status source.
 
 ### Redirects and deferred items (reference)
 - `docs/PROJECT_STATUS.md` - Redirect to INDEX (narrative) + manifest `facts` (metrics), with a bounded historical snapshot of 2025 development phases. Not a current-state dashboard.

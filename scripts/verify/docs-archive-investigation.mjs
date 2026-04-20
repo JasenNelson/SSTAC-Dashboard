@@ -16,7 +16,8 @@ function normalizeRepoPath(p) {
 
 function parseArgs(argv) {
   const args = {
-    root: 'docs',
+    roots: [],
+    includeRepoRootMd: false,
     json: false,
     out: null,
     failOnBrokenLinks: true
@@ -24,17 +25,21 @@ function parseArgs(argv) {
 
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
-    if (a === '--root') args.root = normalizeRepoPath(argv[++i])
+    if (a === '--root') args.roots.push(normalizeRepoPath(argv[++i]))
+    else if (a === '--include-root-md') args.includeRepoRootMd = true
     else if (a === '--json') args.json = true
     else if (a === '--out') args.out = argv[++i]
     else if (a === '--no-fail-on-broken-links') args.failOnBrokenLinks = false
     else {
       die(
-        `Unknown arg: ${a}\nUsage: node scripts/verify/docs-archive-investigation.mjs [--root <dir>] [--json] [--out <file>] [--no-fail-on-broken-links]`
+        `Unknown arg: ${a}\nUsage: node scripts/verify/docs-archive-investigation.mjs [--root <dir>]* [--include-root-md] [--json] [--out <file>] [--no-fail-on-broken-links]\n\n` +
+          `--root may be repeated to scan multiple directories (default: docs).\n` +
+          `--include-root-md also scans repo-root-level *.md files (non-recursive).`
       )
     }
   }
 
+  if (args.roots.length === 0) args.roots = ['docs']
   return args
 }
 
@@ -52,6 +57,30 @@ function listMarkdownFiles(rootDirAbs) {
   }
   out.sort()
   return out
+}
+
+function listRepoRootMarkdownFiles(repoRootAbs) {
+  const out = []
+  for (const e of fs.readdirSync(repoRootAbs, { withFileTypes: true })) {
+    if (e.isFile() && e.name.toLowerCase().endsWith('.md')) {
+      out.push(path.join(repoRootAbs, e.name))
+    }
+  }
+  out.sort()
+  return out
+}
+
+function collectMarkdownFiles(args) {
+  const found = new Set()
+  for (const root of args.roots) {
+    const abs = path.resolve(root)
+    if (!fs.existsSync(abs)) die(`Missing root: ${root} (${abs})`)
+    for (const p of listMarkdownFiles(abs)) found.add(p)
+  }
+  if (args.includeRepoRootMd) {
+    for (const p of listRepoRootMarkdownFiles(path.resolve('.'))) found.add(p)
+  }
+  return [...found].sort()
 }
 
 function stripFences(markdown) {
@@ -216,10 +245,8 @@ class UnionFind {
 
 function main() {
   const args = parseArgs(process.argv.slice(2))
-  const rootAbs = path.resolve(args.root)
-  if (!fs.existsSync(rootAbs)) die(`Missing docs root: ${args.root} (${rootAbs})`)
 
-  const mdFilesAbs = listMarkdownFiles(rootAbs)
+  const mdFilesAbs = collectMarkdownFiles(args)
   const mdFilesRepo = mdFilesAbs.map((p) => normalizeRepoPath(path.relative(path.resolve('.'), p)))
 
   // Preload docs content + heading slugs
@@ -377,7 +404,9 @@ function main() {
   const outboundObject = Object.fromEntries(outbound.entries())
 
   const result = {
-    docs_root: args.root,
+    docs_root: args.roots.length === 1 ? args.roots[0] : args.roots,
+    scanned_roots: args.roots,
+    include_repo_root_md: args.includeRepoRootMd,
     markdown_files: mdFilesRepo,
     link_graph: {
       outbound: outboundObject,
@@ -411,7 +440,9 @@ function formatHuman(result) {
   lines.push('Docs archive-investigation')
   lines.push('=========================')
   lines.push('')
-  lines.push(`Docs root: ${result.docs_root}`)
+  const roots = Array.isArray(result.scanned_roots) ? result.scanned_roots : [result.scanned_roots]
+  lines.push(`Scanned roots: ${roots.join(', ')}`)
+  if (result.include_repo_root_md) lines.push('Repo-root *.md included (non-recursive)')
   lines.push(`Markdown files scanned: ${result.markdown_files.length}`)
   lines.push('')
 
@@ -441,7 +472,12 @@ function formatHuman(result) {
   for (const [p, n] of topInbound) lines.push(`- ${p}: ${n}`)
   lines.push('')
 
-  lines.push('STATUS: PASS (archive investigation completed)')
+  const brokenCount = (result.broken_links || []).length
+  if (brokenCount) {
+    lines.push(`STATUS: FAIL (${brokenCount} broken link(s) — gate will exit non-zero)`)
+  } else {
+    lines.push('STATUS: PASS (archive investigation completed)')
+  }
   return lines.join('\n')
 }
 

@@ -855,6 +855,18 @@
       "notes": "2026-04 documentation audit deliverable (Phase 1a). Informs Phase 2/3 doc updates; do not treat as current-status source."
     },
     {
+      "id": "docs.archive_lifecycle_audit_2026_04",
+      "path": "docs/_meta/DOCUMENTATION_ARCHIVE_LIFECYCLE_AUDIT_2026-04.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "docs-system",
+        "audit",
+        "archive",
+        "lifecycle"
+      ],
+      "notes": "2026-04 archive/lifecycle audit. Follows DOCUMENTATION_AUDIT_2026-04.md by classifying docs as ACTIVE/REFERENCE/HISTORICAL-IN-PLACE/ARCHIVE-CANDIDATE/REVIEW-NEEDED, flagging stale current-status claims (including inside manifest facts), and proposing batched archive remediation. Records the policy/tooling changes applied alongside it. Not a current-status source."
+    },
+    {
       "id": "ops.vercel_setup",
       "path": "docs/operations/VERCEL_SETUP.md",
       "lifecycle": "REFERENCE",

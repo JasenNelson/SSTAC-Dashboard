@@ -86,7 +86,7 @@ Before contributing, please read:
 
 1. **[Main README](README.md)** - Project overview
 2. **[AGENTS.md](docs/AGENTS.md)** - Core development guidelines (CRITICAL)
-3. **[Poll System Guide](docs/POLL_SYSTEM_COMPLETE_GUIDE.md)** - System architecture
+3. **[Poll System Guide](docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md)** - System architecture
 4. **[Documentation Index](docs/README.md)** - All documentation
 
 **⏱️ Time Required:** 2-3 hours for onboarding
@@ -456,7 +456,7 @@ Closes #issue_number
 - `docs/PROJECT_STATUS.md` - For completed work
 - `docs/AGENTS.md` - For core rule changes
 - `docs/DEBUGGING_LESSONS_LEARNED.md` - For bug fixes
-- `docs/POLL_SYSTEM_COMPLETE_GUIDE.md` - For poll changes
+- `docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md` - For poll changes
 - Relevant script documentation
 
 ### **Documentation Standards**
@@ -489,7 +489,7 @@ Create the poll and test it.
 
 ```bash
 # 1. Read the guide
-cat docs/POLL_SYSTEM_COMPLETE_GUIDE.md
+cat docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md
 
 # 2. Follow update protocol
 cat docs/SAFE_POLL_UPDATE_PROTOCOL.md
@@ -528,7 +528,7 @@ git push origin feature/add-new-poll-question
 # Read error messages, check logs
 
 # 2. Check debugging guide
-cat docs/POLL_SYSTEM_DEBUGGING_GUIDE.md
+cat docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md
 
 # 3. Create fix branch
 git checkout -b fix/vote-counting-error
@@ -637,7 +637,7 @@ From [AGENTS.md](docs/AGENTS.md):
 1. **Check documentation first**
    - [Documentation Index](docs/README.md)
    - [Core Guidelines](docs/AGENTS.md)
-   - [Debugging Guide](docs/POLL_SYSTEM_DEBUGGING_GUIDE.md)
+   - [Debugging Guide](docs/poll-system/POLL_SYSTEM_DEBUGGING_GUIDE.md)
 
 2. **Search existing issues**
    - Check for similar problems
