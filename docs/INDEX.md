@@ -75,6 +75,13 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 ### Operations (reference)
 - `docs/operations/VERCEL_SETUP.md`
 - `docs/operations/MONITORING_GUIDE.md`
+- `docs/operations/MIDDLEWARE_GUIDE.md` - `src/middleware.ts` request flow, security headers, "Auth session missing" silencing rationale, and refresh-token redirect path
+
+### Environment (reference)
+- `docs/ENVIRONMENT_REFERENCE.md` - Per-variable reference for every env var read by `src/` and `scripts/`: required-or-not, read-by file:line, default, effect, sensitivity
+
+### BN-RRM (reference)
+- `docs/bn-rrm/README.md` - Dashboard-side BN-RRM feature: pack model, dual `runtime_schema_version` contract (`canonical-20node-v1` / `generic-bn-rrm-v1`), artifact contract under `public/bn-rrm/packs/`, read-only-pack rule, RR boundary
 
 ### Developer Experience & Operations (Phase 5 - NEW)
 **Critical documentation for development, deployment, and maintenance**
@@ -124,6 +131,9 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 
 ### Documentation audits (reference)
 - `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` - 2026-04 documentation audit (Phase 1a deliverable). Inventory, gate-coverage matrix, gap register, cross-repo integration review, manifest fact provenance check, path canonicalization, and prioritized P0/P1/P2 fixes that drive subsequent doc updates. Not a current-status source.
+
+### Local Claude tooling (reference; outside docs/)
+- `.claude/README.md` - Navigation for `.claude/skills/` (safe-exit, update-docs), `/update-docs` invocation guidance, gate-failure remediation pointer, authority hierarchy. Not part of the gate system.
 
 ## Legacy index
 

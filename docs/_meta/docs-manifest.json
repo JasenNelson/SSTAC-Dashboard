@@ -875,6 +875,40 @@
       ]
     },
     {
+      "id": "ops.middleware_guide",
+      "path": "docs/operations/MIDDLEWARE_GUIDE.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "operations",
+        "middleware",
+        "auth",
+        "security-headers"
+      ],
+      "notes": "Describes src/middleware.ts request flow, header set, and auth-error silencing. Source of truth is the file itself."
+    },
+    {
+      "id": "core.environment_reference",
+      "path": "docs/ENVIRONMENT_REFERENCE.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "configuration",
+        "environment",
+        "operations"
+      ],
+      "notes": "Per-variable reference for env vars consumed by src/ and scripts/. Update alongside .env.example when adding new vars."
+    },
+    {
+      "id": "bn_rrm.readme",
+      "path": "docs/bn-rrm/README.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "bn-rrm",
+        "frontend",
+        "model-packs"
+      ],
+      "notes": "Dashboard-side BN-RRM feature, pack model, artifact contract, RR boundary."
+    },
+    {
       "id": "core.project_status",
       "path": "docs/PROJECT_STATUS.md",
       "lifecycle": "REFERENCE",
