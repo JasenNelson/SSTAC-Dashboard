@@ -125,3 +125,7 @@ cython_debug/
 
 
 /support files
+
+# Claude Code local config
+.claude/settings.local.json
+.claude/pending-*.txt
