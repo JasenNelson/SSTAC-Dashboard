@@ -90,6 +90,7 @@ coverage.xml
 .pytest_cache/
 cover/
 tests/test-results/
+/test-results/
 tests/*.log
 playwright-report/
 
