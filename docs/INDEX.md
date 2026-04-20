@@ -70,6 +70,7 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 - `docs/review-analysis/README.md`
 - `docs/review-analysis/NEXT_STEPS.md`
 - `docs/review-analysis/REVIEW_SUMMARY.md`
+- `docs/review-analysis/HOW_TO_CONDUCT_GRADE_ANALYSIS.md` - Methodology for the weighted-category grade analysis. Current grades live in manifest `facts.grades` (subject to Batch B hygiene); this doc describes how the analysis is run, not the current score.
 - `docs/review-analysis/archive/` (historical records)
 
 ### Operations (reference)
@@ -79,6 +80,9 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 
 ### Environment (reference)
 - `docs/ENVIRONMENT_REFERENCE.md` - Per-variable reference for every env var read by `src/` and `scripts/`: required-or-not, read-by file:line, default, effect, sensitivity
+
+### Debugging (reference)
+- `docs/debugging/PRE_COMMIT_CHECKLIST.md` - Lightweight pre-commit checklist for incident/debug work. Complements the full verification process under `docs/review-analysis/archive/CODE_CHANGE_VERIFICATION_PROCESS.md`.
 
 ### BN-RRM (reference)
 - `docs/bn-rrm/README.md` - Dashboard-side BN-RRM feature: pack model, dual `runtime_schema_version` contract (`canonical-20node-v1` / `generic-bn-rrm-v1`), artifact contract under `public/bn-rrm/packs/`, read-only-pack rule, RR boundary

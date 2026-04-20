@@ -1592,6 +1592,451 @@
         "history"
       ],
       "notes": "Pre-correction snapshot of UX mockups."
+    },
+    {
+      "id": "docs.next_steps",
+      "path": "docs/NEXT_STEPS.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "navigation",
+        "deferred-items"
+      ],
+      "notes": "Dated, append-only list of deferred items surfaced by past sessions. Not a status dashboard."
+    },
+    {
+      "id": "poll.index",
+      "path": "docs/poll-system/README.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "poll-system",
+        "navigation"
+      ],
+      "notes": "Navigation index for poll-system documentation cluster."
+    },
+    {
+      "id": "sysdesign.index",
+      "path": "docs/system-design/README.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "system-design",
+        "navigation"
+      ],
+      "notes": "Navigation index for system-design documentation cluster."
+    },
+    {
+      "id": "sysdesign.matrix_graph",
+      "path": "docs/system-design/MATRIX_GRAPH_VISUALIZATION.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "system-design",
+        "matrix-graph",
+        "visualization"
+      ],
+      "notes": "Design guide for overlapping-data-point handling in matrix graphs (jittered clustering, density heatmap)."
+    },
+    {
+      "id": "review.index",
+      "path": "docs/review-analysis/README.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "review-analysis",
+        "navigation"
+      ],
+      "notes": "Navigation index for review-analysis folder. Links to executive summary, roadmap, and historical archive."
+    },
+    {
+      "id": "debug.pre_commit_checklist",
+      "path": "docs/debugging/PRE_COMMIT_CHECKLIST.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "debugging",
+        "process",
+        "pre-commit"
+      ],
+      "notes": "Lightweight pre-commit checklist for incident/debug work. References docs/review-analysis/archive/CODE_CHANGE_VERIFICATION_PROCESS.md for the full process."
+    },
+    {
+      "id": "review.grade_analysis_methodology",
+      "path": "docs/review-analysis/HOW_TO_CONDUCT_GRADE_ANALYSIS.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "review-analysis",
+        "methodology",
+        "grading"
+      ],
+      "notes": "Weighted-category grade-analysis methodology. Current grades live in manifest facts.grades (and are subject to Batch B hygiene); this doc describes how to run the analysis, not the current score."
+    },
+    {
+      "id": "testing.k6_comprehensive_plan",
+      "path": "docs/testing/K6_COMPREHENSIVE_TESTING_PLAN.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "testing",
+        "k6",
+        "load-testing",
+        "plan"
+      ],
+      "notes": "Comprehensive k6 test plan covering CEW polls, survey results, admin poll results, matrix graph, and API endpoints. Referenced from docs/testing/README.md and docs/ARCHITECTURE_DECISIONS.md."
+    },
+    {
+      "id": "sysdesign.debugging_lessons",
+      "path": "docs/system-design/DEBUGGING_LESSONS_LEARNED.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "system-design",
+        "debugging",
+        "history"
+      ],
+      "notes": "January 2026 retrospective: critical debugging scenarios, bad assumptions, and solutions. Dated snapshot; retained for cross-reference. HISTORICAL-IN-PLACE under docs/ARCHIVE_POLICY.md."
+    },
+    {
+      "id": "review.next_steps_nov",
+      "path": "docs/review-analysis/NEXT_STEPS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "planning",
+        "history"
+      ],
+      "notes": "December 2025 planning snapshot from the comprehensive-review stream. HISTORICAL-IN-PLACE; canonical deferred items live in docs/NEXT_STEPS.md."
+    },
+    {
+      "id": "review.summary_nov",
+      "path": "docs/review-analysis/REVIEW_SUMMARY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "summary",
+        "history"
+      ],
+      "notes": "November 2025 executive summary of the comprehensive review. HISTORICAL-IN-PLACE; canonical entrypoint is docs/INDEX.md."
+    },
+    {
+      "id": "archive.review_analysis_archive_readme",
+      "path": "docs/review-analysis/archive/README.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "archive-index",
+        "history"
+      ],
+      "notes": "Index for docs/review-analysis/archive/ historical reference documents."
+    },
+    {
+      "id": "archive.comprehensive_review_progress",
+      "path": "docs/review-analysis/archive/COMPREHENSIVE_REVIEW_PROGRESS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "history",
+        "full-review"
+      ],
+      "notes": "Full detailed review of all 8 phases (historical multi-thousand-line record)."
+    },
+    {
+      "id": "archive.architectural_achievements",
+      "path": "docs/review-analysis/archive/ARCHITECTURAL_ACHIEVEMENTS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "architecture",
+        "history"
+      ],
+      "notes": "November 2025 retrospective celebrating architectural achievements."
+    },
+    {
+      "id": "archive.code_cleanup_verification",
+      "path": "docs/review-analysis/archive/CODE_CLEANUP_VERIFICATION.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "code-cleanup",
+        "history"
+      ],
+      "notes": "Historical verification notes for a code-cleanup pass."
+    },
+    {
+      "id": "archive.consolidation_plan",
+      "path": "docs/review-analysis/archive/CONSOLIDATION_PLAN.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "planning",
+        "history"
+      ],
+      "notes": "Historical consolidation plan from the comprehensive-review stream."
+    },
+    {
+      "id": "archive.current_status_deletion_investigation",
+      "path": "docs/review-analysis/archive/CURRENT_STATUS_DELETION_INVESTIGATION.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "investigation",
+        "history"
+      ],
+      "notes": "Investigation into a missing CURRENT_STATUS.md file (one-time)."
+    },
+    {
+      "id": "archive.grade_projection",
+      "path": "docs/review-analysis/archive/GRADE_PROJECTION.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "grading",
+        "history"
+      ],
+      "notes": "Historical grade-projection snapshot; superseded by manifest facts.grades and subject to Batch B hygiene."
+    },
+    {
+      "id": "archive.markdown_update_plan",
+      "path": "docs/review-analysis/archive/MARKDOWN_UPDATE_PLAN.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "docs",
+        "planning",
+        "history"
+      ],
+      "notes": "Historical plan for a documentation update pass."
+    },
+    {
+      "id": "archive.production_safe_roadmap",
+      "path": "docs/review-analysis/archive/PRODUCTION_SAFE_ROADMAP.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "roadmap",
+        "history"
+      ],
+      "notes": "Historical roadmap for production-safe improvements."
+    },
+    {
+      "id": "archive.ready_to_work_on",
+      "path": "docs/review-analysis/archive/READY_TO_WORK_ON.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "backlog",
+        "history"
+      ],
+      "notes": "Historical backlog snapshot of ready-to-work items."
+    },
+    {
+      "id": "archive.safe_continuation_after_tests",
+      "path": "docs/review-analysis/archive/SAFE_CONTINUATION_AFTER_TESTS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "process",
+        "history"
+      ],
+      "notes": "Historical continuation guide authored after a test-suite pass."
+    },
+    {
+      "id": "archive.script_cleanup_analysis",
+      "path": "docs/review-analysis/archive/SCRIPT_CLEANUP_ANALYSIS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "scripts",
+        "history"
+      ],
+      "notes": "Historical analysis of script-cleanup opportunities."
+    },
+    {
+      "id": "archive.sprint7_a_grade_plan",
+      "path": "docs/review-analysis/archive/SPRINT_7_A_GRADE_PLAN.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "sprint",
+        "history"
+      ],
+      "notes": "Historical Sprint 7 quality-improvements plan."
+    },
+    {
+      "id": "archive.structured_logging_test_guide",
+      "path": "docs/review-analysis/archive/STRUCTURED_LOGGING_TEST_GUIDE.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "logging",
+        "history"
+      ],
+      "notes": "Historical test guide for structured-logging rollout."
+    },
+    {
+      "id": "archive.structured_logging_verification",
+      "path": "docs/review-analysis/archive/STRUCTURED_LOGGING_VERIFICATION.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "logging",
+        "verification",
+        "history"
+      ],
+      "notes": "Historical verification record for structured-logging rollout."
+    },
+    {
+      "id": "archive.prioritization_page_update_plan",
+      "path": "docs/review-analysis/archive/PRIORITIZATION_PAGE_UPDATE_PLAN.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "planning",
+        "history"
+      ],
+      "notes": "Historical update plan for the prioritization page."
+    },
+    {
+      "id": "archive.survey_results_update_plan",
+      "path": "docs/review-analysis/archive/SURVEY_RESULTS_UPDATE_PLAN.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "planning",
+        "history"
+      ],
+      "notes": "Historical update plan for the survey-results page."
+    },
+    {
+      "id": "archive.tiered_framework_update_plan",
+      "path": "docs/review-analysis/archive/TIERED_FRAMEWORK_PAGE_UPDATE_PLAN.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "planning",
+        "history"
+      ],
+      "notes": "Historical update plan for the tiered-framework page."
+    },
+    {
+      "id": "archive.week13_16_component_plan",
+      "path": "docs/review-analysis/archive/WEEK13-16_COMPONENT_DECOMPOSITION_PLAN.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "components",
+        "planning",
+        "history"
+      ],
+      "notes": "Historical week-13-16 component-decomposition plan."
+    },
+    {
+      "id": "archive.ai_handoff_matrix",
+      "path": "docs/review-analysis/archive/AI_HANDOFF_MATRIX_DEBUGGING.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "matrix-graph",
+        "debugging",
+        "history"
+      ],
+      "notes": "Historical AI handoff record for a matrix-graph debugging session."
+    },
+    {
+      "id": "archive.matrix_pairing_verification",
+      "path": "docs/review-analysis/archive/MATRIX_PAIRING_VERIFICATION_SUMMARY.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "matrix-graph",
+        "verification",
+        "history"
+      ],
+      "notes": "Historical matrix-pairing verification summary."
+    },
+    {
+      "id": "archive.wordcloud_button_implementation",
+      "path": "docs/review-analysis/archive/WORDCLOUD_RESULTS_BUTTON_IMPLEMENTATION.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "wordcloud",
+        "implementation",
+        "history"
+      ],
+      "notes": "Historical implementation record for the wordcloud results button."
+    },
+    {
+      "id": "archive.wordcloud_button_prompt",
+      "path": "docs/review-analysis/archive/WORDCLOUD_RESULTS_BUTTON_PROMPT.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "wordcloud",
+        "prompt",
+        "history"
+      ],
+      "notes": "Historical implementation prompt for the wordcloud results button."
+    },
+    {
+      "id": "archive.vercel_log_2025_11_18",
+      "path": "docs/review-analysis/archive/vercel-2025-11-18-log.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "vercel",
+        "deployment-log",
+        "history"
+      ],
+      "notes": "Date-specific Vercel deployment log (2025-11-18)."
+    },
+    {
+      "id": "archive.prompt_28_light_mode",
+      "path": "docs/review-analysis/archive/PROMPT_28_FIX_LIGHT_MODE.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "prompts",
+        "history"
+      ],
+      "notes": "One-time implementation prompt: light-mode contrast fix."
+    },
+    {
+      "id": "archive.prompt_29_linting",
+      "path": "docs/review-analysis/archive/PROMPT_29_LINTING_CHECKS.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "prompts",
+        "history"
+      ],
+      "notes": "One-time implementation prompt: linting verification."
+    },
+    {
+      "id": "archive.prompt_30_typescript",
+      "path": "docs/review-analysis/archive/PROMPT_30_TYPESCRIPT_BUILD.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "prompts",
+        "history"
+      ],
+      "notes": "One-time implementation prompt: TypeScript build verification."
+    },
+    {
+      "id": "archive.prompt_31_manual_testing",
+      "path": "docs/review-analysis/archive/PROMPT_31_MANUAL_TESTING.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "prompts",
+        "history"
+      ],
+      "notes": "One-time implementation prompt: manual testing checklist."
+    },
+    {
+      "id": "archive.prompt_32_git_commit",
+      "path": "docs/review-analysis/archive/PROMPT_32_GIT_COMMIT_VERIFICATION.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "review-analysis",
+        "prompts",
+        "history"
+      ],
+      "notes": "One-time implementation prompt: git commit verification."
     }
   ],
   "section_catalog": {
