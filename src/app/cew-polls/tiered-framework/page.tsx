@@ -110,9 +110,7 @@ export default function CEWTieredFrameworkPage() {
                   pagePath="/cew-polls/tiered-framework"
                   questionNumber={poll.questionNumber}
                   authCode={authCode}
-                  onVote={(pollIndex, optionIndex, otherText) => {
-                    console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}${otherText ? `, otherText: "${otherText}"` : ''}`);
-                  }}
+                  onVote={(_pollIndex, _optionIndex, _otherText) => {}}
                 />
               </div>
             );
