@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/api-guards';
+import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth';
 import {
   getAssessmentWithJudgment,
   getOrCreateJudgment,
@@ -295,6 +296,18 @@ export async function PATCH(
       );
     }
 
+    const supabase = await createAuthenticatedClient();
+    const user = await getAuthenticatedUser(supabase);
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found in session' },
+        { status: 401 }
+      );
+    }
+
+    const reviewerName = (user.user_metadata?.full_name as string) || user.email || 'Unknown Reviewer';
+
     // Get or create judgment
     const existingJudgment = getOrCreateJudgment(assessmentId);
 
@@ -311,6 +324,8 @@ export async function PATCH(
       routed_to: judgmentData.routedTo,
       routing_reason: judgmentData.routingReason,
       review_status: judgmentData.reviewStatus,
+      reviewer_id: user.id,
+      reviewer_name: reviewerName,
     });
 
     if (!updatedJudgment) {
