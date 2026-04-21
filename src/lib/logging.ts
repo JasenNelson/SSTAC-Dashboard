@@ -177,13 +177,14 @@ class Logger {
     const message = `API ${method} ${path}`;
     const level = statusCode >= 500 ? LogLevel.ERROR : statusCode >= 400 ? LogLevel.WARN : LogLevel.INFO;
 
-    this.formatLog(level, message, {
+    const entry = this.formatLog(level, message, {
       method,
       path,
       statusCode,
       duration,
       ...context,
     }, 'api');
+    this.output(entry);
   }
 
   // Database-specific logging
@@ -196,12 +197,13 @@ class Logger {
     const level = success ? LogLevel.DEBUG : LogLevel.ERROR;
     const message = success ? 'Database query executed' : 'Database query failed';
 
-    this.formatLog(level, message, {
+    const entry = this.formatLog(level, message, {
       query: query.substring(0, 200), // Truncate for privacy
       duration,
       success,
       ...context,
     }, 'database');
+    this.output(entry);
   }
 
   // Authentication-specific logging
@@ -233,11 +235,12 @@ class Logger {
     };
 
     const message = `Security: ${event}`;
-    this.formatLog(levelMap[severity], message, {
+    const entry = this.formatLog(levelMap[severity], message, {
       event,
       severity,
       ...context,
     });
+    this.output(entry);
   }
 }
 
