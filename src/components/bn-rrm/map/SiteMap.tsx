@@ -32,6 +32,7 @@ import {
   HEAVY_LAYERS,
   MAP_ARTIFACT_LABELS,
   formatFeaturePopup,
+  formatIdentifyEmptyHtml,
   formatIdentifyPopupHtml,
   getStyleForKey,
   packHasMapArtifacts,
@@ -954,11 +955,20 @@ export function SiteMap({
       }
 
       if (merged.length === 0) {
+        // Distinguish the two empty cases so the popup copy is accurate:
+        //   - no_overlays: user has not enabled any WMS overlay AND the click
+        //     did not hit a GeoJSON feature. Identify has nothing to query;
+        //     the popup hints at the layer menu instead of misleadingly
+        //     saying "no features here".
+        //   - no_hits: at least one overlay was queryable (or a GeoJSON
+        //     feature was clicked) but the buffered search returned nothing.
+        const reason: 'no_overlays' | 'no_hits' =
+          ordered.length === 0 && !geojsonHit ? 'no_overlays' : 'no_hits';
         // Do NOT write to the store when there are no hits.
         try {
           const popup = L.popup({ closeButton: true, autoClose: true })
             .setLatLng(latlng)
-            .setContent(formatIdentifyPopupHtml([]));
+            .setContent(formatIdentifyEmptyHtml(reason));
           popup.openOn(map);
           identifyPopupRef.current = popup;
         } catch (err) {
@@ -1323,7 +1333,7 @@ export function SiteMap({
               ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
           )}
-          title="Identify - click a feature to inspect its attributes"
+          title="Identify - searches currently-enabled WMS overlays. Enable a layer from the layer menu first."
         >
           <Crosshair className="w-4 h-4" />
           <span className="hidden sm:inline">Identify</span>

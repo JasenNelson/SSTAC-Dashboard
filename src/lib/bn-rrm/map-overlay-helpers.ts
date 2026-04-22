@@ -481,18 +481,53 @@ function popupValueAsString(v: unknown): string {
 }
 
 /**
+ * Reason for an empty Identify result. Determines the popup copy so the user
+ * can distinguish "clicked empty space on an enabled overlay" from "no
+ * identify-enabled overlays are currently active."
+ */
+export type IdentifyEmptyReason = 'no_hits' | 'no_overlays';
+
+/**
+ * Popup body for the two empty cases:
+ *   - no_hits:    overlays are active but no feature under the click
+ *   - no_overlays: no WMS overlays active, so Identify has nothing to query
+ *
+ * The no_overlays copy includes a short hint directing the user to the layer
+ * menu, because a user who toggled every overlay off (or never toggled one
+ * on) will otherwise see a misleading "no features here" message.
+ */
+export function formatIdentifyEmptyHtml(
+  reason: IdentifyEmptyReason,
+): string {
+  if (reason === 'no_overlays') {
+    const body =
+      `<p style="${POPUP_ROW_STYLE}">` +
+      'Identify searches only overlays that are currently enabled. ' +
+      'Open the layer menu and turn on a WMS overlay ' +
+      '(for example "Contaminated Sites Registry") to inspect features here.' +
+      '</p>';
+    return wrap('No overlays enabled for Identify', body);
+  }
+  return wrap('No features at this location', '');
+}
+
+/**
  * Compact popup body used by the Identify tool. Shows:
  *   - A count header ("N features identified")
  *   - Primary layer label + up to 3 non-empty property rows
  *   - A footer hint directing the user to the side panel for full detail
  *
  * features[0] is treated as the primary hit (topmost-first z-order upstream).
+ *
+ * For the zero-features case callers should prefer formatIdentifyEmptyHtml
+ * with an explicit reason; this function keeps a no_hits fallback for
+ * backward compatibility with any caller that still passes [].
  */
 export function formatIdentifyPopupHtml(
   features: IdentifyPopupFeature[],
 ): string {
   if (!features || features.length === 0) {
-    return wrap('No features at this location', '');
+    return formatIdentifyEmptyHtml('no_hits');
   }
   const total = features.length;
   const primary = features[0];

@@ -11,6 +11,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatFeaturePopup,
+  formatIdentifyEmptyHtml,
   formatIdentifyPopupHtml,
   packHasMapArtifacts,
   CATEGORY_STYLES,
@@ -213,5 +214,27 @@ describe('formatIdentifyPopupHtml', () => {
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;');
     expect(html).toContain('Test &lt;img&gt;');
+  });
+});
+
+describe('formatIdentifyEmptyHtml', () => {
+  it('no_hits shows the generic "No features" title', () => {
+    const html = formatIdentifyEmptyHtml('no_hits');
+    expect(html).toContain('No features at this location');
+    // No layer-menu hint in the plain no-hit case
+    expect(html).not.toContain('layer menu');
+  });
+
+  it('no_overlays uses a distinct title and hints at the layer menu', () => {
+    const html = formatIdentifyEmptyHtml('no_overlays');
+    expect(html).toContain('No overlays enabled for Identify');
+    expect(html).toContain('layer menu');
+    expect(html).toContain('Contaminated Sites Registry');
+    // Should NOT carry the generic "no features" copy in this case
+    expect(html).not.toContain('No features at this location');
+  });
+
+  it('formatIdentifyPopupHtml([]) delegates to no_hits for backward compat', () => {
+    expect(formatIdentifyPopupHtml([])).toBe(formatIdentifyEmptyHtml('no_hits'));
   });
 });
