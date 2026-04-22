@@ -258,6 +258,72 @@ describe('buildGetFeatureInfoUrl', () => {
     expect(y).toBeLessThanOrEqual(h - 1);
   });
 
+  it('defaults to buffer=8 (GeoServer vendor param) when no buffer passed', () => {
+    const map = makeMap({
+      sw: { lat: 49.0, lng: -123.5 },
+      ne: { lat: 49.5, lng: -122.5 },
+      size: { x: 800, y: 600 },
+    });
+    const url = buildGetFeatureInfoUrl(
+      OVERLAY,
+      map,
+      { lat: 49.25, lng: -123.0 },
+    );
+    const params = new URL(url).searchParams;
+    expect(params.get('buffer')).toBe('8');
+  });
+
+  it('omits buffer param entirely when buffer=0 (OGC-only mode)', () => {
+    const map = makeMap({
+      sw: { lat: 49.0, lng: -123.5 },
+      ne: { lat: 49.5, lng: -122.5 },
+      size: { x: 800, y: 600 },
+    });
+    const url = buildGetFeatureInfoUrl(
+      OVERLAY,
+      map,
+      { lat: 49.25, lng: -123.0 },
+      undefined,
+      0,
+    );
+    const params = new URL(url).searchParams;
+    expect(params.has('buffer')).toBe(false);
+  });
+
+  it('emits explicit buffer=15 when buffer=15 is passed', () => {
+    const map = makeMap({
+      sw: { lat: 49.0, lng: -123.5 },
+      ne: { lat: 49.5, lng: -122.5 },
+      size: { x: 800, y: 600 },
+    });
+    const url = buildGetFeatureInfoUrl(
+      OVERLAY,
+      map,
+      { lat: 49.25, lng: -123.0 },
+      undefined,
+      15,
+    );
+    const params = new URL(url).searchParams;
+    expect(params.get('buffer')).toBe('15');
+  });
+
+  it('rounds a decimal buffer value (8.4 -> 8)', () => {
+    const map = makeMap({
+      sw: { lat: 49.0, lng: -123.5 },
+      ne: { lat: 49.5, lng: -122.5 },
+      size: { x: 800, y: 600 },
+    });
+    const url = buildGetFeatureInfoUrl(
+      OVERLAY,
+      map,
+      { lat: 49.25, lng: -123.0 },
+      undefined,
+      8.4,
+    );
+    const params = new URL(url).searchParams;
+    expect(params.get('buffer')).toBe('8');
+  });
+
   it('throws clearly when map.options.crs is missing', () => {
     const badMap: LeafletMapLike = {
       getSize: () => ({ x: 100, y: 100 }),
@@ -525,5 +591,24 @@ describe('queryActiveOverlays', () => {
       { lat: 0, lng: 0 },
     );
     expect(features).toEqual([]);
+  });
+
+  it('passes buffer option through to the GetFeatureInfo URL', async () => {
+    const layerA: IdentifyOverlay = { key: 'a', name: 'A', layer: 'pub:A' };
+    const fetchImpl = vi.fn(async (_url: string | URL) =>
+      makeJsonResponse({
+        features: [{ type: 'Feature', properties: { id: 'A1' } }],
+      }),
+    );
+    await queryActiveOverlays(
+      [layerA],
+      MAP_FIXTURE,
+      { lat: 49.25, lng: -123.0 },
+      { fetchImpl: fetchImpl as unknown as typeof fetch, buffer: 5 },
+    );
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    const firstArg = fetchImpl.mock.calls[0][0];
+    const url = new URL(String(firstArg));
+    expect(url.searchParams.get('buffer')).toBe('5');
   });
 });

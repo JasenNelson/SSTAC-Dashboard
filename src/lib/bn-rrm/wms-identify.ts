@@ -87,6 +87,14 @@ export interface LeafletMapLike {
 
 export const DEFAULT_WMS_URL = 'https://openmaps.gov.bc.ca/geo/pub/ows';
 
+/**
+ * Default pixel buffer applied to WMS GetFeatureInfo via the GeoServer BUFFER
+ * vendor param. Enlarges the hit-test region so point layers are not missed
+ * on near-miss clicks. BC OpenMaps runs on GeoServer, which honors this param.
+ * Pass 0 through QueryActiveOverlaysOptions.buffer to disable (OGC-only mode).
+ */
+export const DEFAULT_IDENTIFY_BUFFER_PIXELS = 8;
+
 // ---------------------------------------------------------------------------
 // URL builder
 // ---------------------------------------------------------------------------
@@ -96,6 +104,7 @@ export function buildGetFeatureInfoUrl(
   map: LeafletMapLike,
   latlng: LeafletLatLng,
   wmsUrl: string = DEFAULT_WMS_URL,
+  buffer: number = DEFAULT_IDENTIFY_BUFFER_PIXELS,
 ): string {
   const crs = map.options.crs;
   if (!crs || typeof crs.project !== 'function') {
@@ -135,6 +144,13 @@ export function buildGetFeatureInfoUrl(
     x: String(x),
     y: String(y),
   });
+
+  // GeoServer vendor param: enlarges the hit-test region by this many pixels
+  // around the click. Essential for point layers where exact-pixel match is
+  // brittle. buffer <= 0 disables the param (strict OGC-only mode).
+  if (buffer > 0) {
+    params.set('buffer', String(Math.round(buffer)));
+  }
 
   return `${wmsUrl}?${params.toString()}`;
 }
@@ -258,6 +274,11 @@ export interface QueryActiveOverlaysOptions {
   now?: () => number;
   /** Per-request timeout in ms; default 8000. */
   timeoutMs?: number;
+  /**
+   * Pixel buffer around the click; GeoServer vendor param. Default 8.
+   * Pass 0 to disable (strict OGC-only mode).
+   */
+  buffer?: number;
 }
 
 async function fetchOne(
@@ -271,12 +292,13 @@ async function fetchOne(
   const wmsUrl = opts.wmsUrl ?? DEFAULT_WMS_URL;
   const now = opts.now ?? Date.now;
   const timeoutMs = opts.timeoutMs ?? 8000;
+  const buffer = opts.buffer ?? DEFAULT_IDENTIFY_BUFFER_PIXELS;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const url = buildGetFeatureInfoUrl(layer, map, latlng, wmsUrl);
+    const url = buildGetFeatureInfoUrl(layer, map, latlng, wmsUrl, buffer);
     const res = await fetchImpl(url, { signal: controller.signal });
     if (!res.ok || res.status === 204) {
       // Try HTML fallback once before giving up

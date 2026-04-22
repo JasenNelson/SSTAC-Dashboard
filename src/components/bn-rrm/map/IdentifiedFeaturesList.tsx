@@ -7,8 +7,14 @@
  * Contract:
  *   - Caller provides topmost-first ordering (store does not re-sort).
  *   - features.length === 0 renders nothing.
- *   - primaryIndex is expanded; other hits are collapsed header-only rows.
- *   - Clicking a non-primary header promotes it via onPromote(i).
+ *   - features.length === 1 renders an iMapBC-style single-hit view: no count
+ *     header, no Primary badge, the property table is the main content, and a
+ *     small Clear control sits at the top-right.
+ *   - features.length > 1 renders the grouped view: count header + per-hit
+ *     collapsible rows. primaryIndex is expanded; other hits are collapsed
+ *     header-only rows. Clicking a non-primary header promotes it via
+ *     onPromote(i). Clicking the already-primary header is a no-op (does NOT
+ *     toggle the body closed - that would leave the panel blank).
  *   - Null/empty property values are suppressed in the detail table.
  *
  * Plain ASCII only. No em dashes. No emoji.
@@ -54,6 +60,51 @@ export function IdentifiedFeaturesList({
 }: IdentifiedFeaturesListProps) {
   if (!features || features.length === 0) return null;
 
+  // Single-hit: iMapBC-style detail view. No count header, no Primary badge,
+  // property table is the main content, small Clear control at top-right.
+  if (features.length === 1) {
+    const f = features[0];
+    return (
+      <div
+        className={cn(
+          'bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700',
+          className,
+        )}
+        data-testid="identified-features-list"
+      >
+        <div className="flex items-start justify-between px-4 pt-4 pb-2 gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
+              <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                Identified Feature
+              </h4>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 ml-6">
+              {f.coordinates.lat.toFixed(5)}, {f.coordinates.lng.toFixed(5)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClear}
+            className="flex items-center gap-1 px-2 py-1 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 shrink-0"
+            aria-label="Clear identified feature"
+          >
+            <X className="w-3.5 h-3.5" aria-hidden="true" />
+            Clear
+          </button>
+        </div>
+        <div className="px-4 pb-4">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+            {f.layerLabel}
+          </p>
+          <PropertyTable properties={f.properties} />
+        </div>
+      </div>
+    );
+  }
+
+  // Grouped view: count header + per-hit collapsible rows.
   return (
     <div
       className={cn(
@@ -96,10 +147,12 @@ export function IdentifiedFeaturesList({
               <button
                 type="button"
                 onClick={() => {
+                  // No-op when clicking the already-primary row; collapsing
+                  // the only expanded body would leave the panel blank.
                   if (!isPrimary) onPromote(i);
                 }}
                 className={cn(
-                  'w-full flex items-start justify-between gap-2 px-3 py-2 text-left rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+                  'w-full flex items-start justify-between gap-2 px-3 py-2 text-left rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-slate-800',
                   !isPrimary && 'hover:bg-slate-50 dark:hover:bg-slate-700/40',
                 )}
                 aria-expanded={isPrimary}
