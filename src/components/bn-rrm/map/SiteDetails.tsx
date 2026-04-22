@@ -69,8 +69,8 @@ export function SiteDetails({ className, onClose, onRunAssessment, onRunBatchAss
     // replaces the empty-state so users have somewhere to read the hit detail.
     if (hasIdentified) {
       return (
-        <div className={cn('bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col', className)}>
-          <div>
+        <div className={cn('bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col min-h-0', className)}>
+          <div className="flex-1 min-h-0 overflow-hidden">
             <IdentifiedFeaturesList
               features={identifiedFeatures}
               primaryIndex={primaryFeatureIndex}
@@ -144,7 +144,7 @@ export function SiteDetails({ className, onClose, onRunAssessment, onRunBatchAss
   const isReferenceData = location.sourceTag === 'training' || location.sourceTag === 'comparison';
 
   return (
-    <div className={cn('bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col', className)}>
+    <div className={cn('bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col min-h-0', className)}>
       <div className="p-4 border-b border-slate-100 dark:border-slate-700">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -285,13 +285,13 @@ export function SiteDetails({ className, onClose, onRunAssessment, onRunBatchAss
             Assessing {batchProgress.current}/{batchProgress.total}...
           </p>
         )}
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2">
           {(onRunAssessment || onRunBatchAssessment) && (
             <button
               onClick={handleAssessment}
               disabled={!!batchProgress}
               className={cn(
-                'flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-lg transition-colors',
+                'w-full min-w-0 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors text-center',
                 batchProgress
                   ? 'bg-blue-300 dark:bg-blue-800 text-white cursor-not-allowed'
                   : 'bg-blue-500 text-white hover:bg-blue-600',
@@ -302,7 +302,7 @@ export function SiteDetails({ className, onClose, onRunAssessment, onRunBatchAss
           )}
           <button
             onClick={handleReportExport}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+            className="w-full min-w-0 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-center"
           >
             <FileText className="w-4 h-4" />
             {isMultiSelect ? `Report (${multiCount})` : 'Report'}
@@ -310,7 +310,7 @@ export function SiteDetails({ className, onClose, onRunAssessment, onRunBatchAss
           {hasIdentified && (
             <button
               onClick={handleIdentifiedExport}
-              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+              className="w-full min-w-0 flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-center"
             >
               <FileText className="w-4 h-4" />
               {`Export Identified (${identifiedFeatures.length})`}

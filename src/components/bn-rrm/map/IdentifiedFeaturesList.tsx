@@ -67,7 +67,7 @@ export function IdentifiedFeaturesList({
     return (
       <div
         className={cn(
-          'bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700',
+          'bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex flex-col min-h-0',
           className,
         )}
         data-testid="identified-features-list"
@@ -108,7 +108,7 @@ export function IdentifiedFeaturesList({
   return (
     <div
       className={cn(
-        'bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700',
+        'bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex flex-col min-h-0',
         className,
       )}
       data-testid="identified-features-list"
@@ -131,7 +131,7 @@ export function IdentifiedFeaturesList({
         </button>
       </div>
 
-      <ul className="px-4 pb-4 space-y-2">
+      <ul className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-2">
         {features.map((f, i) => {
           const isPrimary = primaryIndex === i;
           return (
