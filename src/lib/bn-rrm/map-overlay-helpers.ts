@@ -127,6 +127,31 @@ export const CATEGORY_LABELS: Record<string, string> = {
   permafrost: 'Thaw Slumps',
 };
 
+/**
+ * Per-layer human labels for pack-supplied GeoJSON map artifacts.
+ *
+ * The overlay menu groups by category, so multiple distinct layers share one
+ * toggle. Identify/popup output must distinguish each layer individually -
+ * otherwise the panel and popup collapse all hits in a category to the same
+ * label (e.g. the two basin layers both showing "Sub-basins"). Use this
+ * record whenever a per-layer display string is required; callers should
+ * fall back to the artifact key if the record is somehow missing an entry.
+ */
+export const MAP_ARTIFACT_LABELS: Record<MapArtifactKey, string> = {
+  basins_gsl: 'GSL Region',
+  basins_gbs: 'GBS Sub-basin',
+  advisory_lakes: 'Fish Consumption Advisory (Lake)',
+  commercial_fisheries: 'Commercial Fishery',
+  historic_mines: 'Historic Mine',
+  large_mines: 'Large Mine',
+  mineral_claims: 'Mineral Claim',
+  oil_gas_claims: 'Oil/Gas Tenure',
+  hydro_facilities: 'Hydro Facility',
+  communities: 'Community',
+  climate_stations: 'Climate Station',
+  thaw_slumps: 'Thaw Slump',
+};
+
 /** Ordered list of all 8 categories used by Jermilova overlays */
 export const ALL_CATEGORIES: string[] = [
   'basins',

@@ -30,6 +30,7 @@ import {
   CATEGORY_STYLES,
   DEFAULT_ON_CATEGORIES,
   HEAVY_LAYERS,
+  MAP_ARTIFACT_LABELS,
   formatFeaturePopup,
   formatIdentifyPopupHtml,
   getStyleForKey,
@@ -182,7 +183,7 @@ const OVERLAY_LAYERS: Record<string, OverlayDef> = {
   },
   emsMonitoring: {
     name: 'Environmental Monitoring Locations',
-    layer: 'pub:WHSE_ENVIRONMENTAL_MONITORING.EMS_MONITORING_LOCN_GROUPS_SVW',
+    layer: 'pub:WHSE_ENVIRONMENTAL_MONITORING.EMS_MONITORING_LOCN_TYPES_SVW',
     color: '#991b1b',
     category: 'waste',
   },
@@ -622,8 +623,11 @@ export function SiteMap({
                   string,
                   unknown
                 >;
-                const label =
-                  CATEGORY_LABELS[MAP_ARTIFACT_CATEGORIES[key]] ?? key;
+                // Per-layer label (NOT category). Multiple layers share a
+                // category toggle, so a category label would collapse distinct
+                // hits to the same display string. Fall back to the key if
+                // ever missing from the per-layer record.
+                const label = MAP_ARTIFACT_LABELS[key] ?? key;
                 const hit: IdentifiedFeature = {
                   source: 'geojson',
                   layerKey: key,
