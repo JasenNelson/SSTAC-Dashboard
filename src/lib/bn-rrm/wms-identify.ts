@@ -86,6 +86,7 @@ export interface LeafletMapLike {
 // ---------------------------------------------------------------------------
 
 export const DEFAULT_WMS_URL = 'https://openmaps.gov.bc.ca/geo/pub/ows';
+export const DEFAULT_WFS_URL = 'https://openmaps.gov.bc.ca/geo/pub/ows';
 
 /**
  * Default pixel buffer applied to WMS GetFeatureInfo via the GeoServer BUFFER
@@ -167,6 +168,21 @@ interface GetFeatureInfoJson {
   }>;
 }
 
+interface GeoJsonGeometry {
+  type?: string;
+  coordinates?: unknown;
+}
+
+interface GeoJsonFeatureCollection {
+  type?: string;
+  features?: Array<{
+    type?: string;
+    id?: string | number;
+    geometry?: GeoJsonGeometry | null;
+    properties?: Record<string, unknown> | null;
+  }>;
+}
+
 export function normalizeFeatureInfoJson(
   json: GetFeatureInfoJson | null | undefined,
   layer: IdentifyOverlay,
@@ -183,6 +199,71 @@ export function normalizeFeatureInfoJson(
       layerLabel: layer.name,
       properties: props,
       coordinates: { lat: latlng.lat, lng: latlng.lng },
+      capturedAt: now,
+    });
+  }
+  return out;
+}
+
+function collectGeometryPoints(
+  value: unknown,
+  out: Array<{ lat: number; lng: number }>,
+): void {
+  if (!Array.isArray(value) || value.length === 0) return;
+  if (
+    value.length >= 2 &&
+    typeof value[0] === 'number' &&
+    typeof value[1] === 'number'
+  ) {
+    out.push({ lng: value[0], lat: value[1] });
+    return;
+  }
+  for (const child of value) {
+    collectGeometryPoints(child, out);
+  }
+}
+
+function geometryToLatLng(
+  geometry: GeoJsonGeometry | null | undefined,
+  fallback: LeafletLatLng,
+): LeafletLatLng {
+  const points: Array<{ lat: number; lng: number }> = [];
+  collectGeometryPoints(geometry?.coordinates, points);
+  if (points.length === 0) return fallback;
+
+  let minLat = points[0].lat;
+  let maxLat = points[0].lat;
+  let minLng = points[0].lng;
+  let maxLng = points[0].lng;
+  for (const p of points) {
+    minLat = Math.min(minLat, p.lat);
+    maxLat = Math.max(maxLat, p.lat);
+    minLng = Math.min(minLng, p.lng);
+    maxLng = Math.max(maxLng, p.lng);
+  }
+  return {
+    lat: (minLat + maxLat) / 2,
+    lng: (minLng + maxLng) / 2,
+  };
+}
+
+export function normalizeGeoJsonFeatures(
+  json: GeoJsonFeatureCollection | null | undefined,
+  layer: IdentifyOverlay,
+  fallbackLatLng: LeafletLatLng,
+  now: number = Date.now(),
+): IdentifiedFeature[] {
+  if (!json || !Array.isArray(json.features)) return [];
+  const out: IdentifiedFeature[] = [];
+  for (const f of json.features) {
+    const props = (f?.properties ?? {}) as Record<string, unknown>;
+    const coords = geometryToLatLng(f?.geometry, fallbackLatLng);
+    out.push({
+      source: 'wms',
+      layerKey: layer.key,
+      layerLabel: layer.name,
+      properties: props,
+      coordinates: coords,
       capturedAt: now,
     });
   }
@@ -281,6 +362,35 @@ export interface QueryActiveOverlaysOptions {
   buffer?: number;
 }
 
+export interface QueryOverlayAreaOptions {
+  fetchImpl?: typeof fetch;
+  wfsUrl?: string;
+  now?: () => number;
+  timeoutMs?: number;
+  maxFeaturesPerLayer?: number;
+}
+
+export function buildWfsGetFeatureUrl(
+  layer: IdentifyOverlay,
+  bounds: LeafletBounds,
+  wfsUrl: string = DEFAULT_WFS_URL,
+  maxFeaturesPerLayer: number = 200,
+): string {
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  const params = new URLSearchParams({
+    service: 'WFS',
+    version: '2.0.0',
+    request: 'GetFeature',
+    typeNames: layer.layer,
+    outputFormat: 'application/json',
+    srsName: 'EPSG:4326',
+    bbox: `${sw.lng},${sw.lat},${ne.lng},${ne.lat},EPSG:4326`,
+    count: String(maxFeaturesPerLayer),
+  });
+  return `${wfsUrl}?${params.toString()}`;
+}
+
 async function fetchOne(
   layer: IdentifyOverlay,
   map: LeafletMapLike,
@@ -330,6 +440,49 @@ async function fetchOne(
   }
 }
 
+async function fetchAreaOne(
+  layer: IdentifyOverlay,
+  bounds: LeafletBounds,
+  opts: QueryOverlayAreaOptions,
+): Promise<IdentifiedFeature[]> {
+  if (layer.queryable === false) return [];
+  const fetchImpl = opts.fetchImpl ?? fetch;
+  const wfsUrl = opts.wfsUrl ?? DEFAULT_WFS_URL;
+  const now = opts.now ?? Date.now;
+  const timeoutMs = opts.timeoutMs ?? 8000;
+  const maxFeaturesPerLayer = opts.maxFeaturesPerLayer ?? 200;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const fallbackLatLng = {
+    lat:
+      (bounds.getSouthWest().lat + bounds.getNorthEast().lat) / 2,
+    lng:
+      (bounds.getSouthWest().lng + bounds.getNorthEast().lng) / 2,
+  };
+
+  try {
+    const url = buildWfsGetFeatureUrl(
+      layer,
+      bounds,
+      wfsUrl,
+      maxFeaturesPerLayer,
+    );
+    const res = await fetchImpl(url, { signal: controller.signal });
+    if (!res.ok || res.status === 204) return [];
+    const ct = (res.headers?.get?.('content-type') ?? '').toLowerCase();
+    if (!ct.includes('json')) return [];
+    const json = (await res.json().catch(() => null)) as
+      | GeoJsonFeatureCollection
+      | null;
+    return normalizeGeoJsonFeatures(json, layer, fallbackLatLng, now());
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /**
  * Fire one GetFeatureInfo request per queryable overlay in PARALLEL, preserve
  * input ordering in the returned array, and preserve server feature order
@@ -345,6 +498,24 @@ export async function queryActiveOverlays(
   if (!orderedLayers || orderedLayers.length === 0) return [];
   const settled = await Promise.allSettled(
     orderedLayers.map((layer) => fetchOne(layer, map, latlng, opts)),
+  );
+  const out: IdentifiedFeature[] = [];
+  for (const s of settled) {
+    if (s.status === 'fulfilled') {
+      for (const f of s.value) out.push(f);
+    }
+  }
+  return out;
+}
+
+export async function queryActiveOverlaysInBounds(
+  orderedLayers: IdentifyOverlay[],
+  bounds: LeafletBounds,
+  opts: QueryOverlayAreaOptions = {},
+): Promise<IdentifiedFeature[]> {
+  if (!orderedLayers || orderedLayers.length === 0) return [];
+  const settled = await Promise.allSettled(
+    orderedLayers.map((layer) => fetchAreaOne(layer, bounds, opts)),
   );
   const out: IdentifiedFeature[] = [];
   for (const s of settled) {

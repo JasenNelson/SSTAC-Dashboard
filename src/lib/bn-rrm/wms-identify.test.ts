@@ -16,10 +16,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   buildGetFeatureInfoUrl,
+  buildWfsGetFeatureUrl,
   getActiveOverlaysInZOrder,
+  normalizeGeoJsonFeatures,
   normalizeFeatureInfoHtml,
   normalizeFeatureInfoJson,
   queryActiveOverlays,
+  queryActiveOverlaysInBounds,
   type IdentifyOverlay,
   type LeafletCRS,
   type LeafletLatLng,
@@ -338,6 +341,21 @@ describe('buildGetFeatureInfoUrl', () => {
       buildGetFeatureInfoUrl(OVERLAY, badMap, { lat: 0.5, lng: 0.5 }),
     ).toThrow(/crs/i);
   });
+
+  it('builds WFS bbox queries in EPSG:4326 for area identify', () => {
+    const bounds = {
+      getSouthWest: () => ({ lat: 49.1, lng: -123.2 }),
+      getNorthEast: () => ({ lat: 49.3, lng: -123.0 }),
+    };
+    const url = buildWfsGetFeatureUrl(OVERLAY, bounds);
+    const params = new URL(url).searchParams;
+    expect(params.get('service')).toBe('WFS');
+    expect(params.get('request')).toBe('GetFeature');
+    expect(params.get('typeNames')).toBe(OVERLAY.layer);
+    expect(params.get('outputFormat')).toBe('application/json');
+    expect(params.get('srsName')).toBe('EPSG:4326');
+    expect(params.get('bbox')).toBe('-123.2,49.1,-123,49.3,EPSG:4326');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -464,6 +482,47 @@ describe('normalizeFeatureInfoHtml', () => {
         { lat: 0, lng: 0 },
       ),
     ).toEqual([]);
+  });
+});
+
+describe('normalizeGeoJsonFeatures', () => {
+  it('uses geometry coordinates when area identify returns GeoJSON features', () => {
+    const features = normalizeGeoJsonFeatures(
+      {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            geometry: {
+              type: 'Point',
+              coordinates: [-123.1, 49.2],
+            },
+            properties: { SITE_ID: 101 },
+          },
+        ],
+      },
+      OVERLAY,
+      { lat: 0, lng: 0 },
+      1234,
+    );
+    expect(features).toHaveLength(1);
+    expect(features[0].coordinates).toEqual({ lat: 49.2, lng: -123.1 });
+    expect(features[0].properties.SITE_ID).toBe(101);
+    expect(features[0].capturedAt).toBe(1234);
+  });
+
+  it('falls back to the query center when geometry is missing', () => {
+    const features = normalizeGeoJsonFeatures(
+      {
+        type: 'FeatureCollection',
+        features: [{ type: 'Feature', properties: { SITE_ID: 202 } }],
+      },
+      OVERLAY,
+      { lat: 49.25, lng: -123.05 },
+      1234,
+    );
+    expect(features).toHaveLength(1);
+    expect(features[0].coordinates).toEqual({ lat: 49.25, lng: -123.05 });
   });
 });
 
@@ -610,5 +669,70 @@ describe('queryActiveOverlays', () => {
     const firstArg = fetchImpl.mock.calls[0][0];
     const url = new URL(String(firstArg));
     expect(url.searchParams.get('buffer')).toBe('5');
+  });
+});
+
+describe('queryActiveOverlaysInBounds', () => {
+  const BOUNDS_FIXTURE = {
+    getSouthWest: () => ({ lat: 49.0, lng: -123.5 }),
+    getNorthEast: () => ({ lat: 49.5, lng: -122.5 }),
+  };
+
+  it('fires one WFS request per layer and preserves input order', async () => {
+    const layerA: IdentifyOverlay = { key: 'a', name: 'A', layer: 'pub:A' };
+    const layerB: IdentifyOverlay = { key: 'b', name: 'B', layer: 'pub:B' };
+    const fetchImpl = vi.fn(async (url: string | URL) => {
+      const u = String(url);
+      if (u.includes('pub%3AA') || u.includes('pub:A')) {
+        return makeJsonResponse({
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: { type: 'Point', coordinates: [-123.1, 49.2] },
+              properties: { id: 'A1' },
+            },
+          ],
+        });
+      }
+      return makeJsonResponse({
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [-123.0, 49.3] },
+            properties: { id: 'B1' },
+          },
+        ],
+      });
+    });
+
+    const features = await queryActiveOverlaysInBounds(
+      [layerA, layerB],
+      BOUNDS_FIXTURE,
+      { fetchImpl: fetchImpl as unknown as typeof fetch, now: () => 42 },
+    );
+
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(features).toHaveLength(2);
+    expect(features[0].layerKey).toBe('a');
+    expect(features[1].layerKey).toBe('b');
+    expect(features[0].capturedAt).toBe(42);
+  });
+
+  it('passes the max feature limit through to the WFS URL', async () => {
+    const layerA: IdentifyOverlay = { key: 'a', name: 'A', layer: 'pub:A' };
+    const fetchImpl = vi.fn(async () =>
+      makeJsonResponse({ type: 'FeatureCollection', features: [] }),
+    );
+
+    await queryActiveOverlaysInBounds([layerA], BOUNDS_FIXTURE, {
+      fetchImpl: fetchImpl as unknown as typeof fetch,
+      maxFeaturesPerLayer: 75,
+    });
+
+    const firstArg = fetchImpl.mock.calls[0][0];
+    const url = new URL(String(firstArg));
+    expect(url.searchParams.get('count')).toBe('75');
   });
 });

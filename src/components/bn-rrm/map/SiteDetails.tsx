@@ -46,6 +46,23 @@ export function SiteDetails({ className, onClose, onRunAssessment, onRunBatchAss
   const multiCount = selectedSiteIds.length;
   const isMultiSelect = multiCount > 1;
   const hasIdentified = identifiedFeatures.length > 0;
+  const primaryIdentifiedFeature =
+    primaryFeatureIndex !== null ? identifiedFeatures[primaryFeatureIndex] : null;
+
+  const handleIdentifiedExport = () => {
+    if (!hasIdentified) return;
+    const data = {
+      exportDate: new Date().toISOString(),
+      featureCount: identifiedFeatures.length,
+      primaryFeatureIndex,
+      primaryLayerLabel: primaryIdentifiedFeature?.layerLabel ?? null,
+      features: identifiedFeatures,
+    };
+    downloadJson(
+      data,
+      `bn-rrm-identified-features-${new Date().toISOString().split('T')[0]}.json`,
+    );
+  };
 
   if (!site) {
     // When no site is selected but identified features exist, the list
@@ -53,12 +70,23 @@ export function SiteDetails({ className, onClose, onRunAssessment, onRunBatchAss
     if (hasIdentified) {
       return (
         <div className={cn('bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col', className)}>
-          <IdentifiedFeaturesList
-            features={identifiedFeatures}
-            primaryIndex={primaryFeatureIndex}
-            onPromote={setPrimaryFeatureIndex}
-            onClear={clearIdentifiedFeatures}
-          />
+          <div>
+            <IdentifiedFeaturesList
+              features={identifiedFeatures}
+              primaryIndex={primaryFeatureIndex}
+              onPromote={setPrimaryFeatureIndex}
+              onClear={clearIdentifiedFeatures}
+            />
+          </div>
+          <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+            <button
+              onClick={handleIdentifiedExport}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Export Identified ({identifiedFeatures.length})
+            </button>
+          </div>
         </div>
       );
     }
@@ -279,6 +307,15 @@ export function SiteDetails({ className, onClose, onRunAssessment, onRunBatchAss
             <FileText className="w-4 h-4" />
             {isMultiSelect ? `Report (${multiCount})` : 'Report'}
           </button>
+          {hasIdentified && (
+            <button
+              onClick={handleIdentifiedExport}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              {`Export Identified (${identifiedFeatures.length})`}
+            </button>
+          )}
         </div>
       </div>
     </div>

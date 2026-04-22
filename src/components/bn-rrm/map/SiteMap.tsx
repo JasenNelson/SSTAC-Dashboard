@@ -42,6 +42,7 @@ import {
 import {
   getActiveOverlaysInZOrder,
   queryActiveOverlays,
+  queryActiveOverlaysInBounds,
   type IdentifiedFeature,
   type IdentifyOverlay,
   type LeafletMapLike,
@@ -94,6 +95,8 @@ const BASE_LAYERS = {
 };
 
 const BC_WMS_URL = 'https://openmaps.gov.bc.ca/geo/pub/ows';
+const BC_WMS_IDENTIFY_PROXY_URL = '/api/bn-rrm/wms-identify';
+const BC_WFS_IDENTIFY_PROXY_URL = '/api/bn-rrm/wfs-identify';
 const BC_ATTR = '© Province of British Columbia';
 
 interface OverlayDef {
@@ -243,7 +246,9 @@ export function SiteMap({
     [packManifest],
   );
   const [siteListExpanded, setSiteListExpanded] = useState(true);
-  const [interactionMode, setInteractionMode] = useState<'pan' | 'select-individual' | 'select-area' | 'identify'>('pan');
+  const [interactionMode, setInteractionMode] = useState<
+    'pan' | 'select-individual' | 'select-area' | 'identify' | 'identify-area'
+  >('pan');
   const interactionModeRef = useRef(interactionMode);
   interactionModeRef.current = interactionMode;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -365,7 +370,10 @@ export function SiteMap({
       // The existing handler does NOT consult defaultPrevented, so a separate
       // interceptor would not suppress it reliably - the gate MUST live here.
       markers.on('clusterclick', (e: { layer?: { getAllChildMarkers?: () => { options?: { locationId?: string } }[] }; originalEvent?: MouseEvent }) => {
-        if (interactionModeRef.current === 'identify') {
+        if (
+          interactionModeRef.current === 'identify' ||
+          interactionModeRef.current === 'identify-area'
+        ) {
           // Swallow the cluster click: in Identify mode we want cluster marker
           // behavior fully disabled. Prevent default (zoom) and any selection.
           e.originalEvent?.preventDefault?.();
@@ -725,7 +733,10 @@ export function SiteMap({
       // bug. Mirror the mode-enter suppression here: save content+options to
       // the backup ref and unbind. The mode-exit cleanup iterates the backup
       // and rebinds every entry, so these markers are restored the same way.
-      if (interactionModeRef.current === 'identify') {
+      if (
+        interactionModeRef.current === 'identify' ||
+        interactionModeRef.current === 'identify-area'
+      ) {
         try {
           const popup = marker.getPopup?.();
           if (popup) {
@@ -742,7 +753,10 @@ export function SiteMap({
         // Identify mode: markers must not select a site. Popup suppression is
         // enforced independently via unbindPopup on mode enter; this short-
         // circuit is a redundant defense so selectSite is never called.
-        if (interactionModeRef.current === 'identify') return;
+        if (
+          interactionModeRef.current === 'identify' ||
+          interactionModeRef.current === 'identify-area'
+        ) return;
         const orig = e.originalEvent;
         const ctrlHeld = orig?.ctrlKey || orig?.metaKey || e.ctrlKey || e.metaKey;
         // In select-individual mode, every click toggles selection (no Ctrl needed)
@@ -860,6 +874,134 @@ export function SiteMap({
     }
   }, [interactionMode, isLoaded, leaflet, siteLocations]);
 
+  // Identify-area mode: drag a rectangle and query active WMS overlays for
+  // all features in the drawn bounds. Results replace the current identified
+  // feature list and the popup only summarizes the batch.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !isLoaded || !leaflet) return;
+    if (interactionMode !== 'identify-area') return;
+
+    map.dragging.disable();
+
+    let startLatLng: { lat: number; lng: number } | null = null;
+
+    const onMouseDown = (e: { latlng: { lat: number; lng: number } }) => {
+      startLatLng = e.latlng;
+      if (areaSelectRectRef.current) {
+        map.removeLayer(areaSelectRectRef.current);
+        areaSelectRectRef.current = null;
+      }
+    };
+
+    const onMouseMove = (e: { latlng: { lat: number; lng: number } }) => {
+      if (!startLatLng) return;
+      if (areaSelectRectRef.current) {
+        map.removeLayer(areaSelectRectRef.current);
+      }
+      areaSelectRectRef.current = leaflet.rectangle(
+        [startLatLng, e.latlng],
+        { color: '#7c3aed', weight: 2, fillOpacity: 0.12, dashArray: '6 3' },
+      ).addTo(map);
+    };
+
+    const onMouseUp = async (e: { latlng: { lat: number; lng: number } }) => {
+      if (!startLatLng) return;
+      const bounds = leaflet.latLngBounds(startLatLng, e.latlng);
+      const center = bounds.getCenter();
+      startLatLng = null;
+
+      if (areaSelectRectRef.current) {
+        map.removeLayer(areaSelectRectRef.current);
+        areaSelectRectRef.current = null;
+      }
+
+      const myId = ++identifyRequestIdRef.current;
+      const overlayDefs: Record<string, Omit<IdentifyOverlay, 'key'>> = {};
+      for (const [key, def] of Object.entries(OVERLAY_LAYERS)) {
+        overlayDefs[key] = {
+          name: def.name,
+          layer: def.layer,
+          category: def.category,
+        };
+      }
+      const ordered = getActiveOverlaysInZOrder(
+        overlayLayersRef.current as Map<string, unknown>,
+        overlayDefs,
+      );
+
+      let hits: IdentifiedFeature[] = [];
+      try {
+        hits = await queryActiveOverlaysInBounds(ordered, bounds, {
+          wfsUrl: BC_WFS_IDENTIFY_PROXY_URL,
+          maxFeaturesPerLayer: 250,
+        });
+      } catch (err) {
+        console.warn('[SiteMap] identify-area: query failed', err);
+      }
+
+      if (identifyRequestIdRef.current !== myId) return;
+
+      if (identifyPopupRef.current) {
+        try {
+          map.closePopup(identifyPopupRef.current);
+        } catch {
+          // ignore
+        }
+        identifyPopupRef.current = null;
+      }
+
+      if (hits.length === 0) {
+        const reason: 'no_overlays' | 'no_hits' =
+          ordered.length === 0 ? 'no_overlays' : 'no_hits';
+        try {
+          const popup = leaflet
+            .popup({ closeButton: true, autoClose: true })
+            .setLatLng(center)
+            .setContent(formatIdentifyEmptyHtml(reason));
+          popup.openOn(map);
+          identifyPopupRef.current = popup;
+        } catch (err) {
+          console.warn('[SiteMap] identify-area: no-hits popup failed', err);
+        }
+        return;
+      }
+
+      setIdentifiedFeatures(hits);
+      try {
+        const popup = leaflet
+          .popup({ closeButton: true, autoClose: true })
+          .setLatLng(center)
+          .setContent(
+            `<div style="min-width:220px;font-family:system-ui,sans-serif;">` +
+              `<p style="font-weight:700;color:#0f172a;margin:0 0 6px 0;">${hits.length} features identified in area</p>` +
+              `<p style="font-size:12px;color:#475569;margin:0;">Review the full result set in the side panel.</p>` +
+            `</div>`,
+          );
+        popup.openOn(map);
+        identifyPopupRef.current = popup;
+      } catch (err) {
+        console.warn('[SiteMap] identify-area: popup open failed', err);
+      }
+    };
+
+    map.on('mousedown', onMouseDown);
+    map.on('mousemove', onMouseMove);
+    map.on('mouseup', onMouseUp);
+
+    return () => {
+      identifyRequestIdRef.current++;
+      map.off('mousedown', onMouseDown);
+      map.off('mousemove', onMouseMove);
+      map.off('mouseup', onMouseUp);
+      map.dragging.enable();
+      if (areaSelectRectRef.current) {
+        map.removeLayer(areaSelectRectRef.current);
+        areaSelectRectRef.current = null;
+      }
+    };
+  }, [interactionMode, isLoaded, leaflet, setIdentifiedFeatures]);
+
   // Identify mode wiring.
   //
   // Entry: set crosshair cursor, close any open popup, unbind all marker
@@ -876,7 +1018,9 @@ export function SiteMap({
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !isLoaded || !leaflet) return;
-    if (interactionMode !== 'identify') return;
+    const isIdentifyMode =
+      interactionMode === 'identify' || interactionMode === 'identify-area';
+    if (!isIdentifyMode) return;
 
     const L = leaflet;
     const container = map.getContainer();
@@ -935,6 +1079,7 @@ export function SiteMap({
           ordered,
           map as unknown as LeafletMapLike,
           latlng,
+          { wmsUrl: BC_WMS_IDENTIFY_PROXY_URL },
         );
       } catch (err) {
         console.warn('[SiteMap] identify: queryActiveOverlays failed', err);
@@ -995,12 +1140,15 @@ export function SiteMap({
         console.warn('[SiteMap] identify: popup open failed', err);
       }
     };
-    runIdentifyRef.current = runIdentify;
+    runIdentifyRef.current =
+      interactionMode === 'identify' ? runIdentify : null;
 
     const handleIdentifyClick = (e: { latlng: { lat: number; lng: number } }) => {
       void runIdentify(e.latlng, null);
     };
-    map.on('click', handleIdentifyClick);
+    if (interactionMode === 'identify') {
+      map.on('click', handleIdentifyClick);
+    }
 
     return () => {
       // Bump the request id so any in-flight runIdentify call that resolves
@@ -1025,7 +1173,9 @@ export function SiteMap({
       });
       backup.clear();
 
-      map.off('click', handleIdentifyClick);
+      if (interactionMode === 'identify') {
+        map.off('click', handleIdentifyClick);
+      }
 
       if (identifyPopupRef.current) {
         try {
@@ -1328,7 +1478,7 @@ export function SiteMap({
           aria-label="Identify mode"
           aria-pressed={interactionMode === 'identify'}
           className={cn(
-            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors',
+            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
             interactionMode === 'identify'
               ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
@@ -1337,6 +1487,21 @@ export function SiteMap({
         >
           <Crosshair className="w-4 h-4" />
           <span className="hidden sm:inline">Identify</span>
+        </button>
+        <button
+          onClick={() => setInteractionMode('identify-area')}
+          aria-label="Identify area mode"
+          aria-pressed={interactionMode === 'identify-area'}
+          className={cn(
+            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors',
+            interactionMode === 'identify-area'
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
+          )}
+          title="Identify Area - drag a box to collect features from currently-enabled WMS overlays."
+        >
+          <BoxSelect className="w-4 h-4" />
+          <span className="hidden sm:inline">Identify Area</span>
         </button>
       </div>
 
