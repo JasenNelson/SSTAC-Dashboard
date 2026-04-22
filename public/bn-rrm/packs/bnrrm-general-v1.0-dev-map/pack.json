@@ -85,7 +85,9 @@
       "cpt_transparency": "review/cpt_transparency.json",
       "provenance": "review/provenance_registry.json",
       "site_reports": "review/site_reports.json",
-      "risk_comparison": "review/risk_comparison.json"
+      "risk_comparison": "review/risk_comparison.json",
+      "explainer": "review/explainer.json",
+      "sensitivity": "review/sensitivity.json"
     }
   }
 }
