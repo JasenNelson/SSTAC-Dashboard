@@ -24,6 +24,9 @@ jobs:
       
       - name: Run ESLint
         run: npm run lint
+
+      - name: Generate Next.js types
+        run: npx next typegen
       
       - name: TypeScript check
         run: npx tsc --noEmit
@@ -117,7 +120,9 @@ jobs:
       - name: Run E2E tests
         run: npm run test:e2e
         env:
-          PLAYWRIGHT_TEST_BASE_URL: http://localhost:3000
+          PLAYWRIGHT_TEST_HOST: 127.0.0.1
+          PLAYWRIGHT_TEST_PORT: 3100
+          PLAYWRIGHT_TEST_BASE_URL: http://127.0.0.1:3100
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 

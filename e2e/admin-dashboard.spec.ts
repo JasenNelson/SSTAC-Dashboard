@@ -175,7 +175,7 @@ test.describe('Admin Dashboard Workflows', () => {
   });
 
   test('should display users management section if available', async ({ page }) => {
-    await page.goto('/admin/users');
+    await page.goto('/admin/users', { waitUntil: 'domcontentloaded' });
 
     const currentUrl = page.url();
     if (currentUrl.includes('/login')) {
@@ -184,7 +184,7 @@ test.describe('Admin Dashboard Workflows', () => {
 
     // Check for user management content
     const body = page.locator('body');
-    await expect(body).toBeVisible();
+    await expect(body).toBeVisible({ timeout: 10000 });
 
     // Look for user-related elements
     const _userElements = page.locator(
