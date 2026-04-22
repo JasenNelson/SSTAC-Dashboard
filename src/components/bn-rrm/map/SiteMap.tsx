@@ -881,6 +881,7 @@ export function SiteMap({
     const map = mapInstanceRef.current;
     if (!map || !isLoaded || !leaflet) return;
     if (interactionMode !== 'identify-area') return;
+    const requestIdRef = identifyRequestIdRef;
 
     map.dragging.disable();
 
@@ -916,7 +917,7 @@ export function SiteMap({
         areaSelectRectRef.current = null;
       }
 
-      const myId = ++identifyRequestIdRef.current;
+      const myId = ++requestIdRef.current;
       const overlayDefs: Record<string, Omit<IdentifyOverlay, 'key'>> = {};
       for (const [key, def] of Object.entries(OVERLAY_LAYERS)) {
         overlayDefs[key] = {
@@ -940,7 +941,7 @@ export function SiteMap({
         console.warn('[SiteMap] identify-area: query failed', err);
       }
 
-      if (identifyRequestIdRef.current !== myId) return;
+      if (requestIdRef.current !== myId) return;
 
       if (identifyPopupRef.current) {
         try {
@@ -990,7 +991,7 @@ export function SiteMap({
     map.on('mouseup', onMouseUp);
 
     return () => {
-      identifyRequestIdRef.current++;
+      requestIdRef.current++;
       map.off('mousedown', onMouseDown);
       map.off('mousemove', onMouseMove);
       map.off('mouseup', onMouseUp);
@@ -1021,6 +1022,7 @@ export function SiteMap({
     const isIdentifyMode =
       interactionMode === 'identify' || interactionMode === 'identify-area';
     if (!isIdentifyMode) return;
+    const requestIdRef = identifyRequestIdRef;
 
     const L = leaflet;
     const container = map.getContainer();
@@ -1061,7 +1063,7 @@ export function SiteMap({
       // Capture a monotonic request id at entry. After each await we compare
       // against the ref; if it has advanced, a newer click (or mode exit)
       // superseded us and we silently discard this response.
-      const myId = ++identifyRequestIdRef.current;
+      const myId = ++requestIdRef.current;
       // Resolve the active WMS overlays in topmost-first z-order. The
       // overlayLayersRef Map is inserted-in-add-order, so reverse iteration
       // gives topmost-first. Declaration order of OVERLAY_LAYERS is NOT used.
@@ -1086,7 +1088,7 @@ export function SiteMap({
       }
       // Stale-response guard: if a newer request has started (or mode exited),
       // abandon this response without writing to the store or opening a popup.
-      if (identifyRequestIdRef.current !== myId) return;
+      if (requestIdRef.current !== myId) return;
       const merged = geojsonHit ? [geojsonHit, ...wmsHits] : wmsHits;
 
       // Remove any prior transient identify popup before opening a new one.
@@ -1152,12 +1154,8 @@ export function SiteMap({
 
     return () => {
       // Bump the request id so any in-flight runIdentify call that resolves
-      // after mode exit will see a mismatch and abandon silently. The lint
-      // warning about ref values in cleanup does not apply here - the ref is
-      // a monotonic counter, not a DOM node reference, and reading current
-      // identity at cleanup time is the intended semantics.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      identifyRequestIdRef.current++;
+      // after mode exit will see a mismatch and abandon silently.
+      requestIdRef.current++;
 
       // Restore cursor
       container.style.cursor = prevCursor;
