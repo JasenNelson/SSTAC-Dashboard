@@ -666,8 +666,9 @@ describe('queryActiveOverlays', () => {
       { fetchImpl: fetchImpl as unknown as typeof fetch, buffer: 5 },
     );
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    const firstArg = fetchImpl.mock.calls[0][0];
-    const url = new URL(String(firstArg));
+    const firstCall = fetchImpl.mock.calls[0] as unknown as [string | URL, ...unknown[]] | undefined;
+    expect(firstCall).toBeDefined();
+    const url = new URL(String(firstCall?.[0]));
     expect(url.searchParams.get('buffer')).toBe('5');
   });
 });
@@ -730,9 +731,9 @@ describe('queryActiveOverlaysInBounds', () => {
       fetchImpl: fetchImpl as unknown as typeof fetch,
       maxFeaturesPerLayer: 75,
     });
-
-    const firstArg = fetchImpl.mock.calls[0][0];
-    const url = new URL(String(firstArg));
+    const firstCall = fetchImpl.mock.calls[0] as unknown as [string | URL, ...unknown[]] | undefined;
+    expect(firstCall).toBeDefined();
+    const url = new URL(String(firstCall?.[0]));
     expect(url.searchParams.get('count')).toBe('75');
   });
 });
