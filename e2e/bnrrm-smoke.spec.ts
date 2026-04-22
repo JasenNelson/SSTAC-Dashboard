@@ -167,4 +167,73 @@ test.describe('BN-RRM Frontend Smoke Tests', () => {
 
     expect(errors, `Console errors on Review: ${errors.join('; ')}`).toHaveLength(0);
   });
+
+  test('Identify mode arms cursor and suppresses marker/cluster side effects', async ({ page }) => {
+    // Navigate to Map tab.
+    const mapTab = page
+      .locator('button, a')
+      .filter({ hasText: /^Map$/i })
+      .first();
+    if (!(await mapTab.isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip(true, 'Map tab not visible');
+      return;
+    }
+    await mapTab.click();
+    await page.waitForTimeout(1500);
+
+    // Identify toolbar button.
+    const identifyBtn = page.getByRole('button', { name: /Identify mode/i });
+    if (!(await identifyBtn.isVisible({ timeout: 5000 }).catch(() => false))) {
+      test.skip(true, 'Identify button not yet rendered');
+      return;
+    }
+    await identifyBtn.click();
+    await page.waitForTimeout(400);
+
+    // aria-pressed flips to true while Identify is active.
+    await expect(identifyBtn).toHaveAttribute('aria-pressed', 'true');
+
+    // The Identify-mode effect tags the map container with a cursor class.
+    const identifyCursor = page.locator('.bnrrm-identify-cursor').first();
+    const hasCursor = await identifyCursor.count();
+    expect(hasCursor).toBeGreaterThan(0);
+
+    // Find a site marker if any sites are loaded. Clicking must NOT open a
+    // Leaflet popup (unbound in Identify mode) and must NOT select a site.
+    const markers = page.locator('.leaflet-interactive');
+    const markerCount = await markers.count();
+    if (markerCount > 0) {
+      await markers.first().click({ force: true });
+      await page.waitForTimeout(400);
+      // No Leaflet popup element should be visible for a marker's popup.
+      // A transient identify popup MAY appear; that is the identify popup,
+      // not a marker popup - so we assert no site-detail "Run Assessment"
+      // button surfaced, which would imply selectSite was called.
+      const runBtn = page
+        .getByRole('button', { name: /Run Assessment/i })
+        .first();
+      expect(await runBtn.isVisible().catch(() => false)).toBe(false);
+    }
+
+    // Ctrl-click on a cluster should be inert in Identify mode. We cannot
+    // guarantee a cluster exists, so this check is best-effort.
+    const cluster = page.locator('.custom-cluster-icon').first();
+    if (await cluster.isVisible().catch(() => false)) {
+      await cluster.click({ modifiers: ['Control'], force: true });
+      await page.waitForTimeout(300);
+      // aria-pressed should still indicate Identify is active - no mode flip
+      await expect(identifyBtn).toHaveAttribute('aria-pressed', 'true');
+    }
+
+    // Switch back to Pan; aria-pressed on Identify should go false.
+    const panBtn = page
+      .locator('button')
+      .filter({ hasText: /^Pan$/ })
+      .first();
+    if (await panBtn.isVisible().catch(() => false)) {
+      await panBtn.click();
+      await page.waitForTimeout(200);
+      await expect(identifyBtn).toHaveAttribute('aria-pressed', 'false');
+    }
+  });
 });

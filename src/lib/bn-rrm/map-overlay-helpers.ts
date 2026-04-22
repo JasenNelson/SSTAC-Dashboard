@@ -426,6 +426,73 @@ export function formatFeaturePopup(
 }
 
 // ---------------------------------------------------------------------------
+// Identify-tool popup formatter (WMS + GeoJSON hits)
+// ---------------------------------------------------------------------------
+
+/**
+ * Minimal subset of IdentifiedFeature needed to render the popup teaser.
+ * Intentionally structural - avoids importing the full type from wms-identify
+ * so this helper stays isolated from that module.
+ */
+export interface IdentifyPopupFeature {
+  layerLabel: string;
+  properties: Record<string, unknown>;
+}
+
+function isPopupEmptyValue(v: unknown): boolean {
+  if (v === null || v === undefined) return true;
+  if (typeof v === 'string' && v.trim() === '') return true;
+  return false;
+}
+
+function popupValueAsString(v: unknown): string {
+  if (typeof v === 'string') return v;
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
+  try {
+    return JSON.stringify(v);
+  } catch {
+    return String(v);
+  }
+}
+
+/**
+ * Compact popup body used by the Identify tool. Shows:
+ *   - A count header ("N features identified")
+ *   - Primary layer label + up to 3 non-empty property rows
+ *   - A footer hint directing the user to the side panel for full detail
+ *
+ * features[0] is treated as the primary hit (topmost-first z-order upstream).
+ */
+export function formatIdentifyPopupHtml(
+  features: IdentifyPopupFeature[],
+): string {
+  if (!features || features.length === 0) {
+    return wrap('No features at this location', '');
+  }
+  const total = features.length;
+  const primary = features[0];
+  const title =
+    total === 1 ? '1 feature identified' : `${total} features identified`;
+
+  const entries = Object.entries(primary.properties).filter(
+    ([, v]) => !isPopupEmptyValue(v),
+  );
+  const shown = entries.slice(0, 3);
+
+  let rows = row('Layer', escapeHtml(primary.layerLabel));
+  for (const [k, v] of shown) {
+    rows += row(k, escapeHtml(popupValueAsString(v)));
+  }
+  if (total > 1) {
+    rows +=
+      `<p style="${POPUP_ROW_STYLE};font-style:italic;">` +
+      `See all ${total} in side panel.` +
+      '</p>';
+  }
+  return wrap(title, rows);
+}
+
+// ---------------------------------------------------------------------------
 // Pack-presence helper
 // ---------------------------------------------------------------------------
 

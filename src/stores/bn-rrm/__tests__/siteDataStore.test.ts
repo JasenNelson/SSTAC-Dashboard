@@ -5,6 +5,18 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useSiteDataStore } from '../siteDataStore';
 import type { SiteData, SiteAssessment } from '@/types/bn-rrm/site-data';
+import type { IdentifiedFeature } from '@/lib/bn-rrm/wms-identify';
+
+function makeFeature(layerKey: string, propId: number): IdentifiedFeature {
+  return {
+    source: 'wms',
+    layerKey,
+    layerLabel: `Layer ${layerKey}`,
+    properties: { id: propId },
+    coordinates: { lat: 49.0, lng: -123.0 },
+    capturedAt: 1_700_000_000_000,
+  };
+}
 
 function makeSite(id: string, sourceTag?: 'user' | 'training' | 'comparison'): SiteData {
   return {
@@ -51,6 +63,8 @@ describe('siteDataStore', () => {
       selectedSiteId: null,
       selectedSiteIds: [],
       batchAssessmentProgress: null,
+      identifiedFeatures: [],
+      primaryFeatureIndex: null,
     });
   });
 
@@ -184,6 +198,92 @@ describe('siteDataStore', () => {
 
       const state = useSiteDataStore.getState();
       expect(state.batchAssessmentProgress).toBeNull();
+    });
+  });
+
+  describe('identified features mutations', () => {
+    it('setIdentifiedFeatures replaces list and sets primary to 0', () => {
+      const store = useSiteDataStore.getState();
+      store.setIdentifiedFeatures([makeFeature('a', 1), makeFeature('b', 2)]);
+
+      const state = useSiteDataStore.getState();
+      expect(state.identifiedFeatures).toHaveLength(2);
+      expect(state.identifiedFeatures[0].layerKey).toBe('a');
+      expect(state.primaryFeatureIndex).toBe(0);
+    });
+
+    it('setIdentifiedFeatures with empty list sets primary to null', () => {
+      const store = useSiteDataStore.getState();
+      store.setIdentifiedFeatures([makeFeature('a', 1)]);
+      store.setIdentifiedFeatures([]);
+
+      const state = useSiteDataStore.getState();
+      expect(state.identifiedFeatures).toEqual([]);
+      expect(state.primaryFeatureIndex).toBeNull();
+    });
+
+    it('setPrimaryFeatureIndex promotes a non-primary hit', () => {
+      const store = useSiteDataStore.getState();
+      store.setIdentifiedFeatures([
+        makeFeature('a', 1),
+        makeFeature('b', 2),
+        makeFeature('c', 3),
+      ]);
+      store.setPrimaryFeatureIndex(2);
+
+      const state = useSiteDataStore.getState();
+      expect(state.primaryFeatureIndex).toBe(2);
+      expect(state.identifiedFeatures[2].layerKey).toBe('c');
+    });
+
+    it('setPrimaryFeatureIndex ignores out-of-range values', () => {
+      const store = useSiteDataStore.getState();
+      store.setIdentifiedFeatures([makeFeature('a', 1)]);
+      store.setPrimaryFeatureIndex(5);
+
+      const state = useSiteDataStore.getState();
+      expect(state.primaryFeatureIndex).toBe(0);
+    });
+
+    it('clearIdentifiedFeatures empties list and resets index', () => {
+      const store = useSiteDataStore.getState();
+      store.setIdentifiedFeatures([makeFeature('a', 1), makeFeature('b', 2)]);
+      store.clearIdentifiedFeatures();
+
+      const state = useSiteDataStore.getState();
+      expect(state.identifiedFeatures).toEqual([]);
+      expect(state.primaryFeatureIndex).toBeNull();
+    });
+
+    it('selecting a site does not clear identified features (independent)', () => {
+      const store = useSiteDataStore.getState();
+      store.addSite(makeSite('a'));
+      store.setIdentifiedFeatures([makeFeature('layerA', 1)]);
+      store.selectSite('a');
+
+      const state = useSiteDataStore.getState();
+      expect(state.selectedSiteId).toBe('a');
+      expect(state.identifiedFeatures).toHaveLength(1);
+    });
+  });
+
+  describe('persist round-trip', () => {
+    it('identifiedFeatures and primaryFeatureIndex are NOT written to storage', () => {
+      const store = useSiteDataStore.getState();
+      store.setIdentifiedFeatures([makeFeature('a', 1), makeFeature('b', 2)]);
+      store.addSite(makeSite('siteA'));
+
+      const raw = typeof window !== 'undefined'
+        ? window.localStorage.getItem('sstac-bn-rrm-site-data')
+        : null;
+      expect(raw).not.toBeNull();
+
+      const parsed = JSON.parse(raw!);
+      const persistedState = parsed.state ?? parsed;
+      expect(persistedState).toHaveProperty('sites');
+      expect(persistedState.sites).toHaveProperty('siteA');
+      expect(persistedState).not.toHaveProperty('identifiedFeatures');
+      expect(persistedState).not.toHaveProperty('primaryFeatureIndex');
     });
   });
 });

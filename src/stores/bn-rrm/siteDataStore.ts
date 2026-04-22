@@ -13,6 +13,7 @@ import type {
   SedimentChemistry,
   ValidationResult,
 } from '@/types/bn-rrm/site-data';
+import type { IdentifiedFeature } from '@/lib/bn-rrm/wms-identify';
 
 interface SiteDataState {
   sites: Record<string, SiteData>;
@@ -23,6 +24,10 @@ interface SiteDataState {
   uploadProgress: number;
   lastUploadResult: { success: boolean; message: string } | null;
   batchAssessmentProgress: { current: number; total: number; currentSiteName: string } | null;
+  // Map Identify tool state. Intentionally NOT persisted (see partialize below):
+  // stale identified features would have no map context on reload.
+  identifiedFeatures: IdentifiedFeature[];
+  primaryFeatureIndex: number | null;
 
   addSite: (site: SiteData) => void;
   addSites: (sites: SiteData[]) => void;
@@ -44,6 +49,12 @@ interface SiteDataState {
   selectAllSites: () => void;
   getSiteCount: () => number;
   setBatchAssessmentProgress: (progress: { current: number; total: number; currentSiteName: string } | null) => void;
+  // Map Identify tool mutations. setIdentifiedFeatures auto-sets
+  // primaryFeatureIndex to 0 when features are non-empty, null otherwise.
+  // Caller is responsible for topmost-first ordering; the store does not re-sort.
+  setIdentifiedFeatures: (features: IdentifiedFeature[]) => void;
+  setPrimaryFeatureIndex: (i: number) => void;
+  clearIdentifiedFeatures: () => void;
 }
 
 export const useSiteDataStore = create<SiteDataState>()(
@@ -58,6 +69,8 @@ export const useSiteDataStore = create<SiteDataState>()(
         uploadProgress: 0,
         lastUploadResult: null,
         batchAssessmentProgress: null,
+        identifiedFeatures: [],
+        primaryFeatureIndex: null,
 
         addSite: (site) => {
           set((state) => ({ sites: { ...state.sites, [site.location.id]: site } }));
@@ -246,8 +259,42 @@ export const useSiteDataStore = create<SiteDataState>()(
         setBatchAssessmentProgress: (progress) => {
           set({ batchAssessmentProgress: progress });
         },
+
+        setIdentifiedFeatures: (features) => {
+          set({
+            identifiedFeatures: features,
+            primaryFeatureIndex: features.length > 0 ? 0 : null,
+          });
+        },
+
+        setPrimaryFeatureIndex: (i) => {
+          set((state) => {
+            if (i < 0 || i >= state.identifiedFeatures.length) return state;
+            return { primaryFeatureIndex: i };
+          });
+        },
+
+        clearIdentifiedFeatures: () => {
+          set({ identifiedFeatures: [], primaryFeatureIndex: null });
+        },
       }),
-      { name: 'sstac-bn-rrm-site-data' }
+      {
+        name: 'sstac-bn-rrm-site-data',
+        // Explicit whitelist. Preserves CURRENT persist behavior (every data
+        // field was previously persisted), and intentionally EXCLUDES the new
+        // identify fields (identifiedFeatures, primaryFeatureIndex) so stale
+        // features are not restored on reload without a map to anchor them.
+        partialize: (state) => ({
+          sites: state.sites,
+          assessments: state.assessments,
+          selectedSiteId: state.selectedSiteId,
+          selectedSiteIds: state.selectedSiteIds,
+          isUploading: state.isUploading,
+          uploadProgress: state.uploadProgress,
+          lastUploadResult: state.lastUploadResult,
+          batchAssessmentProgress: state.batchAssessmentProgress,
+        }),
+      }
     ),
     { name: 'bn-rrm-site-data-store' }
   )

@@ -31,11 +31,19 @@ import {
   DEFAULT_ON_CATEGORIES,
   HEAVY_LAYERS,
   formatFeaturePopup,
+  formatIdentifyPopupHtml,
   getStyleForKey,
   packHasMapArtifacts,
   type GeoJsonFeature,
   type GeoJsonFeatureCollection,
 } from '@/lib/bn-rrm/map-overlay-helpers';
+import {
+  getActiveOverlaysInZOrder,
+  queryActiveOverlays,
+  type IdentifiedFeature,
+  type IdentifyOverlay,
+  type LeafletMapLike,
+} from '@/lib/bn-rrm/wms-identify';
 import {
   ZoomIn,
   ZoomOut,
@@ -49,6 +57,7 @@ import {
   Hand,
   BoxSelect,
   MousePointer,
+  Crosshair,
 } from 'lucide-react';
 
 interface SiteMapProps {
@@ -89,7 +98,7 @@ interface OverlayDef {
   name: string;
   layer: string;
   color: string; // Legend swatch color
-  category: 'protected' | 'aquatic' | 'ecology' | 'regulatory';
+  category: 'protected' | 'aquatic' | 'ecology' | 'regulatory' | 'waste';
 }
 
 const OVERLAY_LAYERS: Record<string, OverlayDef> = {
@@ -159,6 +168,24 @@ const OVERLAY_LAYERS: Record<string, OverlayDef> = {
     color: '#f59e0b',
     category: 'regulatory',
   },
+  csrSites: {
+    name: 'Contaminated Sites Registry',
+    layer: 'pub:WHSE_WASTE.SITE_ENV_RMDTN_SITES_SVW',
+    color: '#b91c1c',
+    category: 'waste',
+  },
+  bkgdGroundwater: {
+    name: 'Background Groundwater Concentration Regions',
+    layer: 'pub:WHSE_WASTE.CSR_BKGD_GRNDWTR_CONC_AREAS_SP',
+    color: '#7c2d12',
+    category: 'waste',
+  },
+  emsMonitoring: {
+    name: 'Environmental Monitoring Locations',
+    layer: 'pub:WHSE_ENVIRONMENTAL_MONITORING.EMS_MONITORING_LOCN_GROUPS_SVW',
+    color: '#991b1b',
+    category: 'waste',
+  },
 };
 
 const OVERLAY_CATEGORIES: { key: string; label: string }[] = [
@@ -166,6 +193,7 @@ const OVERLAY_CATEGORIES: { key: string; label: string }[] = [
   { key: 'aquatic', label: 'Aquatic Features' },
   { key: 'ecology', label: 'Ecosystem Classification' },
   { key: 'regulatory', label: 'Regulatory' },
+  { key: 'waste', label: 'Waste & Remediation' },
 ];
 
 export function SiteMap({
@@ -213,11 +241,33 @@ export function SiteMap({
     [packManifest],
   );
   const [siteListExpanded, setSiteListExpanded] = useState(true);
-  const [interactionMode, setInteractionMode] = useState<'pan' | 'select-individual' | 'select-area'>('pan');
+  const [interactionMode, setInteractionMode] = useState<'pan' | 'select-individual' | 'select-area' | 'identify'>('pan');
   const interactionModeRef = useRef(interactionMode);
   interactionModeRef.current = interactionMode;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const areaSelectRectRef = useRef<any>(null);
+  // Backup of marker popups while Identify mode is active. Iterable Map
+  // (NOT WeakMap) is required because restoration on mode exit iterates the
+  // saved entries. Keys are Leaflet markers; values carry content + options.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markerPopupBackupRef = useRef<Map<any, { content: any; options: any }>>(new Map());
+  // Ref mirror of the Identify writer so Leaflet handlers attached once (in
+  // the GeoJSON onEachFeature closure) can reach the latest implementation.
+  // Set/unset by the Identify-mode useEffect below.
+  const runIdentifyRef = useRef<
+    | ((latlng: { lat: number; lng: number }, geojsonHit: IdentifiedFeature | null) => void)
+    | null
+  >(null);
+  // Transient "no features" / "N features" popup owned by the Identify tool.
+  // We track it so it can be removed on mode exit.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const identifyPopupRef = useRef<any>(null);
+  // Monotonic request counter for the Identify tool. Every runIdentify call
+  // captures its own id at entry; after each await we bail if the ref has
+  // advanced, which means a newer click (or mode exit) superseded us. This is
+  // the correctness guarantee at the call site; queryActiveOverlays has its
+  // own internal timeoutMs but that does NOT discard stale successful replies.
+  const identifyRequestIdRef = useRef<number>(0);
 
   const sites = useSiteDataStore((state) => state.sites);
   const assessments = useSiteDataStore((state) => state.assessments);
@@ -227,6 +277,8 @@ export function SiteMap({
   const toggleSiteSelection = useSiteDataStore((state) => state.toggleSiteSelection);
   const selectAllSites = useSiteDataStore((state) => state.selectAllSites);
   const clearSiteSelection = useSiteDataStore((state) => state.clearSiteSelection);
+  const setIdentifiedFeatures = useSiteDataStore((state) => state.setIdentifiedFeatures);
+  const clearIdentifiedFeatures = useSiteDataStore((state) => state.clearIdentifiedFeatures);
 
   const siteLocations = useMemo(() => {
     return Object.values(sites)
@@ -305,8 +357,19 @@ export function SiteMap({
         },
       });
 
-      // Ctrl+click on a cluster selects all its child markers
+      // Ctrl+click on a cluster selects all its child markers.
+      // In Identify mode this handler must short-circuit at the top so that
+      // Ctrl/meta+cluster is fully inert (no selection, no zoom, no identify).
+      // The existing handler does NOT consult defaultPrevented, so a separate
+      // interceptor would not suppress it reliably - the gate MUST live here.
       markers.on('clusterclick', (e: { layer?: { getAllChildMarkers?: () => { options?: { locationId?: string } }[] }; originalEvent?: MouseEvent }) => {
+        if (interactionModeRef.current === 'identify') {
+          // Swallow the cluster click: in Identify mode we want cluster marker
+          // behavior fully disabled. Prevent default (zoom) and any selection.
+          e.originalEvent?.preventDefault?.();
+          e.originalEvent?.stopPropagation?.();
+          return;
+        }
         const orig = e.originalEvent;
         if (orig?.ctrlKey || orig?.metaKey) {
           orig.preventDefault();
@@ -538,6 +601,39 @@ export function SiteMap({
               } catch (err) {
                 console.warn(`[SiteMap] popup formatter failed for ${key}`, err);
               }
+              // Identify-mode click path for GeoJSON features: stop propagation
+              // (so the map 'click' handler does not ALSO fire) and funnel
+              // through the single-writer runIdentify. Non-Identify modes are
+              // unaffected because runIdentifyRef.current is null outside the
+              // Identify-mode effect.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              layer.on('click', (evt: any) => {
+                if (interactionModeRef.current !== 'identify') return;
+                try {
+                  L.DomEvent.stopPropagation(evt);
+                } catch {
+                  // best-effort
+                }
+                const latlng = evt?.latlng ?? {
+                  lat: 0,
+                  lng: 0,
+                };
+                const props = (feature.properties ?? {}) as Record<
+                  string,
+                  unknown
+                >;
+                const label =
+                  CATEGORY_LABELS[MAP_ARTIFACT_CATEGORIES[key]] ?? key;
+                const hit: IdentifiedFeature = {
+                  source: 'geojson',
+                  layerKey: key,
+                  layerLabel: label,
+                  properties: props,
+                  coordinates: { lat: latlng.lat, lng: latlng.lng },
+                  capturedAt: Date.now(),
+                };
+                runIdentifyRef.current?.(latlng, hit);
+              });
             },
           });
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -618,7 +714,30 @@ export function SiteMap({
       });
 
       marker.bindPopup(createPopupContent(location, assessment), { maxWidth: 280 });
+      // If Identify mode is ALREADY active when this marker is built (e.g.
+      // siteLocations/assessments changed while Identify was on), the fresh
+      // marker would restore the bound popup and re-introduce the mode-enter
+      // bug. Mirror the mode-enter suppression here: save content+options to
+      // the backup ref and unbind. The mode-exit cleanup iterates the backup
+      // and rebinds every entry, so these markers are restored the same way.
+      if (interactionModeRef.current === 'identify') {
+        try {
+          const popup = marker.getPopup?.();
+          if (popup) {
+            const content = popup.getContent?.();
+            const options = popup.options;
+            markerPopupBackupRef.current.set(marker, { content, options });
+            marker.unbindPopup();
+          }
+        } catch (err) {
+          console.warn('[SiteMap] identify: mid-mode unbindPopup failed', err);
+        }
+      }
       marker.on('click', (e: { originalEvent?: MouseEvent; sourceTarget?: unknown; ctrlKey?: boolean; metaKey?: boolean }) => {
+        // Identify mode: markers must not select a site. Popup suppression is
+        // enforced independently via unbindPopup on mode enter; this short-
+        // circuit is a redundant defense so selectSite is never called.
+        if (interactionModeRef.current === 'identify') return;
         const orig = e.originalEvent;
         const ctrlHeld = orig?.ctrlKey || orig?.metaKey || e.ctrlKey || e.metaKey;
         // In select-individual mode, every click toggles selection (no Ctrl needed)
@@ -735,6 +854,184 @@ export function SiteMap({
       map.getContainer().style.cursor = '';
     }
   }, [interactionMode, isLoaded, leaflet, siteLocations]);
+
+  // Identify mode wiring.
+  //
+  // Entry: set crosshair cursor, close any open popup, unbind all marker
+  // popups (saving content+options to markerPopupBackupRef) so Leaflet's
+  // internal popup-open logic cannot fire, attach map.on('click') for
+  // raster/empty clicks, install runIdentify as the single authoritative
+  // writer of identifiedFeatures.
+  //
+  // Exit (cleanup returned from useEffect): restore cursor, rebind all
+  // marker popups from the backup ref and clear it, detach map click
+  // handler, close any transient identify popup, clear runIdentifyRef.
+  // Cluster suppression lives inside the EXISTING clusterclick handler -
+  // flipping interactionModeRef alone restores cluster zoom behavior.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !isLoaded || !leaflet) return;
+    if (interactionMode !== 'identify') return;
+
+    const L = leaflet;
+    const container = map.getContainer();
+    const prevCursor = container.style.cursor;
+    container.style.cursor = 'crosshair';
+    container.classList.add('bnrrm-identify-cursor');
+
+    // Close any currently-open popup so a prior marker popup does not linger.
+    try {
+      map.closePopup();
+    } catch {
+      // ignore
+    }
+
+    // Unbind every site marker's popup and save content+options. Leaflet's
+    // internal popup-open for bound popups fires independently of our click
+    // handler - unbind is the reliable suppression.
+    const backup = markerPopupBackupRef.current;
+    markerMapRef.current.forEach((marker) => {
+      try {
+        const popup = marker.getPopup?.();
+        if (popup) {
+          const content = popup.getContent?.();
+          const options = popup.options;
+          backup.set(marker, { content, options });
+          marker.unbindPopup();
+        }
+      } catch (err) {
+        console.warn('[SiteMap] identify: unbindPopup failed', err);
+      }
+    });
+
+    // The writer. Single authoritative path into identifiedFeatures.
+    const runIdentify = async (
+      latlng: { lat: number; lng: number },
+      geojsonHit: IdentifiedFeature | null,
+    ) => {
+      // Capture a monotonic request id at entry. After each await we compare
+      // against the ref; if it has advanced, a newer click (or mode exit)
+      // superseded us and we silently discard this response.
+      const myId = ++identifyRequestIdRef.current;
+      // Resolve the active WMS overlays in topmost-first z-order. The
+      // overlayLayersRef Map is inserted-in-add-order, so reverse iteration
+      // gives topmost-first. Declaration order of OVERLAY_LAYERS is NOT used.
+      const overlayDefs: Record<string, Omit<IdentifyOverlay, 'key'>> = {};
+      for (const [key, def] of Object.entries(OVERLAY_LAYERS)) {
+        overlayDefs[key] = { name: def.name, layer: def.layer, category: def.category };
+      }
+      const ordered = getActiveOverlaysInZOrder(
+        overlayLayersRef.current as Map<string, unknown>,
+        overlayDefs,
+      );
+      let wmsHits: IdentifiedFeature[] = [];
+      try {
+        wmsHits = await queryActiveOverlays(
+          ordered,
+          map as unknown as LeafletMapLike,
+          latlng,
+        );
+      } catch (err) {
+        console.warn('[SiteMap] identify: queryActiveOverlays failed', err);
+      }
+      // Stale-response guard: if a newer request has started (or mode exited),
+      // abandon this response without writing to the store or opening a popup.
+      if (identifyRequestIdRef.current !== myId) return;
+      const merged = geojsonHit ? [geojsonHit, ...wmsHits] : wmsHits;
+
+      // Remove any prior transient identify popup before opening a new one.
+      if (identifyPopupRef.current) {
+        try {
+          map.closePopup(identifyPopupRef.current);
+        } catch {
+          // ignore
+        }
+        identifyPopupRef.current = null;
+      }
+
+      if (merged.length === 0) {
+        // Do NOT write to the store when there are no hits.
+        try {
+          const popup = L.popup({ closeButton: true, autoClose: true })
+            .setLatLng(latlng)
+            .setContent(formatIdentifyPopupHtml([]));
+          popup.openOn(map);
+          identifyPopupRef.current = popup;
+        } catch (err) {
+          console.warn('[SiteMap] identify: no-hits popup failed', err);
+        }
+        return;
+      }
+
+      setIdentifiedFeatures(merged);
+      try {
+        const popup = L.popup({ closeButton: true, autoClose: true })
+          .setLatLng(latlng)
+          .setContent(
+            formatIdentifyPopupHtml(
+              merged.map((f) => ({
+                layerLabel: f.layerLabel,
+                properties: f.properties,
+              })),
+            ),
+          );
+        popup.openOn(map);
+        identifyPopupRef.current = popup;
+      } catch (err) {
+        console.warn('[SiteMap] identify: popup open failed', err);
+      }
+    };
+    runIdentifyRef.current = runIdentify;
+
+    const handleIdentifyClick = (e: { latlng: { lat: number; lng: number } }) => {
+      void runIdentify(e.latlng, null);
+    };
+    map.on('click', handleIdentifyClick);
+
+    return () => {
+      // Bump the request id so any in-flight runIdentify call that resolves
+      // after mode exit will see a mismatch and abandon silently. The lint
+      // warning about ref values in cleanup does not apply here - the ref is
+      // a monotonic counter, not a DOM node reference, and reading current
+      // identity at cleanup time is the intended semantics.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      identifyRequestIdRef.current++;
+
+      // Restore cursor
+      container.style.cursor = prevCursor;
+      container.classList.remove('bnrrm-identify-cursor');
+
+      // Rebind marker popups from the backup
+      backup.forEach((saved, marker) => {
+        try {
+          marker.bindPopup(saved.content, saved.options);
+        } catch (err) {
+          console.warn('[SiteMap] identify: bindPopup restore failed', err);
+        }
+      });
+      backup.clear();
+
+      map.off('click', handleIdentifyClick);
+
+      if (identifyPopupRef.current) {
+        try {
+          map.closePopup(identifyPopupRef.current);
+        } catch {
+          // ignore
+        }
+        identifyPopupRef.current = null;
+      }
+
+      runIdentifyRef.current = null;
+    };
+  }, [interactionMode, isLoaded, leaflet, setIdentifiedFeatures]);
+
+  // Pack-switch clearing for identified features. UI-level effect scoped to
+  // the map page - NOT a cross-store subscription. Matches the "coexist
+  // stacked" panel choice: identified features do not outlive a pack switch.
+  useEffect(() => {
+    clearIdentifiedFeatures();
+  }, [selectedPackId, clearIdentifiedFeatures]);
 
   // Fit to sites on first load
   useEffect(() => {
@@ -1002,15 +1299,30 @@ export function SiteMap({
         <button
           onClick={() => setInteractionMode('select-area')}
           className={cn(
-            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors',
+            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
             interactionMode === 'select-area'
               ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
           )}
-          title="Area select — drag rectangle to select markers"
+          title="Area select - drag rectangle to select markers"
         >
           <BoxSelect className="w-4 h-4" />
           <span className="hidden sm:inline">Area</span>
+        </button>
+        <button
+          onClick={() => setInteractionMode('identify')}
+          aria-label="Identify mode"
+          aria-pressed={interactionMode === 'identify'}
+          className={cn(
+            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors',
+            interactionMode === 'identify'
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
+          )}
+          title="Identify - click a feature to inspect its attributes"
+        >
+          <Crosshair className="w-4 h-4" />
+          <span className="hidden sm:inline">Identify</span>
         </button>
       </div>
 

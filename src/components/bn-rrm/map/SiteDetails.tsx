@@ -9,6 +9,7 @@
 
 import { cn } from '@/utils/cn';
 import { useSiteDataStore } from '@/stores/bn-rrm/siteDataStore';
+import { IdentifiedFeaturesList } from './IdentifiedFeaturesList';
 import {
   MapPin,
   Beaker,
@@ -35,13 +36,32 @@ export function SiteDetails({ className, onClose, onRunAssessment, onRunBatchAss
   const assessments = useSiteDataStore((state) => state.assessments);
   const selectSite = useSiteDataStore((state) => state.selectSite);
   const batchProgress = useSiteDataStore((state) => state.batchAssessmentProgress);
+  const identifiedFeatures = useSiteDataStore((state) => state.identifiedFeatures);
+  const primaryFeatureIndex = useSiteDataStore((state) => state.primaryFeatureIndex);
+  const setPrimaryFeatureIndex = useSiteDataStore((state) => state.setPrimaryFeatureIndex);
+  const clearIdentifiedFeatures = useSiteDataStore((state) => state.clearIdentifiedFeatures);
 
   const site = selectedSiteId ? sites[selectedSiteId] : undefined;
   const assessment = selectedSiteId ? assessments[selectedSiteId] : undefined;
   const multiCount = selectedSiteIds.length;
   const isMultiSelect = multiCount > 1;
+  const hasIdentified = identifiedFeatures.length > 0;
 
   if (!site) {
+    // When no site is selected but identified features exist, the list
+    // replaces the empty-state so users have somewhere to read the hit detail.
+    if (hasIdentified) {
+      return (
+        <div className={cn('bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 flex flex-col', className)}>
+          <IdentifiedFeaturesList
+            features={identifiedFeatures}
+            primaryIndex={primaryFeatureIndex}
+            onPromote={setPrimaryFeatureIndex}
+            onClear={clearIdentifiedFeatures}
+          />
+        </div>
+      );
+    }
     return (
       <div className={cn('bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 p-6', className)}>
         <div className="h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
@@ -219,6 +239,16 @@ export function SiteDetails({ className, onClose, onRunAssessment, onRunBatchAss
             </div>
           )}
         </Section>
+
+        {hasIdentified && (
+          <IdentifiedFeaturesList
+            features={identifiedFeatures}
+            primaryIndex={primaryFeatureIndex}
+            onPromote={setPrimaryFeatureIndex}
+            onClear={clearIdentifiedFeatures}
+            className="-mx-4"
+          />
+        )}
       </div>
 
       <div className="p-4 border-t border-slate-200 dark:border-slate-700">
