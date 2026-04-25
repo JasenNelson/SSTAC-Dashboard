@@ -1,0 +1,4 @@
+
+## 2024-05-24 - Interactive Div Keyboard Accessibility
+**Learning:** When making non-interactive elements (like `div`) behave as interactive buttons for expand/collapse patterns, relying on `onClick` alone entirely excludes keyboard users. For proper a11y, you must add `role="button"`, `tabIndex={0}`, map the internal expanded state to `aria-expanded`, and handle `onKeyDown` for 'Enter' and 'Space' keys. Additionally, explicit visual focus indicators are required (e.g., using Tailwind's `focus:outline-none focus-visible:ring-2`) to ensure focus is evident for keyboard navigation but unobtrusive for mouse users.
+**Action:** Always check custom interactive elements for these four required accessibility pillars: semantic role, keyboard focusability, state mapping via ARIA, and explicit keyboard event handling.
