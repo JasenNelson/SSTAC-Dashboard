@@ -260,9 +260,10 @@ export default function TagManagement() {
                         const colorInput = document.getElementById('color') as HTMLInputElement;
                         if (colorInput) colorInput.value = color;
                       }}
-                      className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors"
+                      className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
                       style={{ backgroundColor: color }}
                       title={color}
+                      aria-label={`Select color ${color}`}
                     />
                   ))}
                 </div>
@@ -308,14 +309,16 @@ export default function TagManagement() {
                     <button
                       type="button"
                       onClick={() => setEditingTag(tag)}
-                      className="px-3 py-1 text-sm font-medium text-sky-700 hover:text-sky-800 transition-colors"
+                      aria-label={`Edit tag ${tag.name}`}
+                      className="px-3 py-1 text-sm font-medium text-sky-700 hover:text-sky-800 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded"
                     >
                       Edit
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteTag(tag.id)}
-                      className="px-3 py-1 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
+                      aria-label={`Delete tag ${tag.name}`}
+                      className="px-3 py-1 text-sm font-medium text-red-600 hover:text-red-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded"
                     >
                       Delete
                     </button>
@@ -379,9 +382,10 @@ export default function TagManagement() {
                             const colorInput = document.getElementById('edit-color') as HTMLInputElement;
                             if (colorInput) colorInput.value = color;
                           }}
-                          className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors"
+                          className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
                           style={{ backgroundColor: color }}
                           title={color}
+                      aria-label={`Select color ${color}`}
                         />
                       ))}
                     </div>

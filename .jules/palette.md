@@ -1,0 +1,3 @@
+## 2025-04-28 - Tag Management Color Swatches Accessibility
+**Learning:** Visual-only interactive elements, such as color swatches (`<button>` tags indicating color via background styles) in `TagManagement.tsx`, rely solely on `title` attributes, which is insufficient for screen readers. Furthermore, interactive elements often miss focus rings, making them inaccessible to keyboard users.
+**Action:** When implementing visually abstract selections (like colors or icons) as buttons, always include `aria-label` attributes to provide text alternatives. Additionally, ensure keyboard focus states are explicitly visible, for example by using Tailwind's `focus-visible:ring-2 focus-visible:ring-sky-500`.
