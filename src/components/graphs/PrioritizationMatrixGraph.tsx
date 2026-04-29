@@ -213,7 +213,7 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
     <div className="p-3 border rounded-lg shadow-md bg-white dark:bg-slate-800">
       <div className="flex justify-between items-center mb-2 h-10">
         {/* Visualization Mode Selector - Top Left */}
-        <div className="flex gap-1">
+        <div className="flex gap-1" role="group" aria-label="Visualization mode">
           <button
             onClick={() => setVisualizationMode('jittered')}
             className={`p-2 rounded-md transition-all ${
@@ -222,6 +222,8 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
             }`}
             title="Jittered clustering - spread overlapping points"
+            aria-label="Jittered clustering"
+            aria-pressed={visualizationMode === 'jittered'}
           >
             <ScatterChart className="w-4 h-4" />
           </button>
@@ -233,6 +235,8 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
             }`}
             title="Size-scaled - larger dots for more overlapping points"
+            aria-label="Size-scaled"
+            aria-pressed={visualizationMode === 'size-scaled'}
           >
             <Circle className="w-4 h-4" />
           </button>
@@ -244,6 +248,8 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
             }`}
             title="Heatmap - color intensity shows density"
+            aria-label="Heatmap"
+            aria-pressed={visualizationMode === 'heatmap'}
           >
             <Zap className="w-4 h-4" />
           </button>
@@ -255,6 +261,8 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
                 : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
             }`}
             title="Concentric circles - rings show overlapping points"
+            aria-label="Concentric circles"
+            aria-pressed={visualizationMode === 'concentric'}
           >
             <Layers className="w-4 h-4" />
           </button>
