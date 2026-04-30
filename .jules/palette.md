@@ -1,0 +1,3 @@
+## 2024-05-20 - LikeButton Detail Toggle Accessibility
+**Learning:** In Next.js/React components built with Tailwind, a common pattern involves grouping icons (like "View Details") inside a primary action `<button>`. This creates an invalid HTML5 structure (interactive element inside an interactive element) and breaks screen reader focus.
+**Action:** Always extract nested interactive triggers into sibling `<button>` elements wrapped in a styled container `<div>` that mimics the original button's layout and background coloring, applying hover states to the individual child buttons instead of the parent container.
