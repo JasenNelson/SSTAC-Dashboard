@@ -1,0 +1,5 @@
+
+## $(date +%Y-%m-%d) - Prevent Path Traversal in Project File APIs
+**Vulnerability:** Filenames provided by users in uploads, or retrieved from database records, were being directly appended to base directory paths using `path.join()`. This allowed an attacker to supply a filename like `../../../malicious.exe` and perform path traversal, potentially reading, writing, or deleting files outside the intended project directory, or manipulating CLI arguments passed to background Python processes.
+**Learning:** Even when files are stored locally based on database IDs, the original filename strings can contain path traversal characters. Both user-supplied filenames in uploads/API bodies and database-retrieved filenames (for defense-in-depth) must be actively sanitized before being used in file system operations or shell executions.
+**Prevention:** Always wrap untrusted or DB-retrieved filenames with `path.basename(filename)` before concatenating them with base directories using `path.join()` or sending them to subprocesses.

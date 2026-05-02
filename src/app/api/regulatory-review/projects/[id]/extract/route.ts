@@ -74,7 +74,8 @@ export async function POST(
     if (mode === 'new') {
       const filenames = body.files as string[] | undefined;
       if (filenames && filenames.length > 0) {
-        args.push('--files', ...filenames);
+        // 🛡️ Sentinel: Sanitize user-provided filenames to prevent path traversal via CLI arguments
+        args.push('--files', ...filenames.map(f => path.basename(f)));
       } else {
         // Get unprocessed files from DB
         const unprocessed = getUnprocessedFiles(id);
@@ -84,7 +85,8 @@ export async function POST(
             { status: 400 }
           );
         }
-        args.push('--files', ...unprocessed.map((f) => f.filename));
+        // 🛡️ Sentinel: Sanitize DB filenames for defense in depth
+        args.push('--files', ...unprocessed.map((f) => path.basename(f.filename)));
       }
     }
 
