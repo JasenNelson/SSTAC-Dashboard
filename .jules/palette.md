@@ -1,0 +1,3 @@
+## 2023-10-27 - Keyboard Accessibility for Custom Chart Elements
+**Learning:** Custom interactive elements (like SVG paths in charts and custom div legends) often lack inherent keyboard accessibility. When adding click handlers (`onClick`) to these non-interactive elements, it's critical to also add `role="button"`, `tabIndex={0}`, an `onKeyDown` handler (listening for 'Enter' and ' '), and `focus-visible` styles to ensure keyboard users can navigate and interact with them.
+**Action:** Always verify that elements with `onClick` handlers are either native interactive elements (like `<button>`) or have the necessary ARIA attributes and keyboard event listeners to be fully accessible.
