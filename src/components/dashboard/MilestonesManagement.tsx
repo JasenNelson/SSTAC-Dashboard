@@ -460,15 +460,17 @@ export default function MilestonesManagement() {
                   <div className="flex items-center space-x-2 ml-4">
                     <button
                       onClick={() => setEditingMilestone(milestone)}
-                      className="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
+                      className="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-1"
                       title="Edit milestone"
+                      aria-label="Edit milestone"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteMilestone(milestone.id)}
-                      className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1"
                       title="Delete milestone"
+                      aria-label="Delete milestone"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
