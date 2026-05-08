@@ -263,6 +263,7 @@ export default function TagManagement() {
                       className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors"
                       style={{ backgroundColor: color }}
                       title={color}
+                      aria-label={`Select color ${color}`}
                     />
                   ))}
                 </div>
@@ -382,6 +383,7 @@ export default function TagManagement() {
                           className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors"
                           style={{ backgroundColor: color }}
                           title={color}
+                          aria-label={`Select color ${color}`}
                         />
                       ))}
                     </div>
