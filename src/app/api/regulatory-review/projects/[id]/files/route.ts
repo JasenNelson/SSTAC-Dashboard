@@ -103,7 +103,8 @@ export async function POST(
         continue;
       }
 
-      const filename = entry.name;
+      // Sanitize the filename to prevent path traversal vulnerabilities
+      const filename = path.basename(entry.name);
       const buffer = Buffer.from(await entry.arrayBuffer());
       const filePath = path.join(sourceDir, filename);
 
