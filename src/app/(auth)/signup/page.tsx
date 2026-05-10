@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { NextPage } from 'next';
 import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 
 const SignupPage: NextPage = () => {
   const router = useRouter();
@@ -257,21 +258,16 @@ const SignupPage: NextPage = () => {
         <button 
           type="submit" 
           disabled={loading}
-          style={{ 
-            width: '100%', 
-            padding: '14px 16px', 
-            cursor: loading ? 'not-allowed' : 'pointer',
-            backgroundColor: loading ? '#9ca3af' : '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '500',
-            transition: 'background-color 0.2s',
-            marginBottom: '24px'
-          }}
+          className="w-full mb-6 flex justify-center items-center gap-2 bg-gradient-to-r from-sky-700 to-sky-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-sky-800 hover:to-sky-800 focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02]"
         >
-          {loading ? 'Creating Account...' : 'Create Account'}
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Creating Account...
+            </>
+          ) : (
+            'Create Account'
+          )}
         </button>
       </form>
       
