@@ -1,0 +1,4 @@
+## 2024-05-24 - Cryptographically Weak Random Generation
+**Vulnerability:** Use of `Math.random()` to generate CEW user IDs, filenames in Supabase Storage, and local session IDs. This makes session/user tokens somewhat predictable and guessable, exposing the system to potential token forgery or file overwrites.
+**Learning:** `Math.random()` is not cryptographically secure and should never be used for security tokens, authentication IDs, or filenames in multi-tenant storage. The existing `generateCEWUserId` utility correctly utilized `randomBytes`, but it was ignored in several endpoints.
+**Prevention:** Consistently use `crypto.randomUUID()` for generic secure strings (like frontend component IDs or filenames) and `randomBytes()` (or wrappers like `generateCEWUserId`) for authentication-related identifiers. Enforce linting rules (e.g., eslint-plugin-security) to catch `Math.random()` usages.

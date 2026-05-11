@@ -49,7 +49,8 @@ export default function PollWithResults({
     if (typeof window !== 'undefined') {
       let sessionId = sessionStorage.getItem('cew-session-id');
       if (!sessionId) {
-        sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        // Use cryptographically secure random generation
+        sessionId = `session_${Date.now()}_${crypto.randomUUID()}`;
         sessionStorage.setItem('cew-session-id', sessionId);
       }
       return sessionId;
