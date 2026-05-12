@@ -1,0 +1,222 @@
+// engine_v2 frontend: EvaluationHistoryList (Server Component).
+//
+// Presentational table that surfaces ALL evaluations for a project so reviewers
+// can compare runs side-by-side and jump back to prior result pages. Renders as
+// a compact table; no client-side interactivity beyond Next.js Link navigation.
+//
+// All date formatting is locale-locked to "en-US" to avoid SSR/client
+// hydration mismatch (NON-DROPPABLE per Lane 2a EvaluationStatusPanel pattern).
+
+import Link from "next/link";
+import type {
+  EvaluationStatus,
+  V2Evaluation,
+} from "@/lib/engine-v2/types_lane2";
+import { TERMINAL_EVALUATION_STATUSES } from "@/lib/engine-v2/types_lane2";
+
+interface EvaluationHistoryListProps {
+  projectId: string;
+  // Ordered started_at DESC by the caller.
+  evaluations: V2Evaluation[];
+}
+
+function isTerminalStatus(status: EvaluationStatus): boolean {
+  return (TERMINAL_EVALUATION_STATUSES as readonly string[]).includes(status);
+}
+
+function isViewableStatus(status: EvaluationStatus): boolean {
+  return status === "completed" || status === "completed_with_errors";
+}
+
+function statusBadgeClass(status: EvaluationStatus): string {
+  switch (status) {
+    case "completed":
+      return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200";
+    case "completed_with_errors":
+      return "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200";
+    case "error":
+      return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200";
+    case "running":
+    case "pending":
+      return "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200";
+    default:
+      return "bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-200";
+  }
+}
+
+function backendBadgeClass(backend: string): string {
+  // "stub" runs are synthetic fixtures; "live" runs hit a real LLM. Color
+  // them differently so reviewers can tell at a glance whether a row is a
+  // smoke test vs a production-grade run.
+  const lower = backend.toLowerCase();
+  if (lower === "stub") {
+    return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
+  }
+  return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200";
+}
+
+function formatTs(iso: string | null): string {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function readCoverageNumber(
+  coverage: Record<string, unknown> | null | undefined,
+  key: string,
+): number | null {
+  if (!coverage) return null;
+  const raw = coverage[key];
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  return null;
+}
+
+function formatCoverage(coverage: Record<string, unknown> | null): string {
+  const evaluated = readCoverageNumber(coverage, "evaluated");
+  const total = readCoverageNumber(coverage, "total_policies");
+  if (evaluated === null && total === null) return "-";
+  return `${evaluated === null ? "-" : evaluated} / ${
+    total === null ? "-" : total
+  }`;
+}
+
+function formatDuration(startedIso: string, completedIso: string | null): string {
+  if (!completedIso) return "in progress";
+  const start = new Date(startedIso).getTime();
+  const end = new Date(completedIso).getTime();
+  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return "-";
+  const totalSec = Math.round((end - start) / 1000);
+  if (totalSec < 60) return `${totalSec} sec`;
+  const totalMin = Math.round(totalSec / 60);
+  if (totalMin < 60) return `${totalMin} min`;
+  const hr = Math.floor(totalMin / 60);
+  const min = totalMin % 60;
+  if (min === 0) return `${hr} hr`;
+  return `${hr} hr ${min} min`;
+}
+
+export function EvaluationHistoryList(
+  props: EvaluationHistoryListProps,
+): React.ReactElement | null {
+  const { projectId, evaluations } = props;
+
+  // Single-eval or empty: nothing to compare. Suppress the section entirely
+  // so the page does not grow a redundant "history of one" table.
+  if (evaluations.length <= 1) {
+    return null;
+  }
+
+  return (
+    <section
+      data-testid="evaluation-history-list"
+      className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm"
+    >
+      <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
+        Evaluation history
+      </h3>
+      <div className="overflow-x-auto">
+        <table className="min-w-full text-xs text-left">
+          <thead>
+            <tr className="border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+              <th scope="col" className="py-2 pr-3 font-medium">
+                Started
+              </th>
+              <th scope="col" className="py-2 pr-3 font-medium">
+                Status
+              </th>
+              <th scope="col" className="py-2 pr-3 font-medium">
+                Backend
+              </th>
+              <th scope="col" className="py-2 pr-3 font-medium">
+                Coverage
+              </th>
+              <th scope="col" className="py-2 pr-3 font-medium">
+                Duration
+              </th>
+              <th scope="col" className="py-2 pr-3 font-medium text-right">
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {evaluations.map((evalRow) => {
+              const terminal = isTerminalStatus(evalRow.status);
+              const viewable = isViewableStatus(evalRow.status);
+              const resultsHref = `/dashboard/engine-v2/${encodeURIComponent(
+                projectId,
+              )}/evaluation/${encodeURIComponent(evalRow.id)}`;
+              return (
+                <tr
+                  key={evalRow.id}
+                  data-testid="evaluation-history-row"
+                  data-eval-id={evalRow.id}
+                  className="border-b border-slate-100 dark:border-slate-800 last:border-b-0"
+                >
+                  <td className="py-2 pr-3 text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                    {formatTs(evalRow.started_at)}
+                  </td>
+                  <td className="py-2 pr-3">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${statusBadgeClass(
+                        evalRow.status,
+                      )}`}
+                    >
+                      {evalRow.status}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-3">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${backendBadgeClass(
+                        evalRow.evaluation_backend,
+                      )}`}
+                    >
+                      {evalRow.evaluation_backend}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                    {formatCoverage(evalRow.coverage_statement)}
+                  </td>
+                  <td className="py-2 pr-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                    {formatDuration(evalRow.started_at, evalRow.completed_at)}
+                  </td>
+                  <td className="py-2 pr-3 text-right">
+                    {viewable ? (
+                      <Link
+                        href={resultsHref}
+                        data-testid="evaluation-history-view-link"
+                        className="text-sm font-medium text-sky-700 dark:text-sky-300 hover:underline"
+                      >
+                        View
+                      </Link>
+                    ) : terminal ? (
+                      // Errored runs have no results page worth linking to.
+                      <span className="text-xs text-slate-400 dark:text-slate-500">
+                        -
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        Pending...
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+        Showing {evaluations.length} evaluations
+      </p>
+    </section>
+  );
+}
+
+export default EvaluationHistoryList;

@@ -499,6 +499,32 @@ export function PerPolicyResultsTable({
     Record<string, string>
   >({});
 
+  // Per-row disclosure state for engineering-only fields (stage/packet line).
+  const [techDetailsOpen, setTechDetailsOpen] = useState<Set<string>>(new Set());
+
+  function toggleTechDetails(id: string): void {
+    setTechDetailsOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // Lane 2c: locate the policy text for a row from evidence_slices. Several
+  // slices may carry the same policy_id (rare); take the first match for a
+  // prominent quote. Returns null when slices map is null/empty or when no
+  // slice matches the policy_id.
+  function findPolicyText(policyId: string | null): string | null {
+    if (!policyId || !evidenceSlices) return null;
+    for (const slice of Object.values(evidenceSlices)) {
+      if (slice && slice.policy_id === policyId) {
+        return slice.content;
+      }
+    }
+    return null;
+  }
+
   // Filter + sort.
   const filtered = useMemo(() => {
     const filteredArr = results.filter((r) => {
@@ -781,7 +807,7 @@ export function PerPolicyResultsTable({
                 scope="col"
                 className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300"
               >
-                Summary
+                AI Determination
               </th>
               <th
                 scope="col"
@@ -850,7 +876,7 @@ export function PerPolicyResultsTable({
                         <span className="line-clamp-2">
                           {r.summary ?? (
                             <span className="italic text-slate-400 dark:text-slate-500">
-                              (no summary)
+                              (no determination)
                             </span>
                           )}
                         </span>
@@ -894,10 +920,54 @@ export function PerPolicyResultsTable({
                           colSpan={7}
                           className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300 space-y-4"
                         >
-                          {/* Full summary */}
+                          {/* Policy text (prominent, first) -- Lane 2c per-row
+                              ask: surface verbatim policy text from
+                              evidence_slices keyed by policy_id. */}
+                          <section data-testid="per-policy-policy-text-section">
+                            <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                              Policy text
+                            </div>
+                            {(() => {
+                              const policyText = findPolicyText(r.policy_id);
+                              if (policyText) {
+                                return (
+                                  <blockquote
+                                    data-testid="per-policy-policy-text"
+                                    className="border-l-4 border-indigo-400 dark:border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/20 pl-4 pr-3 py-2 text-sm leading-relaxed text-slate-800 dark:text-slate-100 whitespace-pre-wrap break-words"
+                                  >
+                                    {policyText}
+                                  </blockquote>
+                                );
+                              }
+                              if (evidenceSlices === null) {
+                                return (
+                                  <div
+                                    data-testid="per-policy-policy-text-older-schema"
+                                    className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-2 text-xs italic text-slate-500 dark:text-slate-400"
+                                  >
+                                    Policy text not available (eval schema
+                                    v0.0.1).
+                                  </div>
+                                );
+                              }
+                              return (
+                                <div
+                                  data-testid="per-policy-policy-text-missing"
+                                  className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-2 text-xs italic text-slate-500 dark:text-slate-400"
+                                >
+                                  Policy text not retrieved by this evaluation.
+                                </div>
+                              );
+                            })()}
+                          </section>
+
+                          {/* AI Determination (formerly "Summary"). This is
+                              the AI's verdict + supporting prose for THIS
+                              submission against THIS policy, not a recap of
+                              the policy itself. */}
                           <section>
                             <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
-                              Summary
+                              AI Determination
                             </div>
                             <div
                               data-testid="per-policy-full-summary"
@@ -905,25 +975,9 @@ export function PerPolicyResultsTable({
                             >
                               {r.summary ?? (
                                 <span className="italic text-slate-400 dark:text-slate-500">
-                                  (no summary)
+                                  (no determination)
                                 </span>
                               )}
-                            </div>
-                          </section>
-
-                          {/* Stage / packet info */}
-                          <section>
-                            <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
-                              Stage / Packet
-                            </div>
-                            <div
-                              data-testid="per-policy-stage-info"
-                              className="font-mono text-xs break-words"
-                            >
-                              stage={r.stage ?? "-"} packet_id=
-                              {r.packet_id ?? "-"} ai_suggestion=
-                              {r.ai_suggestion ?? "-"} confidence_method=
-                              {r.confidence_method ?? "-"}
                             </div>
                           </section>
 
@@ -1048,6 +1102,40 @@ export function PerPolicyResultsTable({
                                 testId="per-policy-evidence-gaps"
                               />
                             </div>
+                          </section>
+
+                          {/* Technical details disclosure (engineering-only:
+                              stage / packet_id / ai_suggestion /
+                              confidence_method). Default-hidden so reviewers
+                              don't see internal pipeline IDs. */}
+                          <section data-testid="per-policy-tech-details-section">
+                            <button
+                              type="button"
+                              data-testid="per-policy-tech-details-toggle"
+                              aria-expanded={techDetailsOpen.has(r.id)}
+                              onClick={() => toggleTechDetails(r.id)}
+                              className="text-[11px] font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:underline"
+                            >
+                              {techDetailsOpen.has(r.id)
+                                ? "Hide technical details"
+                                : "Show technical details"}
+                            </button>
+                            {techDetailsOpen.has(r.id) ? (
+                              <div className="mt-1">
+                                <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                                  Stage / Packet
+                                </div>
+                                <div
+                                  data-testid="per-policy-stage-info"
+                                  className="font-mono text-xs break-words text-slate-600 dark:text-slate-400"
+                                >
+                                  stage={r.stage ?? "-"} packet_id=
+                                  {r.packet_id ?? "-"} ai_suggestion=
+                                  {r.ai_suggestion ?? "-"} confidence_method=
+                                  {r.confidence_method ?? "-"}
+                                </div>
+                              </div>
+                            ) : null}
                           </section>
 
                           {/* Current judgment status */}

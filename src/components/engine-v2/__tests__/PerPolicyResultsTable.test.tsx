@@ -161,6 +161,12 @@ describe("PerPolicyResultsTable expand panel", () => {
     expect(
       screen.getByTestId("per-policy-evidence-gaps"),
     ).toBeInTheDocument();
+    // Stage / packet metadata is now hidden behind a "Show technical details"
+    // disclosure (engineering-only line). Reveal it and verify the content.
+    expect(
+      screen.queryByTestId("per-policy-stage-info"),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("per-policy-tech-details-toggle"));
     expect(screen.getByTestId("per-policy-stage-info").textContent).toContain(
       "stage=S2",
     );
@@ -235,6 +241,109 @@ describe("PerPolicyResultsTable tier-aware verdict dropdown", () => {
     expect(screen.getByTestId("per-policy-tier-help").textContent).toContain(
       "SDM/Crown",
     );
+  });
+});
+
+describe("PerPolicyResultsTable AI Determination + policy text + tech disclosure", () => {
+  it("uses 'AI Determination' as column header (not 'Summary')", () => {
+    render(
+      <PerPolicyResultsTable results={RESULTS} judgments={NO_JUDGMENTS} />,
+    );
+    const headers = screen.getAllByRole("columnheader").map((h) => h.textContent);
+    expect(headers).toContain("AI Determination");
+    expect(headers).not.toContain("Summary");
+  });
+
+  it("renders policy text prominently from evidence_slices when policy_id matches", () => {
+    const slices = {
+      "slice_abc": {
+        content_hash: "abc",
+        content: "Verbatim policy text for PX-001.",
+        field: "original_text",
+        policy_id: "PX-001",
+        source: {
+          doc_id: "CSAP-NPG",
+          title: "CSAP NPG",
+          page: 12,
+          section: "RP-APP-23a",
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+    };
+    render(
+      <PerPolicyResultsTable
+        results={[RESULTS[0]!]}
+        judgments={NO_JUDGMENTS}
+        evidenceSlices={slices}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    const policyText = screen.getByTestId("per-policy-policy-text");
+    expect(policyText.textContent).toContain("Verbatim policy text for PX-001.");
+  });
+
+  it("falls back to 'not retrieved' when slices exist but no policy_id match", () => {
+    const slices = {
+      "slice_other": {
+        content_hash: "xyz",
+        content: "Some other policy text.",
+        field: "original_text",
+        policy_id: "PX-999",
+        source: {
+          doc_id: "D",
+          title: "T",
+          page: null,
+          section: null,
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+    };
+    render(
+      <PerPolicyResultsTable
+        results={[RESULTS[0]!]}
+        judgments={NO_JUDGMENTS}
+        evidenceSlices={slices}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    expect(
+      screen.getByTestId("per-policy-policy-text-missing"),
+    ).toBeInTheDocument();
+  });
+
+  it("falls back to schema-v0.0.1 message when evidenceSlices is null", () => {
+    render(
+      <PerPolicyResultsTable
+        results={[RESULTS[0]!]}
+        judgments={NO_JUDGMENTS}
+        evidenceSlices={null}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    expect(
+      screen.getByTestId("per-policy-policy-text-older-schema"),
+    ).toBeInTheDocument();
+  });
+
+  it("hides Stage / Packet line by default; reveals it via disclosure toggle", () => {
+    render(
+      <PerPolicyResultsTable
+        results={[RESULTS[0]!]}
+        judgments={NO_JUDGMENTS}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    expect(
+      screen.queryByTestId("per-policy-stage-info"),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("per-policy-tech-details-toggle"));
+    expect(screen.getByTestId("per-policy-stage-info")).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("per-policy-tech-details-toggle"));
+    expect(
+      screen.queryByTestId("per-policy-stage-info"),
+    ).not.toBeInTheDocument();
   });
 });
 

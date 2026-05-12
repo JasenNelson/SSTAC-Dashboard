@@ -159,6 +159,12 @@ export function ExtractionStatusPanel(
 
   const progressPct = Math.max(0, Math.min(100, Math.round(latest.progress || 0)));
   const terminal = isTerminalStatus(latest.status);
+  // Indeterminate progress: while extracting but progress hasn't crossed the
+  // 5% heartbeat threshold, show an animated sliding bar instead of a stuck
+  // 0% bar. dashboard_extract.py only updates progress after each file
+  // completes (file-count-based), so single-PDF extractions sit at 0%
+  // mid-flight; indeterminate is the honest signal there.
+  const indeterminate = latest.status === "extracting" && progressPct < 5;
 
   return (
     <div
@@ -185,14 +191,42 @@ export function ExtractionStatusPanel(
           <span data-testid="extraction-status-progress-label">
             {latest.completed_files} of {latest.total_files} files
           </span>
-          <span data-testid="extraction-status-progress-pct">{progressPct}%</span>
+          <span data-testid="extraction-status-progress-pct">
+            {indeterminate ? "working..." : `${progressPct}%`}
+          </span>
         </div>
-        <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+        {indeterminate ? (
           <div
-            className="h-full bg-sky-500 transition-all"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
+            data-testid="extraction-status-progress-bar"
+            data-progress-mode="indeterminate"
+            className="relative h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Extraction in progress"
+          >
+            <style>{`@keyframes ev2-indet { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }`}</style>
+            <div
+              className="absolute inset-y-0 left-0 h-full w-1/4 rounded-full bg-sky-500"
+              style={{ animation: "ev2-indet 1.5s ease-in-out infinite" }}
+            />
+          </div>
+        ) : (
+          <div
+            data-testid="extraction-status-progress-bar"
+            data-progress-mode="determinate"
+            className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progressPct}
+          >
+            <div
+              className="h-full bg-sky-500 transition-all"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        )}
       </div>
 
       <dl className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">

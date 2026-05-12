@@ -61,17 +61,19 @@ export default async function ProjectDetailPage(props: PageProps) {
   const initialRun =
     runRows && runRows.length > 0 ? (runRows[0] as V2ExtractionRun) : null;
 
-  // Initial latest evaluation row for this project (may be null).
+  // Full evaluation history for this project (ordered started_at DESC).
+  // The latest row drives the live status panel; the full list feeds the
+  // EvaluationHistoryList so reviewers can revisit prior runs.
   const { data: evalRows } = await client
     .from("v2_evaluations")
     .select(
       "id, project_id, extraction_run_id, status, run_id_engine, variant_config_hash, evaluation_backend, embedder_backend, reranker_backend, model, bench_fixture, applicability_mode, coverage_statement, errors, raw_eval_result_json, started_at, completed_at, updated_at",
     )
     .eq("project_id", project.id)
-    .order("started_at", { ascending: false })
-    .limit(1);
+    .order("started_at", { ascending: false });
+  const evaluationHistory: V2Evaluation[] = (evalRows ?? []) as V2Evaluation[];
   const initialEvaluation =
-    evalRows && evalRows.length > 0 ? (evalRows[0] as V2Evaluation) : null;
+    evaluationHistory.length > 0 ? evaluationHistory[0] : null;
 
   // Pass the session access token to the client component (Lane 1 simplification
   // per L1-5 spec). Production should refresh the token client-side.
@@ -94,6 +96,7 @@ export default async function ProjectDetailPage(props: PageProps) {
         initialFiles={initialFiles}
         initialRun={initialRun}
         initialEvaluation={initialEvaluation}
+        evaluationHistory={evaluationHistory}
         accessToken={accessToken}
         supabaseUrl={supabaseUrl}
         supabaseAnonKey={supabaseAnonKey}

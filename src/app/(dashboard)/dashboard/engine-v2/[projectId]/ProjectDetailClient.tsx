@@ -18,6 +18,7 @@ import { ExtractTriggerButton } from "@/components/engine-v2/ExtractTriggerButto
 import { ExtractionStatusPanel } from "@/components/engine-v2/ExtractionStatusPanel";
 import { EvaluateTriggerButton } from "@/components/engine-v2/EvaluateTriggerButton";
 import { EvaluationStatusPanel } from "@/components/engine-v2/EvaluationStatusPanel";
+import { EvaluationHistoryList } from "@/components/engine-v2/EvaluationHistoryList";
 import type {
   V2Project,
   V2SubmissionFile,
@@ -30,6 +31,9 @@ interface ProjectDetailClientProps {
   initialFiles: V2SubmissionFile[];
   initialRun: V2ExtractionRun | null;
   initialEvaluation: V2Evaluation | null;
+  // Full evaluation history (ordered started_at DESC). The first element is
+  // the same row as initialEvaluation; downstream rows surface prior runs.
+  evaluationHistory: V2Evaluation[];
   accessToken: string;
   supabaseUrl: string;
   supabaseAnonKey: string;
@@ -43,6 +47,7 @@ export function ProjectDetailClient(
     initialFiles,
     initialRun,
     initialEvaluation,
+    evaluationHistory,
     accessToken,
     supabaseUrl,
     supabaseAnonKey,
@@ -271,6 +276,11 @@ export function ProjectDetailClient(
           </section>
         </div>
       </div>
+
+      <EvaluationHistoryList
+        projectId={project.id}
+        evaluations={evaluationHistory}
+      />
     </div>
   );
 }
