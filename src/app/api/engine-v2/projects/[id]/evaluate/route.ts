@@ -108,6 +108,41 @@ interface SpawnScenarioArgs {
 // naive spawn() lets a misconfigured pythonPath silently succeed. We race the
 // 'spawn' (success) and 'error' (failure) events with a short wait window and
 // surface a real rejection that the route can stamp into v2_evaluations.errors.
+// Run the engine's extract_to_submission_adapter to convert Lane 1 Docling
+// VERBATIM JSON into a typed submission JSON with submission_text. Runs to
+// completion (blocking) since the transform is pure JSON and finishes in
+// well under a second. Captures stdio to enrich the error message on
+// failure rather than swallowing it.
+async function runExtractAdapter(args: {
+  pythonPath: string;
+  adapterPath: string;
+  inputPath: string;
+  outputPath: string;
+}): Promise<void> {
+  const cli = [
+    args.adapterPath,
+    "--input",
+    args.inputPath,
+    "--output",
+    args.outputPath,
+  ];
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(args.pythonPath, cli, {
+      stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
+    });
+    let stderrBuf = "";
+    child.stderr?.on("data", (d) => {
+      stderrBuf += d.toString();
+    });
+    child.once("error", (err) => reject(err));
+    child.once("exit", (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`adapter_exit_${code}: ${stderrBuf.trim().slice(0, 400)}`));
+    });
+  });
+}
+
 async function spawnScenarioRunner(args: SpawnScenarioArgs): Promise<void> {
   const cli = [
     args.scriptPath,
@@ -392,8 +427,41 @@ export async function POST(
     evaluationId,
   );
   const scenarioYamlPath = path.join(evalRunDir, "scenario.yaml");
+  // The engine expects a typed submission JSON with a submission_text field,
+  // not Lane 1's raw Docling VERBATIM JSON. Run the engine's own
+  // extract_to_submission_adapter to produce a submission JSON BEFORE writing
+  // the scenario YAML so the evaluator sees the actual PSI content, not the
+  // bench-fixture default. (Verified 2026-05-12 against eval 3d9e90af stderr:
+  // "extract has no 'submission_text' field" -> engine fell back to bench
+  // default -> all policies returned trivial OBSERVATION_ONLY).
+  const submissionJsonPath = path.join(evalRunDir, "submission.json");
   try {
     await fs.mkdir(evalRunDir, { recursive: true });
+    const adapterPath =
+      process.env.REG_REVIEW_ENGINE_V2_ADAPTER_PATH ??
+      "C:/Projects/Regulatory-Review-worktrees/engine-v2/engine_v2/scripts/extract_to_submission_adapter.py";
+    await runExtractAdapter({
+      pythonPath: getPythonPath(),
+      adapterPath,
+      inputPath: verbatimJsonPath,
+      outputPath: submissionJsonPath,
+    });
+  } catch (err) {
+    const msg = (err as Error).message ?? "unknown";
+    await client
+      .from("v2_evaluations")
+      .update({
+        status: "error",
+        errors: [`Adapter (extract -> submission) failed: ${msg}`],
+        completed_at: new Date().toISOString(),
+      })
+      .eq("id", evaluationId);
+    return NextResponse.json(
+      { error: "extract_adapter_failed", detail: msg },
+      { status: 500 },
+    );
+  }
+  try {
     const yaml = composeScenarioYaml({
       // Engine rejects scenario_ids containing 4-5 digit numeric segments
       // (anti-leak guard against BC site file numbers like "13254"). UUIDs
@@ -406,7 +474,7 @@ export async function POST(
         .replace(/-/g, "")
         .slice(0, 12)
         .replace(/[0-9]/g, (d) => String.fromCharCode(97 + Number(d)))}`,
-      extractPath: verbatimJsonPath,
+      extractPath: submissionJsonPath,
       benchFixture,
       applicabilityMode,
       evaluationBackend: effectiveBackend,
