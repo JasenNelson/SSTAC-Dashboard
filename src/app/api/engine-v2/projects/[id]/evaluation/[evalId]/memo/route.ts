@@ -18,6 +18,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { requireAdminForApi } from "@/lib/engine-v2/admin_guards";
+import {
+  decodeSupabaseBytea,
+  encodeByteaHex,
+} from "@/lib/engine-v2/bytea_codec";
 import { checkCsrf } from "@/lib/engine-v2/csrf";
 import {
   MEMO_GENERATOR_VERSION,
@@ -41,25 +45,6 @@ const DOCX_MIME =
 
 function isTerminal(status: EvaluationStatus | string): boolean {
   return (TERMINAL_EVALUATION_STATUSES as readonly string[]).includes(status);
-}
-
-function decodeContentBlob(raw: unknown): Buffer | null {
-  if (!raw) return null;
-  if (Buffer.isBuffer(raw)) return raw;
-  if (raw instanceof Uint8Array) return Buffer.from(raw);
-  if (typeof raw === "string") {
-    // Supabase returns bytea as "\\x..." hex-encoded by default.
-    if (raw.startsWith("\\x")) {
-      return Buffer.from(raw.slice(2), "hex");
-    }
-    // Fall through: try base64 as a last resort.
-    try {
-      return Buffer.from(raw, "base64");
-    } catch {
-      return null;
-    }
-  }
-  return null;
 }
 
 function shortHash(hex: string): string {
@@ -223,6 +208,14 @@ export async function POST(
   }
 
   // 10. Insert.
+  //
+  // CRITICAL: supabase-js sends inserts as JSON to PostgREST. Passing a Node
+  // Buffer or Uint8Array here gets JSON-serialized into an object shape that
+  // PostgreSQL cannot interpret as BYTEA, corrupting the stored bytes (this
+  // was the root cause of the 2026-05-12 docx download corruption: Word
+  // refused to open the file, Notepad++ showed gibberish). We must encode the
+  // bytes as a Postgres `\x<hex>` literal string -- which is the canonical
+  // PostgREST representation for BYTEA inserts.
   const insertResp = await client
     .from("v2_memo_exports")
     .insert({
@@ -230,7 +223,7 @@ export async function POST(
       generator_version: MEMO_GENERATOR_VERSION,
       judgment_snapshot_hash: built.judgmentSnapshotHash,
       content_sha256: built.contentSha256,
-      content_blob: Buffer.from(built.bytes),
+      content_blob: encodeByteaHex(built.bytes),
       byte_size: built.bytes.byteLength,
     })
     .select("id, content_sha256, byte_size")
@@ -345,7 +338,19 @@ export async function GET(
     content_sha256: string;
     byte_size: number;
   };
-  const blob = decodeContentBlob(row.content_blob);
+
+  let blob: Buffer | null;
+  try {
+    blob = decodeSupabaseBytea(row.content_blob);
+  } catch (err) {
+    return NextResponse.json(
+      {
+        error: "memo_content_decode_failed",
+        detail: (err as Error).message ?? "unknown_decode_error",
+      },
+      { status: 500 },
+    );
+  }
   if (!blob) {
     return NextResponse.json(
       { error: "memo_content_unavailable" },
@@ -353,14 +358,32 @@ export async function GET(
     );
   }
 
+  // Defensive: if the stored byte_size disagrees with the decoded length, the
+  // row is corrupted -- refuse to serve a truncated/extended file rather than
+  // ship an invalid .docx (ZIP integrity check would fail in Word anyway).
+  if (blob.byteLength !== row.byte_size) {
+    return NextResponse.json(
+      {
+        error: "memo_content_length_mismatch",
+        detail: `expected ${row.byte_size} bytes, decoded ${blob.byteLength}`,
+      },
+      { status: 500 },
+    );
+  }
+
   const filename = `memo-${evalId.slice(0, 8)}-${shortHash(row.content_sha256)}.docx`;
-  // Buffer satisfies the BodyInit ArrayBufferView contract for NextResponse.
-  return new NextResponse(new Uint8Array(blob), {
+  // Create a fresh Uint8Array view over only the bytes we want -- avoids any
+  // ambiguity when `blob` is a Node Buffer that aliases a larger pool buffer.
+  // (Node Buffers can share underlying ArrayBuffers with siblings; passing
+  // the raw .buffer to NextResponse would leak unrelated bytes.)
+  const body = new Uint8Array(blob.byteLength);
+  body.set(blob);
+  return new NextResponse(body, {
     status: 200,
     headers: {
       "Content-Type": DOCX_MIME,
       "Content-Disposition": `attachment; filename="${filename}"`,
-      "Content-Length": String(row.byte_size),
+      "Content-Length": String(blob.byteLength),
       "Cache-Control": "private, no-store",
     },
   });
