@@ -33,6 +33,86 @@ interface PageProps {
   params: Promise<{ projectId: string; evalId: string }>;
 }
 
+// Locale-locked date formatter (en-US) to avoid SSR/client hydration mismatch.
+function formatDateLong(iso: string | null | undefined): string {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function BackendBadge({ backend }: { backend: string }): React.ReactElement {
+  const lower = (backend ?? "").toLowerCase();
+  const palette =
+    lower === "stub"
+      ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+      : "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200";
+  return (
+    <span
+      data-testid="evaluation-backend-badge"
+      data-backend={backend}
+      className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${palette}`}
+    >
+      {backend}
+    </span>
+  );
+}
+
+function MemoStatusNote({
+  memoCreatedAt,
+  latestJudgmentUpdatedAt,
+}: {
+  memoCreatedAt: string | null;
+  latestJudgmentUpdatedAt: string | null;
+}): React.ReactElement {
+  if (!memoCreatedAt) {
+    return (
+      <div
+        data-testid="memo-status-note"
+        data-state="none"
+        className="mb-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-xs text-slate-700 dark:text-slate-300"
+      >
+        No memo exported for this evaluation yet.
+      </div>
+    );
+  }
+  const memoMs = new Date(memoCreatedAt).getTime();
+  const judgmentMs = latestJudgmentUpdatedAt
+    ? new Date(latestJudgmentUpdatedAt).getTime()
+    : NaN;
+  const stale =
+    !Number.isNaN(memoMs) &&
+    !Number.isNaN(judgmentMs) &&
+    judgmentMs > memoMs;
+  if (stale) {
+    return (
+      <div
+        data-testid="memo-status-note"
+        data-state="stale"
+        className="mb-2 rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-3 py-2 text-xs text-amber-900 dark:text-amber-100"
+      >
+        Judgments have changed since the last memo export -- click Export memo
+        to regenerate.
+      </div>
+    );
+  }
+  return (
+    <div
+      data-testid="memo-status-note"
+      data-state="current"
+      className="mb-2 rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 px-3 py-2 text-xs text-slate-700 dark:text-slate-300"
+    >
+      Memo last exported {formatDateLong(memoCreatedAt)}. Re-export to refresh.
+    </div>
+  );
+}
+
 function StatusBadge({
   status,
 }: {
@@ -233,9 +313,61 @@ export default async function EvaluationResultsPage(props: PageProps) {
     judgments = (judgmentRows ?? []) as V2Judgment[];
   }
 
+  // Submission filenames: pull the original_filename(s) of files associated
+  // with the same project (scoped via the evaluation's extraction_run_id ->
+  // project_id). Used in the demo-friendly subtitle below.
+  const { data: submissionFileRows } = await client
+    .from("v2_submission_files")
+    .select("original_filename, uploaded_at")
+    .eq("project_id", project.id)
+    .is("deleted_at", null)
+    .order("uploaded_at", { ascending: true });
+  const submissionFilenames = ((submissionFileRows ?? []) as Array<{
+    original_filename: string;
+  }>)
+    .map((r) => r.original_filename)
+    .filter((n): n is string => typeof n === "string" && n.length > 0);
+
+  // Latest memo export for this evaluation (any snapshot hash). Used to
+  // render the MemoStatusNote above the ExportMemoButton.
+  const { data: latestMemoRow } = await client
+    .from("v2_memo_exports")
+    .select("id, created_at")
+    .eq("evaluation_id", evaluation.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const memoCreatedAt =
+    latestMemoRow && typeof (latestMemoRow as { created_at?: unknown }).created_at === "string"
+      ? ((latestMemoRow as { created_at: string }).created_at)
+      : null;
+
+  // Latest judgment updated_at across all per-policy results of this eval.
+  let latestJudgmentUpdatedAt: string | null = null;
+  for (const j of judgments) {
+    if (!j.updated_at) continue;
+    if (
+      latestJudgmentUpdatedAt === null ||
+      new Date(j.updated_at).getTime() >
+        new Date(latestJudgmentUpdatedAt).getTime()
+    ) {
+      latestJudgmentUpdatedAt = j.updated_at;
+    }
+  }
+
   const coverage = (evaluation.coverage_statement ??
     {}) as EvalCoverageStatement;
   const errors = Array.isArray(evaluation.errors) ? evaluation.errors : [];
+
+  // Demo-friendly subtitle inputs.
+  const policiesTotal =
+    typeof coverage.total_policies === "number"
+      ? coverage.total_policies
+      : results.length;
+  const submissionDisplay =
+    submissionFilenames.length > 0
+      ? submissionFilenames.join(", ")
+      : "(no submission files)";
 
   // Lane 2c: pull the top-level evidence_slices dict from the raw eval result
   // JSONB. Returns null for older schema_version 0.0.1 evaluations; the table
@@ -258,34 +390,41 @@ export default async function EvaluationResultsPage(props: PageProps) {
         <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
           project {projectId} / evaluation {evalId}
         </p>
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-          {project.name}: Evaluation results
+        <h2
+          data-testid="evaluation-page-title"
+          className="text-2xl font-bold text-slate-900 dark:text-white"
+        >
+          {project.name}: Regulatory review
         </h2>
+        <p
+          data-testid="evaluation-page-subtitle"
+          className="text-sm text-slate-700 dark:text-slate-300"
+        >
+          Evaluating{" "}
+          <span className="font-medium">{submissionDisplay}</span> against{" "}
+          <code className="font-mono text-xs">{evaluation.bench_fixture}</code>{" "}
+          ({policiesTotal} policies)
+        </p>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-600 dark:text-slate-300">
           <span className="inline-flex items-center gap-1">
             Status: <StatusBadge status={evaluation.status} />
           </span>
           <span className="inline-flex items-center gap-1">
-            Backend:{" "}
-            <code className="font-mono text-xs">
-              {evaluation.evaluation_backend}
-            </code>
+            Backend: <BackendBadge backend={evaluation.evaluation_backend} />
           </span>
           <span className="inline-flex items-center gap-1">
-            Bench:{" "}
-            <code className="font-mono text-xs">{evaluation.bench_fixture}</code>
-          </span>
-          {evaluation.run_id_engine ? (
-            <span className="inline-flex items-center gap-1">
-              Engine run:{" "}
-              <code className="font-mono text-xs">
-                {evaluation.run_id_engine}
-              </code>
+            Started:{" "}
+            <span className="font-mono text-xs">
+              {formatDateLong(evaluation.started_at)}
             </span>
-          ) : null}
+          </span>
         </div>
         {/* L2b-6: memo export trigger (disabled until terminal). */}
         <div className="pt-2">
+          <MemoStatusNote
+            memoCreatedAt={memoCreatedAt}
+            latestJudgmentUpdatedAt={latestJudgmentUpdatedAt}
+          />
           <ExportMemoButton
             projectId={projectId}
             evaluationId={evaluation.id}

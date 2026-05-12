@@ -1,12 +1,19 @@
-// engine_v2 frontend: EvaluationHistoryList (Server Component).
+"use client";
+
+// engine_v2 frontend: EvaluationHistoryList (Client Component).
 //
-// Presentational table that surfaces ALL evaluations for a project so reviewers
+// Presentational table that surfaces evaluations for a project so reviewers
 // can compare runs side-by-side and jump back to prior result pages. Renders as
-// a compact table; no client-side interactivity beyond Next.js Link navigation.
+// a compact table with a toggle for surfacing errored (no-results) runs.
+//
+// By default, rows with status === "error" are hidden because they represent
+// failed startups (no per-policy results, no memo, nothing to view). A small
+// toggle link below the table reveals them when explicitly requested.
 //
 // All date formatting is locale-locked to "en-US" to avoid SSR/client
 // hydration mismatch (NON-DROPPABLE per Lane 2a EvaluationStatusPanel pattern).
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import type {
   EvaluationStatus,
@@ -106,10 +113,24 @@ export function EvaluationHistoryList(
   props: EvaluationHistoryListProps,
 ): React.ReactElement | null {
   const { projectId, evaluations } = props;
+  const [showErrored, setShowErrored] = useState<boolean>(false);
 
-  // Single-eval or empty: nothing to compare. Suppress the section entirely
-  // so the page does not grow a redundant "history of one" table.
-  if (evaluations.length <= 1) {
+  // Split into "useful" (anything that produced results, plus still-running
+  // rows) vs "errored" (failed startup, no results page worth linking to).
+  const { visible, erroredCount } = useMemo(() => {
+    const errored = evaluations.filter((e) => e.status === "error");
+    const nonErrored = evaluations.filter((e) => e.status !== "error");
+    return {
+      visible: showErrored ? evaluations : nonErrored,
+      erroredCount: errored.length,
+    };
+  }, [evaluations, showErrored]);
+
+  // Single-eval or empty (after filtering): nothing to compare. Suppress the
+  // section entirely so the page does not grow a redundant "history of one"
+  // table. Note: the toggle link is still useful when only errored runs exist,
+  // so we keep the section visible if there are hidden errored rows.
+  if (visible.length <= 1 && erroredCount === 0) {
     return null;
   }
 
@@ -146,7 +167,7 @@ export function EvaluationHistoryList(
             </tr>
           </thead>
           <tbody>
-            {evaluations.map((evalRow) => {
+            {visible.map((evalRow) => {
               const terminal = isTerminalStatus(evalRow.status);
               const viewable = isViewableStatus(evalRow.status);
               const resultsHref = `/dashboard/engine-v2/${encodeURIComponent(
@@ -212,9 +233,27 @@ export function EvaluationHistoryList(
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-        Showing {evaluations.length} evaluations
-      </p>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Showing {visible.length} of {evaluations.length} evaluations
+        </p>
+        {erroredCount > 0 ? (
+          <button
+            type="button"
+            data-testid="evaluation-history-toggle-errored"
+            onClick={() => setShowErrored((prev) => !prev)}
+            className="text-xs font-medium text-sky-700 dark:text-sky-300 hover:underline"
+          >
+            {showErrored
+              ? `Hide ${erroredCount} failed evaluation${
+                  erroredCount === 1 ? "" : "s"
+                }`
+              : `Show ${erroredCount} failed evaluation${
+                  erroredCount === 1 ? "" : "s"
+                }`}
+          </button>
+        ) : null}
+      </div>
     </section>
   );
 }
