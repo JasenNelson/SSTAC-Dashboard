@@ -88,6 +88,29 @@ export function ProjectDetailClient(
     [refetchFiles],
   );
 
+  // Soft-delete: hits DELETE /api/engine-v2/files/<id>, then refetches.
+  // CSRF requires Content-Type: application/json + same-origin.
+  const onDeleteFile = useCallback(
+    async (fileId: string): Promise<void> => {
+      const res = await fetch(`/api/engine-v2/files/${fileId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) {
+        let detail = "";
+        try {
+          const body = await res.json();
+          detail = body?.error ?? body?.detail ?? "";
+        } catch {
+          // body not JSON; surface status text
+        }
+        throw new Error(detail || `Delete failed (HTTP ${res.status})`);
+      }
+      await refetchFiles();
+    },
+    [refetchFiles],
+  );
+
   const onTriggerStart = useCallback(
     (runId: string) => {
       // Optimistically swap the panel to the new (or existing) run. The next
@@ -150,7 +173,7 @@ export function ProjectDetailClient(
             <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
               Files ({files.length} / {project.max_files})
             </h3>
-            <FileList files={files} />
+            <FileList files={files} onDelete={onDeleteFile} />
           </section>
         </div>
 
