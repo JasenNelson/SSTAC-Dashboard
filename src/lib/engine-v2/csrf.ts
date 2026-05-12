@@ -16,8 +16,17 @@ export interface CsrfCheckResult {
 
 // Environment-aware Origin check (Finding 24):
 // - production: strict against NEXT_PUBLIC_SITE_URL
-// - preview: allow *.vercel.app pattern OR same-origin (request.nextUrl.origin)
+// - preview: same-origin (request.nextUrl.origin) OR <project-slug>-*.vercel.app
+//   where slug is derived from VERCEL_PROJECT_PRODUCTION_URL
 // - dev: allow http://localhost:* and http://127.0.0.1:*
+function getProjectSlug(): string | null {
+  const prod = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  if (!prod) return null;
+  const dot = prod.indexOf(".");
+  const slug = dot > 0 ? prod.slice(0, dot) : prod;
+  return /^[a-z0-9-]+$/.test(slug) ? slug : null;
+}
+
 function isOriginAllowed(origin: string, request: NextRequest): boolean {
   const vercelEnv = process.env.VERCEL_ENV;
   const nodeEnv = process.env.NODE_ENV;
@@ -29,9 +38,15 @@ function isOriginAllowed(origin: string, request: NextRequest): boolean {
 
   if (vercelEnv === "preview") {
     if (origin === request.nextUrl.origin) return true; // same-origin pass-through
+    const slug = getProjectSlug();
+    if (!slug) return false;
     try {
       const u = new URL(origin);
-      return u.protocol === "https:" && u.hostname.endsWith(".vercel.app");
+      if (u.protocol !== "https:") return false;
+      if (!u.hostname.endsWith(".vercel.app")) return false;
+      const bare = u.hostname.slice(0, -".vercel.app".length);
+      // Must be "<slug>-<deployment-suffix>" with non-empty suffix.
+      return bare.startsWith(slug + "-") && bare.length > slug.length + 1;
     } catch {
       return false;
     }
@@ -63,8 +78,10 @@ export function checkCsrf(request: NextRequest): CsrfCheckResult {
   if (!contentType) {
     return { ok: false, reason: "missing_content_type" };
   }
-  // Allow charset suffix (e.g., "application/json; charset=utf-8").
-  if (!contentType.toLowerCase().startsWith("application/json")) {
+  // Parse media type before parameters; require exact application/json.
+  // Rejects application/jsonp and other prefix collisions.
+  const mediaType = contentType.split(";")[0]!.trim().toLowerCase();
+  if (mediaType !== "application/json") {
     return { ok: false, reason: "wrong_content_type", detail: contentType };
   }
 

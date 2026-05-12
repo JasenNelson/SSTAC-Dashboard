@@ -25,6 +25,7 @@ beforeEach(() => {
   // Clean slate per test
   delete env.VERCEL_ENV;
   delete env.NEXT_PUBLIC_SITE_URL;
+  delete env.VERCEL_PROJECT_PRODUCTION_URL;
   env.NODE_ENV = "test";
 });
 afterEach(() => {
@@ -42,6 +43,27 @@ describe("Content-Type enforcement (Finding 11)", () => {
   it("rejects non-JSON Content-Type", () => {
     const r = checkCsrf(
       makeReq({ contentType: "application/x-www-form-urlencoded", origin: "https://prod.example.com" })
+    );
+    expect(r.reason).toBe("wrong_content_type");
+  });
+
+  it("rejects application/jsonp (no prefix collision)", () => {
+    process.env.VERCEL_ENV = "production";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://prod.example.com";
+    const r = checkCsrf(
+      makeReq({ contentType: "application/jsonp", origin: "https://prod.example.com" })
+    );
+    expect(r.reason).toBe("wrong_content_type");
+  });
+
+  it("rejects application/json-patch+json (exact media type only)", () => {
+    process.env.VERCEL_ENV = "production";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://prod.example.com";
+    const r = checkCsrf(
+      makeReq({
+        contentType: "application/json-patch+json",
+        origin: "https://prod.example.com",
+      })
     );
     expect(r.reason).toBe("wrong_content_type");
   });
@@ -90,12 +112,13 @@ describe("Production strict origin (Finding 24)", () => {
   });
 });
 
-describe("Preview permissive origin", () => {
+describe("Preview project-slug origin (Finding 24)", () => {
   beforeEach(() => {
     process.env.VERCEL_ENV = "preview";
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = "sstac-dashboard.vercel.app";
   });
 
-  it("accepts *.vercel.app HTTPS", () => {
+  it("accepts <slug>-<suffix>.vercel.app HTTPS", () => {
     const r = checkCsrf(
       makeReq({
         contentType: "application/json",
@@ -116,11 +139,52 @@ describe("Preview permissive origin", () => {
     expect(r.ok).toBe(true);
   });
 
+  it("rejects unrelated *.vercel.app (slug mismatch)", () => {
+    const r = checkCsrf(
+      makeReq({
+        contentType: "application/json",
+        origin: "https://evil.vercel.app",
+      })
+    );
+    expect(r.reason).toBe("origin_mismatch");
+  });
+
+  it("rejects another project's preview <other>-<suffix>.vercel.app", () => {
+    const r = checkCsrf(
+      makeReq({
+        contentType: "application/json",
+        origin: "https://other-project-git-main.vercel.app",
+      })
+    );
+    expect(r.reason).toBe("origin_mismatch");
+  });
+
+  it("rejects bare <slug>.vercel.app (no preview suffix)", () => {
+    const r = checkCsrf(
+      makeReq({
+        contentType: "application/json",
+        origin: "https://sstac-dashboard.vercel.app",
+      })
+    );
+    expect(r.reason).toBe("origin_mismatch");
+  });
+
   it("rejects HTTP *.vercel.app (must be HTTPS)", () => {
     const r = checkCsrf(
       makeReq({
         contentType: "application/json",
-        origin: "http://x.vercel.app",
+        origin: "http://sstac-dashboard-git-x.vercel.app",
+      })
+    );
+    expect(r.reason).toBe("origin_mismatch");
+  });
+
+  it("rejects all *.vercel.app when VERCEL_PROJECT_PRODUCTION_URL unset", () => {
+    delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    const r = checkCsrf(
+      makeReq({
+        contentType: "application/json",
+        origin: "https://sstac-dashboard-git-x.vercel.app",
       })
     );
     expect(r.reason).toBe("origin_mismatch");
