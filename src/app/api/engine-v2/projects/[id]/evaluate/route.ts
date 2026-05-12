@@ -17,6 +17,7 @@
 //      On reject: status='error' + 500. On success: status='running' + 200.
 
 import { spawn } from "child_process";
+import { openSync } from "fs";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { NextResponse, type NextRequest } from "next/server";
@@ -116,9 +117,19 @@ async function spawnScenarioRunner(args: SpawnScenarioArgs): Promise<void> {
     args.outputDir,
   ];
 
+  // Capture subprocess stdout/stderr to log files in the run dir so a crash
+  // is diagnosable from the dashboard (previously stdio:'ignore' threw away
+  // the engine's anti-leak guard error, costing a 30-min stale-timeout to
+  // surface). The stale-handler in /evaluation-status reads stderr.log
+  // when present and appends a tail into v2_evaluations.errors.
+  const stdoutPath = `${args.outputDir}/subprocess_stdout.log`;
+  const stderrPath = `${args.outputDir}/subprocess_stderr.log`;
+  const outFd = openSync(stdoutPath, "a");
+  const errFd = openSync(stderrPath, "a");
+
   const child = spawn(args.pythonPath, cli, {
     detached: true,
-    stdio: "ignore",
+    stdio: ["ignore", outFd, errFd],
     windowsHide: true,
   });
 
@@ -384,7 +395,17 @@ export async function POST(
   try {
     await fs.mkdir(evalRunDir, { recursive: true });
     const yaml = composeScenarioYaml({
-      scenarioId: evaluationId,
+      // Engine rejects scenario_ids containing 4-5 digit numeric segments
+      // (anti-leak guard against BC site file numbers like "13254"). UUIDs
+      // frequently contain numeric hex subgroups (e.g. "4536") that trip
+      // this guard. Use a guaranteed-anonymous handle derived from the eval
+      // UUID's prefix with only letters: takes the first 8 hex chars,
+      // remaps digits -> letters via charCode shift so no numeric run
+      // survives. Example: "7b5b4e60" -> "hbcbeegh".
+      scenarioId: `DASHBOARD-EVAL-${evaluationId
+        .replace(/-/g, "")
+        .slice(0, 12)
+        .replace(/[0-9]/g, (d) => String.fromCharCode(97 + Number(d)))}`,
       extractPath: verbatimJsonPath,
       benchFixture,
       applicabilityMode,
