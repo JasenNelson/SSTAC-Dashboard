@@ -31,7 +31,8 @@ function formatTs(iso: string | null): string {
   if (!iso) return "-";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString(undefined, {
+  // Lock locale to en-US to avoid SSR/client hydration mismatch.
+  return d.toLocaleString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",

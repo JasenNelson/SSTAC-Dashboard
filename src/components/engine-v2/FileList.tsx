@@ -26,7 +26,10 @@ function formatBytes(n: number): string {
 function formatUploadedAt(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString(undefined, {
+  // Lock the locale to en-US so server-rendered and client-rendered strings
+  // match. Without an explicit locale, Node defaults to en-US (`AM`) while
+  // Chrome on en-CA renders `a.m.` -> hydration mismatch.
+  return d.toLocaleString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",

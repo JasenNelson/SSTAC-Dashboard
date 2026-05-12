@@ -101,7 +101,10 @@ function formatCreatedAt(iso: string): string {
   if (Number.isNaN(d.getTime())) {
     return iso;
   }
-  return d.toLocaleDateString(undefined, {
+  // Lock locale to en-US to avoid SSR/client hydration mismatch when the
+  // server (Node, en-US default) renders one string and the browser renders
+  // another (e.g., en-CA "a.m." vs en-US "AM").
+  return d.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
