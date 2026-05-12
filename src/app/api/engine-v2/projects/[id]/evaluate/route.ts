@@ -65,6 +65,35 @@ function readEvalBackendDefault(): EvalBackend | { error: string } {
   return { error: "invalid_eval_backend_default" };
 }
 
+function getOllamaUrl(): string {
+  return process.env.OLLAMA_URL ?? "http://localhost:11434";
+}
+
+function getOllamaModel(): string {
+  return (
+    process.env.ENGINE_V2_OLLAMA_MODEL ?? "qwen2.5:14b-instruct-q4_K_M"
+  );
+}
+
+// Preflight Ollama for live backend. Returns null on success, or an
+// inline {error, ollama_url} payload on failure (timeout / network / non-2xx).
+async function preflightOllama(
+  ollamaUrl: string,
+): Promise<{ error: string; ollama_url: string } | null> {
+  try {
+    const res = await fetch(`${ollamaUrl}/api/tags`, {
+      method: "GET",
+      signal: AbortSignal.timeout(2000),
+    });
+    if (!res.ok) {
+      return { error: "ollama_unreachable", ollama_url: ollamaUrl };
+    }
+    return null;
+  } catch {
+    return { error: "ollama_unreachable", ollama_url: ollamaUrl };
+  }
+}
+
 interface SpawnScenarioArgs {
   pythonPath: string;
   scriptPath: string;
@@ -145,12 +174,13 @@ export async function POST(
   }
 
   // Step 4: env-driven default backend validation. Per plan v0.2 ED-2a-1,
-  // any value other than 'stub'/'live' is a configuration error.
+  // any value other than 'stub'/'live' is a configuration error. The effective
+  // backend (request override -> env default) is resolved after Zod parse.
   const evalBackendResolved = readEvalBackendDefault();
   if (typeof evalBackendResolved !== "string") {
     return NextResponse.json(evalBackendResolved, { status: 500 });
   }
-  const evaluationBackend: EvalBackend = evalBackendResolved;
+  const envBackendDefault: EvalBackend = evalBackendResolved;
 
   const { id: projectId } = await context.params;
 
@@ -217,6 +247,21 @@ export async function POST(
     );
   }
 
+  // ED-2b-4: per-evaluation backend toggle. Request override wins; otherwise
+  // fall back to env default ('stub' if unset). Live mode requires an Ollama
+  // preflight; failure short-circuits the flow with 503 before any DB writes.
+  const requestedBackend = parsed.data.evaluation_backend ?? null;
+  const effectiveBackend: EvalBackend = requestedBackend ?? envBackendDefault;
+  const ollamaModel = getOllamaModel();
+
+  if (effectiveBackend === "live") {
+    const ollamaUrl = getOllamaUrl();
+    const preflight = await preflightOllama(ollamaUrl);
+    if (preflight) {
+      return NextResponse.json(preflight, { status: 503 });
+    }
+  }
+
   // Step 8: locate the single verbatim JSON artifact for this project.
   // Lane 2a contract: exactly one *.json must exist; 0 or >=2 is a setup error.
   const base = getBasePath();
@@ -263,11 +308,12 @@ export async function POST(
       project_id: projectId,
       extraction_run_id: extractionRunId,
       status: "pending",
-      evaluation_backend: evaluationBackend,
+      evaluation_backend: effectiveBackend,
       embedder_backend: embedderBackend,
       reranker_backend: rerankerBackend,
       bench_fixture: benchFixture,
       applicability_mode: applicabilityMode,
+      model: effectiveBackend === "live" ? ollamaModel : null,
     })
     .select("id, status")
     .single();
@@ -332,10 +378,10 @@ export async function POST(
       extractPath: verbatimJsonPath,
       benchFixture,
       applicabilityMode,
-      evaluationBackend,
+      evaluationBackend: effectiveBackend,
       embedderBackend,
       rerankerBackend,
-      model: "",
+      model: effectiveBackend === "live" ? ollamaModel : "",
       variant: "graph_v2_default",
     });
     await fs.writeFile(scenarioYamlPath, yaml, "utf8");

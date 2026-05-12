@@ -34,6 +34,7 @@ interface EvaluateStartResponse {
 interface EvaluateErrorResponse {
   error?: string;
   message?: string;
+  ollama_url?: string;
 }
 
 function isTerminal(evaluation: V2Evaluation | null): boolean {
@@ -58,6 +59,9 @@ export function EvaluateTriggerButton(
     kind: "info" | "warn" | "error";
     text: string;
   } | null>(null);
+  const [selectedBackend, setSelectedBackend] = useState<"stub" | "live">(
+    "stub",
+  );
 
   const hasNonTerminalEval =
     currentEvaluation !== null && !isTerminal(currentEvaluation);
@@ -84,7 +88,7 @@ export function EvaluateTriggerButton(
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: "{}",
+          body: JSON.stringify({ evaluation_backend: selectedBackend }),
         },
       );
 
@@ -154,6 +158,14 @@ export function EvaluateTriggerButton(
       }
 
       if (res.status === 503) {
+        if (errCode === "ollama_unreachable") {
+          const url = errBody?.ollama_url ?? "the configured URL";
+          setMessage({
+            kind: "error",
+            text: `Ollama not reachable at ${url}. Start it with \`ollama serve\` and pull qwen2.5:14b-instruct-q4_K_M.`,
+          });
+          return;
+        }
         setMessage({
           kind: "warn",
           text:
@@ -178,10 +190,37 @@ export function EvaluateTriggerButton(
     } finally {
       setBusy(false);
     }
-  }, [disabled, projectId, onTriggerStart]);
+  }, [disabled, projectId, onTriggerStart, selectedBackend]);
 
   return (
     <div data-testid="evaluate-trigger" className="space-y-2">
+      <div
+        data-testid="evaluate-backend-selector"
+        className="flex gap-3 text-xs text-slate-700 dark:text-slate-200"
+      >
+        <label className="inline-flex items-center gap-1">
+          <input
+            type="radio"
+            name="eval-backend"
+            value="stub"
+            checked={selectedBackend === "stub"}
+            onChange={() => setSelectedBackend("stub")}
+            disabled={busy}
+          />
+          Stub (fast, placeholder verdicts)
+        </label>
+        <label className="inline-flex items-center gap-1">
+          <input
+            type="radio"
+            name="eval-backend"
+            value="live"
+            checked={selectedBackend === "live"}
+            onChange={() => setSelectedBackend("live")}
+            disabled={busy}
+          />
+          Live (Ollama; real verdicts; ~30-90s)
+        </label>
+      </div>
       <button
         type="button"
         data-testid="evaluate-trigger-button"

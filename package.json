@@ -38,6 +38,7 @@
     "@vercel/speed-insights": "^1.2.0",
     "@xyflow/react": "^12.10.1",
     "clsx": "^2.1.1",
+    "docx": "^9.6.1",
     "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
     "leaflet": "^1.9.4",

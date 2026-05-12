@@ -61,3 +61,56 @@ export interface EvalCoverageStatement {
   error?: number;
   deferred_reasons?: Record<string, number>;
 }
+
+// Lane 2b: judgment + memo types (appended; do not modify Lane 2a exports above).
+
+export type JudgmentTier = "TIER_1_BINARY" | "TIER_2_PROFESSIONAL" | "TIER_3_STATUTORY";
+
+export type JudgmentVerdict =
+  | "ADEQUATE"
+  | "INADEQUATE"
+  | "DEFICIENT"
+  | "REQUIRES_REVIEW"
+  | "OBSERVATION_ONLY";
+
+// Mirrors the SQL CHECK constraint v2_judgments_tier_verdict_check exactly.
+// Source of truth: docs/engine_v2_frontend_lane2b_plan_2026_05_12.md L2b-1.
+export const ALLOWED_VERDICTS_BY_TIER: Record<JudgmentTier, readonly JudgmentVerdict[]> = {
+  TIER_1_BINARY: ["ADEQUATE", "INADEQUATE", "DEFICIENT", "REQUIRES_REVIEW"],
+  TIER_2_PROFESSIONAL: ["DEFICIENT", "REQUIRES_REVIEW"],
+  TIER_3_STATUTORY: ["OBSERVATION_ONLY"],
+} as const;
+
+export interface V2Judgment {
+  id: string;
+  per_policy_result_id: string;
+  reviewer_user_id: string;
+  tier: JudgmentTier;
+  verdict: JudgmentVerdict;
+  rationale: string | null;
+  evidence_refs: unknown[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface V2JudgmentHistoryRow {
+  id: string;
+  judgment_id: string;
+  prior_verdict: JudgmentVerdict | null;
+  prior_rationale: string | null;
+  prior_evidence_refs: unknown[] | null;
+  changed_by_user_id: string;
+  changed_at: string;
+}
+
+export interface V2MemoExport {
+  id: string;
+  evaluation_id: string;
+  generator_version: string;
+  judgment_snapshot_hash: string;
+  content_sha256: string;
+  storage_path: string | null;
+  content_blob: unknown | null; // Buffer / Uint8Array on Node; opaque on the wire.
+  byte_size: number;
+  created_at: string;
+}

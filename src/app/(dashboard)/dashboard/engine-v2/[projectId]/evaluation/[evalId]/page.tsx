@@ -15,9 +15,12 @@
 import { notFound } from "next/navigation";
 import { requireAdminForServerComponent } from "@/lib/engine-v2/admin_guards";
 import { PerPolicyResultsTable } from "@/components/engine-v2/PerPolicyResultsTable";
+import { TelemetrySidebar } from "@/components/engine-v2/TelemetrySidebar";
+import { ExportMemoButton } from "@/components/engine-v2/ExportMemoButton";
 import type {
   V2Evaluation,
   V2PerPolicyResult,
+  V2Judgment,
   EvalCoverageStatement,
   EvaluationStatus,
 } from "@/lib/engine-v2/types_lane2";
@@ -211,6 +214,22 @@ export default async function EvaluationResultsPage(props: PageProps) {
     .order("policy_id", { ascending: true });
   const results = (rowsData ?? []) as V2PerPolicyResult[];
 
+  // L2b-2 UI: fetch any existing HITL judgments for the loaded per-policy
+  // results so the table can render the latest verdict in the Judgment column
+  // and prefill the inline editor. RLS already scopes by ownership; we still
+  // skip the IN(...) round-trip when the per-policy import has not run yet.
+  let judgments: V2Judgment[] = [];
+  if (results.length > 0) {
+    const ppIds = results.map((r) => r.id);
+    const { data: judgmentRows } = await client
+      .from("v2_judgments")
+      .select(
+        "id, per_policy_result_id, reviewer_user_id, tier, verdict, rationale, evidence_refs, created_at, updated_at",
+      )
+      .in("per_policy_result_id", ppIds);
+    judgments = (judgmentRows ?? []) as V2Judgment[];
+  }
+
   const coverage = (evaluation.coverage_statement ??
     {}) as EvalCoverageStatement;
   const errors = Array.isArray(evaluation.errors) ? evaluation.errors : [];
@@ -247,15 +266,34 @@ export default async function EvaluationResultsPage(props: PageProps) {
             </span>
           ) : null}
         </div>
+        {/* L2b-6: memo export trigger (disabled until terminal). */}
+        <div className="pt-2">
+          <ExportMemoButton
+            projectId={projectId}
+            evaluationId={evaluation.id}
+            evaluationStatus={evaluation.status}
+          />
+        </div>
       </header>
       <CoverageSummary coverage={coverage} />
       <ErrorsBlock errors={errors} />
-      <section className="space-y-2">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-          Per-policy results ({results.length})
-        </h3>
-        <PerPolicyResultsTable results={results} />
-      </section>
+      {/* L2b-4: 2-column layout with TelemetrySidebar on the right (xl+). */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
+        <div>
+          <section className="space-y-2">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+              Per-policy results ({results.length})
+            </h3>
+            <PerPolicyResultsTable
+              results={results}
+              judgments={judgments}
+            />
+          </section>
+        </div>
+        <aside data-testid="telemetry-sidebar-slot">
+          <TelemetrySidebar evaluation={evaluation} />
+        </aside>
+      </div>
     </div>
   );
 }
