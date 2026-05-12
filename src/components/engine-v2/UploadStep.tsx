@@ -369,27 +369,121 @@ export function UploadStep(props: UploadStepProps): React.ReactElement {
     [props, pushMessage],
   );
 
+  const busy = status === "uploading" || status === "finalizing" || status === "polling";
   return (
-    <div data-testid="upload-step" data-status={status} data-progress={progress}>
-      <input
-        type="file"
-        data-testid="upload-step-input"
-        accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) void upload(f);
-        }}
-      />
-      <div data-testid="upload-step-progress">{progress}%</div>
-      <ul data-testid="upload-step-messages">
-        {messages.map((m, i) => (
-          <li key={i} data-kind={m.kind}>
-            {m.text}
-          </li>
-        ))}
-      </ul>
+    <div data-testid="upload-step" data-status={status} data-progress={progress} className="space-y-3">
+      <label
+        className={
+          "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium " +
+          "cursor-pointer select-none transition-colors " +
+          (busy
+            ? "bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed"
+            : "bg-sky-600 hover:bg-sky-700 text-white shadow-sm focus-within:ring-2 focus-within:ring-sky-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-slate-900")
+        }
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          aria-hidden="true"
+          className="w-4 h-4"
+        >
+          <path d="M10 3a1 1 0 011 1v8.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L9 12.586V4a1 1 0 011-1z" />
+          <path d="M4 15a1 1 0 011 1v1h10v-1a1 1 0 112 0v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2a1 1 0 011-1z" />
+        </svg>
+        <span>
+          {busy
+            ? status === "uploading"
+              ? "Uploading..."
+              : status === "finalizing"
+                ? "Finalizing..."
+                : "Verifying..."
+            : "Choose PDF or Word file"}
+        </span>
+        <input
+          type="file"
+          data-testid="upload-step-input"
+          accept="application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
+          disabled={busy}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void upload(f);
+            // Reset so re-picking the same file fires onChange again.
+            e.currentTarget.value = "";
+          }}
+          className="sr-only"
+        />
+      </label>
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Allowed: PDF, DOCX, legacy DOC. Up to 50 MB.
+      </p>
+      {status !== "idle" || progress > 0 ? (
+        <div
+          data-testid="upload-step-progress"
+          className="space-y-1"
+          aria-label={`Upload progress: ${progress}%`}
+        >
+          <div className="flex justify-between text-xs text-slate-600 dark:text-slate-300">
+            <span>
+              {status === "uploading"
+                ? "Uploading"
+                : status === "finalizing"
+                  ? "Finalizing"
+                  : status === "polling"
+                    ? "Verifying"
+                    : status === "success"
+                      ? "Done"
+                      : status === "error"
+                        ? "Error"
+                        : status === "conflict"
+                          ? "Conflict"
+                          : "Idle"}
+            </span>
+            <span>{progress}%</span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+            <div
+              className={
+                "h-full rounded-full transition-all duration-300 " +
+                (status === "error"
+                  ? "bg-red-500"
+                  : status === "success"
+                    ? "bg-emerald-500"
+                    : "bg-sky-500")
+              }
+              style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
+      {messages.length > 0 ? (
+        <ul data-testid="upload-step-messages" className="space-y-1 text-xs">
+          {messages.map((m, i) => (
+            <li
+              key={i}
+              data-kind={m.kind}
+              className={
+                m.kind === "error"
+                  ? "text-red-700 dark:text-red-300"
+                  : m.kind === "warn"
+                    ? "text-amber-700 dark:text-amber-300"
+                    : m.kind === "success"
+                      ? "text-emerald-700 dark:text-emerald-300"
+                      : "text-slate-600 dark:text-slate-300"
+              }
+            >
+              {m.text}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {lastFileId !== null ? (
-        <div data-testid="upload-step-file-id">{lastFileId}</div>
+        <div
+          data-testid="upload-step-file-id"
+          className="text-[10px] font-mono text-slate-400 dark:text-slate-500"
+        >
+          file_id: {lastFileId}
+        </div>
       ) : null}
     </div>
   );
