@@ -300,8 +300,18 @@ export async function POST(
   // unique violation (23505) re-SELECT and return the existing non-terminal row.
   const benchFixture = getBenchFixture();
   const applicabilityMode = "off";
-  const embedderBackend = "stub";
+  // In live mode the embedder must also be real, otherwise the retriever uses
+  // SHAKE-256 stub embeddings against the real corpus -> meaningless candidates.
+  // The reranker stays disabled (Lane 2c default; live with reranker is a
+  // separate config opt-in).
+  const embedderBackend: "stub" | "real" =
+    effectiveBackend === "live" ? "real" : "stub";
   const rerankerBackend = "disabled";
+  const embedderModelPath: string | undefined =
+    effectiveBackend === "live"
+      ? process.env.ENGINE_V2_EMBEDDER_MODEL_PATH ??
+        "C:/Projects/models/bge-small-en-v1.5/"
+      : undefined;
   const insertResp = await client
     .from("v2_evaluations")
     .insert({
@@ -383,6 +393,7 @@ export async function POST(
       rerankerBackend,
       model: effectiveBackend === "live" ? ollamaModel : "",
       variant: "graph_v2_default",
+      embedderModelPath,
     });
     await fs.writeFile(scenarioYamlPath, yaml, "utf8");
   } catch (err) {

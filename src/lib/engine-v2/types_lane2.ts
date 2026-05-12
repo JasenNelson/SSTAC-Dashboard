@@ -114,3 +114,12 @@ export interface V2MemoExport {
   byte_size: number;
   created_at: string;
 }
+
+// Lane 2c: evidence_slices types (re-exported from evidence_slices.ts so
+// the centralized types module stays the single import surface for engine_v2
+// type consumers). New in eval_result schema_version 0.1.0.
+export type {
+  EvidenceSlice,
+  EvidenceSliceMap,
+  EvidenceSliceSource,
+} from "./evidence_slices";

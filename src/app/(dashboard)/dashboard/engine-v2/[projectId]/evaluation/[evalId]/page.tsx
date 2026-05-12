@@ -19,6 +19,7 @@ import { PerPolicyResultsTable } from "@/components/engine-v2/PerPolicyResultsTa
 import { TelemetryDisclosure } from "@/components/engine-v2/TelemetryDisclosure";
 import { ExportMemoButton } from "@/components/engine-v2/ExportMemoButton";
 import { JudgmentSummaryTile } from "@/components/engine-v2/JudgmentSummaryTile";
+import { extractEvidenceSlices } from "@/lib/engine-v2/evidence_slices";
 import type {
   V2Evaluation,
   V2PerPolicyResult,
@@ -236,6 +237,11 @@ export default async function EvaluationResultsPage(props: PageProps) {
     {}) as EvalCoverageStatement;
   const errors = Array.isArray(evaluation.errors) ? evaluation.errors : [];
 
+  // Lane 2c: pull the top-level evidence_slices dict from the raw eval result
+  // JSONB. Returns null for older schema_version 0.0.1 evaluations; the table
+  // renders a degraded "verbatim text not available" view in that case.
+  const evidenceSlices = extractEvidenceSlices(evaluation.raw_eval_result_json);
+
   return (
     <div className="space-y-6">
       <EngineV2Breadcrumbs
@@ -302,6 +308,7 @@ export default async function EvaluationResultsPage(props: PageProps) {
             <PerPolicyResultsTable
               results={results}
               judgments={judgments}
+              evidenceSlices={evidenceSlices}
             />
           </section>
         </div>

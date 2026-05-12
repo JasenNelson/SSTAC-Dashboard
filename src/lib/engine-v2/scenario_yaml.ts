@@ -23,6 +23,9 @@ export interface ComposeScenarioYamlArgs {
   // (qwen2.5:14b-instruct-q4_K_M) when running stub backends.
   model: string;
   variant: string;
+  // Path to pre-downloaded BGE model directory. Required when
+  // embedderBackend === "real". Engine pre-flight verifies on-disk.
+  embedderModelPath?: string;
 }
 
 // YAML double-quoted scalar: escape backslash + double-quote.
@@ -45,6 +48,9 @@ export function composeScenarioYaml(args: ComposeScenarioYamlArgs): string {
     `rerank: ${quote("off")}`,
     `pathway_notes_mode: ${quote("annotation_only")}`,
   ];
+  if (args.embedderModelPath) {
+    lines.push(`embedder_model_path: ${quote(args.embedderModelPath)}`);
+  }
   // Trailing newline to keep POSIX-style file contents.
   return lines.join("\n") + "\n";
 }

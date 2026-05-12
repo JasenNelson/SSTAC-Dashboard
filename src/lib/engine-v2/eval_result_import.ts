@@ -31,6 +31,14 @@ export interface EvalResultEnvelope {
     errors?: unknown[];
     [k: string]: unknown;
   };
+  // Lane 2c: schema_version 0.1.0 adds a top-level evidence_slices dict that
+  // per-policy evidence_packet entries reference by evidence_item_id. The
+  // dashboard does NOT promote this into its own table -- the existing
+  // raw_eval_result_json wholesale persistence below already carries it.
+  // Frontend rendering uses extractEvidenceSlices() from ./evidence_slices.
+  // Older schema_version 0.0.1 envelopes omit this field; the helper falls
+  // back to a degraded "verbatim text not available" view.
+  evidence_slices?: Record<string, unknown>;
   [k: string]: unknown;
 }
 
@@ -116,6 +124,12 @@ export async function importEvalResult(
     // unique index in the schema is COALESCE-based on (evaluation_id, policy_id,
     // stage, packet_id) so "" and NULL collide identically. ignoreDuplicates is
     // explicitly false to get DO UPDATE semantics per codex amendment.
+    //
+    // Lane 2c note: evidence_slices (when present in envelope, schema_version
+    // 0.1.0+) is persisted via raw_eval_result_json on the v2_evaluations row
+    // below; per-policy rows only get the metadata-side fields per Lane 2a
+    // design. The dashboard dereferences slice_<sha256> ids from
+    // evidence_packet via extractEvidenceSlices() at render time.
     const { error: upsertErr } = await client
       .from("v2_per_policy_results")
       .upsert(rows, {

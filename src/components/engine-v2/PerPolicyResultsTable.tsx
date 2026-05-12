@@ -24,10 +24,20 @@ import type {
   JudgmentVerdict,
 } from "@/lib/engine-v2/types_lane2";
 import { ALLOWED_VERDICTS_BY_TIER } from "@/lib/engine-v2/types_lane2";
+import {
+  dereferenceSlice,
+  type EvidenceSlice,
+  type EvidenceSliceMap,
+} from "@/lib/engine-v2/evidence_slices";
 
 interface Props {
   results: V2PerPolicyResult[];
   judgments: V2Judgment[];
+  // Lane 2c: top-level evidence_slices dict pulled from
+  // evaluation.raw_eval_result_json. null when the evaluation was produced
+  // by engine schema_version 0.0.1 (no evidence_slices emitted). Defaults
+  // to null so existing call sites (tests, older pages) keep working.
+  evidenceSlices?: EvidenceSliceMap | null;
 }
 
 type SortKey = "policy_id" | "tier" | "verdict" | "confidence";
@@ -238,6 +248,164 @@ function pickListField(
   return (obj as Record<string, unknown>)[key];
 }
 
+// Lane 2c: extract evidence items (objects carrying evidence_item_id) from
+// the polymorphic evidence_packet. The engine_v2 contract states each
+// evidence_item has an `evidence_item_id` of the form "slice_<sha256>" that
+// keys into the top-level evidence_slices dict. The packet itself may
+// contain items under common keys (items / evidence_items / chunks) or as
+// a top-level array; we walk all values and collect any object that looks
+// like an evidence item. Each returned entry also preserves the original
+// item so callers can read auxiliary fields (e.g. evidence_type).
+interface EvidenceItemRef {
+  evidence_item_id: string;
+  evidence_type: string | null;
+  raw: Record<string, unknown>;
+}
+
+function isEvidenceItem(v: unknown): v is Record<string, unknown> {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return false;
+  const id = (v as Record<string, unknown>).evidence_item_id;
+  return typeof id === "string" && id.length > 0;
+}
+
+function collectEvidenceItems(
+  evidencePacket: Record<string, unknown> | null | undefined,
+): EvidenceItemRef[] {
+  if (!evidencePacket || typeof evidencePacket !== "object") return [];
+  const out: EvidenceItemRef[] = [];
+  const seen = new Set<string>();
+
+  function consider(v: unknown): void {
+    if (isEvidenceItem(v)) {
+      const item = v as Record<string, unknown>;
+      const id = String(item.evidence_item_id);
+      if (seen.has(id)) return;
+      seen.add(id);
+      const et = item.evidence_type;
+      out.push({
+        evidence_item_id: id,
+        evidence_type: typeof et === "string" ? et : null,
+        raw: item,
+      });
+      return;
+    }
+    if (Array.isArray(v)) {
+      for (const x of v) consider(x);
+    }
+  }
+
+  // Walk known sub-keys plus the whole top-level dict's values, defensively.
+  for (const key of ["items", "evidence_items", "chunks"]) {
+    consider((evidencePacket as Record<string, unknown>)[key]);
+  }
+  // Also handle the case where evidence_packet itself is an array-like or
+  // hosts top-level evidence item entries.
+  for (const v of Object.values(evidencePacket)) {
+    consider(v);
+  }
+  return out;
+}
+
+function truncateHash(hash: string, n = 12): string {
+  if (!hash) return "";
+  return hash.length <= n ? hash : `${hash.slice(0, n)}...`;
+}
+
+function EvidenceTypeBadge({
+  evidenceType,
+}: {
+  evidenceType: string | null;
+}): React.ReactElement | null {
+  if (!evidenceType) return null;
+  const upper = evidenceType.toUpperCase();
+  let palette =
+    "bg-slate-100 text-slate-700 dark:bg-slate-700/40 dark:text-slate-300";
+  if (upper === "POSITIVE") {
+    palette =
+      "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200";
+  } else if (upper === "NEGATIVE") {
+    palette = "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200";
+  } else if (upper === "NEUTRAL") {
+    palette =
+      "bg-slate-200 text-slate-700 dark:bg-slate-600/40 dark:text-slate-200";
+  }
+  return (
+    <span
+      className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${palette}`}
+      data-testid="evidence-type-badge"
+      data-evidence-type={upper}
+    >
+      {upper}
+    </span>
+  );
+}
+
+function copyToClipboard(text: string): void {
+  if (
+    typeof navigator !== "undefined" &&
+    navigator.clipboard &&
+    typeof navigator.clipboard.writeText === "function"
+  ) {
+    void navigator.clipboard.writeText(text);
+  }
+}
+
+function EvidenceCitationCard({
+  itemRef,
+  slice,
+}: {
+  itemRef: EvidenceItemRef;
+  slice: EvidenceSlice;
+}): React.ReactElement {
+  const src = slice.source;
+  const titleText = src.title || src.doc_id || "(unknown source)";
+  const pageLabel = src.page !== null ? `p. ${src.page}` : null;
+  const sectionLabel = src.section ? `Section ${src.section}` : null;
+  return (
+    <div
+      data-testid="evidence-citation-card"
+      data-evidence-item-id={itemRef.evidence_item_id}
+      className="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 space-y-2"
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          data-testid="evidence-citation-source"
+          className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate max-w-md"
+          title={titleText}
+        >
+          {titleText}
+        </span>
+        {pageLabel ? (
+          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+            {pageLabel}
+          </span>
+        ) : null}
+        {sectionLabel ? (
+          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+            {sectionLabel}
+          </span>
+        ) : null}
+        <EvidenceTypeBadge evidenceType={itemRef.evidence_type} />
+        <button
+          type="button"
+          data-testid="evidence-citation-hash"
+          onClick={() => copyToClipboard(slice.content_hash)}
+          title={slice.content_hash}
+          className="ml-auto rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-[10px] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+        >
+          {truncateHash(slice.content_hash)}
+        </button>
+      </div>
+      <blockquote
+        data-testid="evidence-citation-content"
+        className="border-l-4 border-indigo-300 dark:border-indigo-500/60 pl-3 italic text-xs text-slate-700 dark:text-slate-200 whitespace-pre-line break-words"
+      >
+        {slice.content}
+      </blockquote>
+    </div>
+  );
+}
+
 function compareResults(
   a: V2PerPolicyResult,
   b: V2PerPolicyResult,
@@ -293,6 +461,7 @@ function tierHelpText(tier: string | null): string | null {
 export function PerPolicyResultsTable({
   results,
   judgments,
+  evidenceSlices = null,
 }: Props): React.ReactElement {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -756,6 +925,81 @@ export function PerPolicyResultsTable({
                               {r.ai_suggestion ?? "-"} confidence_method=
                               {r.confidence_method ?? "-"}
                             </div>
+                          </section>
+
+                          {/* Verbatim evidence citations (Lane 2c, schema 0.1.0) */}
+                          <section data-testid="per-policy-verbatim-section">
+                            <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
+                              Verbatim evidence citations
+                            </div>
+                            {(() => {
+                              const items = collectEvidenceItems(r.evidence_packet);
+                              if (items.length === 0) {
+                                return (
+                                  <div
+                                    data-testid="per-policy-verbatim-empty"
+                                    className="italic text-slate-400 dark:text-slate-500 text-xs"
+                                  >
+                                    No evidence items emitted for this policy.
+                                  </div>
+                                );
+                              }
+                              return (
+                                <div className="space-y-2">
+                                  {items.map((itemRef) => {
+                                    const slice = dereferenceSlice(
+                                      evidenceSlices,
+                                      itemRef.evidence_item_id,
+                                    );
+                                    if (slice) {
+                                      return (
+                                        <EvidenceCitationCard
+                                          key={itemRef.evidence_item_id}
+                                          itemRef={itemRef}
+                                          slice={slice}
+                                        />
+                                      );
+                                    }
+                                    if (evidenceSlices === null) {
+                                      return (
+                                        <div
+                                          key={itemRef.evidence_item_id}
+                                          data-testid="per-policy-verbatim-older-schema"
+                                          data-evidence-item-id={
+                                            itemRef.evidence_item_id
+                                          }
+                                          className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-2 text-[11px] italic text-slate-500 dark:text-slate-400"
+                                        >
+                                          Verbatim text not available (this
+                                          evaluation was produced with engine
+                                          schema v0.0.1; re-run on schema
+                                          v0.1.0+ to surface verbatim evidence).
+                                        </div>
+                                      );
+                                    }
+                                    return (
+                                      <div
+                                        key={itemRef.evidence_item_id}
+                                        data-testid="per-policy-verbatim-missing-slice"
+                                        data-evidence-item-id={
+                                          itemRef.evidence_item_id
+                                        }
+                                        className="rounded border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-2 text-[11px] text-amber-800 dark:text-amber-200"
+                                      >
+                                        Slice{" "}
+                                        <span className="font-mono">
+                                          {truncateHash(
+                                            itemRef.evidence_item_id,
+                                            18,
+                                          )}
+                                        </span>{" "}
+                                        not present in evidence_slices dict.
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })()}
                           </section>
 
                           {/* Evidence packet */}
