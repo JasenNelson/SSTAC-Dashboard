@@ -65,17 +65,15 @@ function uuidV4(): string {
 }
 
 function deriveSupabaseTusEndpoint(supabaseUrl: string): string {
-  // https://<project-id>.supabase.co -> https://<project-id>.storage.supabase.co/storage/v1/upload/resumable
-  try {
-    const u = new URL(supabaseUrl);
-    const host = u.hostname; // <project>.supabase.co
-    const dot = host.indexOf(".");
-    if (dot < 0) throw new Error("invalid_supabase_url");
-    const project = host.slice(0, dot);
-    return `https://${project}.storage.supabase.co/storage/v1/upload/resumable`;
-  } catch {
-    throw new Error("invalid_supabase_url");
-  }
+  // Use the canonical Supabase project host per official resumable-uploads docs
+  // (https://supabase.com/docs/guides/storage/uploads/resumable-uploads). The
+  // `.storage.supabase.co` subdomain that plan v7.19 line 777 prescribed exists
+  // but does not resolve auth.uid() from the Bearer token in the same way as
+  // the main project URL, causing storage.objects RLS to reject the INSERT as
+  // anonymous even with a valid session JWT. Verified 2026-05-12.
+  if (!supabaseUrl) throw new Error("invalid_supabase_url");
+  const trimmed = supabaseUrl.replace(/\/+$/, "");
+  return `${trimmed}/storage/v1/upload/resumable`;
 }
 
 function isAllowedMime(mt: string): mt is AllowedMimeType {
