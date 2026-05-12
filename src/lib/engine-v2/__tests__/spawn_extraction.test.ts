@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { EventEmitter } from "events";
 import type { ChildProcess } from "child_process";
 
 // vi.mock must be hoisted; the helper imports `spawn` from 'child_process'.
@@ -25,18 +26,30 @@ const ARGS = {
   progressFilePath: "C:/staging/uploads/p1/.extraction_status.json",
 };
 
+// Build a fake ChildProcess that exposes the EventEmitter interface plus the
+// .unref() method that spawnExtractor calls after the spawn/error race settles.
+function makeFakeChild() {
+  const ee = new EventEmitter() as EventEmitter & { unref: ReturnType<typeof vi.fn> };
+  ee.unref = vi.fn();
+  return ee;
+}
+
 describe("spawnExtractor", () => {
   beforeEach(() => {
     spawnMock.mockReset();
   });
 
-  it("invokes child_process.spawn with the pinned arg shape", () => {
-    const unref = vi.fn();
-    spawnMock.mockReturnValue({ unref } as unknown as ChildProcess);
+  it("invokes child_process.spawn with the pinned arg shape on a successful start", async () => {
+    const fake = makeFakeChild();
+    spawnMock.mockImplementation(() => {
+      // Emit 'spawn' asynchronously, the way Node really does.
+      setImmediate(() => fake.emit("spawn"));
+      return fake as unknown as ChildProcess;
+    });
 
-    const child = spawnExtractor(ARGS);
+    const child = await spawnExtractor(ARGS);
     expect(child).toBeTruthy();
-    expect(unref).toHaveBeenCalledTimes(1);
+    expect(fake.unref).toHaveBeenCalledTimes(1);
 
     expect(spawnMock).toHaveBeenCalledTimes(1);
     const [pythonPath, cliArgs, opts] = spawnMock.mock.calls[0] as [
@@ -61,23 +74,43 @@ describe("spawnExtractor", () => {
     });
   });
 
-  it("propagates spawn-throw (ENOENT) so the route can catch and quarantine", () => {
+  it("rejects when child emits async ENOENT error (regression: codex blocker)", async () => {
+    const fake = makeFakeChild();
     spawnMock.mockImplementation(() => {
-      const err = new Error("spawn ENOENT") as NodeJS.ErrnoException;
+      setImmediate(() => {
+        const err = new Error("spawn ENOENT") as NodeJS.ErrnoException;
+        err.code = "ENOENT";
+        fake.emit("error", err);
+      });
+      return fake as unknown as ChildProcess;
+    });
+
+    await expect(spawnExtractor(ARGS)).rejects.toThrow(/ENOENT/);
+    expect(fake.unref).not.toHaveBeenCalled();
+  });
+
+  it("rejects when child emits async EACCES error", async () => {
+    const fake = makeFakeChild();
+    spawnMock.mockImplementation(() => {
+      setImmediate(() => {
+        const err = new Error("spawn EACCES") as NodeJS.ErrnoException;
+        err.code = "EACCES";
+        fake.emit("error", err);
+      });
+      return fake as unknown as ChildProcess;
+    });
+
+    await expect(spawnExtractor(ARGS)).rejects.toThrow(/EACCES/);
+    expect(fake.unref).not.toHaveBeenCalled();
+  });
+
+  it("propagates synchronous spawn-throw (legacy code path)", async () => {
+    spawnMock.mockImplementation(() => {
+      const err = new Error("spawn ENOENT sync") as NodeJS.ErrnoException;
       err.code = "ENOENT";
       throw err;
     });
 
-    expect(() => spawnExtractor(ARGS)).toThrow(/ENOENT/);
-  });
-
-  it("propagates EACCES the same way", () => {
-    spawnMock.mockImplementation(() => {
-      const err = new Error("spawn EACCES") as NodeJS.ErrnoException;
-      err.code = "EACCES";
-      throw err;
-    });
-
-    expect(() => spawnExtractor(ARGS)).toThrow(/EACCES/);
+    await expect(spawnExtractor(ARGS)).rejects.toThrow(/ENOENT sync/);
   });
 });

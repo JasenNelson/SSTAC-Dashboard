@@ -217,9 +217,12 @@ export async function POST(
     }
   }
 
-  // Step 8: Spawn the detached extractor. Wrap in try/catch.
+  // Step 8: Spawn the detached extractor. spawnExtractor is async and rejects
+  // on ENOENT/EACCES via the child's 'error' event (Node emits these
+  // asynchronously, not as a sync throw). The try/catch below handles both
+  // sync-throw and async-reject uniformly.
   try {
-    spawnExtractor({
+    await spawnExtractor({
       pythonPath: getPythonPath(),
       scriptPath: getScriptPath(),
       sourceDir: uploadsDir,

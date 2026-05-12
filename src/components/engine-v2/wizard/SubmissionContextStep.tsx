@@ -8,7 +8,7 @@
 // trimmed and used as the object key; `value` is stored as a string. Empty
 // keys are dropped.
 
-import { useMemo } from "react";
+import { useState } from "react";
 
 export interface SubmissionContextValue {
   overrides: Record<string, string>;
@@ -38,31 +38,39 @@ function rowsToObject(rows: Row[]): Record<string, string> {
   return out;
 }
 
+// Local row state is kept in component state, not derived from parent's
+// overrides object every render. Previous design derived rows from
+// value.overrides via useMemo + dropped empty-keyed rows in rowsToObject --
+// the "+ Add another override" handler could never render a new blank row
+// because the round-trip stripped it. The parent's overrides object remains
+// the authoritative persisted form; the component owns the displayed-rows
+// list (which may include blank-keyed rows the user is mid-edit on).
 export function SubmissionContextStep({ value, onChange }: Props) {
-  const rows = useMemo(() => {
+  const [rows, setRows] = useState<Row[]>(() => {
     const r = objectToRows(value.overrides);
-    // Always show at least one editable row so users can start typing without
-    // having to click Add first.
     if (r.length === 0) r.push({ key: "", value: "" });
     return r;
-  }, [value.overrides]);
+  });
 
-  function update(index: number, patch: Partial<Row>) {
-    const next = rows.map((r, i) => (i === index ? { ...r, ...patch } : r));
+  function emit(next: Row[]) {
+    setRows(next);
     onChange({ overrides: rowsToObject(next) });
   }
 
+  function update(index: number, patch: Partial<Row>) {
+    const next = rows.map((r, i) => (i === index ? { ...r, ...patch } : r));
+    emit(next);
+  }
+
   function add() {
-    const next = [...rows, { key: "", value: "" }];
-    // Adding an empty row doesn't change the overrides object (empty keys
-    // are filtered), but we still need to drive a render so the new row
-    // appears. Re-emit the existing object to trigger React's setState.
-    onChange({ overrides: rowsToObject(next) });
+    emit([...rows, { key: "", value: "" }]);
   }
 
   function remove(index: number) {
     const next = rows.filter((_, i) => i !== index);
-    onChange({ overrides: rowsToObject(next) });
+    // Keep at least one editable row visible.
+    if (next.length === 0) next.push({ key: "", value: "" });
+    emit(next);
   }
 
   return (
