@@ -32,6 +32,12 @@ interface UploadStepProps {
   // Optional override returning a Supabase project URL string. Default reads
   // NEXT_PUBLIC_SUPABASE_URL from process.env.
   supabaseUrl?: string;
+  // Supabase publishable anon key. Required at runtime for the TUS `apikey`
+  // header without which Supabase's gateway does not resolve auth.uid() and
+  // storage.objects RLS evaluates as anon -> 403. Falls back to
+  // NEXT_PUBLIC_SUPABASE_ANON_KEY in production; props form keeps tests
+  // free of env reliance.
+  supabaseAnonKey?: string;
   onUploaded?: (fileId: string) => void;
 }
 
@@ -151,6 +157,14 @@ export function UploadStep(props: UploadStepProps): React.ReactElement {
         pushMessage({ kind: "error", text: "Supabase URL not configured" });
         return;
       }
+      const supabaseAnonKey =
+        props.supabaseAnonKey ??
+        (process.env as Record<string, string | undefined>).NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      if (!supabaseAnonKey) {
+        setStatus("error");
+        pushMessage({ kind: "error", text: "Supabase anon key not configured" });
+        return;
+      }
       let endpoint: string;
       try {
         endpoint = deriveSupabaseTusEndpoint(supabaseUrl);
@@ -195,6 +209,11 @@ export function UploadStep(props: UploadStepProps): React.ReactElement {
           retryDelays: [0, 1000, 3000, 5000],
           headers: {
             authorization: `Bearer ${accessToken}`,
+            // apikey is REQUIRED by Supabase Storage gateway to resolve
+            // auth.uid() from the Bearer JWT. Without it the gateway treats
+            // the request as anon and storage.objects RLS rejects (verified
+            // 2026-05-12 against the v2_submissions_insert policy).
+            apikey: supabaseAnonKey,
           },
           metadata: {
             bucketName: "v2-submissions",

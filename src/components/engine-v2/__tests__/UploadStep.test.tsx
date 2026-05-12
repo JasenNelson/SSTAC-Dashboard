@@ -105,6 +105,7 @@ async function triggerUpload(plan: FetchPlan, TusCtor = FakeTusUpload) {
       tusUploadCtor={TusCtor as any}
       fetchImpl={fetchImpl}
       supabaseUrl="https://demoproject.supabase.co"
+      supabaseAnonKey="test-anon-key"
     />,
   );
   const input = screen.getByTestId("upload-step-input") as HTMLInputElement;
@@ -485,6 +486,7 @@ describe("UploadStep - POST /files/complete payload contract (regression)", () =
         tusUploadCtor={FakeTusUpload as any}
         fetchImpl={fetchImpl}
         supabaseUrl="https://demoproject.supabase.co"
+      supabaseAnonKey="test-anon-key"
       />,
     );
     const input = screen.getByTestId("upload-step-input") as HTMLInputElement;

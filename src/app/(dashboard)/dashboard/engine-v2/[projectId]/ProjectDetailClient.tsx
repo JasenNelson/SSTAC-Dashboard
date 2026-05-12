@@ -140,6 +140,8 @@ export function ProjectDetailClient(
             <UploadStep
               projectId={project.id}
               getAccessToken={getAccessToken}
+              supabaseUrl={supabaseUrl}
+              supabaseAnonKey={supabaseAnonKey}
               onUploaded={onUploaded}
             />
           </section>
