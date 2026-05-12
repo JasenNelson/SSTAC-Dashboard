@@ -16,16 +16,20 @@ import { UploadStep } from "@/components/engine-v2/UploadStep";
 import { FileList } from "@/components/engine-v2/FileList";
 import { ExtractTriggerButton } from "@/components/engine-v2/ExtractTriggerButton";
 import { ExtractionStatusPanel } from "@/components/engine-v2/ExtractionStatusPanel";
+import { EvaluateTriggerButton } from "@/components/engine-v2/EvaluateTriggerButton";
+import { EvaluationStatusPanel } from "@/components/engine-v2/EvaluationStatusPanel";
 import type {
   V2Project,
   V2SubmissionFile,
   V2ExtractionRun,
 } from "@/lib/engine-v2/types";
+import type { V2Evaluation } from "@/lib/engine-v2/types_lane2";
 
 interface ProjectDetailClientProps {
   project: V2Project;
   initialFiles: V2SubmissionFile[];
   initialRun: V2ExtractionRun | null;
+  initialEvaluation: V2Evaluation | null;
   accessToken: string;
   supabaseUrl: string;
   supabaseAnonKey: string;
@@ -38,6 +42,7 @@ export function ProjectDetailClient(
     project,
     initialFiles,
     initialRun,
+    initialEvaluation,
     accessToken,
     supabaseUrl,
     supabaseAnonKey,
@@ -45,6 +50,8 @@ export function ProjectDetailClient(
 
   const [files, setFiles] = useState<V2SubmissionFile[]>(initialFiles);
   const [currentRun, setCurrentRun] = useState<V2ExtractionRun | null>(initialRun);
+  const [currentEvaluation, setCurrentEvaluation] =
+    useState<V2Evaluation | null>(initialEvaluation);
 
   // Lane 1 simplification: a single, server-rendered access token is sufficient
   // for the UploadStep TUS flow. Production should refresh the session
@@ -143,6 +150,46 @@ export function ProjectDetailClient(
     setCurrentRun(updated);
   }, []);
 
+  const onTriggerEvalStart = useCallback(
+    (evalId: string) => {
+      setCurrentEvaluation((prev) => {
+        if (prev && prev.id === evalId) return prev;
+        const nowIso = new Date().toISOString();
+        const skeleton: V2Evaluation = {
+          id: evalId,
+          project_id: project.id,
+          extraction_run_id: "",
+          status: "pending",
+          run_id_engine: null,
+          variant_config_hash: null,
+          evaluation_backend: "stub",
+          embedder_backend: "stub",
+          reranker_backend: "disabled",
+          model: null,
+          bench_fixture: "bench_43_full",
+          applicability_mode: "off",
+          coverage_statement: {},
+          errors: [],
+          raw_eval_result_json: null,
+          started_at: nowIso,
+          completed_at: null,
+          updated_at: nowIso,
+        };
+        return skeleton;
+      });
+    },
+    [project.id],
+  );
+
+  const onEvalPoll = useCallback((updated: V2Evaluation) => {
+    setCurrentEvaluation(updated);
+  }, []);
+
+  const hasCompletedExtraction =
+    currentRun !== null &&
+    (currentRun.status === "completed" ||
+      currentRun.status === "completed_with_errors");
+
   return (
     <div className="space-y-6">
       <header>
@@ -198,6 +245,29 @@ export function ProjectDetailClient(
               projectId={project.id}
               run={currentRun}
               onPoll={onPoll}
+            />
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
+              Evaluation
+            </h3>
+            <EvaluateTriggerButton
+              projectId={project.id}
+              currentEvaluation={currentEvaluation}
+              hasCompletedExtraction={hasCompletedExtraction}
+              onTriggerStart={onTriggerEvalStart}
+            />
+          </section>
+
+          <section>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-3">
+              Evaluation status
+            </h3>
+            <EvaluationStatusPanel
+              projectId={project.id}
+              evaluation={currentEvaluation}
+              onPoll={onEvalPoll}
             />
           </section>
         </div>

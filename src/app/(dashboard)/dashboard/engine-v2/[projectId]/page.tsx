@@ -12,6 +12,7 @@ import type {
   V2SubmissionFile,
   V2ExtractionRun,
 } from "@/lib/engine-v2/types";
+import type { V2Evaluation } from "@/lib/engine-v2/types_lane2";
 
 interface PageProps {
   // Next.js 15 App Router: params is a Promise (Finding 50-style).
@@ -59,6 +60,18 @@ export default async function ProjectDetailPage(props: PageProps) {
   const initialRun =
     runRows && runRows.length > 0 ? (runRows[0] as V2ExtractionRun) : null;
 
+  // Initial latest evaluation row for this project (may be null).
+  const { data: evalRows } = await client
+    .from("v2_evaluations")
+    .select(
+      "id, project_id, extraction_run_id, status, run_id_engine, variant_config_hash, evaluation_backend, embedder_backend, reranker_backend, model, bench_fixture, applicability_mode, coverage_statement, errors, raw_eval_result_json, started_at, completed_at, updated_at",
+    )
+    .eq("project_id", project.id)
+    .order("started_at", { ascending: false })
+    .limit(1);
+  const initialEvaluation =
+    evalRows && evalRows.length > 0 ? (evalRows[0] as V2Evaluation) : null;
+
   // Pass the session access token to the client component (Lane 1 simplification
   // per L1-5 spec). Production should refresh the token client-side.
   const { data: sessionData } = await client.auth.getSession();
@@ -72,6 +85,7 @@ export default async function ProjectDetailPage(props: PageProps) {
       project={project}
       initialFiles={initialFiles}
       initialRun={initialRun}
+      initialEvaluation={initialEvaluation}
       accessToken={accessToken}
       supabaseUrl={supabaseUrl}
       supabaseAnonKey={supabaseAnonKey}
