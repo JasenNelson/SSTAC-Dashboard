@@ -14,8 +14,9 @@
 
 import { notFound } from "next/navigation";
 import { requireAdminForServerComponent } from "@/lib/engine-v2/admin_guards";
+import { EngineV2Breadcrumbs } from "@/components/engine-v2/EngineV2Breadcrumbs";
 import { PerPolicyResultsTable } from "@/components/engine-v2/PerPolicyResultsTable";
-import { TelemetrySidebar } from "@/components/engine-v2/TelemetrySidebar";
+import { TelemetryDisclosure } from "@/components/engine-v2/TelemetryDisclosure";
 import { ExportMemoButton } from "@/components/engine-v2/ExportMemoButton";
 import { JudgmentSummaryTile } from "@/components/engine-v2/JudgmentSummaryTile";
 import type {
@@ -237,6 +238,16 @@ export default async function EvaluationResultsPage(props: PageProps) {
 
   return (
     <div className="space-y-6">
+      <EngineV2Breadcrumbs
+        segments={[
+          { label: "Engine v2", href: "/dashboard/engine-v2" },
+          {
+            label: project.name,
+            href: `/dashboard/engine-v2/${projectId}`,
+          },
+          { label: "Evaluation" },
+        ]}
+      />
       <header className="space-y-1">
         <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
           project {projectId} / evaluation {evalId}
@@ -295,7 +306,7 @@ export default async function EvaluationResultsPage(props: PageProps) {
           </section>
         </div>
         <aside data-testid="telemetry-sidebar-slot">
-          <TelemetrySidebar evaluation={evaluation} />
+          <TelemetryDisclosure evaluation={evaluation} />
         </aside>
       </div>
     </div>

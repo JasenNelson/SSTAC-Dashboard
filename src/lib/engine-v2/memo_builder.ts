@@ -17,6 +17,18 @@
 // ASCII-only in code; the produced Word document uses plain ASCII headers
 // per CLAUDE.md (memo body may contain Unicode from upstream content but
 // builder code introduces no smart quotes / em dashes).
+//
+// Typography (owner feedback 2026-05-12):
+//   - Single font family throughout: Times New Roman.
+//   - Body 11pt, headings 14pt, title 18pt.
+//   - Paragraph spacing-after on every paragraph so text is not jammed.
+//   - Table cells have visible padding.
+// Content hygiene (owner feedback 2026-05-12):
+//   - Hide raw UUIDs (project_id, evaluation_id, run_id_engine,
+//     variant_config_hash) and internal-only fields (backend, bench
+//     fixture, generator version) from the rendered memo.
+//   - Project header uses project.name; evaluation header uses an
+//     en-US-formatted completion date.
 
 import { createHash } from "crypto";
 import {
@@ -43,6 +55,22 @@ import type {
 import type { V2Project } from "./types";
 
 export const MEMO_GENERATOR_VERSION = "lane2b-memo-v1";
+
+// Typography constants. docx sizes are in half-points.
+export const MEMO_FONT_FAMILY = "Times New Roman";
+const BODY_SIZE_HP = 22; // 11pt
+const HEADING_SIZE_HP = 28; // 14pt
+const TITLE_SIZE_HP = 36; // 18pt
+const FOOTER_SIZE_HP = 18; // 9pt
+// Paragraph spacing-after (twips). 120 twips = ~6pt.
+const PARA_SPACING_AFTER = 120;
+const HEADING_SPACING_BEFORE = 240; // ~12pt
+const HEADING_SPACING_AFTER = 120; // ~6pt
+// Table cell margins (twips).
+const CELL_MARGIN_TOP = 60;
+const CELL_MARGIN_BOTTOM = 60;
+const CELL_MARGIN_LEFT = 80;
+const CELL_MARGIN_RIGHT = 80;
 
 export interface MemoBuilderInput {
   project: Pick<V2Project, "id" | "name">;
@@ -71,19 +99,15 @@ const TIER_ORDER: readonly JudgmentTier[] = [
   "TIER_3_STATUTORY",
 ];
 
+// en-US locale-locked date formatter (date-only; no time / timezone noise).
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
-  month: "short",
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: false,
+  month: "long",
+  day: "numeric",
   timeZone: "UTC",
-  timeZoneName: "short",
 });
 
-function formatTimestamp(iso: string | null | undefined): string {
+function formatDate(iso: string | null | undefined): string {
   if (!iso) return "n/a";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "n/a";
@@ -166,6 +190,60 @@ function assertTierDiscretion(
   }
 }
 
+// --- Typography helpers ----------------------------------------------------
+
+interface BodyTextOpts {
+  bold?: boolean;
+  italics?: boolean;
+  color?: string;
+  size?: number;
+}
+
+function bodyText(text: string, opts: BodyTextOpts = {}): TextRun {
+  return new TextRun({
+    text,
+    font: MEMO_FONT_FAMILY,
+    size: opts.size ?? BODY_SIZE_HP,
+    bold: opts.bold ?? false,
+    italics: opts.italics ?? false,
+    color: opts.color,
+  });
+}
+
+function headingText(text: string, size: number = HEADING_SIZE_HP): TextRun {
+  return new TextRun({
+    text,
+    font: MEMO_FONT_FAMILY,
+    size,
+    bold: true,
+  });
+}
+
+function bodyParagraph(
+  children: TextRun[],
+  opts: { spacingAfter?: number } = {},
+): Paragraph {
+  return new Paragraph({
+    spacing: { after: opts.spacingAfter ?? PARA_SPACING_AFTER },
+    children,
+  });
+}
+
+function headingParagraph(
+  text: string,
+  level: (typeof HeadingLevel)[keyof typeof HeadingLevel],
+): Paragraph {
+  const size = level === HeadingLevel.TITLE ? TITLE_SIZE_HP : HEADING_SIZE_HP;
+  return new Paragraph({
+    heading: level,
+    alignment: AlignmentType.LEFT,
+    spacing: { before: HEADING_SPACING_BEFORE, after: HEADING_SPACING_AFTER },
+    children: [headingText(text, size)],
+  });
+}
+
+// --- Tables ---------------------------------------------------------------
+
 function thinBorder() {
   return {
     top: { style: BorderStyle.SINGLE, size: 4, color: "999999" },
@@ -182,9 +260,18 @@ function cell(text: string, opts?: { bold?: boolean; widthPct?: number }): Table
     width: opts?.widthPct
       ? { size: opts.widthPct, type: WidthType.PERCENTAGE }
       : undefined,
+    margins: {
+      top: CELL_MARGIN_TOP,
+      bottom: CELL_MARGIN_BOTTOM,
+      left: CELL_MARGIN_LEFT,
+      right: CELL_MARGIN_RIGHT,
+    },
     children: [
       new Paragraph({
-        children: [new TextRun({ text: text === "" ? " " : text, bold: opts?.bold ?? false })],
+        spacing: { after: 0 },
+        children: [
+          bodyText(text === "" ? " " : text, { bold: opts?.bold ?? false }),
+        ],
       }),
     ],
   });
@@ -206,15 +293,9 @@ function buildTable(rows: TableRow[]): Table {
 }
 
 function emptySectionParagraph(): Paragraph {
-  return new Paragraph({
-    children: [
-      new TextRun({
-        text: "(no results in this tier)",
-        italics: true,
-        color: "666666",
-      }),
-    ],
-  });
+  return bodyParagraph([
+    bodyText("(no results in this tier)", { italics: true, color: "666666" }),
+  ]);
 }
 
 function pickString(v: unknown): string {
@@ -223,14 +304,30 @@ function pickString(v: unknown): string {
   return String(v);
 }
 
+// --- Tier sections --------------------------------------------------------
+
+const TIER_1_EXPLAINER =
+  "These regulatory items are binary requirements (must / shall / required). " +
+  "The AI provided an initial determination; the reviewer's judgment is the " +
+  "final position.";
+
+const TIER_2_EXPLAINER =
+  "These items require professional judgment. The AI can only flag potential " +
+  "deficiencies; a qualified professional (QP) must make the adequacy " +
+  "determination.";
+
+const TIER_3_EXPLAINER =
+  "These items involve statutory discretion (Director, Statutory Decision " +
+  "Maker). The AI provides observations only; final adequacy is determined " +
+  "by the SDM / Crown.";
+
 function buildTier1Section(rows: JoinedRow[]): Array<Paragraph | Table> {
-  const heading = new Paragraph({
-    heading: HeadingLevel.HEADING_2,
-    children: [
-      new TextRun({ text: "Tier 1 (Binary) Findings", bold: true }),
-    ],
-  });
-  if (rows.length === 0) return [heading, emptySectionParagraph()];
+  const heading = headingParagraph(
+    "Tier 1 (Binary) Findings",
+    HeadingLevel.HEADING_2,
+  );
+  const explainer = bodyParagraph([bodyText(TIER_1_EXPLAINER)]);
+  if (rows.length === 0) return [heading, explainer, emptySectionParagraph()];
   const header = buildHeaderRow([
     "Policy ID",
     "AI Suggestion",
@@ -247,26 +344,16 @@ function buildTier1Section(rows: JoinedRow[]): Array<Paragraph | Table> {
       ],
     }),
   );
-  return [heading, buildTable([header, ...body])];
+  return [heading, explainer, buildTable([header, ...body])];
 }
 
 function buildTier2Section(rows: JoinedRow[]): Array<Paragraph | Table> {
-  const heading = new Paragraph({
-    heading: HeadingLevel.HEADING_2,
-    children: [
-      new TextRun({ text: "Tier 2 (Professional Judgment) Flagged Items", bold: true }),
-    ],
-  });
-  const note = new Paragraph({
-    children: [
-      new TextRun({
-        text:
-          "Note: Professional judgment tier; adequacy determination requires a Qualified Professional.",
-        italics: true,
-      }),
-    ],
-  });
-  if (rows.length === 0) return [heading, note, emptySectionParagraph()];
+  const heading = headingParagraph(
+    "Tier 2 (Professional Judgment) Flagged Items",
+    HeadingLevel.HEADING_2,
+  );
+  const explainer = bodyParagraph([bodyText(TIER_2_EXPLAINER)]);
+  if (rows.length === 0) return [heading, explainer, emptySectionParagraph()];
   const header = buildHeaderRow([
     "Policy ID",
     "AI Flag",
@@ -283,26 +370,16 @@ function buildTier2Section(rows: JoinedRow[]): Array<Paragraph | Table> {
       ],
     }),
   );
-  return [heading, note, buildTable([header, ...body])];
+  return [heading, explainer, buildTable([header, ...body])];
 }
 
 function buildTier3Section(rows: JoinedRow[]): Array<Paragraph | Table> {
-  const heading = new Paragraph({
-    heading: HeadingLevel.HEADING_2,
-    children: [
-      new TextRun({ text: "Tier 3 (Statutory Discretion) Observations", bold: true }),
-    ],
-  });
-  const note = new Paragraph({
-    children: [
-      new TextRun({
-        text:
-          "Note: Statutory discretion; adequacy determination requires the Statutory Decision Maker (SDM).",
-        italics: true,
-      }),
-    ],
-  });
-  if (rows.length === 0) return [heading, note, emptySectionParagraph()];
+  const heading = headingParagraph(
+    "Tier 3 (Statutory Discretion) Observations",
+    HeadingLevel.HEADING_2,
+  );
+  const explainer = bodyParagraph([bodyText(TIER_3_EXPLAINER)]);
+  if (rows.length === 0) return [heading, explainer, emptySectionParagraph()];
   const header = buildHeaderRow(["Policy ID", "Observation", "Notes"]);
   const body = rows.map((r) =>
     new TableRow({
@@ -316,11 +393,12 @@ function buildTier3Section(rows: JoinedRow[]): Array<Paragraph | Table> {
       ],
     }),
   );
-  return [heading, note, buildTable([header, ...body])];
+  return [heading, explainer, buildTable([header, ...body])];
 }
 
+// --- Overview / title / footer -------------------------------------------
+
 function buildOverviewSection(
-  project: MemoBuilderInput["project"],
   evaluation: V2Evaluation,
 ): Array<Paragraph | Table> {
   const coverage = (evaluation.coverage_statement ?? {}) as EvalCoverageStatement;
@@ -329,42 +407,15 @@ function buildOverviewSection(
   const deferred = coverage.deferred ?? 0;
   const errored = coverage.error ?? 0;
 
-  const heading = new Paragraph({
-    heading: HeadingLevel.HEADING_2,
-    children: [new TextRun({ text: "Overview", bold: true })],
-  });
-  const meta = new Paragraph({
-    children: [
-      new TextRun({ text: "Status: ", bold: true }),
-      new TextRun({ text: evaluation.status }),
-      new TextRun({ text: "   Backend: ", bold: true }),
-      new TextRun({ text: evaluation.evaluation_backend }),
-      new TextRun({ text: "   Bench: ", bold: true }),
-      new TextRun({ text: evaluation.bench_fixture }),
-    ],
-  });
-  const dates = new Paragraph({
-    children: [
-      new TextRun({ text: "Started: ", bold: true }),
-      new TextRun({ text: formatTimestamp(evaluation.started_at) }),
-      new TextRun({ text: "   Completed: ", bold: true }),
-      new TextRun({ text: formatTimestamp(evaluation.completed_at) }),
-    ],
-  });
-  const projectLine = new Paragraph({
-    children: [
-      new TextRun({ text: "Project: ", bold: true }),
-      new TextRun({ text: project.name }),
-      new TextRun({ text: "   Project ID: " }),
-      new TextRun({ text: project.id, font: "Consolas" }),
-    ],
-  });
-  const evalLine = new Paragraph({
-    children: [
-      new TextRun({ text: "Evaluation ID: " }),
-      new TextRun({ text: evaluation.id, font: "Consolas" }),
-    ],
-  });
+  const heading = headingParagraph("Overview", HeadingLevel.HEADING_2);
+
+  // Coverage prose: human-readable summary; the table below mirrors it.
+  const coverageProse = bodyParagraph([
+    bodyText("Coverage: ", { bold: true }),
+    bodyText(
+      `${evaluated} of ${total} policies evaluated, ${deferred} deferred, ${errored} errored.`,
+    ),
+  ]);
 
   const coverageHeader = buildHeaderRow(["Total", "Evaluated", "Deferred", "Errored"]);
   const coverageRow = new TableRow({
@@ -376,83 +427,47 @@ function buildOverviewSection(
     ],
   });
 
-  return [
-    heading,
-    projectLine,
-    evalLine,
-    meta,
-    dates,
-    buildTable([coverageHeader, coverageRow]),
-  ];
-}
-
-function buildTelemetrySection(evaluation: V2Evaluation): Array<Paragraph | Table> {
-  const heading = new Paragraph({
-    heading: HeadingLevel.HEADING_2,
-    children: [new TextRun({ text: "Telemetry", bold: true })],
-  });
-  const raw = (evaluation.raw_eval_result_json ?? {}) as Record<string, unknown>;
-  const corpusVersion = pickString(raw["corpus_version"]) || "n/a";
-  const gitSha = pickString(raw["git_sha_at_run"]) || "n/a";
-  const embedder = evaluation.embedder_backend || "n/a";
-  const model = evaluation.model || "n/a";
-
-  const header = buildHeaderRow(["Field", "Value"]);
-  const rows: TableRow[] = [
-    new TableRow({
-      children: [cell("corpus_version", { bold: true, widthPct: 30 }), cell(corpusVersion, { widthPct: 70 })],
-    }),
-    new TableRow({
-      children: [cell("embedder_backend", { bold: true }), cell(embedder)],
-    }),
-    new TableRow({
-      children: [cell("model", { bold: true }), cell(model)],
-    }),
-    new TableRow({
-      children: [cell("git_sha_at_run", { bold: true }), cell(gitSha)],
-    }),
-  ];
-  return [heading, buildTable([header, ...rows])];
+  return [heading, coverageProse, buildTable([coverageHeader, coverageRow])];
 }
 
 function buildTitleParagraphs(
   project: MemoBuilderInput["project"],
   evaluation: V2Evaluation,
 ): Paragraph[] {
-  return [
-    new Paragraph({
-      heading: HeadingLevel.TITLE,
-      alignment: AlignmentType.LEFT,
-      children: [
-        new TextRun({
-          text: `${project.name}: Regulatory Review Memo`,
-          bold: true,
-        }),
-      ],
-    }),
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: `Evaluation ${evaluation.id} // ${evaluation.bench_fixture}`,
-          italics: true,
-        }),
-      ],
-    }),
-  ];
+  const completionIso =
+    evaluation.completed_at ?? evaluation.updated_at ?? evaluation.started_at;
+  const title = new Paragraph({
+    heading: HeadingLevel.TITLE,
+    alignment: AlignmentType.LEFT,
+    spacing: { before: 0, after: HEADING_SPACING_AFTER },
+    children: [
+      headingText(`${project.name}: Regulatory Review Memo`, TITLE_SIZE_HP),
+    ],
+  });
+  const subtitle = bodyParagraph(
+    [
+      bodyText(`Evaluation completed ${formatDate(completionIso)}`, {
+        italics: true,
+        color: "666666",
+      }),
+    ],
+    { spacingAfter: HEADING_SPACING_AFTER },
+  );
+  return [title, subtitle];
 }
 
 function buildFooterParagraphs(generatedAt: Date): Paragraph[] {
   return [
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: `Generated by ${MEMO_GENERATOR_VERSION} at ${DATE_FORMATTER.format(generatedAt)} (locale en-US)`,
+    bodyParagraph(
+      [
+        bodyText(`Generated ${DATE_FORMATTER.format(generatedAt)}`, {
           italics: true,
           color: "666666",
-          size: 18,
+          size: FOOTER_SIZE_HP,
         }),
       ],
-    }),
+      { spacingAfter: 0 },
+    ),
   ];
 }
 
@@ -466,15 +481,15 @@ export async function buildMemo(
   assertTierDiscretion(buckets);
 
   const titleParas = buildTitleParagraphs(project, evaluation);
-  const overview = buildOverviewSection(project, evaluation);
+  const overview = buildOverviewSection(evaluation);
   const t1 = buildTier1Section(buckets.get("TIER_1_BINARY") ?? []);
   const t2 = buildTier2Section(buckets.get("TIER_2_PROFESSIONAL") ?? []);
   const t3 = buildTier3Section(buckets.get("TIER_3_STATUTORY") ?? []);
-  const telemetry = buildTelemetrySection(evaluation);
-  // Use a deterministic generated_at derived from the snapshot hash so identical
-  // inputs produce identical bytes. We do this by reusing evaluation.updated_at
-  // when present; falls back to a fixed epoch only if updated_at is empty.
-  const generatedAtIso = evaluation.updated_at || evaluation.started_at;
+  // Use a deterministic generated_at derived from evaluation timestamps so
+  // identical inputs produce identical bytes. Falls back to a fixed epoch
+  // only if no usable timestamp is present.
+  const generatedAtIso =
+    evaluation.updated_at ?? evaluation.completed_at ?? evaluation.started_at;
   const generatedAtDate = generatedAtIso
     ? new Date(generatedAtIso)
     : new Date(0);
@@ -485,7 +500,17 @@ export async function buildMemo(
   const doc = new Document({
     creator: MEMO_GENERATOR_VERSION,
     title: `${project.name}: Regulatory Review Memo`,
-    description: `engine_v2 evaluation ${evaluation.id}`,
+    description: `engine_v2 evaluation`,
+    styles: {
+      default: {
+        document: {
+          run: {
+            font: MEMO_FONT_FAMILY,
+            size: BODY_SIZE_HP,
+          },
+        },
+      },
+    },
     sections: [
       {
         properties: {},
@@ -495,7 +520,6 @@ export async function buildMemo(
           ...t1,
           ...t2,
           ...t3,
-          ...telemetry,
           ...footer,
         ],
       },

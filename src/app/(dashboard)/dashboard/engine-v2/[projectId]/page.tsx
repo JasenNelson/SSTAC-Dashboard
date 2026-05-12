@@ -6,6 +6,7 @@
 
 import { notFound } from "next/navigation";
 import { requireAdminForServerComponent } from "@/lib/engine-v2/admin_guards";
+import { EngineV2Breadcrumbs } from "@/components/engine-v2/EngineV2Breadcrumbs";
 import { ProjectDetailClient } from "./ProjectDetailClient";
 import type {
   V2Project,
@@ -81,14 +82,22 @@ export default async function ProjectDetailPage(props: PageProps) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
   return (
-    <ProjectDetailClient
-      project={project}
-      initialFiles={initialFiles}
-      initialRun={initialRun}
-      initialEvaluation={initialEvaluation}
-      accessToken={accessToken}
-      supabaseUrl={supabaseUrl}
-      supabaseAnonKey={supabaseAnonKey}
-    />
+    <div className="space-y-4">
+      <EngineV2Breadcrumbs
+        segments={[
+          { label: "Engine v2", href: "/dashboard/engine-v2" },
+          { label: project.name },
+        ]}
+      />
+      <ProjectDetailClient
+        project={project}
+        initialFiles={initialFiles}
+        initialRun={initialRun}
+        initialEvaluation={initialEvaluation}
+        accessToken={accessToken}
+        supabaseUrl={supabaseUrl}
+        supabaseAnonKey={supabaseAnonKey}
+      />
+    </div>
   );
 }

@@ -3,6 +3,7 @@
 
 import { requireAdminForServerComponent } from "@/lib/engine-v2/admin_guards";
 import { WizardClient } from "@/components/engine-v2/wizard/WizardClient";
+import { EngineV2Breadcrumbs } from "@/components/engine-v2/EngineV2Breadcrumbs";
 
 export default async function NewProjectPage() {
   // Redirects on failure (never returns); ensures only admins can reach the
@@ -12,6 +13,12 @@ export default async function NewProjectPage() {
 
   return (
     <div className="space-y-6">
+      <EngineV2Breadcrumbs
+        segments={[
+          { label: "Engine v2", href: "/dashboard/engine-v2" },
+          { label: "New project" },
+        ]}
+      />
       <div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
           New project

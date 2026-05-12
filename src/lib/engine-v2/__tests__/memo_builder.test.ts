@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
+import JSZip from "jszip";
 
 import {
+  MEMO_FONT_FAMILY,
   MEMO_GENERATOR_VERSION,
   MemoBuildInvariantError,
   buildMemo,
@@ -126,6 +128,15 @@ function happyPathInput(): MemoBuilderInput {
 
 const HEX64 = /^[0-9a-f]{64}$/;
 
+// Read the inner document.xml from a .docx (zip) blob so tests can assert
+// against the rendered Word XML.
+async function readDocumentXml(bytes: Uint8Array): Promise<string> {
+  const zip = await JSZip.loadAsync(bytes);
+  const entry = zip.file("word/document.xml");
+  if (!entry) throw new Error("document.xml not present in docx");
+  return await entry.async("string");
+}
+
 describe("buildMemo", () => {
   it("happy path: produces non-empty bytes + hex hashes + generator tag", async () => {
     const out = await buildMemo(happyPathInput());
@@ -211,6 +222,77 @@ describe("buildMemo", () => {
     expect(out.bytes[1]).toBe(0x4b);
     expect(out.contentSha256).toMatch(HEX64);
     expect(out.judgmentSnapshotHash).toMatch(HEX64);
+  });
+});
+
+describe("memo typography and content polish", () => {
+  it("uses Times New Roman font family in the rendered document", async () => {
+    const out = await buildMemo(happyPathInput());
+    const xml = await readDocumentXml(out.bytes);
+    expect(MEMO_FONT_FAMILY).toBe("Times New Roman");
+    // docx writes font assignments as w:rFonts entries on runs. We expect
+    // the font name to appear in the rendered XML.
+    expect(xml).toContain("Times New Roman");
+  });
+
+  it("does NOT leak raw UUIDs (project_id, evaluation_id) into the rendered body", async () => {
+    const input = happyPathInput();
+    const out = await buildMemo(input);
+    const xml = await readDocumentXml(out.bytes);
+    expect(xml).not.toContain(input.project.id);
+    expect(xml).not.toContain(input.evaluation.id);
+  });
+
+  it("does NOT leak internal-only fields (backend, bench, run_id_engine, variant_config_hash, generator version) into the body", async () => {
+    const out = await buildMemo(happyPathInput());
+    const xml = await readDocumentXml(out.bytes);
+    expect(xml).not.toContain("bench_43_full");
+    expect(xml).not.toContain("run_abc");
+    expect(xml).not.toContain("vch_abc");
+    // The literal word "Backend" appeared as a header label in the prior
+    // memo layout. It must not appear anywhere in the new body.
+    expect(xml).not.toContain("Backend");
+    expect(xml).not.toContain("Bench");
+    // generator version must not appear in user-visible body
+    expect(xml).not.toContain(MEMO_GENERATOR_VERSION);
+    // telemetry table labels from the prior memo layout
+    expect(xml).not.toContain("corpus_version");
+    expect(xml).not.toContain("git_sha_at_run");
+    expect(xml).not.toContain("embedder_backend");
+  });
+
+  it("shows project name and an en-US completion date in the title block", async () => {
+    const out = await buildMemo(happyPathInput());
+    const xml = await readDocumentXml(out.bytes);
+    expect(xml).toContain("Test Project");
+    // en-US locale-locked, date-only formatting of 2026-05-12T10:30:00.000Z
+    // in UTC -> "May 12, 2026".
+    expect(xml).toContain("May 12, 2026");
+    expect(xml).toContain("Evaluation completed");
+  });
+
+  it("includes the tier explainer paragraphs", async () => {
+    const out = await buildMemo(happyPathInput());
+    const xml = await readDocumentXml(out.bytes);
+    expect(xml).toContain("binary requirements");
+    expect(xml).toContain("qualified professional");
+    expect(xml).toContain("statutory discretion");
+  });
+
+  it("renders a single-line footer of the form 'Generated <date>' without generator version or hash", async () => {
+    const out = await buildMemo(happyPathInput());
+    const xml = await readDocumentXml(out.bytes);
+    expect(xml).toContain("Generated May 12, 2026");
+    expect(xml).not.toContain("locale en-US");
+  });
+
+  it("renders a coverage prose line summarizing evaluated / deferred / errored counts", async () => {
+    const out = await buildMemo(happyPathInput());
+    const xml = await readDocumentXml(out.bytes);
+    expect(xml).toContain("40");
+    expect(xml).toContain("43");
+    expect(xml).toContain("deferred");
+    expect(xml).toContain("errored");
   });
 });
 
