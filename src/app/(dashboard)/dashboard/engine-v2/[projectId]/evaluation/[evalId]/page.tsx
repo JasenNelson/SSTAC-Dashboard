@@ -17,6 +17,7 @@ import { requireAdminForServerComponent } from "@/lib/engine-v2/admin_guards";
 import { PerPolicyResultsTable } from "@/components/engine-v2/PerPolicyResultsTable";
 import { TelemetrySidebar } from "@/components/engine-v2/TelemetrySidebar";
 import { ExportMemoButton } from "@/components/engine-v2/ExportMemoButton";
+import { JudgmentSummaryTile } from "@/components/engine-v2/JudgmentSummaryTile";
 import type {
   V2Evaluation,
   V2PerPolicyResult,
@@ -276,6 +277,9 @@ export default async function EvaluationResultsPage(props: PageProps) {
         </div>
       </header>
       <CoverageSummary coverage={coverage} />
+      {judgments ? (
+        <JudgmentSummaryTile results={results} judgments={judgments} />
+      ) : null}
       <ErrorsBlock errors={errors} />
       {/* L2b-4: 2-column layout with TelemetrySidebar on the right (xl+). */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
