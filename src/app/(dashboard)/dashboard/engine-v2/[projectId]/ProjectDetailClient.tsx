@@ -196,9 +196,8 @@ export function ProjectDetailClient(
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
           {project.name}
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono">
-          project_id {project.id}
-        </p>
+        {/* Project UUID intentionally hidden from end users -- meaningless
+            to reviewers; available on the breadcrumb URL for engineers. */}
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

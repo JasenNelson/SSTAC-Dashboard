@@ -59,9 +59,19 @@ export function EvaluateTriggerButton(
     kind: "info" | "warn" | "error";
     text: string;
   } | null>(null);
-  const [selectedBackend, setSelectedBackend] = useState<"stub" | "live">(
-    "stub",
-  );
+  // Live is the only user-facing backend. Stub mode existed only as a wiring
+  // placeholder during development; reviewers should always see real verdicts.
+  // To force stub for a single trigger (debugging), append `?evalBackend=stub`
+  // to the URL.
+  const [selectedBackend] = useState<"stub" | "live">(() => {
+    if (typeof window === "undefined") return "live";
+    try {
+      const qp = new URLSearchParams(window.location.search).get("evalBackend");
+      return qp === "stub" ? "stub" : "live";
+    } catch {
+      return "live";
+    }
+  });
 
   const hasNonTerminalEval =
     currentEvaluation !== null && !isTerminal(currentEvaluation);
@@ -194,33 +204,20 @@ export function EvaluateTriggerButton(
 
   return (
     <div data-testid="evaluate-trigger" className="space-y-2">
-      <div
-        data-testid="evaluate-backend-selector"
-        className="flex gap-3 text-xs text-slate-700 dark:text-slate-200"
-      >
-        <label className="inline-flex items-center gap-1">
-          <input
-            type="radio"
-            name="eval-backend"
-            value="stub"
-            checked={selectedBackend === "stub"}
-            onChange={() => setSelectedBackend("stub")}
-            disabled={busy}
-          />
-          Stub (fast, placeholder verdicts)
-        </label>
-        <label className="inline-flex items-center gap-1">
-          <input
-            type="radio"
-            name="eval-backend"
-            value="live"
-            checked={selectedBackend === "live"}
-            onChange={() => setSelectedBackend("live")}
-            disabled={busy}
-          />
-          Live (Ollama; real verdicts; ~30-90s)
-        </label>
-      </div>
+      {selectedBackend === "stub" ? (
+        <div
+          data-testid="evaluate-backend-debug-note"
+          className="text-xs text-amber-700 dark:text-amber-300"
+        >
+          Debug mode: stub backend (no real verdicts). Remove
+          <code>?evalBackend=stub</code> from the URL to use live.
+        </div>
+      ) : (
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Real evaluation against the BC contaminated sites policy KB (43
+          policies). Takes 30-90 seconds with local Ollama.
+        </p>
+      )}
       <button
         type="button"
         data-testid="evaluate-trigger-button"
