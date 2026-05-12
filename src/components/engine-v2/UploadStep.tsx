@@ -102,12 +102,21 @@ function classifyOrphanFlag(parsed: unknown): FlagClass {
 }
 
 function shouldUseTestTimeout(): boolean {
-  // Both gates must fail-closed in production builds.
-  const vercelEnv = (
-    process.env as Record<string, string | undefined>
-  ).NEXT_PUBLIC_VERCEL_ENV;
+  // Defense in depth: never fire in production builds.
+  if (typeof window === "undefined") return false;
+  const vercelEnv = (process.env as Record<string, string | undefined>)
+    .NEXT_PUBLIC_VERCEL_ENV;
   const nodeEnv = (process.env as Record<string, string | undefined>).NODE_ENV;
-  return vercelEnv !== "production" && nodeEnv !== "production";
+  if (vercelEnv === "production" || nodeEnv === "production") return false;
+  // Only fire when explicitly opted in via `?testAbortMs=...` query param.
+  // This is the smoke-step-13b deterministic AMBIGUOUS-path coverage
+  // (Findings 70 + 79). Normal local dev runs without this so the AMBIGUOUS
+  // recovery path doesn't trigger on every legitimate upload.
+  try {
+    return new URLSearchParams(window.location.search).has("testAbortMs");
+  } catch {
+    return false;
+  }
 }
 
 export function UploadStep(props: UploadStepProps): React.ReactElement {
