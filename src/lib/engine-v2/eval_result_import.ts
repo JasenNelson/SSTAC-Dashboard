@@ -58,6 +58,8 @@ function asRecord(v: unknown): Record<string, unknown> | null {
 }
 
 // Build the row payload that v2_per_policy_results expects.
+// stage and packet_id default to "" (NOT NULL columns per Lane 2a unique-index
+// hotfix) so the upsert onConflict tuple is always present.
 function toPerPolicyRow(
   evaluationId: string,
   raw: Record<string, unknown>,
@@ -65,8 +67,8 @@ function toPerPolicyRow(
   return {
     evaluation_id: evaluationId,
     policy_id: String(raw.policy_id ?? ""),
-    stage: asString(raw.stage),
-    packet_id: asString(raw.packet_id),
+    stage: asString(raw.stage) ?? "",
+    packet_id: asString(raw.packet_id) ?? "",
     tier: asString(raw.tier),
     verdict_suggestion: asString(raw.verdict_suggestion),
     ai_suggestion: asString(raw.ai_suggestion),

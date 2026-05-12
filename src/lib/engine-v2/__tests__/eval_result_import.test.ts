@@ -292,8 +292,11 @@ describe("importEvalResult", () => {
     expect(rows[0]).toMatchObject({
       evaluation_id: EVAL_ID,
       policy_id: "CSR-NULL",
-      stage: null,
-      packet_id: null,
+      // stage and packet_id default to "" (NOT NULL columns per Lane 2a hotfix)
+      // so the unique index (evaluation_id, policy_id, stage, packet_id) always
+      // resolves on the upsert onConflict tuple.
+      stage: "",
+      packet_id: "",
       tier: null,
       verdict_suggestion: null,
       confidence: null,
