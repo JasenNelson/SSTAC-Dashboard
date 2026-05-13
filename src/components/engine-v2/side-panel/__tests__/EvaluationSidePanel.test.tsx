@@ -5,13 +5,16 @@
 //   - Cmd+K opens the panel; Cmd+J toggles; Esc closes.
 //   - Tab strip uses role=tablist + role=tab + aria-selected; arrow
 //     keys cycle tabs.
-//   - Ask AI / Search submission tabs show their placeholder bodies.
+//   - Ask AI tab shows the Phase D placeholder body (still pending).
+//   - Search submission tab mounts the live SubmissionSearchTab (Phase C
+//     landed; mocked here so Phase A shell tests stay decoupled from
+//     Phase C network fetches).
 //   - Search policies tab renders PolicySearchPanel (smoke).
 //   - aria-expanded on the collapse toggle.
 //   - PolicySearchPanel is mounted with `projectId` only (no extra
 //     props introduced by the wrapper).
-//   - Placeholder smoke for AskAiTab and SubmissionSearchTab so the
-//     Phase C/D mount contract has coverage before those phases land.
+//   - Placeholder smoke for AskAiTab so the Phase D mount contract has
+//     coverage before that phase lands.
 //   - Drawer fallback below 1200px viewport switches data-side-panel-mode
 //     to "drawer"; resize back to >=1200px switches to "split".
 //   - 150ms debounce coalesces back-to-back resize events; only the last
@@ -26,13 +29,25 @@ import React from "react";
 import { EvaluationSidePanel } from "../EvaluationSidePanel";
 import { SidePanelProvider } from "../SidePanelContext";
 import { AskAiTab } from "../AskAiTab";
-import { SubmissionSearchTab } from "../SubmissionSearchTab";
 
 // Mock the relocated PolicySearchPanel so the Phase A shell test
 // doesn't depend on its internal network-fetching behavior.
 vi.mock("@/components/engine-v2/PolicySearchPanel", () => ({
   PolicySearchPanel: ({ projectId }: { projectId: string }) => (
     <div data-testid="policy-search-panel-stub" data-project-id={projectId}>
+      stub
+    </div>
+  ),
+}));
+
+// Mock the Phase C live SubmissionSearchTab so the Phase A shell test
+// doesn't depend on its indexing-status fetch on mount.
+vi.mock("../SubmissionSearchTab", () => ({
+  SubmissionSearchTab: ({ evaluationId }: { evaluationId: string }) => (
+    <div
+      data-testid="submission-search-tab-stub"
+      data-evaluation-id={evaluationId}
+    >
       stub
     </div>
   ),
@@ -246,13 +261,13 @@ describe("EvaluationSidePanel (Phase A) -- tab content", () => {
     ).toHaveTextContent("Ask AI is coming in Phase D");
   });
 
-  it("Search submission tab shows the Phase C placeholder copy", () => {
+  it("Search submission tab mounts the live SubmissionSearchTab (Phase C)", () => {
     renderPanel();
     fireEvent.click(screen.getByTestId("side-panel-expand-toggle"));
     fireEvent.click(screen.getByTestId("side-panel-tab-search-sub"));
-    expect(
-      screen.getByTestId("submission-search-tab-placeholder"),
-    ).toHaveTextContent("Submission search is coming in Phase C");
+    const stub = screen.getByTestId("submission-search-tab-stub");
+    expect(stub).toBeInTheDocument();
+    expect(stub).toHaveAttribute("data-evaluation-id", EVAL_ID);
   });
 
   it("Search policies tab mounts PolicySearchPanel with projectId only", () => {
@@ -273,12 +288,11 @@ describe("Placeholder tabs (Phase C/D mount contract smoke)", () => {
     ).toHaveTextContent("Ask AI is coming in Phase D");
   });
 
-  it("SubmissionSearchTab renders the Phase C placeholder body in isolation", () => {
-    render(<SubmissionSearchTab evaluationId={EVAL_ID} />);
-    expect(
-      screen.getByTestId("submission-search-tab-placeholder"),
-    ).toHaveTextContent("Submission search is coming in Phase C");
-  });
+  // Phase C landed and replaced the placeholder body. Live coverage of
+  // SubmissionSearchTab lives in SubmissionSearchTab.test.tsx; the
+  // mount-contract smoke for it is the wiring assertion above (via
+  // the stub). Only the AskAiTab placeholder smoke remains here until
+  // Phase D lands.
 });
 
 describe("EvaluationSidePanel (Phase A) -- drawer fallback (ED-2d4-10)", () => {
