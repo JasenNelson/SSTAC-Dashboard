@@ -347,11 +347,13 @@ describe("PerPolicyResultsTable AI Determination + policy text + tech disclosure
   });
 });
 
-describe("PerPolicyResultsTable evidence citations policy_id fallback", () => {
-  // Codex Round 1 fix (Lane 2c retro): when evidence_packet is empty and
-  // evidence_slices is non-null with slices matching by policy_id, render
-  // those slices as evidence with a "Linked by policy_id" badge instead of
-  // showing the misleading "No evidence items emitted" message.
+describe("PerPolicyResultsTable evidence citations regulatory invariant (Phase 2.7)", () => {
+  // Owner directive 2026-05-12: evidence citations on the per-policy results
+  // table render ONLY submission content. Policy KB chunks
+  // (index_side === "corpus") are NEVER rendered here, regardless of how
+  // matched. These tests are regression guards -- if a future commit
+  // re-adds a fallback that surfaces policy-side content (e.g. the
+  // Phase 2 Fix 4 policy_id fallback), they MUST fail.
 
   function makeEmptyPacketResult(): V2PerPolicyResult {
     return makeResult({
@@ -362,11 +364,33 @@ describe("PerPolicyResultsTable evidence citations policy_id fallback", () => {
     });
   }
 
-  it("renders slices matched by policy_id when evidence_packet is empty", () => {
+  function makeCorpusSidePacketResult(): V2PerPolicyResult {
+    return makeResult({
+      id: "00000000-0000-4000-8000-000000000001",
+      policy_id: "PX-001",
+      evidence_packet: {
+        items: [
+          {
+            evidence_item_id: "slice_corpus_aaa",
+            evidence_type: "POSITIVE",
+            evidence_item_ref: {
+              index_side: "corpus",
+              source_document_provenance: {
+                doc_id: "CSAP-NPG",
+              },
+            },
+          },
+        ],
+      },
+      pathway_notes: {},
+    });
+  }
+
+  it("evidence citations NEVER render an entry whose index_side is \"corpus\"", () => {
     const slices = {
-      slice_aaa: {
-        content_hash: "aaa111",
-        content: "Verbatim text linked by policy_id only.",
+      slice_corpus_aaa: {
+        content_hash: "corpus-aaa",
+        content: "SECRET POLICY-SIDE TEXT THAT MUST NOT APPEAR.",
         field: "original_text",
         policy_id: "PX-001",
         source: {
@@ -378,66 +402,69 @@ describe("PerPolicyResultsTable evidence citations policy_id fallback", () => {
           source_path: null,
         },
       },
-      slice_bbb: {
-        content_hash: "bbb222",
-        content: "Unrelated other-policy text.",
-        field: "original_text",
-        policy_id: "PX-999",
-        source: {
-          doc_id: "D",
-          title: "T",
-          page: null,
-          section: null,
-          chunk_id: null,
-          source_path: null,
-        },
-      },
     };
     render(
       <PerPolicyResultsTable
-        results={[makeEmptyPacketResult()]}
+        results={[makeCorpusSidePacketResult()]}
         judgments={NO_JUDGMENTS}
         evidenceSlices={slices}
       />,
     );
     fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
 
-    // The "No evidence items emitted" message MUST NOT be shown when slices
-    // match by policy_id.
+    // Regulatory invariant: corpus-side content NEVER reaches the
+    // evidence-citations renderer. (The dedicated "Policy text" section
+    // above the citations is a separate concern -- that section is
+    // explicitly the place policy text IS shown; this invariant is about
+    // the EVIDENCE section ONLY.)
+    const evidenceSection = screen.getByTestId("per-policy-verbatim-section");
+    expect(evidenceSection.textContent).not.toContain(
+      "SECRET POLICY-SIDE TEXT THAT MUST NOT APPEAR",
+    );
     expect(
-      screen.queryByTestId("per-policy-verbatim-empty"),
+      within(evidenceSection).queryByTestId("evidence-citation-card"),
     ).not.toBeInTheDocument();
-
-    const fallbacks = screen.getAllByTestId(
-      "per-policy-verbatim-policy-id-fallback",
-    );
-    expect(fallbacks).toHaveLength(1);
-    expect(fallbacks[0]!.getAttribute("data-evidence-item-id")).toBe("slice_aaa");
-
-    // The "Linked by policy_id" badge is present beside the rendered slice.
-    const badges = screen.getAllByTestId(
-      "per-policy-verbatim-policy-id-badge",
-    );
-    expect(badges).toHaveLength(1);
-    expect(badges[0]!.textContent).toBe("Linked by policy_id");
-
-    // The slice content from the matched slice IS rendered.
-    const card = screen.getByTestId("evidence-citation-card");
-    expect(card.textContent).toContain("Verbatim text linked by policy_id only.");
+    // Empty-state message renders instead.
+    expect(
+      screen.getByTestId("per-policy-evidence-empty-submission"),
+    ).toBeInTheDocument();
   });
 
-  it("still shows the empty-message when evidence_packet is empty AND no slices match by policy_id", () => {
+  it("evidence citations show the empty-state message when packet contains only corpus-side entries", () => {
+    render(
+      <PerPolicyResultsTable
+        results={[makeCorpusSidePacketResult()]}
+        judgments={NO_JUDGMENTS}
+        evidenceSlices={null}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    const empty = screen.getByTestId("per-policy-evidence-empty-submission");
+    expect(empty).toBeInTheDocument();
+    expect(empty.textContent).toContain("No submission evidence cited.");
+    expect(empty.textContent).toContain(
+      "Reviewer should",
+    );
+    expect(empty.textContent).toContain(
+      "examine the AI determination above and the structured submission",
+    );
+  });
+
+  it("evidence citations show the empty-state message when packet is empty and evidence_slices contains matching slices (Phase 2 Fix 4 reversion)", () => {
+    // Phase 2 Fix 4 introduced a policy_id-matched fallback in this exact
+    // case. Phase 2.7 reverts that anti-pattern. If a future commit re-adds
+    // the fallback, this test fails.
     const slices = {
-      slice_zzz: {
-        content_hash: "zzz",
-        content: "Unrelated.",
+      slice_aaa: {
+        content_hash: "aaa111",
+        content: "Verbatim policy text matching by policy_id only.",
         field: "original_text",
-        policy_id: "PX-OTHER",
+        policy_id: "PX-001",
         source: {
-          doc_id: "D",
-          title: "T",
-          page: null,
-          section: null,
+          doc_id: "CSAP-NPG",
+          title: "CSAP NPG",
+          page: 7,
+          section: "RP-APP-1",
           chunk_id: null,
           source_path: null,
         },
@@ -451,15 +478,28 @@ describe("PerPolicyResultsTable evidence citations policy_id fallback", () => {
       />,
     );
     fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+
+    // Empty-state renders.
     expect(
-      screen.getByTestId("per-policy-verbatim-empty"),
+      screen.getByTestId("per-policy-evidence-empty-submission"),
     ).toBeInTheDocument();
+    // The Fix 4 fallback testids MUST NOT appear.
     expect(
       screen.queryByTestId("per-policy-verbatim-policy-id-fallback"),
     ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("per-policy-verbatim-policy-id-badge"),
+    ).not.toBeInTheDocument();
+    // The slice content MUST NOT appear under the evidence label, even
+    // though it IS still rendered in the dedicated "Policy text" section
+    // above (that's a different section and not subject to this invariant).
+    const evidenceSection = screen.getByTestId("per-policy-verbatim-section");
+    expect(evidenceSection.textContent).not.toContain(
+      "Verbatim policy text matching by policy_id only.",
+    );
   });
 
-  it("falls back to the empty-message when evidenceSlices is null (older schema)", () => {
+  it("evidence citations show the empty-state when evidenceSlices is null (older schema)", () => {
     render(
       <PerPolicyResultsTable
         results={[makeEmptyPacketResult()]}
@@ -469,10 +509,120 @@ describe("PerPolicyResultsTable evidence citations policy_id fallback", () => {
     );
     fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
     expect(
-      screen.getByTestId("per-policy-verbatim-empty"),
+      screen.getByTestId("per-policy-evidence-empty-submission"),
     ).toBeInTheDocument();
+  });
+
+  it("evidence citations filter out a self-referenced entry (source_document_provenance.doc_id === policy_id)", () => {
+    // Defense-in-depth: even when the engine forgets to set index_side
+    // explicitly, a self-reference via doc_id should be filtered.
+    const selfRefResult = makeResult({
+      id: "00000000-0000-4000-8000-000000000001",
+      policy_id: "PX-001",
+      evidence_packet: {
+        items: [
+          {
+            evidence_item_id: "slice_selfref",
+            evidence_type: "POSITIVE",
+            evidence_item_ref: {
+              source_document_provenance: {
+                doc_id: "PX-001",
+              },
+            },
+          },
+        ],
+      },
+      pathway_notes: {},
+    });
+    const slices = {
+      slice_selfref: {
+        content_hash: "selfref",
+        content: "Self-referenced policy KB text that must not appear.",
+        field: "original_text",
+        policy_id: "PX-001",
+        source: {
+          doc_id: "PX-001",
+          title: "self",
+          page: null,
+          section: null,
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+    };
+    render(
+      <PerPolicyResultsTable
+        results={[selfRefResult]}
+        judgments={NO_JUDGMENTS}
+        evidenceSlices={slices}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    // Scope to the evidence-citations section only -- the dedicated
+    // "Policy text" section is a separate concern.
+    const evidenceSection = screen.getByTestId("per-policy-verbatim-section");
+    expect(evidenceSection.textContent).not.toContain(
+      "Self-referenced policy KB text that must not appear",
+    );
     expect(
-      screen.queryByTestId("per-policy-verbatim-policy-id-fallback"),
+      within(evidenceSection).queryByTestId("evidence-citation-card"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId("per-policy-evidence-empty-submission"),
+    ).toBeInTheDocument();
+  });
+
+  it("evidence citations DO render submission-side entries (happy path)", () => {
+    // Sanity check: legitimate submission-side evidence still renders.
+    const goodResult = makeResult({
+      id: "00000000-0000-4000-8000-000000000001",
+      policy_id: "PX-001",
+      evidence_packet: {
+        items: [
+          {
+            evidence_item_id: "slice_submission_xyz",
+            evidence_type: "POSITIVE",
+            evidence_item_ref: {
+              index_side: "submission",
+              source_document_provenance: {
+                doc_id: "submission-report-1",
+              },
+            },
+          },
+        ],
+      },
+      pathway_notes: {},
+    });
+    const slices = {
+      slice_submission_xyz: {
+        content_hash: "xyz",
+        content: "Real submission report excerpt that should render.",
+        field: "original_text",
+        policy_id: "PX-001",
+        source: {
+          doc_id: "submission-report-1",
+          title: "Submission report",
+          page: 5,
+          section: null,
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+    };
+    render(
+      <PerPolicyResultsTable
+        results={[goodResult]}
+        judgments={NO_JUDGMENTS}
+        evidenceSlices={slices}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    const card = screen.getByTestId("evidence-citation-card");
+    expect(card.textContent).toContain(
+      "Real submission report excerpt that should render.",
+    );
+    expect(
+      screen.queryByTestId("per-policy-evidence-empty-submission"),
     ).not.toBeInTheDocument();
   });
 });

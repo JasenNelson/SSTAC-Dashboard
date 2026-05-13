@@ -255,7 +255,8 @@ function pickListField(
 // contain items under common keys (items / evidence_items / chunks) or as
 // a top-level array; we walk all values and collect any object that looks
 // like an evidence item. Each returned entry also preserves the original
-// item so callers can read auxiliary fields (e.g. evidence_type).
+// item so callers can read auxiliary fields (e.g. evidence_type,
+// evidence_item_ref.index_side, evidence_item_ref.source_document_provenance).
 interface EvidenceItemRef {
   evidence_item_id: string;
   evidence_type: string | null;
@@ -268,8 +269,47 @@ function isEvidenceItem(v: unknown): v is Record<string, unknown> {
   return typeof id === "string" && id.length > 0;
 }
 
+// REGULATORY INVARIANT (owner directive 2026-05-12): evidence
+// citations on the per-policy results table render ONLY submission
+// content. Policy KB chunks (index_side === "corpus") are NEVER
+// rendered here, regardless of how matched. Showing related or
+// self-referenced policies under an evidence label is a known
+// anti-pattern the owner has already rejected once historically.
+// If you find yourself adding a fallback that surfaces policy-side
+// content here, STOP and read this comment again.
+//
+// Enforcement: isCorpusSideItem() drops any evidence_packet entry whose
+// evidence_item_ref.index_side === "corpus" (engine-side primary marker)
+// or whose source_document_provenance.doc_id self-references the row's
+// own policy_id (engine-side fallback marker for self-references).
+function isCorpusSideItem(
+  raw: Record<string, unknown>,
+  rowPolicyId: string | null,
+): boolean {
+  const refRaw = raw.evidence_item_ref;
+  if (refRaw && typeof refRaw === "object" && !Array.isArray(refRaw)) {
+    const ref = refRaw as Record<string, unknown>;
+    if (ref.index_side === "corpus") return true;
+    const provRaw = ref.source_document_provenance;
+    if (provRaw && typeof provRaw === "object" && !Array.isArray(provRaw)) {
+      const prov = provRaw as Record<string, unknown>;
+      if (
+        rowPolicyId !== null &&
+        typeof prov.doc_id === "string" &&
+        prov.doc_id === rowPolicyId
+      ) {
+        return true;
+      }
+    }
+  }
+  // Defense-in-depth: the engine may flatten index_side onto the item.
+  if (raw.index_side === "corpus") return true;
+  return false;
+}
+
 function collectEvidenceItems(
   evidencePacket: Record<string, unknown> | null | undefined,
+  rowPolicyId: string | null,
 ): EvidenceItemRef[] {
   if (!evidencePacket || typeof evidencePacket !== "object") return [];
   const out: EvidenceItemRef[] = [];
@@ -281,6 +321,10 @@ function collectEvidenceItems(
       const id = String(item.evidence_item_id);
       if (seen.has(id)) return;
       seen.add(id);
+      // REGULATORY INVARIANT: drop corpus-side / self-referenced entries
+      // before they reach the renderer. See sentinel comment at the
+      // evidence-citations render site.
+      if (isCorpusSideItem(item, rowPolicyId)) return;
       const et = item.evidence_type;
       out.push({
         evidence_item_id: id,
@@ -981,70 +1025,27 @@ export function PerPolicyResultsTable({
                             </div>
                           </section>
 
-                          {/* Verbatim evidence citations (Lane 2c, schema 0.1.0) */}
+                          {/* Verbatim evidence citations (Lane 2c, schema 0.1.0). */}
+                          {/* REGULATORY INVARIANT (owner directive 2026-05-12): submission */}
+                          {/* content ONLY -- see sentinel comment above isCorpusSideItem(). */}
                           <section data-testid="per-policy-verbatim-section">
                             <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
                               Verbatim evidence citations
                             </div>
                             {(() => {
-                              const items = collectEvidenceItems(r.evidence_packet);
+                              const items = collectEvidenceItems(
+                                r.evidence_packet,
+                                r.policy_id,
+                              );
                               if (items.length === 0) {
-                                // Codex Round 1 fix (Lane 2c retro): fall
-                                // back to slices linked by policy_id when
-                                // evidence_packet is empty but slices match.
-                                // Mirrors the policy-text fallback above so
-                                // reviewers see linked evidence even when no
-                                // explicit citation was emitted.
-                                if (evidenceSlices !== null) {
-                                  const matched = Object.entries(evidenceSlices)
-                                    .filter(
-                                      ([, slice]) =>
-                                        slice && slice.policy_id === r.policy_id,
-                                    )
-                                    .map(([sliceId, slice]) => ({
-                                      sliceId,
-                                      slice,
-                                    }));
-                                  if (matched.length > 0) {
-                                    return (
-                                      <div className="space-y-2">
-                                        {matched.map(({ sliceId, slice }) => {
-                                          const itemRef: EvidenceItemRef = {
-                                            evidence_item_id: sliceId,
-                                            evidence_type: null,
-                                            raw: {},
-                                          };
-                                          return (
-                                            <div
-                                              key={sliceId}
-                                              data-testid="per-policy-verbatim-policy-id-fallback"
-                                              data-evidence-item-id={sliceId}
-                                            >
-                                              <div className="mb-1">
-                                                <span
-                                                  data-testid="per-policy-verbatim-policy-id-badge"
-                                                  className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200"
-                                                >
-                                                  Linked by policy_id
-                                                </span>
-                                              </div>
-                                              <EvidenceCitationCard
-                                                itemRef={itemRef}
-                                                slice={slice}
-                                              />
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    );
-                                  }
-                                }
                                 return (
                                   <div
-                                    data-testid="per-policy-verbatim-empty"
-                                    className="italic text-slate-400 dark:text-slate-500 text-xs"
+                                    data-testid="per-policy-evidence-empty-submission"
+                                    className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3 text-xs italic text-slate-600 dark:text-slate-300 whitespace-pre-line"
                                   >
-                                    No evidence items emitted for this policy.
+                                    {
+                                      "No submission evidence cited. The engine could not locate matching\ncontent in the structured submission for this policy. Reviewer should\nexamine the AI determination above and the structured submission\ndirectly to verify whether the AI's read is supported by the source."
+                                    }
                                   </div>
                                 );
                               }

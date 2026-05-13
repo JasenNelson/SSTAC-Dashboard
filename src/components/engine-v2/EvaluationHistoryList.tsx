@@ -89,6 +89,15 @@ function readCoverageNumber(
   return null;
 }
 
+// Phase 2.7 hotfix (owner directive 2026-05-12): the Coverage column reads
+// directly from coverage_statement.evaluated / coverage_statement.total_policies
+// as emitted by the engine's eval_result.json. The engine's "evaluated" count
+// includes ALL terminal verdict suggestions (PASS, FAIL, NOT_FOUND, ESCALATE,
+// OBSERVATION_ONLY) -- NOT_FOUND and ESCALATE are valid AI suggestions for
+// reviewer triage, not errors. Falling back to PASS+FAIL counts here would
+// misreport an eval that shipped 43 ESCALATE rows as "0 / 43" coverage. When
+// the coverage_statement field is missing entirely (older schema or freshly
+// running eval), render "-" rather than fabricate a derivation.
 function formatCoverage(coverage: Record<string, unknown> | null): string {
   const evaluated = readCoverageNumber(coverage, "evaluated");
   const total = readCoverageNumber(coverage, "total_policies");
