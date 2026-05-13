@@ -38,17 +38,31 @@ interface SelectCall {
   cols: string;
 }
 
+interface NeqCall {
+  table: string;
+  cols: string;
+  column: string;
+  value: unknown;
+}
+
 // Build a chainable supabase client double that records every .select() call
 // against v2_evaluations so the test can assert which columns each query
 // requested.
 function makeClient(opts: {
   selectCallsCapture: SelectCall[];
+  neqCallsCapture?: NeqCall[];
   latestRow: V2Evaluation | null;
   historyRows: V2EvaluationListRow[];
 }) {
   function makeBuilder(table: string, cols: string, isLatest: boolean) {
     const builder = {
       eq() {
+        return this;
+      },
+      neq(column: string, value: unknown) {
+        if (opts.neqCallsCapture) {
+          opts.neqCallsCapture.push({ table, cols, column, value });
+        }
         return this;
       },
       is() {
@@ -108,6 +122,29 @@ function makeClient(opts: {
   };
 }
 
+function makeLatestRow(id: string): V2Evaluation {
+  return {
+    id,
+    project_id: PROJECT_ID,
+    extraction_run_id: "run-1",
+    status: "completed",
+    run_id_engine: "eng-1",
+    variant_config_hash: "hash-1",
+    evaluation_backend: "stub",
+    embedder_backend: "stub",
+    reranker_backend: "disabled",
+    model: null,
+    bench_fixture: "bench_43_full",
+    applicability_mode: "off",
+    coverage_statement: {},
+    errors: [],
+    raw_eval_result_json: null,
+    started_at: "2026-05-12T00:00:00Z",
+    completed_at: "2026-05-12T00:01:00Z",
+    updated_at: "2026-05-12T00:01:00Z",
+  };
+}
+
 describe("ProjectDetailPage evaluations slim-select split", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -159,6 +196,153 @@ describe("ProjectDetailPage evaluations slim-select split", () => {
     ]) {
       expect(historySelect!.cols).toContain(col);
     }
+  });
+});
+
+describe("ProjectDetailPage history excludes latest eval (Phase 2.5 hotfix)", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("history query applies .neq(id, latestEvalId) when a latest eval exists", async () => {
+    const LATEST_ID = "22222222-2222-4222-8222-222222222222";
+    const captured: SelectCall[] = [];
+    const neqCalls: NeqCall[] = [];
+    const client = makeClient({
+      selectCallsCapture: captured,
+      neqCallsCapture: neqCalls,
+      latestRow: makeLatestRow(LATEST_ID),
+      historyRows: [],
+    });
+    (
+      requireAdminForServerComponent as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({ client });
+
+    await ProjectDetailPage({
+      params: Promise.resolve({ projectId: PROJECT_ID }),
+    });
+
+    // The history query (slim cols, no raw_eval_result_json) must call
+    // .neq("id", <LATEST_ID>) to exclude the duplicate.
+    const historyNeqs = neqCalls.filter(
+      (n) =>
+        n.table === "v2_evaluations" &&
+        !n.cols.includes("raw_eval_result_json"),
+    );
+    expect(historyNeqs).toHaveLength(1);
+    expect(historyNeqs[0].column).toBe("id");
+    expect(historyNeqs[0].value).toBe(LATEST_ID);
+
+    // The latest query (full cols, includes raw_eval_result_json) must NOT
+    // apply a .neq filter.
+    const latestNeqs = neqCalls.filter(
+      (n) =>
+        n.table === "v2_evaluations" &&
+        n.cols.includes("raw_eval_result_json"),
+    );
+    expect(latestNeqs).toHaveLength(0);
+  });
+
+  it("history query does NOT apply .neq when there is no latest eval (empty project)", async () => {
+    const captured: SelectCall[] = [];
+    const neqCalls: NeqCall[] = [];
+    const client = makeClient({
+      selectCallsCapture: captured,
+      neqCallsCapture: neqCalls,
+      latestRow: null,
+      historyRows: [],
+    });
+    (
+      requireAdminForServerComponent as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({ client });
+
+    await ProjectDetailPage({
+      params: Promise.resolve({ projectId: PROJECT_ID }),
+    });
+
+    // No latest -> the history query must NOT carry a .neq filter (the
+    // sentinel path skips it entirely, since the SELECT is unconstrained
+    // and would also be empty anyway).
+    expect(
+      neqCalls.filter((n) => n.table === "v2_evaluations"),
+    ).toHaveLength(0);
+  });
+
+  it("evaluationHistory passed to the client does NOT contain the latest eval's id", async () => {
+    // The .neq filter test above proves the SQL is correct. Here we verify
+    // the end-to-end: the rows the page hands to ProjectDetailClient as
+    // evaluationHistory exclude the latest id. We model the DB-side filter
+    // by only returning the PRIOR row from the history query mock.
+    const LATEST_ID = "33333333-3333-4333-8333-333333333333";
+    const PRIOR_ID = "44444444-4444-4444-8444-444444444444";
+
+    const captured: SelectCall[] = [];
+    const neqCalls: NeqCall[] = [];
+    const priorRow: V2EvaluationListRow = {
+      id: PRIOR_ID,
+      status: "completed",
+      evaluation_backend: "stub",
+      bench_fixture: "bench_43_full",
+      coverage_statement: {},
+      started_at: "2026-05-11T00:00:00Z",
+      completed_at: "2026-05-11T00:01:00Z",
+      errors: [],
+    };
+    const client = makeClient({
+      selectCallsCapture: captured,
+      neqCallsCapture: neqCalls,
+      latestRow: makeLatestRow(LATEST_ID),
+      historyRows: [priorRow],
+    });
+    (
+      requireAdminForServerComponent as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({ client });
+
+    const rendered = await ProjectDetailPage({
+      params: Promise.resolve({ projectId: PROJECT_ID }),
+    });
+    // Render the returned JSX so the ProjectDetailClient mock fires and
+    // captures its props. The page returns a small JSX tree; resolving it
+    // through a render pass invokes the mocked component synchronously.
+    // We use a lightweight inline render: walk the children for the
+    // ProjectDetailClient element and invoke it manually.
+    function findClientPropsInTree(
+      node: unknown,
+    ): { evaluationHistory: V2EvaluationListRow[] } | null {
+      if (
+        node !== null &&
+        typeof node === "object" &&
+        "type" in node &&
+        "props" in node
+      ) {
+        const n = node as {
+          type: unknown;
+          props: { children?: unknown; evaluationHistory?: V2EvaluationListRow[] };
+        };
+        if (typeof n.type === "function" && "evaluationHistory" in n.props) {
+          return {
+            evaluationHistory:
+              n.props.evaluationHistory as V2EvaluationListRow[],
+          };
+        }
+        const children = n.props.children;
+        if (Array.isArray(children)) {
+          for (const c of children) {
+            const found = findClientPropsInTree(c);
+            if (found) return found;
+          }
+        } else if (children !== undefined) {
+          const found = findClientPropsInTree(children);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+    const found = findClientPropsInTree(rendered);
+    expect(found).not.toBeNull();
+    const history = found!.evaluationHistory;
+    expect(history.find((r) => r.id === LATEST_ID)).toBeUndefined();
+    expect(history.find((r) => r.id === PRIOR_ID)).toBeDefined();
   });
 });
 

@@ -25,6 +25,9 @@ interface EvaluationHistoryListProps {
   projectId: string;
   // Ordered started_at DESC by the caller. Slim rows -- no JSONB blob
   // (raw_eval_result_json) per row. Codex Round 1 fix (Lane 2c retro).
+  // Phase 2.5 hotfix: strictly NON-LATEST -- the latest eval is rendered
+  // separately above this table (EvaluationStatusPanel) and must NOT
+  // appear here, or stale "running" rows persist after polling completes.
   evaluations: V2EvaluationListRow[];
 }
 
@@ -127,11 +130,13 @@ export function EvaluationHistoryList(
     };
   }, [evaluations, showErrored]);
 
-  // Single-eval or empty (after filtering): nothing to compare. Suppress the
-  // section entirely so the page does not grow a redundant "history of one"
-  // table. Note: the toggle link is still useful when only errored runs exist,
-  // so we keep the section visible if there are hidden errored rows.
-  if (visible.length <= 1 && erroredCount === 0) {
+  // Empty (after filtering): no prior evals to compare against the latest --
+  // suppress the section entirely. Note: the toggle link is still useful
+  // when only errored runs exist, so we keep the section visible if there
+  // are hidden errored rows. Phase 2.5 hotfix: the threshold dropped from
+  // <= 1 to < 1 because the latest eval is no longer duplicated into this
+  // list, so a length of 1 now represents a genuine prior run worth showing.
+  if (visible.length < 1 && erroredCount === 0) {
     return null;
   }
 

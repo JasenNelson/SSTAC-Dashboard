@@ -34,9 +34,12 @@ interface ProjectDetailClientProps {
   initialFiles: V2SubmissionFile[];
   initialRun: V2ExtractionRun | null;
   initialEvaluation: V2Evaluation | null;
-  // Slim evaluation history (ordered started_at DESC). The first element is
-  // the same eval (by id) as initialEvaluation; downstream rows surface
-  // prior runs. Codex Round 1 fix (Lane 2c retro): the JSONB blob
+  // Slim evaluation history (ordered started_at DESC). Phase 2.5 hotfix:
+  // this list is strictly NON-LATEST -- the latest eval is rendered above
+  // via EvaluationStatusPanel and is NOT duplicated here. This prevents the
+  // staleness bug where client-side polling only updates currentEvaluation,
+  // leaving a "running" row in the history table after completion until a
+  // full page reload. Codex Round 1 fix (Lane 2c retro): the JSONB blob
   // raw_eval_result_json is intentionally NOT included on these rows.
   evaluationHistory: V2EvaluationListRow[];
   accessToken: string;

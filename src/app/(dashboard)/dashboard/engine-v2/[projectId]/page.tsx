@@ -69,6 +69,19 @@ export default async function ProjectDetailPage(props: PageProps) {
   // for every prior run. Latest row keeps the full payload (results page
   // needs raw_eval_result_json for evidence_slices); the rest of the history
   // only needs id/status/backend/bench/coverage/timestamps/errors.
+  //
+  // Phase 2.5 hotfix: the history query MUST exclude the latest eval id.
+  // Previously the latest row appeared in BOTH initialEvaluation AND
+  // evaluationHistory[0], and the client only polls currentEvaluation -- so
+  // a completing eval stayed "running" in the history table until a full
+  // page reload. By rendering the latest separately (above, via
+  // EvaluationStatusPanel) and making evaluationHistory strictly NON-LATEST,
+  // there is no stale duplicate to update.
+  //
+  // Sequencing note: the history .neq(id) filter depends on latestEvalRows
+  // resolving first, so Promise.all is NOT viable here. We keep these
+  // sequential. The perf cost is small (latest is a LIMIT 1 indexed lookup);
+  // history is the larger query but it's already slim (no JSONB blob).
   const { data: latestEvalRows } = await client
     .from("v2_evaluations")
     .select(
@@ -82,16 +95,23 @@ export default async function ProjectDetailPage(props: PageProps) {
       ? (latestEvalRows[0] as V2Evaluation)
       : null;
 
-  // History list: slim columns, no JSONB blob. Includes the latest row too
-  // so the table still shows "1 of N" + ordering remains stable. Ordered
+  // History list: slim columns, no JSONB blob. Strictly NON-LATEST -- the
+  // latest eval is rendered separately above. When there is no latest eval
+  // (fresh project), the history is also empty by definition, but we still
+  // run the query (without .neq) so the empty result is explicit. Ordered
   // started_at DESC by the caller convention.
-  const { data: historyRows } = await client
+  const historyQueryBase = client
     .from("v2_evaluations")
     .select(
       "id, status, evaluation_backend, bench_fixture, coverage_statement, started_at, completed_at, errors",
     )
-    .eq("project_id", project.id)
-    .order("started_at", { ascending: false });
+    .eq("project_id", project.id);
+  const historyQuery = initialEvaluation
+    ? historyQueryBase.neq("id", initialEvaluation.id)
+    : historyQueryBase;
+  const { data: historyRows } = await historyQuery.order("started_at", {
+    ascending: false,
+  });
   const evaluationHistory: V2EvaluationListRow[] =
     (historyRows ?? []) as V2EvaluationListRow[];
 
