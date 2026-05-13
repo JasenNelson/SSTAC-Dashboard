@@ -53,6 +53,18 @@ vi.mock("../SubmissionSearchTab", () => ({
   ),
 }));
 
+// Mock the Phase D live AskAiTab so the Phase A shell test doesn't
+// depend on its indexing-status + chat/models fetches on mount. Live
+// coverage of AskAiTab lives in AskAiTab.test.tsx; the shell test
+// just asserts the mount wiring.
+vi.mock("../AskAiTab", () => ({
+  AskAiTab: ({ evaluationId }: { evaluationId: string }) => (
+    <div data-testid="ask-ai-tab-stub" data-evaluation-id={evaluationId}>
+      stub
+    </div>
+  ),
+}));
+
 // jsdom does not implement ResizeObserver. The production code attaches a
 // debounced callback that re-reads window.innerWidth; we expose a hook
 // that captures the most recently registered callback so tests can fire
@@ -253,12 +265,12 @@ describe("EvaluationSidePanel (Phase A) -- tab strip a11y", () => {
 });
 
 describe("EvaluationSidePanel (Phase A) -- tab content", () => {
-  it("Ask AI tab shows the Phase D placeholder copy by default", () => {
+  it("Ask AI tab mounts the AskAiTab via stub (Phase D)", () => {
     renderPanel();
     fireEvent.click(screen.getByTestId("side-panel-expand-toggle"));
-    expect(
-      screen.getByTestId("ask-ai-tab-placeholder"),
-    ).toHaveTextContent("Ask AI is coming in Phase D");
+    const stub = screen.getByTestId("ask-ai-tab-stub");
+    expect(stub).toBeInTheDocument();
+    expect(stub).toHaveAttribute("data-evaluation-id", EVAL_ID);
   });
 
   it("Search submission tab mounts the live SubmissionSearchTab (Phase C)", () => {
@@ -281,18 +293,16 @@ describe("EvaluationSidePanel (Phase A) -- tab content", () => {
 });
 
 describe("Placeholder tabs (Phase C/D mount contract smoke)", () => {
-  it("AskAiTab renders the Phase D placeholder body in isolation", () => {
+  it("AskAiTab renders via the Phase D stub when imported here", () => {
+    // Phase D landed and replaced the placeholder body. Because this
+    // test file vi.mock()s ../AskAiTab at module-evaluation time, the
+    // imported AskAiTab in this file is the stub; the live component
+    // is covered by AskAiTab.test.tsx.
     render(<AskAiTab evaluationId={EVAL_ID} />);
-    expect(
-      screen.getByTestId("ask-ai-tab-placeholder"),
-    ).toHaveTextContent("Ask AI is coming in Phase D");
+    const stub = screen.getByTestId("ask-ai-tab-stub");
+    expect(stub).toBeInTheDocument();
+    expect(stub).toHaveAttribute("data-evaluation-id", EVAL_ID);
   });
-
-  // Phase C landed and replaced the placeholder body. Live coverage of
-  // SubmissionSearchTab lives in SubmissionSearchTab.test.tsx; the
-  // mount-contract smoke for it is the wiring assertion above (via
-  // the stub). Only the AskAiTab placeholder smoke remains here until
-  // Phase D lands.
 });
 
 describe("EvaluationSidePanel (Phase A) -- drawer fallback (ED-2d4-10)", () => {
