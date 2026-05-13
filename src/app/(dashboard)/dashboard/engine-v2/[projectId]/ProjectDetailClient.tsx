@@ -19,6 +19,8 @@ import { ExtractionStatusPanel } from "@/components/engine-v2/ExtractionStatusPa
 import { EvaluateTriggerButton } from "@/components/engine-v2/EvaluateTriggerButton";
 import { EvaluationStatusPanel } from "@/components/engine-v2/EvaluationStatusPanel";
 import { EvaluationHistoryList } from "@/components/engine-v2/EvaluationHistoryList";
+import { PolicySearchPanel } from "@/components/engine-v2/PolicySearchPanel";
+import { LocalEngineBadge } from "@/components/engine-v2/LocalEngineBadge";
 import type {
   V2Project,
   V2SubmissionFile,
@@ -205,10 +207,11 @@ export function ProjectDetailClient(
 
   return (
     <div className="space-y-6">
-      <header>
+      <header className="flex items-center gap-3 flex-wrap">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
           {project.name}
         </h2>
+        <LocalEngineBadge />
         {/* Project UUID intentionally hidden from end users -- meaningless
             to reviewers; available on the breadcrumb URL for engineers. */}
       </header>
@@ -289,6 +292,11 @@ export function ProjectDetailClient(
         projectId={project.id}
         evaluations={evaluationHistory}
       />
+
+      {/* Lane 2d / L2d-1: Policy KB FTS5 search panel. Mounted as a sibling
+          below the evaluation history; expand to query the canonical
+          rraa_v3_2.db knowledge base via /api/engine-v2/policies/search. */}
+      <PolicySearchPanel projectId={project.id} />
     </div>
   );
 }

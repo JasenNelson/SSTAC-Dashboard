@@ -22,6 +22,7 @@ import {
   ProjectStatusCard,
   type ProjectStatusCardData,
 } from "@/components/engine-v2/ProjectStatusCard";
+import { LocalEngineBadge } from "@/components/engine-v2/LocalEngineBadge";
 
 // Subset of V2Project we need for the dashboard list.
 type V2ProjectListRow = Pick<
@@ -199,9 +200,14 @@ export default async function EngineV2LandingPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-            Projects
-          </h2>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Projects
+            </h2>
+            {/* Lane 2d / L2d-1 (owner Q5 lock): chip is visible only on
+                cloud builds where the local engine is unavailable. */}
+            <LocalEngineBadge />
+          </div>
           <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
             Submission projects you own. Create a new project to upload
             documents and run extraction.
