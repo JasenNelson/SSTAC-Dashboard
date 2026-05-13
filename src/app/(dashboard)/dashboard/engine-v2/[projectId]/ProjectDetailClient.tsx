@@ -19,7 +19,10 @@ import { ExtractionStatusPanel } from "@/components/engine-v2/ExtractionStatusPa
 import { EvaluateTriggerButton } from "@/components/engine-v2/EvaluateTriggerButton";
 import { EvaluationStatusPanel } from "@/components/engine-v2/EvaluationStatusPanel";
 import { EvaluationHistoryList } from "@/components/engine-v2/EvaluationHistoryList";
-import { PolicySearchPanel } from "@/components/engine-v2/PolicySearchPanel";
+// Lane 2d / Phase A: PolicySearchPanel was relocated from this
+// project-detail page into the evaluation-page side panel
+// (src/components/engine-v2/side-panel/PolicySearchTab.tsx). The
+// underlying component module is unchanged.
 import { LocalEngineBadge } from "@/components/engine-v2/LocalEngineBadge";
 import type {
   V2Project,
@@ -292,11 +295,9 @@ export function ProjectDetailClient(
         projectId={project.id}
         evaluations={evaluationHistory}
       />
-
-      {/* Lane 2d / L2d-1: Policy KB FTS5 search panel. Mounted as a sibling
-          below the evaluation history; expand to query the canonical
-          rraa_v3_2.db knowledge base via /api/engine-v2/policies/search. */}
-      <PolicySearchPanel projectId={project.id} />
+      {/* Lane 2d / Phase A: PolicySearchPanel was relocated from here
+          into the evaluation-page side panel's "Search policies" tab.
+          See src/components/engine-v2/side-panel/PolicySearchTab.tsx. */}
     </div>
   );
 }

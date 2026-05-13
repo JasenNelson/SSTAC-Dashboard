@@ -20,6 +20,8 @@ import { TelemetryDisclosure } from "@/components/engine-v2/TelemetryDisclosure"
 import { ExportMemoButton } from "@/components/engine-v2/ExportMemoButton";
 import { ExportFormatMenu } from "@/components/engine-v2/ExportFormatMenu";
 import { JudgmentSummaryTile } from "@/components/engine-v2/JudgmentSummaryTile";
+import { EvaluationSidePanel } from "@/components/engine-v2/side-panel/EvaluationSidePanel";
+import { SidePanelProvider } from "@/components/engine-v2/side-panel/SidePanelContext";
 import { extractEvidenceSlices } from "@/lib/engine-v2/evidence_slices";
 import type {
   V2Evaluation,
@@ -375,9 +377,28 @@ export default async function EvaluationResultsPage(props: PageProps) {
   // renders a degraded "verbatim text not available" view in that case.
   const evidenceSlices = extractEvidenceSlices(evaluation.raw_eval_result_json);
 
+  // Lane 2d / Phase A: side-panel mount region.
+  //
+  // ED-2d4-12 MOUNT CONTRACT: Phase A is the ONLY phase that edits this
+  // file. Phases C (Search submission), D (Ask AI), and E (bidirectional
+  // citation linking) populate the side panel by editing files inside
+  // src/components/engine-v2/side-panel/ and consuming SidePanelContext
+  // via useSidePanel(); they do NOT re-edit this page. If a future
+  // phase needs new props on EvaluationSidePanel, the orchestrator
+  // approves a single isolated edit here -- no parallel work crosses
+  // this file.
+  //
+  // Layout (ED-2d4-10): main content + side panel are flex siblings so
+  // the panel reserves layout space in split mode (>=1200px viewport)
+  // and the main column reflows to share the viewport. The panel handles
+  // its own width-driven flex-basis and switches to a position:fixed
+  // drawer overlay below 1200px (where it leaves the flex flow entirely
+  // and the main column reclaims the full width).
   return (
-    <div className="space-y-6">
-      <EngineV2Breadcrumbs
+    <SidePanelProvider>
+      <div className="flex flex-row items-stretch gap-0 min-h-screen">
+        <div className="flex-1 min-w-0 space-y-6 pr-4">
+        <EngineV2Breadcrumbs
         segments={[
           { label: "Engine v2", href: "/dashboard/engine-v2" },
           {
@@ -464,6 +485,18 @@ export default async function EvaluationResultsPage(props: PageProps) {
           <TelemetryDisclosure evaluation={evaluation} />
         </aside>
       </div>
-    </div>
+        </div>
+        {/* Lane 2d / Phase A: side panel mounted as a flex sibling of
+            the main content column. In split mode (>=1200px) the panel
+            reserves layout space via flex-basis so the main column
+            reflows. In drawer mode (<1200px) the panel switches to a
+            position:fixed full-height overlay and leaves the flex flow
+            (main content reclaims full width). See ED-2d4-10. */}
+        <EvaluationSidePanel
+          evaluationId={evaluation.id}
+          projectId={project.id}
+        />
+      </div>
+    </SidePanelProvider>
   );
 }
