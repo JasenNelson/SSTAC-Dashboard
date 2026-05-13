@@ -7,18 +7,16 @@
 -- The UI surfaces a "Search unavailable: indexing failed (retry)" CTA
 -- when status='error'; the POST reindex route consumes the same row.
 --
--- One row per evaluation_id. Rows are written by the indexer via the
--- service-role client inside importEvalResult (BLOCKER 1 fix:
+-- One row per evaluation_id. Rows are written by the indexer inside
+-- importEvalResult using the authenticated admin client (BLOCKER 1 fix:
 -- non-blocking on indexer failure -- the parent function still returns
 -- success, but a row is written with status='error' here so the failure
 -- is observable).
 --
--- RLS: owner-read only. Service-role writes only. See
--- submission_chunks migration for the deliberate-divergence rationale
--- (Round 2 / MINOR 1: prior v2_* tables used owner-AND-admin because
--- end users wrote directly; Phase B tables are service-role-only on
--- writes, so the admin-via-user_roles predicate is enforced upstream at
--- requireAdminForApi instead of in the policy).
+-- RLS posture (Phase B corrective follow-up): owner-AND-admin FOR ALL TO
+-- authenticated, mirroring v2_submission_chunks. The indexer writes via
+-- the authenticated admin client subject to RLS, not via a service-role
+-- bypass.
 
 CREATE TABLE IF NOT EXISTS v2_submission_chunks_indexing_status (
   evaluation_id  uuid PRIMARY KEY REFERENCES v2_evaluations(id) ON DELETE CASCADE,
@@ -33,8 +31,10 @@ ALTER TABLE v2_submission_chunks_indexing_status ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS v2_submission_chunks_indexing_status_owner_read
   ON v2_submission_chunks_indexing_status;
-CREATE POLICY v2_submission_chunks_indexing_status_owner_read
-  ON v2_submission_chunks_indexing_status FOR SELECT
+DROP POLICY IF EXISTS v2_submission_chunks_indexing_status_owner_admin_all
+  ON v2_submission_chunks_indexing_status;
+CREATE POLICY v2_submission_chunks_indexing_status_owner_admin_all
+  ON v2_submission_chunks_indexing_status FOR ALL TO authenticated
   USING (
     EXISTS (
       SELECT 1
@@ -43,8 +43,17 @@ CREATE POLICY v2_submission_chunks_indexing_status_owner_read
       WHERE e.id = v2_submission_chunks_indexing_status.evaluation_id
         AND p.user_id = auth.uid()
     )
+    AND EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM v2_evaluations e
+      JOIN v2_projects p ON p.id = e.project_id
+      WHERE e.id = v2_submission_chunks_indexing_status.evaluation_id
+        AND p.user_id = auth.uid()
+    )
+    AND EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
   );
 
--- Service-role writes only; no end-user INSERT/UPDATE/DELETE policy.
-
-GRANT SELECT ON v2_submission_chunks_indexing_status TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON v2_submission_chunks_indexing_status TO authenticated;

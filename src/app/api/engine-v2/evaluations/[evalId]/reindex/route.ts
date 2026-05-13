@@ -23,12 +23,11 @@
 //      RPC) so this simply replaces existing rows.
 //   6. Return { status, error_message? }.
 //
-// Round 2 / BLOCKER 1: runIndexerNonBlocking constructs its own service-
-// role client for writes -- we deliberately do NOT pass the authenticated
-// admin client (which only has SELECT on the new Phase B tables). The
-// read steps (ownership probe + raw envelope fetch + per_policy_results
-// fetch) stay on the authenticated client so RLS continues to enforce
-// project ownership for reads.
+// Phase B corrective follow-up (RLS alignment): runIndexerNonBlocking
+// receives the authenticated admin client. The Phase B tables now expose
+// owner-AND-admin FOR ALL TO authenticated policies (matching lane2a /
+// lane2b), so reads AND writes go through the same client subject to
+// RLS. No service-role client is constructed anywhere.
 //
 // Degraded case: when raw_eval_result_json is null (evaluation completed
 // before Lane 2c, schema_version 0.0.1) OR evidence_slices is missing,
@@ -141,10 +140,12 @@ export async function POST(
   // status side table. We surface the outcome inline so the UI can react
   // immediately (no need to re-poll status).
   //
-  // Round 2 / BLOCKER 1: do NOT pass the authenticated client. The
-  // indexer constructs its own service-role client (the new Phase B
-  // tables expose service-role writes only).
+  // Phase B corrective follow-up (RLS alignment): pass the authenticated
+  // admin client. The Phase B tables now expose owner-AND-admin FOR ALL
+  // TO authenticated policies (matching lane2a/lane2b), so the same
+  // client used for reads also covers writes under RLS.
   const result = await runIndexerNonBlocking({
+    client,
     evaluationId: evalId,
     rawEnvelope,
     perPolicyResults: (perPolicyRows ?? []) as Array<Record<string, unknown>>,

@@ -16,6 +16,12 @@
 //     row; surfaces statusWriteError in result.
 //   - detectIndigenousContent: word-boundary on short tokens (tek/latek);
 //     positive + clearly-negative cases.
+//
+// Phase B corrective follow-up (RLS alignment): tests use a mock
+// authenticated client passed via params.client. The Phase B tables now
+// expose owner-AND-admin FOR ALL TO authenticated RLS policies, so the
+// indexer writes through the same client used elsewhere in engine_v2.
+// No service-role client is constructed, mocked, or asserted.
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";

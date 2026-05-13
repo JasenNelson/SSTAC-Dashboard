@@ -182,10 +182,13 @@ export async function importEvalResult(
   // (evidence_item_id), which is always present. source.chunk_id may be
   // null and is stored as optional metadata only.
   //
-  // Round 2 / BLOCKER 1: do NOT pass the authenticated `client` -- the
-  // new Phase B tables expose service-role writes only. The indexer
-  // constructs its own service-role client.
+  // Phase B corrective follow-up (RLS alignment): pass the authenticated
+  // admin `client` through. The Phase B tables now expose owner-AND-
+  // admin FOR ALL TO authenticated policies (matching lane2a/lane2b),
+  // so the same client used for per-policy + evaluation writes also
+  // covers the indexer's writes subject to RLS.
   const indexerResult = await runIndexerNonBlocking({
+    client,
     evaluationId,
     rawEnvelope: envelope,
     perPolicyResults: perPolicy,

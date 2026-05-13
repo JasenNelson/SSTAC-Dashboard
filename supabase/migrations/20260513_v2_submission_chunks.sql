@@ -15,21 +15,13 @@
 -- (2026-05-12, HIGH AUTHORITY). The flag is owner-editable via the
 -- submission_indigenous_keywords.ts list.
 --
--- RLS: owner-read only (project owner inherits via v2_evaluations ->
--- v2_projects.user_id = auth.uid()). Service-role writes only; no
--- end-user INSERT/UPDATE/DELETE policy is exposed.
---
--- Round 2 / MINOR 1 (RLS posture): the prior v2_* migrations (lane2a
--- patch) use owner-AND-admin checks via user_roles for end-user CRUD
--- because end users write rows directly (e.g. v2_per_policy_results
--- inserts on import). These Phase B tables are different: writes only
--- happen via the service-role indexer, never via the end-user client.
--- Owner-only SELECT is deliberate; admin-via-user_roles is not added
--- here because (a) the indexer cannot consult user_roles (it has no
--- session), and (b) the admin-as-read-as-owner pattern is enforced
--- upstream at requireAdminForApi(). A non-admin authenticated user who
--- somehow obtained a project's owner-user-id link cannot still trigger
--- writes because there is NO end-user write policy on this table.
+-- RLS posture (Phase B corrective follow-up): owner-AND-admin FOR ALL TO
+-- authenticated, matching the canonical lane2a / lane2b / engine_v2 patch
+-- pattern. The indexer writes via the same authenticated admin client
+-- that the rest of the engine_v2 surface uses; no service-role client is
+-- required. Inheritance chain: v2_submission_chunks ->
+-- v2_evaluations.project_id -> v2_projects.user_id = auth.uid(), plus an
+-- admin role check via user_roles.
 
 CREATE TABLE IF NOT EXISTS v2_submission_chunks (
   id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -54,9 +46,13 @@ CREATE INDEX IF NOT EXISTS v2_submission_chunks_eval_flag_idx
 
 ALTER TABLE v2_submission_chunks ENABLE ROW LEVEL SECURITY;
 
+-- Drop both the prior owner-read-only policy name (Round 2) and any pre-
+-- existing canonical name so the migration stays re-runnable across the
+-- corrective follow-up boundary.
 DROP POLICY IF EXISTS v2_submission_chunks_owner_read ON v2_submission_chunks;
-CREATE POLICY v2_submission_chunks_owner_read
-  ON v2_submission_chunks FOR SELECT
+DROP POLICY IF EXISTS v2_submission_chunks_owner_admin_all ON v2_submission_chunks;
+CREATE POLICY v2_submission_chunks_owner_admin_all
+  ON v2_submission_chunks FOR ALL TO authenticated
   USING (
     EXISTS (
       SELECT 1
@@ -65,8 +61,17 @@ CREATE POLICY v2_submission_chunks_owner_read
       WHERE e.id = v2_submission_chunks.evaluation_id
         AND p.user_id = auth.uid()
     )
+    AND EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM v2_evaluations e
+      JOIN v2_projects p ON p.id = e.project_id
+      WHERE e.id = v2_submission_chunks.evaluation_id
+        AND p.user_id = auth.uid()
+    )
+    AND EXISTS (SELECT 1 FROM user_roles WHERE user_id = auth.uid() AND role = 'admin')
   );
 
--- Service-role writes only; no end-user INSERT/UPDATE/DELETE policy.
-
-GRANT SELECT ON v2_submission_chunks TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON v2_submission_chunks TO authenticated;

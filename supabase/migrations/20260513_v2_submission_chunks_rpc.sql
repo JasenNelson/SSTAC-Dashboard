@@ -1,5 +1,5 @@
--- engine_v2 frontend Lane 2d / Phase B Round 2 (v0.5 BLOCKER 2 fix):
--- transactional submission-chunks replacement RPC.
+-- engine_v2 frontend Lane 2d / Phase B (v0.5) -- corrective follow-up RLS
+-- alignment: transactional submission-chunks replacement RPC.
 --
 -- Phase B Round 1 used separate DELETE+INSERT calls from the Supabase JS
 -- client, which are NOT a single SQL transaction. Codex flagged the
@@ -20,13 +20,19 @@
 -- function bodies are atomic by default; the entire function body is
 -- one transaction unless explicitly subdivided).
 --
--- Security model:
---   - SECURITY DEFINER + SET search_path = public makes the function
---     execute with the owner's privileges regardless of caller. Combined
---     with REVOKE FROM PUBLIC + GRANT EXECUTE TO service_role, only the
---     service-role JWT can invoke it. The dashboard's authenticated
---     admin client CANNOT call this RPC -- writes are forced through the
---     service-role server helper (see server_supabase_client.ts).
+-- Security model (Phase B corrective follow-up):
+--   - SECURITY INVOKER: the RPC executes with the caller's privileges,
+--     so the owner-AND-admin RLS policies on the three Phase B tables
+--     (v2_submission_chunks, v2_chunk_policy_citations,
+--     v2_submission_chunks_indexing_status) continue to apply inside
+--     the function body. The route layer additionally enforces an
+--     explicit ownership probe before invoking the indexer, so the RLS
+--     check is defense-in-depth on the happy path.
+--   - GRANT EXECUTE TO authenticated: the dashboard's authenticated
+--     admin client (the standard client used by every other engine_v2
+--     write path) invokes this RPC. No service-role key is required.
+--     REVOKE FROM PUBLIC stays so anonymous clients cannot reach the
+--     function.
 --   - Status side table writes (v2_submission_chunks_indexing_status)
 --     are NOT inside this RPC. Status transitions (pending -> running ->
 --     complete/error) are intentionally outside the data transaction:
@@ -57,7 +63,7 @@ CREATE OR REPLACE FUNCTION public.replace_submission_chunks(
 )
 RETURNS TABLE (chunk_rows int, citation_rows int)
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path = public
 AS $$
 DECLARE
@@ -134,11 +140,12 @@ BEGIN
 END;
 $$;
 
--- Lock down execution. SECURITY DEFINER on its own grants the function
--- owner's privileges to the EXECUTOR; we still need to limit WHO can
--- execute. Default function grants in Postgres are EXECUTE TO PUBLIC,
--- which would expose this to any authenticated client. Explicitly
--- revoke and re-grant only to service_role.
+-- Lock down execution. Default function grants in Postgres are EXECUTE
+-- TO PUBLIC; explicitly revoke and grant only to authenticated. The
+-- authenticated admin client is the standard write path used across
+-- engine_v2; the owner-AND-admin RLS policies on the three Phase B
+-- tables continue to gate row-level access inside the function body
+-- (SECURITY INVOKER).
 REVOKE EXECUTE ON FUNCTION public.replace_submission_chunks(uuid, jsonb, jsonb) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION public.replace_submission_chunks(uuid, jsonb, jsonb) FROM authenticated;
-GRANT  EXECUTE ON FUNCTION public.replace_submission_chunks(uuid, jsonb, jsonb) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.replace_submission_chunks(uuid, jsonb, jsonb) FROM service_role;
+GRANT  EXECUTE ON FUNCTION public.replace_submission_chunks(uuid, jsonb, jsonb) TO authenticated;

@@ -12,14 +12,15 @@
 // and returns 200 immediately with status='running'; completion is
 // detected by the evaluation-status route which calls importEvalResult.
 //
-// Round 2 / BLOCKER 1 (write client): all data writes execute against a
-// service-role Supabase client (see server_supabase_client.ts). The new
-// v2_submission_chunks, v2_chunk_policy_citations, and
-// v2_submission_chunks_indexing_status tables expose service-role writes
-// ONLY -- no end-user INSERT/UPDATE/DELETE policy. The optional
-// `writeClient` parameter on IndexFromEnvelopeParams lets tests inject a
-// mock; production code paths pass no client and the indexer constructs
-// its own service-role client.
+// Phase B corrective follow-up (RLS alignment): all writes execute
+// against the authenticated admin Supabase client supplied by the
+// caller. The Phase B tables (v2_submission_chunks,
+// v2_chunk_policy_citations, v2_submission_chunks_indexing_status) now
+// expose owner-AND-admin FOR ALL TO authenticated RLS policies that
+// match the canonical lane2a/lane2b/engine_v2 patch pattern, so the
+// authenticated admin client can read AND write subject to RLS. No
+// service-role client is constructed; callers are required to pass the
+// authenticated client in `params.client`.
 //
 // BLOCKER 3 (v0.5): the join key is the evidence_slices map KEY
 // (evidence_item_id), which is ALWAYS present. The inner source.chunk_id
@@ -67,7 +68,6 @@ import {
   type EvidenceSliceMap,
 } from "./evidence_slices";
 import { detectIndigenousContent } from "./submission_indigenous_keywords";
-import { getServiceRoleClient } from "./server_supabase_client";
 
 export interface SubmissionChunkRow {
   evaluation_id: string;
@@ -288,10 +288,12 @@ async function writeStatus(
 }
 
 export interface IndexFromEnvelopeParams {
-  // Round 2 / BLOCKER 1: write client. In production no caller passes
-  // this; the indexer constructs its own service-role client. Tests
-  // inject a mock to assert call sequences without hitting Supabase.
-  client?: SupabaseClient;
+  // Phase B corrective follow-up (RLS alignment): write client is the
+  // authenticated admin Supabase client supplied by the caller. The
+  // Phase B tables now expose owner-AND-admin FOR ALL TO authenticated
+  // policies (matching the lane2a/lane2b pattern), so the same client
+  // used elsewhere in engine_v2 can write subject to RLS. Required.
+  client: SupabaseClient;
   evaluationId: string;
   rawEnvelope: unknown;
   perPolicyResults: readonly PerPolicyResultLike[];
@@ -307,11 +309,10 @@ export async function indexSubmissionChunksFromEnvelope(
   params: IndexFromEnvelopeParams,
 ): Promise<IndexResult> {
   const { evaluationId, rawEnvelope, perPolicyResults } = params;
-  // Round 2 / BLOCKER 1: writes go through a service-role client.
-  // Tests can override via params.client; production code path leaves
-  // it unset and the indexer constructs its own.
-  const writeClient: SupabaseClient =
-    params.client ?? getServiceRoleClient();
+  // Phase B corrective follow-up (RLS alignment): writes go through the
+  // authenticated admin client supplied by the caller. RLS on the Phase
+  // B tables (owner-AND-admin FOR ALL TO authenticated) gates access.
+  const writeClient: SupabaseClient = params.client;
 
   // Round 2 / IMPORTANT 1: status transitions pending -> running ->
   // complete/error. 'pending' is the entry-state observable; 'running'
@@ -437,10 +438,11 @@ export async function runIndexerNonBlocking(
     // throw came from a path that did not write status (it always does in
     // the current code, but a future refactor could regress that).
     try {
-      // Use the same write client the indexer would have used. If params
-      // didn't supply one, instantiate the service-role client here.
-      const writeClient = params.client ?? getServiceRoleClient();
-      const r = await writeStatus(writeClient, params.evaluationId, "error", {
+      // Use the authenticated admin client supplied by the caller. Phase
+      // B corrective follow-up: no service-role fallback is constructed
+      // here; the same client used for the data writes covers the
+      // defensive status write under RLS.
+      const r = await writeStatus(params.client, params.evaluationId, "error", {
         completed_at: new Date().toISOString(),
         error_message: message,
       });
@@ -449,9 +451,9 @@ export async function runIndexerNonBlocking(
       // happened to succeed.
       if (!r.ok) statusWriteError = r.error;
     } catch (statusErr) {
-      // Already logged inside writeStatus OR getServiceRoleClient
-      // misconfigured. Capture for the return shape (overwrite prior
-      // because the most recent failure is more actionable).
+      // Already logged inside writeStatus. Capture for the return shape
+      // (overwrite prior because the most recent failure is more
+      // actionable).
       statusWriteError = (statusErr as Error).message ?? "unknown";
     }
     console.error(

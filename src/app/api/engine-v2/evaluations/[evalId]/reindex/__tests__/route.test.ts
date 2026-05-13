@@ -369,7 +369,7 @@ describe("POST /api/engine-v2/evaluations/[evalId]/reindex", () => {
     expect(body.status_write_error).toBe("running_upsert_boom");
   });
 
-  it("invokes runIndexerNonBlocking with evalId from URL params and WITHOUT passing the authenticated client (Round 2 / BLOCKER 1)", async () => {
+  it("invokes runIndexerNonBlocking with evalId from URL params and the authenticated admin client (Phase B corrective follow-up)", async () => {
     const client = makeClient({
       evalRow: { id: EVAL_ID, raw_eval_result_json: { evidence_slices: {} } },
     });
@@ -385,9 +385,10 @@ describe("POST /api/engine-v2/evaluations/[evalId]/reindex", () => {
     const arg = mockedRunIndexer.mock.calls[0]![0];
     expect(arg.evaluationId).toBe(EVAL_ID);
     expect(arg.rawEnvelope).toEqual({ evidence_slices: {} });
-    // BLOCKER 1: writes must go through service-role, NOT the authenticated
-    // admin client. Route passes no `client` so the indexer constructs
-    // its own service-role client internally.
-    expect(arg.client).toBeUndefined();
+    // Phase B corrective follow-up (RLS alignment): the Phase B tables
+    // now expose owner-AND-admin FOR ALL TO authenticated policies
+    // (matching lane2a/lane2b), so the route forwards the authenticated
+    // admin client to the indexer. No service-role construction.
+    expect(arg.client).toBe(client);
   });
 });
