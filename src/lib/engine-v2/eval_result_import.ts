@@ -19,6 +19,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { EvalCoverageStatement } from "./types_lane2";
+import { runIndexerNonBlocking } from "./submission_chunks_indexing";
 
 export interface EvalResultEnvelope {
   run_id?: string;
@@ -166,6 +167,36 @@ export async function importEvalResult(
     // The per_policy rows are already committed; the next poll will see the
     // eval still non-terminal and re-run importEvalResult, which is idempotent.
     throw new Error(`evaluation_update_failed: ${updateErr.message}`);
+  }
+
+  // Step 4 (Lane 2d Phase B / BLOCKER 1 fix): submission chunks indexer.
+  // Wired here (NOT inside the evaluate route, which has no completion
+  // path). Non-blocking: the indexer surfaces failures via the
+  // v2_submission_chunks_indexing_status side table (status='error',
+  // error_message set) so the UI can render a retry CTA. importEvalResult
+  // still returns success even when the indexer throws -- the per-policy
+  // verdicts and evaluation terminal status are independent of the
+  // submission search index.
+  //
+  // BLOCKER 3: the indexer joins on the evidence_slices MAP KEY
+  // (evidence_item_id), which is always present. source.chunk_id may be
+  // null and is stored as optional metadata only.
+  //
+  // Round 2 / BLOCKER 1: do NOT pass the authenticated `client` -- the
+  // new Phase B tables expose service-role writes only. The indexer
+  // constructs its own service-role client.
+  const indexerResult = await runIndexerNonBlocking({
+    evaluationId,
+    rawEnvelope: envelope,
+    perPolicyResults: perPolicy,
+  });
+  if (!indexerResult.ok) {
+    // Already logged structurally inside the helper; no chunk content in
+    // logs (IMPORTANT 6). Surface a one-liner here so the importEvalResult
+    // call site can grep against it.
+    console.error(
+      `[eval_result_import] indexer_failed_non_blocking evaluation_id=${evaluationId} error=${indexerResult.error}`,
+    );
   }
 
   return {
