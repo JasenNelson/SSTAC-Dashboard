@@ -16,7 +16,7 @@
 //     match (Lane 1 hydration-safety pattern).
 //   - data-testid values from Lane 2a are preserved verbatim.
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import type {
   V2PerPolicyResult,
   V2Judgment,
@@ -29,6 +29,32 @@ import {
   type EvidenceSlice,
   type EvidenceSliceMap,
 } from "@/lib/engine-v2/evidence_slices";
+import { useSidePanel } from "./side-panel/SidePanelContext";
+
+// Lane 2d / Phase E: pulse animation for the row(s) that match a
+// pendingHighlight.evidenceItemId. The keyframe lives as a scoped style
+// block injected by the component itself so this edit stays inside the
+// Phase E allowlist (no globals.css change). The selector
+// data-eval-pulse="true" is set on matching rows and evidence cards
+// inside this table; collapsed rows still pulse at the row level.
+const PULSE_STYLE_ID = "engine-v2-eval-pulse-keyframes";
+const PULSE_KEYFRAMES = `
+@keyframes engineV2EvalPulse {
+  0%   { background-color: rgba(99, 102, 241, 0.0); }
+  20%  { background-color: rgba(99, 102, 241, 0.30); }
+  50%  { background-color: rgba(99, 102, 241, 0.45); }
+  80%  { background-color: rgba(99, 102, 241, 0.20); }
+  100% { background-color: rgba(99, 102, 241, 0.0); }
+}
+[data-eval-pulse="true"] {
+  animation: engineV2EvalPulse 1.5s ease-in-out 1;
+  border-radius: 6px;
+}
+`;
+
+// Duration of the pulse animation in milliseconds. Must match the
+// 1.5s used in the @keyframes definition above.
+const PULSE_DURATION_MS = 1500;
 
 interface Props {
   results: V2PerPolicyResult[];
@@ -38,6 +64,14 @@ interface Props {
   // by engine schema_version 0.0.1 (no evidence_slices emitted). Defaults
   // to null so existing call sites (tests, older pages) keep working.
   evidenceSlices?: EvidenceSliceMap | null;
+  // Lane 2d / Phase E (additive): externally-controlled highlight target.
+  // When set to an evidence_item_id present in this evaluation's
+  // evidence_packet items, the matching evidence cell(s) scroll into
+  // view and pulse for ~1.5s. If omitted, the component falls back to
+  // reading SidePanelContext.pendingHighlight; both paths are safe to
+  // use simultaneously with prop taking precedence. Defaults to
+  // undefined so existing callers (tests, older pages) keep working.
+  highlightEvidenceItemId?: string | null;
 }
 
 type SortKey = "policy_id" | "tier" | "verdict" | "confidence";
@@ -397,9 +431,22 @@ function copyToClipboard(text: string): void {
 function EvidenceCitationCard({
   itemRef,
   slice,
+  onPeek,
+  pulseKey,
+  isPulseTarget,
 }: {
   itemRef: EvidenceItemRef;
   slice: EvidenceSlice;
+  // Lane 2d / Phase E: clicking the card opens the peek panel for the
+  // underlying chunk. Optional so older callers (none in production)
+  // can pass undefined and the card stays click-inert. The click target
+  // is the card's container; the existing hash-copy button keeps its
+  // own onClick + stopPropagation so it does not double-fire.
+  onPeek?: () => void;
+  // Lane 2d / Phase E: re-keyed via pulseTick to retrigger the CSS
+  // animation when the same evidence_item_id is highlighted again.
+  pulseKey?: number;
+  isPulseTarget?: boolean;
 }): React.ReactElement {
   const src = slice.source;
   const titleText = src.title || src.doc_id || "(unknown source)";
@@ -407,9 +454,41 @@ function EvidenceCitationCard({
   const sectionLabel = src.section ? `Section ${src.section}` : null;
   return (
     <div
+      // The key change forces a remount so the CSS animation re-fires
+      // on each highlight tick (Phase E re-fire semantics).
+      key={pulseKey ?? 0}
       data-testid="evidence-citation-card"
       data-evidence-item-id={itemRef.evidence_item_id}
-      className="rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 space-y-2"
+      data-eval-pulse={isPulseTarget ? "true" : undefined}
+      onClick={(ev) => {
+        // Avoid swallowing clicks on the inner copy-hash button or any
+        // nested interactive element.
+        const t = ev.target as HTMLElement | null;
+        if (t && t.closest("button")) return;
+        if (onPeek) onPeek();
+      }}
+      role={onPeek ? "button" : undefined}
+      tabIndex={onPeek ? 0 : undefined}
+      onKeyDown={(ev) => {
+        if (!onPeek) return;
+        // Round 2 fix (Phase E IMPORTANT 3): mirror the click handler's
+        // guard so Enter/Space activations bubbling from the inner
+        // hash-copy button do not double-fire the peek. The same
+        // closest('button') pattern keeps the parent card's keyboard
+        // affordance intact for the card body itself.
+        const t = ev.target as HTMLElement | null;
+        if (t && t.closest("button")) return;
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          onPeek();
+        }
+      }}
+      className={
+        "rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 space-y-2 " +
+        (onPeek
+          ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          : "")
+      }
     >
       <div className="flex flex-wrap items-center gap-2">
         <span
@@ -506,8 +585,120 @@ export function PerPolicyResultsTable({
   results,
   judgments,
   evidenceSlices = null,
+  highlightEvidenceItemId = null,
 }: Props): React.ReactElement {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const sidePanel = useSidePanel();
+
+  // Lane 2d / Phase E: resolve the active highlight target. Prop takes
+  // precedence so callers that prefer explicit control (or tests that
+  // do not provide a SidePanelContext) keep working. Context fallback
+  // is used by the production mount inside SidePanelProvider.
+  const contextHighlight = sidePanel?.pendingHighlight?.evidenceItemId ?? null;
+  const activeHighlight: string | null =
+    highlightEvidenceItemId ?? contextHighlight;
+
+  // Per-evidence-item-id pulse state. A row matches when at least one
+  // of its evidence_packet items has the active highlight id. We track
+  // a counter that increments whenever the highlight target changes
+  // (or re-fires on the same id) so re-clicking the same citation pill
+  // re-triggers the animation.
+  const [pulseTick, setPulseTick] = useState<number>(0);
+  // Row-level refs keyed by per-policy-result id so the effect can
+  // scroll the first matching row into view even when it is collapsed
+  // (Round 2 fix: IMPORTANT 1 — the old approach queried for an
+  // evidence cell that only exists in the EXPANDED detail row).
+  const rowRefs = useRef<Map<string, HTMLTableRowElement | null>>(new Map());
+  const pulseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Round 2 fix (Phase E IMPORTANT 1): derive the set of per-policy
+  // result ids whose evidence_packet contains the active highlight
+  // evidence_item_id, from the DATA MODEL (results + evidence_packet)
+  // rather than from the DOM. The old DOM-based lookup only found
+  // [data-evidence-item-id] nodes inside EXPANDED detail rows, so
+  // collapsed matching rows could never pulse and multiple collapsed
+  // matching rows were all missed. Walking the data model gives us
+  // every row regardless of expansion state.
+  const matchingRowIds = useMemo<ReadonlySet<string>>(() => {
+    if (!activeHighlight) return new Set<string>();
+    const out = new Set<string>();
+    for (const r of results) {
+      const items = collectEvidenceItems(r.evidence_packet, r.policy_id);
+      for (const it of items) {
+        if (it.evidence_item_id === activeHighlight) {
+          out.add(r.id);
+          break;
+        }
+      }
+    }
+    return out;
+  }, [activeHighlight, results]);
+
+  // Effect: when activeHighlight changes, schedule scroll + pulse and
+  // then clear context pendingHighlight so re-firing on the same id
+  // (from a fresh click) works. Operates on row-level refs so the
+  // animation hits the visible <tr> whether expanded or collapsed.
+  useEffect(() => {
+    if (!activeHighlight) return;
+    if (matchingRowIds.size === 0) return;
+
+    // Auto-expand the FIRST matching row so the inner citation card
+    // pulse is visible too. Other matching rows still pulse at the row
+    // level even if collapsed; reviewer can expand them themselves.
+    // Iteration order on filtered+sorted rows uses the visible order.
+    const visibleOrder = filtered
+      .map((r) => r.id)
+      .filter((id) => matchingRowIds.has(id));
+    const firstId = visibleOrder[0] ?? null;
+    if (firstId) {
+      setExpandedId((prev) => (prev === firstId ? prev : firstId));
+      const rowEl = rowRefs.current.get(firstId);
+      if (rowEl && typeof rowEl.scrollIntoView === "function") {
+        rowEl.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+    }
+
+    // Bump the tick so cells re-render with data-eval-pulse=true.
+    setPulseTick((t) => t + 1);
+
+    // Clear context pendingHighlight after the animation completes so
+    // re-clicking the same pill retriggers the pulse. The local
+    // pulseTick state is what actually drives the animation; clearing
+    // the context here is bookkeeping for re-fire semantics.
+    if (pulseTimeoutRef.current) {
+      clearTimeout(pulseTimeoutRef.current);
+    }
+    pulseTimeoutRef.current = setTimeout(() => {
+      if (sidePanel) {
+        sidePanel.setPendingHighlight(null);
+      }
+      pulseTimeoutRef.current = null;
+    }, PULSE_DURATION_MS);
+
+    return () => {
+      if (pulseTimeoutRef.current) {
+        clearTimeout(pulseTimeoutRef.current);
+        pulseTimeoutRef.current = null;
+      }
+    };
+    // We deliberately exclude `filtered` and `sidePanel` from the dep
+    // array: filtered identity churns on every render (it is a
+    // useMemo, but its deps include toolbar state that may change for
+    // unrelated reasons), and including `sidePanel` would re-fire on
+    // every context value recompute. The effect's sole driver is the
+    // highlight string identity plus the derived matchingRowIds.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeHighlight, matchingRowIds]);
+
+  // Cleanup any pending timeout on unmount.
+  useEffect(() => {
+    return () => {
+      if (pulseTimeoutRef.current) {
+        clearTimeout(pulseTimeoutRef.current);
+        pulseTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Toolbar state (L2b-5).
   const [filterTier, setFilterTier] = useState<TierFilter>("ALL");
@@ -725,6 +916,15 @@ export function PerPolicyResultsTable({
 
   return (
     <div className="space-y-3">
+      {/* Lane 2d / Phase E: scoped pulse keyframe. Lives inline so the
+          Phase E allowlist does not need to touch globals.css. The
+          selector targets only [data-eval-pulse="true"] which is set
+          on matching rows and evidence cards within this table. */}
+      <style
+        data-testid="per-policy-results-pulse-style"
+        id={PULSE_STYLE_ID}
+        dangerouslySetInnerHTML={{ __html: PULSE_KEYFRAMES }}
+      />
       {/* Toolbar (L2b-5) */}
       <div
         data-testid="per-policy-results-toolbar"
@@ -897,11 +1097,26 @@ export function PerPolicyResultsTable({
                   "evidence_gaps",
                 );
 
+                const isRowPulseTarget = matchingRowIds.has(r.id);
                 return (
                   <Fragment key={r.id}>
                     <tr
                       data-testid="per-policy-row"
                       data-policy-id={r.policy_id}
+                      // Round 2 fix (Phase E IMPORTANT 1): data-eval-pulse
+                      // lives on the visible row wrapper so the pulse
+                      // animation hits collapsed rows too. Re-key on
+                      // pulseTick so the animation re-fires when the
+                      // reviewer clicks the same citation pill twice.
+                      data-eval-pulse={isRowPulseTarget ? "true" : undefined}
+                      key={
+                        isRowPulseTarget
+                          ? `${r.id}::${pulseTick}`
+                          : `${r.id}::0`
+                      }
+                      ref={(el) => {
+                        rowRefs.current.set(r.id, el);
+                      }}
                       className="hover:bg-slate-50 dark:hover:bg-slate-800/40 align-top"
                     >
                       <td className="px-4 py-2 text-sm font-mono text-slate-900 dark:text-white whitespace-nowrap">
@@ -1056,23 +1271,55 @@ export function PerPolicyResultsTable({
                                       evidenceSlices,
                                       itemRef.evidence_item_id,
                                     );
+                                    const isPulse =
+                                      activeHighlight !== null &&
+                                      activeHighlight ===
+                                        itemRef.evidence_item_id;
+                                    const onPeek = sidePanel
+                                      ? () => {
+                                          sidePanel.openPeek({
+                                            evidenceItemId:
+                                              itemRef.evidence_item_id,
+                                            docSection: slice
+                                              ? slice.source.section
+                                              : null,
+                                            pageNum: slice
+                                              ? slice.source.page
+                                              : null,
+                                            content: slice
+                                              ? slice.content
+                                              : null,
+                                          });
+                                        }
+                                      : undefined;
                                     if (slice) {
                                       return (
                                         <EvidenceCitationCard
                                           key={itemRef.evidence_item_id}
                                           itemRef={itemRef}
                                           slice={slice}
+                                          onPeek={onPeek}
+                                          pulseKey={isPulse ? pulseTick : 0}
+                                          isPulseTarget={isPulse}
                                         />
                                       );
                                     }
                                     if (evidenceSlices === null) {
                                       return (
                                         <div
-                                          key={itemRef.evidence_item_id}
+                                          key={
+                                            itemRef.evidence_item_id +
+                                            "::" +
+                                            (isPulse ? pulseTick : 0)
+                                          }
                                           data-testid="per-policy-verbatim-older-schema"
                                           data-evidence-item-id={
                                             itemRef.evidence_item_id
                                           }
+                                          data-eval-pulse={
+                                            isPulse ? "true" : undefined
+                                          }
+                                          onClick={onPeek}
                                           className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-2 text-[11px] italic text-slate-500 dark:text-slate-400"
                                         >
                                           Verbatim text not available (this
@@ -1084,11 +1331,19 @@ export function PerPolicyResultsTable({
                                     }
                                     return (
                                       <div
-                                        key={itemRef.evidence_item_id}
+                                        key={
+                                          itemRef.evidence_item_id +
+                                          "::" +
+                                          (isPulse ? pulseTick : 0)
+                                        }
                                         data-testid="per-policy-verbatim-missing-slice"
                                         data-evidence-item-id={
                                           itemRef.evidence_item_id
                                         }
+                                        data-eval-pulse={
+                                          isPulse ? "true" : undefined
+                                        }
+                                        onClick={onPeek}
                                         className="rounded border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-2 text-[11px] text-amber-800 dark:text-amber-200"
                                       >
                                         Slice{" "}

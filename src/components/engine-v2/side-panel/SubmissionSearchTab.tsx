@@ -373,9 +373,14 @@ export function SubmissionSearchTab(
           evidenceItemId: r.evidence_item_id,
           docSection: r.section,
           pageNum: r.page,
-          // content is intentionally null here -- Phase E will hydrate
+          // content is intentionally null here -- Phase E hydrates
           // from the chunk detail endpoint when the peek panel opens.
           content: null,
+        });
+        // Lane 2d / Phase E: also fire pendingHighlight so the per-
+        // policy results table scrolls + pulses the matching row(s).
+        sidePanel.setPendingHighlight({
+          evidenceItemId: r.evidence_item_id,
         });
       }
     },

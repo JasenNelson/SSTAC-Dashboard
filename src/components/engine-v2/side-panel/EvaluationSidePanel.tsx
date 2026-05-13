@@ -55,6 +55,12 @@ import {
 import { AskAiTab } from "./AskAiTab";
 import { SubmissionSearchTab } from "./SubmissionSearchTab";
 import { PolicySearchTab } from "./PolicySearchTab";
+// Lane 2d / Phase E: PeekPanel mounts inside the side panel container
+// so its absolute positioning resolves to the panel's bounds (the
+// outer panel div is sticky/fixed, which creates a containing block).
+// Phase E owns this mount per its explicit allowlist exception to the
+// ED-2d4-12 Phase A mount contract.
+import { PeekPanel } from "./PeekPanel";
 import {
   createGlobalKeydownHandler,
   nextTabFromArrowKey,
@@ -353,6 +359,11 @@ export function EvaluationSidePanel({
           })}
         </div>
       </div>
+      {/* Lane 2d / Phase E: peek panel overlay. Renders only when
+          peekChunk is non-null in SidePanelContext. Positions itself
+          absolutely against the outer panel container (which is
+          sticky/fixed and therefore a containing block). */}
+      <PeekPanel evaluationId={evaluationId} />
     </div>
   );
 }

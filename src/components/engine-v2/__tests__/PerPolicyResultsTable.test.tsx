@@ -728,3 +728,95 @@ describe("PerPolicyResultsTable save judgment", () => {
     expect(errText).toContain("REQUIRES_REVIEW");
   });
 });
+
+// Round 2 fix coverage (Phase E IMPORTANT 1): collapsed-row highlight.
+// The original Phase E implementation looked for [data-evidence-item-id]
+// nodes via DOM querySelector, which only exist when the row is expanded.
+// The fix derives matching rows from the data model so the row wrapper
+// receives data-eval-pulse regardless of expansion state.
+describe("PerPolicyResultsTable highlight (collapsed rows)", () => {
+  const HIGHLIGHT_ID = "slice_submission_collapsed_1";
+
+  function makeHighlightableResult(
+    id: string,
+    policyId: string,
+  ): V2PerPolicyResult {
+    return makeResult({
+      id,
+      policy_id: policyId,
+      evidence_packet: {
+        items: [
+          {
+            evidence_item_id: HIGHLIGHT_ID,
+            evidence_type: "POSITIVE",
+            evidence_item_ref: {
+              index_side: "submission",
+              source_document_provenance: {
+                doc_id: "submission-report-1",
+              },
+            },
+          },
+        ],
+      },
+      pathway_notes: {},
+    });
+  }
+
+  it("marks matching ROW with data-eval-pulse even when collapsed", () => {
+    const matching = makeHighlightableResult(
+      "00000000-0000-4000-8000-000000000010",
+      "PX-010",
+    );
+    const nonMatching = makeResult({
+      id: "00000000-0000-4000-8000-000000000011",
+      policy_id: "PX-011",
+      evidence_packet: {},
+      pathway_notes: {},
+    });
+
+    render(
+      <PerPolicyResultsTable
+        results={[matching, nonMatching]}
+        judgments={NO_JUDGMENTS}
+        highlightEvidenceItemId={HIGHLIGHT_ID}
+      />,
+    );
+
+    const rows = screen.getAllByTestId("per-policy-row");
+    expect(rows).toHaveLength(2);
+    const matchedRow = rows.find(
+      (r) => r.getAttribute("data-policy-id") === "PX-010",
+    );
+    const unmatchedRow = rows.find(
+      (r) => r.getAttribute("data-policy-id") === "PX-011",
+    );
+    expect(matchedRow?.getAttribute("data-eval-pulse")).toBe("true");
+    // Non-matching rows must NOT receive the pulse marker.
+    expect(unmatchedRow?.getAttribute("data-eval-pulse")).toBeNull();
+  });
+
+  it("marks ALL matching rows when multiple rows cite the same chunk", () => {
+    const r1 = makeHighlightableResult(
+      "00000000-0000-4000-8000-000000000020",
+      "PX-020",
+    );
+    const r2 = makeHighlightableResult(
+      "00000000-0000-4000-8000-000000000021",
+      "PX-021",
+    );
+
+    render(
+      <PerPolicyResultsTable
+        results={[r1, r2]}
+        judgments={NO_JUDGMENTS}
+        highlightEvidenceItemId={HIGHLIGHT_ID}
+      />,
+    );
+
+    const rows = screen.getAllByTestId("per-policy-row");
+    expect(rows).toHaveLength(2);
+    for (const row of rows) {
+      expect(row.getAttribute("data-eval-pulse")).toBe("true");
+    }
+  });
+});

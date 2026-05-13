@@ -410,6 +410,11 @@ export function AskAiTab(props: AskAiTabProps): ReactElement {
         pageNum: cit.page,
         content: null,
       });
+      // Lane 2d / Phase E: also fire pendingHighlight so the per-
+      // policy results table scrolls + pulses the cited row(s).
+      sidePanel.setPendingHighlight({
+        evidenceItemId: cit.evidence_item_id,
+      });
     },
     [sidePanel],
   );
