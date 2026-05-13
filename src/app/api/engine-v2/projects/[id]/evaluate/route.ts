@@ -17,7 +17,7 @@
 //      On reject: status='error' + 500. On success: status='running' + 200.
 
 import { spawn } from "child_process";
-import { openSync } from "fs";
+import * as fsSync from "fs";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { NextResponse, type NextRequest } from "next/server";
@@ -113,11 +113,53 @@ interface SpawnScenarioArgs {
 // completion (blocking) since the transform is pure JSON and finishes in
 // well under a second. Captures stdio to enrich the error message on
 // failure rather than swallowing it.
-async function runExtractAdapter(args: {
+//
+// Codex Round 1 fix (Lane 2c retro): the adapter subprocess can hang
+// indefinitely; without a timeout the eval row sits in 'pending' forever
+// and idx_v2_evaluations__one_active blocks retries. Wrap the spawn in a
+// 60s deadline, SIGTERM-then-SIGKILL on timeout, and surface a structured
+// error that includes the tail of subprocess_stderr.log (if present in
+// evalRunDir) so the stale-handler / dashboard can diagnose it.
+export const ADAPTER_TIMEOUT_MS = 60000;
+const ADAPTER_SIGKILL_GRACE_MS = 2000;
+const ADAPTER_STDERR_TAIL_BYTES = 1000;
+
+// Read the last N bytes of a file as a UTF-8 string. Returns null when the
+// file does not exist (subprocess may have died before writing anything).
+// Uses sync fs primitives because this is called from a rejected promise's
+// catch path where ergonomics > microseconds.
+export function tailStderrLog(filePath: string, n: number): string | null {
+  let fd: number | null = null;
+  try {
+    const st = fsSync.statSync(filePath);
+    const size = st.size;
+    if (size === 0) return "";
+    const readLen = Math.min(size, n);
+    fd = fsSync.openSync(filePath, "r");
+    const buf = Buffer.alloc(readLen);
+    fsSync.readSync(fd, buf, 0, readLen, size - readLen);
+    return buf.toString("utf-8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    return null;
+  } finally {
+    if (fd !== null) {
+      try {
+        fsSync.closeSync(fd);
+      } catch {
+        // Ignore close errors on the diagnostic path.
+      }
+    }
+  }
+}
+
+export async function runExtractAdapter(args: {
   pythonPath: string;
   adapterPath: string;
   inputPath: string;
   outputPath: string;
+  evalRunDir: string;
+  timeoutMs?: number;
 }): Promise<void> {
   const cli = [
     args.adapterPath,
@@ -126,19 +168,76 @@ async function runExtractAdapter(args: {
     "--output",
     args.outputPath,
   ];
+  const timeoutMs = args.timeoutMs ?? ADAPTER_TIMEOUT_MS;
+  const stderrLogPath = path.join(args.evalRunDir, "subprocess_stderr.log");
   await new Promise<void>((resolve, reject) => {
     const child = spawn(args.pythonPath, cli, {
       stdio: ["ignore", "pipe", "pipe"],
       windowsHide: true,
     });
     let stderrBuf = "";
+    let promiseSettled = false;
+    let timedOut = false;
+    let killTimer: NodeJS.Timeout | null = null;
     child.stderr?.on("data", (d) => {
       stderrBuf += d.toString();
     });
-    child.once("error", (err) => reject(err));
+    const settlePromise = (fn: () => void): void => {
+      if (promiseSettled) return;
+      promiseSettled = true;
+      clearTimeout(deadline);
+      fn();
+    };
+    const deadline = setTimeout(() => {
+      // Timeout: send SIGTERM immediately, arm a 2s grace timer for SIGKILL,
+      // and reject the promise now. The killTimer is intentionally NOT
+      // cleared by settlePromise so the SIGKILL fallback fires even after
+      // the route has already moved on. Reject message uses the tail of
+      // subprocess_stderr.log per spec; "stderr=null" when absent.
+      timedOut = true;
+      try {
+        child.kill("SIGTERM");
+      } catch {
+        // ignore
+      }
+      killTimer = setTimeout(() => {
+        killTimer = null;
+        try {
+          if (child.exitCode === null && child.signalCode === null) {
+            child.kill("SIGKILL");
+          }
+        } catch {
+          // ignore
+        }
+      }, ADAPTER_SIGKILL_GRACE_MS);
+      const fileTail = tailStderrLog(stderrLogPath, ADAPTER_STDERR_TAIL_BYTES);
+      const tailRepr = fileTail === null ? "null" : JSON.stringify(fileTail);
+      settlePromise(() =>
+        reject(
+          new Error(
+            `adapter_timeout: ${timeoutMs}ms exceeded. stderr=${tailRepr}`,
+          ),
+        ),
+      );
+    }, timeoutMs);
+    child.once("error", (err) => settlePromise(() => reject(err)));
     child.once("exit", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`adapter_exit_${code}: ${stderrBuf.trim().slice(0, 400)}`));
+      // If the process exits cleanly before the 2s grace, cancel the SIGKILL
+      // fallback so we do not signal a dead process.
+      if (killTimer !== null) {
+        clearTimeout(killTimer);
+        killTimer = null;
+      }
+      if (timedOut) return; // Promise already rejected.
+      if (code === 0) settlePromise(resolve);
+      else
+        settlePromise(() =>
+          reject(
+            new Error(
+              `adapter_exit_${code}: ${stderrBuf.trim().slice(0, 400)}`,
+            ),
+          ),
+        );
     });
   });
 }
@@ -159,8 +258,8 @@ async function spawnScenarioRunner(args: SpawnScenarioArgs): Promise<void> {
   // when present and appends a tail into v2_evaluations.errors.
   const stdoutPath = `${args.outputDir}/subprocess_stdout.log`;
   const stderrPath = `${args.outputDir}/subprocess_stderr.log`;
-  const outFd = openSync(stdoutPath, "a");
-  const errFd = openSync(stderrPath, "a");
+  const outFd = fsSync.openSync(stdoutPath, "a");
+  const errFd = fsSync.openSync(stderrPath, "a");
 
   const child = spawn(args.pythonPath, cli, {
     detached: true,
@@ -445,6 +544,7 @@ export async function POST(
       adapterPath,
       inputPath: verbatimJsonPath,
       outputPath: submissionJsonPath,
+      evalRunDir,
     });
   } catch (err) {
     const msg = (err as Error).message ?? "unknown";

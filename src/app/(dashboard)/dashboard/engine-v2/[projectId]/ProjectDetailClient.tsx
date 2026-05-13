@@ -24,16 +24,21 @@ import type {
   V2SubmissionFile,
   V2ExtractionRun,
 } from "@/lib/engine-v2/types";
-import type { V2Evaluation } from "@/lib/engine-v2/types_lane2";
+import type {
+  V2Evaluation,
+  V2EvaluationListRow,
+} from "@/lib/engine-v2/types_lane2";
 
 interface ProjectDetailClientProps {
   project: V2Project;
   initialFiles: V2SubmissionFile[];
   initialRun: V2ExtractionRun | null;
   initialEvaluation: V2Evaluation | null;
-  // Full evaluation history (ordered started_at DESC). The first element is
-  // the same row as initialEvaluation; downstream rows surface prior runs.
-  evaluationHistory: V2Evaluation[];
+  // Slim evaluation history (ordered started_at DESC). The first element is
+  // the same eval (by id) as initialEvaluation; downstream rows surface
+  // prior runs. Codex Round 1 fix (Lane 2c retro): the JSONB blob
+  // raw_eval_result_json is intentionally NOT included on these rows.
+  evaluationHistory: V2EvaluationListRow[];
   accessToken: string;
   supabaseUrl: string;
   supabaseAnonKey: string;

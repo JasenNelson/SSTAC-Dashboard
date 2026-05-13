@@ -17,14 +17,15 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type {
   EvaluationStatus,
-  V2Evaluation,
+  V2EvaluationListRow,
 } from "@/lib/engine-v2/types_lane2";
 import { TERMINAL_EVALUATION_STATUSES } from "@/lib/engine-v2/types_lane2";
 
 interface EvaluationHistoryListProps {
   projectId: string;
-  // Ordered started_at DESC by the caller.
-  evaluations: V2Evaluation[];
+  // Ordered started_at DESC by the caller. Slim rows -- no JSONB blob
+  // (raw_eval_result_json) per row. Codex Round 1 fix (Lane 2c retro).
+  evaluations: V2EvaluationListRow[];
 }
 
 function isTerminalStatus(status: EvaluationStatus): boolean {

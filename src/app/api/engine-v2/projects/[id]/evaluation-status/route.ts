@@ -94,6 +94,39 @@ async function readEvalResultJson(filePath: string): Promise<string> {
   return await fs.promises.readFile(filePath, "utf-8");
 }
 
+// Codex Round 1 fix (Lane 2c retro): when the stale-handler trips, the
+// scenario subprocess may have written diagnostic output to
+// subprocess_stderr.log (Lane 2a-2 began capturing this at c69876d). Tail
+// the file so the v2_evaluations.errors array carries something diagnosable
+// alongside the generic "Subprocess silent" message. ENOENT (file never
+// written) is the expected silent-failure case -> skip the append.
+const STALE_STDERR_TAIL_BYTES = 2000;
+
+export function tailStaleStderrLog(filePath: string, n: number): string | null {
+  let fd: number | null = null;
+  try {
+    const st = fs.statSync(filePath);
+    const size = st.size;
+    if (size === 0) return "";
+    const readLen = Math.min(size, n);
+    fd = fs.openSync(filePath, "r");
+    const buf = Buffer.alloc(readLen);
+    fs.readSync(fd, buf, 0, readLen, size - readLen);
+    return buf.toString("utf-8");
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+    return null;
+  } finally {
+    if (fd !== null) {
+      try {
+        fs.closeSync(fd);
+      } catch {
+        // Ignore close errors on the diagnostic path.
+      }
+    }
+  }
+}
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
@@ -262,11 +295,20 @@ export async function POST(
   const startedMs = new Date(row.started_at).getTime();
   if (Number.isFinite(startedMs) && nowMs - startedMs > staleMs) {
     const completedAtIso = new Date().toISOString();
+    // Append subprocess_stderr.log tail as a second errors[] entry so the
+    // generic message stays first and the diagnostic is preserved. ENOENT
+    // (silent subprocess) -> skip the append entirely. Codex Round 1 fix.
+    const errors: string[] = ["Subprocess silent beyond stale timeout"];
+    const stderrPath = path.join(evalDir, "subprocess_stderr.log");
+    const tail = tailStaleStderrLog(stderrPath, STALE_STDERR_TAIL_BYTES);
+    if (tail !== null && tail.length > 0) {
+      errors.push(`subprocess_stderr_tail: ${tail}`);
+    }
     const { data: updated, error: updErr } = await client
       .from("v2_evaluations")
       .update({
         status: "error",
-        errors: ["Subprocess silent beyond stale timeout"],
+        errors,
         completed_at: completedAtIso,
       })
       .eq("id", evaluationId)

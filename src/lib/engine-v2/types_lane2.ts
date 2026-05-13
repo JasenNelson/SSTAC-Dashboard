@@ -35,6 +35,24 @@ export interface V2Evaluation {
   updated_at: string;
 }
 
+// Codex Round 1 fix (Lane 2c retro): the evaluation-history list view does
+// NOT need the JSONB blobs (raw_eval_result_json, coverage_statement is
+// small but kept). Define a slim Pick<> so the history fetch can omit the
+// large columns and the component prop type is precise. The latest-eval
+// fetch keeps the full V2Evaluation type because the results page needs
+// raw_eval_result_json to render evidence_slices.
+export type V2EvaluationListRow = Pick<
+  V2Evaluation,
+  | "id"
+  | "status"
+  | "evaluation_backend"
+  | "bench_fixture"
+  | "coverage_statement"
+  | "started_at"
+  | "completed_at"
+  | "errors"
+>;
+
 export interface V2PerPolicyResult {
   id: string;
   evaluation_id: string;

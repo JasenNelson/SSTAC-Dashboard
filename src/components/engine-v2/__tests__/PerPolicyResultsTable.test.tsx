@@ -347,6 +347,136 @@ describe("PerPolicyResultsTable AI Determination + policy text + tech disclosure
   });
 });
 
+describe("PerPolicyResultsTable evidence citations policy_id fallback", () => {
+  // Codex Round 1 fix (Lane 2c retro): when evidence_packet is empty and
+  // evidence_slices is non-null with slices matching by policy_id, render
+  // those slices as evidence with a "Linked by policy_id" badge instead of
+  // showing the misleading "No evidence items emitted" message.
+
+  function makeEmptyPacketResult(): V2PerPolicyResult {
+    return makeResult({
+      id: "00000000-0000-4000-8000-000000000001",
+      policy_id: "PX-001",
+      evidence_packet: {}, // No items / no evidence_item_id refs.
+      pathway_notes: {},
+    });
+  }
+
+  it("renders slices matched by policy_id when evidence_packet is empty", () => {
+    const slices = {
+      slice_aaa: {
+        content_hash: "aaa111",
+        content: "Verbatim text linked by policy_id only.",
+        field: "original_text",
+        policy_id: "PX-001",
+        source: {
+          doc_id: "CSAP-NPG",
+          title: "CSAP NPG",
+          page: 7,
+          section: "RP-APP-1",
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+      slice_bbb: {
+        content_hash: "bbb222",
+        content: "Unrelated other-policy text.",
+        field: "original_text",
+        policy_id: "PX-999",
+        source: {
+          doc_id: "D",
+          title: "T",
+          page: null,
+          section: null,
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+    };
+    render(
+      <PerPolicyResultsTable
+        results={[makeEmptyPacketResult()]}
+        judgments={NO_JUDGMENTS}
+        evidenceSlices={slices}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+
+    // The "No evidence items emitted" message MUST NOT be shown when slices
+    // match by policy_id.
+    expect(
+      screen.queryByTestId("per-policy-verbatim-empty"),
+    ).not.toBeInTheDocument();
+
+    const fallbacks = screen.getAllByTestId(
+      "per-policy-verbatim-policy-id-fallback",
+    );
+    expect(fallbacks).toHaveLength(1);
+    expect(fallbacks[0]!.getAttribute("data-evidence-item-id")).toBe("slice_aaa");
+
+    // The "Linked by policy_id" badge is present beside the rendered slice.
+    const badges = screen.getAllByTestId(
+      "per-policy-verbatim-policy-id-badge",
+    );
+    expect(badges).toHaveLength(1);
+    expect(badges[0]!.textContent).toBe("Linked by policy_id");
+
+    // The slice content from the matched slice IS rendered.
+    const card = screen.getByTestId("evidence-citation-card");
+    expect(card.textContent).toContain("Verbatim text linked by policy_id only.");
+  });
+
+  it("still shows the empty-message when evidence_packet is empty AND no slices match by policy_id", () => {
+    const slices = {
+      slice_zzz: {
+        content_hash: "zzz",
+        content: "Unrelated.",
+        field: "original_text",
+        policy_id: "PX-OTHER",
+        source: {
+          doc_id: "D",
+          title: "T",
+          page: null,
+          section: null,
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+    };
+    render(
+      <PerPolicyResultsTable
+        results={[makeEmptyPacketResult()]}
+        judgments={NO_JUDGMENTS}
+        evidenceSlices={slices}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    expect(
+      screen.getByTestId("per-policy-verbatim-empty"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("per-policy-verbatim-policy-id-fallback"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("falls back to the empty-message when evidenceSlices is null (older schema)", () => {
+    render(
+      <PerPolicyResultsTable
+        results={[makeEmptyPacketResult()]}
+        judgments={NO_JUDGMENTS}
+        evidenceSlices={null}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    expect(
+      screen.getByTestId("per-policy-verbatim-empty"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("per-policy-verbatim-policy-id-fallback"),
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe("PerPolicyResultsTable save judgment", () => {
   it("POSTs correct body and updates UI on 200", async () => {
     const fetchMock = vi.fn().mockResolvedValue(

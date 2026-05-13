@@ -989,6 +989,56 @@ export function PerPolicyResultsTable({
                             {(() => {
                               const items = collectEvidenceItems(r.evidence_packet);
                               if (items.length === 0) {
+                                // Codex Round 1 fix (Lane 2c retro): fall
+                                // back to slices linked by policy_id when
+                                // evidence_packet is empty but slices match.
+                                // Mirrors the policy-text fallback above so
+                                // reviewers see linked evidence even when no
+                                // explicit citation was emitted.
+                                if (evidenceSlices !== null) {
+                                  const matched = Object.entries(evidenceSlices)
+                                    .filter(
+                                      ([, slice]) =>
+                                        slice && slice.policy_id === r.policy_id,
+                                    )
+                                    .map(([sliceId, slice]) => ({
+                                      sliceId,
+                                      slice,
+                                    }));
+                                  if (matched.length > 0) {
+                                    return (
+                                      <div className="space-y-2">
+                                        {matched.map(({ sliceId, slice }) => {
+                                          const itemRef: EvidenceItemRef = {
+                                            evidence_item_id: sliceId,
+                                            evidence_type: null,
+                                            raw: {},
+                                          };
+                                          return (
+                                            <div
+                                              key={sliceId}
+                                              data-testid="per-policy-verbatim-policy-id-fallback"
+                                              data-evidence-item-id={sliceId}
+                                            >
+                                              <div className="mb-1">
+                                                <span
+                                                  data-testid="per-policy-verbatim-policy-id-badge"
+                                                  className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200"
+                                                >
+                                                  Linked by policy_id
+                                                </span>
+                                              </div>
+                                              <EvidenceCitationCard
+                                                itemRef={itemRef}
+                                                slice={slice}
+                                              />
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    );
+                                  }
+                                }
                                 return (
                                   <div
                                     data-testid="per-policy-verbatim-empty"

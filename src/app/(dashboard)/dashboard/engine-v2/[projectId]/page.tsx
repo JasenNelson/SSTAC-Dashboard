@@ -13,7 +13,10 @@ import type {
   V2SubmissionFile,
   V2ExtractionRun,
 } from "@/lib/engine-v2/types";
-import type { V2Evaluation } from "@/lib/engine-v2/types_lane2";
+import type {
+  V2Evaluation,
+  V2EvaluationListRow,
+} from "@/lib/engine-v2/types_lane2";
 
 interface PageProps {
   // Next.js 15 App Router: params is a Promise (Finding 50-style).
@@ -61,19 +64,36 @@ export default async function ProjectDetailPage(props: PageProps) {
   const initialRun =
     runRows && runRows.length > 0 ? (runRows[0] as V2ExtractionRun) : null;
 
-  // Full evaluation history for this project (ordered started_at DESC).
-  // The latest row drives the live status panel; the full list feeds the
-  // EvaluationHistoryList so reviewers can revisit prior runs.
-  const { data: evalRows } = await client
+  // Codex Round 1 fix (Lane 2c retro): split the evaluations fetch into two
+  // queries so the history-list does NOT hydrate raw_eval_result_json blobs
+  // for every prior run. Latest row keeps the full payload (results page
+  // needs raw_eval_result_json for evidence_slices); the rest of the history
+  // only needs id/status/backend/bench/coverage/timestamps/errors.
+  const { data: latestEvalRows } = await client
     .from("v2_evaluations")
     .select(
       "id, project_id, extraction_run_id, status, run_id_engine, variant_config_hash, evaluation_backend, embedder_backend, reranker_backend, model, bench_fixture, applicability_mode, coverage_statement, errors, raw_eval_result_json, started_at, completed_at, updated_at",
     )
     .eq("project_id", project.id)
+    .order("started_at", { ascending: false })
+    .limit(1);
+  const initialEvaluation: V2Evaluation | null =
+    latestEvalRows && latestEvalRows.length > 0
+      ? (latestEvalRows[0] as V2Evaluation)
+      : null;
+
+  // History list: slim columns, no JSONB blob. Includes the latest row too
+  // so the table still shows "1 of N" + ordering remains stable. Ordered
+  // started_at DESC by the caller convention.
+  const { data: historyRows } = await client
+    .from("v2_evaluations")
+    .select(
+      "id, status, evaluation_backend, bench_fixture, coverage_statement, started_at, completed_at, errors",
+    )
+    .eq("project_id", project.id)
     .order("started_at", { ascending: false });
-  const evaluationHistory: V2Evaluation[] = (evalRows ?? []) as V2Evaluation[];
-  const initialEvaluation =
-    evaluationHistory.length > 0 ? evaluationHistory[0] : null;
+  const evaluationHistory: V2EvaluationListRow[] =
+    (historyRows ?? []) as V2EvaluationListRow[];
 
   // Pass the session access token to the client component (Lane 1 simplification
   // per L1-5 spec). Production should refresh the token client-side.
