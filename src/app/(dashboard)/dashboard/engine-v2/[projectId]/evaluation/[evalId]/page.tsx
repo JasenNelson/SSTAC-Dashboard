@@ -18,6 +18,7 @@ import { EngineV2Breadcrumbs } from "@/components/engine-v2/EngineV2Breadcrumbs"
 import { PerPolicyResultsTable } from "@/components/engine-v2/PerPolicyResultsTable";
 import { TelemetryDisclosure } from "@/components/engine-v2/TelemetryDisclosure";
 import { ExportMemoButton } from "@/components/engine-v2/ExportMemoButton";
+import { ExportFormatMenu } from "@/components/engine-v2/ExportFormatMenu";
 import { JudgmentSummaryTile } from "@/components/engine-v2/JudgmentSummaryTile";
 import { extractEvidenceSlices } from "@/lib/engine-v2/evidence_slices";
 import type {
@@ -425,11 +426,19 @@ export default async function EvaluationResultsPage(props: PageProps) {
             memoCreatedAt={memoCreatedAt}
             latestJudgmentUpdatedAt={latestJudgmentUpdatedAt}
           />
-          <ExportMemoButton
-            projectId={projectId}
-            evaluationId={evaluation.id}
-            evaluationStatus={evaluation.status}
-          />
+          <div className="flex flex-wrap items-start gap-2">
+            <ExportMemoButton
+              projectId={projectId}
+              evaluationId={evaluation.id}
+              evaluationStatus={evaluation.status}
+            />
+            {/* L2d-3: ad-hoc CSV/MD/HTML export sibling. docx stays on ExportMemoButton. */}
+            <ExportFormatMenu
+              projectId={projectId}
+              evaluationId={evaluation.id}
+              evaluationStatus={evaluation.status}
+            />
+          </div>
         </div>
       </header>
       <CoverageSummary coverage={coverage} />
