@@ -65,6 +65,10 @@ function asRecord(v: unknown): Record<string, unknown> | null {
   }
   return null;
 }
+function asArray(v: unknown): unknown[] | null {
+  if (Array.isArray(v)) return v;
+  return null;
+}
 
 // Build the row payload that v2_per_policy_results expects.
 // stage and packet_id default to "" (NOT NULL columns per Lane 2a unique-index
@@ -84,7 +88,7 @@ function toPerPolicyRow(
     confidence: asNumber(raw.confidence),
     confidence_method: asString(raw.confidence_method),
     summary: asString(raw.summary),
-    evidence_packet: asRecord(raw.evidence_packet) ?? {},
+    evidence_packet: asArray(raw.evidence_packet) ?? asRecord(raw.evidence_packet) ?? [],
     pathway_notes: asRecord(raw.pathway_notes) ?? {},
     rubric_self_score: asRecord(raw.rubric_self_score),
     raw_result_json: raw,

@@ -300,7 +300,7 @@ describe("importEvalResult", () => {
       tier: null,
       verdict_suggestion: null,
       confidence: null,
-      evidence_packet: {},
+      evidence_packet: [],
       pathway_notes: {},
       rubric_self_score: null,
     });
@@ -322,5 +322,81 @@ describe("importEvalResult", () => {
     // Only UPDATE fired.
     expect(calls).toHaveLength(1);
     expect(calls[0]!.op).toBe("update");
+  });
+
+  // --- P0 regression: evidence_packet array must survive import ---
+  //
+  // Root cause: asRecord(raw.evidence_packet) ?? {} stripped arrays to {}.
+  // The engine S4 contract emits evidence_packet as an ARRAY of evidence-item
+  // objects (each carrying evidence_item_id, evidence_type, evidence_item_ref).
+  // The fix uses asArray first so the stored JSONB column carries the full array.
+
+  it("P0 regression: evidence_packet array of 3 items survives toPerPolicyRow (not stripped to {})", async () => {
+    const evidenceItems = [
+      { evidence_item_id: "slice_aaa", evidence_type: "POSITIVE", evidence_item_ref: { index_side: "submission" } },
+      { evidence_item_id: "slice_bbb", evidence_type: "NEGATIVE", evidence_item_ref: { index_side: "submission" } },
+      { evidence_item_id: "slice_ccc", evidence_type: "NEUTRAL",  evidence_item_ref: { index_side: "submission" } },
+    ];
+    const env = makeEnvelope({
+      per_policy_results: [
+        {
+          policy_id: "CSR-EP",
+          stage: "S4",
+          packet_id: "pkt_ep",
+          tier: "TIER_1_BINARY",
+          verdict_suggestion: "PASS",
+          ai_suggestion: "PASS",
+          confidence: 0.88,
+          confidence_method: "calibrated",
+          summary: "Adequate submission text found.",
+          evidence_packet: evidenceItems,
+          pathway_notes: {},
+          rubric_self_score: null,
+        },
+      ],
+    });
+    const { client, calls } = makeMockClient();
+
+    const result = await importEvalResult(client, EVAL_ID, env);
+    expect(result.rowsImported).toBe(1);
+
+    const upsertCall = calls.find((c) => c.op === "upsert");
+    expect(upsertCall).toBeDefined();
+    const rows = upsertCall!.rows as Array<Record<string, unknown>>;
+    expect(rows).toHaveLength(1);
+
+    // CRITICAL: evidence_packet must be the original array, NOT {} and NOT [].
+    const ep = rows[0]!.evidence_packet;
+    expect(Array.isArray(ep)).toBe(true);
+    expect((ep as unknown[]).length).toBe(3);
+    expect(ep).toEqual(evidenceItems);
+  });
+
+  it("P0 regression: missing evidence_packet falls back to [] not {}", async () => {
+    const env = makeEnvelope({
+      per_policy_results: [{ policy_id: "CSR-NOEP" }],
+    });
+    const { client, calls } = makeMockClient();
+
+    await importEvalResult(client, EVAL_ID, env);
+
+    const rows = (calls.find((c) => c.op === "upsert")!.rows) as Array<Record<string, unknown>>;
+    expect(rows[0]!.evidence_packet).toEqual([]);
+  });
+
+  it("P0 regression: object-shaped evidence_packet (legacy schema 0.0.1) still accepted", async () => {
+    const legacyPacket = { hits: [{ chunk_id: "c1" }], score: 0.9 };
+    const env = makeEnvelope({
+      per_policy_results: [
+        { ...makePolicyRow("CSR-LEGACY"), evidence_packet: legacyPacket },
+      ],
+    });
+    const { client, calls } = makeMockClient();
+
+    await importEvalResult(client, EVAL_ID, env);
+
+    const rows = (calls.find((c) => c.op === "upsert")!.rows) as Array<Record<string, unknown>>;
+    // Object-shaped packet is preserved as-is (asArray returns null -> asRecord succeeds).
+    expect(rows[0]!.evidence_packet).toEqual(legacyPacket);
   });
 });

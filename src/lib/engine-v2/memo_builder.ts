@@ -392,7 +392,7 @@ function isCorpusSide(
 }
 
 function extractEvidencePacketItems(
-  evidencePacket: Record<string, unknown> | null | undefined,
+  evidencePacket: unknown[] | Record<string, unknown> | null | undefined,
   rowPolicyId: string | null,
 ): EvidenceItemEntry[] {
   if (!evidencePacket || typeof evidencePacket !== "object") return [];
@@ -417,6 +417,13 @@ function extractEvidencePacketItems(
     if (Array.isArray(v)) {
       for (const x of v) consider(x);
     }
+  }
+
+  // When the engine emits evidence_packet as a top-level array (S4 contract),
+  // iterate the array elements directly.
+  if (Array.isArray(evidencePacket)) {
+    for (const x of evidencePacket) consider(x);
+    return out;
   }
 
   for (const key of ["items", "evidence_items", "chunks"]) {

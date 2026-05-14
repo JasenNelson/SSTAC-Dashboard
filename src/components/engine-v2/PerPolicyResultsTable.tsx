@@ -206,10 +206,34 @@ function JsonObjectView({
   emptyLabel,
   testId,
 }: {
-  obj: Record<string, unknown> | null | undefined;
+  obj: unknown[] | Record<string, unknown> | null | undefined;
   emptyLabel: string;
   testId: string;
 }): React.ReactElement {
+  // When the engine emits evidence_packet as an array (S4 contract), render
+  // it as formatted JSON so reviewers can see the full structure without the
+  // confusing "No evidence packet emitted" fallback that appeared when the
+  // importer was incorrectly stripping the array to {}.
+  if (Array.isArray(obj)) {
+    if (obj.length === 0) {
+      return (
+        <div
+          data-testid={`${testId}-empty`}
+          className="italic text-slate-400 dark:text-slate-500"
+        >
+          {emptyLabel}
+        </div>
+      );
+    }
+    return (
+      <pre
+        data-testid={testId}
+        className="overflow-x-auto whitespace-pre-wrap break-words rounded bg-slate-100 dark:bg-slate-800 p-2 text-[11px] font-mono text-slate-700 dark:text-slate-300"
+      >
+        {JSON.stringify(obj, null, 2)}
+      </pre>
+    );
+  }
   const entries =
     obj && typeof obj === "object" ? Object.entries(obj) : [];
   if (entries.length === 0) {
@@ -273,12 +297,14 @@ function StringListView({
 }
 
 // Helper: pull a possibly-array sub-field out of evidence_packet for the
-// minority findings / evidence gaps display.
+// minority findings / evidence gaps display. When evidence_packet is an array
+// (S4 engine contract) named sub-keys like minority_findings / evidence_gaps
+// are not present at the top level -- returns null gracefully.
 function pickListField(
-  obj: Record<string, unknown> | null | undefined,
+  obj: unknown[] | Record<string, unknown> | null | undefined,
   key: string,
 ): unknown {
-  if (!obj || typeof obj !== "object") return null;
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
   return (obj as Record<string, unknown>)[key];
 }
 
@@ -342,7 +368,7 @@ function isCorpusSideItem(
 }
 
 function collectEvidenceItems(
-  evidencePacket: Record<string, unknown> | null | undefined,
+  evidencePacket: unknown[] | Record<string, unknown> | null | undefined,
   rowPolicyId: string | null,
 ): EvidenceItemRef[] {
   if (!evidencePacket || typeof evidencePacket !== "object") return [];
@@ -372,12 +398,20 @@ function collectEvidenceItems(
     }
   }
 
+  // When the engine emits evidence_packet as a top-level array (S4 contract),
+  // iterate the array elements directly. The nested sub-key walk below also
+  // handles older object-shaped packets defensively.
+  if (Array.isArray(evidencePacket)) {
+    for (const x of evidencePacket) consider(x);
+    return out;
+  }
+
   // Walk known sub-keys plus the whole top-level dict's values, defensively.
   for (const key of ["items", "evidence_items", "chunks"]) {
     consider((evidencePacket as Record<string, unknown>)[key]);
   }
-  // Also handle the case where evidence_packet itself is an array-like or
-  // hosts top-level evidence item entries.
+  // Also handle the case where evidence_packet itself hosts top-level
+  // evidence item entries.
   for (const v of Object.values(evidencePacket)) {
     consider(v);
   }

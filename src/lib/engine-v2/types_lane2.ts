@@ -65,7 +65,11 @@ export interface V2PerPolicyResult {
   confidence: number | null;
   confidence_method: string | null;
   summary: string | null;
-  evidence_packet: Record<string, unknown>;
+  // The engine S4 contract emits evidence_packet as an ARRAY of evidence-item
+  // objects. Legacy schema_version 0.0.1 envelopes may emit an object; both
+  // forms are accepted. Callers must not assume either shape -- use
+  // collectEvidenceItems() / extractEvidencePacketItems() to iterate safely.
+  evidence_packet: unknown[] | Record<string, unknown>;
   pathway_notes: Record<string, unknown>;
   rubric_self_score: Record<string, unknown> | null;
   raw_result_json: Record<string, unknown>;
