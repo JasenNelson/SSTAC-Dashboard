@@ -323,7 +323,7 @@ Spawn the Docling extraction subprocess.
 ### `GET /api/regulatory-review/projects/[id]/extract-status`
 Poll extraction progress.
 - **Response:** the contents of `.extraction_status.json`, or `{ status: 'not_started' }` when the file doesn't exist yet, or `{ status: 'error', error: '... timed out ...' }` on stale timeout.
-- **Stale detection:** uses `updatedAt` heartbeat in the JSON (falling back to file mtime). Timeout is `EXTRACT_STALE_TIMEOUT_MS` (default 30 minutes).
+- **Stale detection:** uses `updatedAt` heartbeat in the JSON. Timeout is `EXTRACT_STALE_TIMEOUT_MS` (default 60 minutes -- `DEFAULT_STALE_MS = 3600000`).
 - **Side effects:**
   - On clean `completed`: marks unprocessed files as processed and sets `review_projects.status='extracted'`, then atomically attempts `UPDATE review_projects SET status='evaluating' WHERE id=? AND status='extracted'` and, if it wins the race, calls `spawnEvaluation()` (see below). On spawn failure, sets `status='eval_failed'`.
   - On `completed_with_errors`: only sets `status='extracted'` (no auto-chain; requires user review).

@@ -30,7 +30,7 @@ all mutating routes require a matching CSRF token.
 | `POST /api/engine-v2/files/orphan` | Best-effort orphan-storage cleanup on client-side upload failure |
 | `GET  /api/engine-v2/files/exists` | Check whether a finalized file already exists by sha256 (for cap-aware UX) |
 | `POST /api/engine-v2/projects/[id]/extract` | Spawn `dashboard_extract.py` against a materialized file copy |
-| `GET  /api/engine-v2/projects/[id]/extract-status` | Poll the latest extraction run (status, page count, ms elapsed, stale flag) |
+| `POST /api/engine-v2/projects/[id]/extract-status` | Poll the latest extraction run (body: `{run_id}`; status, page count, ms elapsed, stale flag) |
 
 ## Source layout
 

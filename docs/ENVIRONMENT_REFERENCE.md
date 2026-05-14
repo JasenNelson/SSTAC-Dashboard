@@ -86,8 +86,8 @@
 ### `EXTRACT_STALE_TIMEOUT_MS`
 
 - **Required:** No.
-- **Read by:** `src/app/api/regulatory-review/projects/[id]/extract-status/route.ts:76`.
-- **Default:** `30 * 60 * 1000` (30 minutes — `DEFAULT_EXTRACT_STALE_TIMEOUT_MS` at `extract-status/route.ts:32`).
+- **Read by:** `src/app/api/engine-v2/projects/[id]/extract-status/route.ts` (`getStaleMs()`).
+- **Default:** `3600000` (60 minutes -- `DEFAULT_STALE_MS = 3600000` at `extract-status/route.ts:40`).
 - **Effect:** Same semantics as `EVAL_STALE_TIMEOUT_MS` for extraction status.
 - **Sensitivity:** Non-secret integer (milliseconds).
 
