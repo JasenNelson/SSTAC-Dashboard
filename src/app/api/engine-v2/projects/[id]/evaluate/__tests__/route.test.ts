@@ -29,7 +29,11 @@ vi.mock("child_process", async (importActual) => {
 });
 
 // Import AFTER the mock so the route uses the hoisted spawn.
-import { runExtractAdapter, ADAPTER_TIMEOUT_MS, tailStderrLog } from "../route";
+import {
+  runExtractAdapter,
+  ADAPTER_TIMEOUT_MS,
+} from "@/lib/engine-v2/extract_adapter";
+import { tailLogFile as tailStderrLog } from "@/lib/engine-v2/log_tail";
 
 interface FakeChild extends EventEmitter {
   stderr: EventEmitter;

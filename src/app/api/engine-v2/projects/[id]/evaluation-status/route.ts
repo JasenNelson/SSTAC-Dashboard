@@ -26,6 +26,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { requireAdminForApi } from "@/lib/engine-v2/admin_guards";
 import { checkCsrf } from "@/lib/engine-v2/csrf";
+import { tailLogFile } from "@/lib/engine-v2/log_tail";
 import { EvalStatusSyncPayloadSchema } from "@/lib/engine-v2/zod_lane2";
 import {
   TERMINAL_EVALUATION_STATUSES,
@@ -102,29 +103,9 @@ async function readEvalResultJson(filePath: string): Promise<string> {
 // written) is the expected silent-failure case -> skip the append.
 const STALE_STDERR_TAIL_BYTES = 2000;
 
-export function tailStaleStderrLog(filePath: string, n: number): string | null {
-  let fd: number | null = null;
-  try {
-    const st = fs.statSync(filePath);
-    const size = st.size;
-    if (size === 0) return "";
-    const readLen = Math.min(size, n);
-    fd = fs.openSync(filePath, "r");
-    const buf = Buffer.alloc(readLen);
-    fs.readSync(fd, buf, 0, readLen, size - readLen);
-    return buf.toString("utf-8");
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
-    return null;
-  } finally {
-    if (fd !== null) {
-      try {
-        fs.closeSync(fd);
-      } catch {
-        // Ignore close errors on the diagnostic path.
-      }
-    }
-  }
+// Internal alias -- tests now import tailLogFile from @/lib/engine-v2/log_tail directly.
+function tailStaleStderrLog(filePath: string, n: number): string | null {
+  return tailLogFile(filePath, n);
 }
 
 export async function POST(

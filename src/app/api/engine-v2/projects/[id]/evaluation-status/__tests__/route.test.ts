@@ -21,7 +21,8 @@ vi.mock("@/lib/engine-v2/csrf", () => ({
 
 import { requireAdminForApi } from "@/lib/engine-v2/admin_guards";
 import { checkCsrf } from "@/lib/engine-v2/csrf";
-import { POST, tailStaleStderrLog } from "../route";
+import { POST } from "../route";
+import { tailLogFile as tailStaleStderrLog } from "@/lib/engine-v2/log_tail";
 
 const PROJECT_ID = "11111111-1111-4111-8111-111111111111";
 const EVAL_ID = "22222222-2222-4222-8222-222222222222";

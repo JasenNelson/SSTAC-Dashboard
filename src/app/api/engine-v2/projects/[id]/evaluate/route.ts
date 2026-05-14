@@ -24,6 +24,10 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { requireAdminForApi } from "@/lib/engine-v2/admin_guards";
 import { checkCsrf } from "@/lib/engine-v2/csrf";
+import {
+  runExtractAdapter,
+  ADAPTER_TIMEOUT_MS,
+} from "@/lib/engine-v2/extract_adapter";
 import { composeScenarioYaml } from "@/lib/engine-v2/scenario_yaml";
 import {
   TERMINAL_EVALUATION_STATUSES,
@@ -102,145 +106,9 @@ interface SpawnScenarioArgs {
   outputDir: string;
 }
 
-// Local copy of spawn_extraction.ts's async-error race pattern. We intentionally
-// do not modify spawn_extraction.ts (Lane 1 file). See SPAWN_RACE_WINDOW_MS:
-// Node emits ENOENT/EACCES asynchronously on the child's 'error' event, so a
-// naive spawn() lets a misconfigured pythonPath silently succeed. We race the
-// 'spawn' (success) and 'error' (failure) events with a short wait window and
-// surface a real rejection that the route can stamp into v2_evaluations.errors.
-// Run the engine's extract_to_submission_adapter to convert Lane 1 Docling
-// VERBATIM JSON into a typed submission JSON with submission_text. Runs to
-// completion (blocking) since the transform is pure JSON and finishes in
-// well under a second. Captures stdio to enrich the error message on
-// failure rather than swallowing it.
-//
-// Codex Round 1 fix (Lane 2c retro): the adapter subprocess can hang
-// indefinitely; without a timeout the eval row sits in 'pending' forever
-// and idx_v2_evaluations__one_active blocks retries. Wrap the spawn in a
-// 60s deadline, SIGTERM-then-SIGKILL on timeout, and surface a structured
-// error that includes the tail of subprocess_stderr.log (if present in
-// evalRunDir) so the stale-handler / dashboard can diagnose it.
-export const ADAPTER_TIMEOUT_MS = 60000;
-const ADAPTER_SIGKILL_GRACE_MS = 2000;
-const ADAPTER_STDERR_TAIL_BYTES = 1000;
-
-// Read the last N bytes of a file as a UTF-8 string. Returns null when the
-// file does not exist (subprocess may have died before writing anything).
-// Uses sync fs primitives because this is called from a rejected promise's
-// catch path where ergonomics > microseconds.
-export function tailStderrLog(filePath: string, n: number): string | null {
-  let fd: number | null = null;
-  try {
-    const st = fsSync.statSync(filePath);
-    const size = st.size;
-    if (size === 0) return "";
-    const readLen = Math.min(size, n);
-    fd = fsSync.openSync(filePath, "r");
-    const buf = Buffer.alloc(readLen);
-    fsSync.readSync(fd, buf, 0, readLen, size - readLen);
-    return buf.toString("utf-8");
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
-    return null;
-  } finally {
-    if (fd !== null) {
-      try {
-        fsSync.closeSync(fd);
-      } catch {
-        // Ignore close errors on the diagnostic path.
-      }
-    }
-  }
-}
-
-export async function runExtractAdapter(args: {
-  pythonPath: string;
-  adapterPath: string;
-  inputPath: string;
-  outputPath: string;
-  evalRunDir: string;
-  timeoutMs?: number;
-}): Promise<void> {
-  const cli = [
-    args.adapterPath,
-    "--input",
-    args.inputPath,
-    "--output",
-    args.outputPath,
-  ];
-  const timeoutMs = args.timeoutMs ?? ADAPTER_TIMEOUT_MS;
-  const stderrLogPath = path.join(args.evalRunDir, "subprocess_stderr.log");
-  await new Promise<void>((resolve, reject) => {
-    const child = spawn(args.pythonPath, cli, {
-      stdio: ["ignore", "pipe", "pipe"],
-      windowsHide: true,
-    });
-    let stderrBuf = "";
-    let promiseSettled = false;
-    let timedOut = false;
-    let killTimer: NodeJS.Timeout | null = null;
-    child.stderr?.on("data", (d) => {
-      stderrBuf += d.toString();
-    });
-    const settlePromise = (fn: () => void): void => {
-      if (promiseSettled) return;
-      promiseSettled = true;
-      clearTimeout(deadline);
-      fn();
-    };
-    const deadline = setTimeout(() => {
-      // Timeout: send SIGTERM immediately, arm a 2s grace timer for SIGKILL,
-      // and reject the promise now. The killTimer is intentionally NOT
-      // cleared by settlePromise so the SIGKILL fallback fires even after
-      // the route has already moved on. Reject message uses the tail of
-      // subprocess_stderr.log per spec; "stderr=null" when absent.
-      timedOut = true;
-      try {
-        child.kill("SIGTERM");
-      } catch {
-        // ignore
-      }
-      killTimer = setTimeout(() => {
-        killTimer = null;
-        try {
-          if (child.exitCode === null && child.signalCode === null) {
-            child.kill("SIGKILL");
-          }
-        } catch {
-          // ignore
-        }
-      }, ADAPTER_SIGKILL_GRACE_MS);
-      const fileTail = tailStderrLog(stderrLogPath, ADAPTER_STDERR_TAIL_BYTES);
-      const tailRepr = fileTail === null ? "null" : JSON.stringify(fileTail);
-      settlePromise(() =>
-        reject(
-          new Error(
-            `adapter_timeout: ${timeoutMs}ms exceeded. stderr=${tailRepr}`,
-          ),
-        ),
-      );
-    }, timeoutMs);
-    child.once("error", (err) => settlePromise(() => reject(err)));
-    child.once("exit", (code) => {
-      // If the process exits cleanly before the 2s grace, cancel the SIGKILL
-      // fallback so we do not signal a dead process.
-      if (killTimer !== null) {
-        clearTimeout(killTimer);
-        killTimer = null;
-      }
-      if (timedOut) return; // Promise already rejected.
-      if (code === 0) settlePromise(resolve);
-      else
-        settlePromise(() =>
-          reject(
-            new Error(
-              `adapter_exit_${code}: ${stderrBuf.trim().slice(0, 400)}`,
-            ),
-          ),
-        );
-    });
-  });
-}
+// runExtractAdapter and ADAPTER_TIMEOUT_MS have been moved to
+// @/lib/engine-v2/extract_adapter to avoid Next.js App Router TS strict-mode
+// errors caused by exporting non-HTTP-verb names from route.ts files.
 
 async function spawnScenarioRunner(args: SpawnScenarioArgs): Promise<void> {
   const cli = [
