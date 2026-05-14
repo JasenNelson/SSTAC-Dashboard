@@ -206,6 +206,12 @@ export async function POST(
     const startedMs = new Date(row.started_at).getTime();
     if (Number.isFinite(startedMs) && nowMs - startedMs > staleMs) {
       const completedAt = new Date().toISOString();
+      // Cleanup-before-UPDATE (L1-6 BLOCKER #2): run quarantine BEFORE the terminal
+      // UPDATE so a crash between the two does NOT leave the row in a permanent terminal
+      // state with orphaned uploads. If cleanup fails here we still do the UPDATE so the
+      // row reaches a terminal error; the orphaned uploads will need manual cleanup, but
+      // future polls will no longer short-circuit at step 6.
+      await bestEffortQuarantine(projectId);
       const { data: updated, error: updErr } = await client
         .from("v2_extraction_runs")
         .update({
@@ -227,7 +233,6 @@ export async function POST(
           { status: 500 },
         );
       }
-      await bestEffortQuarantine(projectId);
       return NextResponse.json(updated, { status: 200 });
     }
     // Within window: return row as-is.
