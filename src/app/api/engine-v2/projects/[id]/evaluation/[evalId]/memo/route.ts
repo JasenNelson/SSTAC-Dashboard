@@ -23,6 +23,7 @@ import {
   encodeByteaHex,
 } from "@/lib/engine-v2/bytea_codec";
 import { checkCsrf } from "@/lib/engine-v2/csrf";
+import { extractEvidenceSlices } from "@/lib/engine-v2/evidence_slices";
 import {
   MEMO_GENERATOR_VERSION,
   MemoBuildInvariantError,
@@ -156,8 +157,14 @@ export async function POST(
     judgments = (judgmentsData ?? []) as V2Judgment[];
   }
 
-  // 8. Pre-compute snapshot hash; check cache.
-  const snapshotHash = computeJudgmentSnapshotHash(judgments);
+  // 8a. Extract evidence_slices from the raw eval result JSON.
+  // Returns null for older schema_version 0.0.1 evals that predate this field.
+  const evidenceSlices = extractEvidenceSlices(evaluation.raw_eval_result_json);
+
+  // 8b. Pre-compute snapshot hash; check cache.
+  // The hash now includes evidence_slices content hashes so memos invalidate
+  // when slices change (e.g. after the submission-text correction engine run).
+  const snapshotHash = computeJudgmentSnapshotHash(judgments, evidenceSlices);
   const { data: cachedRow, error: cachedErr } = await client
     .from("v2_memo_exports")
     .select("id, content_sha256, byte_size, judgment_snapshot_hash")
@@ -187,10 +194,10 @@ export async function POST(
     );
   }
 
-  // 9. Build memo.
+  // 9. Build memo (pass evidenceSlices so verbatim excerpts are inlined).
   let built;
   try {
-    built = await buildMemo({ project, evaluation, results, judgments });
+    built = await buildMemo({ project, evaluation, results, judgments, evidenceSlices });
   } catch (err) {
     if (err instanceof MemoBuildInvariantError) {
       return NextResponse.json(

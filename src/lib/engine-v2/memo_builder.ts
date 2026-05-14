@@ -53,6 +53,7 @@ import type {
   V2PerPolicyResult,
 } from "./types_lane2";
 import type { V2Project } from "./types";
+import type { EvidenceSliceMap, EvidenceSlice } from "./evidence_slices";
 
 export const MEMO_GENERATOR_VERSION = "lane2b-memo-v1";
 
@@ -77,6 +78,11 @@ export interface MemoBuilderInput {
   evaluation: V2Evaluation;
   results: V2PerPolicyResult[];
   judgments: V2Judgment[];
+  // Optional: evidence_slices dereferenced from eval_result.json.
+  // When provided, each per-policy section includes verbatim submission
+  // excerpt(s) the AI cited as evidence. Null/absent means older schema
+  // (schema_version 0.0.1) -- renders a stub instead.
+  evidenceSlices?: EvidenceSliceMap | null;
 }
 
 export interface MemoBuilderOutput {
@@ -124,15 +130,39 @@ function sha256Hex(input: string | Uint8Array): string {
   return h.digest("hex");
 }
 
-// Snapshot hash: deterministic over judgments only. Sorted by id, stringifies
-// [id, updated_at, verdict] tuples. Drives the idempotency key on
-// v2_memo_exports (evaluation_id, judgment_snapshot_hash).
+// Snapshot hash: deterministic over judgments + evidence_slices content hashes.
+// Sorted by id, stringifies [id, updated_at, verdict] tuples for judgments,
+// then appends a sorted evidence_slices content-hash digest so cached memos
+// invalidate when slices change (e.g. after Commit 2 submission-text fix).
+// Drives the idempotency key on v2_memo_exports (evaluation_id, judgment_snapshot_hash).
 export function computeJudgmentSnapshotHash(
   judgments: readonly V2Judgment[],
+  evidenceSlices?: EvidenceSliceMap | null,
 ): string {
   const sorted = [...judgments].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   const tuples = sorted.map((j) => [j.id, j.updated_at, j.verdict]);
-  return sha256Hex(JSON.stringify(tuples));
+
+  // Include a digest of all rendered slice fields so the snapshot hash changes
+  // whenever slice content OR source anchors change (engine re-run fix).
+  // We hash all fields the memo renders: content_hash (content integrity),
+  // title, doc_id, page, section (source anchor fields). Using content_hash
+  // alone would miss corrections to page/section/title that change the memo.
+  let slicesDigest = "";
+  if (evidenceSlices) {
+    const sliceEntries = Object.entries(evidenceSlices)
+      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+      .map(([id, slice]) => [
+        id,
+        slice.content_hash,
+        slice.source.title,
+        slice.source.doc_id,
+        slice.source.page,
+        slice.source.section,
+      ]);
+    slicesDigest = sha256Hex(JSON.stringify(sliceEntries));
+  }
+
+  return sha256Hex(JSON.stringify({ tuples, slicesDigest }));
 }
 
 interface JoinedRow {
@@ -304,6 +334,233 @@ function pickString(v: unknown): string {
   return String(v);
 }
 
+// --- Evidence-packet helpers -----------------------------------------------
+//
+// The engine_v2 evidence_packet is a polymorphic object whose items may live
+// under various sub-keys (items / evidence_items / chunks) or at the top level.
+// Each item that carries an `evidence_item_id` string keys into the top-level
+// evidence_slices map emitted by the engine.
+//
+// REGULATORY INVARIANT: only submission-side evidence (index_side === "submission")
+// is rendered. Corpus-side entries (index_side === "corpus") are silently
+// skipped -- same rule enforced in PerPolicyResultsTable.tsx. The memo must
+// never show policy KB text labelled as submission evidence.
+
+interface EvidenceItemEntry {
+  evidence_item_id: string;
+  // evidence_type is POSITIVE / NEGATIVE / NEUTRAL per engine contract.
+  // For the memo, NEGATIVE maps to "negating"; all others map to "supporting".
+  evidence_type: string | null;
+  raw: Record<string, unknown>;
+}
+
+function isEvidenceItemObject(v: unknown): v is Record<string, unknown> {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return false;
+  const id = (v as Record<string, unknown>).evidence_item_id;
+  return typeof id === "string" && id.length > 0;
+}
+
+// isCorpusSide mirrors the full corpus-side filtering from PerPolicyResultsTable
+// including the self-reference fallback (source_document_provenance.doc_id ===
+// rowPolicyId). The policy_id is passed in so self-referenced policy text is
+// blocked even when index_side is absent from the engine payload.
+function isCorpusSide(
+  raw: Record<string, unknown>,
+  rowPolicyId: string | null,
+): boolean {
+  const refRaw = raw.evidence_item_ref;
+  if (refRaw && typeof refRaw === "object" && !Array.isArray(refRaw)) {
+    const ref = refRaw as Record<string, unknown>;
+    if (ref.index_side === "corpus") return true;
+    // Fallback self-reference check: engine may use doc_id === policy_id as the
+    // corpus marker when index_side is absent. Same rule as PerPolicyResultsTable.
+    const provRaw = ref.source_document_provenance;
+    if (provRaw && typeof provRaw === "object" && !Array.isArray(provRaw)) {
+      const prov = provRaw as Record<string, unknown>;
+      if (
+        rowPolicyId !== null &&
+        typeof prov.doc_id === "string" &&
+        prov.doc_id === rowPolicyId
+      ) {
+        return true;
+      }
+    }
+  }
+  // Defense-in-depth: engine may flatten index_side onto the item directly.
+  if (raw.index_side === "corpus") return true;
+  return false;
+}
+
+function extractEvidencePacketItems(
+  evidencePacket: Record<string, unknown> | null | undefined,
+  rowPolicyId: string | null,
+): EvidenceItemEntry[] {
+  if (!evidencePacket || typeof evidencePacket !== "object") return [];
+  const out: EvidenceItemEntry[] = [];
+  const seen = new Set<string>();
+
+  function consider(v: unknown): void {
+    if (isEvidenceItemObject(v)) {
+      const item = v as Record<string, unknown>;
+      const id = String(item.evidence_item_id);
+      if (seen.has(id)) return;
+      seen.add(id);
+      if (isCorpusSide(item, rowPolicyId)) return;
+      const et = item.evidence_type;
+      out.push({
+        evidence_item_id: id,
+        evidence_type: typeof et === "string" ? et : null,
+        raw: item,
+      });
+      return;
+    }
+    if (Array.isArray(v)) {
+      for (const x of v) consider(x);
+    }
+  }
+
+  for (const key of ["items", "evidence_items", "chunks"]) {
+    consider((evidencePacket as Record<string, unknown>)[key]);
+  }
+  for (const v of Object.values(evidencePacket)) {
+    consider(v);
+  }
+  return out;
+}
+
+// Build a human-readable source anchor: "p. 3, Section 2.1" or whatever
+// fields are present. Returns empty string when no location info.
+function buildSourceAnchor(slice: EvidenceSlice): string {
+  const parts: string[] = [];
+  if (slice.source.page !== null) parts.push(`p. ${slice.source.page}`);
+  if (slice.source.section) parts.push(`Section ${slice.source.section}`);
+  return parts.join(", ");
+}
+
+// Build "cited by" cross-reference label if other policies in the memo
+// also reference the same evidence_item_id.
+function buildCitedBy(
+  evidenceItemId: string,
+  currentPolicyId: string,
+  allRows: readonly JoinedRow[],
+): string {
+  const citing: string[] = [];
+  for (const row of allRows) {
+    if (row.result.policy_id === currentPolicyId) continue;
+    const items = extractEvidencePacketItems(row.result.evidence_packet, row.result.policy_id);
+    for (const item of items) {
+      if (item.evidence_item_id === evidenceItemId) {
+        citing.push(row.result.policy_id);
+        break;
+      }
+    }
+  }
+  if (citing.length === 0) return "";
+  return `Also cited by: ${citing.join(", ")}`;
+}
+
+// Render one verbatim evidence excerpt block into docx paragraph elements.
+// Returns an array of Paragraph objects suitable for insertion into a section.
+function buildEvidenceExcerptParagraphs(
+  entry: EvidenceItemEntry,
+  slice: EvidenceSlice,
+  citedByLabel: string,
+): Paragraph[] {
+  const paras: Paragraph[] = [];
+
+  // Source line: title + page/section anchor + evidence type label.
+  const sourceAnchor = buildSourceAnchor(slice);
+  const titleLabel = slice.source.title || slice.source.doc_id || "(unknown source)";
+  const roleLabel =
+    entry.evidence_type && entry.evidence_type.toUpperCase() === "NEGATIVE"
+      ? "[negating]"
+      : "[supporting]";
+  const sourceLine = [titleLabel, sourceAnchor, roleLabel]
+    .filter(Boolean)
+    .join(" -- ");
+
+  paras.push(
+    bodyParagraph(
+      [bodyText(sourceLine, { bold: true, size: 20 })],
+      { spacingAfter: 40 },
+    ),
+  );
+
+  // Verbatim content as an indented block-quote paragraph.
+  paras.push(
+    new Paragraph({
+      spacing: { after: PARA_SPACING_AFTER },
+      indent: { left: 360, right: 360 },
+      children: [
+        bodyText(slice.content, { italics: true }),
+      ],
+    }),
+  );
+
+  // Cited-by cross-reference (when applicable).
+  if (citedByLabel) {
+    paras.push(
+      bodyParagraph(
+        [bodyText(citedByLabel, { italics: true, color: "888888", size: 18 })],
+        { spacingAfter: 60 },
+      ),
+    );
+  }
+
+  return paras;
+}
+
+// Build all evidence excerpt paragraphs for a single per-policy result row.
+// Returns paragraphs to insert after the row's table. If no slices are
+// available or the packet is empty, returns a single stub paragraph.
+function buildPolicyEvidenceSection(
+  row: JoinedRow,
+  evidenceSlices: EvidenceSliceMap | null | undefined,
+  allRows: readonly JoinedRow[],
+): Paragraph[] {
+  const items = extractEvidencePacketItems(row.result.evidence_packet, row.result.policy_id);
+  if (items.length === 0 || !evidenceSlices) {
+    return [
+      bodyParagraph(
+        [
+          bodyText("No verbatim submission evidence cited by AI.", {
+            italics: true,
+            color: "888888",
+          }),
+        ],
+        { spacingAfter: 60 },
+      ),
+    ];
+  }
+
+  const out: Paragraph[] = [];
+  let anyResolved = false;
+  for (const item of items) {
+    const slice = evidenceSlices[item.evidence_item_id] ?? null;
+    if (!slice) continue;
+    anyResolved = true;
+    const citedBy = buildCitedBy(item.evidence_item_id, row.result.policy_id, allRows);
+    const excerptParas = buildEvidenceExcerptParagraphs(item, slice, citedBy);
+    out.push(...excerptParas);
+  }
+
+  if (!anyResolved) {
+    return [
+      bodyParagraph(
+        [
+          bodyText("No verbatim submission evidence cited by AI.", {
+            italics: true,
+            color: "888888",
+          }),
+        ],
+        { spacingAfter: 60 },
+      ),
+    ];
+  }
+
+  return out;
+}
+
 // --- Tier sections --------------------------------------------------------
 
 const TIER_1_EXPLAINER =
@@ -321,7 +578,19 @@ const TIER_3_EXPLAINER =
   "Maker). The AI provides observations only; final adequacy is determined " +
   "by the SDM / Crown.";
 
-function buildTier1Section(rows: JoinedRow[]): Array<Paragraph | Table> {
+// Build a labelled heading for a per-policy evidence sub-section.
+function policyEvidenceHeading(policyId: string): Paragraph {
+  return bodyParagraph(
+    [bodyText(`Evidence for ${policyId}:`, { bold: true, size: 20 })],
+    { spacingAfter: 40 },
+  );
+}
+
+function buildTier1Section(
+  rows: JoinedRow[],
+  evidenceSlices: EvidenceSliceMap | null | undefined,
+  allRows: readonly JoinedRow[],
+): Array<Paragraph | Table> {
   const heading = headingParagraph(
     "Tier 1 (Binary) Findings",
     HeadingLevel.HEADING_2,
@@ -344,10 +613,20 @@ function buildTier1Section(rows: JoinedRow[]): Array<Paragraph | Table> {
       ],
     }),
   );
-  return [heading, explainer, buildTable([header, ...body])];
+  const out: Array<Paragraph | Table> = [heading, explainer, buildTable([header, ...body])];
+  // Per-policy verbatim evidence sub-sections.
+  for (const row of rows) {
+    out.push(policyEvidenceHeading(row.result.policy_id));
+    out.push(...buildPolicyEvidenceSection(row, evidenceSlices, allRows));
+  }
+  return out;
 }
 
-function buildTier2Section(rows: JoinedRow[]): Array<Paragraph | Table> {
+function buildTier2Section(
+  rows: JoinedRow[],
+  evidenceSlices: EvidenceSliceMap | null | undefined,
+  allRows: readonly JoinedRow[],
+): Array<Paragraph | Table> {
   const heading = headingParagraph(
     "Tier 2 (Professional Judgment) Flagged Items",
     HeadingLevel.HEADING_2,
@@ -370,10 +649,19 @@ function buildTier2Section(rows: JoinedRow[]): Array<Paragraph | Table> {
       ],
     }),
   );
-  return [heading, explainer, buildTable([header, ...body])];
+  const out: Array<Paragraph | Table> = [heading, explainer, buildTable([header, ...body])];
+  for (const row of rows) {
+    out.push(policyEvidenceHeading(row.result.policy_id));
+    out.push(...buildPolicyEvidenceSection(row, evidenceSlices, allRows));
+  }
+  return out;
 }
 
-function buildTier3Section(rows: JoinedRow[]): Array<Paragraph | Table> {
+function buildTier3Section(
+  rows: JoinedRow[],
+  evidenceSlices: EvidenceSliceMap | null | undefined,
+  allRows: readonly JoinedRow[],
+): Array<Paragraph | Table> {
   const heading = headingParagraph(
     "Tier 3 (Statutory Discretion) Observations",
     HeadingLevel.HEADING_2,
@@ -393,7 +681,12 @@ function buildTier3Section(rows: JoinedRow[]): Array<Paragraph | Table> {
       ],
     }),
   );
-  return [heading, explainer, buildTable([header, ...body])];
+  const out: Array<Paragraph | Table> = [heading, explainer, buildTable([header, ...body])];
+  for (const row of rows) {
+    out.push(policyEvidenceHeading(row.result.policy_id));
+    out.push(...buildPolicyEvidenceSection(row, evidenceSlices, allRows));
+  }
+  return out;
 }
 
 // --- Overview / title / footer -------------------------------------------
@@ -475,16 +768,35 @@ function buildFooterParagraphs(generatedAt: Date): Paragraph[] {
 export async function buildMemo(
   input: MemoBuilderInput,
 ): Promise<MemoBuilderOutput> {
-  const { project, evaluation, results, judgments } = input;
+  const { project, evaluation, results, judgments, evidenceSlices } = input;
 
   const buckets = joinByTier(results, judgments);
   assertTierDiscretion(buckets);
 
+  // Flatten all rows for cross-policy cited-by lookups.
+  const allRows: JoinedRow[] = [
+    ...(buckets.get("TIER_1_BINARY") ?? []),
+    ...(buckets.get("TIER_2_PROFESSIONAL") ?? []),
+    ...(buckets.get("TIER_3_STATUTORY") ?? []),
+  ];
+
   const titleParas = buildTitleParagraphs(project, evaluation);
   const overview = buildOverviewSection(evaluation);
-  const t1 = buildTier1Section(buckets.get("TIER_1_BINARY") ?? []);
-  const t2 = buildTier2Section(buckets.get("TIER_2_PROFESSIONAL") ?? []);
-  const t3 = buildTier3Section(buckets.get("TIER_3_STATUTORY") ?? []);
+  const t1 = buildTier1Section(
+    buckets.get("TIER_1_BINARY") ?? [],
+    evidenceSlices,
+    allRows,
+  );
+  const t2 = buildTier2Section(
+    buckets.get("TIER_2_PROFESSIONAL") ?? [],
+    evidenceSlices,
+    allRows,
+  );
+  const t3 = buildTier3Section(
+    buckets.get("TIER_3_STATUTORY") ?? [],
+    evidenceSlices,
+    allRows,
+  );
   // Use a deterministic generated_at derived from evaluation timestamps so
   // identical inputs produce identical bytes. Falls back to a fixed epoch
   // only if no usable timestamp is present.
@@ -530,7 +842,12 @@ export async function buildMemo(
   // docx Packer returns a Buffer; normalize to Uint8Array for callers.
   const bytes = new Uint8Array(buffer);
   const contentSha256 = sha256Hex(bytes);
-  const judgmentSnapshotHash = computeJudgmentSnapshotHash(judgments);
+  // Include evidenceSlices in the snapshot hash so cached memos invalidate
+  // when slices change (e.g. after engine re-run fixes submission content).
+  const judgmentSnapshotHash = computeJudgmentSnapshotHash(
+    judgments,
+    evidenceSlices,
+  );
   return {
     bytes,
     contentSha256,

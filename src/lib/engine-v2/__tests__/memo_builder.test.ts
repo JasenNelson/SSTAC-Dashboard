@@ -17,6 +17,7 @@ import type {
   V2PerPolicyResult,
 } from "../types_lane2";
 import type { V2Project } from "../types";
+import type { EvidenceSliceMap } from "../evidence_slices";
 
 function makeProject(overrides: Partial<V2Project> = {}): Pick<V2Project, "id" | "name"> {
   return {
@@ -314,5 +315,260 @@ describe("computeJudgmentSnapshotHash", () => {
     const h1 = computeJudgmentSnapshotHash([j]);
     const h2 = computeJudgmentSnapshotHash([{ ...j, verdict: "INADEQUATE" }]);
     expect(h1).not.toBe(h2);
+  });
+
+  it("changes when evidence_slices content hashes change (cache invalidation)", () => {
+    const t1 = makeResult("TIER_1_BINARY", "POL-D", "PASS");
+    const j = makeJudgment(t1.id, "TIER_1_BINARY", "ADEQUATE", { id: "j-d" });
+    const slicesV1: EvidenceSliceMap = {
+      slice_001: {
+        content_hash: "hash_v1",
+        content: "old content",
+        field: "original_text",
+        policy_id: "POL-D",
+        source: { doc_id: "d1", title: "Doc", page: 1, section: null, chunk_id: null, source_path: null },
+      },
+    };
+    const slicesV2: EvidenceSliceMap = {
+      slice_001: {
+        content_hash: "hash_v2",
+        content: "new content (submission text after engine fix)",
+        field: "original_text",
+        policy_id: "POL-D",
+        source: { doc_id: "d1", title: "Doc", page: 1, section: null, chunk_id: null, source_path: null },
+      },
+    };
+    const h1 = computeJudgmentSnapshotHash([j], slicesV1);
+    const h2 = computeJudgmentSnapshotHash([j], slicesV2);
+    expect(h1).not.toBe(h2);
+  });
+});
+
+// Helper: build a canonical EvidenceSliceMap for memo evidence tests.
+function makeSlice(
+  evidenceItemId: string,
+  content: string,
+  overrides: Partial<EvidenceSliceMap[string]> = {},
+): EvidenceSliceMap {
+  return {
+    [evidenceItemId]: {
+      content_hash: `hash_${evidenceItemId}`,
+      content,
+      field: "original_text",
+      policy_id: "POL-001",
+      source: {
+        doc_id: "submission-doc-1",
+        title: "Applicant Submission Report",
+        page: 5,
+        section: "2.3",
+        chunk_id: null,
+        source_path: null,
+      },
+      ...overrides,
+    },
+  };
+}
+
+describe("buildMemo evidence_slices integration", () => {
+  // Test 1: TIER_1 PASS multi-chunk -- verbatim excerpts appear in docx.
+  it("TIER_1 PASS: multi-chunk -- renders verbatim excerpt(s) with page+section anchors", async () => {
+    const t1 = makeResult("TIER_1_BINARY", "POL-101", "PASS", {
+      id: "r-ev-t1",
+      evidence_packet: {
+        items: [
+          {
+            evidence_item_id: "slice_sub_aaa",
+            evidence_type: "POSITIVE",
+            evidence_item_ref: { index_side: "submission" },
+          },
+          {
+            evidence_item_id: "slice_sub_bbb",
+            evidence_type: "POSITIVE",
+            evidence_item_ref: { index_side: "submission" },
+          },
+        ],
+      },
+    });
+    const slices: EvidenceSliceMap = {
+      slice_sub_aaa: {
+        content_hash: "h_aaa",
+        content: "The applicant provided a stormwater management plan.",
+        field: "original_text",
+        policy_id: "POL-101",
+        source: {
+          doc_id: "sub-report-1",
+          title: "Engineering Report",
+          page: 12,
+          section: "4.1",
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+      slice_sub_bbb: {
+        content_hash: "h_bbb",
+        content: "Runoff coefficients are within permitted bounds.",
+        field: "original_text",
+        policy_id: "POL-101",
+        source: {
+          doc_id: "sub-report-1",
+          title: "Engineering Report",
+          page: 14,
+          section: null,
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+    };
+
+    const input: MemoBuilderInput = {
+      project: makeProject(),
+      evaluation: makeEvaluation(),
+      results: [t1],
+      judgments: [makeJudgment(t1.id, "TIER_1_BINARY", "ADEQUATE")],
+      evidenceSlices: slices,
+    };
+    const out = await buildMemo(input);
+    const xml = await readDocumentXml(out.bytes);
+
+    // Verbatim excerpts must appear.
+    expect(xml).toContain("The applicant provided a stormwater management plan.");
+    expect(xml).toContain("Runoff coefficients are within permitted bounds.");
+    // Source anchors: page and section labels.
+    expect(xml).toContain("p. 12");
+    expect(xml).toContain("Section 4.1");
+    expect(xml).toContain("p. 14");
+    // Supporting role label.
+    expect(xml).toContain("[supporting]");
+    // Evidence-for heading.
+    expect(xml).toContain("Evidence for POL-101");
+  });
+
+  // Test 2: TIER_1 FAIL -- negating evidence uses [negating] label.
+  it("TIER_1 FAIL: negating evidence renders [negating] role label", async () => {
+    const t1 = makeResult("TIER_1_BINARY", "POL-102", "FAIL", {
+      id: "r-ev-t1-fail",
+      evidence_packet: {
+        items: [
+          {
+            evidence_item_id: "slice_neg_001",
+            evidence_type: "NEGATIVE",
+            evidence_item_ref: { index_side: "submission" },
+          },
+        ],
+      },
+    });
+    const slices: EvidenceSliceMap = {
+      slice_neg_001: {
+        content_hash: "h_neg",
+        content: "No stormwater plan was submitted with this application.",
+        field: "original_text",
+        policy_id: "POL-102",
+        source: {
+          doc_id: "sub-report-2",
+          title: "Completeness Review",
+          page: 3,
+          section: "1.2",
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+    };
+
+    const input: MemoBuilderInput = {
+      project: makeProject(),
+      evaluation: makeEvaluation(),
+      results: [t1],
+      judgments: [makeJudgment(t1.id, "TIER_1_BINARY", "INADEQUATE")],
+      evidenceSlices: slices,
+    };
+    const out = await buildMemo(input);
+    const xml = await readDocumentXml(out.bytes);
+
+    expect(xml).toContain("No stormwater plan was submitted with this application.");
+    expect(xml).toContain("[negating]");
+    expect(xml).toContain("p. 3");
+    expect(xml).toContain("Section 1.2");
+  });
+
+  // Test 3: TIER_3 OBSERVATION_ONLY -- evidence appears in the statutory section.
+  it("TIER_3 OBSERVATION_ONLY: indigenous-trigger evidence appears in statutory section", async () => {
+    const t3 = makeResult("TIER_3_STATUTORY", "POL-201", "OBSERVATION_ONLY", {
+      id: "r-ev-t3",
+      evidence_packet: {
+        items: [
+          {
+            evidence_item_id: "slice_indigenous_001",
+            evidence_type: "NEUTRAL",
+            evidence_item_ref: { index_side: "submission" },
+          },
+        ],
+      },
+    });
+    const slices: EvidenceSliceMap = {
+      slice_indigenous_001: {
+        content_hash: "h_indig",
+        content: "The project area includes traditional territory of the Nlaka'pamux Nation.",
+        field: "original_text",
+        policy_id: "POL-201",
+        source: {
+          doc_id: "sub-report-3",
+          title: "Indigenous Engagement Summary",
+          page: 7,
+          section: "3.1",
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+    };
+
+    const input: MemoBuilderInput = {
+      project: makeProject(),
+      evaluation: makeEvaluation(),
+      results: [t3],
+      judgments: [makeJudgment(t3.id, "TIER_3_STATUTORY", "OBSERVATION_ONLY")],
+      evidenceSlices: slices,
+    };
+    const out = await buildMemo(input);
+    const xml = await readDocumentXml(out.bytes);
+
+    // Tier 3 heading present.
+    expect(xml).toContain("Statutory Discretion");
+    // Evidence excerpt present.
+    expect(xml).toContain("The project area includes traditional territory");
+    expect(xml).toContain("p. 7");
+    expect(xml).toContain("Section 3.1");
+    expect(xml).toContain("Evidence for POL-201");
+  });
+
+  // Test 4: empty-evidence stub -- renders fallback text when no slices available.
+  it("empty-evidence: renders stub when evidence_slices is null", async () => {
+    const t1 = makeResult("TIER_1_BINARY", "POL-301", "PASS", {
+      id: "r-ev-empty",
+      evidence_packet: {
+        items: [
+          {
+            evidence_item_id: "slice_should_be_missing",
+            evidence_type: "POSITIVE",
+            evidence_item_ref: { index_side: "submission" },
+          },
+        ],
+      },
+    });
+
+    // Pass null evidenceSlices to simulate older schema_version 0.0.1 eval.
+    const input: MemoBuilderInput = {
+      project: makeProject(),
+      evaluation: makeEvaluation(),
+      results: [t1],
+      judgments: [makeJudgment(t1.id, "TIER_1_BINARY", "ADEQUATE")],
+      evidenceSlices: null,
+    };
+    const out = await buildMemo(input);
+    const xml = await readDocumentXml(out.bytes);
+
+    // Stub message must be present.
+    expect(xml).toContain("No verbatim submission evidence cited by AI");
+    // No actual content that shouldn't be there.
+    expect(xml).not.toContain("slice_should_be_missing");
   });
 });
