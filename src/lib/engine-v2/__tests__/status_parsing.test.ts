@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { parseStatusJson } from "../status_parsing";
 
 const baseRecord = {
@@ -11,6 +11,17 @@ const baseRecord = {
 };
 
 describe("parseStatusJson (Findings 17, 43)", () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let warnSpy: ReturnType<typeof vi.fn<any>>;
+
+  beforeEach(() => {
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("returns empty Partial on null input", () => {
     expect(parseStatusJson(null)).toEqual({});
   });
@@ -19,6 +30,15 @@ describe("parseStatusJson (Findings 17, 43)", () => {
     const r = parseStatusJson("{not json");
     expect(r.status).toBe("error");
     expect(r.errors).toEqual(["status_json_parse_error"]);
+  });
+
+  it("emits console.warn with SyntaxError detail on malformed JSON (telemetry)", () => {
+    parseStatusJson("{not json");
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    const msg: string = warnSpy.mock.calls[0][0] as string;
+    expect(msg).toContain("[engine-v2 status_parsing]");
+    // SyntaxError message should be present -- not just the opaque sentinel.
+    expect(msg).toMatch(/JSON|token|Unexpected/i);
   });
 
   it("returns parse-error sentinel on non-object JSON (array)", () => {

@@ -51,7 +51,13 @@ export function parseStatusJson(
   let obj: unknown;
   try {
     obj = JSON.parse(rawJson);
-  } catch {
+  } catch (parseErr) {
+    // Log the raw SyntaxError so telemetry captures WHY the JSON was malformed
+    // (truncation, encoding error, subprocess crash mid-write, etc.).
+    // The user-facing sentinel is still the opaque string; operators see the detail.
+    console.warn(
+      `[engine-v2 status_parsing] JSON.parse failed -- returning sentinel: ${(parseErr as Error).message ?? String(parseErr)}`,
+    );
     return { status: "error", errors: ["status_json_parse_error"] };
   }
 
