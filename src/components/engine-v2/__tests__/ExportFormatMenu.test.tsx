@@ -38,6 +38,16 @@ afterEach(() => {
 });
 
 describe("ExportFormatMenu a11y", () => {
+  it("trigger has aria-controls and the menu ul has the matching id", () => {
+    renderMenu();
+    const trigger = screen.getByTestId("export-format-menu-button");
+    expect(trigger).toHaveAttribute("aria-controls", "export-format-menu");
+    // Open the menu so the <ul> is mounted.
+    fireEvent.click(trigger);
+    const list = screen.getByTestId("export-format-menu-list");
+    expect(list).toHaveAttribute("id", "export-format-menu");
+  });
+
   it("Esc closes the menu", () => {
     renderMenu();
     const trigger = screen.getByTestId("export-format-menu-button");

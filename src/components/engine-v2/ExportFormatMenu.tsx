@@ -237,6 +237,7 @@ export function ExportFormatMenu(
         data-state={state.kind}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-controls="export-format-menu"
         className="inline-flex items-center rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-1.5 text-sm font-medium text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {busy
@@ -245,6 +246,7 @@ export function ExportFormatMenu(
       </button>
       {open ? (
         <ul
+          id="export-format-menu"
           role="menu"
           data-testid="export-format-menu-list"
           onKeyDown={onMenuKeyDown}
