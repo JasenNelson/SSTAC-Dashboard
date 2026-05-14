@@ -12,12 +12,11 @@
 //   8. Single-VERBATIM-JSON resolver  -> 500 on 0 / >=2 artifacts.
 //   9. Race-safe INSERT v2_evaluations -> 23505 -> 409 with existing row.
 //  10. Write scenario YAML            -> mkdir -p + fs.writeFile.
-//  11. Spawn detached run_owner_scenario.py with the local async-error race
-//      pattern copied from spawn_extraction.ts (see SPAWN_RACE_WINDOW_MS).
+//  11. Spawn detached run_owner_scenario.py via spawnScenarioRunner (lib).
+//      spawnScenarioRunner sets RRAA_V2_SUBMISSION_RETRIEVAL_ENABLED=1 so BM25
+//      retrieval fires (packet §11.5 P0 fix 2026-05-14).
 //      On reject: status='error' + 500. On success: status='running' + 200.
 
-import { spawn } from "child_process";
-import * as fsSync from "fs";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { NextResponse, type NextRequest } from "next/server";
@@ -29,6 +28,7 @@ import {
   ADAPTER_TIMEOUT_MS,
 } from "@/lib/engine-v2/extract_adapter";
 import { composeScenarioYaml } from "@/lib/engine-v2/scenario_yaml";
+import { spawnScenarioRunner } from "@/lib/engine-v2/spawn_scenario";
 import {
   TERMINAL_EVALUATION_STATUSES,
   type EvaluationStatus,
@@ -36,8 +36,6 @@ import {
 import { EvalTriggerPayloadSchema } from "@/lib/engine-v2/zod_lane2";
 
 export const runtime = "nodejs";
-
-const SPAWN_RACE_WINDOW_MS = 500;
 
 function getBasePath(): string {
   return (
@@ -99,61 +97,11 @@ async function preflightOllama(
   }
 }
 
-interface SpawnScenarioArgs {
-  pythonPath: string;
-  scriptPath: string;
-  scenarioConfigPath: string;
-  outputDir: string;
-}
-
-// runExtractAdapter and ADAPTER_TIMEOUT_MS have been moved to
-// @/lib/engine-v2/extract_adapter to avoid Next.js App Router TS strict-mode
+// runExtractAdapter and ADAPTER_TIMEOUT_MS live in @/lib/engine-v2/extract_adapter.
+// spawnScenarioRunner lives in @/lib/engine-v2/spawn_scenario (P0 fix 2026-05-14:
+// that module sets RRAA_V2_SUBMISSION_RETRIEVAL_ENABLED=1 on the evaluator spawn).
+// Both are separated from route.ts to avoid Next.js App Router TS strict-mode
 // errors caused by exporting non-HTTP-verb names from route.ts files.
-
-async function spawnScenarioRunner(args: SpawnScenarioArgs): Promise<void> {
-  const cli = [
-    args.scriptPath,
-    "--scenario-config",
-    args.scenarioConfigPath,
-    "--output-dir",
-    args.outputDir,
-  ];
-
-  // Capture subprocess stdout/stderr to log files in the run dir so a crash
-  // is diagnosable from the dashboard (previously stdio:'ignore' threw away
-  // the engine's anti-leak guard error, costing a 30-min stale-timeout to
-  // surface). The stale-handler in /evaluation-status reads stderr.log
-  // when present and appends a tail into v2_evaluations.errors.
-  const stdoutPath = `${args.outputDir}/subprocess_stdout.log`;
-  const stderrPath = `${args.outputDir}/subprocess_stderr.log`;
-  const outFd = fsSync.openSync(stdoutPath, "a");
-  const errFd = fsSync.openSync(stderrPath, "a");
-
-  const child = spawn(args.pythonPath, cli, {
-    detached: true,
-    stdio: ["ignore", outFd, errFd],
-    windowsHide: true,
-  });
-
-  await new Promise<void>((resolve, reject) => {
-    let settled = false;
-    const settle = (fn: () => void) => {
-      if (settled) return;
-      settled = true;
-      child.removeListener("spawn", onSpawn);
-      child.removeListener("error", onError);
-      clearTimeout(timer);
-      fn();
-    };
-    const onSpawn = () => settle(resolve);
-    const onError = (err: Error) => settle(() => reject(err));
-    child.once("spawn", onSpawn);
-    child.once("error", onError);
-    const timer = setTimeout(() => settle(resolve), SPAWN_RACE_WINDOW_MS);
-  });
-
-  child.unref();
-}
 
 export async function POST(
   request: NextRequest,

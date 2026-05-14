@@ -1,5 +1,5 @@
 // Route-level unit tests for the evaluate POST handler's adapter timeout
-// (Codex Round 1 fix, Lane 2c retro).
+// (Codex Round 1 fix, Lane 2c retro) and spawn env regression (P0 fix 2026-05-14).
 //
 // Covers runExtractAdapter:
 //   - 60s timeout fires when the subprocess never exits; SIGTERM is sent first,
@@ -7,6 +7,12 @@
 //     "adapter_timeout: 60000ms exceeded" and contains the on-disk stderr tail.
 //   - When subprocess_stderr.log is absent, the stderr tail is the literal
 //     string "null" (so log-greppers can match a deterministic shape).
+//
+// Covers spawnScenarioRunner (P0 regression guard):
+//   - spawn() is called with env.RRAA_V2_SUBMISSION_RETRIEVAL_ENABLED === "1"
+//     so BM25 submission-side retrieval fires on every dashboard eval.
+//   - The pre-fix absence of the flag would cause this test to fail (verified by
+//     inverting the assertion before applying the fix).
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { EventEmitter } from "events";
@@ -34,6 +40,7 @@ import {
   ADAPTER_TIMEOUT_MS,
 } from "@/lib/engine-v2/extract_adapter";
 import { tailLogFile as tailStderrLog } from "@/lib/engine-v2/log_tail";
+import { spawnScenarioRunner } from "@/lib/engine-v2/spawn_scenario";
 
 interface FakeChild extends EventEmitter {
   stderr: EventEmitter;
@@ -177,5 +184,102 @@ describe("tailStderrLog", () => {
     const p = path.join(tmpDir, "small.log");
     fsSync.writeFileSync(p, "short content", "utf-8");
     expect(tailStderrLog(p, 1000)).toBe("short content");
+  });
+});
+
+// P0 regression guard (2026-05-14): spawnScenarioRunner must pass
+// RRAA_V2_SUBMISSION_RETRIEVAL_ENABLED=1 in the subprocess env.
+//
+// Without this flag the engine runs the legacy corpus-leak path and returns an
+// empty evidence_packet across all policies (packet §11.5). This test fails on
+// the pre-fix code and passes on the fixed code, confirming the spawn site is
+// correct. The guard was validated empirically on eval 8bfc1c30 (site 13254
+// Stage 2 PSI, 2026-05-14): 43/43 policies returned "No submission evidence
+// cited" before the fix.
+describe("spawnScenarioRunner -- P0 env var regression guard", () => {
+  let tmpDir = "";
+
+  beforeEach(() => {
+    spawnMock.mockReset();
+    tmpDir = fsSync.mkdtempSync(path.join(os.tmpdir(), "spawn-scenario-"));
+    vi.useFakeTimers();
+    // Create the output dir so openSync calls on stdout/stderr log paths succeed.
+    fsSync.mkdirSync(tmpDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    try {
+      fsSync.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      // ignore
+    }
+  });
+
+  it("passes RRAA_V2_SUBMISSION_RETRIEVAL_ENABLED=1 in the subprocess env", async () => {
+    // Return a fake child that emits 'spawn' so the promise resolves cleanly.
+    const fake = new EventEmitter() as EventEmitter & {
+      unref: ReturnType<typeof vi.fn>;
+    };
+    fake.unref = vi.fn();
+    spawnMock.mockReturnValue(fake);
+
+    const p = spawnScenarioRunner({
+      pythonPath: "C:/python/pythonw.exe",
+      scriptPath: "C:/scripts/run_owner_scenario.py",
+      scenarioConfigPath: path.join(tmpDir, "scenario.yaml"),
+      outputDir: tmpDir,
+    });
+
+    // Emit 'spawn' so spawnScenarioRunner resolves.
+    fake.emit("spawn");
+    await p;
+
+    expect(spawnMock).toHaveBeenCalledOnce();
+    const spawnOptions = spawnMock.mock.calls[0]?.[2] as {
+      env?: Record<string, string>;
+    };
+    expect(spawnOptions?.env?.["RRAA_V2_SUBMISSION_RETRIEVAL_ENABLED"]).toBe(
+      "1",
+    );
+  });
+
+  it("inherits process.env alongside the new flag (no env isolation)", async () => {
+    // This confirms ...process.env is spread, not replaced, so PATH etc. survive.
+    const fake = new EventEmitter() as EventEmitter & {
+      unref: ReturnType<typeof vi.fn>;
+    };
+    fake.unref = vi.fn();
+    spawnMock.mockReturnValue(fake);
+
+    // Set a canary var in process.env to verify it is inherited.
+    const originalCanary = process.env["RRAA_TEST_CANARY"];
+    process.env["RRAA_TEST_CANARY"] = "canary-value";
+
+    try {
+      const p = spawnScenarioRunner({
+        pythonPath: "C:/python/pythonw.exe",
+        scriptPath: "C:/scripts/run_owner_scenario.py",
+        scenarioConfigPath: path.join(tmpDir, "scenario.yaml"),
+        outputDir: tmpDir,
+      });
+      fake.emit("spawn");
+      await p;
+
+      const spawnOptions = spawnMock.mock.calls[0]?.[2] as {
+        env?: Record<string, string>;
+      };
+      // Both the new flag AND the inherited canary must be present.
+      expect(spawnOptions?.env?.["RRAA_V2_SUBMISSION_RETRIEVAL_ENABLED"]).toBe(
+        "1",
+      );
+      expect(spawnOptions?.env?.["RRAA_TEST_CANARY"]).toBe("canary-value");
+    } finally {
+      if (originalCanary === undefined) {
+        delete process.env["RRAA_TEST_CANARY"];
+      } else {
+        process.env["RRAA_TEST_CANARY"] = originalCanary;
+      }
+    }
   });
 });
