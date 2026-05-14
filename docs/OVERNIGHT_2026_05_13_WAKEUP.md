@@ -133,9 +133,193 @@ I did NOT push -- you push when you are ready.
 
 Codex CLI quota exhausted partway through Phase 1 (around the Round 52 verification). Phases 1, 2, 7-items-3+4 (after first round), 8-item-7-skipped, 9 all substituted **manual 5-point invariant review** as per-commit gate. All commits passed the manual review. Reset is 2026-05-18 -- post-canary work can resume codex per-commit.
 
+- [DONE 2026-05-14 12:20 PDT] Pre-canary smoke + Commit 2 fix: 99e7237b; smoke GREEN; two bugs fixed (evaluator.py plain-dict bug + retriever.py policy_text_lookup shadowing); 15 submission-side slices surfaced with field=submission_text, page=4, section=Remediation and Risk Assessment Considerations; all 8 assertions PASS; 1035 tests (1030+5 new).
+
 ### Other open items not in the plan
 
 - The 13 `.tmp_codex_holistic_round*.txt` + `.tmp_codex_output_round*.txt` files in the engine-v2 worktree are session artifacts from the Round 47-52 codex iteration loop. The pre-existing 4 `.tmp_*` / `_tmp_*` from prior sessions are also present. None are staged; none are touched by any commit. Standing convention: LEAVE them. If you want to clean: `Remove-Item .tmp_codex_*.txt` will only catch this session's; the others are convention-protected.
 - The 5 `.tmp_codex_p7_*` files on the dashboard side are Phase 7 codex outputs. Same status.
 - Two untracked planning docs in dashboard `docs/` (`engine_v2_frontend_lane1_plan_2026_05_11.md`, `engine_v2_frontend_lane1_plan_v7.19.md`) are from OTHER sessions. Convention-protected.
 
+
+
+===============================================================================
+## Adversarial review-fix loop (2026-05-14, Codex/Cursor/Gemini reconciliation)
+===============================================================================
+
+Branch: master @ engine-v2 worktree; baseline 99e7237b; final tip 8874d9ce.
+Codex CLI exhausted until 2026-05-18 -- substituted 5-point manual invariant
+review on every commit.
+
+### Per-finding status
+
+**P1-A: Flag-OFF byte-identity violation (Codex)** -- **VERIFIED-NOT-A-BUG.**
+Read all 4 cited line ranges (evaluator.py:3137-3177, 3273-3305, 2928 and
+schema_v2_sandbox.sql:225-255). The s3_priority / s4_cited PK derivation
+rewrites are intentional unconditional contract changes per design packet
+sections 4.0 steps 8.f and 8.h -- they are NOT flag-gated by design.
+"Byte-identical flag-OFF" applies to public outputs (eval_result.json /
+per_policy_results / ai_suggestion / tier), NOT to sandbox evidence_index
+rows. The submission_chunks DDL is no-op flag-OFF (table created but never
+written; _build_submission_index_and_store is gated). Cursor + Gemini were
+correct; Codex misframed the scope. Closed without code change.
+
+**P1-B: Step 8.h EXCLUSIVE sourcing violation (Codex + Cursor C-1)** --
+**FIXED** in commit 501d099c. Rewrote _append_s4_cited_rows to source the
+four traceability_anchor slots exclusively from authoritative paths per
+Round 52 contract. s2_ref = evidence_packet[i]["evidence_item_id"];
+source_ref = priority_match["evidence_item_ref"]["source_document_provenance"]
+["chunk_id"] (with corpus-edge fallback to evidence_item_ref.
+traceability_anchor.source_ref -- NOT the S3 packet anchor, which Round 52
+prohibits specifically). Added test_s4_cited_anchor_sourcing_is_exclusive_
+round52 as a forcing-function regression (sentinel "STALE_PACKET_ANCHOR
+_VALUE_MUST_NOT_APPEAR" tripped pre-fix).
+
+**P2-C: _build_policy_text_lookup returns None on missing chunks.sqlite
+(Cursor C-2)** -- **FIXED** in commit 407b2856. Lookup now ALWAYS returns
+a callable PolicyTextLookup; missing/None chunks_sqlite_path yields a
+lookup whose __call__ returns "". Retriever's flag-ON gate stays alive
+on the missing-corpus path -> zero-seed short-circuit instead of legacy
+stub-seed corpus-leak. Regression test:
+test_build_policy_text_lookup_returns_callable_when_chunks_sqlite_missing.
+Integration regression (forcing function):
+test_submission_retrieval_missing_chunks_sqlite_flag_on_zero_seeds.
+
+**P2-D: Anti-drift test omits S2/S3 (Cursor C-3)** -- **FIXED** in commit
+5fdbed03. Extended test_anti_drift_no_fetch_parent_original_text_on_
+submission_paths to AST-scan s2_evidence_finder.py and s3_prioritizer.py.
+For each fetch_parent_original_text call site, verifies SOME enclosing
+ast.If has 'index_side' in its test expression (structural anti-drift
+guard). Existing branch structure already satisfies the rule; any future
+unguarded call would fire the test.
+
+**P2-E: Runtime contract guards at boundaries (Codex addendum)** --
+**FIXED** in commit 889a9e37. Added boundary guards at retriever.py
+(callable(policy_text_lookup)), s4_synthesizer._build_real_backend_prompt
+(hasattr(store, "fetch_chunk_text")), s2_evidence_finder real submission
+branch (same hasattr check), s3_prioritizer real submission branch (same).
+TypeError / ContractViolation raised at boundary with clear messages
+instead of AttributeError mid-loop. Two regression tests: test_retriever_
+p2e_boundary_guard_rejects_non_callable_policy_text_lookup,
+test_s4_synthesizer_p2e_boundary_guard_rejects_misshaped_submission_chunk
+_store.
+
+**Integration tests (Cursor F-1..F-12 minimum set)** -- **3 of 5 LANDED**
+in commit 98dd9041 (above the GREEN threshold of 3). New file
+engine_v2/tests/integration/test_submission_retrieval_flag_on.py:
+1. test_submission_retrieval_end_to_end_smoke_flag_on (F-1..F-8 smoke)
+2. test_submission_retrieval_zero_seed_short_circuit_flag_on (F-9)
+3. test_submission_retrieval_missing_chunks_sqlite_flag_on_zero_seeds
+   (F-12 / P2-C verification, doubles as forcing function)
+Deferred: per-policy S2-exception synthesizer test (F-10) + cleanup-
+releases-handles test (F-11) -- both deferrable per Cursor's threshold.
+
+**P3 minors** --
+- D-1 (empty-packet eid uuid4 violates slice_<64hex> pattern):
+  **DEFERRED-WITH-RATIONALE** -- attempted switch to derive_stage_evidence
+  _item_id collides with existing PK-collision regression test fixture
+  (test_s3_s4_append_pk_collision_raises_evaluator_error); would need a
+  bigger refactor of that test, deferred to the next round per the
+  hard-cap budget.
+- D-2 (EvaluatorError vs ContractViolation naming): **DEFERRED** (cosmetic).
+- D-3 (empty-packet self-link has packet_ref == source_ref violates
+  anti-aggregation): **FIXED** in commit 8874d9ce -- explicit
+  is_self_link:true marker added to the anchor JSON.
+- D-4 (CLI flag asymmetry --submission-retrieval-enabled True/False):
+  **DEFERRED** (cosmetic).
+- D-5 (new run_evaluation kwarg surface): **DEFERRED** (cosmetic; packet
+  silent about this is a documentation gap, not a code bug).
+- D-6 (S4 prompt embedding style): **DEFERRED** (cosmetic).
+
+### Commit list (SHAs + diff stats since baseline 99e7237b)
+
+| SHA | Subject | Files changed |
+| --- | --- | --- |
+| 501d099c | P1-B Round 52 EXCLUSIVE anchor sourcing | evaluator.py + test_evaluator.py |
+| 407b2856 | P2-C policy_text_lookup always callable | evaluator.py + test_evaluator.py |
+| 5fdbed03 | P2-D extend anti-drift AST scan to S2/S3 | test_evaluator.py |
+| 889a9e37 | P2-E runtime contract guards at boundaries | retriever.py + 3 stages + test_evaluator.py |
+| 98dd9041 | F-coverage flag-ON integration tests | new integration/ dir |
+| 8874d9ce | P3 D-3 is_self_link marker | evaluator.py |
+
+Diff stat summary since 99e7237b:
+  8 files changed, 906 insertions(+), 34 deletions(-)
+
+### Final test sweep count
+
+1042 passed, 20 skipped, 1 xfailed (was 1035 -> 1042; +7 net tests).
+No regressions throughout the loop.
+
+### Final smoke verdict
+
+Smoke NOT re-run during this loop -- Ollama IS reachable
+(qwen2.5:14b-instruct-q4_K_M present) but the owner_scenario_001_live
+fixture path resolution required deeper investigation than the time
+budget allowed. The 3 stub-backend integration tests added in commit
+98dd9041 cover the same code paths the live smoke exercises, with the
+same assertions (>= 1 index_side='submission' row, field=submission_text,
+non-empty submission_chunks table). Verdict: **GREEN by proxy via
+integration tests; live smoke deferred to owner.**
+
+### Authorize-canary recommendation: **GREEN**
+
+- All P1 findings: P1-A verified-not-a-bug, P1-B FIXED with regression.
+- 3 of 3 P2 IMPORTANTs (C, D, E): FIXED with regression tests.
+- 3 of 5 integration tests landed (>= GREEN threshold).
+- D-3 P3 closed; D-1, D-2, D-4, D-5, D-6 deferred with rationale.
+- 1042 tests passing, no regressions.
+- Stub-backend integration tests exercise flag-ON code path end-to-end.
+
+Owner can proceed to canary with the following caveat: D-1 (empty-packet
+eid pattern) is a contract drift; document it in CANARY_LOG.md as known
+and re-address in a follow-up. The live smoke (Ollama-backed) should
+still be re-run by the owner against the final tip 8874d9ce as a
+sanity check before authorizing the canary scenario.
+
+===============================================================================
+## Gemini round-3 review fix loop (2026-05-14)
+===============================================================================
+
+Branch: main @ SSTAC-Dashboard; 3 commits landed (72632c7, 8741b07, 30f46d7).
+Codex CLI exhausted until 2026-05-18 -- manual 5-point invariant review per commit.
+
+### Per-finding status
+
+**A: /api/logs/store endpoint does not exist** -- VERIFIED-TRUE-AND-FIXED (72632c7).
+sendToAggregationService was posting to a route that was never implemented;
+every ERROR/CRITICAL log in production silently 404'd. Fix (Option b):
+removed the server-side fetch call entirely; left a doc comment explaining
+the rationale and how to restore. Updated logging.test.ts (6 new tests
+asserting fetch is NOT called for any level; removed 8 stale tests).
+
+**B: CollapsedRail localStorage SecurityError** -- VERIFIED-TRUE-AND-FIXED (8741b07).
+window.localStorage.getItem/setItem called bare without try/catch in
+EvaluationSidePanel.tsx CollapsedRail. Fixed by wrapping both in try/catch;
+on catch, console.warn emitted and component shows tooltip as first-launch.
+New vitest case added: mocks localStorage to throw DOMException SecurityError,
+asserts component does not throw and tooltip is visible.
+
+**C: ExportFormatMenu missing aria-controls + ul id** -- VERIFIED-TRUE-AND-FIXED (30f46d7).
+Gemini claimed aria-controls existed but id was missing. Actual state: BOTH
+aria-controls (on trigger) and id (on ul) were missing. Added
+aria-controls="export-format-menu" to the trigger button and
+id="export-format-menu" to the ul. New test asserts both attributes match.
+
+**D: escapeMd corrupts intentional Markdown escapes** -- VERIFIED-FALSE.
+escapeMd receives plain-text (never pre-escaped) input: policy IDs, rationales,
+summaries. Input "\*" means literal backslash + asterisk; the function
+correctly outputs "\\*" (escaped backslash + unescaped asterisk) which
+renders in a Markdown table cell as backslash + asterisk. The backslash-first
+order is correct and is guarded by existing tests. No code change needed.
+
+### Final test sweep: 95/96 files pass, 1388 passing, 9 skipped, 0 failed.
+### TypeScript: clean on src/ (2 pre-existing .next/ generated-type errors are not new).
+
+- [DONE 2026-05-14 06:13 PDT] Final canary prep: live smoke re-run at 8874d9ce (GREEN); +2 integration tests (commit 33fc4a68; 1044 passed); D-1 documented (commit 50bf6670). Final canary authorization: GREEN.
+
+- [DONE 2026-05-14 07:35 PDT] Canary-scale + memo end-to-end validation:
+  Task 1 (canary-shaped smoke, 43 policies, ~2s runtime, stub-mode flag-ON): GREEN
+    88 verbatim slices across 5 pages / 5 sections, 0 errors, 0 tier guardrail violations; verdict diversity (PASS/FAIL/ESCALATE) is the only stub-mode gap and must be re-validated under live Ollama.
+  Task 2 (memo .docx against real flag-ON eval_result.json): GREEN
+    buildMemo() renders 16 KB .docx in 48ms with verbatim excerpts + page/section anchors + NOT_FOUND stub + HITL placeholders; Phase 5 verbatim integration (c56dcfe) is canary-ready.
+  Reports: .tmp_canary_scale_report.md, .tmp_memo_validation_report.md (both in engine-v2 worktree).
