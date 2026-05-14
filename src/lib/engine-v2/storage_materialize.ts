@@ -106,9 +106,17 @@ export async function materializeToLocal(
     const readable = Readable.fromWeb(response.body as any);
     await pipeline(readable, writeStream);
   } catch (err) {
-    // Best-effort unlink of any partial file (Finding 30).
-    await fs.promises.unlink(localPath).catch(() => {
-      /* best-effort; file may not exist yet */
+    // Best-effort unlink of any partial file (Finding 30). Log unlink failures so
+    // debris is visible in telemetry -- the original error still propagates (throw err).
+    await fs.promises.unlink(localPath).catch((unlinkErr: unknown) => {
+      const code = (unlinkErr as NodeJS.ErrnoException).code;
+      if (code !== "ENOENT") {
+        // ENOENT is expected (file may not have been created yet); any other error
+        // means we left a partial file on disk -- log for operator visibility.
+        console.warn(
+          `[engine-v2 materialize] partial file unlink failed for ${localPath}: ${(unlinkErr as Error).message ?? String(unlinkErr)}`,
+        );
+      }
     });
     throw err;
   }
