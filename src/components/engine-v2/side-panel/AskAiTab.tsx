@@ -41,8 +41,8 @@ import {
   StopCircle,
 } from "lucide-react";
 
-import { useSidePanel } from "./SidePanelContext";
 import { useSidePanelState } from "./useSidePanelState";
+import { CitationRenderer } from "./CitationRenderer";
 
 export interface AskAiTabProps {
   evaluationId: string;
@@ -119,7 +119,6 @@ function randomId(): string {
 
 export function AskAiTab(props: AskAiTabProps): ReactElement {
   const { evaluationId } = props;
-  const sidePanel = useSidePanel();
   const panelState = useSidePanelState(evaluationId);
   const { chatMode, setChatMode } = panelState;
 
@@ -399,26 +398,6 @@ export function AskAiTab(props: AskAiTabProps): ReactElement {
     [input, send],
   );
 
-  const onCitationClick = useCallback(
-    (cit: Citation): void => {
-      if (cit.type !== "chunk") return;
-      if (!sidePanel) return;
-      sidePanel.openPeek({
-        evidenceItemId: cit.evidence_item_id,
-        sourceChunkId: cit.source_chunk_id,
-        docSection: cit.section,
-        pageNum: cit.page,
-        content: null,
-      });
-      // Lane 2d / Phase E: also fire pendingHighlight so the per-
-      // policy results table scrolls + pulses the cited row(s).
-      sidePanel.setPendingHighlight({
-        evidenceItemId: cit.evidence_item_id,
-      });
-    },
-    [sidePanel],
-  );
-
   // Auto-scroll on new content. Guarded for jsdom (no scrollIntoView).
   useEffect(() => {
     const el = messagesEndRef.current;
@@ -534,10 +513,7 @@ export function AskAiTab(props: AskAiTabProps): ReactElement {
         )}
 
         {indexingState.kind === "ready" && (
-          <AskAiMessages
-            messages={messages}
-            onCitationClick={onCitationClick}
-          />
+          <AskAiMessages messages={messages} />
         )}
 
         <div ref={messagesEndRef} />
@@ -714,11 +690,10 @@ function ModelChip(props: ModelChipProps): ReactElement {
 
 interface AskAiMessagesProps {
   messages: ChatMessage[];
-  onCitationClick: (cit: Citation) => void;
 }
 
 function AskAiMessages(props: AskAiMessagesProps): ReactElement {
-  const { messages, onCitationClick } = props;
+  const { messages } = props;
   if (messages.length === 0) {
     return (
       <div className="p-4 text-xs text-slate-500 dark:text-slate-400">
@@ -736,7 +711,6 @@ function AskAiMessages(props: AskAiMessagesProps): ReactElement {
         <AskAiMessageRow
           key={m.id}
           message={m}
-          onCitationClick={onCitationClick}
         />
       ))}
     </ul>
@@ -745,11 +719,10 @@ function AskAiMessages(props: AskAiMessagesProps): ReactElement {
 
 interface AskAiMessageRowProps {
   message: ChatMessage;
-  onCitationClick: (cit: Citation) => void;
 }
 
 function AskAiMessageRow(props: AskAiMessageRowProps): ReactElement {
-  const { message, onCitationClick } = props;
+  const { message } = props;
   const isUser = message.role === "user";
   return (
     <li
@@ -784,10 +757,7 @@ function AskAiMessageRow(props: AskAiMessageRowProps): ReactElement {
           </p>
         )}
         {!isUser && message.citations && message.citations.length > 0 && (
-          <CitationPills
-            citations={message.citations}
-            onClick={onCitationClick}
-          />
+          <CitationPills citations={message.citations} />
         )}
       </div>
     </li>
@@ -796,11 +766,14 @@ function AskAiMessageRow(props: AskAiMessageRowProps): ReactElement {
 
 interface CitationPillsProps {
   citations: Citation[];
-  onClick: (cit: Citation) => void;
 }
 
+// CitationPills renders chunk citations via the shared CitationRenderer
+// (Lane 2d / Phase E) so peek-panel + per-policy row pulse behavior is
+// unified across Ask AI, Search submission, and per-policy results.
+// Policy citations remain as non-interactive span badges (no chunk to peek).
 function CitationPills(props: CitationPillsProps): ReactElement {
-  const { citations, onClick } = props;
+  const { citations } = props;
   const chunks = useMemo(
     () => citations.filter((c): c is ChunkCitation => c.type === "chunk"),
     [citations],
@@ -815,30 +788,15 @@ function CitationPills(props: CitationPillsProps): ReactElement {
       className="mt-2 flex flex-wrap gap-1"
     >
       {chunks.map((c, i) => (
-        <button
+        <CitationRenderer
           key={`chunk-${c.evidence_item_id}-${i}`}
-          type="button"
-          onClick={() => onClick(c)}
-          data-testid="ask-ai-citation-chunk"
-          data-evidence-item-id={c.evidence_item_id}
-          title={`${c.section}${c.page !== null ? " - p." + c.page : ""}`}
-          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-200 dark:hover:bg-indigo-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-        >
-          <span>S{i + 1}</span>
-          <span className="text-slate-500 dark:text-slate-400">
-            {c.section}
-            {c.page !== null ? ` p.${c.page}` : ""}
-          </span>
-          {c.indigenous_flagged && (
-            <span
-              data-testid="ask-ai-citation-indigenous-badge"
-              className="ml-1 px-1 rounded bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300"
-              title="Content references Indigenous uses (gardens, hunting, fishing, medicines)"
-            >
-              Indigenous uses content
-            </span>
-          )}
-        </button>
+          evidenceItemId={c.evidence_item_id}
+          sourceChunkId={c.source_chunk_id}
+          docSection={c.section}
+          pageNum={c.page}
+          indigenousFlagged={c.indigenous_flagged}
+          positionLabel={`S${i + 1}`}
+        />
       ))}
       {policies.map((p, i) => (
         <span

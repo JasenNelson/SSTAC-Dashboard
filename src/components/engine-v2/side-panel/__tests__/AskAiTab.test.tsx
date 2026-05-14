@@ -360,9 +360,9 @@ describe("AskAiTab", () => {
       );
     });
 
-    // Citation pill rendered.
+    // Citation pill rendered (now via shared CitationRenderer; testid is "citation-pill").
     expect(
-      screen.getByTestId("ask-ai-citation-chunk"),
+      screen.getByTestId("citation-pill"),
     ).toHaveAttribute("data-evidence-item-id", "slice_a");
 
     // Body shape: mode=fast, history=[], query verbatim.
@@ -418,11 +418,11 @@ describe("AskAiTab", () => {
 
     await waitFor(() =>
       expect(
-        screen.getByTestId("ask-ai-citation-indigenous-badge"),
+        screen.getByTestId("citation-pill-indigenous-badge"),
       ).toBeInTheDocument(),
     );
     expect(
-      screen.getByTestId("ask-ai-citation-indigenous-badge"),
+      screen.getByTestId("citation-pill-indigenous-badge"),
     ).toHaveTextContent("Indigenous uses content");
 
     // Verify the chat proceeded normally (no hard-stop, no
