@@ -114,54 +114,14 @@ class Logger {
       }
     }
 
-    // Send to log aggregation service (if configured)
-    if (typeof window === 'undefined') {
-      // Server-side: send to server logs
-      this.sendToAggregationService(entry);
-    }
-  }
-
-  private async sendToAggregationService(entry: LogEntry): Promise<void> {
-    // Log ERROR and CRITICAL events to database for persistence and audit trail.
-    // CRITICAL events (logSecurityEvent severity:'critical') are the most important
-    // to persist -- the filter must include both ERROR and CRITICAL.
-    const shouldPersist =
-      entry.level === LogLevel.ERROR || entry.level === LogLevel.CRITICAL;
-    if (!shouldPersist) return;
-
-    try {
-      // Server-side (Node): fetch requires an absolute URL. Construct one using
-      // NEXT_PUBLIC_SITE_URL (e.g. "https://your-app.vercel.app") or fall back to
-      // the localhost dev default. If neither is available, log a warning and skip
-      // rather than throwing -- logging failure must never crash the request path.
-      let storeUrl: string;
-      if (typeof window === 'undefined') {
-        const siteUrl =
-          process.env.NEXT_PUBLIC_SITE_URL ||
-          (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : '');
-        if (!siteUrl) {
-          console.warn(
-            '[logging] sendToAggregationService: NEXT_PUBLIC_SITE_URL is not set; ' +
-              'skipping server-side persistence for level=' + entry.level,
-          );
-          return;
-        }
-        storeUrl = siteUrl.replace(/\/$/, '') + '/api/logs/store';
-      } else {
-        // Client-side: relative URL works fine.
-        storeUrl = '/api/logs/store';
-      }
-
-      await fetch(storeUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry),
-      }).catch(() => {
-        // Silently absorb network failures -- don't let logging errors break the app.
-      });
-    } catch (error) {
-      console.error('Failed to persist log to database', error);
-    }
+    // Server-side aggregation endpoint (/api/logs/store) is not yet
+    // implemented. The call has been intentionally removed to prevent
+    // silent 404 errors on every ERROR/CRITICAL log. Client-side logging
+    // (console.error / console.warn above) and any external aggregator
+    // configured at the infrastructure level (Vercel log drain, Datadog,
+    // etc.) remain the persistence mechanism. When the endpoint is
+    // implemented, restore sendToAggregationService here.
+    // See: docs/OVERNIGHT_2026_05_13_WAKEUP.md (round-3 finding A).
   }
 
   debug(message: string, context?: Record<string, unknown>): void {
