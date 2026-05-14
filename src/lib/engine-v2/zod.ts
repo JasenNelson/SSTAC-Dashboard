@@ -8,6 +8,7 @@ const uuid = z.string().uuid();
 
 // ProjectCreatePayload (POST /api/engine-v2/projects).
 // Finding 81: NO max_files / max_total_bytes overrides in Lane 1; defaults always used.
+// .strict() rejects arbitrary extra keys -- no legitimate client use case per Finding 81.
 export const ProjectCreatePayloadSchema = z.object({
   name: z.string().min(1).max(255),
   application_types: z.array(z.unknown()).default([]),
@@ -15,33 +16,36 @@ export const ProjectCreatePayloadSchema = z.object({
   media_types: z.array(z.unknown()).default([]),
   submission_context_overrides: z.record(z.string(), z.unknown()).default({}),
   model: z.string().nullable().optional(),
-});
+}).strict();
 export type ProjectCreatePayload = z.infer<typeof ProjectCreatePayloadSchema>;
 
 // FileCompletePayload (POST /api/engine-v2/files/complete).
 // NO client-claimed SHA256: server computes via streaming hash (Finding 2, 29).
 // file_id is the TUS client-supplied UUID; persisted as v2_submission_files.id (Finding 58).
+// .strict() rejects arbitrary extra keys (e.g., client-supplied sha256) -- Finding 2.
 export const FileCompletePayloadSchema = z.object({
   project_id: uuid,
   file_id: uuid,
   original_filename: z.string().min(1).max(1024), // deep filename safety in filename_safety.ts
   size_bytes: z.number().int().nonnegative(),
   content_type: z.enum(ALLOWED_MIME_TYPES),
-});
+}).strict();
 export type FileCompletePayload = z.infer<typeof FileCompletePayloadSchema>;
 
 // OrphanCleanupPayload (POST /api/engine-v2/files/orphan).
 // NO client-supplied storage_path; server derives from {user_id, project_id, file_id}.
+// .strict() rejects extra keys (e.g., client-supplied storage_path) -- server derives it.
 export const OrphanCleanupPayloadSchema = z.object({
   project_id: uuid,
   file_id: uuid,
-});
+}).strict();
 export type OrphanCleanupPayload = z.infer<typeof OrphanCleanupPayloadSchema>;
 
 // ExtractStatusSyncPayload (POST /api/engine-v2/projects/[id]/extract-status, Finding 37).
+// .strict() rejects extra keys -- the body carries only run_id per Finding 37 spec.
 export const ExtractStatusSyncPayloadSchema = z.object({
   run_id: uuid,
-});
+}).strict();
 export type ExtractStatusSyncPayload = z.infer<typeof ExtractStatusSyncPayloadSchema>;
 
 // FileExistsQuery (GET /api/engine-v2/files/exists, Finding 60).

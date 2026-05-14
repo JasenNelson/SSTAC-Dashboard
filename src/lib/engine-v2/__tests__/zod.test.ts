@@ -22,14 +22,15 @@ describe("ProjectCreatePayloadSchema", () => {
     expect(() => ProjectCreatePayloadSchema.parse({ name: "" })).toThrow();
   });
 
-  it("rejects extra max_files (Finding 81: not allowed in Lane 1)", () => {
-    // Zod strict mode would reject extras; default strip mode silently drops them.
-    // Either way, the field MUST NOT influence the parsed output.
-    const r = ProjectCreatePayloadSchema.parse({
-      name: "Smoke",
-      max_files: 1,
-    } as unknown as Record<string, unknown>);
-    expect((r as Record<string, unknown>).max_files).toBeUndefined();
+  it("rejects extra max_files (Finding 81: not allowed in Lane 1; .strict() enforces)", () => {
+    // .strict() causes parse() to throw on unrecognized keys.
+    // Clients MUST NOT send max_files; the schema rejects it outright.
+    expect(() =>
+      ProjectCreatePayloadSchema.parse({
+        name: "Smoke",
+        max_files: 1,
+      } as unknown as Record<string, unknown>),
+    ).toThrow();
   });
 });
 
@@ -78,12 +79,15 @@ describe("FileCompletePayloadSchema", () => {
     expect(() => FileCompletePayloadSchema.parse({ ...valid, size_bytes: -1 })).toThrow();
   });
 
-  it("does NOT accept a client-claimed sha256", () => {
-    const r = FileCompletePayloadSchema.parse({
-      ...valid,
-      sha256: "deadbeef",
-    } as unknown as Record<string, unknown>);
-    expect((r as Record<string, unknown>).sha256).toBeUndefined();
+  it("rejects client-claimed sha256 (.strict() enforcement; Finding 2 server-computes SHA)", () => {
+    // .strict() causes parse() to throw when sha256 is included.
+    // Clients MUST NOT supply sha256; server computes it via streaming hash.
+    expect(() =>
+      FileCompletePayloadSchema.parse({
+        ...valid,
+        sha256: "deadbeef",
+      } as unknown as Record<string, unknown>),
+    ).toThrow();
   });
 });
 
@@ -94,13 +98,16 @@ describe("OrphanCleanupPayloadSchema", () => {
     ).toEqual({ project_id: uuid, file_id: uuid2 });
   });
 
-  it("does NOT accept storage_path (server derives)", () => {
-    const r = OrphanCleanupPayloadSchema.parse({
-      project_id: uuid,
-      file_id: uuid2,
-      storage_path: "foo/bar",
-    } as unknown as Record<string, unknown>);
-    expect((r as Record<string, unknown>).storage_path).toBeUndefined();
+  it("rejects client-supplied storage_path (.strict() enforcement; server derives path)", () => {
+    // .strict() causes parse() to throw when storage_path is included.
+    // Clients MUST NOT supply storage_path; server derives it from user_id/project_id/file_id.
+    expect(() =>
+      OrphanCleanupPayloadSchema.parse({
+        project_id: uuid,
+        file_id: uuid2,
+        storage_path: "foo/bar",
+      } as unknown as Record<string, unknown>),
+    ).toThrow();
   });
 });
 
@@ -112,6 +119,14 @@ describe("ExtractStatusSyncPayloadSchema", () => {
   });
   it("rejects non-UUID run_id", () => {
     expect(() => ExtractStatusSyncPayloadSchema.parse({ run_id: "x" })).toThrow();
+  });
+  it("rejects extra keys (.strict() enforcement -- body carries only run_id per Finding 37)", () => {
+    expect(() =>
+      ExtractStatusSyncPayloadSchema.parse({
+        run_id: uuid,
+        project_id: uuid2,
+      } as unknown as Record<string, unknown>),
+    ).toThrow();
   });
 });
 
