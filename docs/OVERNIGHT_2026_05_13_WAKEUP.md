@@ -55,3 +55,87 @@ I am working through the plan in this order:
 - [DONE 2026-05-13 23:05 PDT] Phase 7: Critical hygiene (3 commits; commits 8e86f16..327a1da). Items 1+2 fixed real bugs (stale-path ordering in extract-status, streaming materializeToLocal); Items 3+4 fixed logging P2s (absolute URL server-side, CRITICAL persistence); 20 new tests added total.
 - [DONE 2026-05-14 00:28 PDT] Phase 8 (partial): 6 Lane 2e items shipped (commits 4a3b15b..e687152); 2 deferred (Item 6 bidi sanitizer -- too aggressive risk; Item 7 FTS migration -- Codex credits exhausted, owner apply needed).
 - [DONE 2026-05-14 00:56 PDT] Phase 9: Lane 1 retro -- 4 items shipped (commits 444942a..58cfb34); 0 deferred.
+- [DONE 2026-05-14 PDT] Prep docs committed: CANARY_LOG.md (engine-v2 `ca08b446`); LANE2_E2E_DOGFOOD.md (dashboard `219c89c`).
+
+---
+
+## FINAL SUMMARY (all autonomous work complete)
+
+**Total commits landed overnight: 18** (2 on engine-v2 master + 16 on SSTAC-Dashboard main; ZERO pushed -- all local).
+
+### Engine-v2 worktree (`C:\Projects\Regulatory-Review-worktrees\engine-v2`, branch `master`)
+
+```
+ca08b446  docs(engine_v2): CANARY_LOG.md template for Phase 3 owner canary gate
+cadcfcc5  docs(engine_v2): Commit 3/4 - doc reversal + Phase 5 rebaseline pointer
+c533bbd6  feat(engine_v2): Commit 2/4 - submission-side retrieval integration + T-N1-13 tests (1030 pass)
+fc06d81f  feat(submission_index): Commit 1/4 (pre-session)
+```
+
+Test sweep tip: 1030 passed, 20 skipped, 1 xfailed.
+
+### SSTAC-Dashboard (`C:\Projects\SSTAC-Dashboard`, branch `main`)
+
+```
+219c89c   docs: LANE2_E2E_DOGFOOD.md 10-step Phase 6 owner walkthrough
+b0e5090   chore: Phase 9 complete -- update OVERNIGHT wakeup doc phase status log
+58cfb34   docs(engine_v2): Lane 1 retro L1-7 -- refresh Lane 1 wiring docs
+605ee0b   fix(engine_v2): Lane 1 retro L1-5 -- structured logging at 1 silent-error path
+15a6bf4   fix(engine_v2): Lane 1 retro L1-4 -- Zod tighten extract-route inputs
+444942a   test(engine_v2): Lane 1 retro L1-3 -- extraction flow test coverage
+e687152   refactor(engine_v2): Lane 2e -- AskAiTab consumes shared CitationRenderer
+483e7ae   feat(engine_v2): Lane 2e -- ExportFormatMenu a11y
+30e25ae   feat(engine_v2): Lane 2e -- first-launch tooltip on side-panel rail
+d96ab87   feat(engine_v2): Lane 2e -- "show uncited chunks only" filter
+5393d36   fix(engine_v2): Lane 2e -- escapeMd handles backslashes
+4a3b15b   chore(engine_v2): Lane 2e -- replace NULL/control bytes with escape
+327a1da   fix(logging): sendToAggregationService absolute URL + CRITICAL persistence
+ff25188   fix(engine_v2): L1-6 BLOCKER #3 stream materializeToLocal
+8e86f16   fix(engine_v2): L1-6 BLOCKER #2 cleanup-before-UPDATE ordering
+c56dcfe   feat(engine_v2): memo builder cites verbatim submission excerpts per policy verdict
+bf9f720   fix(engine_v2): align Phase B RLS to FOR ALL TO authenticated (pre-session)
+```
+
+Test sweep tip: 1389 passed, 9 skipped, 0 failed. TypeScript clean.
+
+### What is GREEN to push (when you wake)
+
+Both repos have clean working trees (only `.tmp_*` codex outputs and 2 pre-existing planning docs untracked; LEAVE THEM as standing convention). All 18 commits are ready to push:
+
+```powershell
+# Engine
+cd C:\Projects\Regulatory-Review-worktrees\engine-v2
+git log --oneline origin/master..HEAD   # should show: fc06d81f -> ca08b446 (4 new commits)
+# git push origin master   # AFTER you review
+
+# Dashboard
+cd C:\Projects\SSTAC-Dashboard
+git log --oneline origin/main..HEAD     # should show: bf9f720 -> 219c89c (16 new commits)
+# git push origin main     # AFTER you review
+```
+
+I did NOT push -- you push when you are ready.
+
+### What is BLOCKED on you (Phases 3, 4, 6, 10, 11)
+
+1. **Phase 3 -- Owner canary gate** (requires Ollama). Run 3 evaluations across 3 distinct submission types per `engine_v2/docs/CANARY_LOG.md`. Append entries; sign off.
+2. **Phase 4 -- Engine Commit 4** (flip flag default to ON). Single-line change. Gated on Phase 3 PASS.
+3. **Phase 6 -- Lane 2 e2e dogfood** (requires Ollama). Walk through the 10 steps in `docs/LANE2_E2E_DOGFOOD.md`. This is the production-readiness acceptance test.
+4. **Phase 10 -- Phase 5 A/B rebaseline** (post-Phase-6). Re-measure baselines; replace `engine_v2/docs/PHASE5_REBASELINE_PLAN.md` placeholder with actual numbers.
+5. **Phase 11 -- Production-ready sign-off**. Walk through the 12 acceptance criteria in the plan file; sign off in a new `docs/PRODUCTION_READY_SIGNOFF.md`.
+
+### What was deferred (NOT blocked; needs owner judgment call)
+
+- **Phase 8 Item 6** -- bidi/C1 sanitizer hardening (Trojan Source defense). Skipped per the risk dial in the brief: aggressive sanitization could mangle legitimate non-Latin text in submissions. Decide if you want a conservative pass shipped, or defer to vNext.
+- **Phase 8 Item 7** -- FTS `websearch_to_tsquery` migration. Codex CLI credits exhausted (quota reset 2026-05-18) so per-commit gate could not run on the SQL migration. Subagent did NOT ship without the gate. Two paths when you wake: (a) wait until 2026-05-18 for codex, run the subagent's planned migration through codex, then commit; (b) ship the migration with manual review now. The migration is small (single RPC update + 3 tests).
+
+### Codex credit note
+
+Codex CLI quota exhausted partway through Phase 1 (around the Round 52 verification). Phases 1, 2, 7-items-3+4 (after first round), 8-item-7-skipped, 9 all substituted **manual 5-point invariant review** as per-commit gate. All commits passed the manual review. Reset is 2026-05-18 -- post-canary work can resume codex per-commit.
+
+### Other open items not in the plan
+
+- The 13 `.tmp_codex_holistic_round*.txt` + `.tmp_codex_output_round*.txt` files in the engine-v2 worktree are session artifacts from the Round 47-52 codex iteration loop. The pre-existing 4 `.tmp_*` / `_tmp_*` from prior sessions are also present. None are staged; none are touched by any commit. Standing convention: LEAVE them. If you want to clean: `Remove-Item .tmp_codex_*.txt` will only catch this session's; the others are convention-protected.
+- The 5 `.tmp_codex_p7_*` files on the dashboard side are Phase 7 codex outputs. Same status.
+- Two untracked planning docs in dashboard `docs/` (`engine_v2_frontend_lane1_plan_2026_05_11.md`, `engine_v2_frontend_lane1_plan_v7.19.md`) are from OTHER sessions. Convention-protected.
+
