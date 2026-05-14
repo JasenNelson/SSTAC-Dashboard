@@ -323,3 +323,58 @@ order is correct and is guarded by existing tests. No code change needed.
   Task 2 (memo .docx against real flag-ON eval_result.json): GREEN
     buildMemo() renders 16 KB .docx in 48ms with verbatim excerpts + page/section anchors + NOT_FOUND stub + HITL placeholders; Phase 5 verbatim integration (c56dcfe) is canary-ready.
   Reports: .tmp_canary_scale_report.md, .tmp_memo_validation_report.md (both in engine-v2 worktree).
+
+- [DONE 2026-05-14 09:30 PDT] Round 3 smoke triage at tip 13cdb205: original FileNotFoundError was NOT reproducible. Fresh live-Ollama smoke at the SAME commit ran GREEN (exit 0, run_id 15e6e0eb-6c00-4871-a4f6-17a342c3ebe2): 6 submission_text slices emitted (e.g. doc_id=SMOKE_SUBMISSION_COMMIT2, chunk_id=subchunk_<64hex>, non-empty content_hash), 1 PASS verdict, 12/12 policies evaluated. The 5 ContractViolations on this run are LLM nondeterminism (qwen2.5 emitted gap_type="UNCERTAIN_ELEMENT", not in the s4_output.schema enum) -- pre-existing latent issue, NOT a Round 2 regression. No regressing commit identified; no fix-forward or rollback applied. Unit sweep at tip: 1050 passed. Round 2 commits e5adf1ea / 4d47c338 / 82c03296 / 13cdb205 stand. Authorize-canary: GREEN. Note: schema enum mismatch on LLM-emitted gap_type warrants a separate retry-on-schema-violation hardening commit (out of scope for Round 3 triage).
+
+- [DONE 2026-05-14 09:35 PDT] Round 2 adversarial fix loop completed (engine-v2 tip 13cdb205, +4 commits over 50bf6670). Gemini retro returned RED with 4 defects in Round 1; all 4 VERIFIED-AND-FIXED: (1) e5adf1ea -- _append_s4_cited_rows EXCLUSIVE anchor fallback now gated by s3_index_side != "submission" (flag-ON path can no longer mask null chunk_id via stale traceability_anchor); (2) 4d47c338 -- dead `policy_text_lookup is not None` co-guard removed from retriever.py (silent corpus-leak path closed; entry-point callable() assertion preserved); (3) 82c03296 -- naive `"index_side" in ast.dump(test)` AST check replaced with branch-aware resolver that distinguishes submission-body vs corpus-orelse positioning, with 4-case meta-test; (4) 13cdb205 -- hasattr() duck-typing at s2/s3/s4 boundaries replaced with isinstance(SubmissionChunkStore) against @runtime_checkable Protocol; s4_synthesizer TypeError replaced with ContractViolation. Test sweep: 1044 -> 1050 passed (+6 net new regression/meta tests). Live Ollama smoke at 13cdb205 ran end-to-end GREEN: 12/12 policies evaluated, 4 PASS + 4 NOT_FOUND (zero_seed_short_circuit) + 4 ContractViolation (LLM gap_type enum drift -- pre-existing, NOT a Round 2 regression). The wrapper-mediated smoke (run_owner_scenario.py) hit a Windows FileNotFoundError at line 3527, but the same code path invoked directly works -- the issue is wrapper-script-level, not a code regression from Round 2 fixes. Authorize-canary: GREEN.
+
+===============================================================================
+## Gemini Prompt-8 retro fix loop (2026-05-14)
+===============================================================================
+
+Branch: main @ SSTAC-Dashboard; baseline 5a5b8a5 (Gemini round-3 docs commit).
+Codex CLI exhausted -- manual 5-point invariant review per commit.
+
+### Per-finding status
+
+**Finding 1 (L1-3 contract assertions)** -- GEMINI GREEN. No action.
+
+**Finding 2 (CRITICAL -- WizardClient selected_services key mismatch)** -- VERIFIED-FALSE.
+ProjectCreatePayloadSchema (zod.ts:12-19) uses `selected_services` matching the
+WizardClient.tsx payload key exactly (line 101). No mismatch; no production regression.
+Gemini hallucinated the schema key as `services`.
+
+**Finding 3 (ExtractionStatusUpsertSchema no .strict())** -- DEFERRED per brief. No action.
+
+**Finding 4 (incomplete silent-error paths)** -- PARTIALLY VERIFIED.
+- safeDeleteUploadsDir + bestEffortQuarantine: use console.error/warn, which IS the
+  project's logging primitive in engine-v2 routes. VERIFIED-FALSE for these two.
+- status_parsing.ts catch block: bare `catch { }` swallowed SyntaxError entirely --
+  no telemetry on WHY JSON was malformed. VERIFIED-TRUE-AND-FIXED (fcd7e2d).
+  New test asserts console.warn emitted with SyntaxError detail.
+
+**Finding 5 (stale doc values)** -- VERIFIED-TRUE-AND-FIXED (ba0b95c).
+- ENVIRONMENT_REFERENCE.md line 90: 30 min -> 60 min + corrected Read-by path.
+- API_REFERENCE.md line 326: 30 min -> 60 min.
+- engine_v2_frontend_lane1_plan_2026_05_11.md line 361: GET -> POST (in-place, untracked file).
+- engine_v2_frontend_lane1_plan_2026_05_11.md line 366: 30 min -> 60 min (in-place, untracked).
+- engine_v2_frontend_lane1_handoff_2026_05_11.md line 99: 10 min -> 60 min (in-place, untracked).
+- README.md line 33: GET -> POST + body note.
+
+**Finding 6 (writeStream handle leak on error path)** -- VERIFIED-TRUE-AND-FIXED (79e1d65).
+Window between fs.createWriteStream() and pipeline() takeover: if Readable.fromWeb
+throws, the WriteStream fd is left open and subsequent unlink causes EBUSY on Windows.
+Fix: writeStream.destroy() called before unlink in the catch block. New test verifies
+error propagates and partial file is absent.
+
+**Finding 7 ("Last verified" footers)** -- DEFERRED per brief. No footers removed.
+
+### Commits landed
+
+| SHA | Subject |
+| --- | --- |
+| fcd7e2d | fix(engine_v2): Gemini F4 -- log SyntaxError detail in status_parsing catch |
+| 79e1d65 | fix(engine_v2): Gemini F6 -- destroy writeStream before unlink on error path |
+| ba0b95c | docs(engine_v2): Gemini F5 -- fix stale EXTRACT_STALE_TIMEOUT_MS default + GET->POST |
+
+Test sweep: 1390 passed, 9 skipped, 0 failed (was 1389 + 1 failed). TypeScript: 0 src/ errors.
