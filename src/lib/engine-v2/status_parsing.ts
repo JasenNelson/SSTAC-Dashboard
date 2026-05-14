@@ -52,11 +52,16 @@ export function parseStatusJson(
   try {
     obj = JSON.parse(rawJson);
   } catch (parseErr) {
-    // Log the raw SyntaxError so telemetry captures WHY the JSON was malformed
-    // (truncation, encoding error, subprocess crash mid-write, etc.).
-    // The user-facing sentinel is still the opaque string; operators see the detail.
+    // Log the error TYPE only -- not the full message. In Node 19+, SyntaxError
+    // messages from JSON.parse include snippets of the malformed input
+    // (e.g., "Unexpected token 'X', \"...content...\" is not valid JSON").
+    // If the status file contains user-uploaded filenames or text those snippets
+    // would leak to logs. Operators still see the failure category (e.g.,
+    // "SyntaxError") without the content.
+    const errType =
+      parseErr instanceof Error ? parseErr.name : "UnknownError";
     console.warn(
-      `[engine-v2 status_parsing] JSON.parse failed -- returning sentinel: ${(parseErr as Error).message ?? String(parseErr)}`,
+      `[engine-v2 status_parsing] JSON.parse failed (${errType}) -- returning sentinel.`,
     );
     return { status: "error", errors: ["status_json_parse_error"] };
   }

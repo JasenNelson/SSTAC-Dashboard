@@ -32,13 +32,15 @@ describe("parseStatusJson (Findings 17, 43)", () => {
     expect(r.errors).toEqual(["status_json_parse_error"]);
   });
 
-  it("emits console.warn with SyntaxError detail on malformed JSON (telemetry)", () => {
+  it("emits console.warn with error type marker on malformed JSON (PII-safe)", () => {
     parseStatusJson("{not json");
     expect(warnSpy).toHaveBeenCalledTimes(1);
     const msg: string = warnSpy.mock.calls[0][0] as string;
     expect(msg).toContain("[engine-v2 status_parsing]");
-    // SyntaxError message should be present -- not just the opaque sentinel.
-    expect(msg).toMatch(/JSON|token|Unexpected/i);
+    // Must include the error type in parentheses so operators see the failure category.
+    expect(msg).toContain("(SyntaxError)");
+    // Must NOT include raw snippets of the malformed input (PII guard).
+    expect(msg).not.toContain("not json");
   });
 
   it("returns parse-error sentinel on non-object JSON (array)", () => {
