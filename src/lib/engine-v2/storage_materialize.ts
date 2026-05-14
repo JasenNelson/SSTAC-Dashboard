@@ -7,17 +7,13 @@
 //
 // `materializeToLocal` signature (per L1-6 spec): (client, storagePath, localPath). The
 // client is an authenticated Supabase server client; storagePath is the v2-submissions
-// bucket key; localPath is the absolute destination on disk. Implementation uses
-// `supabase.storage.from('v2-submissions').download(storagePath)` (returns a Blob);
-// parent dir is mkdir-recursive'd before write (Finding 34); partial files are unlinked
-// on any error (Finding 30).
+// bucket key; localPath is the absolute destination on disk.
 //
-// NOTE on the v6.x writeStream pattern in Engineering Decisions: that block describes a
-// fetch-based streaming variant for signed-URL downloads. The L1-6 spec for this module
-// uses the SupabaseClient direct-download path, which buffers the file as a Blob (acceptable
-// for Lane 1 sizes -- bucket file_size_limit caps individual files; large-file streaming
-// is a Lane 2 enhancement). Persistent error listener / backpressure / drain semantics from
-// the ED block do not apply to Blob-bytes write paths.
+// Implementation (L1-6 BLOCKER #3 fix): uses createSignedUrl + native fetch to stream
+// the source file to the local tempfile in chunks via stream.pipeline, so 50MB+ PDFs
+// do NOT buffer the entire file in the Node heap. The signed URL is valid for 60 seconds
+// (sufficient for the pipeline to complete). Parent dir is mkdir-recursive'd before write
+// (Finding 34); partial files are unlinked on any error (Finding 30).
 //
 // `quarantineUploadsDir` contract (Finding 62 locked):
 //   - source missing -> { moved: false, reason: 'source_missing' } (NO throw)
@@ -32,6 +28,8 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { pipeline } from "stream/promises";
+import { Readable } from "stream";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isContained } from "./path_containment";
 import type { QuarantineUploadsDirResult } from "./types";
@@ -52,45 +50,63 @@ function utcStampForPath(d: Date = new Date()): string {
   return iso.replace(/:/g, "-").replace(/\./g, "-");
 }
 
-// Materialize a single bucket object to the local filesystem. Uses the authenticated
-// SupabaseClient's storage download (Blob) -- NO service-role. Throws on:
-//   - download error from Supabase Storage
-//   - fs write failure (parent dir creation, write, unlink-on-cleanup)
+// Signed-URL TTL for the streaming download. 60 seconds is sufficient for the
+// stream.pipeline to complete even for large files over a local network; the
+// URL is only used once and the pipeline runs synchronously to completion.
+const SIGNED_URL_TTL_SECONDS = 60;
+
+// Materialize a single bucket object to the local filesystem. Streams the source
+// file via a short-lived signed URL through Node's stream.pipeline so that
+// large (50MB+) PDFs do NOT buffer the entire file in the heap before writing.
 //
-// Partial-file cleanup (Finding 30): on any throw after the writeFile call started, the
-// localPath is best-effort unlinked so we never leave a half-written artifact for the
-// extractor to read.
+// Implementation: createSignedUrl -> fetch(url) -> Readable.fromWeb(body) ->
+// fs.createWriteStream. NO service-role required; the signed URL is generated
+// using the authenticated client's RLS-checked credentials.
+//
+// Partial-file cleanup (Finding 30): on any throw the localPath is best-effort
+// unlinked so we never leave a half-written artifact for the extractor to read.
+//
+// Throws on:
+//   - createSignedUrl error
+//   - HTTP response !ok from the signed URL
+//   - stream.pipeline failure (network / disk error)
 export async function materializeToLocal(
   client: SupabaseClient,
   storagePath: string,
   localPath: string,
 ): Promise<void> {
-  const { data, error } = await client.storage.from(BUCKET).download(storagePath);
-  if (error || !data) {
+  // Obtain a short-lived signed URL (RLS-checked via the authenticated client).
+  const { data: signedData, error: signedErr } = await client.storage
+    .from(BUCKET)
+    .createSignedUrl(storagePath, SIGNED_URL_TTL_SECONDS);
+  if (signedErr || !signedData?.signedUrl) {
     throw new Error(
-      `materialize_download_failed:${error?.message ?? "no_data"}`,
+      `materialize_signed_url_failed:${signedErr?.message ?? "no_url"}`,
     );
   }
 
   // Ensure parent dir exists before write (Finding 34).
   await fs.promises.mkdir(path.dirname(localPath), { recursive: true });
 
-  // Convert Blob -> Buffer via ArrayBuffer. Blob.arrayBuffer() resolves to a
-  // structured-cloneable ArrayBuffer; Buffer.from copies into a Node Buffer.
-  let buf: Buffer;
+  // Fetch the object and stream it to disk. Partial-file cleanup on any error.
+  let writeStream: fs.WriteStream | null = null;
   try {
-    const ab = await data.arrayBuffer();
-    buf = Buffer.from(ab);
-  } catch (err) {
-    throw new Error(
-      `materialize_blob_decode_failed:${(err as Error).message ?? "unknown"}`,
-    );
-  }
+    const response = await fetch(signedData.signedUrl);
+    if (!response.ok || !response.body) {
+      throw new Error(
+        `materialize_fetch_failed:${response.status}:${response.statusText}`,
+      );
+    }
 
-  try {
-    await fs.promises.writeFile(localPath, buf);
+    writeStream = fs.createWriteStream(localPath);
+
+    // Node 18+: ReadableStream (WHATWG) can be adapted via Readable.fromWeb so
+    // stream.pipeline handles backpressure and cleanup automatically.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const readable = Readable.fromWeb(response.body as any);
+    await pipeline(readable, writeStream);
   } catch (err) {
-    // Cleanup partial file on any write failure (Finding 30).
+    // Best-effort unlink of any partial file (Finding 30).
     await fs.promises.unlink(localPath).catch(() => {
       /* best-effort; file may not exist yet */
     });

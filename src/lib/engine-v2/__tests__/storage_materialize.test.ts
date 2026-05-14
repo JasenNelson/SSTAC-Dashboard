@@ -2,33 +2,36 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
+import { Readable } from "stream";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   materializeToLocal,
   quarantineUploadsDir,
 } from "../storage_materialize";
 
-// Build a minimal mock SupabaseClient that returns a Blob-like from
-// .from('v2-submissions').download(). We deliberately mint a duck-typed object with
-// .arrayBuffer() rather than constructing a real Blob, because jsdom in some versions
-// does not provide Blob.prototype.arrayBuffer().
-interface BlobLike {
-  arrayBuffer(): Promise<ArrayBuffer>;
-}
-function blobFromBytes(bytes: Uint8Array): BlobLike {
-  // Copy into a fresh ArrayBuffer so it survives across the boundary.
-  const copy = new Uint8Array(bytes.length);
-  copy.set(bytes);
-  return {
-    async arrayBuffer() {
-      return copy.buffer;
+// Mock global fetch so tests run without a real network.
+// Each test configures fetchMock to return bytes or an error.
+const fetchMock = vi.fn();
+vi.stubGlobal("fetch", fetchMock);
+
+// Helper: build a mock ReadableStream (WHATWG) from a Uint8Array.
+// materializeToLocal uses Readable.fromWeb(response.body), so we need
+// a WHATWG-compatible ReadableStream that Readable.fromWeb can wrap.
+function makeReadableStream(bytes: Uint8Array): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(bytes);
+      controller.close();
     },
-  };
+  });
 }
+
+// Build a minimal mock SupabaseClient for the new streaming implementation.
+// The new materializeToLocal calls createSignedUrl (not download).
 function makeClient(opts: {
-  blob?: BlobLike;
-  error?: { message: string } | null;
-  recordCall?: (path: string) => void;
+  signedUrl?: string;
+  signedError?: { message: string } | null;
+  recordCall?: (storagePath: string) => void;
 }): SupabaseClient {
   return {
     storage: {
@@ -37,13 +40,13 @@ function makeClient(opts: {
           throw new Error(`unexpected bucket: ${bucket}`);
         }
         return {
-          async download(p: string) {
+          async createSignedUrl(p: string, _ttl: number) {
             opts.recordCall?.(p);
-            if (opts.error) {
-              return { data: null, error: opts.error };
+            if (opts.signedError) {
+              return { data: null, error: opts.signedError };
             }
             return {
-              data: opts.blob ?? blobFromBytes(new Uint8Array()),
+              data: { signedUrl: opts.signedUrl ?? "https://example.com/signed" },
               error: null,
             };
           },
@@ -51,6 +54,26 @@ function makeClient(opts: {
       },
     },
   } as unknown as SupabaseClient;
+}
+
+// Configure fetchMock to respond with bytes.
+function mockFetchWithBytes(bytes: Uint8Array): void {
+  fetchMock.mockResolvedValueOnce({
+    ok: true,
+    status: 200,
+    statusText: "OK",
+    body: makeReadableStream(bytes),
+  });
+}
+
+// Configure fetchMock to return a non-2xx error response.
+function mockFetchError(status: number, statusText: string): void {
+  fetchMock.mockResolvedValueOnce({
+    ok: false,
+    status,
+    statusText,
+    body: null,
+  });
 }
 
 async function makeTmpDir(label: string): Promise<string> {
@@ -66,21 +89,23 @@ async function rimraf(p: string): Promise<void> {
   });
 }
 
-describe("materializeToLocal (Findings 29, 30, 34)", () => {
+describe("materializeToLocal (streaming, L1-6 BLOCKER #3 fix)", () => {
   let tmp: string;
 
   beforeEach(async () => {
     tmp = await makeTmpDir("materialize");
+    fetchMock.mockReset();
   });
 
   afterEach(async () => {
     await rimraf(tmp);
+    vi.restoreAllMocks();
   });
 
-  it("downloads a Blob and writes bytes to localPath", async () => {
-    const bytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]);
-    const blob = blobFromBytes(bytes);
-    const client = makeClient({ blob });
+  it("streams a response body and writes bytes to localPath", async () => {
+    const bytes = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31]); // %PDF-1
+    const client = makeClient({ signedUrl: "https://example.com/test.pdf" });
+    mockFetchWithBytes(bytes);
 
     const localPath = path.join(tmp, "out", "abc.pdf");
     await materializeToLocal(client, "user1/project1/abc/abc.pdf", localPath);
@@ -90,7 +115,8 @@ describe("materializeToLocal (Findings 29, 30, 34)", () => {
   });
 
   it("mkdir-recursive's the parent dir when it does not exist (Finding 34)", async () => {
-    const client = makeClient({ blob: blobFromBytes(new Uint8Array([1, 2, 3])) });
+    const client = makeClient({});
+    mockFetchWithBytes(new Uint8Array([1, 2, 3]));
     const deepPath = path.join(tmp, "a", "b", "c", "d", "out.pdf");
     expect(fs.existsSync(path.dirname(deepPath))).toBe(false);
 
@@ -99,50 +125,130 @@ describe("materializeToLocal (Findings 29, 30, 34)", () => {
     expect(fs.existsSync(deepPath)).toBe(true);
   });
 
-  it("throws when supabase download returns an error", async () => {
-    const client = makeClient({ error: { message: "rls_blocked" } });
+  it("throws when createSignedUrl returns an error", async () => {
+    const client = makeClient({ signedError: { message: "rls_blocked" } });
     const localPath = path.join(tmp, "x.pdf");
+
     await expect(
       materializeToLocal(client, "user/project/file/file.pdf", localPath),
-    ).rejects.toThrow(/materialize_download_failed/);
+    ).rejects.toThrow(/materialize_signed_url_failed/);
     expect(fs.existsSync(localPath)).toBe(false);
   });
 
-  it("passes the storage_path through to download()", async () => {
+  it("throws when the signed URL fetch returns a non-2xx response", async () => {
+    const client = makeClient({ signedUrl: "https://example.com/gone.pdf" });
+    mockFetchError(403, "Forbidden");
+    const localPath = path.join(tmp, "forbidden.pdf");
+
+    await expect(
+      materializeToLocal(client, "user/project/file/file.pdf", localPath),
+    ).rejects.toThrow(/materialize_fetch_failed:403/);
+    // Partial file must be cleaned up (Finding 30).
+    expect(fs.existsSync(localPath)).toBe(false);
+  });
+
+  it("passes the storage_path through to createSignedUrl()", async () => {
     const recorded: string[] = [];
     const client = makeClient({
-      blob: blobFromBytes(new Uint8Array([0])),
+      signedUrl: "https://example.com/ok.pdf",
       recordCall: (p) => recorded.push(p),
     });
+    mockFetchWithBytes(new Uint8Array([0]));
+
     const localPath = path.join(tmp, "y.pdf");
     await materializeToLocal(client, "u/p/f/f.pdf", localPath);
     expect(recorded).toEqual(["u/p/f/f.pdf"]);
   });
 
-  it("unlinks partial file when fs.writeFile throws (Finding 30)", async () => {
-    const client = makeClient({ blob: blobFromBytes(new Uint8Array([1, 2])) });
+  it("unlinks partial file when the pipeline fails mid-stream (Finding 30)", async () => {
+    const client = makeClient({ signedUrl: "https://example.com/partial.pdf" });
+
+    // Return a stream that errors mid-way.
+    const erroringStream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new Uint8Array([1, 2, 3]));
+        controller.error(new Error("network_drop"));
+      },
+    });
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      body: erroringStream,
+    });
+
     const localPath = path.join(tmp, "partial.pdf");
-    // Pre-create the parent dir; then make writeFile throw via vi.spyOn.
-    await fs.promises.mkdir(path.dirname(localPath), { recursive: true });
-    // Pretouch the file so we can verify unlink ran (after the simulated failure).
-    await fs.promises.writeFile(localPath, Buffer.from([0xff]));
+    await expect(
+      materializeToLocal(client, "u/p/f/partial.pdf", localPath),
+    ).rejects.toThrow();
 
-    const writeSpy = vi
-      .spyOn(fs.promises, "writeFile")
-      .mockImplementationOnce(async () => {
-        throw new Error("disk_full");
-      });
-
-    try {
-      await expect(
-        materializeToLocal(client, "u/p/f/f.pdf", localPath),
-      ).rejects.toThrow(/disk_full/);
-    } finally {
-      writeSpy.mockRestore();
-    }
-    // Either the unlink succeeded (file gone) or the pretouched file was removed.
+    // Partial file must be cleaned up.
     expect(fs.existsSync(localPath)).toBe(false);
   });
+
+  // Memory-bounded regression test (L1-6 BLOCKER #3): streaming should NOT cause
+  // heap growth proportional to the file size. We use a 100MB synthetic stream
+  // and verify that heap growth stays well below 100MB.
+  //
+  // Node's streaming pipeline reads in chunks; the GC may not have run by the
+  // time we measure, so we use a generous 70MB ceiling (not 50MB) to avoid
+  // flakiness on CI while still catching a full-buffer regression.
+  it("does not buffer a large (100 MB) file in the heap (streaming regression)", async () => {
+    const FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+    const HEAP_CEILING_BYTES = 70 * 1024 * 1024; // 70 MB growth ceiling
+
+    const client = makeClient({ signedUrl: "https://example.com/large.pdf" });
+
+    // Build a large ReadableStream from small chunks without allocating a 100MB
+    // monolithic buffer (which would defeat the test).
+    const CHUNK_SIZE = 64 * 1024; // 64 KB chunks
+    let sent = 0;
+    const largeSteam = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (sent >= FILE_SIZE) {
+          controller.close();
+          return;
+        }
+        const remaining = FILE_SIZE - sent;
+        const toSend = Math.min(CHUNK_SIZE, remaining);
+        controller.enqueue(new Uint8Array(toSend));
+        sent += toSend;
+      },
+    });
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      body: largeSteam,
+    });
+
+    const localPath = path.join(tmp, "large.pdf");
+
+    // Force GC before measuring (Node may not expose gc() in all environments).
+    if (typeof global.gc === "function") global.gc();
+    const memBefore = process.memoryUsage();
+
+    await materializeToLocal(client, "large/file.pdf", localPath);
+
+    if (typeof global.gc === "function") global.gc();
+    const memAfter = process.memoryUsage();
+
+    // Verify the file was written correctly.
+    const stat = await fs.promises.stat(localPath);
+    expect(stat.size).toBe(FILE_SIZE);
+
+    // Check BOTH heap (V8 objects) AND external/arrayBuffers (Buffer/ArrayBuffer backing
+    // store) for growth. A full-buffer implementation would spike one or both. The ceiling
+    // is generous (70MB) to account for streaming chunk overlap and GC timing.
+    const heapGrowth = memAfter.heapUsed - memBefore.heapUsed;
+    const externalGrowth = memAfter.external - memBefore.external;
+    const arrayBuffersGrowth = memAfter.arrayBuffers - memBefore.arrayBuffers;
+
+    // At least one dimension must be below ceiling -- if all were >= ceiling, the entire
+    // 100MB file is being held in memory simultaneously.
+    const maxGrowth = Math.max(heapGrowth, externalGrowth, arrayBuffersGrowth);
+    expect(maxGrowth).toBeLessThan(HEAP_CEILING_BYTES);
+  }, 30000); // 30s timeout for large file write
 });
 
 describe("quarantineUploadsDir (Findings 38, 49, 54, 62)", () => {
