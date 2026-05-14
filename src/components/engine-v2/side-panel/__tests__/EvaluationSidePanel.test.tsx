@@ -415,4 +415,37 @@ describe("CollapsedRail first-launch tooltip", () => {
       screen.queryByTestId("side-panel-rail-tooltip"),
     ).not.toBeInTheDocument();
   });
+
+  it("shows the tooltip and does not crash when localStorage throws SecurityError", () => {
+    // Simulate strict private-browsing: localStorage access is forbidden.
+    const origGetItem = window.localStorage.getItem.bind(window.localStorage);
+    const origSetItem = window.localStorage.setItem.bind(window.localStorage);
+    const storageError = new DOMException("The operation is insecure.", "SecurityError");
+    vi.spyOn(window.localStorage, "getItem").mockImplementation(() => {
+      throw storageError;
+    });
+    vi.spyOn(window.localStorage, "setItem").mockImplementation(() => {
+      throw storageError;
+    });
+
+    // Should not throw; tooltip should be visible (first-launch default).
+    expect(() => renderPanel()).not.toThrow();
+    expect(screen.getByTestId("side-panel-rail-tooltip")).toBeInTheDocument();
+
+    // Dismissal should also not throw even when setItem fails.
+    const dismissBtn = screen.getByTestId("side-panel-rail-tooltip-dismiss");
+    expect(() => fireEvent.click(dismissBtn)).not.toThrow();
+    // After dismiss the tooltip is hidden in-memory even if persistence failed.
+    expect(
+      screen.queryByTestId("side-panel-rail-tooltip"),
+    ).not.toBeInTheDocument();
+
+    // Restore spies.
+    vi.mocked(window.localStorage.getItem).mockRestore
+      ? vi.mocked(window.localStorage.getItem).mockRestore()
+      : window.localStorage.getItem.bind(origGetItem);
+    vi.mocked(window.localStorage.setItem).mockRestore
+      ? vi.mocked(window.localStorage.setItem).mockRestore()
+      : window.localStorage.setItem.bind(origSetItem);
+  });
 });

@@ -398,15 +398,32 @@ function CollapsedRail({ onExpand }: CollapsedRailProps): ReactElement {
   useEffect(() => {
     // SSR guard: localStorage is not available in server context.
     if (typeof window === "undefined") return;
-    const seen = window.localStorage.getItem(RAIL_TOOLTIP_SEEN_KEY);
-    if (!seen) {
+    // In strict private browsing (Firefox/Safari), localStorage access throws
+    // a SecurityError synchronously. Treat any storage error as "not seen" so
+    // the tooltip is shown but the failure is recorded via console.warn.
+    try {
+      const seen = window.localStorage.getItem(RAIL_TOOLTIP_SEEN_KEY);
+      if (!seen) {
+        setShowTooltip(true);
+      }
+    } catch {
+      // SecurityError or QuotaExceededError: proceed as first-launch so the
+      // tooltip is shown. Do not crash the component.
+      console.warn("[EvaluationSidePanel] localStorage read failed; showing tooltip as first-launch.");
       setShowTooltip(true);
     }
   }, []);
 
   const dismissTooltip = useCallback((): void => {
     if (typeof window !== "undefined") {
-      window.localStorage.setItem(RAIL_TOOLTIP_SEEN_KEY, "1");
+      try {
+        window.localStorage.setItem(RAIL_TOOLTIP_SEEN_KEY, "1");
+      } catch {
+        // SecurityError or QuotaExceededError: the dismissal cannot be
+        // persisted. The tooltip will re-appear on next load in this
+        // private-browsing context, which is acceptable.
+        console.warn("[EvaluationSidePanel] localStorage write failed; tooltip dismissal not persisted.");
+      }
     }
     setShowTooltip(false);
   }, []);
