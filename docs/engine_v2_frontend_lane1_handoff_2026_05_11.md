@@ -30,7 +30,7 @@ API endpoints (all `runtime = 'nodejs'`, admin-gated, CSRF-validated on mutation
 - `POST /api/engine-v2/files/orphan`
 - `GET  /api/engine-v2/files/exists`
 - `POST /api/engine-v2/projects/[id]/extract`
-- `GET  /api/engine-v2/projects/[id]/extract-status`
+- `POST /api/engine-v2/projects/[id]/extract-status` (POST not GET; body: {run_id: uuid}; per Finding 37 CSRF)
 
 Reference: `src/app/(dashboard)/dashboard/engine-v2/README.md` for the
 full source-tree map.
@@ -196,3 +196,8 @@ Captured at the start of Module L1-2 work:
 `docs/engine_v2_frontend_lane1_plan_v7.19.md`. Module sections L1-1 through
 L1-7 use `<!-- BEGIN SECTION -->` / `<!-- END SECTION -->` markers for codex
 per-module review scoping.
+
+---
+
+Last verified: 2026-05-14 (L1-7 retro pass -- extract-status verb corrected from GET
+to POST per Finding 37; env var defaults in LANE1_SMOKE_2026_05_11.md corrected).
