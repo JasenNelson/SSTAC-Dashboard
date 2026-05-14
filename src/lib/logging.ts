@@ -122,22 +122,45 @@ class Logger {
   }
 
   private async sendToAggregationService(entry: LogEntry): Promise<void> {
-    // Log to database for persistence and searching
-    // This is completely free and you own the data
-    if (typeof window === 'undefined' && entry.level === LogLevel.ERROR) {
-      try {
-        // Send error logs to database for audit trail
-        // Uses Supabase which you already have
-        await fetch('/api/logs/store', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(entry),
-        }).catch(() => {
-          // Silently fail - don't let logging errors break the app
-        });
-      } catch (error) {
-        console.error('Failed to persist log to database', error);
+    // Log ERROR and CRITICAL events to database for persistence and audit trail.
+    // CRITICAL events (logSecurityEvent severity:'critical') are the most important
+    // to persist -- the filter must include both ERROR and CRITICAL.
+    const shouldPersist =
+      entry.level === LogLevel.ERROR || entry.level === LogLevel.CRITICAL;
+    if (!shouldPersist) return;
+
+    try {
+      // Server-side (Node): fetch requires an absolute URL. Construct one using
+      // NEXT_PUBLIC_SITE_URL (e.g. "https://your-app.vercel.app") or fall back to
+      // the localhost dev default. If neither is available, log a warning and skip
+      // rather than throwing -- logging failure must never crash the request path.
+      let storeUrl: string;
+      if (typeof window === 'undefined') {
+        const siteUrl =
+          process.env.NEXT_PUBLIC_SITE_URL ||
+          (process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : '');
+        if (!siteUrl) {
+          console.warn(
+            '[logging] sendToAggregationService: NEXT_PUBLIC_SITE_URL is not set; ' +
+              'skipping server-side persistence for level=' + entry.level,
+          );
+          return;
+        }
+        storeUrl = siteUrl.replace(/\/$/, '') + '/api/logs/store';
+      } else {
+        // Client-side: relative URL works fine.
+        storeUrl = '/api/logs/store';
       }
+
+      await fetch(storeUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry),
+      }).catch(() => {
+        // Silently absorb network failures -- don't let logging errors break the app.
+      });
+    } catch (error) {
+      console.error('Failed to persist log to database', error);
     }
   }
 
