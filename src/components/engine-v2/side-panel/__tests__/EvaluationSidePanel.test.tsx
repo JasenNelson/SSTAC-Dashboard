@@ -395,3 +395,24 @@ describe("EvaluationSidePanel (Phase A) -- drawer fallback (ED-2d4-10)", () => {
     );
   });
 });
+
+// Lane 2e -- first-launch tooltip tests.
+describe("CollapsedRail first-launch tooltip", () => {
+  it("shows the tooltip on first launch (no localStorage flag)", () => {
+    // beforeEach already clears localStorage, so RAIL_TOOLTIP_SEEN_KEY is absent.
+    renderPanel();
+    // Panel starts collapsed so the rail is visible.
+    expect(screen.getByTestId("side-panel-rail-tooltip")).toBeInTheDocument();
+  });
+
+  it("suppresses the tooltip when the localStorage flag is already set", () => {
+    window.localStorage.setItem(
+      "engine_v2.side_panel.rail_tooltip_seen",
+      "1",
+    );
+    renderPanel();
+    expect(
+      screen.queryByTestId("side-panel-rail-tooltip"),
+    ).not.toBeInTheDocument();
+  });
+});

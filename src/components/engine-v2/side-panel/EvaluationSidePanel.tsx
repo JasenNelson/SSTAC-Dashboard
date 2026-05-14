@@ -382,20 +382,71 @@ function renderTab(
   return <PolicySearchTab projectId={projectId} />;
 }
 
+// localStorage key that gates the one-time first-launch tooltip on the
+// collapsed rail. Once set, the tooltip never re-appears.
+const RAIL_TOOLTIP_SEEN_KEY = "engine_v2.side_panel.rail_tooltip_seen";
+
 interface CollapsedRailProps {
   onExpand: () => void;
 }
 
 function CollapsedRail({ onExpand }: CollapsedRailProps): ReactElement {
+  // Show the first-launch nudge tooltip unless the user has already
+  // dismissed it (localStorage flag) or opened the panel before.
+  const [showTooltip, setShowTooltip] = useState<boolean>(false);
+
+  useEffect(() => {
+    // SSR guard: localStorage is not available in server context.
+    if (typeof window === "undefined") return;
+    const seen = window.localStorage.getItem(RAIL_TOOLTIP_SEEN_KEY);
+    if (!seen) {
+      setShowTooltip(true);
+    }
+  }, []);
+
+  const dismissTooltip = useCallback((): void => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(RAIL_TOOLTIP_SEEN_KEY, "1");
+    }
+    setShowTooltip(false);
+  }, []);
+
+  const handleExpand = useCallback((): void => {
+    dismissTooltip();
+    onExpand();
+  }, [dismissTooltip, onExpand]);
+
   return (
     <div
       data-testid="side-panel-collapsed-rail"
       className="fixed top-1/2 right-0 -translate-y-1/2 z-30"
     >
+      {showTooltip && (
+        <div
+          data-testid="side-panel-rail-tooltip"
+          role="tooltip"
+          className="absolute right-full top-1/2 -translate-y-1/2 mr-2 w-48 rounded-lg border border-indigo-200 dark:border-indigo-700 bg-white dark:bg-slate-900 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 shadow-lg"
+        >
+          <p className="font-medium text-indigo-700 dark:text-indigo-300">
+            Search and Ask
+          </p>
+          <p className="mt-1">
+            Click these tabs for Search submission, Ask AI, and Citation peek.
+          </p>
+          <button
+            type="button"
+            data-testid="side-panel-rail-tooltip-dismiss"
+            onClick={dismissTooltip}
+            className="mt-2 text-[10px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          >
+            Got it
+          </button>
+        </div>
+      )}
       <button
         data-testid="side-panel-expand-toggle"
         type="button"
-        onClick={onExpand}
+        onClick={handleExpand}
         aria-expanded={false}
         aria-controls="side-panel-body"
         aria-label="Search and Ask side panel; press Enter to expand"
