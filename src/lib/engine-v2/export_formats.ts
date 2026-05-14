@@ -284,11 +284,14 @@ export function generateCSV(input: ExportInput): string {
 
 // --- Markdown -------------------------------------------------------------
 
-// Escape pipe and newline characters in Markdown table cells. Pipes break the
-// table column structure; newlines collapse a row visually.
+// Escape pipe, backslash, and newline characters in Markdown table cells.
+// Backslashes must be escaped first (before other escapes add new backslashes)
+// to avoid double-escaping. Pipes break the table column structure; newlines
+// collapse a row visually.
 function escapeMd(text: string): string {
   if (text === null || text === undefined || text === "") return "";
   return text
+    .replace(/\\/g, "\\\\")
     .replace(/\|/g, "\\|")
     .replace(/\r\n/g, " ")
     .replace(/\n/g, " ")

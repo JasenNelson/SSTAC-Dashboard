@@ -359,6 +359,33 @@ describe("generateMarkdown", () => {
     expect(md).toContain("pipe \\| inside and newline");
   });
 
+  it("escapeMd: single backslash in source becomes double backslash", () => {
+    const r = makeResult("r1", "POL-BS", "TIER_1_BINARY");
+    const j = makeJudgment("r1", "TIER_1_BINARY", "ADEQUATE", "path\\to\\file");
+    const md = generateMarkdown(baseInput({ results: [r], judgments: [j] }));
+    // Each \ in source must become \\ in MD output.
+    expect(md).toContain("path\\\\to\\\\file");
+  });
+
+  it("escapeMd: double backslash in source becomes four backslashes", () => {
+    const r = makeResult("r1", "POL-DBS", "TIER_1_BINARY");
+    const j = makeJudgment("r1", "TIER_1_BINARY", "ADEQUATE", "foo\\\\bar");
+    const md = generateMarkdown(baseInput({ results: [r], judgments: [j] }));
+    // \\\\ in source -> \\\\\\\\ in MD (four backslashes).
+    expect(md).toContain("foo\\\\\\\\bar");
+  });
+
+  it("escapeMd: backslash before special char (pipe) -- backslash escaped before pipe", () => {
+    const r = makeResult("r1", "POL-MIX", "TIER_1_BINARY");
+    // Source rationale: a + backslash + pipe + b (3 chars between a and b).
+    const j = makeJudgment("r1", "TIER_1_BINARY", "ADEQUATE", "a\\|b");
+    const md = generateMarkdown(baseInput({ results: [r], judgments: [j] }));
+    // backslash escape pass: \ -> \\ (now a\\|b)
+    // pipe escape pass:     | -> \| (now a\\\|b)
+    // Use concatenation to make expected unambiguous: "a" + "\\" + "\\" + "\\|" + "b"
+    expect(md).toContain("a" + "\\\\" + "\\|" + "b");
+  });
+
   it("renders unjudged rows with marker", () => {
     const r = makeResult("r1", "POL-Z", "TIER_2_PROFESSIONAL");
     const md = generateMarkdown(baseInput({ results: [r], judgments: [] }));
