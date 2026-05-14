@@ -13,8 +13,14 @@
 //
 // Disabled when the evaluation is not terminal -- exports against an
 // in-flight run would be misleading.
+//
+// A11y (Lane 2e):
+//   - Esc closes the menu and returns focus to the trigger button.
+//   - ArrowDown / ArrowUp navigate between menu items.
+//   - Click outside the wrapper dismisses the menu.
+//   - Focus returns to the trigger button on close.
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   TERMINAL_EVALUATION_STATUSES,
@@ -65,8 +71,75 @@ export function ExportFormatMenu(
   const [state, setState] = useState<MenuState>({ kind: "idle" });
   const [open, setOpen] = useState<boolean>(false);
   const anchorRef = useRef<HTMLAnchorElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   const terminal = isTerminalStatus(evaluationStatus);
+
+  // Close the menu and return focus to the trigger button.
+  const closeMenu = useCallback((): void => {
+    setOpen(false);
+    // requestAnimationFrame ensures the trigger is rendered before focusing.
+    requestAnimationFrame(() => {
+      triggerRef.current?.focus();
+    });
+  }, []);
+
+  // Outside-click dismiss: if a click lands outside the wrapper, close.
+  useEffect(() => {
+    if (!open) return;
+    const handler = (ev: MouseEvent): void => {
+      const wrapper = wrapperRef.current;
+      if (wrapper && !wrapper.contains(ev.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+    };
+  }, [open]);
+
+  // Esc-to-close + ArrowDown/ArrowUp navigation inside the open menu.
+  const onMenuKeyDown = useCallback(
+    (ev: React.KeyboardEvent<HTMLUListElement>): void => {
+      if (ev.key === "Escape") {
+        ev.preventDefault();
+        closeMenu();
+        return;
+      }
+      if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+        ev.preventDefault();
+        const list = ev.currentTarget;
+        const items = Array.from(
+          list.querySelectorAll<HTMLButtonElement>('[role="menuitem"]'),
+        );
+        if (items.length === 0) return;
+        const focused = document.activeElement;
+        const idx = items.indexOf(focused as HTMLButtonElement);
+        if (ev.key === "ArrowDown") {
+          const next = idx < items.length - 1 ? idx + 1 : 0;
+          items[next]?.focus();
+        } else {
+          const prev = idx > 0 ? idx - 1 : items.length - 1;
+          items[prev]?.focus();
+        }
+      }
+    },
+    [closeMenu],
+  );
+
+  // Esc-to-close on the trigger button itself (in case focus is there
+  // while the menu is open, e.g. after arrow navigation wraps).
+  const onTriggerKeyDown = useCallback(
+    (ev: React.KeyboardEvent<HTMLButtonElement>): void => {
+      if (ev.key === "Escape" && open) {
+        ev.preventDefault();
+        closeMenu();
+      }
+    },
+    [open, closeMenu],
+  );
 
   const handleExport = useCallback(
     async (format: MenuFormat) => {
@@ -150,12 +223,15 @@ export function ExportFormatMenu(
 
   return (
     <div
+      ref={wrapperRef}
       data-testid="export-format-menu-wrapper"
       className="inline-flex flex-col gap-1 relative"
     >
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
+        onKeyDown={onTriggerKeyDown}
         disabled={busy}
         data-testid="export-format-menu-button"
         data-state={state.kind}
@@ -171,6 +247,7 @@ export function ExportFormatMenu(
         <ul
           role="menu"
           data-testid="export-format-menu-list"
+          onKeyDown={onMenuKeyDown}
           className="absolute left-0 top-full z-10 mt-1 w-48 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-1 shadow-md"
         >
           {FORMATS.map((f) => (
