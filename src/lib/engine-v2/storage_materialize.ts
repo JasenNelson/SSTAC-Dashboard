@@ -89,6 +89,12 @@ export async function materializeToLocal(
   await fs.promises.mkdir(path.dirname(localPath), { recursive: true });
 
   // Fetch the object and stream it to disk. Partial-file cleanup on any error.
+  //
+  // Window between createWriteStream and pipeline(readable, writeStream): if
+  // Readable.fromWeb throws AFTER the WriteStream is opened but BEFORE pipeline
+  // takes ownership, the WriteStream is left open. Calling writeStream.destroy()
+  // in the catch block closes the handle synchronously so that the subsequent
+  // unlink does not race an open fd (which causes EBUSY on Windows).
   let writeStream: fs.WriteStream | null = null;
   try {
     const response = await fetch(signedData.signedUrl);
@@ -106,6 +112,11 @@ export async function materializeToLocal(
     const readable = Readable.fromWeb(response.body as any);
     await pipeline(readable, writeStream);
   } catch (err) {
+    // Destroy the WriteStream before unlink -- prevents EBUSY on Windows when
+    // the stream was opened but pipeline had not yet taken ownership (Finding 6).
+    if (writeStream !== null && !writeStream.destroyed) {
+      writeStream.destroy();
+    }
     // Best-effort unlink of any partial file (Finding 30). Log unlink failures so
     // debris is visible in telemetry -- the original error still propagates (throw err).
     await fs.promises.unlink(localPath).catch((unlinkErr: unknown) => {

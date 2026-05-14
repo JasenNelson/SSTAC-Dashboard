@@ -160,6 +160,35 @@ describe("materializeToLocal (streaming, L1-6 BLOCKER #3 fix)", () => {
     expect(recorded).toEqual(["u/p/f/f.pdf"]);
   });
 
+  it("cleans up partial file and does not EBUSY when pipeline errors immediately (Finding 6)", async () => {
+    // Exercises the error path where the WriteStream is opened but the pipeline
+    // fails (stream errors on first chunk). The fix calls writeStream.destroy()
+    // before the unlink so the file handle is released (no EBUSY on Windows).
+    // We verify the observable post-condition: the partial file is gone and the
+    // function rejects with the original error (not an EBUSY unlink error).
+    const client = makeClient({ signedUrl: "https://example.com/early-error.pdf" });
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.error(new Error("pipeline_early_error"));
+        },
+      }),
+    });
+
+    const localPath = path.join(tmp, "early-error.pdf");
+    const err = await materializeToLocal(client, "u/p/f/early-error.pdf", localPath).catch(
+      (e: unknown) => e,
+    );
+
+    // Must reject (not resolve).
+    expect(err).toBeInstanceOf(Error);
+    // Partial file must not remain (unlink succeeded -- no EBUSY).
+    expect(fs.existsSync(localPath)).toBe(false);
+  });
+
   it("unlinks partial file when the pipeline fails mid-stream (Finding 30)", async () => {
     const client = makeClient({ signedUrl: "https://example.com/partial.pdf" });
 
