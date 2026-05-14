@@ -153,6 +153,7 @@ export function SubmissionSearchTab(
   // Search controls + results.
   const [query, setQuery] = useState<string>(persistedLastSearchQuery);
   const [results, setResults] = useState<SearchResultRow[]>([]);
+  const [uncitedOnly, setUncitedOnly] = useState<boolean>(false);
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
@@ -424,6 +425,24 @@ export function SubmissionSearchTab(
             />
           )}
         </div>
+        {indexingState.kind === "ready" && (
+          <label
+            className="mt-1.5 flex items-center gap-1.5 cursor-pointer select-none"
+            data-testid="submission-search-uncited-toggle-label"
+          >
+            <input
+              type="checkbox"
+              checked={uncitedOnly}
+              onChange={(e) => setUncitedOnly(e.target.checked)}
+              data-testid="submission-search-uncited-toggle"
+              className="w-3 h-3 rounded accent-indigo-600"
+              aria-label="Show uncited chunks only"
+            />
+            <span className="text-[10px] text-slate-600 dark:text-slate-400">
+              Uncited chunks only
+            </span>
+          </label>
+        )}
       </form>
 
       <div className="flex-1 overflow-y-auto">
@@ -518,6 +537,7 @@ export function SubmissionSearchTab(
         {indexingState.kind === "ready" && (
           <SubmissionSearchResults
             results={results}
+            uncitedOnly={uncitedOnly}
             isSearching={isSearching}
             hasSearched={hasSearched}
             searchError={searchError}
@@ -531,6 +551,7 @@ export function SubmissionSearchTab(
 
 interface SubmissionSearchResultsProps {
   results: SearchResultRow[];
+  uncitedOnly: boolean;
   isSearching: boolean;
   hasSearched: boolean;
   searchError: string | null;
@@ -540,8 +561,17 @@ interface SubmissionSearchResultsProps {
 function SubmissionSearchResults(
   props: SubmissionSearchResultsProps,
 ): ReactElement {
-  const { results, isSearching, hasSearched, searchError, onResultClick } =
+  const { results, uncitedOnly, isSearching, hasSearched, searchError, onResultClick } =
     props;
+
+  // Client-side filter: when uncitedOnly is true, show only chunks not cited
+  // by any policy verdict. cited_by_count === 0 means the AI did not reference
+  // this chunk in any policy verdict, so the owner can spot missed evidence.
+  const displayResults = useMemo(
+    () =>
+      uncitedOnly ? results.filter((r) => r.cited_by_count === 0) : results,
+    [results, uncitedOnly],
+  );
 
   if (searchError) {
     return (
@@ -583,12 +613,25 @@ function SubmissionSearchResults(
     );
   }
 
+  if (displayResults.length === 0) {
+    // All results exist but were hidden by the uncited-only filter.
+    return (
+      <div
+        data-testid="submission-search-uncited-empty"
+        className="p-4 text-sm text-slate-500 dark:text-slate-400"
+      >
+        All {results.length} result
+        {results.length === 1 ? "" : "s"} already cited by a policy verdict.
+      </div>
+    );
+  }
+
   return (
     <ul
       data-testid="submission-search-results"
       className="divide-y divide-slate-100 dark:divide-slate-800"
     >
-      {results.map((r) => (
+      {displayResults.map((r) => (
         <SubmissionSearchResultRow
           key={r.evidence_item_id}
           row={r}

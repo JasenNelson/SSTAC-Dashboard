@@ -463,4 +463,167 @@ describe("SubmissionSearchTab", () => {
     await new Promise((resolve) => setTimeout(resolve, 300));
     expect(searchCalls).toBe(1);
   });
+
+  // Lane 2e -- "show uncited chunks only" filter tests.
+
+  it("uncited-only toggle ON: only chunks with cited_by_count=0 are displayed", async () => {
+    fetchHandler = (url) => {
+      if (url.includes("/indexing-status")) {
+        return Promise.resolve(jsonResponse({ status: "complete" }));
+      }
+      if (url.includes("/submission/search")) {
+        return Promise.resolve(
+          jsonResponse({
+            query: "arsenic",
+            count: 2,
+            results: [
+              {
+                evidence_item_id: "slice_cited",
+                snippet: "<mark>arsenic</mark> in cited chunk",
+                section: "S1",
+                page: 1,
+                indigenous_flagged: false,
+                cited_by_count: 2,
+              },
+              {
+                evidence_item_id: "slice_uncited",
+                snippet: "<mark>arsenic</mark> in uncited chunk",
+                section: "S2",
+                page: 2,
+                indigenous_flagged: false,
+                cited_by_count: 0,
+              },
+            ],
+          }),
+        );
+      }
+      return Promise.resolve(jsonResponse({}));
+    };
+
+    renderWithProvider();
+    await waitFor(() =>
+      expect(screen.queryByTestId("submission-search-status-loading")).toBeFalsy(),
+    );
+    const input = screen.getByTestId("submission-search-input") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "arsenic" } });
+    await waitFor(
+      () => expect(screen.queryByTestId("submission-search-results")).toBeTruthy(),
+      { timeout: 2000 },
+    );
+    // Both results visible before toggle.
+    const rowsBefore = screen.getAllByTestId("submission-search-result");
+    expect(rowsBefore.length).toBe(2);
+
+    // Toggle on "uncited only".
+    const toggle = screen.getByTestId("submission-search-uncited-toggle") as HTMLInputElement;
+    fireEvent.click(toggle);
+    // Only the uncited chunk remains.
+    await waitFor(() => {
+      const rows = screen.getAllByTestId("submission-search-result");
+      expect(rows.length).toBe(1);
+      expect(rows[0].getAttribute("data-evidence-item-id")).toBe("slice_uncited");
+    });
+  });
+
+  it("uncited-only toggle OFF: all results are displayed", async () => {
+    fetchHandler = (url) => {
+      if (url.includes("/indexing-status")) {
+        return Promise.resolve(jsonResponse({ status: "complete" }));
+      }
+      if (url.includes("/submission/search")) {
+        return Promise.resolve(
+          jsonResponse({
+            query: "soil",
+            count: 2,
+            results: [
+              {
+                evidence_item_id: "slice_a",
+                snippet: "<mark>soil</mark> cited",
+                section: "A",
+                page: null,
+                indigenous_flagged: false,
+                cited_by_count: 1,
+              },
+              {
+                evidence_item_id: "slice_b",
+                snippet: "<mark>soil</mark> uncited",
+                section: "B",
+                page: null,
+                indigenous_flagged: false,
+                cited_by_count: 0,
+              },
+            ],
+          }),
+        );
+      }
+      return Promise.resolve(jsonResponse({}));
+    };
+
+    renderWithProvider();
+    await waitFor(() =>
+      expect(screen.queryByTestId("submission-search-status-loading")).toBeFalsy(),
+    );
+    const input = screen.getByTestId("submission-search-input") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "soil" } });
+    await waitFor(
+      () => expect(screen.queryByTestId("submission-search-results")).toBeTruthy(),
+      { timeout: 2000 },
+    );
+
+    // Toggle ON then toggle OFF.
+    const toggle = screen.getByTestId("submission-search-uncited-toggle") as HTMLInputElement;
+    fireEvent.click(toggle); // on
+    fireEvent.click(toggle); // off
+    // All 2 results visible.
+    await waitFor(() => {
+      const rows = screen.getAllByTestId("submission-search-result");
+      expect(rows.length).toBe(2);
+    });
+  });
+
+  it("uncited-only toggle ON with empty result set shows uncited-empty state", async () => {
+    fetchHandler = (url) => {
+      if (url.includes("/indexing-status")) {
+        return Promise.resolve(jsonResponse({ status: "complete" }));
+      }
+      if (url.includes("/submission/search")) {
+        return Promise.resolve(
+          jsonResponse({
+            query: "water",
+            count: 1,
+            results: [
+              {
+                evidence_item_id: "slice_all_cited",
+                snippet: "<mark>water</mark> all cited",
+                section: "C",
+                page: 5,
+                indigenous_flagged: false,
+                cited_by_count: 3,
+              },
+            ],
+          }),
+        );
+      }
+      return Promise.resolve(jsonResponse({}));
+    };
+
+    renderWithProvider();
+    await waitFor(() =>
+      expect(screen.queryByTestId("submission-search-status-loading")).toBeFalsy(),
+    );
+    const input = screen.getByTestId("submission-search-input") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "water" } });
+    await waitFor(
+      () => expect(screen.queryByTestId("submission-search-results")).toBeTruthy(),
+      { timeout: 2000 },
+    );
+
+    const toggle = screen.getByTestId("submission-search-uncited-toggle") as HTMLInputElement;
+    fireEvent.click(toggle);
+    // All chunks are cited -- should show the uncited-empty state.
+    await waitFor(() => {
+      expect(screen.queryByTestId("submission-search-uncited-empty")).toBeTruthy();
+      expect(screen.queryByTestId("submission-search-results")).toBeFalsy();
+    });
+  });
 });
