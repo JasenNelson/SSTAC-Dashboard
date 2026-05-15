@@ -129,3 +129,8 @@ cython_debug/
 # Claude Code local config
 .claude/settings.local.json
 .claude/pending-*.txt
+
+# Archive Policy Ignored Extensions
+.tmp_*
+*.xml
+*.docx
