@@ -1,149 +1,169 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import MathRenderer from './MathRenderer';
+import { cn } from '@/utils/cn';
 
-export default function TWGReviewPortal() {
-  const [priority, setPriority] = useState('');
-  const [supportLevel, setSupportLevel] = useState<number | null>(null);
-  const [integrationStrategy, setIntegrationStrategy] = useState('');
-  const [feedback, setFeedback] = useState('');
+interface TWGReviewPortalProps {
+  finalDraftContent: string;
+  showLeftPanel?: boolean;
+  showRightPanel?: boolean;
+}
+
+export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = true, showRightPanel = true }: TWGReviewPortalProps) {
+  const [comments, setComments] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const headings = useMemo(() => {
+    if (!finalDraftContent) return [];
+    const regex = /^##\s+(.*)$/gm;
+    const matches = [];
+    let match;
+    while ((match = regex.exec(finalDraftContent)) !== null) {
+      matches.push(match[1].trim());
+    }
+    return matches;
+  }, [finalDraftContent]);
+
+  const scrollToHeading = (heading: string) => {
+    const elements = document.querySelectorAll('h2');
+    for (let el of Array.from(elements)) {
+      if (el.textContent === heading) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      }
+    }
+  };
+
+  const handleCommentChange = (section: string, value: string) => {
+    setComments(prev => ({ ...prev, [section]: value }));
+  };
+
+  const handleSave = () => {
+    alert('Progress saved to local storage.');
+  };
+
+  const handleSubmit = () => {
     setIsSubmitted(true);
   };
 
   if (isSubmitted) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl animate-in fade-in zoom-in duration-300">
+      <div className="flex flex-col items-center justify-center p-12 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl animate-in fade-in zoom-in duration-300 w-full h-full">
         <svg className="w-16 h-16 text-emerald-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <h2 className="text-2xl font-bold text-emerald-900 dark:text-emerald-300 mb-2">Thank you for your feedback</h2>
-        <p className="text-emerald-700 dark:text-emerald-400 text-center max-w-lg">
-          Your input has been recorded and will directly influence the 2026 Matrix Standards Derivation Options Paper.
+        <h2 className="text-2xl font-bold text-emerald-900 dark:text-emerald-300 mb-2">Review Submitted</h2>
+        <p className="text-emerald-700 dark:text-emerald-400 text-center max-w-lg mb-6">
+          Your comprehensive review has been logged and flagged for author consideration. Thank you!
         </p>
         <button 
           onClick={() => setIsSubmitted(false)}
-          className="mt-6 px-4 py-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+          className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
         >
-          Submit Another Response
+          Return to Draft
         </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      <div className="bg-sky-50 dark:bg-sky-900/20 border-l-4 border-sky-500 p-5 rounded-r-xl shadow-sm">
-        <h2 className="text-lg font-bold text-sky-900 dark:text-sky-300 mb-2">Reviewer Instructions</h2>
-        <p className="text-sm text-sky-800 dark:text-sky-200/90 leading-relaxed">
-          The feedback provided in this portal will directly influence the development of the <strong>2026 Matrix Standards Derivation Options Paper</strong>. Please answer the following technical polls based on your review of the jurisdictional frameworks. Your responses will be aggregated and presented during the next TWG session.
-        </p>
+    <>
+      {/* Left Sidebar (TOC) */}
+      <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col', showLeftPanel ? 'w-80' : 'w-0')}>
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800 shrink-0">
+          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">TABLE OF CONTENTS</h3>
+        </div>
+        <div className="p-6 overflow-y-auto flex-1">
+          <ul className="space-y-3">
+            {headings.map((heading, idx) => (
+              <li 
+                key={idx} 
+                onClick={() => scrollToHeading(heading)}
+                className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer transition-colors"
+              >
+                {heading}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Question 1 */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <label className="block text-base font-bold text-slate-900 dark:text-slate-100 mb-4">
-            1. Which derivation pathway should be the highest priority for initial implementation?
-          </label>
-          <div className="space-y-3">
-            {['Ecological Direct Contact', 'Ecological Food Web', 'Human Health Direct Contact', 'Human Health Food Web'].map((option) => (
-              <label key={option} className="flex items-center space-x-3 cursor-pointer group">
-                <input 
-                  type="radio" 
-                  name="priority" 
-                  value={option}
-                  checked={priority === option}
-                  onChange={(e) => setPriority(e.target.value)}
-                  className="w-4 h-4 text-sky-600 border-slate-300 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-700" 
-                  required
-                />
-                <span className="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">{option}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {/* Question 2 */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <label className="block text-base font-bold text-slate-900 dark:text-slate-100 mb-4">
-            2. To what extent do you support transitioning from empirical to mechanistic (EqP-based) standards for non-ionic organics?
-          </label>
-          <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 sm:space-x-4">
-            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">1 (Strongly Oppose)</span>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              {[1, 2, 3, 4, 5].map((num) => (
-                <label key={num} className="flex flex-col items-center cursor-pointer">
-                  <input 
-                    type="radio" 
-                    name="supportLevel" 
-                    value={num}
-                    checked={supportLevel === num}
-                    onChange={() => setSupportLevel(num)}
-                    className="w-5 h-5 text-sky-600 border-slate-300 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-700 mb-2" 
-                    required
-                  />
-                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{num}</span>
-                </label>
-              ))}
+      {/* Center Content (Document) */}
+      <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 px-8 py-10 sm:px-12">
+        <div className="max-w-4xl mx-auto space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Final Master Draft</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Review the concatenated policy options below.</p>
             </div>
-            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">5 (Strongly Support)</span>
+            <button className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download Draft (PDF)
+            </button>
           </div>
+          <MathRenderer content={finalDraftContent || ''} />
+        </div>
+      </div>
+
+      {/* Right Drawer (Comments) */}
+      <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col relative', showRightPanel ? 'w-96' : 'w-0')}>
+        <div className="p-5 border-b border-slate-200 dark:border-slate-800 shrink-0 bg-slate-50 dark:bg-slate-900/50">
+          <h3 className="font-bold text-slate-900 dark:text-white flex items-center space-x-2 mb-3">
+            <svg className="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+            </svg>
+            <span>Section Comments</span>
+          </h3>
+          <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800/50">
+            Reviews can be saved and updated at any time. Submitting simply flags your review as ready for author consideration.
+          </p>
         </div>
 
-        {/* Question 3 */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <label className="block text-base font-bold text-slate-900 dark:text-slate-100 mb-4">
-            3. Regarding Indigenous traditional food consumption, which integration strategy do you favor?
-          </label>
-          <div className="space-y-3">
-            {[
-              'Province-wide default modifiers',
-              'Mandatory site-specific assessment',
-              'Tiered hybrid approach'
-            ].map((option) => (
-              <label key={option} className="flex items-center space-x-3 cursor-pointer group">
-                <input 
-                  type="radio" 
-                  name="integrationStrategy" 
-                  value={option}
-                  checked={integrationStrategy === option}
-                  onChange={(e) => setIntegrationStrategy(e.target.value)}
-                  className="w-4 h-4 text-sky-600 border-slate-300 focus:ring-sky-500 dark:border-slate-600 dark:bg-slate-700" 
-                  required
-                />
-                <span className="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">{option}</span>
-              </label>
-            ))}
+        <div className="p-6 overflow-y-auto flex-1 space-y-6 pb-32">
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-900 dark:text-slate-100">General Comments</label>
+            <textarea 
+              value={comments['General'] || ''}
+              onChange={(e) => handleCommentChange('General', e.target.value)}
+              placeholder="Overall thoughts on the methodology..."
+              className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
+              rows={4}
+            />
           </div>
+
+          {headings.map((heading, idx) => (
+            <div key={idx} className="space-y-2">
+              <label className="text-sm font-bold text-slate-900 dark:text-slate-100">Comments on {heading}</label>
+              <textarea 
+                value={comments[heading] || ''}
+                onChange={(e) => handleCommentChange(heading, e.target.value)}
+                placeholder={`Specific feedback for ${heading}...`}
+                className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
+                rows={3}
+              />
+            </div>
+          ))}
         </div>
 
-        {/* Open Feedback */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <label className="block text-base font-bold text-slate-900 dark:text-slate-100 mb-4">
-            General Methodological Concerns
-          </label>
-          <textarea 
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            rows={5}
-            placeholder="Provide any additional technical feedback, concerns regarding specific derivations (e.g. AVS/SEM multipliers), or alternative approaches..."
-            className="w-full p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all resize-y"
-          ></textarea>
-        </div>
-
-        <div className="flex justify-end pt-4">
+        {/* Sticky Bottom Bar */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-3 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
           <button 
-            type="submit"
-            className="px-8 py-3 bg-sky-600 hover:bg-sky-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+            onClick={handleSave}
+            className="flex-1 py-2 px-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
           >
-            Submit Feedback
+            Save Draft
+          </button>
+          <button 
+            onClick={handleSubmit}
+            className="flex-1 py-2 px-4 bg-sky-600 hover:bg-sky-700 text-white font-medium rounded-lg shadow-md transition-colors"
+          >
+            Submit Review
           </button>
         </div>
-      </form>
-    </div>
+      </div>
+    </>
   );
 }

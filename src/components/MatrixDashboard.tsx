@@ -13,18 +13,20 @@ interface MatrixDashboardProps {
   bsafCaseStudyContent: string;
   humanHealthContent: string;
   guideContent: string;
+  finalDraftContent: string;
 }
 
 const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'Interactive Map', 'TWG Review', 'Calculator'];
 const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
 
-export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent }: MatrixDashboardProps) {
+export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent, finalDraftContent }: MatrixDashboardProps) {
   const [activeTopTab, setActiveTopTab] = useState('The Guide');
   const [activeSideTab, setActiveSideTab] = useState('Ecological: EqP & AVS');
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(false);
 
   const isToolMode = activeTopTab === 'Calculator' || activeTopTab === 'Jurisdictional Frameworks';
+  const isReviewMode = activeTopTab === 'TWG Review';
 
   const renderSidebar = () => {
     switch (activeTopTab) {
@@ -91,9 +93,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         );
       case 'TWG Review':
         return (
-          <div className="w-full">
-            <TWGReviewPortal />
-          </div>
+          <TWGReviewPortal finalDraftContent={finalDraftContent} showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} />
         );
       case 'Calculator':
         return (
@@ -137,7 +137,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           </nav>
         </div>
         <div className="flex items-center gap-1 ml-auto pl-4 border-l border-slate-200 dark:border-slate-700">
-           {isToolMode && (
+           {(isToolMode || isReviewMode) && (
              <>
                <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('p-2 rounded-lg transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'}>
                  {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
@@ -204,6 +204,10 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               </div>
             </div>
           </>
+        ) : isReviewMode ? (
+          <div className="flex-1 flex overflow-hidden">
+            {renderContent()}
+          </div>
         ) : (
           <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900">
             <div className="max-w-4xl mx-auto px-8 py-12">

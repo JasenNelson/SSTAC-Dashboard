@@ -26,10 +26,28 @@ export default async function MatrixOptionsPage() {
     return `Error loading ${filename}.`;
   };
 
+  const readFinalPaper = () => {
+    try {
+      const filePath = path.join('C:\\Projects\\SSTAC-Dashboard\\matrix_research\\options_paper\\BC_Matrix_Options_Paper_FINAL_DRAFT.md');
+      if (fs.existsSync(filePath)) {
+        return fs.readFileSync(filePath, 'utf8');
+      } else {
+        const fallbackPath = path.join(process.cwd(), 'matrix_research', 'options_paper', 'BC_Matrix_Options_Paper_FINAL_DRAFT.md');
+        if (fs.existsSync(fallbackPath)) {
+          return fs.readFileSync(fallbackPath, 'utf8');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load final paper', error);
+    }
+    return 'Error loading final paper.';
+  };
+
   const eqpCaseStudyContent = readDraft('CaseStudy_EqP_AVS.md');
   const bsafCaseStudyContent = readDraft('CaseStudy_BSAF.md');
   const humanHealthContent = readDraft('Framework_HumanHealth.md');
   const guideContent = readDraft('The_Guide.md');
+  const finalDraftContent = readFinalPaper();
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] w-full overflow-hidden">
@@ -38,6 +56,7 @@ export default async function MatrixOptionsPage() {
         bsafCaseStudyContent={bsafCaseStudyContent}
         humanHealthContent={humanHealthContent}
         guideContent={guideContent}
+        finalDraftContent={finalDraftContent}
       />
     </div>
   );
