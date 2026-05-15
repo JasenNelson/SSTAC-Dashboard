@@ -28,28 +28,45 @@ export default function DerivationSimulator() {
 
   useEffect(() => {
     let rawStandard = 0;
-    
+
     // Base standard modifier based on substance
-    const substanceMod = substance === 'Benzo[a]pyrene' ? 0.05 : 
+    const substanceMod = substance === 'Benzo[a]pyrene' ? 0.05 :
                          substance === 'Total PCBs' ? 0.1 : 15.0; // Copper
 
     if (activePathway === 'EqP') {
       // Mock EqP math: proportional to TOC
       rawStandard = substanceMod * toc * 10;
     } else if (activePathway === 'BSAF') {
-      // Mock BSAF math: inversely proportional to lipid fraction and bsaf modifier
-      rawStandard = (substanceMod * 100) / (lipidFraction * bsafModifier);
+      // Mock BSAF math: inversely proportional to lipid fraction and bsaf modifier.
+      // Denominator guard - slider mins keep this >0, but defend against any
+      // future input source that could feed 0/NaN.
+      const denom = lipidFraction * bsafModifier;
+      rawStandard = denom > 0 ? (substanceMod * 100) / denom : 0;
     } else if (activePathway === 'HumanHealth') {
       // Mock HH math
-      rawStandard = (targetRisk * 1e6 * 100 * substanceMod) / consumptionRate;
+      rawStandard = consumptionRate > 0
+        ? (targetRisk * 1e6 * 100 * substanceMod) / consumptionRate
+        : 0;
     }
 
-    setCalculatedStandard(rawStandard.toFixed(4));
+    setCalculatedStandard(Number.isFinite(rawStandard) ? rawStandard.toFixed(4) : '0.0000');
   }, [activePathway, substance, toc, lipidFraction, bsafModifier, consumptionRate, targetRisk]);
 
-  const logRisk = Math.log10(targetRisk);
+  const logRisk = targetRisk > 0 ? Math.log10(targetRisk) : -6;
   const handleRiskChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTargetRisk(Math.pow(10, parseFloat(e.target.value)));
+    const parsed = parseFloat(e.target.value);
+    if (!Number.isFinite(parsed)) return;
+    const next = Math.pow(10, parsed);
+    if (Number.isFinite(next) && next > 0) setTargetRisk(next);
+  };
+
+  const handleSliderNumber = (
+    setter: (n: number) => void,
+    fallback: number,
+    parser: (v: string) => number = parseFloat,
+  ) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const parsed = parser(e.target.value);
+    setter(Number.isFinite(parsed) ? parsed : fallback);
   };
 
   return (
@@ -123,9 +140,9 @@ export default function DerivationSimulator() {
                 <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Total Organic Carbon (TOC)</label>
                 <span className="text-sm font-mono text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded shadow-sm">{toc.toFixed(1)} %</span>
               </div>
-              <input 
-                type="range" min="0.1" max="10" step="0.1" value={toc} 
-                onChange={(e) => setToc(parseFloat(e.target.value))}
+              <input
+                type="range" min="0.1" max="10" step="0.1" value={toc}
+                onChange={handleSliderNumber(setToc, 1.0)}
                 className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-600"
               />
               <div className="flex justify-between text-xs text-slate-400 mt-1"><span>0.1%</span><span>10%</span></div>
@@ -139,9 +156,9 @@ export default function DerivationSimulator() {
                   <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Lipid Fraction</label>
                   <span className="text-sm font-mono text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded shadow-sm">{lipidFraction.toFixed(1)} %</span>
                 </div>
-                <input 
-                  type="range" min="1" max="15" step="0.1" value={lipidFraction} 
-                  onChange={(e) => setLipidFraction(parseFloat(e.target.value))}
+                <input
+                  type="range" min="1" max="15" step="0.1" value={lipidFraction}
+                  onChange={handleSliderNumber(setLipidFraction, 5.0)}
                   className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-600"
                 />
                 <div className="flex justify-between text-xs text-slate-400 mt-1"><span>1%</span><span>15%</span></div>
@@ -151,9 +168,9 @@ export default function DerivationSimulator() {
                   <label className="text-sm font-bold text-slate-700 dark:text-slate-300">BSAF Modifier</label>
                   <span className="text-sm font-mono text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded shadow-sm">{bsafModifier.toFixed(2)}</span>
                 </div>
-                <input 
-                  type="range" min="0.1" max="5" step="0.1" value={bsafModifier} 
-                  onChange={(e) => setBsafModifier(parseFloat(e.target.value))}
+                <input
+                  type="range" min="0.1" max="5" step="0.1" value={bsafModifier}
+                  onChange={handleSliderNumber(setBsafModifier, 1.5)}
                   className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-600"
                 />
                 <div className="flex justify-between text-xs text-slate-400 mt-1"><span>0.1</span><span>5.0</span></div>
@@ -180,9 +197,9 @@ export default function DerivationSimulator() {
                   <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Fish Consumption Rate</label>
                   <span className="text-sm font-mono text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded shadow-sm">{consumptionRate} g/day</span>
                 </div>
-                <input 
-                  type="range" min="10" max="200" step="1" value={consumptionRate} 
-                  onChange={(e) => setConsumptionRate(parseInt(e.target.value))}
+                <input
+                  type="range" min="10" max="200" step="1" value={consumptionRate}
+                  onChange={handleSliderNumber(setConsumptionRate, 32, (v) => parseInt(v, 10))}
                   className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-600"
                 />
                 <div className="flex justify-between text-xs text-slate-400 mt-1"><span>10 g/d</span><span>200 g/d</span></div>

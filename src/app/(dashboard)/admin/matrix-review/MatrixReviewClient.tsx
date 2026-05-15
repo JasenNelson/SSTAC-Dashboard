@@ -8,6 +8,25 @@ import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type JsonRecord = Record<string, any>
 
+// Reserved JS prototype-pollution keys; filtered out before mapping JSONB
+// payloads into JSX so a tampered row can't render under these section names.
+const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
+// Normalize an arbitrary JSONB value into a string for safe rendering. React
+// auto-escapes the resulting string, so this guards against [object Object]
+// rendering when comments_data holds a non-string value (number, object, array,
+// boolean). Null/undefined return empty so the caller can drop the row.
+function renderJsonValue(v: unknown): string {
+  if (v == null) return ''
+  if (typeof v === 'string') return v
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v)
+  try {
+    return JSON.stringify(v)
+  } catch {
+    return ''
+  }
+}
+
 export interface MatrixReview {
   id: string
   user_id: string
@@ -222,15 +241,18 @@ export default function MatrixReviewClient({ user: _user, reviews }: MatrixRevie
                       <p className="text-sm text-slate-500 italic">No comments provided yet.</p>
                     ) : (
                       <div className="space-y-4">
-                        {Object.entries(review.comments_data).map(([section, comment]) => {
-                          if (!comment) return null;
-                          return (
-                            <div key={section} className="bg-white dark:bg-slate-800 rounded p-3">
-                              <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">{section}</h5>
-                              <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{String(comment)}</p>
-                            </div>
-                          )
-                        })}
+                        {Object.entries(review.comments_data)
+                          .filter(([section]) => !RESERVED_KEYS.has(section))
+                          .map(([section, comment]) => {
+                            const rendered = renderJsonValue(comment)
+                            if (!rendered) return null
+                            return (
+                              <div key={section} className="bg-white dark:bg-slate-800 rounded p-3">
+                                <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">{section}</h5>
+                                <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{rendered}</p>
+                              </div>
+                            )
+                          })}
                       </div>
                     )}
                   </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import MathRenderer from './MathRenderer';
 import { cn } from '@/utils/cn';
 import { createClient } from '@/lib/supabase/client';
@@ -11,64 +11,186 @@ interface TWGReviewPortalProps {
   showRightPanel?: boolean;
 }
 
+// v2 bumped storage key because internal state keys changed from heading-text
+// to idx-stable form (v1 drafts are intentionally discarded on first mount).
+const DRAFT_STORAGE_KEY = 'twg-matrix-review-draft-v2';
+const MAX_CHARS = 5000;
+const GENERAL_KEY = 'general';
+
+// Reserved JS prototype-pollution keys. Never accepted as user-controlled map
+// keys, even though all maps are created with Object.create(null) below.
+const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+type HeadingEntry = {
+  idx: number;
+  text: string;
+  storageKey: string;   // stable internal key, safe to use as object index
+  displayLabel: string; // user-visible label, disambiguated on duplicates
+};
+
+// Build a plain object whose prototype chain is null, so user-controlled keys
+// cannot mutate Object.prototype and lookups never walk up to it.
+function makeBareRecord<T>(): Record<string, T> {
+  return Object.create(null) as Record<string, T>;
+}
+
 export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = true, showRightPanel = true }: TWGReviewPortalProps) {
-  const [comments, setComments] = useState<Record<string, string>>({});
+  const [comments, setComments] = useState<Record<string, string>>(() => makeBareRecord<string>());
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
-  const MAX_CHARS = 5000;
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
+      const sanitized = makeBareRecord<string>();
+      for (const [k, v] of Object.entries(parsed)) {
+        if (RESERVED_KEYS.has(k)) continue;
+        if (typeof v !== 'string') continue;
+        sanitized[k] = v.slice(0, MAX_CHARS);
+      }
+      setComments(sanitized);
+    } catch {
+      /* corrupt draft - ignore */
+    }
+  }, []);
 
-  const headings = useMemo(() => {
+  const headings = useMemo<HeadingEntry[]>(() => {
     if (!finalDraftContent) return [];
     const regex = /^##\s+(.*)$/gm;
-    const matches = [];
+    const texts: string[] = [];
     let match;
     while ((match = regex.exec(finalDraftContent)) !== null) {
-      matches.push(match[1].trim());
+      texts.push(match[1].trim());
     }
-    return matches;
+    // Disambiguate duplicate heading text. Use Object.create(null) so a heading
+    // literally named "__proto__" cannot poison the counts map.
+    const counts = makeBareRecord<number>();
+    for (const t of texts) counts[t] = (counts[t] ?? 0) + 1;
+    const seen = makeBareRecord<number>();
+    return texts.map((text, idx) => {
+      const n = (seen[text] = (seen[text] ?? 0) + 1);
+      const displayLabel = counts[text] > 1 ? `${text} (#${n})` : text;
+      return { idx, text, storageKey: `h::${idx}`, displayLabel };
+    });
   }, [finalDraftContent]);
 
-  const scrollToHeading = (heading: string) => {
-    const elements = document.querySelectorAll('h2');
-    for (let el of Array.from(elements)) {
-      if (el.textContent === heading) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        break;
-      }
-    }
+  const scrollToHeading = (idx: number) => {
+    // Scope to the rendered draft container so unrelated H2s in the page
+    // chrome (e.g., "Final Master Draft") don't shift indices.
+    const root = contentRef.current;
+    if (!root) return;
+    const target = root.querySelectorAll('h2')[idx];
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const handleCommentChange = (section: string, value: string) => {
-    setComments(prev => ({ ...prev, [section]: value }));
+  const handleCommentChange = (key: string, value: string) => {
+    if (RESERVED_KEYS.has(key)) return;
+    const clipped = value.length > MAX_CHARS ? value.slice(0, MAX_CHARS) : value;
+    setComments(prev => {
+      const next = makeBareRecord<string>();
+      for (const [k, v] of Object.entries(prev)) {
+        if (!RESERVED_KEYS.has(k)) next[k] = v;
+      }
+      next[key] = clipped;
+      return next;
+    });
   };
 
   const handleSave = () => {
-    alert('Progress saved to local storage.');
+    if (typeof window === 'undefined') return;
+    try {
+      // JSON.stringify on a null-prototype object still serializes own keys.
+      window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(comments));
+      alert('Progress saved to local storage.');
+    } catch {
+      alert('Unable to save draft locally (storage quota or access denied).');
+    }
+  };
+
+  // Map internal storage keys to user-readable labels for the DB payload.
+  // The admin view renders payload keys as section headers, so we keep them
+  // human-readable and disambiguate duplicate H2s with "(#n)" suffixes.
+  // Returns a normal {}-prototype object (not null-prototype) so the JSONB
+  // serializer and downstream consumers see a vanilla shape.
+  const buildCommentsPayload = (): Record<string, string> => {
+    const out: Record<string, string> = {};
+    const general = comments[GENERAL_KEY];
+    if (typeof general === 'string' && general.length > 0) {
+      out['General'] = general;
+    }
+    for (const h of headings) {
+      const v = comments[h.storageKey];
+      if (typeof v === 'string' && v.length > 0 && !RESERVED_KEYS.has(h.displayLabel)) {
+        out[h.displayLabel] = v;
+      }
+    }
+    return out;
   };
 
   const handleSubmit = async () => {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const supabase = createClient();
 
-    if (!session) {
-      alert('You must be logged in to submit a review.');
-      return;
+      // Verified user check: getUser() round-trips to the auth server,
+      // unlike getSession() which trusts local cookie state.
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        alert('You must be logged in to submit a review.');
+        return;
+      }
+
+      // matrix_reviews has no UNIQUE(user_id) constraint, so onConflict can't be
+      // used. The RLS INSERT WITH CHECK (auth.uid() = user_id) and UPDATE USING
+      // (auth.uid() = user_id) policies are the authoritative gates. Look up the
+      // user's existing row and UPDATE in place, otherwise INSERT a new one, so
+      // re-submits don't accumulate duplicate rows. The isSubmitting guard above
+      // prevents the same client from racing itself between SELECT and INSERT.
+      const { data: existing, error: lookupError } = await supabase
+        .from('matrix_reviews')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (lookupError) {
+        console.error('Error looking up existing review:', lookupError);
+        alert('There was an error submitting your review.');
+        return;
+      }
+
+      const payload = buildCommentsPayload();
+      const writeResult = existing
+        ? await supabase
+            .from('matrix_reviews')
+            .update({ status: 'SUBMITTED', poll_data: {}, comments_data: payload })
+            .eq('id', existing.id)
+        : await supabase
+            .from('matrix_reviews')
+            .insert({ user_id: user.id, status: 'SUBMITTED', poll_data: {}, comments_data: payload });
+
+      if (writeResult.error) {
+        console.error('Error submitting review:', writeResult.error);
+        alert('There was an error submitting your review.');
+        return;
+      }
+
+      try {
+        window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+      } catch {
+        /* non-fatal */
+      }
+      setIsSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    const { error } = await supabase.from('matrix_reviews').upsert({
-      user_id: session.user.id,
-      status: 'SUBMITTED',
-      poll_data: {},
-      comments_data: comments
-    });
-
-    if (error) {
-      console.error('Error submitting review:', error);
-      alert('There was an error submitting your review.');
-      return;
-    }
-
-    setIsSubmitted(true);
   };
 
   if (isSubmitted) {
@@ -100,13 +222,13 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         </div>
         <div className="p-6 overflow-y-auto flex-1">
           <ul className="space-y-3">
-            {headings.map((heading, idx) => (
-              <li 
-                key={idx} 
-                onClick={() => scrollToHeading(heading)}
+            {headings.map((h) => (
+              <li
+                key={h.storageKey}
+                onClick={() => scrollToHeading(h.idx)}
                 className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer transition-colors"
               >
-                {heading}
+                {h.displayLabel}
               </li>
             ))}
           </ul>
@@ -128,7 +250,9 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
               Download Draft (PDF)
             </button>
           </div>
-          <MathRenderer content={finalDraftContent || ''} />
+          <div ref={contentRef}>
+            <MathRenderer content={finalDraftContent || ''} />
+          </div>
         </div>
       </div>
 
@@ -149,32 +273,32 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         <div className="p-6 overflow-y-auto flex-1 space-y-6 pb-32">
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900 dark:text-slate-100">General Comments</label>
-            <textarea 
-              value={comments['General'] || ''}
-              onChange={(e) => handleCommentChange('General', e.target.value)}
+            <textarea
+              value={comments[GENERAL_KEY] || ''}
+              onChange={(e) => handleCommentChange(GENERAL_KEY, e.target.value)}
               maxLength={MAX_CHARS}
               placeholder="Overall thoughts on the methodology..."
               className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
               rows={4}
             />
-            <div className={cn("text-right text-xs mt-1 transition-colors", (comments['General']?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>
-              {comments['General']?.length || 0} / {MAX_CHARS}
+            <div className={cn("text-right text-xs mt-1 transition-colors", (comments[GENERAL_KEY]?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>
+              {comments[GENERAL_KEY]?.length || 0} / {MAX_CHARS}
             </div>
           </div>
 
-          {headings.map((heading, idx) => (
-            <div key={idx} className="space-y-2">
-              <label className="text-sm font-bold text-slate-900 dark:text-slate-100">Comments on {heading}</label>
-              <textarea 
-                value={comments[heading] || ''}
-                onChange={(e) => handleCommentChange(heading, e.target.value)}
+          {headings.map((h) => (
+            <div key={h.storageKey} className="space-y-2">
+              <label className="text-sm font-bold text-slate-900 dark:text-slate-100">Comments on {h.displayLabel}</label>
+              <textarea
+                value={comments[h.storageKey] || ''}
+                onChange={(e) => handleCommentChange(h.storageKey, e.target.value)}
                 maxLength={MAX_CHARS}
-                placeholder={`Specific feedback for ${heading}...`}
+                placeholder={`Specific feedback for ${h.displayLabel}...`}
                 className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
                 rows={3}
               />
-              <div className={cn("text-right text-xs mt-1 transition-colors", (comments[heading]?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>
-                {comments[heading]?.length || 0} / {MAX_CHARS}
+              <div className={cn("text-right text-xs mt-1 transition-colors", (comments[h.storageKey]?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>
+                {comments[h.storageKey]?.length || 0} / {MAX_CHARS}
               </div>
             </div>
           ))}
@@ -188,11 +312,12 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
           >
             Save Draft
           </button>
-          <button 
+          <button
             onClick={handleSubmit}
-            className="flex-1 py-2 px-4 bg-sky-600 hover:bg-sky-700 text-white font-medium rounded-lg shadow-md transition-colors"
+            disabled={isSubmitting}
+            className="flex-1 py-2 px-4 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-md transition-colors"
           >
-            Submit Review
+            {isSubmitting ? 'Submitting...' : 'Submit Review'}
           </button>
         </div>
       </div>
