@@ -10,6 +10,7 @@ const adminNavItems = [
   { href: '/admin/announcements', label: 'Announcements' },
   { href: '/admin/milestones', label: 'Milestones' },
   { href: '/admin/twg-synthesis', label: 'TWG Review' },
+  { href: '/admin/matrix-review', label: 'Matrix Review' },
 ]
 
 export default function AdminFunctionsNav() {

@@ -13,7 +13,8 @@ import {
   Vote,
   FileSearch,
   ClipboardCheck,
-  Cpu
+  Cpu,
+  Grid3x3
 } from 'lucide-react';
 
 
@@ -231,6 +232,21 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
                   Analyze and synthesize TWG review feedback
+                </p>
+              </div>
+            </Link>
+
+            {/* Matrix Options Review */}
+            <Link href="/admin/matrix-review" className="group">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-emerald-300">
+                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800 transition-colors">
+                  <Grid3x3 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors mb-2">
+                  Matrix Options Review
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  Analyze and synthesize Matrix Options phase feedback
                 </p>
               </div>
             </Link>
