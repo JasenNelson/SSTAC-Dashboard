@@ -5,6 +5,10 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   css: {
+    // @ts-expect-error -- vitest documents `postcss: false` as the way to
+    // disable postcss, but vite's shared `css` types don't expose `false`
+    // as a valid value. Runtime is correct; this suppresses the next-build
+    // type-check failure. See https://vitest.dev/config/#css-postcss
     postcss: false,
   },
   test: {
