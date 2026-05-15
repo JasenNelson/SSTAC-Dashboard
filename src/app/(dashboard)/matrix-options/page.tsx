@@ -32,16 +32,7 @@ export default async function MatrixOptionsPage() {
   const guideContent = readDraft('The_Guide.md');
 
   return (
-    <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-          Matrix Standards Derivation Options
-        </h1>
-        <p className="mt-2 text-md text-slate-600 dark:text-slate-400 max-w-4xl leading-relaxed">
-          Collaborative Policy Review Dashboard. Select a tab below to explore the pathways, methodologies, and proposed framework options.
-        </p>
-      </div>
-      
+    <div className="flex flex-col h-[calc(100vh-4rem)] w-full overflow-hidden">
       <MatrixDashboard 
         eqpCaseStudyContent={eqpCaseStudyContent} 
         bsafCaseStudyContent={bsafCaseStudyContent}

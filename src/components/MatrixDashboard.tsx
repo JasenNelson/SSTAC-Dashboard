@@ -114,7 +114,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   };
 
   return (
-    <div className="w-full h-[calc(100vh-4rem)] flex flex-col bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-lg relative">
+    <div className="flex flex-col flex-1 w-full h-full bg-slate-100 dark:bg-slate-900 relative">
       {/* Sub-header / Toolbar */}
       <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm overflow-x-auto">
         <div className="flex items-center gap-4">
