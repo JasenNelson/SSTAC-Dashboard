@@ -26,11 +26,14 @@ export default function Home() {
             <p className="text-xl text-sky-200 max-w-4xl mx-auto leading-relaxed mb-8">
               Developing a modern, robust scientific framework for updating BC&apos;s Contaminated Sites Regulation sediment standards
             </p>
-            <div className="inline-flex items-center px-6 py-3 bg-slate-200/90 dark:bg-slate-300/90 backdrop-blur-sm rounded-full border border-white/30 dark:border-slate-600/30 shadow-lg">
-              <span className="text-slate-900 text-sm font-semibold phase-1-text">
-                🎯 Phase 1: Scientific Framework Development
+            <div className="inline-flex items-center px-6 py-3 bg-sky-600 dark:bg-sky-500 rounded-full border border-sky-400 dark:border-sky-300 shadow-lg shadow-sky-900/20 mb-4">
+              <span className="text-white text-sm font-bold tracking-wide uppercase">
+                🚀 Current Focus: Phase 2 - Foundational Research (2026)
               </span>
             </div>
+            <p className="text-sky-100 max-w-2xl mx-auto">
+              Focused on the Matrix Sediment Standards Derivation Options and BN-RRM implementation.
+            </p>
           </div>
         </div>
       </div>

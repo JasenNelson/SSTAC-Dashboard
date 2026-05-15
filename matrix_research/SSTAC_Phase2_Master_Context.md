@@ -35,6 +35,7 @@ Completed Deep Research:
 - 2026-05-15: Implemented contextual layout routing in `MatrixDashboard.tsx` to switch between a clean `Reading Mode` (side panels completely hidden) and an interactive `Tool Mode` (3-pane layout) based on the active tab. Passed strict Vercel pre-flight audit.
 - 2026-05-15: Drafted Section 1.0 (Executive Summary) and successfully compiled all sections into the unified `BC_Matrix_Options_Paper_FINAL_DRAFT.md` deliverable.
 - 2026-05-15: Transformed `TWGReviewPortal.tsx` into an interactive 3-pane document reviewer that accepts the final draft content, dynamically extracts headers for a clickable TOC sidebar, and provides section-specific comment fields on the right pane.
+- 2026-05-15: Added visible 5000-character limits with dynamic counters to all text areas in the `TWGReviewPortal` to improve UX and prevent overly long submissions.
 
 Pending Tasks: Matrix Options UI integration based on the newly acquired Deep Research documents.
 
