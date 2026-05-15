@@ -22,6 +22,14 @@ Completed Deep Research:
 - 2026-05-14: Built and wired the ConceptualMatrix.tsx component, providing a visual 2x2 grid representing the four derivation pathways for the "Conceptual Model" tab.
 - 2026-05-14: Developed and integrated the TWGReviewPortal.tsx component, completing the Dashboard UI tabs by adding a functional feedback portal for structured and open-ended stakeholder polling.
 - 2026-05-14: Locked in straggling dependencies and executed a clean merge of 'feature/matrix-options-dashboard' into 'main'. Removed stale 'feat/archive-policy' branch.
+- 2026-05-14: Wired the /matrix-options route into the global application navigation menu under the Tools category. Passed final linting and type-check audit.
+- 2026-05-14: Transitioned focus to formal deliverables by creating the `options_paper` directory and drafting the comprehensive `00_Master_Outline.md` for the Matrix Sediment Standards Derivation Options Paper.
+- 2026-05-14: Built and wired the `DerivationSimulator.tsx` component, adding a new interactive "Calculator" tab as a placeholder for the What-If Simulator with state-driven sliders. Passed strict Vercel pre-flight audit.
+- 2026-05-14: Drafted Section 2.0 (Context & Problem Statement) of the Options Paper, establishing the scientific and regulatory rationale for modernizing the standards via a mechanistic matrix framework.
+- 2026-05-15: Upgraded the DerivationSimulator UI architecture to implement "Progressive Disclosure", featuring a left sidebar for global controls and dynamic pathway states (EqP, BSAF, Human Health) with specific math parameters. Passed strict Vercel pre-flight audit.
+- 2026-05-15: Drafted Section 3.0 (Jurisdictional Scan & Scientific Frameworks) of the Options Paper, synthesizing the policy narratives for the four primary derivation pathways and referencing the technical appendices.
+- 2026-05-15: Drafted Section 4.0 (Evaluation Criteria) and Section 5.0 (Proposed Matrix Implementation Options) of the Options Paper, establishing the rubric for assessment and presenting three regulatory paths, ultimately recommending a Tiered Hybrid Framework.
+- 2026-05-15: Drafted Section 6.0 (Indigenous Knowledge Integration) and Section 7.0 (Recommendations & Next Steps) of the Options Paper, detailing the Two-Eyed Seeing approach, TWG review process, and the Phase 3 Roadmap.
 
 Pending Tasks: Matrix Options UI integration based on the newly acquired Deep Research documents.
 
