@@ -36,7 +36,13 @@ export default function ProjectTimeline() {
       }
       
       const data = await response.json();
-      setMilestones(data);
+      
+      // Sort milestones so recent/future items are at the top and older ones at the bottom
+      const sortedData = data.sort((a: Milestone, b: Milestone) => 
+        new Date(b.target_date).getTime() - new Date(a.target_date).getTime()
+      );
+      
+      setMilestones(sortedData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch milestones');
     } finally {

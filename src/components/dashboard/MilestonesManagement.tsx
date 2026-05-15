@@ -46,7 +46,7 @@ export default function MilestonesManagement() {
       const { data, error } = await supabase
         .from('milestones')
         .select('*')
-        .order('target_date', { ascending: true });
+        .order('target_date', { ascending: false });
       
       if (error) {
         console.error('Error fetching milestones:', error);
