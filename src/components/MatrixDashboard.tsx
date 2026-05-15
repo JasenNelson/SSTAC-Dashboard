@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import MathRenderer from './MathRenderer';
 import ConceptualMatrix from './ConceptualMatrix';
 import TWGReviewPortal from './TWGReviewPortal';
+import DerivationSimulator from './DerivationSimulator';
 
 interface MatrixDashboardProps {
   eqpCaseStudyContent: string;
@@ -12,7 +13,7 @@ interface MatrixDashboardProps {
   guideContent: string;
 }
 
-const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'Interactive Map', 'TWG Review'];
+const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'Interactive Map', 'TWG Review', 'Calculator'];
 const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
 
 export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent }: MatrixDashboardProps) {
@@ -87,6 +88,12 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         return (
           <div className="w-full">
             <TWGReviewPortal />
+          </div>
+        );
+      case 'Calculator':
+        return (
+          <div className="w-full">
+            <DerivationSimulator />
           </div>
         );
       default:
