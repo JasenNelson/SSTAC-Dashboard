@@ -36,6 +36,8 @@ Completed Deep Research:
 - 2026-05-15: Drafted Section 1.0 (Executive Summary) and successfully compiled all sections into the unified `BC_Matrix_Options_Paper_FINAL_DRAFT.md` deliverable.
 - 2026-05-15: Transformed `TWGReviewPortal.tsx` into an interactive 3-pane document reviewer that accepts the final draft content, dynamically extracts headers for a clickable TOC sidebar, and provides section-specific comment fields on the right pane.
 - 2026-05-15: Added visible 5000-character limits with dynamic counters to all text areas in the `TWGReviewPortal` to improve UX and prevent overly long submissions.
+- 2026-05-15: Built Matrix Admin Dashboard at `/admin/matrix-review` utilizing custom `user_roles` RBAC and integrated E2E (Playwright) and Unit (Vitest) security test suites.
+- 2026-05-15: Developed Vitest suite for the `DerivationSimulator` to lock down mathematical logic and dynamic progressive disclosure UI.
 
 Pending Tasks: Matrix Options UI integration based on the newly acquired Deep Research documents.
 
