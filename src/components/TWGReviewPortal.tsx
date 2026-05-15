@@ -14,6 +14,8 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
   const [comments, setComments] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  const MAX_CHARS = 5000;
+
   const headings = useMemo(() => {
     if (!finalDraftContent) return [];
     const regex = /^##\s+(.*)$/gm;
@@ -128,10 +130,14 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
             <textarea 
               value={comments['General'] || ''}
               onChange={(e) => handleCommentChange('General', e.target.value)}
+              maxLength={MAX_CHARS}
               placeholder="Overall thoughts on the methodology..."
               className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
               rows={4}
             />
+            <div className={cn("text-right text-xs mt-1 transition-colors", (comments['General']?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>
+              {comments['General']?.length || 0} / {MAX_CHARS}
+            </div>
           </div>
 
           {headings.map((heading, idx) => (
@@ -140,10 +146,14 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
               <textarea 
                 value={comments[heading] || ''}
                 onChange={(e) => handleCommentChange(heading, e.target.value)}
+                maxLength={MAX_CHARS}
                 placeholder={`Specific feedback for ${heading}...`}
                 className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
                 rows={3}
               />
+              <div className={cn("text-right text-xs mt-1 transition-colors", (comments[heading]?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>
+                {comments[heading]?.length || 0} / {MAX_CHARS}
+              </div>
             </div>
           ))}
         </div>
