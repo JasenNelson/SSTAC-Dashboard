@@ -29,6 +29,7 @@ export default async function MatrixOptionsPage() {
   const eqpCaseStudyContent = readDraft('CaseStudy_EqP_AVS.md');
   const bsafCaseStudyContent = readDraft('CaseStudy_BSAF.md');
   const humanHealthContent = readDraft('Framework_HumanHealth.md');
+  const guideContent = readDraft('The_Guide.md');
 
   return (
     <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -45,6 +46,7 @@ export default async function MatrixOptionsPage() {
         eqpCaseStudyContent={eqpCaseStudyContent} 
         bsafCaseStudyContent={bsafCaseStudyContent}
         humanHealthContent={humanHealthContent}
+        guideContent={guideContent}
       />
     </div>
   );

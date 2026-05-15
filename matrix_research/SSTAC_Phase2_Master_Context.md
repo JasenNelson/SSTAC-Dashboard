@@ -17,6 +17,11 @@ Completed Deep Research:
 - 2026-05-14: Polished all three markdown frameworks for scannability and wired them into the MatrixDashboard side navigation for dynamic rendering.
 - 2026-05-14: Appended reputable primary-source references to all three frameworks and passed a strict Vercel pre-flight audit (0 TypeScript or ESLint errors in new UI components).
 - 2026-05-14: Safely isolated work onto 'feature/matrix-options-dashboard' branch and executed a targeted commit of matrix_research and UI components to avoid conflicting with concurrent agent activities.
+- 2026-05-14: Drafted The_Guide.md to serve as the TWG onboarding document for the dashboard's initial tab.
+- 2026-05-14: Wired The_Guide.md to the frontend, updating page.tsx to pass the content and MatrixDashboard.tsx to render it via MathRenderer when the 'The Guide' tab is active.
+- 2026-05-14: Built and wired the ConceptualMatrix.tsx component, providing a visual 2x2 grid representing the four derivation pathways for the "Conceptual Model" tab.
+- 2026-05-14: Developed and integrated the TWGReviewPortal.tsx component, completing the Dashboard UI tabs by adding a functional feedback portal for structured and open-ended stakeholder polling.
+- 2026-05-14: Locked in straggling dependencies and executed a clean merge of 'feature/matrix-options-dashboard' into 'main'. Removed stale 'feat/archive-policy' branch.
 
 Pending Tasks: Matrix Options UI integration based on the newly acquired Deep Research documents.
 

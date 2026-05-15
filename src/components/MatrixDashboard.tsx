@@ -2,18 +2,21 @@
 
 import React, { useState } from 'react';
 import MathRenderer from './MathRenderer';
+import ConceptualMatrix from './ConceptualMatrix';
+import TWGReviewPortal from './TWGReviewPortal';
 
 interface MatrixDashboardProps {
   eqpCaseStudyContent: string;
   bsafCaseStudyContent: string;
   humanHealthContent: string;
+  guideContent: string;
 }
 
 const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'Interactive Map', 'TWG Review'];
 const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
 
-export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent }: MatrixDashboardProps) {
-  const [activeTopTab, setActiveTopTab] = useState('Jurisdictional Frameworks');
+export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent }: MatrixDashboardProps) {
+  const [activeTopTab, setActiveTopTab] = useState('The Guide');
   const [activeSideTab, setActiveSideTab] = useState('Ecological: EqP & AVS');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -38,13 +41,13 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           </ul>
         );
       case 'The Guide':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Welcome to the Matrix Options Dashboard. Use the tabs above to navigate.</p>;
+        return <p className="text-sm text-slate-500 dark:text-slate-400">Welcome to the Matrix Options Dashboard. Please read the full guide in the main content area.</p>;
       case 'Conceptual Model':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Explore the scientific and regulatory pathways.</p>;
+        return <p className="text-sm text-slate-500 dark:text-slate-400">Explore the scientific and regulatory pathways in the main content area.</p>;
       case 'Interactive Map':
         return <p className="text-sm text-slate-500 dark:text-slate-400">Geospatial visualization of sediment sample sites.</p>;
       case 'TWG Review':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Workspace for formal evaluation and feedback.</p>;
+        return <p className="text-sm text-slate-500 dark:text-slate-400">Workspace for formal evaluation and feedback. See the main content area.</p>;
       default:
         return null;
     }
@@ -66,6 +69,24 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               </p>
             </div>
             <MathRenderer content={contentToRender} />
+          </div>
+        );
+      case 'The Guide':
+        return (
+          <div className="space-y-6">
+            <MathRenderer content={guideContent} />
+          </div>
+        );
+      case 'Conceptual Model':
+        return (
+          <div className="w-full">
+            <ConceptualMatrix />
+          </div>
+        );
+      case 'TWG Review':
+        return (
+          <div className="w-full">
+            <TWGReviewPortal />
           </div>
         );
       default:
