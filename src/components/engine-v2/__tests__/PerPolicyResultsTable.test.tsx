@@ -347,6 +347,85 @@ describe("PerPolicyResultsTable AI Determination + policy text + tech disclosure
   });
 });
 
+describe("PerPolicyResultsTable policyTexts prop (Lane 2c regression fix)", () => {
+  it("displays policyTexts[policy_id] in the Policy Text panel when provided", () => {
+    // Primary path: policyTexts map wins, even when evidenceSlices is present.
+    const slices = {
+      "slice_sub_1": {
+        content_hash: "sub1",
+        content: "PSI SUBMISSION EXCERPT -- must NOT appear in Policy Text panel.",
+        field: "submission_text",
+        policy_id: "PX-001",
+        source: {
+          doc_id: "submission-report-1",
+          title: "PSI report",
+          page: 4,
+          section: null,
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+    };
+    const policyTexts = {
+      "PX-001": "Does the investigator identify the primary authors of the plan and state qualifications?",
+    };
+    render(
+      <PerPolicyResultsTable
+        results={[RESULTS[0]!]}
+        judgments={NO_JUDGMENTS}
+        evidenceSlices={slices}
+        policyTexts={policyTexts}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    const policyTextEl = screen.getByTestId("per-policy-policy-text");
+    expect(policyTextEl.textContent).toContain(
+      "Does the investigator identify the primary authors",
+    );
+    // Submission excerpt must NOT appear in the Policy Text panel.
+    expect(policyTextEl.textContent).not.toContain("PSI SUBMISSION EXCERPT");
+  });
+
+  it("NEVER returns slice.content when slice.field is submission_text (regression guard for AUTH-1 PSI bug)", () => {
+    // Regression guard: post-engine-fix, evidence_slices contain submission
+    // excerpts (field=submission_text). findPolicyText must NOT return those
+    // in the Policy Text panel, even when policyTexts prop is absent.
+    const slices = {
+      "slice_sub_2": {
+        content_hash: "sub2",
+        content: "Hydrocarbon impacted soil should be removed -- submission excerpt.",
+        field: "submission_text",
+        policy_id: "PX-001",
+        source: {
+          doc_id: "submission-report-2",
+          title: "PSI report 2",
+          page: 7,
+          section: null,
+          chunk_id: null,
+          source_path: null,
+        },
+      },
+    };
+    render(
+      <PerPolicyResultsTable
+        results={[RESULTS[0]!]}
+        judgments={NO_JUDGMENTS}
+        evidenceSlices={slices}
+        // policyTexts intentionally absent to test the slice guard path.
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    // Must NOT render the submission excerpt as policy text.
+    expect(
+      screen.queryByTestId("per-policy-policy-text"),
+    ).not.toBeInTheDocument();
+    // Must show "not retrieved" fallback instead.
+    expect(
+      screen.getByTestId("per-policy-policy-text-missing"),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("PerPolicyResultsTable evidence citations regulatory invariant (Phase 2.7)", () => {
   // Owner directive 2026-05-12: evidence citations on the per-policy results
   // table render ONLY submission content. Policy KB chunks

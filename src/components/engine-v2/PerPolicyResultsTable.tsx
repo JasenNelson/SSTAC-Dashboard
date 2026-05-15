@@ -64,6 +64,15 @@ interface Props {
   // by engine schema_version 0.0.1 (no evidence_slices emitted). Defaults
   // to null so existing call sites (tests, older pages) keep working.
   evidenceSlices?: EvidenceSliceMap | null;
+  // Lane 2c regression fix: server-side map of policy_id -> originalText
+  // fetched from the policy KB via getPolicyById. Takes precedence over
+  // evidence_slices for the Policy Text panel. Allows the panel to display
+  // the real policy question rather than submission excerpts (which is what
+  // evidence_slices now correctly contains post-corpus-leak fix). When
+  // absent or empty the component falls back to the legacy slice-based
+  // path (back-compat for pre-fix eval_results still in DB whose slices
+  // carry field="original_text"). Defaults to undefined.
+  policyTexts?: Record<string, string>;
   // Lane 2d / Phase E (additive): externally-controlled highlight target.
   // When set to an evidence_item_id present in this evaluation's
   // evidence_packet items, the matching evidence cell(s) scroll into
@@ -619,6 +628,7 @@ export function PerPolicyResultsTable({
   results,
   judgments,
   evidenceSlices = null,
+  policyTexts,
   highlightEvidenceItemId = null,
 }: Props): React.ReactElement {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -780,15 +790,37 @@ export function PerPolicyResultsTable({
     });
   }
 
-  // Lane 2c: locate the policy text for a row from evidence_slices. Several
-  // slices may carry the same policy_id (rare); take the first match for a
-  // prominent quote. Returns null when slices map is null/empty or when no
-  // slice matches the policy_id.
+  // Lane 2c regression fix: locate the policy text for a row.
+  //
+  // Primary path (post-corpus-leak-fix engines): look up policyTexts prop,
+  // which is a server-side map of policy_id -> originalText fetched from the
+  // KB via getPolicyById. This is authoritative and always correct.
+  //
+  // Back-compat path (pre-fix eval_results still in DB): if policyTexts is
+  // absent/empty AND evidence_slices has a slice whose field === "original_text"
+  // AND policy_id matches, return slice.content. Pre-fix engines emitted the
+  // policy text verbatim into slices with field="original_text" (the corpus-
+  // leak bug). That path is preserved so legacy eval_results still render.
+  //
+  // The critical guard: NEVER return slice.content when field === "submission_text".
+  // Post-fix engines emit submission excerpts in slices; returning those in the
+  // Policy Text panel was the original regression (AUTH-1 PSI canary, 2026-05-13).
   function findPolicyText(policyId: string | null): string | null {
-    if (!policyId || !evidenceSlices) return null;
-    for (const slice of Object.values(evidenceSlices)) {
-      if (slice && slice.policy_id === policyId) {
-        return slice.content;
+    if (!policyId) return null;
+    // Primary: KB-sourced map takes precedence.
+    if (policyTexts && Object.prototype.hasOwnProperty.call(policyTexts, policyId)) {
+      return policyTexts[policyId] ?? null;
+    }
+    // Back-compat: legacy slices with field="original_text" only.
+    if (evidenceSlices) {
+      for (const slice of Object.values(evidenceSlices)) {
+        if (
+          slice &&
+          slice.policy_id === policyId &&
+          slice.field === "original_text"
+        ) {
+          return slice.content;
+        }
       }
     }
     return null;

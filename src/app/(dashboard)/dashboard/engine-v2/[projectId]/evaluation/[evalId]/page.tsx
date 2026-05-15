@@ -23,6 +23,7 @@ import { JudgmentSummaryTile } from "@/components/engine-v2/JudgmentSummaryTile"
 import { EvaluationSidePanel } from "@/components/engine-v2/side-panel/EvaluationSidePanel";
 import { SidePanelProvider } from "@/components/engine-v2/side-panel/SidePanelContext";
 import { extractEvidenceSlices } from "@/lib/engine-v2/evidence_slices";
+import { getPolicyById, isDriverAvailable } from "@/lib/engine-v2/policy_kb";
 import type {
   V2Evaluation,
   V2PerPolicyResult,
@@ -377,6 +378,31 @@ export default async function EvaluationResultsPage(props: PageProps) {
   // renders a degraded "verbatim text not available" view in that case.
   const evidenceSlices = extractEvidenceSlices(evaluation.raw_eval_result_json);
 
+  // Lane 2c regression fix: build a policy_id -> originalText map from the
+  // local policy KB (policy_statements SQLite) so PerPolicyResultsTable's
+  // Policy Text panel displays the real policy question rather than submission
+  // excerpts. getPolicyById uses better-sqlite3; guard with isDriverAvailable
+  // so the page degrades gracefully on Vercel (where the native binding is
+  // absent) -- the table falls back to the slice-based legacy path or shows
+  // "not retrieved" instead of erroring.
+  const policyTexts: Record<string, string> = {};
+  if (results.length > 0 && isDriverAvailable()) {
+    const uniquePolicyIds = Array.from(
+      new Set(results.map((r) => r.policy_id).filter((id): id is string => typeof id === "string" && id.length > 0)),
+    );
+    for (const pid of uniquePolicyIds) {
+      try {
+        const row = getPolicyById(pid);
+        if (row && typeof row.originalText === "string" && row.originalText.length > 0) {
+          policyTexts[pid] = row.originalText;
+        }
+      } catch {
+        // Best-effort: skip policies whose KB lookup fails (e.g. id not found,
+        // DB temporarily locked). The table renders "not retrieved" for those.
+      }
+    }
+  }
+
   // Lane 2d / Phase A: side-panel mount region.
   //
   // ED-2d4-12 MOUNT CONTRACT: Phase A is the ONLY phase that edits this
@@ -478,6 +504,7 @@ export default async function EvaluationResultsPage(props: PageProps) {
               results={results}
               judgments={judgments}
               evidenceSlices={evidenceSlices}
+              policyTexts={policyTexts}
             />
           </section>
         </div>
