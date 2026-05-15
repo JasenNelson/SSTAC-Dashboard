@@ -31,6 +31,7 @@ Completed Deep Research:
 - 2026-05-15: Drafted Section 4.0 (Evaluation Criteria) and Section 5.0 (Proposed Matrix Implementation Options) of the Options Paper, establishing the rubric for assessment and presenting three regulatory paths, ultimately recommending a Tiered Hybrid Framework.
 - 2026-05-15: Drafted Section 6.0 (Indigenous Knowledge Integration) and Section 7.0 (Recommendations & Next Steps) of the Options Paper, detailing the Two-Eyed Seeing approach, TWG review process, and the Phase 3 Roadmap.
 - 2026-05-15: Refactored `MatrixDashboard.tsx` to utilize a space-efficient, collapsible 3-pane layout mirroring the BN-RRM architecture, featuring dynamic `w-80` to `w-0` transitions for side panels. Passed strict Vercel pre-flight audit.
+- 2026-05-15: Elevated MatrixDashboard to an edge-to-edge layout by removing container constraints in `page.tsx` and updating `MatrixDashboard.tsx` to aggressively fill the viewport.
 
 Pending Tasks: Matrix Options UI integration based on the newly acquired Deep Research documents.
 

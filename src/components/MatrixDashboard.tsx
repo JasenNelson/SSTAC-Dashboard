@@ -24,6 +24,8 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(false);
 
+  const isToolMode = activeTopTab === 'Calculator' || activeTopTab === 'Jurisdictional Frameworks';
+
   const renderSidebar = () => {
     switch (activeTopTab) {
       case 'Jurisdictional Frameworks':
@@ -135,66 +137,80 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           </nav>
         </div>
         <div className="flex items-center gap-1 ml-auto pl-4 border-l border-slate-200 dark:border-slate-700">
-           <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('p-2 rounded-lg transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'}>
-             {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
-           </button>
-           <button onClick={() => setShowRightPanel(!showRightPanel)} className={cn('p-2 rounded-lg transition-colors', showRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showRightPanel ? 'Hide right panel' : 'Show right panel'}>
-             {showRightPanel ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
-           </button>
+           {isToolMode && (
+             <>
+               <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('p-2 rounded-lg transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'}>
+                 {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
+               </button>
+               <button onClick={() => setShowRightPanel(!showRightPanel)} className={cn('p-2 rounded-lg transition-colors', showRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showRightPanel ? 'Hide right panel' : 'Show right panel'}>
+                 {showRightPanel ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
+               </button>
+             </>
+           )}
         </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
-        <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800', showLeftPanel ? 'w-80 p-6' : 'w-0')}>
-          <div className="w-full min-w-[270px]">
-            <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">JURISDICTION / REGION</h3>
-            {renderSidebar()}
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 p-8">
-          {renderContent()}
-        </div>
-
-        {/* Right Drawer (Smart Tray) */}
-        <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl', showRightPanel ? 'w-80' : 'w-0')}>
-          <div className="w-[320px] h-full flex flex-col">
-            <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-              <h3 className="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                <svg className="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span>Quick Reference / Polls</span>
-              </h3>
+        {isToolMode ? (
+          <>
+            {/* Left Sidebar */}
+            <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800', showLeftPanel ? 'w-80 p-6' : 'w-0')}>
+              <div className="w-full min-w-[270px]">
+                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">JURISDICTION / REGION</h3>
+                {renderSidebar()}
+              </div>
             </div>
-            <div className="p-5 overflow-y-auto flex-1">
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                Live polling and reference material will dynamically appear here during active Technical Working Group (TWG) sessions.
-              </p>
-              
-              <div className="p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800/50 rounded-xl">
-                <div className="flex items-center space-x-2 mb-3">
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-sky-500"></span>
-                  </span>
-                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Active Poll: AVS/SEM Ratio</p>
+
+            {/* Main Content */}
+            <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 p-8">
+              {renderContent()}
+            </div>
+
+            {/* Right Drawer (Smart Tray) */}
+            <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl', showRightPanel ? 'w-80' : 'w-0')}>
+              <div className="w-[320px] h-full flex flex-col">
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+                  <h3 className="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                    <svg className="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span>Quick Reference / Polls</span>
+                  </h3>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mb-4">Which molar valency multiplier for silver do you support adopting for the unified matrix framework?</p>
-                <div className="space-y-3">
-                  <button className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:border-sky-400 dark:hover:border-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-all shadow-sm">
-                    Support US EPA (0.5 Ag multiplier)
-                  </button>
-                  <button className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:border-sky-400 dark:hover:border-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-all shadow-sm">
-                    Support ANZG (2.0 Ag multiplier)
-                  </button>
+                <div className="p-5 overflow-y-auto flex-1">
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
+                    Live polling and reference material will dynamically appear here during active Technical Working Group (TWG) sessions.
+                  </p>
+                  
+                  <div className="p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800/50 rounded-xl">
+                    <div className="flex items-center space-x-2 mb-3">
+                      <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-sky-500"></span>
+                      </span>
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Active Poll: AVS/SEM Ratio</p>
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-4">Which molar valency multiplier for silver do you support adopting for the unified matrix framework?</p>
+                    <div className="space-y-3">
+                      <button className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:border-sky-400 dark:hover:border-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-all shadow-sm">
+                        Support US EPA (0.5 Ag multiplier)
+                      </button>
+                      <button className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:border-sky-400 dark:hover:border-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-all shadow-sm">
+                        Support ANZG (2.0 Ag multiplier)
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+          </>
+        ) : (
+          <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900">
+            <div className="max-w-4xl mx-auto px-8 py-12">
+              {renderContent()}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
