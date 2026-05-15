@@ -96,7 +96,7 @@ L1-3:
 L1-6:
 - Path containment guard prevents `..` and absolute paths in materialized paths.
 - Materialize: mkdir(recursive) before createWriteStream; persistent error listener; drain-and-error on writes; finish-and-error on close; partial-file cleanup on any failure; safe releaseLock in `finally`.
-- Stale-run detection: uses `EXTRACT_STALE_TIMEOUT_MS` (default 10 min); status endpoint surfaces stale flag.
+- Stale-run detection: uses `EXTRACT_STALE_TIMEOUT_MS` (default 60 min -- `DEFAULT_STALE_MS = 3600000`); status endpoint surfaces stale flag.
 - Zero-file guard: refuse to spawn extraction against a zero-byte materialized file.
 - Quarantine helper: on subprocess error, move materialized file to a quarantine subpath for post-mortem.
 

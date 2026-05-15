@@ -56,6 +56,7 @@ I am working through the plan in this order:
 - [DONE 2026-05-14 00:28 PDT] Phase 8 (partial): 6 Lane 2e items shipped (commits 4a3b15b..e687152); 2 deferred (Item 6 bidi sanitizer -- too aggressive risk; Item 7 FTS migration -- Codex credits exhausted, owner apply needed).
 - [DONE 2026-05-14 00:56 PDT] Phase 9: Lane 1 retro -- 4 items shipped (commits 444942a..58cfb34); 0 deferred.
 - [DONE 2026-05-14 PDT] Prep docs committed: CANARY_LOG.md (engine-v2 `ca08b446`); LANE2_E2E_DOGFOOD.md (dashboard `219c89c`).
+- [DONE 2026-05-14 10:55 PDT] 43-policy LIVE Ollama smoke at tip b3d76dbe (post wrapper-fix): YELLOW. Verdict mix: NOT_FOUND=21, OBSERVATION_ONLY=22 (only 2 distinct, A3 FAIL; A8 FAIL no PASS verdicts). A1/A2 PASS (71 dereferenced submission slices, 5 distinct pages [1,3,7,12,17]); A4-A7 PASS (no IntegrityError/UnboundLocalError/FileNotFoundError; 43/43 coverage; tier render policy clean). Retrieval grounding works; verdict collapse is downstream (S3/S4 prompt or schema mapping). ContractViolation baseline: 0. Runtime 21min. run_id=98d3cd5d-d2f4-4043-9af8-03c991f635b0. Test sweep 1052 passed. Recommend NO prod canary until S3/S4 prompt / schema-retry remediation lifts A3 and A8.
 
 ---
 
@@ -378,3 +379,22 @@ error propagates and partial file is absent.
 | ba0b95c | docs(engine_v2): Gemini F5 -- fix stale EXTRACT_STALE_TIMEOUT_MS default + GET->POST |
 
 Test sweep: 1390 passed, 9 skipped, 0 failed (was 1389 + 1 failed). TypeScript: 0 src/ errors.
+
+## Pre-canary adversarial review (2026-05-14)
+
+Final disposition: **GREEN** -- proceed to owner Phase 3 canary.
+
+- Slice 1 (engine wrapper-fix b3d76dbe): VERIFIED-OK. Path.resolve() handles non-existent paths on Windows + Python 3.10+; defense-in-depth mirror in evaluator.run_evaluation is idempotent; e2e test invokes wrapper as subprocess with explicit cwd=tmp_path and a RELATIVE --output-dir, asserting absolute landing -- would fail pre-fix. Both regression tests pass.
+- Slice 2 (dashboard rounds 3+4): VERIFIED-OK on 72632c7, 8741b07, 30f46d7, fcd7e2d, 79e1d65, 4bb53b2. ONE doc-drift P3 in ba0b95c: API_REFERENCE.md heading still documents the legacy `regulatory-review/.../extract-status` route (whose default IS still 30 min at route.ts:32) but the stale-detection note was changed to "60 minutes" (correct only for the new engine-v2 route). ENVIRONMENT_REFERENCE.md "Read by" was redirected to engine-v2 only, hiding the legacy consumer. Non-blocking for canary (canary uses engine-v2 path); proposed-only fix: keep two entries in ENVIRONMENT_REFERENCE.md and split API_REFERENCE.md to a separate heading for the engine-v2 POST route with its 60 min default.
+- Slice 3 (43-policy verdict-collapse): GREEN. Independently verified from `.tmp_canary_scale_live_output/98d3cd5d-.../eval_result.json`: cohort is 21 TIER_1_BINARY + 22 TIER_3_STATUTORY + 0 TIER_2; all 21 TIER_1 records carry zero_seed/short_circuit markers AND have zero evidence slices (correct per step 8a); all 22 TIER_3 records went through retrieval and produced 71 slices but return OBSERVATION_ONLY per schema Conditional 2 (contractually fixed regardless of evidence). Cross-reference: earlier 12-policy live smoke at `.tmp_smoke_output/15e6e0eb-.../` produced 1 PASS + 5 ESCALATE + 1 OBSERVATION_ONLY + 5 NOT_FOUND on the same TIER_1 schema (all 12 TIER_1_BINARY) -- proof the S2/S3/S4 pipeline DOES produce PASS verdicts when retrieval succeeds. The 43-policy collapse is a synthetic fixture artifact (submission_text content does not token-overlap the 21 TIER_1 policy texts), NOT a downstream model failure. Sonnet YELLOW claim ("model fed real evidence but produces no PASS") is mechanically incorrect: TIER_1 policies are never fed evidence (zero-seed bypass), and TIER_3 policies cannot produce PASS by design.
+- Owner-domain implication: at canary time, the owner uses REAL PSI/DSI/RP submissions whose content WILL token-overlap many of the 21 TIER_1 policies, so the verdict collapse will not occur. If canary cohort remains bench_43_full, expect a mix of PASS/FAIL/ESCALATE/NOT_FOUND across the TIER_1 21 plus 22 OBSERVATION_ONLY on TIER_3.
+
+Findings detail:
+- VERIFIED-OK: b3d76dbe (wrapper-fix), 72632c7, 8741b07, 30f46d7, fcd7e2d, 79e1d65, 4bb53b2.
+- VERIFIED-DEFECT-P3 (proposed-only, non-blocking): ba0b95c doc-drift in API_REFERENCE.md heading + ENVIRONMENT_REFERENCE.md "Read by". Legacy `regulatory-review/.../extract-status` route still has 30 min default at `route.ts:32`; new doc text incorrectly applies the engine-v2 60 min default to the legacy heading.
+
+Pytest (engine TestRelativeOutputDirRegression): 2/2 passed.
+
+- [DONE 2026-05-14 11:48 PDT] Pre-canary Gemini fixes: 3 commits (189cc4b..08020e69). TS clean; 1053 engine + 1390 dashboard tests pass.
+- [DONE 2026-05-14 15:13 PDT] P0 fix: dashboard sets RRAA_V2_SUBMISSION_RETRIEVAL_ENABLED on eval spawn (ea4fd23). Owner can re-trigger eval on site 13254 to validate.
+- [DONE 2026-05-14 18:28 PDT] Two-level chunking commit 665b2ddae1730d8bb54445a8ce2e3c30001263df (engine-v2 master). Owner-experience fix: canary citations were mid-sentence fragments ("her hydrocarbons..." = end of "other hydrocarbons"). NEW semantic_units.py re-assembles per_block_index into SemanticUnits (sentence boundaries via NLTK punkt, conservative cross-block merge, bullet binding). submission_index.chunk_submission rewritten to unit-aware packer (never splits a unit; soft_token_limit=500; overlap_units=1). chunk_id derivation unchanged; SubmissionChunk fields unchanged; T-N5/T-N6/T-N7 preserved. Tests: 1053 -> 1057. 12-policy live smoke PASSED. Sample slice: "Stage 2 Preliminary Site Investigation Summary Report. This submission documents..." (complete sentence, ends with period). ACTION REQUIRED: re-trigger 43-policy eval on site 13254 through the dashboard (~14 min Ollama) to validate end-to-end.
