@@ -57,9 +57,9 @@ export default async function DashboardPage() {
             <p className="text-xl text-sky-200 max-w-4xl mx-auto leading-relaxed mb-8">
               Developing a modern, robust scientific framework for updating BC&apos;s Contaminated Sites Regulation sediment standards
             </p>
-            <div className="inline-flex items-center px-6 py-3 bg-white/90 backdrop-blur-sm rounded-full border border-white/30 shadow-lg">
-              <span className="text-slate-900 text-sm font-semibold">
-                🎯 Phase 1: Scientific Framework Development
+            <div className="inline-flex items-center px-6 py-3 bg-sky-600 dark:bg-sky-500 rounded-full border border-sky-400 dark:border-sky-300 shadow-lg shadow-sky-900/20 mb-4">
+              <span className="text-white text-sm font-bold tracking-wide uppercase">
+                🚀 Current Focus: Phase 2 - Foundational Research (2026)
               </span>
             </div>
           </div>
