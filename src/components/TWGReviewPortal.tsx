@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import MathRenderer from './MathRenderer';
 import { cn } from '@/utils/cn';
+import { createClient } from '@/lib/supabase/client';
 
 interface TWGReviewPortalProps {
   finalDraftContent: string;
@@ -45,7 +46,28 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     alert('Progress saved to local storage.');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      alert('You must be logged in to submit a review.');
+      return;
+    }
+
+    const { error } = await supabase.from('matrix_reviews').upsert({
+      user_id: session.user.id,
+      status: 'SUBMITTED',
+      poll_data: {},
+      comments_data: comments
+    });
+
+    if (error) {
+      console.error('Error submitting review:', error);
+      alert('There was an error submitting your review.');
+      return;
+    }
+
     setIsSubmitted(true);
   };
 
