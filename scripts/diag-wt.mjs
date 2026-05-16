@@ -14,14 +14,15 @@
  *   node scripts/diag-wt.mjs
  *
  * What it does:
- *   1. Prints process.env.PATH so we can see what Node inherits.
- *   2. spawnSync('where', ['wt'])             -- shell-resolvable lookup.
- *   3. spawnSync('wt.exe', ['--help'])        -- direct invocation.
- *   4. spawnSync('cmd.exe', ['/c', 'where wt']) -- cmd-shell view of PATH.
+ *   Preamble: prints process.env.PATH so we can see what Node inherits.
+ *   Probe 1:  spawnSync('where', ['wt'])               -- shell-resolvable lookup.
+ *   Probe 2:  spawnSync('wt.exe', ['--help'])          -- direct invocation.
+ *   Probe 3:  spawnSync('cmd.exe', ['/c', 'where wt']) -- cmd-shell view of PATH.
  *
  * Each probe reports exit status + stdout + stderr. A PASS/FAIL summary
- * runs at the end so the operator does not have to read four blocks of
- * output to draw a conclusion.
+ * runs at the end so the operator does not have to read three blocks of
+ * output to draw a conclusion. (The PATH preamble is informational and
+ * is not pass/fail-scored; only the three probes are.)
  *
  * Owner runs this from a NEW PowerShell tab (so it inherits PATH the same
  * way `npm run dev` does -- both come from the user's interactive shell);

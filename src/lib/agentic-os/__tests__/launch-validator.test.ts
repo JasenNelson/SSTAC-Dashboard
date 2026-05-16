@@ -115,9 +115,13 @@ describe('validateLaunchRequest', () => {
         // Belt-and-suspenders: no element contains a `"` so Node's
         // argv quoter never has to escape, which is what kept the
         // earlier `""` sentinel from surviving the round-trip through
-        // cmd.exe's tokenizer.
+        // cmd.exe's tokenizer. Extended (per codex 2026-05-16 MINOR) to
+        // also forbid the full cmd.exe metacharacter set -- ALLOWED_PROJECTS
+        // is hyphen-only today so cwd is safe, but a future allowlist
+        // addition with a metachar would silently rebuild the same
+        // round-trip mismatch this assertion exists to prevent.
         for (const token of result.value.args) {
-          expect(token).not.toContain('"');
+          expect(token).not.toMatch(/["&|<>^%]/);
         }
       }
     });
@@ -185,6 +189,12 @@ describe('validateLaunchRequest', () => {
         );
         expect(result.value.cwd).toBe(expected);
         expect(result.value.args[4]).toBe(expected);
+        // Lock the spawn target name (per codex 2026-05-16 MINOR) so an
+        // accidental future swap of wt.exe for wt.exe.bak or similar
+        // fails at this unit boundary instead of only at the integration
+        // layer (e2e uses AGENTIC_OS_SPAWN_STUB so it would never catch
+        // it).
+        expect(result.value.args[2]).toBe('wt.exe');
       }
     });
   });

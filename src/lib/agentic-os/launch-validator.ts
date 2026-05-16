@@ -118,6 +118,18 @@ const PROJECTS_ROOT = 'C:\\Projects';
 // the argv all-unquoted, which both Node and cmd.exe agree on. wt.exe
 // is a bare unquoted token here, so start's first-positional-as-title
 // rule never triggers.
+//
+// ALTERNATIVE ARCHITECTURE (codex 2026-05-16 holistic observation, not
+// implemented): resolve wt.exe's absolute path at runtime via
+// `spawnSync('where', ['wt'])` and then `child_process.spawn(absPath,
+// args, { detached: false, stdio: 'pipe', windowsHide: false })`. This
+// sidesteps BOTH the AppExecutionAlias activation context issue AND
+// the cmd-vs-Node tokenizer issue at the cost of one extra spawn per
+// request and a runtime dependency on `where` working. NOT adopted
+// today because the current cmd.exe shim is owner-runtime-validated
+// and works. Revisit if BUG-3 ever regresses or if a future Windows /
+// Node / Terminal version surfaces a new failure mode in the cmd.exe
+// -> start -> AppX chain.
 interface CommandTemplate {
   readonly exe: string;
   // Pure function: project -> args. Must not consult any external state.
