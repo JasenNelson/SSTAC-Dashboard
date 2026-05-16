@@ -92,6 +92,17 @@ describe('validateLaunchRequest', () => {
             '--resume',
           ]);
           expect(result.value.cwd).toBe(expectedCwd);
+          // cmd.exe metachar guard runs PER PROJECT (per codex 2026-05-16
+          // P3 follow-up): the same guard further down only inspects the
+          // hardcoded Regulatory-Review project, so a future
+          // ALLOWED_PROJECTS entry containing &, %, etc. would slip past
+          // unless we also scan every project's resolved args here. The
+          // cwd is the only project-derived token; if a metachar ever
+          // appears in args, this assertion catches it before it reaches
+          // cmd.exe's tokenizer at runtime.
+          for (const token of result.value.args) {
+            expect(token, `metachar in args for ${project}`).not.toMatch(/["&|<>^%]/);
+          }
         }
       }
     });
