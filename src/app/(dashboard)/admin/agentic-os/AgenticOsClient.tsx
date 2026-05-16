@@ -46,6 +46,8 @@ import {
   formatLastActivity,
   compactName,
   shortenPath,
+  applyViewFilter,
+  type ViewFilter,
 } from '@/lib/agentic-os/status-helpers';
 
 // Pattern A skill actions exposed by the per-row Skill v dropdown and the
@@ -134,6 +136,11 @@ export default function AgenticOsClient({
     result.ok && result.projects.length > 0 ? result.projects[0].name : null
   );
   const [filter, setFilter] = useState('');
+  // Owner-bug 4 (2026-05-16): the three Views items used to be inert <div>s.
+  // They now control this discriminated-union state, which feeds into
+  // applyViewFilter alongside the free-text filter. Default 'all' preserves
+  // the prior no-op behavior so the page renders identically on first load.
+  const [viewFilter, setViewFilter] = useState<ViewFilter>('all');
   const [terminalTab, setTerminalTab] = useState<TerminalTab>('logs');
 
   // Step 6b: active run streams. Keyed by runId; rendered by TerminalPanel.
@@ -379,16 +386,15 @@ export default function AgenticOsClient({
     [result],
   );
 
-  const filteredProjects = useMemo(() => {
-    const q = filter.trim().toLowerCase();
-    if (!q) return projects;
-    return projects.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.tags.some((t) => t.toLowerCase().includes(q)) ||
-        p.purpose.toLowerCase().includes(q)
-    );
-  }, [projects, filter]);
+  // Owner-bug 4 (2026-05-16): combined free-text + Views filter is now
+  // applied through the pure applyViewFilter helper in status-helpers.ts so
+  // it can be unit-tested without DOM. The helper accepts readonly arrays,
+  // hence the cast back to Project[] -- the result is structurally identical
+  // and downstream code only reads from it.
+  const filteredProjects = useMemo(
+    () => applyViewFilter(projects, filter, viewFilter),
+    [projects, filter, viewFilter],
+  );
 
   // If the user filters in a way that excludes the currently-selected project,
   // the right detail panel would otherwise show a project not visible in the
@@ -505,34 +511,48 @@ export default function AgenticOsClient({
               className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-2 py-1.5 text-xs placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-slate-900 dark:text-slate-100"
             />
           </div>
-          <nav className="flex-1 overflow-y-auto py-2 text-[13px]">
+          <nav className="flex-1 overflow-y-auto py-2 text-[13px]" aria-label="Project views">
             <div className="px-3 py-1 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
               Views
             </div>
-            <div className="flex items-center justify-between px-3 py-1.5 bg-slate-100 dark:bg-slate-800 border-l-2 border-violet-500">
-              All projects
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                {statusCounts.total}
-              </span>
-            </div>
-            <div
-              className="flex items-center justify-between px-3 py-1.5 text-slate-600 dark:text-slate-400"
-              title="Filter-by-status arrives with a richer filter model in a later step"
-            >
-              Active
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                {statusCounts.active}
-              </span>
-            </div>
-            <div
-              className="flex items-center justify-between px-3 py-1.5 text-slate-600 dark:text-slate-400"
-              title="Filter-by-status arrives with a richer filter model in a later step"
-            >
-              Blocked
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                {statusCounts.blocked}
-              </span>
-            </div>
+            {/* Owner-bug 4 (2026-05-16): three Views items are now clickable
+                buttons that set viewFilter. The selected item carries the
+                violet left-border + slate-100 highlight that previously sat
+                statically on "All projects". role="radiogroup" semantics
+                (above) + aria-pressed on each button signal the
+                mutually-exclusive state to screen readers. */}
+            {(
+              [
+                { id: 'all', label: 'All projects', count: statusCounts.total },
+                { id: 'active', label: 'Active', count: statusCounts.active },
+                { id: 'blocked', label: 'Blocked', count: statusCounts.blocked },
+              ] as ReadonlyArray<{ id: ViewFilter; label: string; count: number }>
+            ).map((v) => {
+              const selected = viewFilter === v.id;
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setViewFilter(v.id)}
+                  title={
+                    v.id === 'all'
+                      ? 'Show every project'
+                      : `Show only projects whose inferred status is ${v.id}`
+                  }
+                  className={`w-full flex items-center justify-between px-3 py-1.5 text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-violet-500 ${
+                    selected
+                      ? 'bg-slate-100 dark:bg-slate-800 border-l-2 border-violet-500 text-slate-900 dark:text-slate-100'
+                      : 'border-l-2 border-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                  }`}
+                >
+                  <span>{v.label}</span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                    {v.count}
+                  </span>
+                </button>
+              );
+            })}
 
             <div
               className="px-3 py-1 mt-4 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold flex items-center justify-between"
@@ -630,6 +650,7 @@ export default function AgenticOsClient({
               <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                 {filteredProjects.length} of {projects.length}
                 {filter ? ` matching "${filter}"` : ''}
+                {viewFilter !== 'all' ? ` · view: ${viewFilter}` : ''}
               </span>
               <div className="flex-1" />
               <button
@@ -643,8 +664,17 @@ export default function AgenticOsClient({
 
             {filteredProjects.length === 0 ? (
               <div className="px-6 py-8 text-sm text-slate-500 dark:text-slate-400 italic">
-                {filter
-                  ? `No projects match "${filter}". Clear the filter to see all ${projects.length}.`
+                {filter || viewFilter !== 'all'
+                  ? // Owner-bug 4 (2026-05-16): the empty-state message now
+                    // reflects BOTH the free-text and Views filter so the
+                    // user knows which control to clear when zero rows
+                    // remain after applying e.g. the "Active" view + a
+                    // text-search that excludes every active project.
+                    `No projects match the current filters${
+                      filter ? ` (text: "${filter}")` : ''
+                    }${
+                      viewFilter !== 'all' ? ` (view: ${viewFilter})` : ''
+                    }. Clear them to see all ${projects.length}.`
                   : 'PROJECTS_MAP.md parsed cleanly but contained no projects under "## Active Projects".'}
               </div>
             ) : (

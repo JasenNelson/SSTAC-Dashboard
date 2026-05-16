@@ -8,6 +8,51 @@
 // level rather than via DOM snapshots.
 
 import type { SparklineTone } from '@/components/agentic-os/ActivitySparkline';
+import type { Project } from '@/lib/agentic-os/parse-projects-map';
+
+/**
+ * Owner-bug 4 (2026-05-16): the three Views items in the left sidebar
+ * (All projects / Active / Blocked) were inert <div>s; clicking them did
+ * nothing. The filter has three states; "all" is the no-op pass-through.
+ *
+ * Kept as a discriminated union (not a boolean) so the UI can show a
+ * three-way selected state and so future view filters (e.g. "stale",
+ * "paused") can extend the union without breaking callers.
+ */
+export type ViewFilter = 'all' | 'active' | 'blocked';
+
+/**
+ * Apply the combined free-text filter + Views filter to the project list.
+ * Pure function -- no React, no module state, no side effects -- so it can
+ * be unit-tested without DOM and reused by any future filtered surface
+ * (CSV export, headless status check, etc.).
+ *
+ * Order of operations:
+ *  1. Free-text filter (name / tag / purpose substring match, lowercased).
+ *  2. Views filter (status-label match via inferStatus).
+ *
+ * Order matters only marginally (composition is commutative for these two
+ * predicates) but the text filter runs first because it's the cheaper
+ * filter on typical corpus sizes (8 projects; a single lowercased substring
+ * vs an inferStatus call per row).
+ */
+export function applyViewFilter(
+  projects: readonly Project[],
+  textFilter: string,
+  viewFilter: ViewFilter,
+): readonly Project[] {
+  const q = textFilter.trim().toLowerCase();
+  const textFiltered = q
+    ? projects.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.tags.some((t) => t.toLowerCase().includes(q)) ||
+          p.purpose.toLowerCase().includes(q),
+      )
+    : projects;
+  if (viewFilter === 'all') return textFiltered;
+  return textFiltered.filter((p) => inferStatus(p.status).label === viewFilter);
+}
 
 /**
  * Step-deferral tooltips so disabled buttons explain themselves on hover.

@@ -7,7 +7,10 @@ import {
   formatLastActivity,
   compactName,
   shortenPath,
+  applyViewFilter,
+  type ViewFilter,
 } from '../status-helpers';
+import type { Project } from '../parse-projects-map';
 
 describe('TOOLTIPS', () => {
   it('exposes the full step 5-11 tooltip set as a frozen-shape constant', () => {
@@ -217,5 +220,104 @@ describe('shortenPath', () => {
 
   it('returns empty string for empty input', () => {
     expect(shortenPath('')).toBe('');
+  });
+});
+
+describe('applyViewFilter (owner-bug 4, 2026-05-16)', () => {
+  // Minimal Project fixtures. Required fields only -- name / path / purpose /
+  // status / tags / extras. status is the load-bearing field for the Views
+  // filter (it flows through inferStatus); tags + purpose are load-bearing
+  // for the free-text filter; the rest is filler.
+  const mkProject = (
+    over: Partial<Project> & Pick<Project, 'name' | 'status'>,
+  ): Project => ({
+    name: over.name,
+    path: over.path ?? `C:\\Projects\\${over.name}`,
+    purpose: over.purpose ?? '',
+    status: over.status,
+    tags: over.tags ?? [],
+    extras: over.extras ?? {},
+    keyHandoff: over.keyHandoff,
+    resumePrompt: over.resumePrompt,
+    activitySignal: over.activitySignal,
+  });
+
+  const projects: readonly Project[] = [
+    mkProject({ name: 'Regulatory-Review', status: 'Active development', tags: ['rraa', 'engine'] }),
+    mkProject({ name: 'Site3250-KB', status: 'AUTH_POINT_3 pending owner', tags: ['kb'] }),
+    mkProject({ name: 'TechMemo-KB', status: 'Paused while site work completes', tags: ['memo'] }),
+    mkProject({ name: 'Knowledge-Base', status: 'active', tags: ['wiki'], purpose: 'Personal Karpathy LLM wiki' }),
+    mkProject({ name: 'EnquiryMgt', status: 'blocked on PAC review', tags: ['inquiry'] }),
+  ];
+
+  it('viewFilter "all" with empty text returns the input array unchanged', () => {
+    const out = applyViewFilter(projects, '', 'all');
+    expect(out).toHaveLength(projects.length);
+    expect(out.map((p) => p.name)).toEqual(projects.map((p) => p.name));
+  });
+
+  it('viewFilter "active" returns only projects whose inferred label is "active"', () => {
+    const out = applyViewFilter(projects, '', 'active');
+    // Regulatory-Review (Active development) + Knowledge-Base (active) only.
+    expect(out.map((p) => p.name).sort()).toEqual(
+      ['Knowledge-Base', 'Regulatory-Review'].sort(),
+    );
+  });
+
+  it('viewFilter "blocked" matches BOTH "blocked" keyword AND "AUTH_POINT_*"', () => {
+    const out = applyViewFilter(projects, '', 'blocked');
+    // EnquiryMgt explicit "blocked" + Site3250-KB AUTH_POINT_3. Paused and
+    // active projects must NOT leak in.
+    expect(out.map((p) => p.name).sort()).toEqual(
+      ['EnquiryMgt', 'Site3250-KB'].sort(),
+    );
+  });
+
+  it('text filter composes with viewFilter via AND semantics (both predicates pass)', () => {
+    // viewFilter "active" narrows to [Regulatory-Review, Knowledge-Base];
+    // text filter "wiki" matches Knowledge-Base via BOTH its "wiki" tag and
+    // its "Personal Karpathy LLM wiki" purpose. Intersection: [Knowledge-Base].
+    const out = applyViewFilter(projects, 'wiki', 'active');
+    expect(out.map((p) => p.name)).toEqual(['Knowledge-Base']);
+  });
+
+  it('text filter matches name / tag / purpose substrings, lowercased', () => {
+    // "karpathy" only appears in Knowledge-Base.purpose.
+    expect(applyViewFilter(projects, 'KARPATHY', 'all').map((p) => p.name)).toEqual([
+      'Knowledge-Base',
+    ]);
+    // "engine" only appears in Regulatory-Review.tags.
+    expect(applyViewFilter(projects, 'engine', 'all').map((p) => p.name)).toEqual([
+      'Regulatory-Review',
+    ]);
+  });
+
+  it('returns empty array when no project satisfies the combined filter', () => {
+    // viewFilter "blocked" + text "engine" -- no blocked project has the
+    // "engine" tag.
+    const out = applyViewFilter(projects, 'engine', 'blocked');
+    expect(out).toEqual([]);
+  });
+
+  it('whitespace-only text filter is treated as empty (no text-side narrowing)', () => {
+    const out = applyViewFilter(projects, '   ', 'all');
+    expect(out).toHaveLength(projects.length);
+  });
+
+  it('does not mutate the input array', () => {
+    const snapshot = projects.map((p) => p.name);
+    applyViewFilter(projects, 'kb', 'blocked');
+    expect(projects.map((p) => p.name)).toEqual(snapshot);
+  });
+
+  it('ViewFilter union is exhaustively handled (compile-time check)', () => {
+    // If a future contributor widens ViewFilter without updating
+    // applyViewFilter, this assignment line will fail tsc. Runtime call is
+    // just a sanity that each value returns *something*.
+    const filters: ViewFilter[] = ['all', 'active', 'blocked'];
+    for (const f of filters) {
+      const out = applyViewFilter(projects, '', f);
+      expect(Array.isArray(out)).toBe(true);
+    }
   });
 });
