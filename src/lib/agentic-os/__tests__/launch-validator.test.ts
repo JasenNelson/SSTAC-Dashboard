@@ -67,7 +67,7 @@ describe('validateLaunchRequest', () => {
   // ---------------------------------------------------------------------------
 
   describe('open_session (Pattern B, step 7)', () => {
-    it('produces {exe: "cmd.exe", args: ["/c", "start", "\\"\\"", "wt.exe", "-d", <cwd>, "claude", "--resume"]} for every allowed project', () => {
+    it('produces {exe: "cmd.exe", args: ["/c", "start", "wt.exe", "-d", <cwd>, "claude", "--resume"]} for every allowed project', () => {
       for (const project of ALL_PROJECTS) {
         const result = validateLaunchRequest({ project, action: 'open_session' });
         expect(result.ok, `expected ok for ${project}/open_session`).toBe(true);
@@ -76,13 +76,15 @@ describe('validateLaunchRequest', () => {
           // BUG-3 fix (2026-05-16): wt.exe is an AppExecutionAlias stub;
           // a direct spawn doesn't activate the AppX context, so we go
           // through cmd.exe /c start instead. exe becomes cmd.exe; argv
-          // is 8 hardcoded-shape tokens with the project-derived cwd at
-          // args[5] (wt.exe's -d starting-directory).
+          // is 7 hardcoded-shape tokens with the project-derived cwd at
+          // args[4] (wt.exe's -d starting-directory). No empty-title
+          // `""` sentinel: Node's MSVCRT argv-quoting and cmd.exe's
+          // tokenizer disagree on escaped-quote semantics, so the
+          // sentinel breaks `start` instead of guarding it.
           expect(result.value.exe).toBe('cmd.exe');
           expect(result.value.args).toEqual([
             '/c',
             'start',
-            '""',
             'wt.exe',
             '-d',
             expectedCwd,
@@ -94,7 +96,7 @@ describe('validateLaunchRequest', () => {
       }
     });
 
-    it('argv is an array of exactly eight hardcoded-shape tokens (no shell-string concatenation)', () => {
+    it('argv is an array of exactly seven hardcoded-shape tokens (no shell-string concatenation, no quoted sentinel tokens)', () => {
       const result = validateLaunchRequest({
         project: 'Regulatory-Review',
         action: 'open_session',
@@ -102,15 +104,21 @@ describe('validateLaunchRequest', () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(Array.isArray(result.value.args)).toBe(true);
-        expect(result.value.args).toHaveLength(8);
+        expect(result.value.args).toHaveLength(7);
         expect(result.value.args[0]).toBe('/c');
         expect(result.value.args[1]).toBe('start');
-        expect(result.value.args[2]).toBe('""');
-        expect(result.value.args[3]).toBe('wt.exe');
-        expect(result.value.args[4]).toBe('-d');
-        // args[5] = cwd (project-derived, already past the allowlist).
-        expect(result.value.args[6]).toBe('claude');
-        expect(result.value.args[7]).toBe('--resume');
+        expect(result.value.args[2]).toBe('wt.exe');
+        expect(result.value.args[3]).toBe('-d');
+        // args[4] = cwd (project-derived, already past the allowlist).
+        expect(result.value.args[5]).toBe('claude');
+        expect(result.value.args[6]).toBe('--resume');
+        // Belt-and-suspenders: no element contains a `"` so Node's
+        // argv quoter never has to escape, which is what kept the
+        // earlier `""` sentinel from surviving the round-trip through
+        // cmd.exe's tokenizer.
+        for (const token of result.value.args) {
+          expect(token).not.toContain('"');
+        }
       }
     });
 
@@ -136,10 +144,10 @@ describe('validateLaunchRequest', () => {
     });
 
     it('declares spawnOverrides so cmd.exe stays hidden and detaches cleanly (windowsHide:true, detached:true, stdio:"ignore")', () => {
-      // BUG-3 fix (2026-05-16, post-probe): we now spawn cmd.exe -- a
-      // console-subsystem process we DO want hidden -- which fires
-      // `start "" wt.exe ...`. The wt.exe AppExecutionAlias is activated
-      // separately via the AppX service and creates its own desktop
+      // BUG-3 fix (2026-05-16, post-probe + post-dogfood): we now spawn
+      // cmd.exe -- a console-subsystem process we DO want hidden --
+      // which fires `start wt.exe ...`. The wt.exe AppExecutionAlias is
+      // activated separately via the AppX service and creates its own desktop
       // Terminal window in a different process tree, so we never need
       // the parent cmd.exe to show a window. The validator declares
       // per-template overrides on open_session that the route applies
@@ -168,14 +176,15 @@ describe('validateLaunchRequest', () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         // path.join normalizes the slash for the running platform; the SAME
-        // joined cwd appears both as args[5] (wt.exe -d, post-BUG-3-fix
-        // index shift) and as the spawn cwd.
+        // joined cwd appears both as args[4] (wt.exe -d, post-BUG-3-fix
+        // index shift -- 7 tokens after the empty-title sentinel was
+        // dropped) and as the spawn cwd.
         const expected = path.join(
           'C:\\Projects',
           'Regulatory-Review-worktrees/engine-v2',
         );
         expect(result.value.cwd).toBe(expected);
-        expect(result.value.args[5]).toBe(expected);
+        expect(result.value.args[4]).toBe(expected);
       }
     });
   });

@@ -270,7 +270,7 @@ export default function AgenticOsClient({
           action === 'open_session'
             ? {
                 exe: 'cmd.exe',
-                args: ['/c', 'start', '""', 'wt.exe', '-d', project, 'claude', '--resume'],
+                args: ['/c', 'start', 'wt.exe', '-d', project, 'claude', '--resume'],
                 cwd: project,
               }
             : action === 'run_skill' && options?.skillSlug

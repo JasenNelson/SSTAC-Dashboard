@@ -99,7 +99,7 @@ const PROJECTS_ROOT = 'C:\\Projects';
 // builtin `start` handles AppExecutionAlias activation correctly: it
 // fires the AppX activation in the user's interactive shell context and
 // returns immediately. So we spawn cmd.exe (a real PE) which runs
-// `start "" wt.exe -d <cwd> claude --resume` and exits; wt.exe gets
+// `start wt.exe -d <cwd> claude --resume` and exits; wt.exe gets
 // activated SEPARATELY via the AppX service and creates its own Terminal
 // window on the user's desktop. The audit + SSE wiring still applies --
 // the cmd.exe registry entry shows empty stdout and a clean exit within
@@ -107,10 +107,17 @@ const PROJECTS_ROOT = 'C:\\Projects';
 // Windows Terminal tab on their desktop, owned by a different process
 // tree than the dashboard's.
 //
-// The `""` empty-title sentinel after `start` is defensive: `start`
-// interprets the first quoted token as the new window's title, so the
-// empty string keeps the wt.exe positional argument from being absorbed
-// in case a future maintainer quotes it (e.g. for a path with spaces).
+// NO empty-title `""` sentinel between `start` and `wt.exe`. An earlier
+// iteration of this fix included one defensively (start interprets a
+// quoted first token as the new window's title), but Node-on-Windows
+// uses MSVCRT-style argv-to-cmdline quoting that escapes inner quotes
+// as backslash-quote (`\"\"`), and cmd.exe's tokenizer does NOT speak
+// backslash escapes -- start receives `\"\"` and reads it as a literal
+// title token, then misreads `wt.exe` as the program-with-quoted-title
+// payload and the activation never fires. Removing the sentinel keeps
+// the argv all-unquoted, which both Node and cmd.exe agree on. wt.exe
+// is a bare unquoted token here, so start's first-positional-as-title
+// rule never triggers.
 interface CommandTemplate {
   readonly exe: string;
   // Pure function: project -> args. Must not consult any external state.
@@ -142,7 +149,7 @@ const COMMAND_TEMPLATES: Readonly<Record<string, CommandTemplate>> = {
     args: (_project: string, _cwd: string) => ['-p', '/doc-navigator'],
   },
   // Pattern B (step 7): Windows Terminal external pop-out. cmd.exe runs
-  // `start "" wt.exe -d <cwd> claude --resume`, which fires the wt.exe
+  // `start wt.exe -d <cwd> claude --resume`, which fires the wt.exe
   // AppExecutionAlias activation via the shell and exits; the activated
   // Terminal opens its tab in the project cwd running `claude --resume`.
   // The -d flag is wt.exe's "starting directory" switch (verified vs
@@ -153,7 +160,7 @@ const COMMAND_TEMPLATES: Readonly<Record<string, CommandTemplate>> = {
   //
   // argv contains NO user input beyond the project-derived cwd (which
   // has already cleared the project allowlist before this closure runs);
-  // every other token ('/c', 'start', '""', 'wt.exe', '-d', 'claude',
+  // every other token ('/c', 'start', 'wt.exe', '-d', 'claude',
   // '--resume') is hardcoded. spawn (not exec) consumes the array, so
   // cmd.exe's own arg-parsing never interprets any token as a metachar
   // -- Node passes them through to cmd.exe's CommandLineToArgvW
@@ -164,7 +171,6 @@ const COMMAND_TEMPLATES: Readonly<Record<string, CommandTemplate>> = {
     args: (_project: string, cwd: string) => [
       '/c',
       'start',
-      '""',
       'wt.exe',
       '-d',
       cwd,
