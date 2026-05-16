@@ -48,7 +48,7 @@ describe('validateLaunchRequest', () => {
     }
   });
 
-  it('ships the three Pattern-A actions plus open_session (Pattern B) plus run_skill (Pattern C) plus run_agent (Pattern D); no per-skill / per-agent templates', () => {
+  it('ships the three Pattern-A actions plus open_session (Pattern B) plus run_skill (Pattern C) plus run_agent (Pattern D) plus open_embedded (Pattern E); no per-skill / per-agent templates', () => {
     expect(new Set(ALL_ACTIONS)).toEqual(
       new Set([
         'run_safe_exit',
@@ -57,6 +57,7 @@ describe('validateLaunchRequest', () => {
         'open_session',
         'run_skill',
         'run_agent',
+        'open_embedded',
       ]),
     );
   });
@@ -588,6 +589,47 @@ describe('validateLaunchRequest', () => {
           'Begin working on Regulatory-Review-worktrees/engine-v2.',
         );
       }
+    });
+  });
+
+  describe('open_embedded (step 9 / Pattern E)', () => {
+    it('accepts open_embedded and returns claude --resume command shape', () => {
+      const result = validateLaunchRequest({
+        project: 'SSTAC-Dashboard',
+        action: 'open_embedded',
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.exe).toBe('claude');
+        expect(result.value.args).toEqual(['--resume']);
+        expect(result.value.cwd).toMatch(/SSTAC-Dashboard$/);
+      }
+    });
+
+    it('still enforces project allowlist for open_embedded', () => {
+      const result = validateLaunchRequest({
+        project: 'Not-A-Real-Project',
+        action: 'open_embedded',
+      });
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.reason).toBe('unknown_project');
+    });
+
+    it('cwd uses path.join(PROJECTS_ROOT, project) for open_embedded', () => {
+      const result = validateLaunchRequest({
+        project: 'Regulatory-Review-worktrees/engine-v2',
+        action: 'open_embedded',
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.cwd).toBe(
+          path.join('C:\\Projects', 'Regulatory-Review-worktrees/engine-v2'),
+        );
+      }
+    });
+
+    it('open_embedded is exposed in the action allowlist', () => {
+      expect(ALL_ACTIONS).toContain('open_embedded');
     });
   });
 

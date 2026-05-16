@@ -31,6 +31,7 @@ import TerminalPanel, {
   type LogLine,
 } from '@/components/agentic-os/TerminalPanel';
 import ProjectDetailPanel from '@/components/agentic-os/ProjectDetailPanel';
+import EmbeddedTerminalModal from '@/components/agentic-os/EmbeddedTerminalModal';
 import type {
   Project,
   ConvergenceEdge,
@@ -85,6 +86,11 @@ interface Props {
    *  global agents list. Empty object on map read failure; missing entries
    *  render as the "no agents discovered" placeholder. */
   projectAgents?: Record<string, ProjectAgents>;
+  /** Step 9 / Pattern E: whether the embedded xterm.js terminal modal is
+   *  enabled. Server-resolved (isAgenticOsPtyEnabled checks node-pty +
+   *  AGENTIC_OS_PTY_SECRET + launch-enabled). When false the "Open in
+   *  embedded terminal" button stays disabled with an explanatory tooltip. */
+  ptyEnabled?: boolean;
 }
 
 function ErrorState({
@@ -121,6 +127,7 @@ export default function AgenticOsClient({
   activity = {},
   projectSkills = {},
   projectAgents = {},
+  ptyEnabled = false,
 }: Props) {
   // Hooks must be unconditional — declare ALL state before the early return.
   const [selectedName, setSelectedName] = useState<string | null>(
@@ -136,6 +143,17 @@ export default function AgenticOsClient({
   //  - closed on component unmount (effect cleanup below)
   //  - closed when the user clicks the run card's x (closeRun handler)
   const [runs, setRuns] = useState<ActiveRun[]>([]);
+  // Step 9 / Pattern E: which project (if any) has the embedded terminal
+  // modal open. Null = modal closed. Only one modal open at a time -- the
+  // mockup doesn't suggest stacking embedded terminals.
+  const [embeddedTerminalProject, setEmbeddedTerminalProject] = useState<string | null>(null);
+  const openEmbeddedTerminal = useCallback((project: string) => {
+    if (!ptyEnabled) return; // defense in depth -- button is also disabled
+    setEmbeddedTerminalProject(project);
+  }, [ptyEnabled]);
+  const closeEmbeddedTerminal = useCallback(() => {
+    setEmbeddedTerminalProject(null);
+  }, []);
   // Set of in-flight "${project}::${action}" concurrency keys. A Set (rather
   // than a single string) lets concurrent launches across different rows
   // coexist without racing each other: a fast click followed by a slow click
@@ -692,14 +710,28 @@ export default function AgenticOsClient({
                             onClick={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()}
                           >
-                            {/* Embedded xterm.js modal arrives in step 9 -- this
-                                button stays disabled until then. Step 7's
-                                external pop-out lives in the [ ] external
-                                button to its right. */}
+                            {/* Step 9 / Pattern E: embedded xterm.js modal.
+                                Live when ptyEnabled (server-side check that
+                                node-pty loaded + AGENTIC_OS_PTY_SECRET is
+                                set + launch-enabled). Disabled with an
+                                explanatory tooltip otherwise. */}
                             <button
-                              className="text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-0.5 cursor-not-allowed text-slate-500 dark:text-slate-400 opacity-60"
-                              disabled
-                              title={TOOLTIPS.step9}
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                openEmbeddedTerminal(p.name);
+                              }}
+                              disabled={!ptyEnabled}
+                              className={
+                                ptyEnabled
+                                  ? 'text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700/30 rounded px-2 py-0.5 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500'
+                                  : 'text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-0.5 cursor-not-allowed text-slate-500 dark:text-slate-400 opacity-60'
+                              }
+                              title={
+                                ptyEnabled
+                                  ? 'Open an embedded xterm.js terminal modal connected to a real PTY (claude --resume) for this project'
+                                  : 'Set AGENTIC_OS_PTY_SECRET in .env.local and run `npm run pty-server` to enable the embedded terminal modal'
+                              }
                             >
                               Open
                             </button>
@@ -1071,8 +1103,21 @@ export default function AgenticOsClient({
           onLaunch={launchAction}
           launchingFor={launchingFor}
           patternASkills={PATTERN_A_SKILLS}
+          ptyEnabled={ptyEnabled}
+          onOpenEmbeddedTerminal={openEmbeddedTerminal}
         />
       </div>
+
+      {/* Step 9 / Pattern E: embedded xterm.js modal. Mounted only when a
+          project is selected. The modal owns its own xterm.js + WebSocket
+          lifecycle; the parent just controls which project (if any) is
+          currently open. */}
+      {embeddedTerminalProject && (
+        <EmbeddedTerminalModal
+          project={embeddedTerminalProject}
+          onClose={closeEmbeddedTerminal}
+        />
+      )}
     </div>
   );
 }

@@ -140,7 +140,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // GATE 6: allowlist + command template.
+  // GATE 6a: Pattern E (step 9) MUST go through /api/agentic-os/pty-token,
+  // NOT through this route. The validator recognizes open_embedded so the
+  // PTY token-mint route can reuse it, but the /launch route must never
+  // spawn `claude --resume` into a piped child -- that path is reserved
+  // for the PTY sidecar. Rejecting here keeps the surfaces explicitly
+  // disjoint and means a regression in the client cannot accidentally
+  // burn a Pattern A spawn slot on what should be an embedded PTY.
+  if (parsed.data.action === 'open_embedded') {
+    return NextResponse.json(
+      { error: 'use_pty_token_route', detail: 'open_embedded is handled by /api/agentic-os/pty-token' },
+      { status: 400 },
+    );
+  }
+
+  // GATE 6b: allowlist + command template.
   const validation = validateLaunchRequest(parsed.data);
   if (!validation.ok) {
     return NextResponse.json(

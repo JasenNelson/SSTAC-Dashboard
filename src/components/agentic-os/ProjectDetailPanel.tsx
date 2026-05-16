@@ -62,6 +62,12 @@ interface Props {
   /** Available Pattern A skills (step 6b). When empty, the detail panel
    *  shows the legacy disabled state. */
   patternASkills?: ReadonlyArray<PatternASkill>;
+  /** Step 9 / Pattern E: whether the embedded xterm.js terminal modal is
+   *  enabled (node-pty loaded + AGENTIC_OS_PTY_SECRET set + launch enabled).
+   *  Controls whether the "Open in embedded terminal" button is clickable. */
+  ptyEnabled?: boolean;
+  /** Step 9 / Pattern E: parent-supplied handler to mount the modal. */
+  onOpenEmbeddedTerminal?: (project: string) => void;
 }
 
 export default function ProjectDetailPanel({
@@ -73,6 +79,8 @@ export default function ProjectDetailPanel({
   onLaunch,
   launchingFor,
   patternASkills,
+  ptyEnabled = false,
+  onOpenEmbeddedTerminal,
 }: Props) {
   if (!project) {
     return (
@@ -115,10 +123,28 @@ export default function ProjectDetailPanel({
           <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-2">
             Launch session
           </div>
+          {/* Step 9 / Pattern E: embedded xterm.js modal. Live when
+              ptyEnabled is true AND a handler is wired; disabled with an
+              explanatory tooltip otherwise. */}
           <button
-            className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-medium py-1.5 rounded mb-2 cursor-not-allowed border border-slate-200 dark:border-slate-700"
-            disabled
-            title={tooltips.step9}
+            type="button"
+            disabled={!ptyEnabled || !onOpenEmbeddedTerminal}
+            onClick={() => {
+              if (ptyEnabled && onOpenEmbeddedTerminal) {
+                onOpenEmbeddedTerminal(project.name);
+              }
+            }}
+            className={
+              ptyEnabled && onOpenEmbeddedTerminal
+                ? 'w-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium py-1.5 rounded mb-2 border border-emerald-200 dark:border-emerald-700/30 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500'
+                : 'w-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-medium py-1.5 rounded mb-2 cursor-not-allowed border border-slate-200 dark:border-slate-700'
+            }
+            title={
+              ptyEnabled && onOpenEmbeddedTerminal
+                ? `Open an embedded xterm.js terminal modal connected to a real PTY (claude --resume) for ${project.name}`
+                : tooltips.step9 +
+                  ' -- set AGENTIC_OS_PTY_SECRET and run `npm run pty-server` to enable'
+            }
           >
             Open in embedded terminal
           </button>

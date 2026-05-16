@@ -69,6 +69,30 @@ npm run test:e2e -- --project=chromium agentic-os
 boots, so setting these in the parent shell is sufficient -- no edits to
 the config required.
 
+## Step 9 / Pattern E (embedded xterm.js modal) -- not E2E covered
+
+The embedded terminal modal at `/admin/agentic-os` (the "Open in embedded
+terminal" buttons on the project row + detail panel) is intentionally NOT
+exercised by Playwright in this MVP step. It depends on:
+
+1. The PTY sidecar server (`scripts/agentic-os-pty-server.mjs`) being
+   running on `ws://127.0.0.1:3101/pty`. The sidecar refuses to start
+   unless `AGENTIC_OS_PTY_SECRET` is set in the environment.
+2. A working `node-pty` (Windows prebuilds ship with the npm install but
+   Playwright's hermetic container does not guarantee them).
+3. A live `claude` CLI in `PATH` -- the PTY spawns it directly. There is
+   no equivalent of `AGENTIC_OS_SPAWN_STUB=true` for the WS server path
+   in this MVP step.
+
+The unit tests cover the JWT signing/verification, the feature-flag
+matrix, the token-mint route's gate chain, and the `open_embedded` guard
+on the launch route. Manual smoke-test procedure is documented in the
+project root README / commit message body.
+
+A future test pass could add a WS-mode stub (`AGENTIC_OS_PTY_STUB=true`)
+that replaces `pty.spawn` with a fake emitting a fixed transcript, but
+that is out of scope for step 9 itself.
+
 ## Why a stubbed spawn (and not a mocked fetch / real CLI)
 
 The holistic reviewer recommended this boundary explicitly:

@@ -61,3 +61,26 @@ export const LaunchRequestSchema = z
   .strict();
 
 export type LaunchRequest = z.infer<typeof LaunchRequestSchema>;
+
+// Step 9 (Pattern E): the PTY token-mint route reuses the project + action
+// pair from LaunchRequestSchema but limits action to the single
+// `open_embedded` literal. We keep a tighter schema here so the token-mint
+// route cannot be tricked into minting a token for a Pattern A skill or
+// the wt.exe pop-out action -- both have separate, already-shipped
+// HTTP entrypoints that should remain the only way to spawn them.
+//
+// The schema also adds defensive bounds on `cols` / `rows` that the
+// browser may send to seed the initial PTY window size. Both are
+// optional; if absent, the PTY server uses 80x24. Bounds prevent a
+// degenerate caller from requesting a 1x1000000 PTY that would explode
+// xterm.js memory before the WS even connects.
+export const PtyTokenRequestSchema = z
+  .object({
+    project: z.string().min(1).max(120),
+    action: z.literal('open_embedded'),
+    cols: z.number().int().min(1).max(1000).optional(),
+    rows: z.number().int().min(1).max(1000).optional(),
+  })
+  .strict();
+
+export type PtyTokenRequest = z.infer<typeof PtyTokenRequestSchema>;

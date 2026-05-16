@@ -37,7 +37,10 @@ import {
   discoverAllProjectAgents,
   type ProjectAgents,
 } from '@/lib/agentic-os/agent-discovery';
-import { isAgenticOsEnabled } from '@/lib/agentic-os/feature-flag';
+import {
+  isAgenticOsEnabled,
+  isAgenticOsPtyEnabled,
+} from '@/lib/agentic-os/feature-flag';
 import AgenticOsClient, { type AgenticOsResult } from './AgenticOsClient';
 
 // ErrorBoundary intentionally NOT wrapped here: it only catches CLIENT-side
@@ -103,9 +106,17 @@ export default async function AgenticOsPage() {
         activity={{}}
         projectSkills={{}}
         projectAgents={{}}
+        ptyEnabled={false}
       />
     );
   }
+
+  // Step 9 / Pattern E: probe the PTY gate server-side. node-pty's
+  // require-time probe is server-only; we pass a plain boolean to the
+  // client so the bundle never imports node-pty. The boolean controls
+  // whether the "Open in embedded terminal" button is clickable + which
+  // tooltip it shows.
+  const ptyEnabled = isAgenticOsPtyEnabled();
 
   // Read PROJECTS_MAP.md. If the file is missing or unparseable, surface a
   // discriminated-union to the client rather than throwing. Admins should see
@@ -147,6 +158,7 @@ export default async function AgenticOsPage() {
       activity={activity}
       projectSkills={projectSkills}
       projectAgents={projectAgents}
+      ptyEnabled={ptyEnabled}
     />
   );
 }

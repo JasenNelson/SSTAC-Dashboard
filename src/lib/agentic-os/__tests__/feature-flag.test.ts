@@ -3,6 +3,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   isAgenticOsEnabled,
   isAgenticOsLaunchEnabled,
+  isAgenticOsPtyEnabled,
+  __resetPtyModuleProbeForTest,
 } from '../feature-flag';
 
 // vi.stubEnv mutates process.env in a vitest-managed way that survives
@@ -82,5 +84,56 @@ describe('isAgenticOsLaunchEnabled (stricter spawn gate)', () => {
     vi.stubEnv('AGENTIC_OS_LOCAL', '');
     expect(isAgenticOsEnabled()).toBe(true);
     expect(isAgenticOsLaunchEnabled()).toBe(false);
+  });
+});
+
+describe('isAgenticOsPtyEnabled (Pattern E / embedded terminal modal gate)', () => {
+  beforeEach(() => {
+    __resetPtyModuleProbeForTest();
+  });
+
+  it('returns false when launch is disabled, even with secret set', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('AGENTIC_OS_LOCAL', '');
+    vi.stubEnv('AGENTIC_OS_PTY_SECRET', 'some-secret');
+    expect(isAgenticOsPtyEnabled()).toBe(false);
+  });
+
+  it('returns false in dev when secret is unset', () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('AGENTIC_OS_PTY_SECRET', '');
+    expect(isAgenticOsPtyEnabled()).toBe(false);
+  });
+
+  it('returns false in dev when secret is the empty string', () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('AGENTIC_OS_PTY_SECRET', '');
+    expect(isAgenticOsPtyEnabled()).toBe(false);
+  });
+
+  it('returns true in dev when secret is set AND node-pty loads', () => {
+    // node-pty is installed in the workspace; the probe should succeed.
+    // If this test ever fails, it's a signal that node-pty has regressed
+    // on this platform -- not a test bug.
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('AGENTIC_OS_PTY_SECRET', 'test-secret');
+    expect(isAgenticOsPtyEnabled()).toBe(true);
+  });
+
+  it('CRITICAL: returns false in production even when NEXT_PUBLIC_AGENTIC_OS_ENABLED=true and secret is set', () => {
+    // Reinforces the layered-gate invariant: NEXT_PUBLIC_* never crosses
+    // into spawn-class behaviors. AGENTIC_OS_LOCAL is the only escape.
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXT_PUBLIC_AGENTIC_OS_ENABLED', 'true');
+    vi.stubEnv('AGENTIC_OS_LOCAL', '');
+    vi.stubEnv('AGENTIC_OS_PTY_SECRET', 'test-secret');
+    expect(isAgenticOsPtyEnabled()).toBe(false);
+  });
+
+  it('returns true in production when AGENTIC_OS_LOCAL=true AND secret is set', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('AGENTIC_OS_LOCAL', 'true');
+    vi.stubEnv('AGENTIC_OS_PTY_SECRET', 'test-secret');
+    expect(isAgenticOsPtyEnabled()).toBe(true);
   });
 });

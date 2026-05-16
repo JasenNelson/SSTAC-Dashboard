@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { LaunchRequestSchema } from '../launch-schemas';
+import { LaunchRequestSchema, PtyTokenRequestSchema } from '../launch-schemas';
 
 describe('LaunchRequestSchema', () => {
   it('accepts a valid {project, action} payload', () => {
@@ -127,5 +127,77 @@ describe('LaunchRequestSchema', () => {
       action: 'run_safe_exit',
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe('PtyTokenRequestSchema (step 9 / Pattern E)', () => {
+  it('accepts a minimal open_embedded payload', () => {
+    const result = PtyTokenRequestSchema.safeParse({
+      project: 'SSTAC-Dashboard',
+      action: 'open_embedded',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts cols/rows when within bounds', () => {
+    const result = PtyTokenRequestSchema.safeParse({
+      project: 'SSTAC-Dashboard',
+      action: 'open_embedded',
+      cols: 120,
+      rows: 40,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects non-open_embedded actions', () => {
+    for (const action of ['run_safe_exit', 'open_session', 'run_skill', 'run_agent']) {
+      const result = PtyTokenRequestSchema.safeParse({
+        project: 'SSTAC-Dashboard',
+        action,
+      });
+      expect(result.success, `expected reject for action "${action}"`).toBe(false);
+    }
+  });
+
+  it('rejects cols/rows outside bounds', () => {
+    expect(
+      PtyTokenRequestSchema.safeParse({
+        project: 'SSTAC-Dashboard',
+        action: 'open_embedded',
+        cols: 0,
+        rows: 24,
+      }).success,
+    ).toBe(false);
+    expect(
+      PtyTokenRequestSchema.safeParse({
+        project: 'SSTAC-Dashboard',
+        action: 'open_embedded',
+        cols: 80,
+        rows: 100000,
+      }).success,
+    ).toBe(false);
+    expect(
+      PtyTokenRequestSchema.safeParse({
+        project: 'SSTAC-Dashboard',
+        action: 'open_embedded',
+        cols: -1,
+        rows: 24,
+      }).success,
+    ).toBe(false);
+  });
+
+  it('rejects extra unknown keys (strict)', () => {
+    const result = PtyTokenRequestSchema.safeParse({
+      project: 'SSTAC-Dashboard',
+      action: 'open_embedded',
+      smuggled: 'whoami',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects missing project', () => {
+    expect(
+      PtyTokenRequestSchema.safeParse({ action: 'open_embedded' }).success,
+    ).toBe(false);
   });
 });

@@ -145,6 +145,23 @@ const COMMAND_TEMPLATES: Readonly<Record<string, CommandTemplate>> = {
     exe: 'claude',
     args: (_project: string, _cwd: string) => ['--agent', '', '--bg', ''],
   },
+  // Pattern E (step 9): embedded xterm.js modal via node-pty WebSocket.
+  // Same shape as Pattern B's open_session (claude --resume in the project
+  // cwd) but consumed by the PTY sidecar server (scripts/agentic-os-pty-server.mjs)
+  // rather than child_process.spawn at HTTP-route time. The /api/agentic-os/pty-token
+  // route mints a short-lived JWT bound to this {exe, args, cwd} triple and
+  // hands it to the browser, which connects to ws://localhost:3101/pty.
+  //
+  // The /launch route DOES NOT spawn for this action -- the
+  // launch-route handler must guard against open_embedded and 400 it.
+  // Defense in depth: a request reaching this template via /launch is
+  // a regression, so the template still produces a structurally-valid
+  // command (claude --resume) rather than something nonsensical, but the
+  // launch route's open_embedded guard is the real protection.
+  open_embedded: {
+    exe: 'claude',
+    args: (_project: string, _cwd: string) => ['--resume'],
+  },
 };
 
 export interface ValidatedLaunch {
