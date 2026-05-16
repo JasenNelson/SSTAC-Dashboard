@@ -1,0 +1,3 @@
+## 2024-05-16 - [Tag Color Swatches Keyboard and Screen Reader Accessibility]
+**Learning:** Visual-only interactive elements, such as `<button>` tags serving as color swatches (`style={{ backgroundColor: color }}`) in forms, are completely invisible to screen readers without an `aria-label`, and difficult for keyboard users without explicit `focus-visible` styling indicating their interactive nature.
+**Action:** When implementing or reviewing visual color selectors, always add an `aria-label` detailing the color hex or name, and ensure keyboard focus outlines are clearly visible using Tailwind's `focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-sky-500` classes to maintain accessibility parity.
