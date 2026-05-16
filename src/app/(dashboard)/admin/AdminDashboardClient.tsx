@@ -14,7 +14,8 @@ import {
   FileSearch,
   ClipboardCheck,
   Cpu,
-  Grid3x3
+  Grid3x3,
+  Boxes
 } from 'lucide-react';
 
 
@@ -247,6 +248,21 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
                   Analyze and synthesize Matrix Options phase feedback
+                </p>
+              </div>
+            </Link>
+
+            {/* Agentic OS */}
+            <Link href="/admin/agentic-os" className="group">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-violet-300">
+                <div className="w-16 h-16 bg-violet-100 dark:bg-violet-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-violet-200 dark:group-hover:bg-violet-800 transition-colors">
+                  <Boxes className="w-8 h-8 text-violet-600 dark:text-violet-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-violet-600 transition-colors mb-2">
+                  Agentic OS
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  Pulse view across all personal projects with launch buttons
                 </p>
               </div>
             </Link>

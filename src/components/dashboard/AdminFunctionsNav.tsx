@@ -11,6 +11,7 @@ const adminNavItems = [
   { href: '/admin/milestones', label: 'Milestones' },
   { href: '/admin/twg-synthesis', label: 'TWG Review' },
   { href: '/admin/matrix-review', label: 'Matrix Review' },
+  { href: '/admin/agentic-os', label: 'Agentic OS' },
 ]
 
 export default function AdminFunctionsNav() {
