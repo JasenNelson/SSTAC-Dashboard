@@ -21,6 +21,7 @@ vi.mock('child_process', async (importActual) => {
 import {
   spawnAwaitingReady,
   __SPAWN_RACE_WINDOW_MS_FOR_TEST,
+  __STUB_CLOSE_DELAY_MS_FOR_TEST,
 } from '../spawn-await-ready';
 
 // Build a fake ChildProcess that emits 'spawn' / 'error' / neither on demand.
@@ -145,5 +146,129 @@ describe('spawnAwaitingReady', () => {
     const ee = fake as unknown as EventEmitter;
     expect(ee.listenerCount('spawn')).toBe(0);
     expect(ee.listenerCount('error')).toBe(0);
+  });
+});
+
+describe('spawnAwaitingReady stub branch (AGENTIC_OS_SPAWN_STUB)', () => {
+  // Each test sets/unsets the env var locally so the global vitest environment
+  // is unaffected. The stub branch must be OPT-IN per call.
+  const origEnv = process.env.AGENTIC_OS_SPAWN_STUB;
+  afterEach(() => {
+    if (origEnv === undefined) {
+      delete process.env.AGENTIC_OS_SPAWN_STUB;
+    } else {
+      process.env.AGENTIC_OS_SPAWN_STUB = origEnv;
+    }
+  });
+
+  it('returns a stub ChildProcess WITHOUT invoking real spawn when env-var is set', async () => {
+    process.env.AGENTIC_OS_SPAWN_STUB = 'true';
+    // Configure the spawn mock to throw if called -- proof of bypass.
+    spawnMock.mockImplementation(() => {
+      throw new Error('real spawn should not be called in stub mode');
+    });
+
+    const child = await spawnAwaitingReady('claude', ['-p', '/safe-exit'], {
+      cwd: 'C:\\Projects\\SSTAC-Dashboard',
+    });
+
+    expect(spawnMock).not.toHaveBeenCalled();
+    expect(typeof child.pid).toBe('number');
+    expect(child.stdout).toBeTruthy();
+    expect(child.stderr).toBeTruthy();
+  });
+
+  it('stub emits canned stdout lines via the data event', async () => {
+    process.env.AGENTIC_OS_SPAWN_STUB = 'true';
+    spawnMock.mockImplementation(() => {
+      throw new Error('real spawn should not be called in stub mode');
+    });
+
+    const child = await spawnAwaitingReady('claude', ['-p', '/safe-exit'], {
+      cwd: 'C:\\Projects\\SSTAC-Dashboard',
+    });
+
+    const chunks: string[] = [];
+    // child.stdout is a Readable on the stub; attach a data listener and
+    // collect emitted text. Wait for the stream's 'end' signal.
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(
+        () => reject(new Error('timed out waiting for stub stdout')),
+        2000,
+      );
+      child.stdout!.on('data', (c: Buffer | string) => {
+        chunks.push(typeof c === 'string' ? c : c.toString('utf-8'));
+      });
+      child.stdout!.on('end', () => {
+        clearTimeout(timeout);
+        resolve();
+      });
+    });
+
+    const joined = chunks.join('');
+    expect(joined).toMatch(/\[stub\] launched claude -p \/safe-exit/);
+    expect(joined).toMatch(/\[stub\] done/);
+  });
+
+  it('stub emits close with exit code 0 after the short delay', async () => {
+    process.env.AGENTIC_OS_SPAWN_STUB = 'true';
+    spawnMock.mockImplementation(() => {
+      throw new Error('real spawn should not be called in stub mode');
+    });
+
+    const t0 = Date.now();
+    const child = await spawnAwaitingReady('claude', ['-p', '/safe-exit'], {
+      cwd: 'C:\\Projects\\SSTAC-Dashboard',
+    });
+
+    const exitCode = await new Promise<number | null>((resolve, reject) => {
+      const timeout = setTimeout(
+        () => reject(new Error('timed out waiting for stub close')),
+        2000,
+      );
+      child.on('close', (code: number | null) => {
+        clearTimeout(timeout);
+        resolve(code);
+      });
+    });
+    const elapsed = Date.now() - t0;
+
+    expect(exitCode).toBe(0);
+    // Close should fire approximately STUB_CLOSE_DELAY_MS after the call.
+    // Allow generous slack for slow CI runners (especially Windows).
+    expect(elapsed).toBeGreaterThanOrEqual(
+      Math.max(0, __STUB_CLOSE_DELAY_MS_FOR_TEST - 20),
+    );
+    expect(elapsed).toBeLessThan(__STUB_CLOSE_DELAY_MS_FOR_TEST + 2000);
+  });
+
+  it('does NOT activate the stub branch when env-var is unset', async () => {
+    delete process.env.AGENTIC_OS_SPAWN_STUB;
+    // With the env var unset we expect the real-spawn path: configure the
+    // mock to return a successful child so we observe the call.
+    const fake = makeFakeChild({ mode: 'spawn', pid: 7777 });
+    spawnMock.mockReturnValueOnce(fake);
+
+    const child = await spawnAwaitingReady('claude', ['-p', '/safe-exit'], {
+      cwd: 'C:\\x',
+    });
+
+    expect(spawnMock).toHaveBeenCalledTimes(1);
+    expect(child).toBe(fake);
+  });
+
+  it('does NOT activate the stub branch when env-var is the wrong value (defense in depth)', async () => {
+    // Any value other than the exact string 'true' MUST fall through to the
+    // real-spawn path. Common typos / case-variants must NOT enable stub.
+    for (const wrong of ['1', 'yes', 'TRUE', 'True', 'on']) {
+      process.env.AGENTIC_OS_SPAWN_STUB = wrong;
+      const fake = makeFakeChild({ mode: 'spawn', pid: 1111 });
+      spawnMock.mockReturnValueOnce(fake);
+      const child = await spawnAwaitingReady('claude', ['-p', '/safe-exit'], {
+        cwd: 'C:\\x',
+      });
+      expect(child).toBe(fake);
+    }
+    expect(spawnMock).toHaveBeenCalledTimes(5);
   });
 });

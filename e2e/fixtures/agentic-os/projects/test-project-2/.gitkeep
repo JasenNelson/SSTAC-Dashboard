@@ -1,0 +1,3 @@
+Sibling project for the Agentic OS E2E spec. Intentionally empty -- no
+.claude/ directory so skill + agent discovery for this project returns
+the "no skills / agents discovered" placeholder.

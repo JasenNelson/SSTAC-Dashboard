@@ -348,7 +348,18 @@ export default function AgenticOsClient({
     [],
   );
 
-  const projects = result.ok ? result.projects : [];
+  // Wrap `projects` in its own useMemo so the downstream filteredProjects /
+  // statusCounts / agentCountTotal references see a STABLE array identity
+  // across renders when `result` does not change. Without this, the ternary
+  // `result.ok ? result.projects : []` returns a fresh `[]` reference each
+  // render in the error branch, which would invalidate every useMemo that
+  // depends on it -- and would trigger the react-hooks/exhaustive-deps
+  // warning on filteredProjects' dependency array (NIT-A from the
+  // holistic review). Polishes that warning cleanly without an eslint-disable.
+  const projects = useMemo(
+    () => (result.ok ? result.projects : []),
+    [result],
+  );
 
   const filteredProjects = useMemo(() => {
     const q = filter.trim().toLowerCase();

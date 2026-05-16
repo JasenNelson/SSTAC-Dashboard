@@ -22,12 +22,96 @@
 // Engine_v2 precedent: src/lib/engine-v2/spawn_extraction.ts.
 
 import { spawn, type ChildProcess, type SpawnOptions } from 'child_process';
+import { EventEmitter } from 'events';
+import { Readable } from 'stream';
 
 // How long to wait for either 'spawn' or 'error' before concluding the
 // subprocess started successfully. Node emits both events within microtasks
 // in practice; 500ms is a generous safety margin without blocking the route.
 // Matches SPAWN_RACE_WINDOW_MS in src/lib/engine-v2/spawn_extraction.ts.
 const SPAWN_RACE_WINDOW_MS = 500;
+
+// Test-only spawn stub (step 12 / Playwright E2E).
+//
+// When AGENTIC_OS_SPAWN_STUB === 'true', spawnAwaitingReady short-circuits
+// the real child_process.spawn() call and returns a fake ChildProcess that:
+//   - exposes readable .stdout / .stderr streams that emit a couple of canned
+//     lines via 'data' events, then end,
+//   - emits 'close' with exit code 0 after a short timeout,
+//   - has a stable .pid for audit display.
+//
+// This is the right injection boundary because every gate (1-6) in the
+// launch route runs BEFORE spawnAwaitingReady -- the stub does NOT bypass
+// the feature flag, localhost check, CSRF, admin auth, payload validation,
+// or allowlist. It only swaps the syscall that would have launched
+// `claude` / `wt.exe` so Playwright tests can exercise the full route +
+// SSE plumbing without any external CLI on the runner.
+//
+// Hard rule: this branch is INERT unless AGENTIC_OS_SPAWN_STUB is exactly
+// the string 'true'. We re-check on every call so a single process can
+// flip the flag (tests do not, but defense in depth costs nothing).
+function isStubEnabled(): boolean {
+  return process.env.AGENTIC_OS_SPAWN_STUB === 'true';
+}
+
+/**
+ * How long after stub spawn before we emit 'close' on the fake child.
+ * Short enough that E2E assertions complete fast; long enough that the
+ * launch route returns + the client opens the SSE stream before close
+ * fires (otherwise the client would never observe the running state).
+ */
+const STUB_CLOSE_DELAY_MS = 50;
+
+/**
+ * Build a fake ChildProcess that emits a couple of canned stdout lines,
+ * then closes with exit 0 after STUB_CLOSE_DELAY_MS. The stdout/stderr
+ * streams are real Readable instances (in object mode off) so the
+ * registerRun() data listeners attach without special-casing.
+ */
+function createStubChild(exe: string, args: readonly string[]): ChildProcess {
+  const stdout = new Readable({ read() { /* no-op; we push manually */ } });
+  const stderr = new Readable({ read() { /* no-op */ } });
+
+  const child = new EventEmitter() as EventEmitter & {
+    pid: number;
+    stdout: Readable;
+    stderr: Readable;
+    kill: (signal?: NodeJS.Signals | number) => boolean;
+  };
+  // Synthetic but deterministic-ish pid; the launch route only uses it for
+  // audit display, and runId is the real handle.
+  child.pid = 99000 + Math.floor(Math.random() * 1000);
+  child.stdout = stdout;
+  child.stderr = stderr;
+  // No-op kill so callers that try to terminate the stub don't throw.
+  child.kill = () => true;
+
+  // Emit canned output + close on the next tick so the caller can attach
+  // listeners (registerRun does this BEFORE this function returns? No:
+  // spawnAwaitingReady returns the child first, registerRun then attaches.
+  // We therefore delay the emissions just enough to let that happen).
+  setImmediate(() => {
+    // 'spawn' must fire so the await in spawnAwaitingReady resolves; we
+    // emit it manually here on the stub path too for symmetry with the
+    // real spawn semantics, even though spawnAwaitingReady doesn't await
+    // the race when the stub branch is taken (see below).
+    child.emit('spawn');
+    stdout.push(`[stub] launched ${exe} ${args.join(' ')}\n`);
+    stdout.push('[stub] done\n');
+    // End the streams so any consumer that awaits 'end' settles.
+    stdout.push(null);
+    stderr.push(null);
+  });
+
+  setTimeout(() => {
+    child.emit('close', 0, null);
+    // 'exit' is what node's ChildProcess fires for process termination;
+    // some consumers listen to either. Emit both for parity.
+    child.emit('exit', 0, null);
+  }, STUB_CLOSE_DELAY_MS);
+
+  return child as unknown as ChildProcess;
+}
 
 /**
  * Spawn `exe` with `args` and `options`, awaiting either the child's
@@ -85,6 +169,15 @@ export async function spawnAwaitingReady(
   args: readonly string[],
   options: SpawnOptions,
 ): Promise<ChildProcess> {
+  // Test-only stub branch (step 12). Guarded behind an explicit env-var
+  // string equality so production / dev runs without the env var follow
+  // the real-spawn path verbatim. The check is INSIDE the function so a
+  // mid-run flip would apply on the next call, but tests do not rely on
+  // that property -- they set the var via Playwright's webServer.env.
+  if (isStubEnabled()) {
+    return createStubChild(exe, args);
+  }
+
   // child_process.spawn's TS overloads accept readonly string[] as args; cast
   // through string[] to satisfy the signature without copying. Args have
   // already been validated by launch-validator (or hardcoded by caller).
@@ -114,3 +207,4 @@ export async function spawnAwaitingReady(
 
 // Export for test assertions (spawnAwaitingReady's race-window length).
 export const __SPAWN_RACE_WINDOW_MS_FOR_TEST = SPAWN_RACE_WINDOW_MS;
+export const __STUB_CLOSE_DELAY_MS_FOR_TEST = STUB_CLOSE_DELAY_MS;
