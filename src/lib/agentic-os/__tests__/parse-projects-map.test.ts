@@ -216,6 +216,43 @@ E --x--> F
     expect(edges).toHaveLength(3);
   });
 
+  it('does NOT leak typed field keys into extras under case/whitespace drift (holistic IMPORTANT-2)', () => {
+    // Owner authors PROJECTS_MAP.md by hand. Case/whitespace variants of
+    // a typed field key must land in the typed slot (last-write-wins is
+    // fine; the file is hand-edited), and must NEVER duplicate into
+    // extras where they would render as confusing "Notes" headers.
+    const md = `## Active Projects
+
+### \`Driftful\`
+
+**Path:** /x
+**Purpose:** y
+**Status:** z
+**  PATH  :** /case-drift
+**KEY HANDOFF:** docs/upper.md
+**Resume Prompt:** "case-drifted prompt"
+**Tags:** drift
+`;
+    const { projects } = parseProjectsMap(md);
+    expect(projects).toHaveLength(1);
+    const p = projects[0];
+    // Typed slots accept every case-drifted variant; last write wins.
+    expect(p.path).toBe('/case-drift');
+    expect(p.keyHandoff).toBe('docs/upper.md');
+    expect(p.resumePrompt).toBe('case-drifted prompt');
+    // No case-variant of any typed key ever lands in extras.
+    for (const key of Object.keys(p.extras)) {
+      const normalized = key.toLowerCase().trim();
+      expect(normalized).not.toBe('path');
+      expect(normalized).not.toBe('purpose');
+      expect(normalized).not.toBe('status');
+      expect(normalized).not.toBe('key handoff');
+      expect(normalized).not.toBe('resume prompt');
+      expect(normalized).not.toBe('activity signal');
+      expect(normalized).not.toBe('tags');
+    }
+  });
+
   it('captures unknown bold fields in extras with original key casing preserved', () => {
     const md = `## Active Projects
 

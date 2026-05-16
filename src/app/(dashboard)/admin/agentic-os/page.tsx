@@ -29,6 +29,7 @@ import {
   getAllProjectsActivity,
   type ProjectActivity,
 } from '@/lib/agentic-os/git-activity';
+import { isAgenticOsEnabled } from '@/lib/agentic-os/feature-flag';
 import AgenticOsClient, { type AgenticOsResult } from './AgenticOsClient';
 
 // ErrorBoundary intentionally NOT wrapped here: it only catches CLIENT-side
@@ -68,6 +69,27 @@ export default async function AgenticOsPage() {
 
   if (!roleData) {
     redirect('/dashboard');
+  }
+
+  // Feature-flag gate (holistic review IMPORTANT-1). The page reads
+  // PROJECTS_MAP.md from the local filesystem and spawns git per project --
+  // neither works on a serverless deployment, so we render a clear
+  // "local-only" message rather than silently producing a page where every
+  // sparkline is idle and every Recent-Commits panel reads "Git unavailable".
+  if (!isAgenticOsEnabled()) {
+    const result: AgenticOsResult = {
+      ok: false,
+      error: 'Agentic OS is a local-only feature',
+      hint:
+        'This admin page reads Knowledge-Base/PROJECTS_MAP.md from the ' +
+        'local filesystem and spawns git per project, so it only works ' +
+        'when you run the dashboard with `npm run dev` on the same ' +
+        'machine that hosts your Projects directory. To enable it ' +
+        'outside development mode, set NEXT_PUBLIC_AGENTIC_OS_ENABLED=true ' +
+        'in your runtime environment (and ensure the filesystem + git are ' +
+        'actually available there).',
+    };
+    return <AgenticOsClient result={result} activity={{}} />;
   }
 
   // Read PROJECTS_MAP.md. If the file is missing or unparseable, surface a

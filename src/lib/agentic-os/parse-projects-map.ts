@@ -183,6 +183,16 @@ export function parseProjectsMap(markdown: string): ParsedProjectsMap {
           if (value) currentProject[prop] = value;
         } else {
           // Unknown bold field -> extras, preserving the original key casing.
+          //
+          // Defense in depth (holistic review IMPORTANT-2): if the trimmed
+          // key resolves to a typed property, it must NEVER reach extras
+          // even if the lookup-key drifted (e.g., owner typed "** path :**"
+          // with stray whitespace). The fieldKey normalization already
+          // handles common drift; this extra guard catches anything that
+          // slipped past it -- preventing a duplicate "Path" notes section
+          // showing alongside the typed Path slot in the UI.
+          const normalized = rawKey.toLowerCase().trim();
+          if (normalized in FIELD_TO_PROPERTY) continue;
           if (rawKey && !(rawKey in currentProject.extras)) {
             currentProject.extras[rawKey] = value;
           }
