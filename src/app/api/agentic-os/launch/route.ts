@@ -17,14 +17,16 @@
 // rejection requires zero database I/O and shields the admin-role lookup
 // from any cross-origin probing.
 //
-// IMPORTANT (step 6a scope only): the child's stdout/stderr are NOT yet
-// routed back to the client. Step 6b will add an in-memory PID -> stream
-// registry plus an SSE endpoint subscribing to it. For step 6a, we:
-//   - spawn with stdio: ['ignore', 'pipe', 'pipe'] so step 6b's registry
-//     can attach without re-spawning,
-//   - append { pid, command, user_email, timestamp } to an in-memory audit
-//     log that is inspectable from this same module, and
-//   - return { pid, status: 'spawned' } 200 to the caller.
+// Step 6b: after successful spawn, the route:
+//   - generates a runId (uuid) -- primary client-facing handle (NOT pid;
+//     pids are OS-reused),
+//   - registers the run with @/lib/agentic-os/launch-runs (line capture +
+//     buffer + pub/sub for the SSE endpoint at /api/agentic-os/stream/[runId]),
+//   - appends a JSON audit line to both the in-memory ring buffer and
+//     logs/agentic-os-launches.log (best-effort persistence), and
+//   - returns { runId, pid, status: 'spawned' } 200.
+// The child's stdout/stderr are 'pipe' so launch-runs.ts can attach 'data'
+// listeners without re-spawning.
 //
 // The child is NOT detached and NOT unref'd: the pipes must stay alive for
 // step 6b. The OS reaps the child when it exits.
@@ -32,6 +34,7 @@
 // Architecture spec: .tmp_presentation/master/AGENTIC_OS_ARCHITECTURE.md
 // section 5 (lines 144-229). Handoff anti-patterns: HANDOFF.md section 10.
 
+import { randomUUID } from 'crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/engine-v2/admin_guards';
 import { checkCsrf } from '@/lib/engine-v2/csrf';
@@ -40,6 +43,7 @@ import { LaunchRequestSchema } from '@/lib/agentic-os/launch-schemas';
 import { validateLaunchRequest } from '@/lib/agentic-os/launch-validator';
 import { spawnAwaitingReady } from '@/lib/agentic-os/spawn-await-ready';
 import { appendLaunchAudit } from '@/lib/agentic-os/launch-audit-log';
+import { registerRun } from '@/lib/agentic-os/launch-runs';
 
 export const runtime = 'nodejs';
 
@@ -160,17 +164,35 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       windowsHide: true,
     });
 
+    // runId is the primary client-facing handle. Generated AFTER spawn so a
+    // spawn failure does not burn a uuid (and so the registry never holds a
+    // half-initialized entry pointing at a dead child).
+    const runId = randomUUID();
+    const startedAt = new Date().toISOString();
+
+    registerRun({
+      runId,
+      project: parsed.data.project,
+      action: parsed.data.action,
+      command: { exe, args, cwd },
+      child,
+      startedAt,
+    });
+
     appendLaunchAudit({
-      ts: new Date().toISOString(),
+      ts: startedAt,
       user_email: user.email,
       pid: child.pid,
+      run_id: runId,
       exe,
       args,
       cwd,
+      project: parsed.data.project,
+      action: parsed.data.action,
     });
 
     return NextResponse.json(
-      { pid: child.pid, status: 'spawned' },
+      { runId, pid: child.pid, status: 'spawned' },
       { status: 200 },
     );
   } catch (err) {

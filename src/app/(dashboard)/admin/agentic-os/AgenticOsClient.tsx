@@ -21,12 +21,14 @@
 // project detail aside lives in `./ProjectDetailPanel`. This file retains
 // selection / filter / tab state and the page-level layout grid.
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav';
 import ActivitySparkline from '@/components/agentic-os/ActivitySparkline';
 import ConvergenceGraph from '@/components/agentic-os/ConvergenceGraph';
 import TerminalPanel, {
   type TerminalTab,
+  type ActiveRun,
+  type LogLine,
 } from '@/components/agentic-os/TerminalPanel';
 import ProjectDetailPanel from '@/components/agentic-os/ProjectDetailPanel';
 import type {
@@ -42,6 +44,21 @@ import {
   compactName,
   shortenPath,
 } from '@/lib/agentic-os/status-helpers';
+
+// Pattern A skill actions exposed by the per-row Skill v dropdown and the
+// detail panel's claude-resume button. Order is presentation order. The
+// action keys MUST match COMMAND_TEMPLATES keys in launch-validator.ts
+// (gate 6 will 400 otherwise).
+const PATTERN_A_SKILLS: ReadonlyArray<{ action: string; label: string; slash: string }> = [
+  { action: 'run_safe_exit', label: '/safe-exit', slash: '/safe-exit' },
+  { action: 'run_update_docs', label: '/update-docs', slash: '/update-docs' },
+  { action: 'run_doc_navigator', label: '/doc-navigator', slash: '/doc-navigator' },
+];
+
+function skillForAction(action: string): string {
+  const found = PATTERN_A_SKILLS.find((s) => s.action === action);
+  return found ? found.slash : action;
+}
 
 export type AgenticOsResult =
   | { ok: true; projects: Project[]; edges: ConvergenceEdge[] }
@@ -95,6 +112,152 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
   );
   const [filter, setFilter] = useState('');
   const [terminalTab, setTerminalTab] = useState<TerminalTab>('logs');
+
+  // Step 6b: active run streams. Keyed by runId; rendered by TerminalPanel.
+  // EventSource lifecycle:
+  //  - opened by launchAction() on successful POST to /launch
+  //  - closed by the 'exit' event handler (server signals child close)
+  //  - closed on component unmount (effect cleanup below)
+  //  - closed when the user clicks the run card's x (closeRun handler)
+  const [runs, setRuns] = useState<ActiveRun[]>([]);
+  const [launchingFor, setLaunchingFor] = useState<string | null>(null);
+  // Track open EventSources so unmount + manual-close can release them.
+  // Stored in a ref to avoid re-renders on every open/close.
+  const eventSourcesRef = useRef<Map<string, EventSource>>(new Map());
+
+  // Close all event sources on unmount. Without this, navigating away from
+  // the page leaves connections open until the dev-server times them out.
+  useEffect(() => {
+    const map = eventSourcesRef.current;
+    return () => {
+      for (const es of map.values()) {
+        try { es.close(); } catch { /* ignore */ }
+      }
+      map.clear();
+    };
+  }, []);
+
+  const closeRun = useCallback((runId: string) => {
+    const es = eventSourcesRef.current.get(runId);
+    if (es) {
+      try { es.close(); } catch { /* ignore */ }
+      eventSourcesRef.current.delete(runId);
+    }
+    setRuns((prev) => prev.filter((r) => r.runId !== runId));
+  }, []);
+
+  const launchAction = useCallback(
+    async (project: string, action: string) => {
+      const concurrencyKey = `${project}::${action}`;
+      if (launchingFor === concurrencyKey) return; // double-click guard
+      setLaunchingFor(concurrencyKey);
+      try {
+        const resp = await fetch('/api/agentic-os/launch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ project, action }),
+        });
+        if (!resp.ok) {
+          let detail = '';
+          try {
+            const j = await resp.json();
+            detail = j.error ? `${j.error}${j.detail ? ': ' + j.detail : ''}` : '';
+          } catch { /* ignore */ }
+          alert(`Launch failed (${resp.status})${detail ? ': ' + detail : ''}`);
+          return;
+        }
+        const body = (await resp.json()) as {
+          runId: string;
+          pid?: number;
+          status: string;
+        };
+        const startedAt = new Date().toISOString();
+        const newRun: ActiveRun = {
+          runId: body.runId,
+          project,
+          action,
+          command: { exe: 'claude', args: ['-p', skillForAction(action)], cwd: project },
+          startedAt,
+          lines: [],
+          status: 'running',
+          exitCode: null,
+          exitedAt: null,
+        };
+        setRuns((prev) => [newRun, ...prev]);
+        setTerminalTab('logs');
+
+        // Open the SSE stream. EventSource auto-reconnects on transient
+        // network errors; we let it. On 'exit' or 'error after exit' we
+        // close explicitly.
+        const es = new EventSource(`/api/agentic-os/stream/${body.runId}`);
+        eventSourcesRef.current.set(body.runId, es);
+
+        const appendLine = (stream: 'stdout' | 'stderr', payload: string) => {
+          try {
+            const { text, ts } = JSON.parse(payload) as { text: string; ts: number };
+            setRuns((prev) =>
+              prev.map((r) =>
+                r.runId === body.runId
+                  ? { ...r, lines: [...r.lines, { stream, text, ts } as LogLine] }
+                  : r,
+              ),
+            );
+          } catch {
+            // Malformed payload -- ignore.
+          }
+        };
+
+        es.addEventListener('stdout', (e: MessageEvent) => appendLine('stdout', e.data));
+        es.addEventListener('stderr', (e: MessageEvent) => appendLine('stderr', e.data));
+        es.addEventListener('exit', (e: MessageEvent) => {
+          try {
+            const { exitCode, exitedAt } = JSON.parse(e.data) as {
+              exitCode: number | null;
+              exitedAt: string;
+            };
+            setRuns((prev) =>
+              prev.map((r) =>
+                r.runId === body.runId
+                  ? {
+                      ...r,
+                      status: exitCode === 0 ? 'completed' : 'failed',
+                      exitCode,
+                      exitedAt,
+                    }
+                  : r,
+              ),
+            );
+          } catch {
+            // ignore
+          }
+          try { es.close(); } catch { /* ignore */ }
+          eventSourcesRef.current.delete(body.runId);
+        });
+        es.addEventListener('snapshot_complete', () => {
+          // Boundary marker -- noop in the client today; reserved for
+          // a "live tail" indicator in a future step.
+        });
+        es.onerror = () => {
+          // EventSource auto-reconnects on transient errors. Only treat as
+          // terminal if the readyState is CLOSED (2) -- e.g. server hard-closed
+          // after exit. In that case we already cleaned up via the 'exit'
+          // handler; this is defense in depth.
+          if (es.readyState === EventSource.CLOSED) {
+            eventSourcesRef.current.delete(body.runId);
+          }
+        };
+      } catch (err) {
+        alert(
+          'Launch network error: ' +
+            (err instanceof Error ? err.message : String(err)),
+        );
+      } finally {
+        setLaunchingFor(null);
+      }
+    },
+    [launchingFor],
+  );
 
   const projects = result.ok ? result.projects : [];
 
@@ -169,10 +332,18 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
           </span>
           <span
             className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400"
-            title={TOOLTIPS.step6}
+            title="Active Pattern A skill runs (step 6b)"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/40" />
-            <span className="font-mono">0 sessions</span>
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                runs.some((r) => r.status === 'running')
+                  ? 'bg-emerald-400'
+                  : 'bg-emerald-400/40'
+              }`}
+            />
+            <span className="font-mono">
+              {runs.filter((r) => r.status === 'running').length} sessions
+            </span>
           </span>
         </div>
       </header>
@@ -225,16 +396,37 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
 
             <div
               className="px-3 py-1 mt-4 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold flex items-center justify-between"
-              title={TOOLTIPS.step6}
+              title="Active Pattern A skill runs (step 6b)"
             >
               <span>Running</span>
               <span className="text-slate-500 dark:text-slate-400 font-mono normal-case font-normal">
-                0
+                {runs.filter((r) => r.status === 'running').length}
               </span>
             </div>
-            <div className="px-3 py-1.5 text-xs text-slate-500 dark:text-slate-400 italic">
-              No active sessions
-            </div>
+            {runs.length === 0 ? (
+              <div className="px-3 py-1.5 text-xs text-slate-500 dark:text-slate-400 italic">
+                No active sessions
+              </div>
+            ) : (
+              runs.slice(0, 5).map((r) => (
+                <div
+                  key={r.runId}
+                  className="px-3 py-1 text-xs text-slate-700 dark:text-slate-300 truncate font-mono flex items-center gap-1.5"
+                  title={`${r.project} - ${r.action} (${r.status})`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      r.status === 'running'
+                        ? 'bg-sky-400'
+                        : r.status === 'completed'
+                          ? 'bg-emerald-400'
+                          : 'bg-red-400'
+                    }`}
+                  />
+                  <span className="truncate">{r.project}</span>
+                </div>
+              ))
+            )}
 
             <div className="px-3 py-1 mt-4 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
               Quick actions
@@ -242,14 +434,14 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
             <button
               className="block w-full text-left px-3 py-1.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed"
               disabled
-              title={TOOLTIPS.step6}
+              title="Bulk Pattern A across all projects ships after step 6b (per-row launch is available now)"
             >
               /safe-exit on all
             </button>
             <button
               className="block w-full text-left px-3 py-1.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed"
               disabled
-              title={TOOLTIPS.step6}
+              title="Orphan-process detection from the dashboard ships in MVP step 11"
             >
               Detect orphans
             </button>
@@ -282,9 +474,9 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
               </span>
               <div className="flex-1" />
               <button
-                className="text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 cursor-not-allowed rounded px-2.5 py-1 font-medium border border-violet-200 dark:border-violet-700/30"
+                className="text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 cursor-not-allowed rounded px-2.5 py-1 font-medium border border-violet-200 dark:border-violet-700/30 opacity-70"
                 disabled
-                title={TOOLTIPS.step6}
+                title="Bulk action picker ships after step 6b -- use the per-row Skill v dropdown today"
               >
                 + Action
               </button>
@@ -373,28 +565,63 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
                           {formatLastActivity(activity[p.name]?.lastCommitAt ?? null)}
                         </td>
                         <td className="px-6 text-right">
-                          <div className="inline-flex items-center gap-1 opacity-60">
+                          <div
+                            className="inline-flex items-center gap-1"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          >
                             <button
-                              className="text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-0.5 cursor-not-allowed text-slate-500 dark:text-slate-400"
+                              className="text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-0.5 cursor-not-allowed text-slate-500 dark:text-slate-400 opacity-60"
                               disabled
                               title={TOOLTIPS.step9}
-                              onClick={(e) => e.stopPropagation()}
                             >
                               Open
                             </button>
+                            {/* Skill v dropdown (Pattern A, step 6b).
+                                Native <details> avoids dependency on a headless
+                                UI library; the summary acts as the button. */}
+                            <details className="relative">
+                              <summary
+                                className="list-none cursor-pointer text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700/30 rounded px-2 py-0.5 hover:bg-violet-200 dark:hover:bg-violet-900/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-violet-500"
+                                title="Launch a Pattern A headless skill (claude -p '/<skill>')"
+                              >
+                                Skill v
+                              </summary>
+                              <div className="absolute right-0 mt-1 z-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-md py-1 min-w-[10rem]">
+                                {PATTERN_A_SKILLS.map((s) => {
+                                  const concurrencyKey = `${p.name}::${s.action}`;
+                                  const busy = launchingFor === concurrencyKey;
+                                  return (
+                                    <button
+                                      key={s.action}
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        // Close the <details> popover.
+                                        const det = (
+                                          e.currentTarget.closest('details') as HTMLDetailsElement | null
+                                        );
+                                        if (det) det.open = false;
+                                        void launchAction(p.name, s.action);
+                                      }}
+                                      className="block w-full text-left text-xs px-3 py-1.5 font-mono text-slate-800 dark:text-slate-200 hover:bg-violet-50 dark:hover:bg-violet-900/30 disabled:opacity-50 disabled:cursor-wait"
+                                    >
+                                      {s.label}
+                                      {busy && (
+                                        <span className="ml-2 text-[10px] text-slate-500 dark:text-slate-400">
+                                          ...
+                                        </span>
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </details>
                             <button
-                              className="text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-0.5 cursor-not-allowed text-slate-500 dark:text-slate-400"
-                              disabled
-                              title={TOOLTIPS.step8}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              Skill v
-                            </button>
-                            <button
-                              className="text-xs bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-700/30 rounded px-2 py-0.5 cursor-not-allowed text-sky-700 dark:text-sky-300"
+                              className="text-xs bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-700/30 rounded px-2 py-0.5 cursor-not-allowed text-sky-700 dark:text-sky-300 opacity-60"
                               disabled
                               title={TOOLTIPS.step10}
-                              onClick={(e) => e.stopPropagation()}
                             >
                               Agent v
                             </button>
@@ -428,16 +655,18 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
             </div>
           </div>
 
-          {/* Bottom terminal panel — tabbed shell only; live streaming starts step 6. */}
+          {/* Bottom terminal panel — step 6b: logs tab is live (SSE-driven). */}
           <TerminalPanel
             activeTab={terminalTab}
             onTabChange={setTerminalTab}
             tooltips={{
-              logs: TOOLTIPS.step6,
+              logs: 'Live stdout/stderr from launched Pattern A skills (step 6b)',
               terminal: TOOLTIPS.step9,
               agents: TOOLTIPS.step10,
               tasks: TOOLTIPS.step11,
             }}
+            activeRuns={runs}
+            onCloseRun={closeRun}
           />
         </main>
 
@@ -446,6 +675,9 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
           project={selectedProject}
           activity={selectedProject ? activity[selectedProject.name] : undefined}
           tooltips={TOOLTIPS}
+          onLaunch={launchAction}
+          launchingFor={launchingFor}
+          patternASkills={PATTERN_A_SKILLS}
         />
       </div>
     </div>

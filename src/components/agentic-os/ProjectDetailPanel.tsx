@@ -17,16 +17,35 @@ import {
   type Tooltips,
 } from '@/lib/agentic-os/status-helpers';
 
+export interface PatternASkill {
+  /** action key passed to /api/agentic-os/launch (must match launch-validator). */
+  action: string;
+  /** Human label, e.g. "/safe-exit". */
+  label: string;
+  /** Slash command (for display). */
+  slash: string;
+}
+
 interface Props {
   project: Project | null;
   activity?: ProjectActivity;
   tooltips: Tooltips;
+  /** Step 6b: launch a Pattern A skill against the selected project. */
+  onLaunch?: (project: string, action: string) => void;
+  /** "{project}::{action}" of the in-flight launch, if any. */
+  launchingFor?: string | null;
+  /** Available Pattern A skills (step 6b). When empty, the detail panel
+   *  shows the legacy disabled state. */
+  patternASkills?: ReadonlyArray<PatternASkill>;
 }
 
 export default function ProjectDetailPanel({
   project,
   activity,
   tooltips,
+  onLaunch,
+  launchingFor,
+  patternASkills,
 }: Props) {
   if (!project) {
     return (
@@ -63,34 +82,68 @@ export default function ProjectDetailPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {/* Launch session — all controls disabled at step 3. */}
+        {/* Launch session. Step 6b: Pattern A skills are live; embedded
+            terminal (step 9) + external pop-out (step 7) stay disabled. */}
         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
           <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-2">
             Launch session
           </div>
           <button
-            className="w-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-xs font-medium py-1.5 rounded mb-2 cursor-not-allowed border border-violet-200 dark:border-violet-700/30"
+            className="w-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-xs font-medium py-1.5 rounded mb-2 cursor-not-allowed border border-slate-200 dark:border-slate-700"
             disabled
             title={tooltips.step9}
           >
             Open in embedded terminal
           </button>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs py-1.5 rounded font-mono cursor-not-allowed text-slate-500 dark:text-slate-400"
-              disabled
-              title={tooltips.step6}
-            >
-              claude --resume
-            </button>
-            <button
-              className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs py-1.5 rounded cursor-not-allowed text-slate-500 dark:text-slate-400"
-              disabled
-              title={tooltips.step7}
-            >
-              [ ] external
-            </button>
-          </div>
+          {patternASkills && patternASkills.length > 0 && onLaunch ? (
+            <>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 mb-1.5 font-mono">
+                Pattern A (headless):
+              </div>
+              <div className="grid grid-cols-1 gap-1.5">
+                {patternASkills.map((s) => {
+                  const concurrencyKey = `${project.name}::${s.action}`;
+                  const busy = launchingFor === concurrencyKey;
+                  return (
+                    <button
+                      key={s.action}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => onLaunch(project.name, s.action)}
+                      className="bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700/30 text-xs py-1.5 px-2 rounded font-mono text-left hover:bg-violet-200 dark:hover:bg-violet-900/50 disabled:opacity-50 disabled:cursor-wait focus:outline-none focus-visible:ring-1 focus-visible:ring-violet-500"
+                      title={`Run claude -p '${s.slash}' in ${project.name}`}
+                    >
+                      claude -p &apos;{s.slash}&apos;{busy && ' ...'}
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                className="mt-2 w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs py-1.5 rounded cursor-not-allowed text-slate-500 dark:text-slate-400"
+                disabled
+                title={tooltips.step7}
+              >
+                [ ] external (step 7)
+              </button>
+            </>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs py-1.5 rounded font-mono cursor-not-allowed text-slate-500 dark:text-slate-400"
+                disabled
+                title={tooltips.step6}
+              >
+                claude --resume
+              </button>
+              <button
+                className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs py-1.5 rounded cursor-not-allowed text-slate-500 dark:text-slate-400"
+                disabled
+                title={tooltips.step7}
+              >
+                [ ] external
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Purpose / Status / Resume prompt block */}
