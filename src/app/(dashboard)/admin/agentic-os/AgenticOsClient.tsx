@@ -17,10 +17,14 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav';
+import ActivitySparkline, {
+  type SparklineTone,
+} from '@/components/agentic-os/ActivitySparkline';
 import type {
   Project,
   ConvergenceEdge,
 } from '@/lib/agentic-os/parse-projects-map';
+import type { ProjectActivity } from '@/lib/agentic-os/git-activity';
 
 export type AgenticOsResult =
   | { ok: true; projects: Project[]; edges: ConvergenceEdge[] }
@@ -36,11 +40,12 @@ type TerminalTab = 'logs' | 'terminal' | 'agents' | 'tasks';
 
 interface Props {
   result: AgenticOsResult;
+  /** Per-project git activity, keyed by project name. Empty object on map read failure. */
+  activity?: Record<string, ProjectActivity>;
 }
 
 // Step-deferral tooltips so the disabled buttons explain themselves on hover.
 const TOOLTIP = {
-  step4: 'Sparkline + recent activity arrive in MVP step 4',
   step5: 'Mermaid convergence graph arrives in MVP step 5',
   step6: 'Launch buttons arrive in MVP step 6 (Pattern A: headless)',
   step7: 'External Windows Terminal pop-out arrives in MVP step 7',
@@ -49,6 +54,37 @@ const TOOLTIP = {
   step10: 'Agent dropdown + spawn arrives in MVP step 10',
   step11: 'Cowork daily digest + Telegram automation arrives in MVP step 11',
 } as const;
+
+/**
+ * Map an inferred project status label to the sparkline color tone.
+ * `total === 0` already overrides to "idle" inside the sparkline itself,
+ * so the only mapping needed here is: blocked -> red, everything else -> emerald.
+ */
+function sparklineToneFor(statusLabel: string): SparklineTone {
+  return statusLabel === 'blocked' ? 'blocked' : 'active';
+}
+
+/**
+ * Render a commit timestamp as a compact "Xm / Xh / Xd / Mon DD" relative
+ * marker for the table's Last column.
+ */
+function formatLastActivity(iso: string | null): string {
+  if (!iso) return '—';
+  const ts = Date.parse(iso);
+  if (Number.isNaN(ts)) return '—';
+  const diffMs = Date.now() - ts;
+  if (diffMs < 0) return 'just now';
+  const min = Math.floor(diffMs / 60_000);
+  if (min < 60) return `${Math.max(1, min)}m`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h`;
+  const day = Math.floor(hr / 24);
+  if (day < 30) return `${day}d`;
+  return new Date(ts).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  });
+}
 
 // Map free-text Status field to a badge color. The data is human-maintained
 // so we keyword-sniff rather than expect strict enum values.
@@ -113,7 +149,7 @@ function ErrorState({
   );
 }
 
-export default function AgenticOsClient({ result }: Props) {
+export default function AgenticOsClient({ result, activity = {} }: Props) {
   // Hooks must be unconditional — declare ALL state before the early return.
   const [selectedName, setSelectedName] = useState<string | null>(
     result.ok && result.projects.length > 0 ? result.projects[0].name : null
@@ -329,18 +365,10 @@ export default function AgenticOsClient({ result }: Props) {
                       Project
                     </th>
                     <th className="text-left font-medium px-2 py-2">Status</th>
-                    <th
-                      className="text-left font-medium px-2 py-2 w-32"
-                      title={TOOLTIP.step4}
-                    >
+                    <th className="text-left font-medium px-2 py-2 w-32">
                       Activity
                     </th>
-                    <th
-                      className="text-left font-medium px-2 py-2"
-                      title={TOOLTIP.step4}
-                    >
-                      Last
-                    </th>
+                    <th className="text-left font-medium px-2 py-2">Last</th>
                     <th className="text-right font-medium px-6 py-2">
                       Actions
                     </th>
@@ -396,16 +424,14 @@ export default function AgenticOsClient({ result }: Props) {
                             {status.label}
                           </span>
                         </td>
-                        <td className="px-2 align-middle" title={TOOLTIP.step4}>
-                          <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-                            ——————
-                          </span>
+                        <td className="px-2 align-middle">
+                          <ActivitySparkline
+                            data={activity[p.name]?.daily ?? []}
+                            tone={sparklineToneFor(status.label)}
+                          />
                         </td>
-                        <td
-                          className="px-2 align-middle text-xs text-slate-400 dark:text-slate-500"
-                          title={TOOLTIP.step4}
-                        >
-                          —
+                        <td className="px-2 align-middle text-xs text-slate-600 dark:text-slate-400 font-mono">
+                          {formatLastActivity(activity[p.name]?.lastCommitAt ?? null)}
                         </td>
                         <td className="px-6 text-right">
                           <div className="inline-flex items-center gap-1 opacity-60">
@@ -720,20 +746,52 @@ export default function AgenticOsClient({ result }: Props) {
                   </div>
                 </div>
 
-                {/* Recent commits — populated by step 4's git-activity helper. */}
+                {/* Recent commits -- populated server-side by getProjectActivity. */}
                 <div className="px-4 py-3">
                   <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-2">
                     Recent commits
-                    <span
-                      className="ml-2 font-mono text-slate-400 dark:text-slate-500 normal-case"
-                      title={TOOLTIP.step4}
-                    >
-                      (step 4)
-                    </span>
                   </div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400 italic">
-                    git log via spawn() arrives in MVP step 4.
-                  </div>
+                  {(() => {
+                    const projActivity = activity[selectedProject.name];
+                    if (!projActivity) {
+                      return (
+                        <div className="text-xs text-slate-500 dark:text-slate-400 italic">
+                          Activity not yet loaded.
+                        </div>
+                      );
+                    }
+                    if (projActivity.error) {
+                      return (
+                        <div className="text-xs text-slate-500 dark:text-slate-400 italic">
+                          Git unavailable: {projActivity.error}
+                        </div>
+                      );
+                    }
+                    if (projActivity.recent.length === 0) {
+                      return (
+                        <div className="text-xs text-slate-500 dark:text-slate-400 italic">
+                          No commits in the last 14 days.
+                        </div>
+                      );
+                    }
+                    return (
+                      <ul className="space-y-1.5 text-xs">
+                        {projActivity.recent.map((c) => (
+                          <li key={c.sha} className="flex gap-2">
+                            <span className="font-mono text-emerald-600 dark:text-emerald-400 shrink-0">
+                              {c.sha}
+                            </span>
+                            {/* min-w-0 is load-bearing: without it, this flex
+                                item refuses to shrink and `truncate` silently
+                                falls back to horizontal overflow. */}
+                            <span className="text-slate-700 dark:text-slate-300 truncate min-w-0">
+                              {c.subject}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    );
+                  })()}
                 </div>
               </div>
             </>

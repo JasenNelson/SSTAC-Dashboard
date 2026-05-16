@@ -25,6 +25,10 @@ import {
   readProjectsMap,
   resolveProjectsMapPath,
 } from '@/lib/agentic-os/parse-projects-map';
+import {
+  getAllProjectsActivity,
+  type ProjectActivity,
+} from '@/lib/agentic-os/git-activity';
 import AgenticOsClient, { type AgenticOsResult } from './AgenticOsClient';
 
 // ErrorBoundary intentionally NOT wrapped here: it only catches CLIENT-side
@@ -70,8 +74,15 @@ export default async function AgenticOsPage() {
   // discriminated-union to the client rather than throwing. Admins should see
   // "here is what's wrong and how to fix it", not a generic error page.
   let result: AgenticOsResult;
+  let activity: Record<string, ProjectActivity> = {};
   try {
     const parsed = await readProjectsMap();
+    // Fan-out git log across every project in parallel. Per-project failures
+    // (not a git repo, missing path) are isolated to that project's `error`
+    // field by getAllProjectsActivity; the overall promise always resolves.
+    activity = await getAllProjectsActivity(
+      parsed.projects.map((p) => ({ name: p.name, path: p.path }))
+    );
     result = { ok: true, projects: parsed.projects, edges: parsed.edges };
   } catch (err) {
     const expectedPath = resolveProjectsMapPath();
@@ -88,5 +99,5 @@ export default async function AgenticOsPage() {
     };
   }
 
-  return <AgenticOsClient result={result} />;
+  return <AgenticOsClient result={result} activity={activity} />;
 }
