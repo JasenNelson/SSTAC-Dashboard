@@ -45,6 +45,40 @@ const SPAWN_RACE_WINDOW_MS = 500;
  * The child is NOT detached and NOT unref'd: step 6b will pipe its stdout
  * back over SSE. Callers should set stdio: ['ignore', 'pipe', 'pipe'] in
  * `options` to keep stdout/stderr pipes available without holding stdin open.
+ *
+ * ERROR SEMANTICS (post-race-window contract):
+ *
+ *   This function resolves once 'spawn' fires OR the 500ms race window
+ *   elapses without any 'error'. It REJECTS only on an 'error' event that
+ *   fires BEFORE 'spawn' AND BEFORE the race window elapses. After this
+ *   function settles (resolve OR reject), its event listeners are removed
+ *   via `child.removeListener` in `settle()` -- meaning any subsequent
+ *   'error' event will NOT reject this promise and will NOT propagate to
+ *   the caller's `await` site.
+ *
+ *   Two post-settle failure modes the caller MUST handle:
+ *
+ *     1. Late 'error' (rare): the child emits 'error' after both the race
+ *        window elapsed AND 'spawn' never fired -- e.g. an ENOENT delivered
+ *        after the 500ms timer. The promise has already resolved with a
+ *        ChildProcess whose .pid is undefined. The caller's downstream
+ *        consumer (run registry / SSE handler) is responsible for detecting
+ *        the missing pid and the eventually-emitted 'error' event.
+ *
+ *     2. Post-spawn 'error': the child started, then died later (e.g.
+ *        write-after-exit on stdin, OS-level kill). This is normal lifecycle
+ *        and is delivered to whichever listener the caller attached after
+ *        this function returned -- for the agentic-os launch route that is
+ *        the run registry's 'error' handler which sets status='failed' and
+ *        flushes the SSE stream with an 'exit' event.
+ *
+ *   Neither path is a bug in this function; both are explicitly the caller's
+ *   responsibility per the launch route's design (see route.ts: post-spawn
+ *   wire-up of stdout / stderr / exit / error listeners on the registry).
+ *
+ *   No behavior change is intended by this documentation block -- the
+ *   contract above describes the implementation that has shipped since
+ *   step 6a (commit 3bb5479).
  */
 export async function spawnAwaitingReady(
   exe: string,

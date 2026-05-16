@@ -55,6 +55,14 @@ const AUDIT_LOG_FILE = path.join(AUDIT_LOG_DIR, 'agentic-os-launches.log');
 // Cached directory-ensured flag so we don't hit the FS for every entry.
 let dirEnsured = false;
 
+// One-shot warn flag for persistent file-write failures. Without this, a
+// permission-denied or disk-full state would emit one console.warn PER
+// launch -- which on an active dev server can flood the terminal. We warn
+// once, suppress subsequent warnings until a successful write resets the
+// flag (so a transient failure that resolves later starts warning again
+// if a NEW failure mode appears).
+let auditFileFailed = false;
+
 const launchAuditLog: AuditEntry[] = [];
 
 function ensureLogDir(): boolean {
@@ -80,14 +88,21 @@ function appendToFile(entry: AuditEntry): void {
     // appendFileSync is fine here: launch route latency is dominated by spawn,
     // and a write of ~250 bytes is sub-millisecond on any local disk.
     fs.appendFileSync(AUDIT_LOG_FILE, line, { encoding: 'utf-8' });
+    // Clear the one-shot flag on a successful write so a NEW failure mode
+    // (e.g. disk fills up later) emits one fresh warning rather than being
+    // silently swallowed. This keeps "first failure of a kind" observable
+    // without flooding the terminal during a persistent outage.
+    if (auditFileFailed) auditFileFailed = false;
   } catch (err) {
-    console.warn(
-      '[agentic-os audit] append to logs/agentic-os-launches.log failed:',
-      err instanceof Error ? err.message : String(err),
-    );
-    // Disable further attempts this session? No -- the failure may be
-    // transient (e.g. disk briefly full). Per-call retry is the simpler
-    // correctness story.
+    if (!auditFileFailed) {
+      auditFileFailed = true;
+      console.warn(
+        '[agentic-os audit] append to logs/agentic-os-launches.log failed; further warnings suppressed until a successful write:',
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+    // Per-call retry is still attempted on the next entry -- the failure may
+    // be transient (e.g. disk briefly full). Only the noisy warn is gated.
   }
 }
 
@@ -114,6 +129,15 @@ export function getLaunchAuditLog(): readonly AuditEntry[] {
 export function __resetLaunchAuditLogForTest(): void {
   launchAuditLog.length = 0;
   dirEnsured = false;
+  auditFileFailed = false;
+}
+
+/**
+ * Test-only probe of the one-shot warn flag. Returns true iff the last
+ * file-write attempt failed AND no successful write has cleared the flag.
+ */
+export function __getAuditFileFailedForTest(): boolean {
+  return auditFileFailed;
 }
 
 export const __AUDIT_LOG_CAP_FOR_TEST = AUDIT_LOG_CAP;

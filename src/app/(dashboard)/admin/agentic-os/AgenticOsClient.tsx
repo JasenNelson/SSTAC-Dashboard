@@ -120,7 +120,14 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
   //  - closed on component unmount (effect cleanup below)
   //  - closed when the user clicks the run card's x (closeRun handler)
   const [runs, setRuns] = useState<ActiveRun[]>([]);
-  const [launchingFor, setLaunchingFor] = useState<string | null>(null);
+  // Set of in-flight "${project}::${action}" concurrency keys. A Set (rather
+  // than a single string) lets concurrent launches across different rows
+  // coexist without racing each other: a fast click followed by a slow click
+  // would otherwise leave the slow launch's button stuck busy when the fast
+  // launch cleared the single-string state. React update detection requires
+  // a new Set reference on every mutation -- callers MUST use `new Set(prev)`
+  // before add/delete (see addLaunching / removeLaunching helpers below).
+  const [launchingFor, setLaunchingFor] = useState<Set<string>>(() => new Set());
   // Track open EventSources so unmount + manual-close can release them.
   // Stored in a ref to avoid re-renders on every open/close.
   const eventSourcesRef = useRef<Map<string, EventSource>>(new Map());
@@ -149,8 +156,20 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
   const launchAction = useCallback(
     async (project: string, action: string) => {
       const concurrencyKey = `${project}::${action}`;
-      if (launchingFor === concurrencyKey) return; // double-click guard
-      setLaunchingFor(concurrencyKey);
+      // Functional read via setState to avoid capturing a stale Set reference
+      // in the closure (the useCallback dep list intentionally omits
+      // launchingFor so back-to-back launches don't allocate a new callback).
+      let alreadyInFlight = false;
+      setLaunchingFor((prev) => {
+        if (prev.has(concurrencyKey)) {
+          alreadyInFlight = true;
+          return prev; // same reference -- no re-render
+        }
+        const next = new Set(prev);
+        next.add(concurrencyKey);
+        return next;
+      });
+      if (alreadyInFlight) return; // double-click guard
       try {
         const resp = await fetch('/api/agentic-os/launch', {
           method: 'POST',
@@ -262,10 +281,18 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
             (err instanceof Error ? err.message : String(err)),
         );
       } finally {
-        setLaunchingFor(null);
+        setLaunchingFor((prev) => {
+          if (!prev.has(concurrencyKey)) return prev; // already cleared elsewhere
+          const next = new Set(prev);
+          next.delete(concurrencyKey);
+          return next;
+        });
       }
     },
-    [launchingFor],
+    // launchingFor intentionally omitted: all reads/writes happen through
+    // the functional setLaunchingFor form so the latest state is always
+    // observed without re-allocating this callback on every mutation.
+    [],
   );
 
   const projects = result.ok ? result.projects : [];
@@ -598,7 +625,7 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
                                 launch. */}
                             {(() => {
                               const concurrencyKey = `${p.name}::open_session`;
-                              const busy = launchingFor === concurrencyKey;
+                              const busy = launchingFor.has(concurrencyKey);
                               return (
                                 <button
                                   type="button"
@@ -627,7 +654,7 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
                               <div className="absolute right-0 mt-1 z-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-md py-1 min-w-[10rem]">
                                 {PATTERN_A_SKILLS.map((s) => {
                                   const concurrencyKey = `${p.name}::${s.action}`;
-                                  const busy = launchingFor === concurrencyKey;
+                                  const busy = launchingFor.has(concurrencyKey);
                                   return (
                                     <button
                                       key={s.action}

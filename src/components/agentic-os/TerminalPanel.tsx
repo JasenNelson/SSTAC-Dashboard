@@ -151,7 +151,19 @@ function LogCard({
         className="bg-[#0A0A0A] text-slate-200 font-mono text-[11px] leading-tight px-3 py-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-all"
       >
         {run.lines.length === 0 ? (
-          <span className="text-slate-500 italic">(waiting for output...)</span>
+          // Empty-state copy branches on action: Pattern B (open_session) spawns
+          // wt.exe which launches an external desktop window and exits
+          // immediately, so no inline stdout/stderr is ever expected. The
+          // generic "waiting for output" wording would be misleading. All
+          // other actions are Pattern A (claude -p <skill>) which streams its
+          // output over SSE; for those the wait message is accurate.
+          run.action === 'open_session' ? (
+            <span className="text-slate-500 italic">
+              External terminal opened on your desktop; no inline output expected.
+            </span>
+          ) : (
+            <span className="text-slate-500 italic">Waiting for output...</span>
+          )
         ) : (
           run.lines.map((line, i) => (
             <div

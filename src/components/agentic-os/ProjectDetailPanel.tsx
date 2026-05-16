@@ -32,8 +32,9 @@ interface Props {
   tooltips: Tooltips;
   /** Step 6b: launch a Pattern A skill against the selected project. */
   onLaunch?: (project: string, action: string) => void;
-  /** "{project}::{action}" of the in-flight launch, if any. */
-  launchingFor?: string | null;
+  /** Set of in-flight "{project}::{action}" concurrency keys. Allows
+   *  concurrent launches across rows without single-string races. */
+  launchingFor?: ReadonlySet<string>;
   /** Available Pattern A skills (step 6b). When empty, the detail panel
    *  shows the legacy disabled state. */
   patternASkills?: ReadonlyArray<PatternASkill>;
@@ -103,7 +104,7 @@ export default function ProjectDetailPanel({
               <div className="grid grid-cols-1 gap-1.5">
                 {patternASkills.map((s) => {
                   const concurrencyKey = `${project.name}::${s.action}`;
-                  const busy = launchingFor === concurrencyKey;
+                  const busy = launchingFor?.has(concurrencyKey) ?? false;
                   return (
                     <button
                       key={s.action}
@@ -124,7 +125,7 @@ export default function ProjectDetailPanel({
                   the launch route still records the audit + SSE entry. */}
               {(() => {
                 const concurrencyKey = `${project.name}::open_session`;
-                const busy = launchingFor === concurrencyKey;
+                const busy = launchingFor?.has(concurrencyKey) ?? false;
                 return (
                   <button
                     type="button"
