@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { isAgenticOsEnabled } from '@/lib/agentic-os/feature-flag'
 
-const adminNavItems = [
+const baseAdminNavItems = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/admin/users', label: 'User Management' },
   { href: '/admin/tags', label: 'Tag Management' },
@@ -12,6 +13,14 @@ const adminNavItems = [
   { href: '/admin/twg-synthesis', label: 'TWG Review' },
   { href: '/admin/matrix-review', label: 'Matrix Review' },
 ]
+
+// Agentic OS pill is only rendered when the feature flag is on (dev mode
+// or NEXT_PUBLIC_AGENTIC_OS_ENABLED=true). Without this gate the pill
+// would be a visible-but-broken link in production deployments per
+// holistic review NIT-3.
+const adminNavItems = isAgenticOsEnabled()
+  ? [...baseAdminNavItems, { href: '/admin/agentic-os', label: 'Agentic OS' }]
+  : baseAdminNavItems
 
 export default function AdminFunctionsNav() {
   const pathname = usePathname()

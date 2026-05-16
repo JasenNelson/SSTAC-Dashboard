@@ -11,10 +11,19 @@ const nextConfig = {
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   webpack: (config: any) => {
-    // Mark better-sqlite3 as external to prevent webpack from trying to bundle it
-    // This is a native module that only works in local development, not in serverless
+    // Mark native-binary modules as external so webpack does not try to bundle
+    // them. These are local-dev-only modules; production (Vercel) serves no
+    // surface that references them, and the Next.js build trace would
+    // otherwise fail trying to follow the .node binary loader path.
+    //   - better-sqlite3: engine-v2 local-dev DB.
+    //   - node-pty: Agentic OS embedded terminal modal (step 9 / Pattern E).
+    //     Required at runtime ONLY by scripts/agentic-os-pty-server.mjs (a
+    //     sidecar process), never by Next route handlers. The
+    //     isAgenticOsPtyEnabled() feature flag wraps the require in try/catch,
+    //     so externalizing it here keeps the build clean even when node-pty
+    //     is absent.
     config.externals = config.externals || [];
-    config.externals.push('better-sqlite3');
+    config.externals.push('better-sqlite3', 'node-pty');
     return config;
   },
 };

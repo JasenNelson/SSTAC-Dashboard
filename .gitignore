@@ -29,6 +29,9 @@ yarn-error.log*
 .pnpm-debug.log*
 *.log
 
+# Agentic OS launch audit log (step 6b -- written by /api/agentic-os/launch).
+/logs/
+
 # Environment variables
 .env*
 !.env.example
