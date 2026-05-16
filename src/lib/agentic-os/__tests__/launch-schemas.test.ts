@@ -84,4 +84,48 @@ describe('LaunchRequestSchema', () => {
     expect(LaunchRequestSchema.safeParse(null).success).toBe(false);
     expect(LaunchRequestSchema.safeParse([]).success).toBe(false);
   });
+
+  // ---- Step 8 (Pattern C) skillSlug acceptance / rejection. ---------------
+
+  it('accepts an optional skillSlug matching SKILL_SLUG_PATTERN', () => {
+    const result = LaunchRequestSchema.safeParse({
+      project: 'SSTAC-Dashboard',
+      action: 'run_skill',
+      skillSlug: 'doc-navigator',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.skillSlug).toBe('doc-navigator');
+    }
+  });
+
+  it('rejects a skillSlug that violates the slug pattern', () => {
+    const hostile = [
+      '../etc',
+      'foo/bar',
+      '.foo',
+      '-foo',
+      'foo bar',
+      'foo;bar',
+      '$(echo)',
+      '`whoami`',
+      'a'.repeat(42),
+    ];
+    for (const skillSlug of hostile) {
+      const result = LaunchRequestSchema.safeParse({
+        project: 'SSTAC-Dashboard',
+        action: 'run_skill',
+        skillSlug,
+      });
+      expect(result.success, `expected reject for slug "${skillSlug}"`).toBe(false);
+    }
+  });
+
+  it('still accepts payloads without skillSlug (optional field)', () => {
+    const result = LaunchRequestSchema.safeParse({
+      project: 'SSTAC-Dashboard',
+      action: 'run_safe_exit',
+    });
+    expect(result.success).toBe(true);
+  });
 });

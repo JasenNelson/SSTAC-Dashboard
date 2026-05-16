@@ -48,13 +48,14 @@ describe('validateLaunchRequest', () => {
     }
   });
 
-  it('ships the three Pattern-A actions plus the step-7 open_session, and no Pattern-C/D templates yet', () => {
+  it('ships the three Pattern-A actions plus open_session (Pattern B) plus run_skill (Pattern C); no per-skill templates', () => {
     expect(new Set(ALL_ACTIONS)).toEqual(
       new Set([
         'run_safe_exit',
         'run_update_docs',
         'run_doc_navigator',
         'open_session',
+        'run_skill',
       ]),
     );
   });
@@ -252,6 +253,163 @@ describe('validateLaunchRequest', () => {
         path.join('C:\\Projects', 'Regulatory-Review-worktrees/engine-v2'),
       );
     }
+  });
+
+  // ---------------------------------------------------------------------------
+  // Step 8: Pattern C (run_skill generic launcher).
+  // ---------------------------------------------------------------------------
+
+  describe('run_skill (Pattern C, step 8)', () => {
+    it('produces {exe: "claude", args: ["-p", "/<slug>"]} for every allowed project + a valid slug', () => {
+      for (const project of ALL_PROJECTS) {
+        const result = validateLaunchRequest({
+          project,
+          action: 'run_skill',
+          skillSlug: 'safe-exit',
+        });
+        expect(result.ok, `expected ok for ${project}/run_skill/safe-exit`).toBe(true);
+        if (result.ok) {
+          expect(result.value.exe).toBe('claude');
+          expect(result.value.args).toEqual(['-p', '/safe-exit']);
+          expect(result.value.cwd).toBe(path.join('C:\\Projects', project));
+        }
+      }
+    });
+
+    it('accepts mixed-case slug, slug with digits, slug with hyphens', () => {
+      const valid = ['Foo', 'foo-bar', 'a1', 'doc-navigator', 'update-docs', 'foo123bar'];
+      for (const slug of valid) {
+        const result = validateLaunchRequest({
+          project: 'SSTAC-Dashboard',
+          action: 'run_skill',
+          skillSlug: slug,
+        });
+        expect(result.ok, `expected ok for slug "${slug}"`).toBe(true);
+        if (result.ok) {
+          expect(result.value.args).toEqual(['-p', `/${slug}`]);
+        }
+      }
+    });
+
+    it('rejects run_skill when skillSlug is missing', () => {
+      const result = validateLaunchRequest({
+        project: 'SSTAC-Dashboard',
+        action: 'run_skill',
+      });
+      expect(result).toEqual({ ok: false, reason: 'missing_skill_slug' });
+    });
+
+    it('rejects run_skill when skillSlug is empty string (defense in depth past zod)', () => {
+      // zod min(1) catches this at the schema layer in real life, but the
+      // validator is the security boundary -- it must reject empty regardless.
+      const result = validateLaunchRequest({
+        project: 'SSTAC-Dashboard',
+        action: 'run_skill',
+        skillSlug: '',
+      });
+      expect(result).toEqual({ ok: false, reason: 'missing_skill_slug' });
+    });
+
+    it('rejects slugs containing path traversal / shell metachars / unicode tokens', () => {
+      // 8+ invalid slug forms covering the categories called out in the spec.
+      const hostile = [
+        '..',
+        '../etc/passwd',
+        '../../foo',
+        '..\\windows',
+        '/etc/passwd',
+        '\\windows',
+        'foo/bar',
+        'foo\\bar',
+        '.dotleading',
+        '-leadingdash',
+        'foo.bar',
+        'foo bar',
+        'foo;bar',
+        'foo`bar',
+        'foo$(echo pwned)',
+        'foo&&bar',
+        'foo|bar',
+        'foo>out',
+        '$ENV',
+        'foo\nbar',
+        'foo\rbar',
+        'foo\tbar',
+        // Non-ASCII / unicode -- slug regex is [a-z0-9-] case-insensitive only.
+        'foo bar',
+        'foo‮bar', // RTL override
+        'café',
+        // Length: regex caps at 41 chars (1 + 40); 42 chars must fail.
+        'a'.repeat(42),
+      ];
+      for (const slug of hostile) {
+        const result = validateLaunchRequest({
+          project: 'SSTAC-Dashboard',
+          action: 'run_skill',
+          skillSlug: slug,
+        });
+        expect(result, `expected reject for slug "${JSON.stringify(slug)}"`).toEqual({
+          ok: false,
+          reason: 'invalid_skill_slug',
+        });
+      }
+    });
+
+    it('rejects run_skill against an unknown project (allowlist runs first, ahead of slug check)', () => {
+      const result = validateLaunchRequest({
+        project: 'NotAProject',
+        action: 'run_skill',
+        skillSlug: 'safe-exit',
+      });
+      expect(result).toEqual({ ok: false, reason: 'unknown_project' });
+    });
+
+    it('rejects run_skill against an unknown project even when slug is itself invalid (project check is first)', () => {
+      // Confirms the cheap allowlist check runs ahead of the slug regex,
+      // matching the existing layering between project/action/template.
+      const result = validateLaunchRequest({
+        project: '`whoami`',
+        action: 'run_skill',
+        skillSlug: '../etc/passwd',
+      });
+      expect(result).toEqual({ ok: false, reason: 'unknown_project' });
+    });
+
+    it('cwd is set normally for run_skill (same path.join semantics)', () => {
+      const result = validateLaunchRequest({
+        project: 'Regulatory-Review-worktrees/engine-v2',
+        action: 'run_skill',
+        skillSlug: 'doc-navigator',
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.cwd).toBe(
+          path.join('C:\\Projects', 'Regulatory-Review-worktrees/engine-v2'),
+        );
+      }
+    });
+
+    it('args for run_skill is a defensive copy (caller mutation cannot leak into next call)', () => {
+      const r1 = validateLaunchRequest({
+        project: 'SSTAC-Dashboard',
+        action: 'run_skill',
+        skillSlug: 'foo',
+      });
+      expect(r1.ok).toBe(true);
+      if (r1.ok) {
+        // Try to mutate (TS readonly cast).
+        (r1.value.args as string[])[1] = '/pwned';
+      }
+      const r2 = validateLaunchRequest({
+        project: 'SSTAC-Dashboard',
+        action: 'run_skill',
+        skillSlug: 'foo',
+      });
+      expect(r2.ok).toBe(true);
+      if (r2.ok) {
+        expect(r2.value.args).toEqual(['-p', '/foo']);
+      }
+    });
   });
 
   it('args is a defensive copy (caller cannot mutate the registry)', () => {

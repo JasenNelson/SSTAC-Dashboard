@@ -29,6 +29,10 @@ import {
   getAllProjectsActivity,
   type ProjectActivity,
 } from '@/lib/agentic-os/git-activity';
+import {
+  discoverAllProjectSkills,
+  type ProjectSkills,
+} from '@/lib/agentic-os/skill-discovery';
 import { isAgenticOsEnabled } from '@/lib/agentic-os/feature-flag';
 import AgenticOsClient, { type AgenticOsResult } from './AgenticOsClient';
 
@@ -89,7 +93,7 @@ export default async function AgenticOsPage() {
         'in your runtime environment (and ensure the filesystem + git are ' +
         'actually available there).',
     };
-    return <AgenticOsClient result={result} activity={{}} />;
+    return <AgenticOsClient result={result} activity={{}} projectSkills={{}} />;
   }
 
   // Read PROJECTS_MAP.md. If the file is missing or unparseable, surface a
@@ -97,14 +101,17 @@ export default async function AgenticOsPage() {
   // "here is what's wrong and how to fix it", not a generic error page.
   let result: AgenticOsResult;
   let activity: Record<string, ProjectActivity> = {};
+  let projectSkills: Record<string, ProjectSkills> = {};
   try {
     const parsed = await readProjectsMap();
-    // Fan-out git log across every project in parallel. Per-project failures
-    // (not a git repo, missing path) are isolated to that project's `error`
-    // field by getAllProjectsActivity; the overall promise always resolves.
-    activity = await getAllProjectsActivity(
-      parsed.projects.map((p) => ({ name: p.name, path: p.path }))
-    );
+    // Fan-out git log + skill discovery across every project in parallel.
+    // Both helpers isolate per-project failures into their result's `error`
+    // field; the outer Promise.all always resolves.
+    const projectInputs = parsed.projects.map((p) => ({ name: p.name, path: p.path }));
+    [activity, projectSkills] = await Promise.all([
+      getAllProjectsActivity(projectInputs),
+      discoverAllProjectSkills(projectInputs),
+    ]);
     result = { ok: true, projects: parsed.projects, edges: parsed.edges };
   } catch (err) {
     const expectedPath = resolveProjectsMapPath();
@@ -121,5 +128,11 @@ export default async function AgenticOsPage() {
     };
   }
 
-  return <AgenticOsClient result={result} activity={activity} />;
+  return (
+    <AgenticOsClient
+      result={result}
+      activity={activity}
+      projectSkills={projectSkills}
+    />
+  );
 }

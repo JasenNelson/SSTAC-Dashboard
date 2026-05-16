@@ -23,6 +23,7 @@
 
 import path from 'path';
 import type { LaunchRequest } from './launch-schemas';
+import { SKILL_SLUG_PATTERN } from './launch-schemas';
 
 // The 8 projects from PROJECTS_MAP.md. Matches the arch spec's allowlist verbatim.
 const ALLOWED_PROJECTS: ReadonlySet<string> = new Set<string>([
@@ -100,6 +101,28 @@ const COMMAND_TEMPLATES: Readonly<Record<string, CommandTemplate>> = {
     exe: 'wt.exe',
     args: (_project: string, cwd: string) => ['-d', cwd, 'claude', '--resume'],
   },
+  // Pattern C (step 8): generic skill launcher. The slug arrives via the
+  // optional `skillSlug` field on LaunchRequest. The slug is re-validated
+  // against SKILL_SLUG_PATTERN inside validateLaunchRequest (defense in
+  // depth -- zod already validated it at the schema layer) BEFORE this
+  // closure runs. We keep the argv pattern identical to the other Pattern A
+  // templates so the SSE/audit/run-card wiring needs no special-case.
+  //
+  // This is the ONLY template that depends on the optional skillSlug field.
+  // The validator binds the slug into the closure via a fresh per-request
+  // entry rather than reading it through some mutable field on the template
+  // registry, so the static COMMAND_TEMPLATES remains immutable.
+  //
+  // We do NOT add per-skill entries to COMMAND_TEMPLATES. The allowlist-only
+  // invariant is preserved by ONE generic template + a strict slug regex.
+  run_skill: {
+    exe: 'claude',
+    // Placeholder closure -- the validator overrides this with a slug-bound
+    // version at request time. If something reaches this default path the
+    // result will produce argv `['-p', '/']` which the CLI will reject; the
+    // validator's pre-check is still the real guarantee.
+    args: (_project: string, _cwd: string) => ['-p', '/'],
+  },
 };
 
 export interface ValidatedLaunch {
@@ -110,7 +133,14 @@ export interface ValidatedLaunch {
 
 export type LaunchValidatorResult =
   | { ok: true; value: ValidatedLaunch }
-  | { ok: false; reason: 'unknown_project' | 'unknown_action' };
+  | {
+      ok: false;
+      reason:
+        | 'unknown_project'
+        | 'unknown_action'
+        | 'missing_skill_slug'
+        | 'invalid_skill_slug';
+    };
 
 /**
  * Validate a parsed LaunchRequest against the project + command allowlists.
@@ -142,11 +172,30 @@ export function validateLaunchRequest(req: LaunchRequest): LaunchValidatorResult
   // so there is no traversal surface here.
   const cwd = path.join(PROJECTS_ROOT, req.project);
 
-  // args is computed by the template closure; copied into a fresh array so
-  // the caller cannot mutate the registry. The cwd is passed in so Pattern B
-  // (open_session) can embed it as wt.exe's -d argument without re-deriving
-  // the path inside the closure.
-  const args = Array.from(template.args(req.project, cwd));
+  // Step 8 (Pattern C): the generic `run_skill` template needs the slug
+  // argument BOTH to be present and to re-pass the strict regex even though
+  // zod already validated it at the schema layer. Belt + suspenders -- this
+  // module is the security boundary; a regression in the schema must NOT
+  // widen what the spawn step accepts. Slug is the only field that flows
+  // into argv beyond the hardcoded literals (-p) and the (allowlisted)
+  // project-derived cwd; the strict regex prevents any shell metachar /
+  // path-traversal / dot / slash / whitespace / unicode token.
+  let args: string[];
+  if (req.action === 'run_skill') {
+    if (typeof req.skillSlug !== 'string' || req.skillSlug.length === 0) {
+      return { ok: false, reason: 'missing_skill_slug' };
+    }
+    if (!SKILL_SLUG_PATTERN.test(req.skillSlug)) {
+      return { ok: false, reason: 'invalid_skill_slug' };
+    }
+    args = ['-p', `/${req.skillSlug}`];
+  } else {
+    // args is computed by the template closure; copied into a fresh array so
+    // the caller cannot mutate the registry. The cwd is passed in so Pattern B
+    // (open_session) can embed it as wt.exe's -d argument without re-deriving
+    // the path inside the closure.
+    args = Array.from(template.args(req.project, cwd));
+  }
 
   return {
     ok: true,

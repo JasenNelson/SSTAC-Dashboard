@@ -11,6 +11,7 @@
 
 import type { Project } from '@/lib/agentic-os/parse-projects-map';
 import type { ProjectActivity } from '@/lib/agentic-os/git-activity';
+import type { ProjectSkills } from '@/lib/agentic-os/skill-discovery';
 import {
   compactName,
   shortenPath,
@@ -29,11 +30,24 @@ export interface PatternASkill {
 interface Props {
   project: Project | null;
   activity?: ProjectActivity;
+  /** Step 8 / Pattern C: skills discovered from <project>/.claude/skills/.
+   *  Undefined when no discovery has happened (renders the legacy placeholder);
+   *  defined-with-empty-skills renders the "no skills discovered" message;
+   *  defined-with-error renders the failure note. */
+  skills?: ProjectSkills;
   tooltips: Tooltips;
-  /** Step 6b: launch a Pattern A skill against the selected project. */
-  onLaunch?: (project: string, action: string) => void;
-  /** Set of in-flight "{project}::{action}" concurrency keys. Allows
-   *  concurrent launches across rows without single-string races. */
+  /** Step 6b: launch a Pattern A skill against the selected project.
+   *  Step 8: optional `options.skillSlug` carries the discovered skill slug
+   *  when action === 'run_skill'. */
+  onLaunch?: (
+    project: string,
+    action: string,
+    options?: { skillSlug?: string },
+  ) => void;
+  /** Set of in-flight concurrency keys. For Pattern A this is
+   *  "{project}::{action}"; for Pattern C run_skill it is
+   *  "{project}::run_skill::{skillSlug}" so concurrent discovered-skill
+   *  launches on the same project don't race the single-string key. */
   launchingFor?: ReadonlySet<string>;
   /** Available Pattern A skills (step 6b). When empty, the detail panel
    *  shows the legacy disabled state. */
@@ -43,6 +57,7 @@ interface Props {
 export default function ProjectDetailPanel({
   project,
   activity,
+  skills,
   tooltips,
   onLaunch,
   launchingFor,
@@ -232,7 +247,13 @@ export default function ProjectDetailPanel({
           </div>
         )}
 
-        {/* Skills + Agents — empty placeholders until later steps. */}
+        {/* Skills -- step 8 / Pattern C live discovery. Lists the skills found
+            under <project>/.claude/skills/ each as a clickable launch button.
+            Click fires onLaunch(project, 'run_skill', { skillSlug }), which
+            routes through the same /api/agentic-os/launch + SSE plumbing as
+            Pattern A so the run shows up in the run-card list / terminal
+            panel. Empty/error/truncated states each get their own affordance
+            (no green check, no red error -- just italic notes). */}
         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
           <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-2 flex items-center justify-between">
             <span>Skills</span>
@@ -243,9 +264,75 @@ export default function ProjectDetailPanel({
               step 8
             </span>
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 italic">
-            Skill discovery from .claude/skills/ ships in MVP step 8.
-          </div>
+          {(() => {
+            if (!skills) {
+              return (
+                <div className="text-xs text-slate-500 dark:text-slate-400 italic">
+                  Skill discovery not yet loaded.
+                </div>
+              );
+            }
+            if (skills.error) {
+              return (
+                <div className="text-xs text-red-600 dark:text-red-400 italic">
+                  Skill discovery failed: {skills.error}
+                </div>
+              );
+            }
+            if (skills.skills.length === 0) {
+              return (
+                <div className="text-xs text-slate-500 dark:text-slate-400 italic">
+                  No skills discovered for this project
+                </div>
+              );
+            }
+            return (
+              <>
+                <div className="grid grid-cols-1 gap-1.5">
+                  {skills.skills.map((sk) => {
+                    const concurrencyKey = `${project.name}::run_skill::${sk.slug}`;
+                    const busy = launchingFor?.has(concurrencyKey) ?? false;
+                    return (
+                      <button
+                        key={sk.slug}
+                        type="button"
+                        disabled={!onLaunch || busy}
+                        onClick={() =>
+                          onLaunch?.(project.name, 'run_skill', { skillSlug: sk.slug })
+                        }
+                        className="text-left bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700/30 text-xs py-1.5 px-2 rounded hover:bg-violet-200 dark:hover:bg-violet-900/50 disabled:opacity-50 disabled:cursor-wait focus:outline-none focus-visible:ring-1 focus-visible:ring-violet-500"
+                        title={`Run claude -p '/${sk.slug}' in ${project.name}`}
+                      >
+                        <div className="font-mono">
+                          /{sk.slug}
+                          {busy && (
+                            <span className="ml-2 text-[10px] text-slate-500 dark:text-slate-400">
+                              ...
+                            </span>
+                          )}
+                        </div>
+                        {sk.name && sk.name !== sk.slug && (
+                          <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5 font-sans">
+                            {sk.name}
+                          </div>
+                        )}
+                        {sk.description && (
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug whitespace-normal break-words font-sans">
+                            {sk.description}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {skills.truncated && (
+                  <div className="mt-1.5 text-[10px] italic text-amber-600 dark:text-amber-400">
+                    More skills exist; cap at 50
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
 
         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">

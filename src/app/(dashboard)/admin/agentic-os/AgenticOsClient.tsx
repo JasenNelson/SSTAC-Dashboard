@@ -36,6 +36,7 @@ import type {
   ConvergenceEdge,
 } from '@/lib/agentic-os/parse-projects-map';
 import type { ProjectActivity } from '@/lib/agentic-os/git-activity';
+import type { ProjectSkills } from '@/lib/agentic-os/skill-discovery';
 import {
   TOOLTIPS,
   inferStatus,
@@ -74,6 +75,10 @@ interface Props {
   result: AgenticOsResult;
   /** Per-project git activity, keyed by project name. Empty object on map read failure. */
   activity?: Record<string, ProjectActivity>;
+  /** Per-project discovered skills (step 8 / Pattern C), keyed by project name.
+   *  Empty object on map read failure; missing entries render as the
+   *  "no skills discovered" placeholder. */
+  projectSkills?: Record<string, ProjectSkills>;
 }
 
 function ErrorState({
@@ -105,7 +110,11 @@ function ErrorState({
   );
 }
 
-export default function AgenticOsClient({ result, activity = {} }: Props) {
+export default function AgenticOsClient({
+  result,
+  activity = {},
+  projectSkills = {},
+}: Props) {
   // Hooks must be unconditional — declare ALL state before the early return.
   const [selectedName, setSelectedName] = useState<string | null>(
     result.ok && result.projects.length > 0 ? result.projects[0].name : null
@@ -154,8 +163,18 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
   }, []);
 
   const launchAction = useCallback(
-    async (project: string, action: string) => {
-      const concurrencyKey = `${project}::${action}`;
+    async (
+      project: string,
+      action: string,
+      options?: { skillSlug?: string },
+    ) => {
+      // Concurrency keys distinguish per-skill clicks (so two different
+      // discovered skills can run concurrently on the same project) by
+      // appending the slug when it is provided. Without this, two run_skill
+      // launches on the same project would race the single-string key.
+      const concurrencyKey = options?.skillSlug
+        ? `${project}::${action}::${options.skillSlug}`
+        : `${project}::${action}`;
       // Functional read via setState to avoid capturing a stale Set reference
       // in the closure (the useCallback dep list intentionally omits
       // launchingFor so back-to-back launches don't allocate a new callback).
@@ -171,11 +190,16 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
       });
       if (alreadyInFlight) return; // double-click guard
       try {
+        const reqBody: { project: string; action: string; skillSlug?: string } = {
+          project,
+          action,
+        };
+        if (options?.skillSlug) reqBody.skillSlug = options.skillSlug;
         const resp = await fetch('/api/agentic-os/launch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
-          body: JSON.stringify({ project, action }),
+          body: JSON.stringify(reqBody),
         });
         if (!resp.ok) {
           let detail = '';
@@ -200,7 +224,9 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
         const command =
           action === 'open_session'
             ? { exe: 'wt.exe', args: ['-d', project, 'claude', '--resume'], cwd: project }
-            : { exe: 'claude', args: ['-p', skillForAction(action)], cwd: project };
+            : action === 'run_skill' && options?.skillSlug
+              ? { exe: 'claude', args: ['-p', `/${options.skillSlug}`], cwd: project }
+              : { exe: 'claude', args: ['-p', skillForAction(action)], cwd: project };
         const newRun: ActiveRun = {
           runId: body.runId,
           project,
@@ -641,9 +667,16 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
                                 </button>
                               );
                             })()}
-                            {/* Skill v dropdown (Pattern A, step 6b).
+                            {/* Skill v dropdown (Pattern A, step 6b + Pattern C, step 8).
                                 Native <details> avoids dependency on a headless
-                                UI library; the summary acts as the button. */}
+                                UI library; the summary acts as the button.
+                                Top section: the three hardcoded Pattern A
+                                baselines. Bottom section: skills discovered
+                                from <project>/.claude/skills/ via server-side
+                                discoverProjectSkills. The two are separated
+                                by an <hr role="separator"> divider so the
+                                hardcoded set stays visually distinct from
+                                project-local discovery (audit-trail clarity). */}
                             <details className="relative">
                               <summary
                                 className="list-none cursor-pointer text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700/30 rounded px-2 py-0.5 hover:bg-violet-200 dark:hover:bg-violet-900/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-violet-500"
@@ -651,7 +684,7 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
                               >
                                 Skill v
                               </summary>
-                              <div className="absolute right-0 mt-1 z-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-md py-1 min-w-[10rem]">
+                              <div className="absolute right-0 mt-1 z-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-md py-1 min-w-[14rem] max-h-80 overflow-y-auto">
                                 {PATTERN_A_SKILLS.map((s) => {
                                   const concurrencyKey = `${p.name}::${s.action}`;
                                   const busy = launchingFor.has(concurrencyKey);
@@ -680,6 +713,84 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
                                     </button>
                                   );
                                 })}
+
+                                {/* Pattern C (step 8): discovered skills.
+                                    Divider gives a clear visual + a11y break
+                                    between the hardcoded baseline above and
+                                    project-local discovery below. */}
+                                <hr
+                                  role="separator"
+                                  className="my-1 border-slate-200 dark:border-slate-700"
+                                />
+                                <div className="px-3 py-1 text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
+                                  Project skills
+                                </div>
+                                {(() => {
+                                  const ps = projectSkills[p.name];
+                                  if (ps?.error) {
+                                    return (
+                                      <div className="px-3 py-1 text-[10px] italic text-red-600 dark:text-red-400">
+                                        Skill discovery failed: {ps.error}
+                                      </div>
+                                    );
+                                  }
+                                  if (!ps || ps.skills.length === 0) {
+                                    return (
+                                      <div className="px-3 py-1 text-[10px] italic text-slate-500 dark:text-slate-400">
+                                        No skills discovered for this project
+                                      </div>
+                                    );
+                                  }
+                                  return (
+                                    <>
+                                      {ps.skills.map((sk) => {
+                                        const concurrencyKey = `${p.name}::run_skill::${sk.slug}`;
+                                        const busy = launchingFor.has(concurrencyKey);
+                                        return (
+                                          <button
+                                            key={sk.slug}
+                                            type="button"
+                                            disabled={busy}
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              const det = (
+                                                e.currentTarget.closest('details') as HTMLDetailsElement | null
+                                              );
+                                              if (det) det.open = false;
+                                              void launchAction(p.name, 'run_skill', { skillSlug: sk.slug });
+                                            }}
+                                            className="block w-full text-left text-xs px-3 py-1.5 text-slate-800 dark:text-slate-200 hover:bg-violet-50 dark:hover:bg-violet-900/30 disabled:opacity-50 disabled:cursor-wait"
+                                            title={`Run claude -p '/${sk.slug}' in ${p.name}`}
+                                          >
+                                            <div className="font-mono">
+                                              /{sk.slug}
+                                              {sk.name && sk.name !== sk.slug && (
+                                                <span className="ml-2 text-[10px] text-slate-500 dark:text-slate-400 font-sans">
+                                                  {sk.name}
+                                                </span>
+                                              )}
+                                              {busy && (
+                                                <span className="ml-2 text-[10px] text-slate-500 dark:text-slate-400">
+                                                  ...
+                                                </span>
+                                              )}
+                                            </div>
+                                            {sk.description && (
+                                              <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug whitespace-normal break-words">
+                                                {sk.description}
+                                              </div>
+                                            )}
+                                          </button>
+                                        );
+                                      })}
+                                      {ps.truncated && (
+                                        <div className="px-3 py-1 text-[10px] italic text-amber-600 dark:text-amber-400">
+                                          More skills exist; cap at 50
+                                        </div>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </details>
                             <button
@@ -738,6 +849,7 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
         <ProjectDetailPanel
           project={selectedProject}
           activity={selectedProject ? activity[selectedProject.name] : undefined}
+          skills={selectedProject ? projectSkills[selectedProject.name] : undefined}
           tooltips={TOOLTIPS}
           onLaunch={launchAction}
           launchingFor={launchingFor}
