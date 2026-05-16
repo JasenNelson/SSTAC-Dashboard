@@ -171,8 +171,12 @@ export default function ProjectDetailPanel({
                 })}
               </div>
               {/* Step 7: Pattern B external pop-out. Fires open_session
-                  which spawns wt.exe with `-d <cwd> claude --resume`.
-                  wt.exe creates a new desktop terminal tab and exits cleanly;
+                  which spawns cmd.exe to activate wt.exe via the shell
+                  `start` builtin (BUG-3 fix 2026-05-16: direct-spawning the
+                  wt.exe AppExecutionAlias stub silently dropped the AppX
+                  activation; the cmd.exe shim fires it in the right context).
+                  The activated wt.exe creates a new desktop terminal tab in
+                  a separate process tree and the cmd.exe child exits cleanly;
                   the launch route still records the audit + SSE entry. */}
               {(() => {
                 const concurrencyKey = `${project.name}::open_session`;

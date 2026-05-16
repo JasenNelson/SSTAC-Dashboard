@@ -31,12 +31,14 @@ import { SKILL_SLUG_PATTERN, AGENT_SLUG_PATTERN } from './launch-schemas';
  * templates (Pattern A skill, Pattern C run_skill, Pattern D run_agent)
  * inherit the launch route's defaults (windowsHide: true, piped stdio).
  *
- * Pattern B (open_session / wt.exe) is the one place where the defaults
- * are wrong: wt.exe IS the user-visible window we want shown, so the
- * defaults must be inverted. Holding piped stdio also prevents wt.exe
- * from cleanly detaching from the parent on Windows. The overrides let
- * the validator declare these per-template needs without leaking spawn
- * concerns into the route handler.
+ * Pattern B (open_session) goes through cmd.exe /c start so wt.exe is
+ * activated by the shell (see the open_session template below for why
+ * direct-spawn does not work on the AppExecutionAlias stub). cmd.exe
+ * itself is a console subsystem process we want hidden; wt.exe creates
+ * its own desktop window via the AppX activation that start triggers,
+ * so the parent cmd.exe never needs a console of its own. detached:true
+ * + stdio:'ignore' let the parent cmd.exe exit cleanly without holding
+ * pipes the started process never uses.
  *
  * The route handler reads spawnOverrides AFTER applying its defaults so
  * the override values win on conflict, and unref()s the child when
@@ -73,10 +75,10 @@ const PROJECTS_ROOT = 'C:\\Projects';
 //
 // Step 6a shipped three headless one-shots (Pattern A in the arch spec).
 // Step 7 adds Pattern B (Windows Terminal external pop-out) -- a single
-// `open_session` template whose exe is wt.exe and whose argv asks Windows
-// Terminal to open a new tab in the project's cwd running `claude --resume`.
-// Pattern C/D (skill dropdown beyond the current three, agents) are scheduled
-// for steps 8/10 and intentionally NOT in this registry yet.
+// `open_session` template that activates wt.exe via cmd.exe /c start so a
+// new Windows Terminal tab opens in the project's cwd running `claude
+// --resume`. Pattern C/D (skill dropdown beyond the current three, agents)
+// are scheduled for steps 8/10 and intentionally NOT in this registry yet.
 //
 // The current set of Pattern A skill names ('safe-exit', 'update-docs',
 // 'doc-navigator') matches the skills documented in CLAUDE.md /
@@ -84,14 +86,31 @@ const PROJECTS_ROOT = 'C:\\Projects';
 // to the project's absolute path so the CLI picks up the project's
 // .claude/settings.local.json.
 //
-// Pattern B (open_session) builds argv as the four-element array
-// ['-d', '<absolute project path>', 'claude', '--resume']. wt.exe interprets
-// -d as the inner shell's working directory; the subsequent positional tokens
-// become the command line wt.exe runs in the new tab. wt.exe itself spawns a
-// new desktop window and exits within milliseconds (exit code 0). The launch
-// route's audit + SSE wiring still applies -- the run-registry entry will
-// show empty stdout and a clean exit shortly after launch. That's expected;
-// the user-visible artifact is the new Windows Terminal tab on their desktop.
+// Pattern B (open_session) goes through cmd.exe /c start instead of
+// spawning wt.exe directly. Reason (BUG-3 fix, 2026-05-16): wt.exe at
+// %LOCALAPPDATA%\Microsoft\WindowsApps\wt.exe is an AppExecutionAlias
+// stub -- not a real PE binary. A direct child_process.spawn('wt.exe', ...)
+// with detached:true + stdio:'ignore' invokes the stub, the stub forwards
+// the request to the Windows Terminal AppX background service, then the
+// stub exits cleanly with code 0; but the AppX activation context Node
+// hands the stub is wrong for that detached + stdio:'ignore' shape, so
+// the activation message either never lands or lands in a context that
+// silently drops it -- empirically NO Terminal window appears. The shell
+// builtin `start` handles AppExecutionAlias activation correctly: it
+// fires the AppX activation in the user's interactive shell context and
+// returns immediately. So we spawn cmd.exe (a real PE) which runs
+// `start "" wt.exe -d <cwd> claude --resume` and exits; wt.exe gets
+// activated SEPARATELY via the AppX service and creates its own Terminal
+// window on the user's desktop. The audit + SSE wiring still applies --
+// the cmd.exe registry entry shows empty stdout and a clean exit within
+// milliseconds. That's expected; the user-visible artifact is the new
+// Windows Terminal tab on their desktop, owned by a different process
+// tree than the dashboard's.
+//
+// The `""` empty-title sentinel after `start` is defensive: `start`
+// interprets the first quoted token as the new window's title, so the
+// empty string keeps the wt.exe positional argument from being absorbed
+// in case a future maintainer quotes it (e.g. for a path with spaces).
 interface CommandTemplate {
   readonly exe: string;
   // Pure function: project -> args. Must not consult any external state.
@@ -102,8 +121,10 @@ interface CommandTemplate {
   // Optional spawn-option overrides applied by the launch route on top of
   // its defaults. Absent means "use the route's defaults verbatim" -- the
   // case for every Pattern A/C/D template. Pattern B (open_session)
-  // declares { windowsHide: false, detached: true, stdio: 'ignore' } so
-  // wt.exe pops up its window and survives without holding our pipes.
+  // declares { windowsHide: true, detached: true, stdio: 'ignore' } so
+  // the transient cmd.exe console stays hidden while the start-activated
+  // wt.exe creates its own desktop Terminal window via AppX in a
+  // separate process tree.
   readonly spawnOverrides?: SpawnOverrides;
 }
 
@@ -120,34 +141,57 @@ const COMMAND_TEMPLATES: Readonly<Record<string, CommandTemplate>> = {
     exe: 'claude',
     args: (_project: string, _cwd: string) => ['-p', '/doc-navigator'],
   },
-  // Pattern B (step 7): Windows Terminal external pop-out. wt.exe spawns a
-  // new desktop tab whose inner shell runs `claude --resume` in the project
-  // cwd. The -d flag is wt.exe's "starting directory" switch (verified vs
-  // Microsoft Terminal command-line reference). argv contains NO user input
-  // beyond the project-derived cwd (which has already cleared the project
-  // allowlist before this closure runs); the literals '-d', 'claude', and
-  // '--resume' are hardcoded.
+  // Pattern B (step 7): Windows Terminal external pop-out. cmd.exe runs
+  // `start "" wt.exe -d <cwd> claude --resume`, which fires the wt.exe
+  // AppExecutionAlias activation via the shell and exits; the activated
+  // Terminal opens its tab in the project cwd running `claude --resume`.
+  // The -d flag is wt.exe's "starting directory" switch (verified vs
+  // Microsoft Terminal command-line reference). The diag-wt.mjs probe
+  // confirmed wt.exe is reachable on PATH from Node, so the cmd.exe shim
+  // is solely to get the AppX activation context right; see the long
+  // BUG-3 explanation in the COMMAND_TEMPLATES header above.
+  //
+  // argv contains NO user input beyond the project-derived cwd (which
+  // has already cleared the project allowlist before this closure runs);
+  // every other token ('/c', 'start', '""', 'wt.exe', '-d', 'claude',
+  // '--resume') is hardcoded. spawn (not exec) consumes the array, so
+  // cmd.exe's own arg-parsing never interprets any token as a metachar
+  // -- Node passes them through to cmd.exe's CommandLineToArgvW
+  // tokenization with conservative quoting around any element that
+  // contains a space (e.g. a cwd with spaces in the path).
   open_session: {
-    exe: 'wt.exe',
-    args: (_project: string, cwd: string) => ['-d', cwd, 'claude', '--resume'],
-    // Pattern B owner-bug fix (2026-05-16): with the route's default
-    //   { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }
-    // wt.exe either failed to show its window or got immediately
-    // collected when the parent's pipes drained. wt.exe is the visible
-    // window we WANT shown, so:
-    //   - windowsHide:false  -> let the new Terminal window appear,
-    //   - detached:true       -> let wt.exe survive parent exit /
-    //                            detach from our process group on Win32,
-    //   - stdio:'ignore'      -> drop the pipes wt.exe doesn't use; the
-    //                            log-card UX already handles the empty-
-    //                            output case ("External terminal opened
-    //                            on your desktop"), and there's no SSE
-    //                            value to subscribers anyway.
+    exe: 'cmd.exe',
+    args: (_project: string, cwd: string) => [
+      '/c',
+      'start',
+      '""',
+      'wt.exe',
+      '-d',
+      cwd,
+      'claude',
+      '--resume',
+    ],
+    // Pattern B BUG-3 fix (2026-05-16, post-probe):
+    //   - windowsHide:true   -> hide the transient cmd.exe console; the
+    //                           started wt.exe creates its own visible
+    //                           Terminal window in a separate process
+    //                           tree via AppX activation,
+    //   - detached:true       -> let the cmd.exe child survive parent
+    //                           exit / detach from our process group on
+    //                           Win32 (cmd.exe exits in ms but the
+    //                           detach is belt-and-suspenders against
+    //                           any pre-exit termination),
+    //   - stdio:'ignore'      -> drop the pipes; cmd.exe + start don't
+    //                           produce meaningful stdout for the UI,
+    //                           and the log-card UX already renders an
+    //                           "External terminal opened on your
+    //                           desktop; no inline output expected"
+    //                           empty-state keyed on action === 'open_session'.
     // The route handler also calls child.unref() when detached:true is
     // set; per Node docs the unref()+detached pair is required on
-    // Windows for wt.exe to outlive the dashboard process.
+    // Windows for the child to outlive the dashboard process.
     spawnOverrides: {
-      windowsHide: false,
+      windowsHide: true,
       detached: true,
       stdio: 'ignore',
     },

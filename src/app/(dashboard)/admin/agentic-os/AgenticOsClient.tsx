@@ -259,12 +259,20 @@ export default function AgenticOsClient({
         const startedAt = new Date().toISOString();
         // Optimistic command display. The server-side validator is the source
         // of truth; this is only what we render in the run card while the
-        // child is alive. open_session (Pattern B, step 7) launches wt.exe
-        // and exits immediately, so the card flips to "completed" with empty
-        // stdout shortly after the new desktop tab opens.
+        // child is alive. open_session (Pattern B, step 7 / BUG-3 fix
+        // 2026-05-16) spawns cmd.exe which fires `start "" wt.exe ...` to
+        // activate the wt.exe AppExecutionAlias via the shell; cmd.exe
+        // exits within ms, the activated wt.exe paints its tab in a
+        // separate process tree, and the run card flips to "completed"
+        // with empty stdout. Mirror the server-side argv shape exactly
+        // so the optimistic card matches the audit-log entry.
         const command =
           action === 'open_session'
-            ? { exe: 'wt.exe', args: ['-d', project, 'claude', '--resume'], cwd: project }
+            ? {
+                exe: 'cmd.exe',
+                args: ['/c', 'start', '""', 'wt.exe', '-d', project, 'claude', '--resume'],
+                cwd: project,
+              }
             : action === 'run_skill' && options?.skillSlug
               ? { exe: 'claude', args: ['-p', `/${options.skillSlug}`], cwd: project }
               : action === 'run_agent' && options?.agentSlug

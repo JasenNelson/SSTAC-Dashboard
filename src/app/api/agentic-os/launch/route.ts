@@ -174,12 +174,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   //   - windowsHide: prevents console flash on Windows admins.
   //
   // Per-template overrides (validator-provided): Pattern B / open_session
-  // inverts windowsHide so wt.exe's window appears, sets detached:true so
-  // wt.exe survives parent exit on Windows, and switches stdio to 'ignore'
-  // so wt.exe isn't held back by our pipes. The override block wins on
-  // conflict because it's spread AFTER the defaults. When detached is
-  // requested we ALSO call child.unref() per Node docs -- on Windows the
-  // unref()+detached pair is required for the child to outlive the parent.
+  // spawns cmd.exe (not wt.exe directly) so the shell's `start` builtin
+  // can fire the wt.exe AppExecutionAlias activation in the right context;
+  // see the BUG-3 fix notes in launch-validator.ts open_session for why
+  // direct-spawning the wt.exe stub silently drops the AppX activation.
+  // Overrides keep windowsHide:true (hide the transient cmd.exe console;
+  // the started wt.exe creates its own visible Terminal in a separate
+  // process tree), set detached:true so cmd.exe detaches cleanly, and
+  // switch stdio to 'ignore' since cmd.exe + start produce no useful UI
+  // output. The override block wins on conflict because it's spread AFTER
+  // the defaults. When detached is requested we ALSO call child.unref()
+  // per Node docs -- on Windows the unref()+detached pair is required for
+  // the child to outlive the parent.
   const spawnDefaults: import('child_process').SpawnOptions = {
     cwd,
     env: process.env,
