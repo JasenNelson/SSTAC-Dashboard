@@ -650,7 +650,7 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
               </div>
               <ConvergenceGraph
                 edges={result.edges}
-                projectNames={projects.map((p) => p.name)}
+                projects={projects}
               />
             </div>
           </div>
