@@ -31,3 +31,27 @@ export function isAgenticOsEnabled(): boolean {
   if (process.env.NEXT_PUBLIC_AGENTIC_OS_ENABLED === 'true') return true;
   return false;
 }
+
+/**
+ * Stricter local-only gate for the launch route (and any future server
+ * endpoint that spawns local subprocesses). Returns true ONLY in dev mode
+ * OR when AGENTIC_OS_LOCAL=true is set server-side. The NEXT_PUBLIC_*
+ * variant (used by the page render gate) is INSUFFICIENT here -- it can
+ * be turned on in a production deployment by accident, and that must
+ * never enable spawning.
+ *
+ * Source-of-truth check order:
+ *   1. process.env.NODE_ENV === 'development'    -> true
+ *   2. process.env.AGENTIC_OS_LOCAL === 'true'   -> true
+ *   3. otherwise                                  -> false
+ *
+ * Note: AGENTIC_OS_LOCAL is intentionally NOT prefixed with NEXT_PUBLIC_.
+ * Next.js does not inline non-public env vars into the client bundle, so
+ * this value lives strictly server-side. A flip of NEXT_PUBLIC_AGENTIC_OS_ENABLED
+ * in a Vercel deploy will NOT enable spawning here.
+ */
+export function isAgenticOsLaunchEnabled(): boolean {
+  if (process.env.NODE_ENV === 'development') return true;
+  if (process.env.AGENTIC_OS_LOCAL === 'true') return true;
+  return false;
+}
