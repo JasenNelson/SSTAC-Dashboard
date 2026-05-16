@@ -56,83 +56,8 @@ export function isAgenticOsLaunchEnabled(): boolean {
   return false;
 }
 
-// Step 9 / Pattern E (embedded xterm.js modal via node-pty WebSocket).
-//
-// The embedded terminal modal connects the browser to a real PTY through a
-// sidecar Node server (scripts/agentic-os-pty-server.mjs) on ws://localhost:3101.
-// This surface is gated more strictly than the launch route because:
-//   1. It requires node-pty -- a native module that ships prebuilt binaries
-//      but may not be present in some serverless / docker images, so we
-//      probe-load it server-side and cache the result.
-//   2. It requires AGENTIC_OS_PTY_SECRET -- a JWT-signing secret used to
-//      hand off the validated {exe, args, cwd} from the token-mint route to
-//      the WebSocket server. The PTY server WILL NOT START without this set
-//      so a missing secret in dev becomes a clear "off" state rather than
-//      a hidden auth bypass.
-//   3. It piggy-backs on isAgenticOsLaunchEnabled() so the dev / prod gate
-//      stays a single source of truth.
-//
-// The check is intentionally additive: launch-enabled stays the floor,
-// PTY-enabled is the strictly-stricter superset. A Vercel deploy that
-// enables the read-only public view (NEXT_PUBLIC_AGENTIC_OS_ENABLED=true)
-// will see this helper return false because both AGENTIC_OS_LOCAL and the
-// PTY secret are unset on the deploy.
-//
-// node-pty probe: wrapped in try/catch at module require time so a build
-// trace on Vercel (where node-pty may have been excluded via webpack
-// externals) does NOT cause this file to throw at import.
-
-let ptyModuleLoaded: boolean | null = null;
-function isNodePtyAvailable(): boolean {
-  if (ptyModuleLoaded !== null) return ptyModuleLoaded;
-  // Probe behavior:
-  //   - Browser (real one): `window` exists, `process.versions?.node` is undef.
-  //     Refuse the probe so we don't pull node-pty into the client bundle.
-  //   - jsdom (vitest test env): `window` exists too, but `process.versions.node`
-  //     IS defined because we still run inside the Node process. We MUST allow
-  //     the probe there or the route + flag tests would always see "off".
-  //   - Server-side / Node: window undef, probe runs normally.
-  const isBrowser =
-    typeof window !== 'undefined' &&
-    (typeof process === 'undefined' || !process?.versions?.node);
-  if (isBrowser) {
-    ptyModuleLoaded = false;
-    return false;
-  }
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pty = require('node-pty');
-    ptyModuleLoaded = typeof pty?.spawn === 'function';
-  } catch {
-    ptyModuleLoaded = false;
-  }
-  return ptyModuleLoaded;
-}
-
-/**
- * Strictest gate -- enables the embedded xterm.js terminal modal (step 9 /
- * Pattern E). Returns true ONLY when all three are satisfied:
- *   1. isAgenticOsLaunchEnabled() is true (dev or AGENTIC_OS_LOCAL=true)
- *   2. process.env.AGENTIC_OS_PTY_SECRET is a non-empty string
- *   3. node-pty loaded successfully at module require time
- *
- * Client components reach this via a server-rendered prop or the
- * `/api/agentic-os/pty-token` route's response shape (not by importing
- * this module directly; node-pty would be pulled into the client bundle).
- */
-export function isAgenticOsPtyEnabled(): boolean {
-  if (!isAgenticOsLaunchEnabled()) return false;
-  const secret = process.env.AGENTIC_OS_PTY_SECRET;
-  if (typeof secret !== 'string' || secret.length === 0) return false;
-  if (!isNodePtyAvailable()) return false;
-  return true;
-}
-
-/**
- * Test-only reset for the cached node-pty probe result. Without this, a
- * vitest case that wants to assert the "module unavailable" path cannot
- * roll back from a previous successful probe in the same process.
- */
-export function __resetPtyModuleProbeForTest(): void {
-  ptyModuleLoaded = null;
-}
+// The PTY-enabled gate for step 9 (embedded xterm.js modal) lives in the
+// sibling SERVER-ONLY module `./feature-flag-server` because it probe-loads
+// node-pty, which would otherwise leak into client bundles that import any
+// helper from this file. Server components / route handlers that need
+// `isAgenticOsPtyEnabled()` import from `./feature-flag-server` directly.

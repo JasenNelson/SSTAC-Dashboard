@@ -3,9 +3,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   isAgenticOsEnabled,
   isAgenticOsLaunchEnabled,
+} from '../feature-flag';
+import {
   isAgenticOsPtyEnabled,
   __resetPtyModuleProbeForTest,
-} from '../feature-flag';
+} from '../feature-flag-server';
 
 // vi.stubEnv mutates process.env in a vitest-managed way that survives
 // TypeScript's `readonly NODE_ENV` declaration. unstubAllEnvs in afterEach

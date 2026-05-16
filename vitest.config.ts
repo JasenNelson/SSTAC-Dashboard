@@ -41,6 +41,16 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // `server-only` is a build-time tripwire that throws unconditionally
+      // at module load to prevent server-only modules from being bundled
+      // into client chunks (see src/lib/agentic-os/feature-flag-server.ts).
+      // In Next dev/build it's resolved correctly because Next swaps it
+      // for an empty module on the server. Vitest runs in jsdom and has
+      // no Next runtime, so the real `server-only/index.js` throws and
+      // kills every test file that imports a server-only module. Alias
+      // it to an empty module here so the import succeeds in tests; the
+      // real protection still fires when Next traces a client bundle.
+      'server-only': path.resolve(__dirname, './src/test/server-only-stub.ts'),
     },
   },
 });

@@ -21,7 +21,7 @@ vi.mock('@/lib/agentic-os/launch-audit-log', () => ({
 import { requireAdminForApi } from '@/lib/engine-v2/admin_guards';
 import { checkCsrf } from '@/lib/engine-v2/csrf';
 import { POST } from '../route';
-import { __resetPtyModuleProbeForTest } from '@/lib/agentic-os/feature-flag';
+import { __resetPtyModuleProbeForTest } from '@/lib/agentic-os/feature-flag-server';
 
 const VALID_SECRET = 'test-pty-secret-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 

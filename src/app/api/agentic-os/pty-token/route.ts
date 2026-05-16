@@ -27,10 +27,8 @@ import { randomUUID } from 'crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireAdminForApi } from '@/lib/engine-v2/admin_guards';
 import { checkCsrf } from '@/lib/engine-v2/csrf';
-import {
-  isAgenticOsLaunchEnabled,
-  isAgenticOsPtyEnabled,
-} from '@/lib/agentic-os/feature-flag';
+import { isAgenticOsLaunchEnabled } from '@/lib/agentic-os/feature-flag';
+import { isAgenticOsPtyEnabled } from '@/lib/agentic-os/feature-flag-server';
 import { PtyTokenRequestSchema } from '@/lib/agentic-os/launch-schemas';
 import { validateLaunchRequest } from '@/lib/agentic-os/launch-validator';
 import { appendLaunchAudit } from '@/lib/agentic-os/launch-audit-log';

@@ -37,10 +37,8 @@ import {
   discoverAllProjectAgents,
   type ProjectAgents,
 } from '@/lib/agentic-os/agent-discovery';
-import {
-  isAgenticOsEnabled,
-  isAgenticOsPtyEnabled,
-} from '@/lib/agentic-os/feature-flag';
+import { isAgenticOsEnabled } from '@/lib/agentic-os/feature-flag';
+import { isAgenticOsPtyEnabled } from '@/lib/agentic-os/feature-flag-server';
 import AgenticOsClient, { type AgenticOsResult } from './AgenticOsClient';
 
 // ErrorBoundary intentionally NOT wrapped here: it only catches CLIENT-side
