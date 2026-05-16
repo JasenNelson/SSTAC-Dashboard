@@ -48,7 +48,7 @@ describe('validateLaunchRequest', () => {
     }
   });
 
-  it('ships the three Pattern-A actions plus open_session (Pattern B) plus run_skill (Pattern C); no per-skill templates', () => {
+  it('ships the three Pattern-A actions plus open_session (Pattern B) plus run_skill (Pattern C) plus run_agent (Pattern D); no per-skill / per-agent templates', () => {
     expect(new Set(ALL_ACTIONS)).toEqual(
       new Set([
         'run_safe_exit',
@@ -56,6 +56,7 @@ describe('validateLaunchRequest', () => {
         'run_doc_navigator',
         'open_session',
         'run_skill',
+        'run_agent',
       ]),
     );
   });
@@ -408,6 +409,184 @@ describe('validateLaunchRequest', () => {
       expect(r2.ok).toBe(true);
       if (r2.ok) {
         expect(r2.value.args).toEqual(['-p', '/foo']);
+      }
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Step 10: Pattern D (run_agent generic launcher).
+  // ---------------------------------------------------------------------------
+
+  describe('run_agent (Pattern D, step 10)', () => {
+    it('produces {exe: "claude", args: ["--agent", <slug>, "--bg", <prompt>]} for every allowed project + a valid slug', () => {
+      for (const project of ALL_PROJECTS) {
+        const result = validateLaunchRequest({
+          project,
+          action: 'run_agent',
+          agentSlug: 'chunk-processor',
+        });
+        expect(result.ok, `expected ok for ${project}/run_agent/chunk-processor`).toBe(true);
+        if (result.ok) {
+          expect(result.value.exe).toBe('claude');
+          expect(result.value.args).toEqual([
+            '--agent',
+            'chunk-processor',
+            '--bg',
+            `Begin working on ${project}.`,
+          ]);
+          expect(result.value.cwd).toBe(path.join('C:\\Projects', project));
+        }
+      }
+    });
+
+    it('accepts mixed-case slug, slug with digits, slug with hyphens', () => {
+      const valid = ['Foo', 'foo-bar', 'a1', 'subagent-watchdog', 'extraction-orchestrator', 'foo123bar'];
+      for (const slug of valid) {
+        const result = validateLaunchRequest({
+          project: 'SSTAC-Dashboard',
+          action: 'run_agent',
+          agentSlug: slug,
+        });
+        expect(result.ok, `expected ok for slug "${slug}"`).toBe(true);
+        if (result.ok) {
+          expect(result.value.args).toEqual([
+            '--agent',
+            slug,
+            '--bg',
+            'Begin working on SSTAC-Dashboard.',
+          ]);
+        }
+      }
+    });
+
+    it('rejects run_agent when agentSlug is missing', () => {
+      const result = validateLaunchRequest({
+        project: 'SSTAC-Dashboard',
+        action: 'run_agent',
+      });
+      expect(result).toEqual({ ok: false, reason: 'missing_agent_slug' });
+    });
+
+    it('rejects run_agent when agentSlug is empty string (defense in depth past zod)', () => {
+      const result = validateLaunchRequest({
+        project: 'SSTAC-Dashboard',
+        action: 'run_agent',
+        agentSlug: '',
+      });
+      expect(result).toEqual({ ok: false, reason: 'missing_agent_slug' });
+    });
+
+    it('rejects slugs containing path traversal / shell metachars / unicode tokens', () => {
+      const hostile = [
+        '..',
+        '../etc/passwd',
+        '../../foo',
+        '..\\windows',
+        '/etc/passwd',
+        '\\windows',
+        'foo/bar',
+        'foo\\bar',
+        '.dotleading',
+        '-leadingdash',
+        'foo.bar',
+        'foo bar',
+        'foo;bar',
+        'foo`bar',
+        'foo$(echo pwned)',
+        'foo&&bar',
+        'foo|bar',
+        'foo>out',
+        '$ENV',
+        'foo\nbar',
+        'foo\rbar',
+        'foo\tbar',
+        'foo‮bar', // RTL override
+        'café',
+        'a'.repeat(42),
+      ];
+      for (const slug of hostile) {
+        const result = validateLaunchRequest({
+          project: 'SSTAC-Dashboard',
+          action: 'run_agent',
+          agentSlug: slug,
+        });
+        expect(result, `expected reject for slug "${JSON.stringify(slug)}"`).toEqual({
+          ok: false,
+          reason: 'invalid_agent_slug',
+        });
+      }
+    });
+
+    it('rejects run_agent against an unknown project (allowlist runs first, ahead of slug check)', () => {
+      const result = validateLaunchRequest({
+        project: 'NotAProject',
+        action: 'run_agent',
+        agentSlug: 'chunk-processor',
+      });
+      expect(result).toEqual({ ok: false, reason: 'unknown_project' });
+    });
+
+    it('rejects run_agent against an unknown project even when slug is itself invalid (project check is first)', () => {
+      const result = validateLaunchRequest({
+        project: '`whoami`',
+        action: 'run_agent',
+        agentSlug: '../etc/passwd',
+      });
+      expect(result).toEqual({ ok: false, reason: 'unknown_project' });
+    });
+
+    it('cwd is set normally for run_agent (same path.join semantics)', () => {
+      const result = validateLaunchRequest({
+        project: 'Regulatory-Review-worktrees/engine-v2',
+        action: 'run_agent',
+        agentSlug: 'subagent-watchdog',
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.cwd).toBe(
+          path.join('C:\\Projects', 'Regulatory-Review-worktrees/engine-v2'),
+        );
+      }
+    });
+
+    it('args for run_agent is a defensive copy (caller mutation cannot leak into next call)', () => {
+      const r1 = validateLaunchRequest({
+        project: 'SSTAC-Dashboard',
+        action: 'run_agent',
+        agentSlug: 'foo',
+      });
+      expect(r1.ok).toBe(true);
+      if (r1.ok) {
+        (r1.value.args as string[])[1] = 'pwned';
+      }
+      const r2 = validateLaunchRequest({
+        project: 'SSTAC-Dashboard',
+        action: 'run_agent',
+        agentSlug: 'foo',
+      });
+      expect(r2.ok).toBe(true);
+      if (r2.ok) {
+        expect(r2.value.args).toEqual([
+          '--agent',
+          'foo',
+          '--bg',
+          'Begin working on SSTAC-Dashboard.',
+        ]);
+      }
+    });
+
+    it('prompt embeds project name verbatim (project has already cleared allowlist)', () => {
+      const result = validateLaunchRequest({
+        project: 'Regulatory-Review-worktrees/engine-v2',
+        action: 'run_agent',
+        agentSlug: 'subagent-watchdog',
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        // Prompt is a single argv element (no shell interpretation).
+        expect(result.value.args[3]).toBe(
+          'Begin working on Regulatory-Review-worktrees/engine-v2.',
+        );
       }
     });
   });

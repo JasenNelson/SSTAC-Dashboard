@@ -37,6 +37,7 @@ import type {
 } from '@/lib/agentic-os/parse-projects-map';
 import type { ProjectActivity } from '@/lib/agentic-os/git-activity';
 import type { ProjectSkills } from '@/lib/agentic-os/skill-discovery';
+import type { ProjectAgents } from '@/lib/agentic-os/agent-discovery';
 import {
   TOOLTIPS,
   inferStatus,
@@ -79,6 +80,11 @@ interface Props {
    *  Empty object on map read failure; missing entries render as the
    *  "no skills discovered" placeholder. */
   projectSkills?: Record<string, ProjectSkills>;
+  /** Per-project discovered agents (step 10 / Pattern D), keyed by project
+   *  name. Each entry carries both project-scoped agents and the shared
+   *  global agents list. Empty object on map read failure; missing entries
+   *  render as the "no agents discovered" placeholder. */
+  projectAgents?: Record<string, ProjectAgents>;
 }
 
 function ErrorState({
@@ -114,6 +120,7 @@ export default function AgenticOsClient({
   result,
   activity = {},
   projectSkills = {},
+  projectAgents = {},
 }: Props) {
   // Hooks must be unconditional — declare ALL state before the early return.
   const [selectedName, setSelectedName] = useState<string | null>(
@@ -166,14 +173,17 @@ export default function AgenticOsClient({
     async (
       project: string,
       action: string,
-      options?: { skillSlug?: string },
+      options?: { skillSlug?: string; agentSlug?: string },
     ) => {
-      // Concurrency keys distinguish per-skill clicks (so two different
-      // discovered skills can run concurrently on the same project) by
-      // appending the slug when it is provided. Without this, two run_skill
-      // launches on the same project would race the single-string key.
-      const concurrencyKey = options?.skillSlug
-        ? `${project}::${action}::${options.skillSlug}`
+      // Concurrency keys distinguish per-slug clicks so two different
+      // discovered skills (or agents) can run concurrently on the same project.
+      // Without this, two run_skill / run_agent launches on the same project
+      // would race the single-string key. Order: skillSlug then agentSlug;
+      // they are mutually exclusive at the action level (run_skill vs run_agent)
+      // so only one branch is ever taken.
+      const slugForKey = options?.skillSlug ?? options?.agentSlug ?? '';
+      const concurrencyKey = slugForKey
+        ? `${project}::${action}::${slugForKey}`
         : `${project}::${action}`;
       // Functional read via setState to avoid capturing a stale Set reference
       // in the closure (the useCallback dep list intentionally omits
@@ -190,11 +200,17 @@ export default function AgenticOsClient({
       });
       if (alreadyInFlight) return; // double-click guard
       try {
-        const reqBody: { project: string; action: string; skillSlug?: string } = {
+        const reqBody: {
+          project: string;
+          action: string;
+          skillSlug?: string;
+          agentSlug?: string;
+        } = {
           project,
           action,
         };
         if (options?.skillSlug) reqBody.skillSlug = options.skillSlug;
+        if (options?.agentSlug) reqBody.agentSlug = options.agentSlug;
         const resp = await fetch('/api/agentic-os/launch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -226,7 +242,18 @@ export default function AgenticOsClient({
             ? { exe: 'wt.exe', args: ['-d', project, 'claude', '--resume'], cwd: project }
             : action === 'run_skill' && options?.skillSlug
               ? { exe: 'claude', args: ['-p', `/${options.skillSlug}`], cwd: project }
-              : { exe: 'claude', args: ['-p', skillForAction(action)], cwd: project };
+              : action === 'run_agent' && options?.agentSlug
+                ? {
+                    exe: 'claude',
+                    args: [
+                      '--agent',
+                      options.agentSlug,
+                      '--bg',
+                      `Begin working on ${project}.`,
+                    ],
+                    cwd: project,
+                  }
+                : { exe: 'claude', args: ['-p', skillForAction(action)], cwd: project };
         const newRun: ActiveRun = {
           runId: body.runId,
           project,
@@ -361,6 +388,24 @@ export default function AgenticOsClient({
       .length,
   };
 
+  // Total discovered agents across all projects + the shared global list
+  // (counted once, since it's identical for every project entry).
+  const agentCountTotal = (() => {
+    let projTotal = 0;
+    let globalCount = 0;
+    let sawGlobal = false;
+    for (const p of projects) {
+      const pa = projectAgents[p.name];
+      if (!pa) continue;
+      projTotal += pa.projectAgents.length;
+      if (!sawGlobal) {
+        globalCount = pa.globalAgents.length;
+        sawGlobal = true;
+      }
+    }
+    return projTotal + globalCount;
+  })();
+
   return (
     <div className="bg-gradient-to-br from-slate-50 via-white to-sky-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
       {/* Admin pill-bar — inherits the dashboard's slate/sky palette directly now. */}
@@ -380,10 +425,14 @@ export default function AgenticOsClient({
         <div className="flex items-center gap-3 text-xs">
           <span
             className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400"
-            title={TOOLTIPS.step10}
+            title="Total agents discovered (project-scoped across all projects + shared global pool)"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400/40" />
-            <span className="font-mono">0 agents</span>
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                agentCountTotal > 0 ? 'bg-blue-400' : 'bg-blue-400/40'
+              }`}
+            />
+            <span className="font-mono">{agentCountTotal} agents</span>
           </span>
           <span
             className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400"
@@ -793,13 +842,169 @@ export default function AgenticOsClient({
                                 })()}
                               </div>
                             </details>
-                            <button
-                              className="text-xs bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-700/30 rounded px-2 py-0.5 cursor-not-allowed text-sky-700 dark:text-sky-300 opacity-60"
-                              disabled
-                              title={TOOLTIPS.step10}
-                            >
-                              Agent v
-                            </button>
+                            {/* Pattern D (step 10): Agent v dropdown.
+                                Lists project-scoped agents from
+                                <project>/.claude/agents/*.md AND global
+                                agents from ~/.claude/agents/*.md (the same
+                                global list appears on every row). Click
+                                fires launchAction(p.name, 'run_agent',
+                                { agentSlug: agent.slug }) which routes
+                                through the same /api/agentic-os/launch +
+                                SSE plumbing as Pattern A/C, so the run
+                                surfaces in the run-card list. */}
+                            <details className="relative">
+                              <summary
+                                className="list-none cursor-pointer text-xs bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-700/30 rounded px-2 py-0.5 hover:bg-sky-200 dark:hover:bg-sky-900/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-sky-500"
+                                title="Launch a Pattern D agent (claude --agent <slug> --bg)"
+                              >
+                                Agent v
+                              </summary>
+                              <div className="absolute right-0 mt-1 z-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-md py-1 min-w-[14rem] max-h-80 overflow-y-auto">
+                                {(() => {
+                                  const pa = projectAgents[p.name];
+                                  const projAgents = pa?.projectAgents ?? [];
+                                  const globAgents = pa?.globalAgents ?? [];
+                                  const hasAny =
+                                    projAgents.length > 0 || globAgents.length > 0;
+                                  return (
+                                    <>
+                                      <div
+                                        className="px-3 py-1 text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold"
+                                        aria-label="Project-scoped agents"
+                                      >
+                                        Project agents
+                                      </div>
+                                      {pa?.error ? (
+                                        <div className="px-3 py-1 text-[10px] italic text-red-600 dark:text-red-400">
+                                          Agent discovery failed: {pa.error}
+                                        </div>
+                                      ) : projAgents.length === 0 ? (
+                                        <div className="px-3 py-1 text-[10px] italic text-slate-500 dark:text-slate-400">
+                                          {globAgents.length > 0
+                                            ? 'No project agents; see global agents below'
+                                            : 'No project agents'}
+                                        </div>
+                                      ) : (
+                                        projAgents.map((ag) => {
+                                          const concurrencyKey = `${p.name}::run_agent::${ag.slug}`;
+                                          const busy = launchingFor.has(concurrencyKey);
+                                          return (
+                                            <button
+                                              key={`p-${ag.slug}`}
+                                              type="button"
+                                              disabled={busy}
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                const det = (
+                                                  e.currentTarget.closest(
+                                                    'details',
+                                                  ) as HTMLDetailsElement | null
+                                                );
+                                                if (det) det.open = false;
+                                                void launchAction(p.name, 'run_agent', {
+                                                  agentSlug: ag.slug,
+                                                });
+                                              }}
+                                              className="block w-full text-left text-xs px-3 py-1.5 text-slate-800 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-sky-900/30 disabled:opacity-50 disabled:cursor-wait"
+                                              title={`Run claude --agent ${ag.slug} --bg in ${p.name}`}
+                                            >
+                                              <div className="font-mono">
+                                                {ag.slug}
+                                                {ag.name && ag.name !== ag.slug && (
+                                                  <span className="ml-2 text-[10px] text-slate-500 dark:text-slate-400 font-sans">
+                                                    {ag.name}
+                                                  </span>
+                                                )}
+                                                {busy && (
+                                                  <span className="ml-2 text-[10px] text-slate-500 dark:text-slate-400">
+                                                    ...
+                                                  </span>
+                                                )}
+                                              </div>
+                                              {ag.description && (
+                                                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug whitespace-normal break-words">
+                                                  {ag.description}
+                                                </div>
+                                              )}
+                                            </button>
+                                          );
+                                        })
+                                      )}
+                                      <hr
+                                        role="separator"
+                                        className="my-1 border-slate-200 dark:border-slate-700"
+                                      />
+                                      <div
+                                        className="px-3 py-1 text-[9px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold"
+                                        aria-label="Global (user-scoped) agents"
+                                      >
+                                        Global agents
+                                      </div>
+                                      {globAgents.length === 0 ? (
+                                        <div className="px-3 py-1 text-[10px] italic text-slate-500 dark:text-slate-400">
+                                          No global agents
+                                        </div>
+                                      ) : (
+                                        globAgents.map((ag) => {
+                                          const concurrencyKey = `${p.name}::run_agent::${ag.slug}`;
+                                          const busy = launchingFor.has(concurrencyKey);
+                                          return (
+                                            <button
+                                              key={`g-${ag.slug}`}
+                                              type="button"
+                                              disabled={busy}
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                const det = (
+                                                  e.currentTarget.closest(
+                                                    'details',
+                                                  ) as HTMLDetailsElement | null
+                                                );
+                                                if (det) det.open = false;
+                                                void launchAction(p.name, 'run_agent', {
+                                                  agentSlug: ag.slug,
+                                                });
+                                              }}
+                                              className="block w-full text-left text-xs px-3 py-1.5 text-slate-800 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-sky-900/30 disabled:opacity-50 disabled:cursor-wait"
+                                              title={`Run claude --agent ${ag.slug} --bg in ${p.name}`}
+                                            >
+                                              <div className="font-mono">
+                                                {ag.slug}
+                                                {ag.name && ag.name !== ag.slug && (
+                                                  <span className="ml-2 text-[10px] text-slate-500 dark:text-slate-400 font-sans">
+                                                    {ag.name}
+                                                  </span>
+                                                )}
+                                                {busy && (
+                                                  <span className="ml-2 text-[10px] text-slate-500 dark:text-slate-400">
+                                                    ...
+                                                  </span>
+                                                )}
+                                              </div>
+                                              {ag.description && (
+                                                <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug whitespace-normal break-words">
+                                                  {ag.description}
+                                                </div>
+                                              )}
+                                            </button>
+                                          );
+                                        })
+                                      )}
+                                      {pa?.truncated && (
+                                        <div className="px-3 py-1 text-[10px] italic text-amber-600 dark:text-amber-400">
+                                          More project agents exist; cap at 50
+                                        </div>
+                                      )}
+                                      {!hasAny && !pa?.error && (
+                                        <div className="sr-only">
+                                          No agents discovered
+                                        </div>
+                                      )}
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            </details>
                           </div>
                         </td>
                       </tr>
@@ -850,6 +1055,7 @@ export default function AgenticOsClient({
           project={selectedProject}
           activity={selectedProject ? activity[selectedProject.name] : undefined}
           skills={selectedProject ? projectSkills[selectedProject.name] : undefined}
+          agents={selectedProject ? projectAgents[selectedProject.name] : undefined}
           tooltips={TOOLTIPS}
           onLaunch={launchAction}
           launchingFor={launchingFor}

@@ -26,25 +26,37 @@ import { z } from 'zod';
 // so the slug can be embedded inside argv (`/<slug>`) without escaping.
 export const SKILL_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,40}$/i;
 
+// Agent-slug pattern (step 10 / Pattern D). MUST stay in lockstep with
+// AGENT_SLUG_PATTERN in agent-discovery.ts. Same shape as the skill slug
+// (filename minus `.md` for an agent .md file under `.claude/agents/`).
+// Locked here as a separate constant -- if/when the two patterns diverge
+// (e.g. agents grow underscores), this single source of truth flips
+// without touching the skill side.
+export const AGENT_SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,40}$/i;
+
 // Tight, defensive shape. Action is a literal string matched against the
 // command-templates allowlist server-side (launch-validator.ts).
 //
 // .strict() rejects unknown keys so a sloppy / hostile client cannot smuggle
 // extra fields past the schema. The route only reads `project` + `action`
-// (+ optional `skillSlug` for the generic run_skill template, step 8); strict-
-// rejection makes any future field additions a deliberate change.
+// (+ optional `skillSlug` for run_skill, step 8; + optional `agentSlug`
+// for run_agent, step 10); strict-rejection makes any future field
+// additions a deliberate change.
 //
 // Step 8 (Pattern C): a single generic `run_skill` template handles all
-// discovered skills via a `skillSlug` argument. We did NOT add per-skill
-// entries to COMMAND_TEMPLATES because that would dynamically expand the
-// allowlist at runtime, which is exactly the kind of widening that broke the
-// allowlist-only invariant. The slug regex above is the security boundary;
-// the validator re-checks it before building argv.
+// discovered skills via a `skillSlug` argument. Step 10 (Pattern D): a
+// single generic `run_agent` template handles all discovered agents via
+// an `agentSlug` argument. We did NOT add per-skill or per-agent entries
+// to COMMAND_TEMPLATES because that would dynamically expand the
+// allowlist at runtime, which is exactly the kind of widening that broke
+// the allowlist-only invariant. The slug regexes above are the security
+// boundary; the validator re-checks them before building argv.
 export const LaunchRequestSchema = z
   .object({
     project: z.string().min(1).max(120),
     action: z.string().min(1).max(60),
     skillSlug: z.string().regex(SKILL_SLUG_PATTERN).optional(),
+    agentSlug: z.string().regex(AGENT_SLUG_PATTERN).optional(),
   })
   .strict();
 

@@ -33,6 +33,10 @@ import {
   discoverAllProjectSkills,
   type ProjectSkills,
 } from '@/lib/agentic-os/skill-discovery';
+import {
+  discoverAllProjectAgents,
+  type ProjectAgents,
+} from '@/lib/agentic-os/agent-discovery';
 import { isAgenticOsEnabled } from '@/lib/agentic-os/feature-flag';
 import AgenticOsClient, { type AgenticOsResult } from './AgenticOsClient';
 
@@ -93,7 +97,14 @@ export default async function AgenticOsPage() {
         'in your runtime environment (and ensure the filesystem + git are ' +
         'actually available there).',
     };
-    return <AgenticOsClient result={result} activity={{}} projectSkills={{}} />;
+    return (
+      <AgenticOsClient
+        result={result}
+        activity={{}}
+        projectSkills={{}}
+        projectAgents={{}}
+      />
+    );
   }
 
   // Read PROJECTS_MAP.md. If the file is missing or unparseable, surface a
@@ -102,15 +113,17 @@ export default async function AgenticOsPage() {
   let result: AgenticOsResult;
   let activity: Record<string, ProjectActivity> = {};
   let projectSkills: Record<string, ProjectSkills> = {};
+  let projectAgents: Record<string, ProjectAgents> = {};
   try {
     const parsed = await readProjectsMap();
-    // Fan-out git log + skill discovery across every project in parallel.
-    // Both helpers isolate per-project failures into their result's `error`
-    // field; the outer Promise.all always resolves.
+    // Fan-out git log + skill discovery + agent discovery across every project
+    // in parallel. All three helpers isolate per-project failures into their
+    // result's `error` field; the outer Promise.all always resolves.
     const projectInputs = parsed.projects.map((p) => ({ name: p.name, path: p.path }));
-    [activity, projectSkills] = await Promise.all([
+    [activity, projectSkills, projectAgents] = await Promise.all([
       getAllProjectsActivity(projectInputs),
       discoverAllProjectSkills(projectInputs),
+      discoverAllProjectAgents(projectInputs),
     ]);
     result = { ok: true, projects: parsed.projects, edges: parsed.edges };
   } catch (err) {
@@ -133,6 +146,7 @@ export default async function AgenticOsPage() {
       result={result}
       activity={activity}
       projectSkills={projectSkills}
+      projectAgents={projectAgents}
     />
   );
 }

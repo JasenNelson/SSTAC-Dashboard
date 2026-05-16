@@ -23,7 +23,7 @@
 
 import path from 'path';
 import type { LaunchRequest } from './launch-schemas';
-import { SKILL_SLUG_PATTERN } from './launch-schemas';
+import { SKILL_SLUG_PATTERN, AGENT_SLUG_PATTERN } from './launch-schemas';
 
 // The 8 projects from PROJECTS_MAP.md. Matches the arch spec's allowlist verbatim.
 const ALLOWED_PROJECTS: ReadonlySet<string> = new Set<string>([
@@ -123,6 +123,28 @@ const COMMAND_TEMPLATES: Readonly<Record<string, CommandTemplate>> = {
     // validator's pre-check is still the real guarantee.
     args: (_project: string, _cwd: string) => ['-p', '/'],
   },
+  // Pattern D (step 10): generic agent launcher. The slug arrives via the
+  // optional `agentSlug` field on LaunchRequest. Mirrors the run_skill
+  // template architecture exactly: ONE generic entry + strict slug regex
+  // re-validated by validateLaunchRequest below. We do NOT add per-agent
+  // entries to COMMAND_TEMPLATES.
+  //
+  // Invocation shape per AGENTIC_OS_HANDOFF.md §8:
+  //   claude --agent <slug> --bg "<initial prompt>"
+  // The --bg flag runs the agent in background mode; SSE/audit/run-card
+  // plumbing handles the streamed output. The initial prompt is FIXED for
+  // step 10 (Pattern D MVP); a customizable prompt is post-MVP.
+  //
+  // The fixed prompt is "Begin working on <project name>." with the project
+  // name embedded inline. The project name has ALREADY cleared the strict
+  // ALLOWED_PROJECTS allowlist before this closure runs, so no untrusted
+  // tokens can reach the prompt string. The prompt is passed as a single
+  // argv element via spawn (not exec), so even if a future regression
+  // widened the project allowlist, no shell interpretation occurs.
+  run_agent: {
+    exe: 'claude',
+    args: (_project: string, _cwd: string) => ['--agent', '', '--bg', ''],
+  },
 };
 
 export interface ValidatedLaunch {
@@ -139,7 +161,9 @@ export type LaunchValidatorResult =
         | 'unknown_project'
         | 'unknown_action'
         | 'missing_skill_slug'
-        | 'invalid_skill_slug';
+        | 'invalid_skill_slug'
+        | 'missing_agent_slug'
+        | 'invalid_agent_slug';
     };
 
 /**
@@ -189,6 +213,20 @@ export function validateLaunchRequest(req: LaunchRequest): LaunchValidatorResult
       return { ok: false, reason: 'invalid_skill_slug' };
     }
     args = ['-p', `/${req.skillSlug}`];
+  } else if (req.action === 'run_agent') {
+    // Step 10 (Pattern D): generic agent launcher. The slug is re-validated
+    // against AGENT_SLUG_PATTERN here even though zod already did so at the
+    // schema layer -- belt + suspenders, this module is the security boundary.
+    // The fixed step-10 prompt embeds the (already-allowlisted) project name.
+    // Argv is a 4-element array consumed by child_process.spawn (not exec),
+    // so NO shell interpretation occurs even on the prompt string.
+    if (typeof req.agentSlug !== 'string' || req.agentSlug.length === 0) {
+      return { ok: false, reason: 'missing_agent_slug' };
+    }
+    if (!AGENT_SLUG_PATTERN.test(req.agentSlug)) {
+      return { ok: false, reason: 'invalid_agent_slug' };
+    }
+    args = ['--agent', req.agentSlug, '--bg', `Begin working on ${req.project}.`];
   } else {
     // args is computed by the template closure; copied into a fresh array so
     // the caller cannot mutate the registry. The cwd is passed in so Pattern B

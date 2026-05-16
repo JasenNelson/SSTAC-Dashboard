@@ -12,6 +12,7 @@
 import type { Project } from '@/lib/agentic-os/parse-projects-map';
 import type { ProjectActivity } from '@/lib/agentic-os/git-activity';
 import type { ProjectSkills } from '@/lib/agentic-os/skill-discovery';
+import type { ProjectAgents } from '@/lib/agentic-os/agent-discovery';
 import {
   compactName,
   shortenPath,
@@ -35,18 +36,27 @@ interface Props {
    *  defined-with-empty-skills renders the "no skills discovered" message;
    *  defined-with-error renders the failure note. */
   skills?: ProjectSkills;
+  /** Step 10 / Pattern D: agents discovered from <project>/.claude/agents/
+   *  (project scope) AND ~/.claude/agents/ (global scope, shared across all
+   *  projects). Undefined when no discovery has happened (renders the legacy
+   *  placeholder); defined-with-empty-lists renders the empty-state message;
+   *  defined-with-error renders the failure note. */
+  agents?: ProjectAgents;
   tooltips: Tooltips;
   /** Step 6b: launch a Pattern A skill against the selected project.
    *  Step 8: optional `options.skillSlug` carries the discovered skill slug
-   *  when action === 'run_skill'. */
+   *  when action === 'run_skill'.
+   *  Step 10: optional `options.agentSlug` carries the discovered agent slug
+   *  when action === 'run_agent'. */
   onLaunch?: (
     project: string,
     action: string,
-    options?: { skillSlug?: string },
+    options?: { skillSlug?: string; agentSlug?: string },
   ) => void;
   /** Set of in-flight concurrency keys. For Pattern A this is
    *  "{project}::{action}"; for Pattern C run_skill it is
-   *  "{project}::run_skill::{skillSlug}" so concurrent discovered-skill
+   *  "{project}::run_skill::{skillSlug}"; for Pattern D run_agent it is
+   *  "{project}::run_agent::{agentSlug}" so concurrent discovered-agent
    *  launches on the same project don't race the single-string key. */
   launchingFor?: ReadonlySet<string>;
   /** Available Pattern A skills (step 6b). When empty, the detail panel
@@ -58,6 +68,7 @@ export default function ProjectDetailPanel({
   project,
   activity,
   skills,
+  agents,
   tooltips,
   onLaunch,
   launchingFor,
@@ -335,6 +346,13 @@ export default function ProjectDetailPanel({
           })()}
         </div>
 
+        {/* Agents -- step 10 / Pattern D live discovery. Lists project-scoped
+            agents from <project>/.claude/agents/*.md (top), then global
+            agents from ~/.claude/agents/*.md (bottom, separated by a
+            divider). Click fires onLaunch(project, 'run_agent',
+            { agentSlug }), which routes through the same /api/agentic-os/launch
+            + SSE plumbing as Pattern A/C so the run shows up in the run-card
+            list / terminal panel. */}
         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
           <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-2 flex items-center justify-between">
             <span className="flex items-center gap-1">
@@ -350,9 +368,121 @@ export default function ProjectDetailPanel({
               step 10
             </span>
           </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 italic">
-            Agent discovery from .claude/agents/ ships in MVP step 10.
-          </div>
+          {(() => {
+            if (!agents) {
+              return (
+                <div className="text-xs text-slate-500 dark:text-slate-400 italic">
+                  Agent discovery not yet loaded.
+                </div>
+              );
+            }
+            const renderAgentButton = (
+              ag: ProjectAgents['projectAgents'][number],
+              keyPrefix: string,
+            ) => {
+              const concurrencyKey = `${project.name}::run_agent::${ag.slug}`;
+              const busy = launchingFor?.has(concurrencyKey) ?? false;
+              return (
+                <button
+                  key={`${keyPrefix}-${ag.slug}`}
+                  type="button"
+                  disabled={!onLaunch || busy}
+                  onClick={() =>
+                    onLaunch?.(project.name, 'run_agent', { agentSlug: ag.slug })
+                  }
+                  className="text-left bg-sky-100 dark:bg-sky-900/30 text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-700/30 text-xs py-1.5 px-2 rounded hover:bg-sky-200 dark:hover:bg-sky-900/50 disabled:opacity-50 disabled:cursor-wait focus:outline-none focus-visible:ring-1 focus-visible:ring-sky-500"
+                  title={`Run claude --agent ${ag.slug} --bg in ${project.name}`}
+                >
+                  <div className="font-mono">
+                    {ag.slug}
+                    {busy && (
+                      <span className="ml-2 text-[10px] text-slate-500 dark:text-slate-400">
+                        ...
+                      </span>
+                    )}
+                  </div>
+                  {ag.name && ag.name !== ag.slug && (
+                    <div className="text-[10px] text-slate-600 dark:text-slate-400 mt-0.5 font-sans">
+                      {ag.name}
+                    </div>
+                  )}
+                  {ag.description && (
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug whitespace-normal break-words font-sans">
+                      {ag.description}
+                    </div>
+                  )}
+                </button>
+              );
+            };
+
+            const projList = agents.projectAgents;
+            const globList = agents.globalAgents;
+            const totalDiscovered = projList.length + globList.length;
+            if (agents.error && totalDiscovered === 0) {
+              return (
+                <div className="text-xs text-red-600 dark:text-red-400 italic">
+                  Agent discovery failed: {agents.error}
+                </div>
+              );
+            }
+            if (totalDiscovered === 0) {
+              return (
+                <div className="text-xs text-slate-500 dark:text-slate-400 italic">
+                  No agents discovered for this project
+                </div>
+              );
+            }
+            return (
+              <>
+                <div
+                  className="text-[10px] text-slate-500 dark:text-slate-400 mb-1.5 font-mono uppercase tracking-wider"
+                  aria-label="Project-scoped agents"
+                >
+                  Project agents
+                </div>
+                {projList.length === 0 ? (
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 italic mb-2">
+                    {globList.length > 0
+                      ? 'No project agents; see global agents below'
+                      : 'No project agents'}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-1.5 mb-2">
+                    {projList.map((ag) => renderAgentButton(ag, 'p'))}
+                  </div>
+                )}
+                {agents.error && (
+                  <div className="text-[10px] italic text-red-600 dark:text-red-400 mb-2">
+                    Project agent discovery hit error: {agents.error}
+                  </div>
+                )}
+                <hr
+                  role="separator"
+                  className="my-2 border-slate-200 dark:border-slate-700"
+                />
+                <div
+                  className="text-[10px] text-slate-500 dark:text-slate-400 mb-1.5 font-mono uppercase tracking-wider"
+                  aria-label="Global (user-scoped) agents"
+                >
+                  Global agents
+                </div>
+                {globList.length === 0 ? (
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 italic">
+                    No global agents
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {globList.map((ag) => renderAgentButton(ag, 'g'))}
+                  </div>
+                )}
+                {agents.truncated && (
+                  <div className="mt-1.5 text-[10px] italic text-amber-600 dark:text-amber-400">
+                    More project agents exist; cap at 50
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
 
         {/* Recent commits -- populated server-side by getProjectActivity. */}
