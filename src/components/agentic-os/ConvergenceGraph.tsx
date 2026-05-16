@@ -23,6 +23,7 @@ import {
   Background,
   BackgroundVariant,
   Controls,
+  MarkerType,
   Position,
   type Node,
   type Edge as RFEdge,
@@ -158,7 +159,7 @@ export default function ConvergenceGraph({ edges, projectNames }: Props) {
           padding: 0,
           background: 'transparent',
           border: 'none',
-          fontSize: n.kind === 'project' ? 12 : 11,
+          fontSize: n.kind === 'project' ? 13 : 12,
         },
       })),
     [laidOut]
@@ -166,27 +167,44 @@ export default function ConvergenceGraph({ edges, projectNames }: Props) {
 
   const rfEdges: RFEdge[] = useMemo(
     () =>
-      edges.map((e, i) => ({
-        id: `e-${i}-${e.from}-${e.to}`,
-        source: e.from,
-        target: e.to,
-        label: e.label,
-        style: e.dashed
-          ? { strokeDasharray: '5,5', stroke: '#94a3b8', strokeWidth: 1 } // slate-400
-          : { stroke: '#0ea5e9', strokeWidth: 1.5 },                     // sky-500
-        // labelStyle.fill and labelBgStyle.fill are intentionally NOT set
-        // here because React Flow renders them as inline style attributes
-        // which beat dark-mode CSS overrides regardless of selector
-        // specificity. Colors live in the styled-jsx block below.
-        labelStyle: {
-          fontSize: 10,
-        },
-        labelBgStyle: {
-          fillOpacity: 0.9,
-        },
-        labelBgPadding: [3, 4] as [number, number],
-        type: 'default',
-      })),
+      edges.map((e, i) => {
+        // Color is shared between stroke and arrowhead so they read as a
+        // single visual unit. Without an explicit markerEnd, React Flow
+        // renders edges with no arrowhead at all -- matching the owner's
+        // "chicken scratches / arrows floating" feedback on the prior pass.
+        const stroke = e.dashed ? '#94a3b8' : '#0ea5e9'; // slate-400 / sky-500
+        const strokeWidth = e.dashed ? 1.5 : 2;
+        return {
+          id: `e-${i}-${e.from}-${e.to}`,
+          source: e.from,
+          target: e.to,
+          label: e.label,
+          style: e.dashed
+            ? { strokeDasharray: '6,5', stroke, strokeWidth }
+            : { stroke, strokeWidth },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: stroke,
+            width: 18,
+            height: 18,
+          },
+          // labelStyle.fill and labelBgStyle.fill are intentionally NOT set
+          // here because React Flow renders them as inline style attributes
+          // which beat dark-mode CSS overrides regardless of selector
+          // specificity. Colors live in the styled-jsx block below.
+          labelStyle: {
+            fontSize: 11,
+            fontWeight: 500,
+          },
+          labelBgStyle: {
+            fillOpacity: 0.92,
+          },
+          labelBgPadding: [4, 6] as [number, number],
+          // 'default' = bezier curves (owner explicitly likes the curves).
+          // Do not change to 'straight' or 'step'.
+          type: 'default',
+        };
+      }),
     [edges]
   );
 
