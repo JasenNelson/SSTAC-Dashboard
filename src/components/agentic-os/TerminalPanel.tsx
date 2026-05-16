@@ -5,7 +5,11 @@
 // Step 6a: extracted from AgenticOsClient.tsx with placeholder tabpanels.
 // Step 6b: the 'logs' tabpanel now renders a stack of "log cards", one per
 // active run (most-recent first). The 'terminal' / 'agents' / 'tasks' tabs
-// retain their step-N placeholders until later MVP steps ship them.
+// carry explanatory placeholders -- step 9 shipped the embedded terminal as
+// a MODAL (not a tab), step 10 shipped agent launches via a per-project
+// dropdown (output streams into the logs tab), and step 11 (Cowork digest)
+// lives on a separate machine. Placeholder copy refreshed 2026-05-16
+// (owner-bug 5) to reflect those realities.
 //
 // Tab tooltips are passed in by the parent so the component has no implicit
 // dependency on the parent's TOOLTIP step-number catalog.
@@ -45,13 +49,51 @@ interface Props {
 
 const TABS: readonly TerminalTab[] = ['logs', 'terminal', 'agents', 'tasks'];
 
-// Step-number placeholder map for the non-logs tabs. The 'logs' tab no
-// longer falls back to a placeholder once step 6b ships -- it always renders
-// the active-runs surface (which has its own empty state).
-const TAB_STEP: Record<Exclude<TerminalTab, 'logs'>, string> = {
-  terminal: '9',
-  agents: '10',
-  tasks: '11',
+// Owner-bug 5 (2026-05-16): the non-logs tabs used to read
+// "this tab will populate when MVP step 9/10/11 ships its launch / streaming
+// surface" -- but step 9 and step 10 ARE shipped, and step 11 (Cowork
+// Telegram digest) lives on a separate machine entirely. Owner directive:
+// keep all four tabs, refresh placeholder copy so it reflects what each
+// surface actually does today. NO timeline promises. The placeholders are
+// pointers / explainers, not "coming soon" cards.
+//
+// - terminal: the embedded xterm.js terminal (step 9) is a MODAL, not a tab.
+//   Tell the user how to open it from this page (per-row Open button + the
+//   right-pane "Open in embedded terminal" button).
+// - agents: agents are launched via the per-project "Agent v" dropdown
+//   (Pattern D, step 10). The run cards for `run_agent` launches surface in
+//   the logs tab next to skill runs; this tab is the conceptual home for a
+//   future filtered agents-only view.
+// - tasks: Cowork Telegram digest lives on a separate machine. No timeline.
+interface TabPlaceholder {
+  readonly heading: string;
+  readonly body: string;
+}
+const TAB_PLACEHOLDERS: Record<Exclude<TerminalTab, 'logs'>, TabPlaceholder> = {
+  terminal: {
+    heading: 'TERMINAL',
+    body:
+      'The embedded xterm.js terminal opens as a MODAL, not a tab. ' +
+      'Use the per-row "Open" button on any project, or the right-pane ' +
+      '"Open in embedded terminal" button on the selected project, to ' +
+      'launch a real PTY session (requires AGENTIC_OS_PTY_SECRET + ' +
+      '`npm run dev:all`).',
+  },
+  agents: {
+    heading: 'AGENTS',
+    body:
+      'Agents are launched via the per-project "Agent v" dropdown in the ' +
+      'Actions column. Running agents stream their output into the LOGS ' +
+      'tab as `run_agent` cards alongside skill runs. A filtered ' +
+      'agents-only view will live here.',
+  },
+  tasks: {
+    heading: 'TASKS',
+    body:
+      'The daily digest + task queue lives on a separate Cowork machine ' +
+      '(Telegram automation). This tab is a pointer for when that ' +
+      'integration surfaces here.',
+  },
 };
 
 function formatElapsed(startedAt: string, exitedAt: string | null | undefined): string {
@@ -274,18 +316,20 @@ export default function TerminalPanel({
             </div>
           )
         ) : (
-          <div className="h-full flex items-center justify-center text-xs text-slate-500 dark:text-slate-400 italic">
-            <div className="text-center">
-              <div className="font-mono text-slate-500 dark:text-slate-400 mb-2">
-                {activeTab.toUpperCase()}
+          (() => {
+            const placeholder =
+              TAB_PLACEHOLDERS[activeTab as Exclude<TerminalTab, 'logs'>];
+            return (
+              <div className="h-full flex items-center justify-center text-xs text-slate-500 dark:text-slate-400">
+                <div className="text-center max-w-md px-4">
+                  <div className="font-mono text-slate-500 dark:text-slate-400 mb-2">
+                    {placeholder.heading}
+                  </div>
+                  <div className="leading-relaxed">{placeholder.body}</div>
+                </div>
               </div>
-              <div>
-                This tab will populate when MVP step{' '}
-                {TAB_STEP[activeTab as Exclude<TerminalTab, 'logs'>]} ships
-                its launch / streaming surface.
-              </div>
-            </div>
-          </div>
+            );
+          })()
         )}
       </div>
     </div>

@@ -571,27 +571,46 @@ export default function AgenticOsClient({
             <div className="px-3 py-1 mt-4 text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
               Quick actions
             </div>
-            <button
-              className="block w-full text-left px-3 py-1.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed"
-              disabled
-              title="Bulk Pattern A across all projects ships after step 6b (per-row launch is available now)"
+            {/* Owner-bug 1 (2026-05-16): these three items are deferred (some
+                indefinitely -- "Detect orphans" was a mockup-only idea). They
+                used to render as <button disabled> which gave Windows browsers
+                a red "no-entry" cursor that looked like a broken affordance.
+                Owner directive: style as "coming soon" -- italic + reduced
+                opacity, NO cursor-not-allowed, NO hover state, NO disabled
+                attribute (so the cursor stays as default and they read as
+                informational labels rather than broken controls). Rendered as
+                <div role="note"> so screen readers don't announce them as
+                interactive. */}
+            <div
+              role="note"
+              className="block w-full text-left px-3 py-1.5 text-xs italic text-slate-500 dark:text-slate-400 opacity-50 select-none"
+              title="Bulk Pattern A across all projects -- coming soon. Use the per-row Skill v dropdown today."
             >
               /safe-exit on all
-            </button>
-            <button
-              className="block w-full text-left px-3 py-1.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed"
-              disabled
-              title="Orphan-process detection from the dashboard ships in MVP step 11"
+              <span className="ml-1 text-[10px] font-mono not-italic">
+                (coming soon)
+              </span>
+            </div>
+            <div
+              role="note"
+              className="block w-full text-left px-3 py-1.5 text-xs italic text-slate-500 dark:text-slate-400 opacity-50 select-none"
+              title="Orphan-process detection from the dashboard -- coming soon."
             >
               Detect orphans
-            </button>
-            <button
-              className="block w-full text-left px-3 py-1.5 text-xs text-slate-400 dark:text-slate-500 cursor-not-allowed"
-              disabled
-              title={TOOLTIPS.step11}
+              <span className="ml-1 text-[10px] font-mono not-italic">
+                (coming soon)
+              </span>
+            </div>
+            <div
+              role="note"
+              className="block w-full text-left px-3 py-1.5 text-xs italic text-slate-500 dark:text-slate-400 opacity-50 select-none"
+              title="Cowork daily digest preview -- coming soon (lives on a separate machine)."
             >
               Daily digest preview
-            </button>
+              <span className="ml-1 text-[10px] font-mono not-italic">
+                (coming soon)
+              </span>
+            </div>
           </nav>
         </aside>
 

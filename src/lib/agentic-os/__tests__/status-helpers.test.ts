@@ -28,8 +28,18 @@ describe('TOOLTIPS', () => {
     // is NOT present so a future regression doesn't silently restore it.
     expect(TOOLTIPS.step9).toMatch(/AGENTIC_OS_PTY_SECRET/);
     expect(TOOLTIPS.step9).not.toMatch(/arrives in MVP step 9/);
-    expect(TOOLTIPS.step10).toMatch(/step 10/);
-    expect(TOOLTIPS.step11).toMatch(/step 11/);
+    // step 10 has shipped (Pattern D agent dropdown). The tooltip describes
+    // where agents launch from (per-project "Agent v" dropdown -> logs tab)
+    // rather than deferring. Defensive: assert the stale "arrives in MVP
+    // step 10" copy is NOT present so a future regression doesn't silently
+    // restore the deferral wording.
+    expect(TOOLTIPS.step10).toMatch(/agent|dropdown|logs/i);
+    expect(TOOLTIPS.step10).not.toMatch(/arrives in MVP step 10/);
+    // step 11 (Cowork digest) lives on a separate machine; its tooltip is
+    // an informational note, not a deferral. Defensive: assert the stale
+    // "arrives in MVP step 11" copy is gone.
+    expect(TOOLTIPS.step11).toMatch(/Cowork|separate machine|Telegram/i);
+    expect(TOOLTIPS.step11).not.toMatch(/arrives in MVP step 11/);
   });
 });
 

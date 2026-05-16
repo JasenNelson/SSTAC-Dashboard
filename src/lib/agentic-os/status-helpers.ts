@@ -22,8 +22,17 @@ export const TOOLTIPS = {
     'Embedded terminal disabled. Set AGENTIC_OS_PTY_SECRET in .env.local ' +
     '(any 64-char hex), then restart with `npm run dev:all` so the PTY ' +
     'sidecar starts alongside Next.',
-  step10: 'Agent dropdown + spawn arrives in MVP step 10',
-  step11: 'Cowork daily digest + Telegram automation arrives in MVP step 11',
+  // step10 + step11 tooltips refreshed 2026-05-16 (owner-bug 5). step10
+  // shipped (agents launch via the per-project Agent v dropdown; runs
+  // surface in the logs tab). step11 (Cowork Telegram digest) lives on a
+  // separate machine; no in-app timeline. These strings are reused by
+  // TerminalPanel's tab tooltips and by some informational chips.
+  step10:
+    'Agents launch via the per-project "Agent v" dropdown; runs stream ' +
+    'into the logs tab as run_agent cards.',
+  step11:
+    'Cowork daily digest + Telegram automation lives on a separate ' +
+    'machine; no in-app timeline.',
 } as const;
 
 export type Tooltips = typeof TOOLTIPS;
