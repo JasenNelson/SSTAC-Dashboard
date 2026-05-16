@@ -650,7 +650,7 @@ export default function AgenticOsClient({
               <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
                 {filteredProjects.length} of {projects.length}
                 {filter ? ` matching "${filter}"` : ''}
-                {viewFilter !== 'all' ? ` · view: ${viewFilter}` : ''}
+                {viewFilter !== 'all' ? ` | view: ${viewFilter}` : ''}
               </span>
               <div className="flex-1" />
               <button
