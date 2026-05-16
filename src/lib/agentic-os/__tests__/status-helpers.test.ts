@@ -15,7 +15,11 @@ describe('TOOLTIPS', () => {
     // depend on in TerminalPanel + ProjectDetailPanel.
     expect(TOOLTIPS.step5).toMatch(/step 5/);
     expect(TOOLTIPS.step6).toMatch(/step 6/);
-    expect(TOOLTIPS.step7).toMatch(/step 7/);
+    // step 7 has shipped (Pattern B Windows Terminal pop-out); its tooltip
+    // now describes the action rather than a deferral. Sanity-check that
+    // the string is non-empty and mentions the terminal pop-out behavior.
+    expect(TOOLTIPS.step7).toMatch(/Windows Terminal|pop ?out|terminal/i);
+    expect(TOOLTIPS.step7.length).toBeGreaterThan(0);
     expect(TOOLTIPS.step8).toMatch(/step 8/);
     expect(TOOLTIPS.step9).toMatch(/step 9/);
     expect(TOOLTIPS.step10).toMatch(/step 10/);

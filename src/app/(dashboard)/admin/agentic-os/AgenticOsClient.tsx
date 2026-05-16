@@ -173,11 +173,20 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
           status: string;
         };
         const startedAt = new Date().toISOString();
+        // Optimistic command display. The server-side validator is the source
+        // of truth; this is only what we render in the run card while the
+        // child is alive. open_session (Pattern B, step 7) launches wt.exe
+        // and exits immediately, so the card flips to "completed" with empty
+        // stdout shortly after the new desktop tab opens.
+        const command =
+          action === 'open_session'
+            ? { exe: 'wt.exe', args: ['-d', project, 'claude', '--resume'], cwd: project }
+            : { exe: 'claude', args: ['-p', skillForAction(action)], cwd: project };
         const newRun: ActiveRun = {
           runId: body.runId,
           project,
           action,
-          command: { exe: 'claude', args: ['-p', skillForAction(action)], cwd: project },
+          command,
           startedAt,
           lines: [],
           status: 'running',
@@ -570,6 +579,10 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
                             onClick={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()}
                           >
+                            {/* Embedded xterm.js modal arrives in step 9 -- this
+                                button stays disabled until then. Step 7's
+                                external pop-out lives in the [ ] external
+                                button to its right. */}
                             <button
                               className="text-xs bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-0.5 cursor-not-allowed text-slate-500 dark:text-slate-400 opacity-60"
                               disabled
@@ -577,6 +590,30 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
                             >
                               Open
                             </button>
+                            {/* Step 7: Pattern B (wt.exe external pop-out).
+                                Fires open_session which spawns a new Windows
+                                Terminal tab running `claude --resume` in the
+                                project cwd. wt.exe exits immediately (exit 0);
+                                the audit log + SSE wiring still record the
+                                launch. */}
+                            {(() => {
+                              const concurrencyKey = `${p.name}::open_session`;
+                              const busy = launchingFor === concurrencyKey;
+                              return (
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    void launchAction(p.name, 'open_session');
+                                  }}
+                                  className="text-xs bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-700/30 rounded px-2 py-0.5 hover:bg-sky-200 dark:hover:bg-sky-900/50 disabled:opacity-50 disabled:cursor-wait focus:outline-none focus-visible:ring-1 focus-visible:ring-sky-500"
+                                  title={TOOLTIPS.step7}
+                                >
+                                  [ ] external{busy && ' ...'}
+                                </button>
+                              );
+                            })()}
                             {/* Skill v dropdown (Pattern A, step 6b).
                                 Native <details> avoids dependency on a headless
                                 UI library; the summary acts as the button. */}

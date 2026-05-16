@@ -46,33 +46,59 @@ const PROJECTS_ROOT = 'C:\\Projects';
 // args strings; the project name is captured only in args closures that wrap
 // it inside hardcoded literals.
 //
-// For step 6a, we ship three headless one-shots (Pattern A in the arch spec).
-// Pattern B (Windows Terminal pop-out) and Pattern C/D (skill dropdown,
-// agents) are scheduled for steps 7/8/10 and intentionally NOT in this
-// registry yet.
+// Step 6a shipped three headless one-shots (Pattern A in the arch spec).
+// Step 7 adds Pattern B (Windows Terminal external pop-out) -- a single
+// `open_session` template whose exe is wt.exe and whose argv asks Windows
+// Terminal to open a new tab in the project's cwd running `claude --resume`.
+// Pattern C/D (skill dropdown beyond the current three, agents) are scheduled
+// for steps 8/10 and intentionally NOT in this registry yet.
 //
-// The current set of skill names ('safe-exit', 'update-docs', 'doc-navigator')
-// matches the skills documented in CLAUDE.md / .claude/skills/_shared. Each
-// spawns `claude -p '/<skill>'` with cwd set to the project's absolute path
-// so the CLI picks up the project's .claude/settings.local.json.
+// The current set of Pattern A skill names ('safe-exit', 'update-docs',
+// 'doc-navigator') matches the skills documented in CLAUDE.md /
+// .claude/skills/_shared. Each spawns `claude -p '/<skill>'` with cwd set
+// to the project's absolute path so the CLI picks up the project's
+// .claude/settings.local.json.
+//
+// Pattern B (open_session) builds argv as the four-element array
+// ['-d', '<absolute project path>', 'claude', '--resume']. wt.exe interprets
+// -d as the inner shell's working directory; the subsequent positional tokens
+// become the command line wt.exe runs in the new tab. wt.exe itself spawns a
+// new desktop window and exits within milliseconds (exit code 0). The launch
+// route's audit + SSE wiring still applies -- the run-registry entry will
+// show empty stdout and a clean exit shortly after launch. That's expected;
+// the user-visible artifact is the new Windows Terminal tab on their desktop.
 interface CommandTemplate {
   readonly exe: string;
   // Pure function: project -> args. Must not consult any external state.
-  readonly args: (project: string) => readonly string[];
+  // The closure receives the (already-allowlisted) project name; for
+  // open_session it also receives the resolved absolute cwd so the -d
+  // argument can be wired without re-deriving the path inside the closure.
+  readonly args: (project: string, cwd: string) => readonly string[];
 }
 
 const COMMAND_TEMPLATES: Readonly<Record<string, CommandTemplate>> = {
   run_safe_exit: {
     exe: 'claude',
-    args: (_project: string) => ['-p', '/safe-exit'],
+    args: (_project: string, _cwd: string) => ['-p', '/safe-exit'],
   },
   run_update_docs: {
     exe: 'claude',
-    args: (_project: string) => ['-p', '/update-docs'],
+    args: (_project: string, _cwd: string) => ['-p', '/update-docs'],
   },
   run_doc_navigator: {
     exe: 'claude',
-    args: (_project: string) => ['-p', '/doc-navigator'],
+    args: (_project: string, _cwd: string) => ['-p', '/doc-navigator'],
+  },
+  // Pattern B (step 7): Windows Terminal external pop-out. wt.exe spawns a
+  // new desktop tab whose inner shell runs `claude --resume` in the project
+  // cwd. The -d flag is wt.exe's "starting directory" switch (verified vs
+  // Microsoft Terminal command-line reference). argv contains NO user input
+  // beyond the project-derived cwd (which has already cleared the project
+  // allowlist before this closure runs); the literals '-d', 'claude', and
+  // '--resume' are hardcoded.
+  open_session: {
+    exe: 'wt.exe',
+    args: (_project: string, cwd: string) => ['-d', cwd, 'claude', '--resume'],
   },
 };
 
@@ -117,8 +143,10 @@ export function validateLaunchRequest(req: LaunchRequest): LaunchValidatorResult
   const cwd = path.join(PROJECTS_ROOT, req.project);
 
   // args is computed by the template closure; copied into a fresh array so
-  // the caller cannot mutate the registry.
-  const args = Array.from(template.args(req.project));
+  // the caller cannot mutate the registry. The cwd is passed in so Pattern B
+  // (open_session) can embed it as wt.exe's -d argument without re-deriving
+  // the path inside the closure.
+  const args = Array.from(template.args(req.project, cwd));
 
   return {
     ok: true,

@@ -16,7 +16,7 @@ import type { SparklineTone } from '@/components/agentic-os/ActivitySparkline';
 export const TOOLTIPS = {
   step5: 'Mermaid convergence graph arrives in MVP step 5',
   step6: 'Launch buttons arrive in MVP step 6 (Pattern A: headless)',
-  step7: 'External Windows Terminal pop-out arrives in MVP step 7',
+  step7: 'Pop out a new Windows Terminal tab running claude --resume in this project',
   step8: 'Skill dropdown + per-project skill discovery arrives in MVP step 8',
   step9: 'Embedded xterm.js modal arrives in MVP step 9',
   step10: 'Agent dropdown + spawn arrives in MVP step 10',

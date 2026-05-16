@@ -118,13 +118,25 @@ export default function ProjectDetailPanel({
                   );
                 })}
               </div>
-              <button
-                className="mt-2 w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs py-1.5 rounded cursor-not-allowed text-slate-500 dark:text-slate-400"
-                disabled
-                title={tooltips.step7}
-              >
-                [ ] external (step 7)
-              </button>
+              {/* Step 7: Pattern B external pop-out. Fires open_session
+                  which spawns wt.exe with `-d <cwd> claude --resume`.
+                  wt.exe creates a new desktop terminal tab and exits cleanly;
+                  the launch route still records the audit + SSE entry. */}
+              {(() => {
+                const concurrencyKey = `${project.name}::open_session`;
+                const busy = launchingFor === concurrencyKey;
+                return (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onLaunch(project.name, 'open_session')}
+                    className="mt-2 w-full bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-700/30 text-xs py-1.5 rounded hover:bg-sky-200 dark:hover:bg-sky-900/50 disabled:opacity-50 disabled:cursor-wait focus:outline-none focus-visible:ring-1 focus-visible:ring-sky-500"
+                    title={tooltips.step7}
+                  >
+                    [ ] external (pop out new terminal){busy && ' ...'}
+                  </button>
+                );
+              })()}
             </>
           ) : (
             <div className="grid grid-cols-2 gap-2">
