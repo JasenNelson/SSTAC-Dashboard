@@ -67,8 +67,27 @@ const STUB_CLOSE_DELAY_MS = 50;
  * then closes with exit 0 after STUB_CLOSE_DELAY_MS. The stdout/stderr
  * streams are real Readable instances (in object mode off) so the
  * registerRun() data listeners attach without special-casing.
+ *
+ * Codex holistic 2026-05-16 fixes (P2-1 + P2-2):
+ *   - The stub now exposes `unref()` as a no-op so callers that pair
+ *     `detached:true` with `child.unref()` (Pattern B open_session) do
+ *     not crash with TypeError. Without this, the launch route would
+ *     500 spawn_failed for any e2e exercising the detached path, which
+ *     is masked today only because the Pattern B e2e skips without an
+ *     admin storageState fixture.
+ *   - When `options.stdio === 'ignore'`, the stub now suppresses the
+ *     canned stdout pushes so the stub stream shape mirrors the real
+ *     spawn shape for open_session (zero inline bytes). Tests asserting
+ *     the empty-state copy still pass because TerminalPanel keys the
+ *     copy on action === 'open_session', not on stdout being empty;
+ *     this change is for stub-vs-prod fidelity so future stream-aware
+ *     assertions can rely on the stub.
  */
-function createStubChild(exe: string, args: readonly string[]): ChildProcess {
+function createStubChild(
+  exe: string,
+  args: readonly string[],
+  options: SpawnOptions,
+): ChildProcess {
   const stdout = new Readable({ read() { /* no-op; we push manually */ } });
   const stderr = new Readable({ read() { /* no-op */ } });
 
@@ -77,6 +96,8 @@ function createStubChild(exe: string, args: readonly string[]): ChildProcess {
     stdout: Readable;
     stderr: Readable;
     kill: (signal?: NodeJS.Signals | number) => boolean;
+    unref: () => void;
+    ref: () => void;
   };
   // Synthetic but deterministic-ish pid; the launch route only uses it for
   // audit display, and runId is the real handle.
@@ -85,6 +106,18 @@ function createStubChild(exe: string, args: readonly string[]): ChildProcess {
   child.stderr = stderr;
   // No-op kill so callers that try to terminate the stub don't throw.
   child.kill = () => true;
+  // No-op unref / ref so the route's `if (spawnOpts.detached) child.unref()`
+  // path (Pattern B open_session) does not crash with TypeError on the
+  // stub child. The real ChildProcess has both methods.
+  child.unref = () => undefined;
+  child.ref = () => undefined;
+
+  // P2-2: when stdio is 'ignore' the real spawn produces no inline output
+  // (Pattern B / open_session uses this). Mirror that in the stub so the
+  // stream shape matches production -- the launch-runs registry, the SSE
+  // pipe, and any future stream-aware assertion see the same zero-byte
+  // shape they would in prod.
+  const stdioIgnored = options.stdio === 'ignore';
 
   // Emit canned output + close on the next tick so the caller can attach
   // listeners (registerRun does this BEFORE this function returns? No:
@@ -96,9 +129,13 @@ function createStubChild(exe: string, args: readonly string[]): ChildProcess {
     // real spawn semantics, even though spawnAwaitingReady doesn't await
     // the race when the stub branch is taken (see below).
     child.emit('spawn');
-    stdout.push(`[stub] launched ${exe} ${args.join(' ')}\n`);
-    stdout.push('[stub] done\n');
-    // End the streams so any consumer that awaits 'end' settles.
+    if (!stdioIgnored) {
+      stdout.push(`[stub] launched ${exe} ${args.join(' ')}\n`);
+      stdout.push('[stub] done\n');
+    }
+    // End the streams so any consumer that awaits 'end' settles. This
+    // runs unconditionally so consumers see EOF even when stdio is
+    // ignored (mirrors real spawn's behavior on stream close).
     stdout.push(null);
     stderr.push(null);
   });
@@ -175,7 +212,7 @@ export async function spawnAwaitingReady(
   // mid-run flip would apply on the next call, but tests do not rely on
   // that property -- they set the var via Playwright's webServer.env.
   if (isStubEnabled()) {
-    return createStubChild(exe, args);
+    return createStubChild(exe, args, options);
   }
 
   // child_process.spawn's TS overloads accept readonly string[] as args; cast

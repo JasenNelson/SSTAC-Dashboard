@@ -95,7 +95,21 @@ export default function EmbeddedTerminalModal({
 
     (async () => {
       try {
-        // Step 1: mint token.
+        // Step 1: dynamic-import xterm.js + addons FIRST (codex 2026-05-16
+        // P3-6 reorder). The PTY token has a 30-second TTL; on a cold dev
+        // server the xterm + addon chunks (~300 KB ungzipped) plus the
+        // CSS compile can take several seconds, and any time spent here
+        // BEFORE the token is minted comes out of the 30-second budget
+        // before the WS handshake. Loading the chunks first means the
+        // token clock only ticks while we're actively wiring it up.
+        const [{ Terminal }, { FitAddon }, { WebLinksAddon }] = await Promise.all([
+          import('@xterm/xterm'),
+          import('@xterm/addon-fit'),
+          import('@xterm/addon-web-links'),
+        ]);
+        if (cancelled) return;
+
+        // Step 2: mint token (now post-import so the 30s TTL starts late).
         const tokenResp = await fetch('/api/agentic-os/pty-token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -123,14 +137,6 @@ export default function EmbeddedTerminalModal({
         const body = (await tokenResp.json()) as TokenMintResponse;
         if (cancelled) return;
         setRunId(body.runId);
-
-        // Step 2: dynamic-import xterm.js + addons. Keeps the route-level
-        // bundle lean for users who never open the modal.
-        const [{ Terminal }, { FitAddon }, { WebLinksAddon }] = await Promise.all([
-          import('@xterm/xterm'),
-          import('@xterm/addon-fit'),
-          import('@xterm/addon-web-links'),
-        ]);
         // xterm.css is imported at module top-level (bundled by Next.js).
         if (!containerRef.current || cancelled) return;
         const term = new Terminal({

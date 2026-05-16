@@ -64,11 +64,24 @@ function isNodePtyAvailable(): boolean {
 }
 
 /**
+ * Minimum PTY-secret length (codex 2026-05-16 P2-5 hardening). Matches the
+ * PTY sidecar server's startup check. 32 chars catches the case where a
+ * dev typed a weak placeholder ("test123") instead of running the
+ * documented `openssl rand -hex 32` (which produces 64 hex chars). Any
+ * value at least this long is considered acceptable; we do not enforce
+ * hex format because base64 / arbitrary high-entropy strings are also OK.
+ */
+export const MIN_PTY_SECRET_LENGTH = 32;
+
+/**
  * Strictest gate -- enables the embedded xterm.js terminal modal (step 9 /
- * Pattern E). Returns true ONLY when all three are satisfied:
+ * Pattern E). Returns true ONLY when all four are satisfied:
  *   1. isAgenticOsLaunchEnabled() is true (dev or AGENTIC_OS_LOCAL=true)
  *   2. process.env.AGENTIC_OS_PTY_SECRET is a non-empty string
- *   3. node-pty loaded successfully (probed lazily, cached)
+ *   3. The secret is at least MIN_PTY_SECRET_LENGTH chars
+ *      (codex 2026-05-16 P2-5: refuse weak secrets so HS256 token forging
+ *      stays infeasible on a localhost-shared machine)
+ *   4. node-pty loaded successfully (probed lazily, cached)
  *
  * Client components must NOT import this function. The page server
  * component resolves it once and passes the result down as a prop
@@ -78,6 +91,7 @@ export function isAgenticOsPtyEnabled(): boolean {
   if (!isAgenticOsLaunchEnabled()) return false;
   const secret = process.env.AGENTIC_OS_PTY_SECRET;
   if (typeof secret !== 'string' || secret.length === 0) return false;
+  if (secret.length < MIN_PTY_SECRET_LENGTH) return false;
   if (!isNodePtyAvailable()) return false;
   return true;
 }

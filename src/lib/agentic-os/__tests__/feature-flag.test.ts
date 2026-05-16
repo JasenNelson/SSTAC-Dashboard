@@ -94,10 +94,15 @@ describe('isAgenticOsPtyEnabled (Pattern E / embedded terminal modal gate)', () 
     __resetPtyModuleProbeForTest();
   });
 
-  it('returns false when launch is disabled, even with secret set', () => {
+  // Min-strength secret per codex 2026-05-16 P2-5 hardening. 32+ chars
+  // (a 64-hex value mirrors `openssl rand -hex 32`). Tests that USED to
+  // pass with weak strings like 'test-secret' now require this.
+  const STRONG_SECRET = 'a'.repeat(64);
+
+  it('returns false when launch is disabled, even with strong secret set', () => {
     vi.stubEnv('NODE_ENV', 'production');
     vi.stubEnv('AGENTIC_OS_LOCAL', '');
-    vi.stubEnv('AGENTIC_OS_PTY_SECRET', 'some-secret');
+    vi.stubEnv('AGENTIC_OS_PTY_SECRET', STRONG_SECRET);
     expect(isAgenticOsPtyEnabled()).toBe(false);
   });
 
@@ -113,29 +118,46 @@ describe('isAgenticOsPtyEnabled (Pattern E / embedded terminal modal gate)', () 
     expect(isAgenticOsPtyEnabled()).toBe(false);
   });
 
-  it('returns true in dev when secret is set AND node-pty loads', () => {
+  it('returns false in dev when secret is shorter than MIN_PTY_SECRET_LENGTH (codex P2-5)', () => {
+    // Weak-secret guard. Anything under 32 chars must be rejected so
+    // HS256 token forging stays infeasible on a localhost-shared
+    // machine. The PTY sidecar refuses to start on the same condition.
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('AGENTIC_OS_PTY_SECRET', 'a'.repeat(31));
+    expect(isAgenticOsPtyEnabled()).toBe(false);
+  });
+
+  it('returns true in dev when secret is set with sufficient length AND node-pty loads', () => {
     // node-pty is installed in the workspace; the probe should succeed.
     // If this test ever fails, it's a signal that node-pty has regressed
     // on this platform -- not a test bug.
     vi.stubEnv('NODE_ENV', 'development');
-    vi.stubEnv('AGENTIC_OS_PTY_SECRET', 'test-secret');
+    vi.stubEnv('AGENTIC_OS_PTY_SECRET', STRONG_SECRET);
     expect(isAgenticOsPtyEnabled()).toBe(true);
   });
 
-  it('CRITICAL: returns false in production even when NEXT_PUBLIC_AGENTIC_OS_ENABLED=true and secret is set', () => {
+  it('returns true in dev at the exact MIN_PTY_SECRET_LENGTH boundary', () => {
+    // Boundary test: exactly 32 chars is acceptable (the `<` check is
+    // strict-less-than, not less-than-or-equal).
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('AGENTIC_OS_PTY_SECRET', 'a'.repeat(32));
+    expect(isAgenticOsPtyEnabled()).toBe(true);
+  });
+
+  it('CRITICAL: returns false in production even when NEXT_PUBLIC_AGENTIC_OS_ENABLED=true and strong secret is set', () => {
     // Reinforces the layered-gate invariant: NEXT_PUBLIC_* never crosses
     // into spawn-class behaviors. AGENTIC_OS_LOCAL is the only escape.
     vi.stubEnv('NODE_ENV', 'production');
     vi.stubEnv('NEXT_PUBLIC_AGENTIC_OS_ENABLED', 'true');
     vi.stubEnv('AGENTIC_OS_LOCAL', '');
-    vi.stubEnv('AGENTIC_OS_PTY_SECRET', 'test-secret');
+    vi.stubEnv('AGENTIC_OS_PTY_SECRET', STRONG_SECRET);
     expect(isAgenticOsPtyEnabled()).toBe(false);
   });
 
-  it('returns true in production when AGENTIC_OS_LOCAL=true AND secret is set', () => {
+  it('returns true in production when AGENTIC_OS_LOCAL=true AND strong secret is set', () => {
     vi.stubEnv('NODE_ENV', 'production');
     vi.stubEnv('AGENTIC_OS_LOCAL', 'true');
-    vi.stubEnv('AGENTIC_OS_PTY_SECRET', 'test-secret');
+    vi.stubEnv('AGENTIC_OS_PTY_SECRET', STRONG_SECRET);
     expect(isAgenticOsPtyEnabled()).toBe(true);
   });
 });

@@ -38,6 +38,13 @@ const DEFAULT_PORT = 3101;
 const HEARTBEAT_INTERVAL_MS = 20_000;
 const MAX_INBOUND_MESSAGE_BYTES = 64 * 1024; // 64 KiB; way more than any keystroke burst
 
+// PTY secret must be at least 32 chars (codex 2026-05-16 P2-5 hardening).
+// The .env.example points users at `openssl rand -hex 32` which produces 64
+// hex chars; a typed-in or accidentally-short secret would let any
+// localhost process forge HS256 tokens against a guessable secret. Refuse
+// to start under any non-empty-but-weak value so the failure is loud at
+// dev-server start rather than silent at the first PTY handshake.
+const MIN_SECRET_LENGTH = 32;
 const SECRET = process.env.AGENTIC_OS_PTY_SECRET;
 if (typeof SECRET !== 'string' || SECRET.length === 0) {
   // Refuse to start. A secretless server would either reject every handshake
@@ -46,6 +53,16 @@ if (typeof SECRET !== 'string' || SECRET.length === 0) {
   console.error(
     '[agentic-os pty-server] AGENTIC_OS_PTY_SECRET is not set. ' +
       'Generate one (openssl rand -hex 32) and put it in .env.local. ' +
+      'Refusing to start.',
+  );
+  process.exit(1);
+}
+if (SECRET.length < MIN_SECRET_LENGTH) {
+  console.error(
+    `[agentic-os pty-server] AGENTIC_OS_PTY_SECRET is only ${SECRET.length} ` +
+      `chars; minimum is ${MIN_SECRET_LENGTH} chars to keep HS256 token ` +
+      'forging infeasible on a localhost-shared machine. Generate a stronger ' +
+      'secret (openssl rand -hex 32 -> 64 hex chars) and put it in .env.local. ' +
       'Refusing to start.',
   );
   process.exit(1);
@@ -224,11 +241,18 @@ wss.on('connection', (ws, _request, payload) => {
     // ignore
   }
 
-  // Stream PTY output to the WS as binary frames where possible (xterm.js
-  // accepts both). node-pty's onData emits strings; pass through as-is.
+  // Stream PTY output to the WS as BINARY frames (codex 2026-05-16 P2-3
+  // fix). node-pty's onData emits strings; we wrap into a Buffer so the
+  // ws library sends a binary frame. This disambiguates PTY output from
+  // the JSON control envelopes ({type:'ready'|'exit'|'error'}) which
+  // remain as text frames -- otherwise any PTY output that happened to
+  // start with `{` and parse as JSON-with-known-type would be silently
+  // swallowed (or mis-interpreted as session-end) by the modal's
+  // text-frame JSON-control parser. The modal already handles binary
+  // frames via its ArrayBuffer branch (ws.binaryType='arraybuffer').
   const onDataDisposable = ptyProcess.onData((data) => {
     try {
-      ws.send(data);
+      ws.send(Buffer.from(data, 'utf-8'));
     } catch {
       // ws closed mid-write; ignore
     }

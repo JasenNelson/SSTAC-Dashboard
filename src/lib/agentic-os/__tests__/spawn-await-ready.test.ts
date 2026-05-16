@@ -271,4 +271,72 @@ describe('spawnAwaitingReady stub branch (AGENTIC_OS_SPAWN_STUB)', () => {
     }
     expect(spawnMock).toHaveBeenCalledTimes(5);
   });
+
+  it('stub child exposes a no-op unref() (codex P2-1 -- route calls child.unref() when detached:true)', async () => {
+    // Pattern B / open_session sets detached:true; the route then calls
+    // child.unref(). Before the codex P2-1 fix, the stub only declared
+    // .kill, so this call crashed with TypeError and the route returned
+    // 500 spawn_failed for any e2e exercising the detached path. Masked
+    // today only because the Pattern B e2e skips without admin auth.
+    process.env.AGENTIC_OS_SPAWN_STUB = 'true';
+    spawnMock.mockImplementation(() => {
+      throw new Error('real spawn should not be called in stub mode');
+    });
+
+    const child = await spawnAwaitingReady('cmd.exe', ['/c', 'start', 'wt.exe'], {
+      cwd: 'C:\\Projects\\SSTAC-Dashboard',
+      detached: true,
+      stdio: 'ignore',
+    });
+
+    expect(typeof (child as unknown as { unref?: () => void }).unref).toBe('function');
+    // Calling unref() must not throw.
+    expect(() => (child as unknown as { unref: () => void }).unref()).not.toThrow();
+    // ref() is the symmetric counterpart -- real ChildProcess has both.
+    expect(typeof (child as unknown as { ref?: () => void }).ref).toBe('function');
+    expect(() => (child as unknown as { ref: () => void }).ref()).not.toThrow();
+  });
+
+  it('stub suppresses canned stdout when options.stdio === "ignore" (codex P2-2 stream-shape fidelity)', async () => {
+    // For Pattern B / open_session the real spawn uses stdio:'ignore' and
+    // produces zero inline bytes. Before the codex P2-2 fix the stub
+    // always pushed canned stdout regardless of stdio, so the stub stream
+    // shape diverged from prod for this template. The empty-state copy in
+    // TerminalPanel is keyed on action===open_session and rendered
+    // regardless of stdout, so e2e still passed -- but any future
+    // stream-aware assertion would have tested phantom bytes.
+    process.env.AGENTIC_OS_SPAWN_STUB = 'true';
+    spawnMock.mockImplementation(() => {
+      throw new Error('real spawn should not be called in stub mode');
+    });
+
+    const child = await spawnAwaitingReady(
+      'cmd.exe',
+      ['/c', 'start', 'wt.exe', '-d', 'C:\\Projects\\SSTAC-Dashboard', 'claude', '--resume'],
+      {
+        cwd: 'C:\\Projects\\SSTAC-Dashboard',
+        detached: true,
+        stdio: 'ignore',
+      },
+    );
+
+    const chunks: string[] = [];
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(
+        () => reject(new Error('timed out waiting for stub stdout EOF')),
+        2000,
+      );
+      child.stdout!.on('data', (c: Buffer | string) => {
+        chunks.push(typeof c === 'string' ? c : c.toString('utf-8'));
+      });
+      child.stdout!.on('end', () => {
+        clearTimeout(timeout);
+        resolve();
+      });
+    });
+
+    // The stream must close cleanly (no hang), AND must have emitted
+    // zero bytes -- mirroring the real stdio:'ignore' shape.
+    expect(chunks.join('')).toBe('');
+  });
 });
