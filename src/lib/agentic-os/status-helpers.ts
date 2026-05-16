@@ -18,7 +18,10 @@ export const TOOLTIPS = {
   step6: 'Launch buttons arrive in MVP step 6 (Pattern A: headless)',
   step7: 'Pop out a new Windows Terminal tab running claude --resume in this project',
   step8: 'Skill dropdown + per-project skill discovery arrives in MVP step 8',
-  step9: 'Embedded xterm.js modal arrives in MVP step 9',
+  step9:
+    'Embedded terminal disabled. Set AGENTIC_OS_PTY_SECRET in .env.local ' +
+    '(any 64-char hex), then restart with `npm run dev:all` so the PTY ' +
+    'sidecar starts alongside Next.',
   step10: 'Agent dropdown + spawn arrives in MVP step 10',
   step11: 'Cowork daily digest + Telegram automation arrives in MVP step 11',
 } as const;

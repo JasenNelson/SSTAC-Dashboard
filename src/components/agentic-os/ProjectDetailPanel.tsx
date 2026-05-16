@@ -142,8 +142,7 @@ export default function ProjectDetailPanel({
             title={
               ptyEnabled && onOpenEmbeddedTerminal
                 ? `Open an embedded xterm.js terminal modal connected to a real PTY (claude --resume) for ${project.name}`
-                : tooltips.step9 +
-                  ' -- set AGENTIC_OS_PTY_SECRET and run `npm run pty-server` to enable'
+                : tooltips.step9
             }
           >
             Open in embedded terminal
@@ -293,7 +292,21 @@ export default function ProjectDetailPanel({
             (no green check, no red error -- just italic notes). */}
         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
           <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-2 flex items-center justify-between">
-            <span>Skills</span>
+            <span className="flex items-center gap-2">
+              Skills
+              {/* Counter pill (owner-bug 3, 2026-05-16): the list is now
+                  height-capped + scrollable so projects with 50 skills don't
+                  push the convergence graph into massive whitespace. The pill
+                  tells the user there's MORE content scrollable below the
+                  fold without forcing the layout open. Only rendered when
+                  discovery is loaded + has content (no pill on empty/error
+                  branches to keep the placeholder text uncluttered). */}
+              {skills && !skills.error && skills.skills.length > 0 && (
+                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 px-1.5 py-0 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 normal-case tracking-normal">
+                  {skills.skills.length} {skills.skills.length === 1 ? 'skill' : 'skills'}
+                </span>
+              )}
+            </span>
             <span
               className="font-mono text-slate-400 dark:text-slate-500"
               title={tooltips.step8}
@@ -325,7 +338,10 @@ export default function ProjectDetailPanel({
             }
             return (
               <>
-                <div className="grid grid-cols-1 gap-1.5">
+                {/* Cap the skills list at ~12rem (about 6-8 visible items).
+                    Scroll for the rest. The counter pill above signals
+                    discoverability so the cap doesn't silently hide content. */}
+                <div className="grid grid-cols-1 gap-1.5 max-h-48 overflow-y-auto pr-1">
                   {skills.skills.map((sk) => {
                     const concurrencyKey = `${project.name}::run_skill::${sk.slug}`;
                     const busy = launchingFor?.has(concurrencyKey) ?? false;
@@ -386,6 +402,17 @@ export default function ProjectDetailPanel({
               <span className="px-1 py-0 bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 font-mono text-[9px] rounded">
                 NEW
               </span>
+              {/* Counter pill: combined project + global agent count so the
+                  user sees the total scrollable corpus at a glance. Each
+                  sub-list (project / global) has its own scroll cap below. */}
+              {agents && (agents.projectAgents.length + agents.globalAgents.length) > 0 && (
+                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 px-1.5 py-0 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 normal-case tracking-normal ml-1">
+                  {agents.projectAgents.length + agents.globalAgents.length}{' '}
+                  {agents.projectAgents.length + agents.globalAgents.length === 1
+                    ? 'agent'
+                    : 'agents'}
+                </span>
+              )}
             </span>
             <span
               className="font-mono text-slate-400 dark:text-slate-500"
@@ -461,10 +488,15 @@ export default function ProjectDetailPanel({
             return (
               <>
                 <div
-                  className="text-[10px] text-slate-500 dark:text-slate-400 mb-1.5 font-mono uppercase tracking-wider"
+                  className="text-[10px] text-slate-500 dark:text-slate-400 mb-1.5 font-mono uppercase tracking-wider flex items-center gap-2"
                   aria-label="Project-scoped agents"
                 >
-                  Project agents
+                  <span>Project agents</span>
+                  {projList.length > 0 && (
+                    <span className="font-mono text-slate-500 dark:text-slate-400 px-1.5 py-0 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 normal-case tracking-normal">
+                      {projList.length}
+                    </span>
+                  )}
                 </div>
                 {projList.length === 0 ? (
                   <div className="text-[10px] text-slate-500 dark:text-slate-400 italic mb-2">
@@ -473,7 +505,11 @@ export default function ProjectDetailPanel({
                       : 'No project agents'}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-1.5 mb-2">
+                  // Cap project agents at ~8rem (about 4-5 visible items).
+                  // Project + global agents are split into independent scroll
+                  // containers per owner spec so a project with 30 global
+                  // agents doesn't push the divider off-screen.
+                  <div className="grid grid-cols-1 gap-1.5 mb-2 max-h-32 overflow-y-auto pr-1">
                     {projList.map((ag) => renderAgentButton(ag, 'p'))}
                   </div>
                 )}
@@ -487,17 +523,23 @@ export default function ProjectDetailPanel({
                   className="my-2 border-slate-200 dark:border-slate-700"
                 />
                 <div
-                  className="text-[10px] text-slate-500 dark:text-slate-400 mb-1.5 font-mono uppercase tracking-wider"
+                  className="text-[10px] text-slate-500 dark:text-slate-400 mb-1.5 font-mono uppercase tracking-wider flex items-center gap-2"
                   aria-label="Global (user-scoped) agents"
                 >
-                  Global agents
+                  <span>Global agents</span>
+                  {globList.length > 0 && (
+                    <span className="font-mono text-slate-500 dark:text-slate-400 px-1.5 py-0 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 normal-case tracking-normal">
+                      {globList.length}
+                    </span>
+                  )}
                 </div>
                 {globList.length === 0 ? (
                   <div className="text-[10px] text-slate-500 dark:text-slate-400 italic">
                     No global agents
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-1.5">
+                  // Cap global agents at ~8rem independently of project agents.
+                  <div className="grid grid-cols-1 gap-1.5 max-h-32 overflow-y-auto pr-1">
                     {globList.map((ag) => renderAgentButton(ag, 'g'))}
                   </div>
                 )}

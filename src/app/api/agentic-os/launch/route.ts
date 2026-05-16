@@ -162,21 +162,42 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 400 },
     );
   }
-  const { exe, args, cwd } = validation.value;
+  const { exe, args, cwd, spawnOverrides } = validation.value;
 
   // SPAWN: await 'spawn' vs 'error' race (engine_v2 commit 49b1cb0 pattern).
-  // stdio is intentionally ['ignore', 'pipe', 'pipe']:
+  //
+  // Defaults (used for Pattern A skill / Pattern C run_skill / Pattern D
+  // run_agent -- everything whose output we want to surface via SSE):
   //   - stdin 'ignore': nothing to feed the child; never block on input.
-  //   - stdout/stderr 'pipe': step 6b's SSE endpoint will attach to these
-  //     via the (forthcoming) pid -> stream registry without re-spawning.
-  // windowsHide prevents console flash on Windows admins.
+  //   - stdout/stderr 'pipe': step 6b's SSE endpoint attaches to these
+  //     via the runId -> stream registry without re-spawning.
+  //   - windowsHide: prevents console flash on Windows admins.
+  //
+  // Per-template overrides (validator-provided): Pattern B / open_session
+  // inverts windowsHide so wt.exe's window appears, sets detached:true so
+  // wt.exe survives parent exit on Windows, and switches stdio to 'ignore'
+  // so wt.exe isn't held back by our pipes. The override block wins on
+  // conflict because it's spread AFTER the defaults. When detached is
+  // requested we ALSO call child.unref() per Node docs -- on Windows the
+  // unref()+detached pair is required for the child to outlive the parent.
+  const spawnDefaults: import('child_process').SpawnOptions = {
+    cwd,
+    env: process.env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+    windowsHide: true,
+  };
+  const spawnOpts: import('child_process').SpawnOptions = {
+    ...spawnDefaults,
+    ...(spawnOverrides ?? {}),
+  };
   try {
-    const child = await spawnAwaitingReady(exe, args, {
-      cwd,
-      env: process.env,
-      stdio: ['ignore', 'pipe', 'pipe'],
-      windowsHide: true,
-    });
+    const child = await spawnAwaitingReady(exe, args, spawnOpts);
+    if (spawnOpts.detached) {
+      // Required on Windows when detached:true so the parent's exit
+      // doesn't terminate wt.exe. Node docs:
+      // https://nodejs.org/api/child_process.html#optionsdetached
+      child.unref();
+    }
 
     // runId is the primary client-facing handle. Generated AFTER spawn so a
     // spawn failure does not burn a uuid (and so the registry never holds a

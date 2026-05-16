@@ -776,7 +776,7 @@ export default function AgenticOsClient({
                               >
                                 Skill v
                               </summary>
-                              <div className="absolute right-0 mt-1 z-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-md py-1 min-w-[14rem] max-h-80 overflow-y-auto">
+                              <div className="absolute right-0 mt-1 z-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-md py-1 min-w-[14rem] max-h-60 overflow-y-auto">
                                 {PATTERN_A_SKILLS.map((s) => {
                                   const concurrencyKey = `${p.name}::${s.action}`;
                                   const busy = launchingFor.has(concurrencyKey);
@@ -902,7 +902,7 @@ export default function AgenticOsClient({
                               >
                                 Agent v
                               </summary>
-                              <div className="absolute right-0 mt-1 z-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-md py-1 min-w-[14rem] max-h-80 overflow-y-auto">
+                              <div className="absolute right-0 mt-1 z-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shadow-md py-1 min-w-[14rem] max-h-60 overflow-y-auto">
                                 {(() => {
                                   const pa = projectAgents[p.name];
                                   const projAgents = pa?.projectAgents ?? [];

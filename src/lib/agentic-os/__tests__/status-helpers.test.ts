@@ -21,7 +21,13 @@ describe('TOOLTIPS', () => {
     expect(TOOLTIPS.step7).toMatch(/Windows Terminal|pop ?out|terminal/i);
     expect(TOOLTIPS.step7.length).toBeGreaterThan(0);
     expect(TOOLTIPS.step8).toMatch(/step 8/);
-    expect(TOOLTIPS.step9).toMatch(/step 9/);
+    // step 9 has shipped (Pattern E xterm.js embedded terminal). The tooltip
+    // now describes how to ENABLE the surface (set AGENTIC_OS_PTY_SECRET +
+    // restart with `npm run dev:all`) rather than deferring to a future
+    // step. Defensive: also assert the stale "arrives in MVP step 9" copy
+    // is NOT present so a future regression doesn't silently restore it.
+    expect(TOOLTIPS.step9).toMatch(/AGENTIC_OS_PTY_SECRET/);
+    expect(TOOLTIPS.step9).not.toMatch(/arrives in MVP step 9/);
     expect(TOOLTIPS.step10).toMatch(/step 10/);
     expect(TOOLTIPS.step11).toMatch(/step 11/);
   });

@@ -125,6 +125,27 @@ describe('validateLaunchRequest', () => {
       }
     });
 
+    it('declares spawnOverrides so wt.exe pops out (windowsHide:false, detached:true, stdio:"ignore")', () => {
+      // Owner-bug fix 2026-05-16: with the route's default windowsHide:true +
+      // piped stdio, wt.exe never showed its window. The validator must
+      // therefore declare per-template overrides on open_session that the
+      // route applies on top of its defaults. This locks the exact shape
+      // the route reads so a future regression that silently drops the
+      // overrides is caught at the unit layer.
+      const result = validateLaunchRequest({
+        project: 'SSTAC-Dashboard',
+        action: 'open_session',
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.spawnOverrides).toEqual({
+          windowsHide: false,
+          detached: true,
+          stdio: 'ignore',
+        });
+      }
+    });
+
     it('handles the worktree project with a forward slash in its name', () => {
       const result = validateLaunchRequest({
         project: 'Regulatory-Review-worktrees/engine-v2',
@@ -631,6 +652,33 @@ describe('validateLaunchRequest', () => {
     it('open_embedded is exposed in the action allowlist', () => {
       expect(ALL_ACTIONS).toContain('open_embedded');
     });
+  });
+
+  it('non-open_session actions have NO spawnOverrides (route uses its defaults)', () => {
+    // Sibling guarantee to the open_session spawnOverrides test: only Pattern B
+    // needs its windowsHide / detached / stdio defaults inverted. Pattern A/C/D
+    // actions MUST inherit the route's piped-stdio defaults so SSE / run-card
+    // wiring keeps working unchanged. A future regression that broadens
+    // spawnOverrides to other templates would break log capture silently;
+    // assert undefined here so that regression is caught at the unit layer.
+    const cases: Array<LaunchRequest> = [
+      { project: 'SSTAC-Dashboard', action: 'run_safe_exit' },
+      { project: 'SSTAC-Dashboard', action: 'run_update_docs' },
+      { project: 'SSTAC-Dashboard', action: 'run_doc_navigator' },
+      { project: 'SSTAC-Dashboard', action: 'run_skill', skillSlug: 'safe-exit' },
+      { project: 'SSTAC-Dashboard', action: 'run_agent', agentSlug: 'chunk-processor' },
+      { project: 'SSTAC-Dashboard', action: 'open_embedded' },
+    ];
+    for (const req of cases) {
+      const result = validateLaunchRequest(req);
+      expect(result.ok, `expected ok for ${req.action}`).toBe(true);
+      if (result.ok) {
+        expect(
+          result.value.spawnOverrides,
+          `${req.action} should NOT declare spawnOverrides`,
+        ).toBeUndefined();
+      }
+    }
   });
 
   it('args is a defensive copy (caller cannot mutate the registry)', () => {

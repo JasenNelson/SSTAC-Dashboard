@@ -22,8 +22,32 @@
 // section 5 (lines 231-277, "Launch validator (project + command allowlists)").
 
 import path from 'path';
+import type { StdioOptions } from 'child_process';
 import type { LaunchRequest } from './launch-schemas';
 import { SKILL_SLUG_PATTERN, AGENT_SLUG_PATTERN } from './launch-schemas';
+
+/**
+ * Optional per-template overrides for child_process.spawn options. Most
+ * templates (Pattern A skill, Pattern C run_skill, Pattern D run_agent)
+ * inherit the launch route's defaults (windowsHide: true, piped stdio).
+ *
+ * Pattern B (open_session / wt.exe) is the one place where the defaults
+ * are wrong: wt.exe IS the user-visible window we want shown, so the
+ * defaults must be inverted. Holding piped stdio also prevents wt.exe
+ * from cleanly detaching from the parent on Windows. The overrides let
+ * the validator declare these per-template needs without leaking spawn
+ * concerns into the route handler.
+ *
+ * The route handler reads spawnOverrides AFTER applying its defaults so
+ * the override values win on conflict, and unref()s the child when
+ * `detached: true` is requested (Node docs: child.unref() is required
+ * for a detached child to survive parent exit on Windows).
+ */
+export interface SpawnOverrides {
+  readonly windowsHide?: boolean;
+  readonly detached?: boolean;
+  readonly stdio?: StdioOptions;
+}
 
 // The 8 projects from PROJECTS_MAP.md. Matches the arch spec's allowlist verbatim.
 const ALLOWED_PROJECTS: ReadonlySet<string> = new Set<string>([
@@ -75,6 +99,12 @@ interface CommandTemplate {
   // open_session it also receives the resolved absolute cwd so the -d
   // argument can be wired without re-deriving the path inside the closure.
   readonly args: (project: string, cwd: string) => readonly string[];
+  // Optional spawn-option overrides applied by the launch route on top of
+  // its defaults. Absent means "use the route's defaults verbatim" -- the
+  // case for every Pattern A/C/D template. Pattern B (open_session)
+  // declares { windowsHide: false, detached: true, stdio: 'ignore' } so
+  // wt.exe pops up its window and survives without holding our pipes.
+  readonly spawnOverrides?: SpawnOverrides;
 }
 
 const COMMAND_TEMPLATES: Readonly<Record<string, CommandTemplate>> = {
@@ -100,6 +130,27 @@ const COMMAND_TEMPLATES: Readonly<Record<string, CommandTemplate>> = {
   open_session: {
     exe: 'wt.exe',
     args: (_project: string, cwd: string) => ['-d', cwd, 'claude', '--resume'],
+    // Pattern B owner-bug fix (2026-05-16): with the route's default
+    //   { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true }
+    // wt.exe either failed to show its window or got immediately
+    // collected when the parent's pipes drained. wt.exe is the visible
+    // window we WANT shown, so:
+    //   - windowsHide:false  -> let the new Terminal window appear,
+    //   - detached:true       -> let wt.exe survive parent exit /
+    //                            detach from our process group on Win32,
+    //   - stdio:'ignore'      -> drop the pipes wt.exe doesn't use; the
+    //                            log-card UX already handles the empty-
+    //                            output case ("External terminal opened
+    //                            on your desktop"), and there's no SSE
+    //                            value to subscribers anyway.
+    // The route handler also calls child.unref() when detached:true is
+    // set; per Node docs the unref()+detached pair is required on
+    // Windows for wt.exe to outlive the dashboard process.
+    spawnOverrides: {
+      windowsHide: false,
+      detached: true,
+      stdio: 'ignore',
+    },
   },
   // Pattern C (step 8): generic skill launcher. The slug arrives via the
   // optional `skillSlug` field on LaunchRequest. The slug is re-validated
@@ -168,6 +219,8 @@ export interface ValidatedLaunch {
   readonly exe: string;
   readonly args: readonly string[];
   readonly cwd: string;
+  /** Optional spawn-option overrides for this action; see SpawnOverrides. */
+  readonly spawnOverrides?: SpawnOverrides;
 }
 
 export type LaunchValidatorResult =
@@ -258,6 +311,9 @@ export function validateLaunchRequest(req: LaunchRequest): LaunchValidatorResult
       exe: template.exe,
       args,
       cwd,
+      // Propagate spawn-option overrides verbatim when the template defines
+      // them. Omitted (undefined) means the route uses its plain defaults.
+      ...(template.spawnOverrides ? { spawnOverrides: template.spawnOverrides } : {}),
     },
   };
 }
