@@ -260,7 +260,7 @@ export default function AgenticOsClient({
         // Optimistic command display. The server-side validator is the source
         // of truth; this is only what we render in the run card while the
         // child is alive. open_session (Pattern B, step 7 / BUG-3 fix
-        // 2026-05-16) spawns cmd.exe which fires `start "" wt.exe ...` to
+        // 2026-05-16) spawns cmd.exe which fires `start wt.exe ...` to
         // activate the wt.exe AppExecutionAlias via the shell; cmd.exe
         // exits within ms, the activated wt.exe paints its tab in a
         // separate process tree, and the run card flips to "completed"
