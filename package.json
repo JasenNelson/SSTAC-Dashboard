@@ -31,6 +31,7 @@
     "import:evaluation": "npx tsx scripts/import-evaluation-results.ts"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^3.0.0",
     "@sentry/nextjs": "^10.22.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.54.0",

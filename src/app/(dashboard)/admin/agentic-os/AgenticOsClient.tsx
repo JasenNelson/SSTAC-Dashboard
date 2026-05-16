@@ -20,6 +20,7 @@ import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav';
 import ActivitySparkline, {
   type SparklineTone,
 } from '@/components/agentic-os/ActivitySparkline';
+import ConvergenceGraph from '@/components/agentic-os/ConvergenceGraph';
 import type {
   Project,
   ConvergenceEdge,
@@ -468,41 +469,24 @@ export default function AgenticOsClient({ result, activity = {} }: Props) {
               </table>
             )}
 
-            {/* Convergence-edges preview (step 5 will render this as Mermaid). */}
+            {/* Convergence graph — step 5. Interactive node-and-edge view of
+                the parsed convergence edges. Falls back to an sr-only text
+                list internally for screen readers. */}
             <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700">
               <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-2">
-                Convergence edges
-                <span
-                  className="ml-2 font-mono normal-case text-slate-500 dark:text-slate-400"
-                  title={TOOLTIP.step5}
-                >
-                  ({result.edges.length} parsed · Mermaid graph in step 5)
+                Convergence graph
+                <span className="ml-2 font-mono normal-case text-slate-500 dark:text-slate-400">
+                  ({projects.length} projects · {result.edges.length} edges
+                  {result.edges.filter((e) => e.dashed).length > 0
+                    ? ` · ${result.edges.filter((e) => e.dashed).length} dashed (future)`
+                    : ''}
+                  )
                 </span>
               </div>
-              <ul className="space-y-0.5 text-xs font-mono text-slate-600 dark:text-slate-400 max-h-48 overflow-y-auto">
-                {result.edges.map((e, i) => (
-                  <li
-                    key={`${e.from}-${e.to}-${i}`}
-                    className="flex gap-2 items-center"
-                  >
-                    <span>{e.from}</span>
-                    <span className={e.dashed ? 'text-slate-500 dark:text-slate-400' : 'text-slate-500 dark:text-slate-400'}>
-                      {e.dashed ? '··' : '──'}
-                      {e.label ? ` ${e.label} ` : ' '}
-                      {e.dashed ? '··>' : '──>'}
-                    </span>
-                    <span>{e.to}</span>
-                    {e.dashed && (
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500">(future)</span>
-                    )}
-                  </li>
-                ))}
-                {result.edges.length === 0 && (
-                  <li className="text-slate-500 dark:text-slate-400 italic">
-                    No edges parsed from PROJECTS_MAP.md.
-                  </li>
-                )}
-              </ul>
+              <ConvergenceGraph
+                edges={result.edges}
+                projectNames={projects.map((p) => p.name)}
+              />
             </div>
           </div>
 
