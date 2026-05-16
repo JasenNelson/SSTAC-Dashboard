@@ -36,6 +36,22 @@ export default defineConfig({
     url: playwrightBaseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 2 minutes
+    // Codex 2026-05-16 final-holistic P2 fix: pin AGENTIC_OS_SPAWN_STUB=true
+    // for the Playwright dev server unconditionally. The admin-agentic-os
+    // spec's Pattern A/B/D launch-click tests assert on stub-canned-output
+    // strings ("[stub] launched...") so they FAIL-AT-ASSERTION if a real
+    // claude / wt.exe ever spawns -- but the assertion fires AFTER the
+    // spawn. Pinning the stub env here ensures the launch route's spawn
+    // call short-circuits BEFORE any real CLI binary is invoked on the
+    // developer's machine, even when a maintainer forgets to prefix
+    // `AGENTIC_OS_SPAWN_STUB=true` to the npm test:e2e command. This is
+    // fail-closed at the routing layer rather than the assertion layer.
+    // The stub branch in spawn-await-ready.ts is INERT outside the
+    // agentic-os feature so this does not affect any other spec.
+    env: {
+      ...process.env,
+      AGENTIC_OS_SPAWN_STUB: 'true',
+    },
   },
 });
 
