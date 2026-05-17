@@ -236,8 +236,8 @@ function TwgReviewContent() {
     <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden h-[calc(100vh-20rem)] min-h-[600px]">
       <JermilovaReviewPortal
         methodologyContent={methodologyContent}
-        showLeftPanel
-        showRightPanel
+        initialShowLeftPanel
+        initialShowRightPanel
       />
     </div>
   );
