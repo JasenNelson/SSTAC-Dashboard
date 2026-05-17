@@ -160,6 +160,50 @@ const COMMAND_TEMPLATES: Readonly<Record<string, CommandTemplate>> = {
     exe: 'claude',
     args: (_project: string, _cwd: string) => ['-p', '/doc-navigator'],
   },
+  // AI Subscriptions panel (2026-05-16): live auth-status / login-status checks
+  // for providers that expose a CLI subcommand returning useful data WITHOUT
+  // consuming subscription tokens. Project cwd is ignored at the semantic
+  // layer (these are system-level checks, not project-local actions), but
+  // path.join still produces a real cwd from the allowlisted-project name
+  // for spawn-options compliance.
+  //
+  // IMPORTANT: only add a check_* template here when the underlying CLI
+  // subcommand (a) returns useful data and (b) does NOT consume tokens.
+  // Slash commands like `claude -p /cost` / `/status` / `/usage` DO consume
+  // tokens AND don't actually invoke the slash command (verified 2026-05-16
+  // empirical test: -p mode does not process slash commands). Stick to real
+  // subcommands like `auth status` / `login status` / `list`.
+  // claude + ollama distribute as real PE .exe binaries reachable on PATH,
+  // so child_process.spawn invokes them directly without a shell wrapper.
+  // codex + agent (cursor) ship as Windows .cmd shims, which CreateProcess
+  // cannot execute directly -- spawn returns ENOENT. Wrap those two in
+  // cmd.exe /c (same fix shape as BUG-3 wt.exe -- see commits 85e069c,
+  // 3df94ab on this branch's main-merged history) so the shim runs through
+  // the shell. Codex 2026-05-16 caught the missing wrapper on the per-
+  // commit review of 8d35d31; verified empirically: spawn('codex',...)
+  // and spawn('agent',...) both fail ENOENT today.
+  check_claude_auth: {
+    exe: 'claude',
+    args: (_project: string, _cwd: string) => ['auth', 'status'],
+  },
+  check_codex_login: {
+    exe: 'cmd.exe',
+    args: (_project: string, _cwd: string) => ['/c', 'codex', 'login', 'status'],
+  },
+  // Cursor's agent CLI lives at C:\Users\jasen\AppData\Local\cursor-agent\agent.cmd
+  // (PATHEXT-resolved by shells but NOT by child_process.spawn on Windows).
+  // `agent about` returns multiline output with Subscription Tier, Model,
+  // CLI Version, Terminal, Shell, User Email -- richest live-check output
+  // of the supported providers. Empirically confirmed 2026-05-16: no token
+  // cost. Wrapped via cmd.exe per the shim-spawn discussion above.
+  check_cursor_about: {
+    exe: 'cmd.exe',
+    args: (_project: string, _cwd: string) => ['/c', 'agent', 'about'],
+  },
+  check_ollama_models: {
+    exe: 'ollama',
+    args: (_project: string, _cwd: string) => ['list'],
+  },
   // Pattern B (step 7): Windows Terminal external pop-out. cmd.exe runs
   // `start wt.exe -d <cwd> claude --resume`, which fires the wt.exe
   // AppExecutionAlias activation via the shell and exits; the activated
