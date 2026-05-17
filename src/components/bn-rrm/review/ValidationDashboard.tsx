@@ -288,6 +288,14 @@ export function ValidationDashboard() {
   const correctCount = predictions.filter((p) => p.predicted === p.observed).length;
   const nComplete = validationData.n_complete;
 
+  // Benchmark packs (e.g. Jermilova) have CPT-level LOO data but no
+  // station-level predictions -- the confusion matrix and the predictions
+  // table are not applicable. Detect this case so we can show a targeted
+  // disclaimer + suppress the "no station predictions" empty-state which
+  // would otherwise read as a data-quality issue rather than a deliberate
+  // scope choice.
+  const isBenchmarkScope = packManifest?.scope_type === 'benchmark';
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -297,6 +305,29 @@ export function ValidationDashboard() {
           Leave-One-Out cross-validation results{nComplete ? ` for ${nComplete} stations` : ''}. {correctCount} correct{nComplete ? ` (${(correctCount / nComplete * 100).toFixed(1)}%)` : ''}.
         </p>
       </div>
+
+      {/* Benchmark-scope disclaimer: LOO is per-CPT not per-station, so
+          the confusion matrix + predictions table below render with the
+          empty/no-predictions state. The Detailed Comparison view in the
+          Case Studies tab is the right surface for per-CPT-node detail. */}
+      {isBenchmarkScope && (
+        <div
+          className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg p-4"
+          data-testid="validation-benchmark-disclaimer"
+        >
+          <p className="text-sm font-medium text-sky-800 dark:text-sky-200 mb-1">
+            Benchmark pack: per-CPT LOO, not per-station
+          </p>
+          <p className="text-sm text-sky-700 dark:text-sky-300">
+            This pack ships per-CPT Leave-One-Out kappa (see Case Studies &gt;
+            Published Benchmark &gt; LOO Validation Summary and Case Studies &gt;
+            Detailed Comparison for the per-node breakdown + the N-weighted
+            mean kappa). It does NOT include station-level predictions, so
+            the aggregate confusion matrix below is not applicable for this
+            scope.
+          </p>
+        </div>
+      )}
 
       {/* Validation semantics disclaimer */}
       {(validationData.disclaimer || validationData.status) && (
