@@ -2113,7 +2113,7 @@
         "subscriptions",
         "ia-refactor"
       ],
-      "notes": "Feature handoff for the /admin/agentic-os/subscriptions panel + IA refactor (shared layout + sidebar + page-level auth-guard helper). Documents 4 commits on feat/agentic-os-ai-subscriptions-panel: 8d35d31, 586eaab, c1a3b21, 0b3dcde. Not a current-status source; defer to docs/INDEX.md and manifest facts for canonical project state."
+      "notes": "Feature handoff for the /admin/agentic-os/subscriptions panel + IA refactor (shared layout + sidebar + page-level auth-guard helper). Documents the commits on feat/agentic-os-ai-subscriptions-panel (PR #116): 8d35d31, 586eaab, c1a3b21, 0b3dcde, e8654ed, + this commit (codex holistic P2/P3 fix). Not a current-status source; defer to docs/INDEX.md and manifest facts for canonical project state."
     }
   ],
   "section_catalog": {

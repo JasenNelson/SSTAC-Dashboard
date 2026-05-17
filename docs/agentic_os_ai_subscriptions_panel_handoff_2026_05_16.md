@@ -28,15 +28,15 @@ commit bodies.
 - Defense in depth: every `/admin/agentic-os/*` page also calls
   `requireAgenticOsPageAccess()` directly (layout RSC caching on
   client-side sibling nav cannot be relied on as a per-navigation guard).
-- Branch `feat/agentic-os-ai-subscriptions-panel` is pushed but PR is
-  NOT yet opened. 4 commits ahead of `main` (`ceaedb6`).
+- Branch `feat/agentic-os-ai-subscriptions-panel` is pushed; PR #116 is
+  open (draft) against `main`. 6 commits ahead of `main` (`ceaedb6`).
 
 ## Branch + commit chain
 
 Branch: `feat/agentic-os-ai-subscriptions-panel` (pushed to origin; PR
-not opened).
+#116 open as draft).
 
-4 commits ahead of `main` (`ceaedb6`, the prior PR #115 merge):
+6 commits ahead of `main` (`ceaedb6`, the prior PR #115 merge):
 
 | SHA       | Type | Summary |
 |-----------|------|---------|
@@ -44,6 +44,8 @@ not opened).
 | 586eaab   | feat | IA refactor -- shared layout + sidebar + subscriptions route |
 | c1a3b21   | fix  | Wrap codex/agent .cmd shims via cmd.exe (codex P2 on 8d35d31) |
 | 0b3dcde   | fix  | Page-level auth guards on projects + subscriptions routes (codex P2 on 586eaab) |
+| e8654ed   | docs | Add AI subscriptions panel + IA refactor handoff (R4 YELLOW -> R5 GREEN) |
+| this commit | fix + docs | Strip `extras` from RSC payload (codex holistic P2) + update handoff chain (codex holistic P3) |
 
 See individual commit bodies for module-level detail, test counts, and
 file-by-file rationale.
@@ -140,18 +142,37 @@ authoritative file lists.
 
 ## Codex iterative-review audit trail
 
-3 rounds, converged GREEN. Mutual-agreement discipline applied
+8 rounds, converged GREEN at R8. Mutual-agreement discipline applied
 throughout: every finding was empirically verified against the codebase
 before agreeing or pushing back; no hallucinated findings were accepted
-this round.
+across these rounds.
 
 | Round | Target | Verdict | Outcome |
 |-------|--------|---------|---------|
 | R1 | 8d35d31 (subscriptions feat) | YELLOW | 1 P2 valid: codex/agent .cmd shims spawn ENOENT -> fixed in `c1a3b21` |
 | R2 | 586eaab (IA refactor) | YELLOW | 1 P2 valid: layout-only auth not a per-nav guard -> fixed in `0b3dcde` |
-| R3 | Holistic over 4 commits | GREEN | No new blockers; PR-ready |
+| R3 | Holistic over 4 commits | GREEN | No blockers at the 4-commit state |
+| R4 | Handoff doc (uncommitted) | YELLOW | 2 P2 valid: wrong client paths + missing INDEX/manifest registration -> fixed in `e8654ed` |
+| R5 | Handoff doc + INDEX + manifest (staged) | GREEN | No new findings on the doc commit |
+| R6 | Holistic over 5 commits (pre-merge checkpoint) | YELLOW | 2 valid: P2 `extras` RSC payload leak + P3 stale handoff commit chain -> fixed in this commit |
+| R7 | This combined fix (uncommitted) | YELLOW | P2 code fix verified structurally sound (tsc + targeted vitest GREEN); 1 P3 inline doc self-consistency (R7 row marked pending while doc claimed convergence) -- resolved by this edit |
+| R8 | Closeout verify (uncommitted, self-consistency fix) | GREEN | All findings closed; mark-ready gate cleared |
 
-How the P2 findings were verified before agreeing:
+How the P2/P3 findings from R6 were verified before agreeing:
+
+- **RSC payload leak**: read `parse-ai-subscriptions.ts` confirming
+  `extras: Record<string, string>` lands on `AiSubscription` and the
+  parser preserves unknown `**Bold:**` fields there; grep'd
+  `AiSubscriptionsPanel.tsx` confirming no `extras` reference (only the
+  named fields). Page.tsx passed the full objects unchanged, so RSC
+  serialized `extras` into the client component props. Fix narrows the
+  type chain to `DisplayAiSubscription = Omit<AiSubscription, 'extras'>`
+  and transforms at the server -> client boundary via
+  `toDisplayAiSubscription`.
+- **Stale commit chain**: literal -- handoff said "4 commits" but the
+  branch tip was 5 (incl. `e8654ed`). Updated to 6 (incl. this commit).
+
+How the R1-R4 P2 findings were verified before agreeing:
 
 - **.cmd shim**: reproduced `child_process.spawn('codex', ['login', 'status'])`
   -> `ENOENT` on Windows; reproduced `spawn('cmd.exe', ['/c', 'codex',

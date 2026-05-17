@@ -18,7 +18,8 @@ import { requireAgenticOsPageAccess } from '@/lib/agentic-os/page-auth-guard';
 import {
   readAiSubscriptions,
   resolveAiSubscriptionsPath,
-  type AiSubscription,
+  toDisplayAiSubscription,
+  type DisplayAiSubscription,
 } from '@/lib/agentic-os/parse-ai-subscriptions';
 import SubscriptionsView, {
   type SubscriptionsLoadResult,
@@ -35,7 +36,13 @@ export default async function AgenticOsSubscriptionsPage() {
   let result: SubscriptionsLoadResult;
   try {
     const parsed = await readAiSubscriptions();
-    const subscriptions: AiSubscription[] = parsed.subscriptions;
+    // Strip `extras` at the server -> client boundary so unrecognized
+    // **Bold:** fields in AI_SUBSCRIPTIONS.md do not cross into the RSC
+    // payload. Codex 2026-05-16 holistic P2: the panel never renders
+    // extras, but RSC still serializes whatever props the client component
+    // receives.
+    const subscriptions: DisplayAiSubscription[] =
+      parsed.subscriptions.map(toDisplayAiSubscription);
     result = { ok: true, subscriptions };
   } catch (err) {
     const expectedPath = resolveAiSubscriptionsPath();

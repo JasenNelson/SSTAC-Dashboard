@@ -67,6 +67,33 @@ export interface ParsedAiSubscriptions {
   subscriptions: AiSubscription[];
 }
 
+/**
+ * Display-only DTO for the client component. Strips `extras` so unrecognized
+ * **Bold:** fields in AI_SUBSCRIPTIONS.md do not cross the RSC serialization
+ * boundary into the browser payload. The panel never renders `extras`; this
+ * shape is what `<AiSubscriptionsPanel />` actually consumes.
+ *
+ * Codex 2026-05-16 holistic P2: the panel deliberately ignores `extras`, but
+ * passing the full `AiSubscription` through page.tsx still serializes those
+ * fields into the client component props (RSC payload), which can leak
+ * owner-only metadata if a future entry adds a sensitive **Bold:** field.
+ * Strip at the server -> client boundary via `toDisplayAiSubscription`.
+ */
+export type DisplayAiSubscription = Omit<AiSubscription, 'extras'>;
+
+/**
+ * Maps a fully-parsed AiSubscription to the display-only shape by dropping
+ * the `extras` bag. Keep this trivial; the value is the narrowing at the
+ * serialization boundary, not transformation.
+ */
+export function toDisplayAiSubscription(
+  sub: AiSubscription,
+): DisplayAiSubscription {
+  const { extras: _extras, ...rest } = sub;
+  void _extras;
+  return rest;
+}
+
 // Field key (lowercased) -> AiSubscription property mapping. Anything not in
 // this map drops into `extras` keyed by the original (un-lowercased, trimmed)
 // heading.

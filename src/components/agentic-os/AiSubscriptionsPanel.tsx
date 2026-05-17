@@ -23,11 +23,16 @@
 // Important: this component renders zero secrets. Subscription tier + email
 // are owner-self-data already exposed in the live-check command's stdout.
 
-import type { AiSubscription } from '@/lib/agentic-os/parse-ai-subscriptions';
+import type { DisplayAiSubscription } from '@/lib/agentic-os/parse-ai-subscriptions';
 
 interface Props {
-  /** Parsed AI subscriptions from AI_SUBSCRIPTIONS.md. */
-  subscriptions: AiSubscription[];
+  /**
+   * Parsed AI subscriptions from AI_SUBSCRIPTIONS.md, in the display-only
+   * shape (no `extras` bag). Codex 2026-05-16 holistic P2: page.tsx strips
+   * `extras` at the server -> client boundary so unrecognized **Bold:**
+   * fields never enter the RSC payload.
+   */
+  subscriptions: DisplayAiSubscription[];
   /**
    * Optional fixed project to attribute live-check launches to. The launch
    * route requires a project name (the cwd is computed from it) but the

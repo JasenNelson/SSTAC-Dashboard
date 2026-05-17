@@ -17,10 +17,10 @@
 
 import AiSubscriptionsPanel from '@/components/agentic-os/AiSubscriptionsPanel';
 import { useAgenticOsRuntime } from '@/lib/agentic-os/runtime-context';
-import type { AiSubscription } from '@/lib/agentic-os/parse-ai-subscriptions';
+import type { DisplayAiSubscription } from '@/lib/agentic-os/parse-ai-subscriptions';
 
 export type SubscriptionsLoadResult =
-  | { ok: true; subscriptions: AiSubscription[] }
+  | { ok: true; subscriptions: DisplayAiSubscription[] }
   | { ok: false; error: { message: string; expectedPath: string } };
 
 interface Props {
