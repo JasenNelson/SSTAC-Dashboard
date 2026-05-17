@@ -131,6 +131,9 @@ The repo-root upgrade-plan files were authored mid-roadmap and embed grades, wee
 - `docs/regulatory-review/CODEX_REVIEW_PROMPT.md` - One-shot Codex review prompt for the Local-Engine Routing Plan (historical).
 - Archived pre-correction copies live under `docs/regulatory-review/archive/`
 
+### Agentic OS (reference)
+- `docs/agentic_os_ai_subscriptions_panel_handoff_2026_05_16.md` - Feature handoff for the `/admin/agentic-os/subscriptions` panel + IA refactor (shared layout + sidebar + page-level auth-guard helper). REFERENCE-tier: not a current-status source.
+
 ### Multi-Project Coordination (reference)
 - `MULTI_PROJECT_COORDINATION.md` - Unified coordination for the SSTAC Dashboard, Regulatory-Review, and Database Cleanup workstreams. Phase/status claims inside that file are snapshots; check commit date and re-verify against current code before citing. Structural content (data ownership rules, synchronization points, session resumption instructions, risk assessment) remains the useful contribution.
 - Archived snapshots: `docs/archive/2026-01-27_multi-project-coordination/`
