@@ -20,7 +20,19 @@
 --     bug (duplicate rows on every Submit click) by construction. The
 --     portal code does upsert-with-WHERE-eq (mirrors the matrix_reviews
 --     code path), but the constraint is the authoritative guard.
---   - updated_at auto-bumped by trigger; created_at immutable.
+--   - updated_at auto-bumped via the EXISTING update_updated_at_column()
+--     trigger function (do NOT redefine; reused from database_schema.sql).
+--
+-- PRE-FLIGHT VERIFICATION REQUIRED BEFORE APPLYING. Run the verification
+-- block in the PR description / handoff against the live DB; confirm
+-- existence of:
+--   - public.is_admin()                       (from 20260515 audit)
+--   - public.update_updated_at_column()       (from database_schema.sql)
+--   - public.user_roles table                 (from database_schema.sql)
+--   - public.get_users_with_emails()          (from 20260515 audit, admin route)
+--   - auth.users + gen_random_uuid()          (Supabase defaults)
+--   - no existing public.document_reviews     (must not exist; CREATE IF NOT EXISTS
+--                                              is a safety net not a contract)
 -- =====================================================================
 
 BEGIN;
@@ -44,24 +56,19 @@ CREATE INDEX IF NOT EXISTS document_reviews_document_id_idx
 CREATE INDEX IF NOT EXISTS document_reviews_document_status_idx
   ON public.document_reviews (document_id, status);
 
--- updated_at trigger. The function may already exist from prior migrations;
--- CREATE OR REPLACE is safe.
-CREATE OR REPLACE FUNCTION public.set_updated_at_now()
-RETURNS trigger
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  NEW.updated_at := now();
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS document_reviews_set_updated_at
+-- updated_at trigger. Reuse the existing update_updated_at_column()
+-- function that the live DB already uses for user_roles / tags /
+-- documents / announcements / milestones / etc. (see database_schema.sql
+-- + the trigger fan-out around line 837). Creating a parallel
+-- set_updated_at_now() function would add redundant surface area + drift
+-- the convention. Pre-flight verification confirms update_updated_at_column()
+-- exists in the live DB before running this migration.
+DROP TRIGGER IF EXISTS update_document_reviews_updated_at
   ON public.document_reviews;
-CREATE TRIGGER document_reviews_set_updated_at
+CREATE TRIGGER update_document_reviews_updated_at
   BEFORE UPDATE ON public.document_reviews
   FOR EACH ROW
-  EXECUTE FUNCTION public.set_updated_at_now();
+  EXECUTE FUNCTION public.update_updated_at_column();
 
 ALTER TABLE public.document_reviews ENABLE ROW LEVEL SECURITY;
 
