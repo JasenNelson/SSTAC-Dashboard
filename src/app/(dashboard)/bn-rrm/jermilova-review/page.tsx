@@ -75,8 +75,8 @@ export default async function JermilovaReviewPage() {
     <div className="flex flex-col h-[calc(100vh-4rem)] w-full overflow-hidden">
       <JermilovaReviewPortal
         methodologyContent={methodologyContent}
-        showLeftPanel
-        showRightPanel
+        initialShowLeftPanel
+        initialShowRightPanel
       />
     </div>
   );
