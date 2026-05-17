@@ -482,6 +482,15 @@ export function DetailedComparison() {
         </ul>
       </div>
 
+      {/* Uncertainty & Sensitivity Analysis section.
+          Headlines the four families of uncertainty/sensitivity that
+          peer reviewers care about: (a) CPT-development priors,
+          (b) predictive validation, (c) input-importance ranking, and
+          (d) counterfactual scenarios. Each family card pulls from the
+          existing pack artifacts (cpt_transparency, validation,
+          comparison_results) without authoring new data. */}
+      <UncertaintyAndSensitivitySection rows={rows} comparison={comparisonRaw} />
+
       {/* Per-CPT-node table */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
@@ -670,6 +679,284 @@ export function DetailedComparison() {
 // ---------------------------------------------------------------------------
 // Expanded row detail -- shows full BDeu posterior bar + parameter info.
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Uncertainty & Sensitivity Analysis section
+//
+// Four families per the advisory:
+//   (a) CPT-development -- BDeu ESS, soft-edging, sample size
+//   (b) Predictive -- LOO kappa per endpoint
+//   (c) Input-importance -- MI ranking vs published slope ranking
+//   (d) Counterfactual -- Minamata 35-60% atmospheric Hg reduction (not run)
+// All four are headlines into either the per-CPT-node table below or the
+// Review tab's CPT Transparency / Validation Dashboard. No new artifacts
+// are authored; everything here is data-reshape over existing JSON.
+// ---------------------------------------------------------------------------
+
+function UncertaintyAndSensitivitySection({
+  rows,
+  comparison,
+}: {
+  rows: NodeRow[];
+  comparison: ComparisonResults;
+}) {
+  // (a) CPT-development -- ESS distribution + sample-size range.
+  const essValues = useMemo(() => {
+    const set = new Set<number>();
+    for (const r of rows) {
+      const ess = r.node.ess_prior_weight?.ess;
+      if (typeof ess === 'number') set.add(ess);
+    }
+    return Array.from(set).sort((a, b) => a - b);
+  }, [rows]);
+  const sampleSizes = useMemo(() => {
+    const counts = rows.map((r) => r.node.sample_count).filter((n) => n > 0);
+    if (counts.length === 0) return null;
+    return {
+      min: Math.min(...counts),
+      max: Math.max(...counts),
+      median: counts.slice().sort((a, b) => a - b)[Math.floor(counts.length / 2)],
+    };
+  }, [rows]);
+
+  // (b) Predictive -- LOO kappa per endpoint as a compact heatmap row.
+  const looEndpoints = useMemo(() => {
+    const out: { node: NodeRow; kappa: number; n: number }[] = [];
+    for (const r of rows) {
+      if (r.loo) out.push({ node: r, kappa: r.loo.kappa, n: r.loo.n });
+    }
+    return out;
+  }, [rows]);
+
+  // (c) Input-importance -- top driver per endpoint comparison.
+  const topDriversByEndpoint = useMemo(() => {
+    const out: { endpoint: string; ourTop?: MIRankingEntry; pubTopLabel?: string }[] = [];
+    for (const ep of ENDPOINT_KEYS) {
+      const entry = comparison.sensitivity_ranking_comparison[ep];
+      if (!entry || typeof entry === 'string') continue;
+      const ourTop = entry.our_MI_ranking.find((r) => r.rank === 1);
+      const pubTop = Object.entries(entry.published_ranking).find(([, v]) => v.rank === 1);
+      out.push({ endpoint: ep, ourTop, pubTopLabel: pubTop ? pubTop[0] : undefined });
+    }
+    return out;
+  }, [comparison.sensitivity_ranking_comparison]);
+
+  function kappaColor(k: number): string {
+    if (k <= 0) return 'bg-red-200 dark:bg-red-900/50 text-red-800 dark:text-red-300';
+    if (k < 0.2) return 'bg-orange-200 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300';
+    if (k < 0.4) return 'bg-amber-200 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300';
+    if (k < 0.6) return 'bg-lime-200 dark:bg-lime-900/40 text-lime-800 dark:text-lime-300';
+    return 'bg-emerald-200 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300';
+  }
+
+  return (
+    <div
+      className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5"
+      data-testid="us-section-root"
+    >
+      <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
+        Uncertainty &amp; Sensitivity Analysis
+      </h3>
+      <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 max-w-3xl">
+        Four families. CPT-development priors (a) and predictive
+        cross-validation (b) describe the reconstruction&apos;s own
+        uncertainty. Input-importance sensitivity (c) compares our
+        mutual-information ranking to the paper&apos;s slope-coefficient
+        ranking. Counterfactual sensitivity (d) is the Minamata Treaty
+        scenario from the paper, not yet implemented in this dashboard.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* (a) CPT-development */}
+        <div
+          className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-2"
+          data-testid="us-family-a"
+        >
+          <div className="flex items-center gap-2">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+              a
+            </span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              CPT-development priors
+            </span>
+          </div>
+          <div className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+            <div>
+              <span className="font-medium text-slate-700 dark:text-slate-300">BDeu ESS:</span>{' '}
+              {essValues.length === 1
+                ? `${essValues[0]} (uniform across all nodes)`
+                : essValues.length === 0
+                  ? 'not specified'
+                  : essValues.join(', ')}
+            </div>
+            {sampleSizes && (
+              <div>
+                <span className="font-medium text-slate-700 dark:text-slate-300">Sample size N:</span>{' '}
+                min={sampleSizes.min}, median={sampleSizes.median}, max={sampleSizes.max}
+              </div>
+            )}
+            <div>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Soft-edging:</span>{' '}
+              0.90/0.10 multi-state, 0.95/0.05 binary (prevents zero-prob blocking).
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-500 italic pt-1 leading-relaxed">
+              ESS=1.0 is a low-information BDeu prior. The methodology paper
+              records this as a documented choice; the proper empirical
+              defense is an ESS sensitivity sweep (Plan Q6: re-run LOO at
+              ESS in {`{0.5, 1.0, 5.0, 10.0}`}). Not yet run.
+            </p>
+          </div>
+        </div>
+
+        {/* (b) Predictive */}
+        <div
+          className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-2"
+          data-testid="us-family-b"
+        >
+          <div className="flex items-center gap-2">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+              b
+            </span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Predictive validation (LOO)
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            Cohen&apos;s kappa per endpoint node, N-weighted across GSL +
+            GBS submodels:
+          </p>
+          {looEndpoints.length === 0 ? (
+            <p className="text-xs text-slate-400">No LOO data in this pack.</p>
+          ) : (
+            <ul className="space-y-1">
+              {looEndpoints.map((ep) => (
+                <li
+                  key={ep.node.node.id}
+                  className="flex items-center gap-2 text-xs"
+                  data-testid={`us-loo-row-${ep.node.node.id}`}
+                >
+                  <span
+                    className={`tabular-nums w-12 text-center px-1.5 py-0.5 rounded font-mono font-semibold ${kappaColor(ep.kappa)}`}
+                  >
+                    {ep.kappa.toFixed(2)}
+                  </span>
+                  <span className="text-slate-700 dark:text-slate-300 flex-1 truncate">
+                    {ep.node.node.label}
+                  </span>
+                  <span className="text-[10px] text-slate-400">n={ep.n}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="text-[11px] text-slate-500 dark:text-slate-500 italic pt-1 leading-relaxed">
+            kappa &gt;= 0.6 substantial; 0.4-0.6 moderate; &lt; 0.4 limited.
+            kappa = 0 indicates majority-class collapse (model predicts the
+            modal class regardless of evidence) -- this is the water-THg
+            pattern, expected from the published class imbalance.
+          </p>
+        </div>
+
+        {/* (c) Input-importance */}
+        <div
+          className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-2"
+          data-testid="us-family-c"
+        >
+          <div className="flex items-center gap-2">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+              c
+            </span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Input-importance ranking
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            Top driver per endpoint: ours (mutual information) vs published
+            (Table 2 slope coefficient).
+          </p>
+          {topDriversByEndpoint.length === 0 ? (
+            <p className="text-xs text-slate-400">No ranking data in this pack.</p>
+          ) : (
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-slate-500 dark:text-slate-400">
+                  <th className="text-left py-1 font-medium">Endpoint</th>
+                  <th className="text-left py-1 font-medium">Ours (MI)</th>
+                  <th className="text-left py-1 font-medium">Published</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topDriversByEndpoint.map((d) => (
+                  <tr key={d.endpoint} data-testid={`us-driver-row-${d.endpoint}`}>
+                    <td className="py-1 text-slate-700 dark:text-slate-300">
+                      {d.endpoint.replace(/_/g, ' ')}
+                    </td>
+                    <td className="py-1 text-slate-600 dark:text-slate-400 font-mono">
+                      {d.ourTop ? d.ourTop.source : '-'}
+                    </td>
+                    <td className="py-1 text-slate-600 dark:text-slate-400">
+                      {d.pubTopLabel ?? '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <p className="text-[11px] text-slate-500 dark:text-slate-500 italic pt-1 leading-relaxed">
+            MI measures statistical dependence; slope coefficients measure
+            linear effect size. Comparison is approximate. Full Spearman
+            rho / rank-displacement metric is a follow-up.
+          </p>
+        </div>
+
+        {/* (d) Counterfactual */}
+        <div
+          className="border border-slate-200 dark:border-slate-700 rounded-lg p-4 space-y-2"
+          data-testid="us-family-d"
+        >
+          <div className="flex items-center gap-2">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">
+              d
+            </span>
+            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Counterfactual scenarios
+            </span>
+          </div>
+          <div className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
+            <div>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Minamata Treaty:</span>{' '}
+              35-60% atmospheric-Hg reduction. Apply intervention; report
+              fold-change in fish-tissue Hg across regions and species.
+            </div>
+            <div>
+              <span className="font-medium text-slate-700 dark:text-slate-300">Threshold:</span>{' '}
+              same direction (decrease) + magnitude within 0.5x of the
+              paper&apos;s reported ~1.2-fold reduction.
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+              not run
+            </span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-500 italic">
+              Requires Python pipeline work in the Regulatory-Review repo;
+              not yet authored.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Deep-link pointers to Review-tab transparency surfaces */}
+      <div className="mt-4 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+        For per-node detail beyond what this section surfaces: the Review tab&apos;s{' '}
+        <span className="font-semibold text-slate-700 dark:text-slate-300">CPT Transparency</span>{' '}
+        view exposes the full BDeu posterior + tier-by-tier source breakdown, and{' '}
+        <span className="font-semibold text-slate-700 dark:text-slate-300">QA/QC &amp; Validation</span>{' '}
+        exposes the per-endpoint LOO confusion (Jermilova is per-CPT not
+        per-station; aggregate confusion matrix is not applicable).
+      </div>
+    </div>
+  );
+}
 
 function ExpandedNodeDetail({ row }: { row: NodeRow }) {
   const { node } = row;

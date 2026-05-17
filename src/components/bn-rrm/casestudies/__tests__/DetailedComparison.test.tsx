@@ -252,6 +252,59 @@ describe('DetailedComparison', () => {
     expect(screen.queryByTestId('detailed-node-row-proximity_mine_gsl')).toBeNull();
   });
 
+  // -------------------------------------------------------------------------
+  // Uncertainty & Sensitivity Analysis section
+  // -------------------------------------------------------------------------
+
+  it('renders the U/S section with all four families', () => {
+    setArtifacts();
+    render(<DetailedComparison />);
+    expect(screen.getByTestId('us-section-root')).toBeInTheDocument();
+    expect(screen.getByTestId('us-family-a')).toBeInTheDocument();
+    expect(screen.getByTestId('us-family-b')).toBeInTheDocument();
+    expect(screen.getByTestId('us-family-c')).toBeInTheDocument();
+    expect(screen.getByTestId('us-family-d')).toBeInTheDocument();
+  });
+
+  it('family (a) reports ESS = 1.0 uniform when all nodes share that prior weight', () => {
+    setArtifacts();
+    render(<DetailedComparison />);
+    const familyA = screen.getByTestId('us-family-a');
+    expect(familyA).toHaveTextContent(/BDeu ESS:/);
+    expect(familyA).toHaveTextContent(/1\s*\(uniform/);
+    // Sample-size summary line.
+    expect(familyA).toHaveTextContent(/Sample size N:/);
+    expect(familyA).toHaveTextContent(/min=584/);
+    expect(familyA).toHaveTextContent(/max=855/);
+  });
+
+  it('family (b) renders one LOO row per endpoint node with kappa + n', () => {
+    setArtifacts();
+    render(<DetailedComparison />);
+    // fish_tissue_hg is the only LOO endpoint in the fixture cpt list.
+    expect(screen.getByTestId('us-loo-row-fish_tissue_hg')).toBeInTheDocument();
+    expect(screen.getByTestId('us-loo-row-fish_tissue_hg').textContent).toMatch(/0\.4[0-9]/);
+    expect(screen.getByTestId('us-loo-row-fish_tissue_hg').textContent).toMatch(/n=842/);
+  });
+
+  it('family (c) renders top-driver rows per endpoint (ours vs published)', () => {
+    setArtifacts();
+    render(<DetailedComparison />);
+    const row = screen.getByTestId('us-driver-row-GSL_fish_tissue_hg');
+    expect(row).toBeInTheDocument();
+    expect(row).toHaveTextContent(/fish_species/); // our top driver
+    expect(row).toHaveTextContent(/Total Hg input/); // published top driver
+  });
+
+  it('family (d) shows "not run" status with a clear next-step note', () => {
+    setArtifacts();
+    render(<DetailedComparison />);
+    const familyD = screen.getByTestId('us-family-d');
+    expect(familyD).toHaveTextContent(/Minamata Treaty/);
+    expect(familyD).toHaveTextContent(/not run/i);
+    expect(familyD).toHaveTextContent(/Python pipeline/);
+  });
+
   it('exports CSV with the visible rows when the CSV button is clicked', () => {
     setArtifacts();
     // Stub URL.createObjectURL + the anchor click so we can inspect the
