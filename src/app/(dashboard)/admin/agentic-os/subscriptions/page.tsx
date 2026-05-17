@@ -1,10 +1,12 @@
 // AI Subscriptions view (server entry).
 //
-// Server-side responsibilities are minimal: read AI_SUBSCRIPTIONS.md and
-// pass the parsed providers (or a load-error envelope) to the
-// SubscriptionsView client component. Auth + admin-role + feature-flag +
-// PTY-enabled gates are handled by the shared layout.tsx so this file
-// stays narrow.
+// Server-side responsibilities:
+//   1. PAGE-LEVEL auth + admin-role guard (codex 2026-05-16 P2 fix:
+//      defense in depth against stale layout RSC cache on client-side
+//      navigation between sibling routes). The layout.tsx ALSO performs
+//      the same check; both must pass for the page to render.
+//   2. Read AI_SUBSCRIPTIONS.md and pass the parsed providers (or a
+//      load-error envelope) to the SubscriptionsView client component.
 //
 // Why the data fetch is here rather than in the layout: the layout serves
 // every sibling route; computing AI_SUBSCRIPTIONS.md on every navigation
@@ -12,6 +14,7 @@
 // surfaced on /subscriptions. The trade-off is one extra fs read per
 // /subscriptions render, which is trivial.
 
+import { requireAgenticOsPageAccess } from '@/lib/agentic-os/page-auth-guard';
 import {
   readAiSubscriptions,
   resolveAiSubscriptionsPath,
@@ -24,6 +27,11 @@ import SubscriptionsView, {
 export const dynamic = 'force-dynamic';
 
 export default async function AgenticOsSubscriptionsPage() {
+  // Page-level auth guard. Redirects to /login (unauth) or /dashboard
+  // (auth but not admin) on failure. Defense in depth alongside the
+  // layout's identical check.
+  await requireAgenticOsPageAccess();
+
   let result: SubscriptionsLoadResult;
   try {
     const parsed = await readAiSubscriptions();

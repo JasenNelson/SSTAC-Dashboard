@@ -1,18 +1,23 @@
 // Agentic OS Projects view (server entry).
 //
 // Server component responsibilities:
-//   1. Read + parse Knowledge-Base/PROJECTS_MAP.md via the step-2 parser.
-//   2. Fan out git activity + skill + agent discovery in parallel.
-//   3. Pass the parsed data to the Projects-view client as a discriminated-
+//   1. PAGE-LEVEL auth + admin-role guard (codex 2026-05-16 P2 fix:
+//      defense in depth against stale layout RSC cache on client-side
+//      navigation between sibling routes). The layout.tsx ALSO performs
+//      the same check; both must pass for the page to render. Restores
+//      the pre-IA-refactor inline auth pattern this page had.
+//   2. Read + parse Knowledge-Base/PROJECTS_MAP.md via the step-2 parser.
+//   3. Fan out git activity + skill + agent discovery in parallel.
+//   4. Pass the parsed data to the Projects-view client as a discriminated-
 //      union prop so missing-file / parse-error states render an admin-
 //      friendly message instead of an ErrorBoundary stacktrace.
 //
-// Auth + feature-flag + PTY-enabled gates are handled by the parent
-// `layout.tsx` so this file focuses purely on the projects-data fetch.
+// Feature-flag + PTY-enabled gates are handled by the parent `layout.tsx`.
 //
 // Architecture spec: .tmp_presentation/master/AGENTIC_OS_ARCHITECTURE.md §3-7
 // Handoff doc: .tmp_presentation/master/AGENTIC_OS_HANDOFF.md §4, §11
 
+import { requireAgenticOsPageAccess } from '@/lib/agentic-os/page-auth-guard';
 import {
   readProjectsMap,
   resolveProjectsMapPath,
@@ -34,6 +39,11 @@ import AgenticOsClient, { type AgenticOsResult } from './AgenticOsClient';
 export const dynamic = 'force-dynamic';
 
 export default async function AgenticOsPage() {
+  // Page-level auth guard. Redirects to /login (unauth) or /dashboard
+  // (auth but not admin) on failure. Defense in depth alongside the
+  // layout's identical check.
+  await requireAgenticOsPageAccess();
+
   // Read PROJECTS_MAP.md. If the file is missing or unparseable, surface a
   // discriminated-union to the client rather than throwing. Admins should
   // see "here is what's wrong and how to fix it", not a generic error page.
