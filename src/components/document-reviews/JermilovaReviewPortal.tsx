@@ -353,7 +353,7 @@ export default function JermilovaReviewPortal({
       statusIntent: 'save' | 'submit',
       dirtyKeysSnapshot: ReadonlySet<string>,
       commentsSnapshot: Record<string, string>,
-    ): Promise<{ ok: boolean; error?: string }> => {
+    ): Promise<{ ok: boolean; error?: string; writtenStatus?: ReviewStatus }> => {
       const supabase = createClient();
       const { data: { user }, error: getUserErr } = await supabase.auth.getUser();
       if (getUserErr || !user) {
@@ -410,7 +410,7 @@ export default function JermilovaReviewPortal({
           .update({ status: writeStatus, comments_data: merged })
           .eq('id', existing.id);
         if (updateErr) return { ok: false, error: updateErr.message };
-        return { ok: true };
+        return { ok: true, writtenStatus: writeStatus };
       } else {
         // No row yet -- INSERT the snapshotted local payload. For initial
         // INSERT, dirty-key concept doesn't apply (no remote payload to
@@ -437,7 +437,7 @@ export default function JermilovaReviewPortal({
             comments_data: payload,
           });
         if (insertErr) return { ok: false, error: insertErr.message };
-        return { ok: true };
+        return { ok: true, writtenStatus: writeStatus };
       }
     },
     [headings, storageKeyToPayloadKey],
@@ -470,6 +470,13 @@ export default function JermilovaReviewPortal({
       }
       setLastSavedAt(new Date().toISOString());
       setHasExistingRow(true);
+      // Mirror the WRITTEN status (from the re-SELECTed remote) into
+      // local state. If another tab flipped to SUBMITTED while this tab
+      // was IN_PROGRESS, persistToDb('save') correctly preserves
+      // SUBMITTED on the row, and this line propagates that to the UI
+      // (Submitted badge + Re-submit button label). Codex holistic
+      // 2026-05-17 P3 fix.
+      if (result.writtenStatus) setStatus(result.writtenStatus);
       clearReconciledDirtyKeys(dirtyKeysSnapshot, commentsSnapshot);
     } finally {
       setIsSaving(false);
@@ -591,12 +598,21 @@ export default function JermilovaReviewPortal({
         <div className="p-6 overflow-y-auto flex-1">
           <ul className="space-y-3">
             {headings.map((h) => (
-              <li
-                key={h.storageKey}
-                onClick={() => scrollToHeading(h.idx)}
-                className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer transition-colors"
-              >
-                {h.displayLabel}
+              <li key={h.storageKey}>
+                {/*
+                  Codex holistic 2026-05-17 P3 fix: render TOC entries as
+                  buttons (not <li onClick>) so keyboard-only + screen-
+                  reader users can navigate. <button type="button"> is
+                  focusable by default, fires onClick on Enter/Space, and
+                  exposes role=button to AT.
+                */}
+                <button
+                  type="button"
+                  onClick={() => scrollToHeading(h.idx)}
+                  className="w-full text-left text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:rounded"
+                >
+                  {h.displayLabel}
+                </button>
               </li>
             ))}
           </ul>
