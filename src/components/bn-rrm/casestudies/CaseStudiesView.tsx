@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/utils/cn';
 import { usePackStore } from '@/stores/bn-rrm/packStore';
 import { TrainingSites } from './TrainingSites';
@@ -18,46 +18,85 @@ type CaseStudySection =
   | 'how-it-works'
   | 'ai-assisted';
 
-const baseSections: { id: CaseStudySection; label: string; description: string }[] = [
+interface SectionDef {
+  id: CaseStudySection;
+  label: string;
+  description: string;
+}
+
+const baseSections: SectionDef[] = [
   { id: 'training', label: 'Training Sites', description: 'BN-RRM vs WOE for 8 training sites' },
   { id: 'external', label: 'External Sites', description: 'Non-training site comparisons' },
   { id: 'methods', label: 'Method Comparison', description: 'BN-RRM vs WOE, SQT, SQG approaches' },
 ];
 
-const howItWorksSection: { id: CaseStudySection; label: string; description: string } = {
+const howItWorksSection: SectionDef = {
   id: 'how-it-works',
   label: 'How It Works',
   description: 'Understand the Mackenzie Mercury model',
 };
 
-const benchmarkSection: { id: CaseStudySection; label: string; description: string } = {
+const benchmarkSection: SectionDef = {
   id: 'benchmark',
   label: 'Published Benchmark',
   description: 'Comparison with Jermilova et al. 2025',
 };
 
-const aiAssistedSection: { id: CaseStudySection; label: string; description: string } = {
+const aiAssistedSection: SectionDef = {
   id: 'ai-assisted',
   label: 'AI-assisted BN-RRM development',
   description: 'How the Jermilova model was reconstructed in Python',
 };
 
+// The AI-assisted-development view's content is specific to the Jermilova
+// reconstruction (Mackenzie Mercury BN; uses Jermilova-specific kappa
+// numbers, comparison-protocol dimensions, methodology-paper source path).
+// Restrict the tab to that exact pack so a hypothetical future
+// scope_type=benchmark pack does not inherit Jermilova-specific content.
+// Codex holistic 2026-05-17 P3.
+const JERMILOVA_PACK_ID = 'bnrrm-casestudy-jermilova2025-mackenzie-hg';
+
 export function CaseStudiesView() {
   const packManifest = usePackStore((s) => s.packManifest);
   const isBenchmark = packManifest?.scope_type === 'benchmark';
+  const isJermilova = packManifest?.pack_id === JERMILOVA_PACK_ID;
+
+  // Build section list. Benchmark packs show how-it-works + published
+  // benchmark; only the Jermilova pack additionally surfaces the
+  // AI-assisted-development tab (its content is Jermilova-specific).
+  // Training Sites / External Sites / Method Comparison are
+  // sediment-model-specific (general / site-specific packs).
+  const sections: SectionDef[] = useMemo(() => {
+    if (isBenchmark) {
+      return isJermilova
+        ? [howItWorksSection, benchmarkSection, aiAssistedSection]
+        : [howItWorksSection, benchmarkSection];
+    }
+    return baseSections;
+  }, [isBenchmark, isJermilova]);
 
   // For benchmark packs, default to the how-it-works section
   const [activeSection, setActiveSection] = useState<CaseStudySection>(
     isBenchmark ? 'how-it-works' : 'training'
   );
 
-  // Build section list: benchmark packs (currently only Jermilova) show
-  // how-it-works, published benchmark, and AI-assisted development.
-  // Training Sites, External Sites, and Method Comparison are
-  // sediment-model-specific.
-  const sections = isBenchmark
-    ? [howItWorksSection, benchmarkSection, aiAssistedSection]
-    : baseSections;
+  // Reset activeSection when the pack changes so a section selected under
+  // one pack does not "stick" onto another pack. Codex holistic 2026-05-17
+  // P2: without this guard, switching from the Jermilova benchmark pack
+  // (with 'ai-assisted' active) to a general/site pack would leave
+  // activeSection='ai-assisted' and the render branch -- still
+  // unconditional -- would show Jermilova-specific content over the
+  // wrong pack. Inverse case (selecting a section that exists under both
+  // pack types) is also handled by snapping back to the first available
+  // section for that pack family. We compute the valid default per pack
+  // family, then promote only if the current activeSection is no longer
+  // valid for the new sections array.
+  useEffect(() => {
+    const sectionIds = sections.map((s) => s.id);
+    if (!sectionIds.includes(activeSection)) {
+      setActiveSection(sections[0]?.id ?? (isBenchmark ? 'how-it-works' : 'training'));
+    }
+  }, [sections, activeSection, isBenchmark]);
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -97,15 +136,18 @@ export function CaseStudiesView() {
         </div>
       </div>
 
-      {/* Content area */}
+      {/* Content area. Each render branch is additionally guarded so a
+          stale activeSection (from a brief moment between pack switch +
+          useEffect reset) cannot render a section type for the wrong
+          pack family. Codex holistic 2026-05-17 P2. */}
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-4xl mx-auto">
-          {activeSection === 'how-it-works' && <HowItWorksView />}
-          {activeSection === 'benchmark' && <PublishedComparison />}
-          {activeSection === 'ai-assisted' && <AiAssistedDevelopmentView />}
-          {activeSection === 'training' && <TrainingSites />}
-          {activeSection === 'external' && <ExternalSites />}
-          {activeSection === 'methods' && <MethodComparison />}
+          {activeSection === 'how-it-works' && isBenchmark && <HowItWorksView />}
+          {activeSection === 'benchmark' && isBenchmark && <PublishedComparison />}
+          {activeSection === 'ai-assisted' && isJermilova && <AiAssistedDevelopmentView />}
+          {activeSection === 'training' && !isBenchmark && <TrainingSites />}
+          {activeSection === 'external' && !isBenchmark && <ExternalSites />}
+          {activeSection === 'methods' && !isBenchmark && <MethodComparison />}
         </div>
       </div>
     </div>
