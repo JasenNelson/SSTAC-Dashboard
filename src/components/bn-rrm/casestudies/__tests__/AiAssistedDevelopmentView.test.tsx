@@ -238,7 +238,7 @@ describe('AiAssistedDevelopmentView', () => {
     expect(twgShell.className).not.toMatch(/max-w-4xl/);
   });
 
-  it('always shows the source-of-truth pointer footer regardless of active tier', () => {
+  it('shows the source-of-truth pointer footer on the curated tiers (1-3) + the no-tier-active state', () => {
     render(<AiAssistedDevelopmentView />);
     // Footer with the canonical path is visible on default (Everyone) tier.
     expect(
@@ -254,5 +254,32 @@ describe('AiAssistedDevelopmentView', () => {
     expect(
       screen.getByText(/JERMILOVA_BNRRM_CONSTRUCTION_METHODOLOGY\.md/),
     ).toBeInTheDocument();
+  });
+
+  it('HIDES the source-of-truth pointer footer on the TWG Review tier (portal opens the canonical content in-line)', async () => {
+    // The TWG Review tier mounts the JermilovaReviewPortal which loads the
+    // canonical methodology MD inline -- a separate canonical-path pointer
+    // would be redundant. The layout-shell branch in
+    // AiAssistedDevelopmentView intentionally omits SourcePointerFooter
+    // when activeTier === 'twg-review'.
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve('# Methodology\n\n## Section A\nbody'),
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis as any).fetch = fetchMock;
+
+    render(<AiAssistedDevelopmentView />);
+    // Footer is visible on the default Everyone tier.
+    expect(
+      screen.getByText(/JERMILOVA_BNRRM_CONSTRUCTION_METHODOLOGY\.md/),
+    ).toBeInTheDocument();
+    // Switch to TWG Review tier; footer disappears.
+    fireEvent.click(screen.getByTestId('ai-assisted-tier-twg-review'));
+    await screen.findByTestId('ai-assisted-tier-content-twg-review');
+    expect(
+      screen.queryByText(/JERMILOVA_BNRRM_CONSTRUCTION_METHODOLOGY\.md/),
+    ).toBeNull();
   });
 });
