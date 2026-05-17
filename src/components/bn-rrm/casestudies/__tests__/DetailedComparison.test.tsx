@@ -238,6 +238,36 @@ describe('DetailedComparison', () => {
     expect(proxRow.textContent).toMatch(/DR-001/);
   });
 
+  it('tier filter chips are derived from the actual row data (Tier 4 nodes also get a chip)', () => {
+    // Codex holistic H-3 fix: the previous hard-coded ['all', 1, 2, 3]
+    // chip list missed Jermilova's Tier 4 deterministic nodes
+    // (eligible_commercial_catch, mehg_ingested, ptwi_exceedance).
+    // Verify the chip set is now dynamic.
+    const fixtureWithTier4 = {
+      nodes: [
+        ...FIXTURE_CPT.nodes,
+        {
+          id: 'mehg_ingested',
+          label: 'MeHg Ingested',
+          tier: 4,
+          cpt_source: 'Data-Learned',
+          sample_count: 100,
+          dr001_affected: false,
+          learned_distribution: { states: ['low', 'high'], marginal: { low: 0.5, high: 0.5 } },
+          ess_prior_weight: { ess: 1.0, method: 'BDeu' },
+        },
+      ],
+    };
+    setArtifacts({ cpt: fixtureWithTier4 });
+    render(<DetailedComparison />);
+    // Tier 4 chip is now present in the dynamic set.
+    expect(screen.getByTestId('detailed-tier-filter-4')).toBeInTheDocument();
+    // Click it; only the Tier 4 row remains.
+    fireEvent.click(screen.getByTestId('detailed-tier-filter-4'));
+    expect(screen.getByTestId('detailed-node-row-mehg_ingested')).toBeInTheDocument();
+    expect(screen.queryByTestId('detailed-node-row-atmospheric_hg_deposition')).toBeNull();
+  });
+
   it('tier filter narrows the rows to the selected tier', () => {
     setArtifacts();
     render(<DetailedComparison />);

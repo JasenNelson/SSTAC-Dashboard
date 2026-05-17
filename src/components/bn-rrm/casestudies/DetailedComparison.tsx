@@ -320,8 +320,11 @@ export function DetailedComparison() {
   const loading = loadingCmp || loadingCpt || loadingVal;
   const error = errCmp || errCpt || errVal;
 
-  // Filter state: tier filter, source filter, expanded-row state.
-  const [tierFilter, setTierFilter] = useState<'all' | 1 | 2 | 3>('all');
+  // Filter state. Tier filter is `'all' | <tier-number>` derived
+  // dynamically from the row data (codex H-3: Jermilova has Tier 4
+  // deterministic nodes -- eligible_commercial_catch, mehg_ingested,
+  // ptwi_exceedance -- that a hard-coded 1/2/3 chip list missed).
+  const [tierFilter, setTierFilter] = useState<'all' | number>('all');
   const [expandedNodeId, setExpandedNodeId] = useState<string | null>(null);
 
   // Build NodeRow[] -- per-CPT-node merge of cpt_transparency + LOO + ranks.
@@ -339,6 +342,15 @@ export function DetailedComparison() {
     if (tierFilter === 'all') return rows;
     return rows.filter((r) => r.node.tier === tierFilter);
   }, [rows, tierFilter]);
+
+  // Tier values present in the pack, derived from the row data so the
+  // chip set is correct for any Jermilova-like pack (Tier 4 in current
+  // Jermilova; could be different in a future pack). Codex H-3 fix.
+  const availableTiers = useMemo(() => {
+    const set = new Set<number>();
+    for (const r of rows) set.add(r.node.tier);
+    return Array.from(set).sort((a, b) => a - b);
+  }, [rows]);
 
   // Summary stats for the 3-up cards.
   const summary = useMemo(() => {
@@ -498,8 +510,8 @@ export function DetailedComparison() {
             Per-CPT-Node Results
           </h3>
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex gap-1">
-              {(['all', 1, 2, 3] as const).map((t) => (
+            <div className="flex gap-1 flex-wrap">
+              {(['all' as const, ...availableTiers]).map((t) => (
                 <button
                   key={String(t)}
                   type="button"
