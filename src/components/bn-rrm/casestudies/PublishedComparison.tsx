@@ -120,7 +120,16 @@ const ENDPOINT_LABELS: Record<string, string> = {
 // Main component
 // ---------------------------------------------------------------------------
 
-export function PublishedComparison() {
+interface PublishedComparisonProps {
+  /** Optional callback to navigate to a sibling Case Studies section.
+   *  Used to deep-link "See Detailed Comparison" from the Published
+   *  Benchmark headlines view. Passed in by CaseStudiesView; absent
+   *  in tests or any future standalone usage (the CTA banner is then
+   *  hidden). */
+  onNavigateToDetailedComparison?: () => void;
+}
+
+export function PublishedComparison({ onNavigateToDetailedComparison }: PublishedComparisonProps = {}) {
   const packManifest = usePackStore((s) => s.packManifest);
 
   // Load the three review artifacts via the pack system.
@@ -176,6 +185,17 @@ export function PublishedComparison() {
       {/* HEADER                                                           */}
       {/* ================================================================= */}
       <HeaderSection reference={reference} />
+
+      {/* ================================================================= */}
+      {/* DETAILED COMPARISON CTA                                          */}
+      {/* The sections below are headlines. The per-CPT-node breakdown +   */}
+      {/* the Uncertainty & Sensitivity Analysis live in the sibling       */}
+      {/* Detailed Comparison Case Studies entry. CaseStudiesView passes   */}
+      {/* the navigation callback; absent the callback, the CTA hides.    */}
+      {/* ================================================================= */}
+      {onNavigateToDetailedComparison && (
+        <DetailedComparisonCta onNavigate={onNavigateToDetailedComparison} />
+      )}
 
       {/* ================================================================= */}
       {/* STRUCTURAL COMPARISON                                            */}
@@ -572,5 +592,40 @@ function MethodologySection({ published }: { published: PublishedReference | nul
         )}
       </div>
     </ExpandableSection>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Detailed Comparison CTA -- banner that deeplinks the user from the
+// Published Benchmark headlines to the Detailed Comparison sibling view.
+// ---------------------------------------------------------------------------
+
+function DetailedComparisonCta({ onNavigate }: { onNavigate: () => void }) {
+  return (
+    <div
+      className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+      data-testid="published-detailed-comparison-cta"
+    >
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-semibold text-sky-800 dark:text-sky-200">
+          Want per-CPT-node detail?
+        </h3>
+        <p className="text-xs text-sky-700 dark:text-sky-300 mt-1 leading-relaxed">
+          The sections below are headlines. The full per-CPT-node breakdown
+          (14 nodes -- BDeu posterior, sample size, LOO kappa, MI vs paper
+          rank) and the Uncertainty &amp; Sensitivity Analysis live in the
+          Detailed Comparison view.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onNavigate}
+        data-testid="published-detailed-comparison-cta-button"
+        className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold shadow-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2"
+      >
+        See Detailed Comparison
+        <span aria-hidden="true">-&gt;</span>
+      </button>
+    </div>
   );
 }

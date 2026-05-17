@@ -36,14 +36,29 @@ vi.mock('@/stores/bn-rrm/packStore', () => ({
 vi.mock('../HowItWorksView', () => ({
   HowItWorksView: () => <div data-testid="view-how-it-works" />,
 }));
-vi.mock('../PublishedComparison', () => ({
-  PublishedComparison: () => <div data-testid="view-benchmark" />,
-}));
 vi.mock('../AiAssistedDevelopmentView', () => ({
   AiAssistedDevelopmentView: () => <div data-testid="view-ai-assisted" />,
 }));
 vi.mock('../DetailedComparison', () => ({
   DetailedComparison: () => <div data-testid="view-detailed-comparison" />,
+}));
+// Mock that surfaces the onNavigateToDetailedComparison callback so tests
+// can verify the deep-link wire-up from CaseStudiesView -> Published ->
+// Detailed.
+vi.mock('../PublishedComparison', () => ({
+  PublishedComparison: (props: { onNavigateToDetailedComparison?: () => void }) => (
+    <div data-testid="view-benchmark">
+      {props.onNavigateToDetailedComparison && (
+        <button
+          type="button"
+          data-testid="mock-published-cta"
+          onClick={props.onNavigateToDetailedComparison}
+        >
+          go to detailed
+        </button>
+      )}
+    </div>
+  ),
 }));
 vi.mock('../TrainingSites', () => ({
   TrainingSites: () => <div data-testid="view-training" />,
@@ -117,6 +132,35 @@ describe('CaseStudiesView -- AI-assisted-development tab gating', () => {
     expect(screen.getByTestId('view-detailed-comparison')).toBeInTheDocument();
     // Hides the previously-active how-it-works view.
     expect(screen.queryByTestId('view-how-it-works')).toBeNull();
+  });
+
+  it('passes onNavigateToDetailedComparison to PublishedComparison only when isJermilova', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    // Navigate to Published Benchmark; CTA button appears via the prop wire.
+    fireEvent.click(screen.getByRole('button', { name: /Published Benchmark/i }));
+    expect(screen.getByTestId('mock-published-cta')).toBeInTheDocument();
+  });
+
+  it('does NOT pass onNavigateToDetailedComparison for a non-Jermilova benchmark pack', () => {
+    (mockPackManifest as Mock).mockReturnValue(otherBenchmarkManifest);
+    render(<CaseStudiesView />);
+    // Other benchmark packs default to Published Benchmark; CTA is hidden
+    // because the navigation target (Detailed Comparison) is Jermilova-only.
+    fireEvent.click(screen.getByRole('button', { name: /Published Benchmark/i }));
+    expect(screen.queryByTestId('mock-published-cta')).toBeNull();
+  });
+
+  it('clicking the published->detailed CTA navigates activeSection to detailed-comparison', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    fireEvent.click(screen.getByRole('button', { name: /Published Benchmark/i }));
+    expect(screen.getByTestId('view-benchmark')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('mock-published-cta'));
+    // After the CTA click, activeSection flips and the Detailed Comparison
+    // mount renders.
+    expect(screen.getByTestId('view-detailed-comparison')).toBeInTheDocument();
+    expect(screen.queryByTestId('view-benchmark')).toBeNull();
   });
 
   it('does NOT render the AI-assisted tab for a non-Jermilova benchmark pack (P3)', () => {

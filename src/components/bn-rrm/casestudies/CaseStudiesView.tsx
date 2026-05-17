@@ -151,7 +151,13 @@ export function CaseStudiesView() {
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-4xl mx-auto">
           {activeSection === 'how-it-works' && isBenchmark && <HowItWorksView />}
-          {activeSection === 'benchmark' && isBenchmark && <PublishedComparison />}
+          {activeSection === 'benchmark' && isBenchmark && (
+            <PublishedComparison
+              onNavigateToDetailedComparison={
+                isJermilova ? () => setActiveSection('detailed-comparison') : undefined
+              }
+            />
+          )}
           {activeSection === 'detailed-comparison' && isJermilova && <DetailedComparison />}
           {activeSection === 'ai-assisted' && isJermilova && <AiAssistedDevelopmentView />}
           {activeSection === 'training' && !isBenchmark && <TrainingSites />}
