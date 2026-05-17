@@ -173,22 +173,32 @@ const COMMAND_TEMPLATES: Readonly<Record<string, CommandTemplate>> = {
   // tokens AND don't actually invoke the slash command (verified 2026-05-16
   // empirical test: -p mode does not process slash commands). Stick to real
   // subcommands like `auth status` / `login status` / `list`.
+  // claude + ollama distribute as real PE .exe binaries reachable on PATH,
+  // so child_process.spawn invokes them directly without a shell wrapper.
+  // codex + agent (cursor) ship as Windows .cmd shims, which CreateProcess
+  // cannot execute directly -- spawn returns ENOENT. Wrap those two in
+  // cmd.exe /c (same fix shape as BUG-3 wt.exe -- see commits 85e069c,
+  // 3df94ab on this branch's main-merged history) so the shim runs through
+  // the shell. Codex 2026-05-16 caught the missing wrapper on the per-
+  // commit review of 8d35d31; verified empirically: spawn('codex',...)
+  // and spawn('agent',...) both fail ENOENT today.
   check_claude_auth: {
     exe: 'claude',
     args: (_project: string, _cwd: string) => ['auth', 'status'],
   },
   check_codex_login: {
-    exe: 'codex',
-    args: (_project: string, _cwd: string) => ['login', 'status'],
+    exe: 'cmd.exe',
+    args: (_project: string, _cwd: string) => ['/c', 'codex', 'login', 'status'],
   },
   // Cursor's agent CLI lives at C:\Users\jasen\AppData\Local\cursor-agent\agent.cmd
-  // (PATHEXT-resolved on Windows). `agent about` returns multiline output with
-  // Subscription Tier, Model, CLI Version, Terminal, Shell, User Email --
-  // richest live-check output of the supported providers. Empirically
-  // confirmed 2026-05-16: no token cost.
+  // (PATHEXT-resolved by shells but NOT by child_process.spawn on Windows).
+  // `agent about` returns multiline output with Subscription Tier, Model,
+  // CLI Version, Terminal, Shell, User Email -- richest live-check output
+  // of the supported providers. Empirically confirmed 2026-05-16: no token
+  // cost. Wrapped via cmd.exe per the shim-spawn discussion above.
   check_cursor_about: {
-    exe: 'agent',
-    args: (_project: string, _cwd: string) => ['about'],
+    exe: 'cmd.exe',
+    args: (_project: string, _cwd: string) => ['/c', 'agent', 'about'],
   },
   check_ollama_models: {
     exe: 'ollama',

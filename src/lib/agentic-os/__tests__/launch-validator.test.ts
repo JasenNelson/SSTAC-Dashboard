@@ -78,14 +78,19 @@ describe('validateLaunchRequest', () => {
   // ---------------------------------------------------------------------------
 
   describe('AI subscription check_* templates', () => {
+    // claude + ollama spawn directly (real .exe binaries reachable via
+    // CreateProcess on Windows). codex + agent are .cmd shims that
+    // CreateProcess cannot execute -- wrapped through cmd.exe /c per the
+    // codex 2026-05-16 P2 review on commit 8d35d31. Empirically verified
+    // (spawnSync direct on codex/agent fails ENOENT; via cmd.exe passes).
     const CHECK_TEMPLATE_FIXTURES: ReadonlyArray<{
       action: string;
       exe: string;
       args: readonly string[];
     }> = [
       { action: 'check_claude_auth', exe: 'claude', args: ['auth', 'status'] },
-      { action: 'check_codex_login', exe: 'codex', args: ['login', 'status'] },
-      { action: 'check_cursor_about', exe: 'agent', args: ['about'] },
+      { action: 'check_codex_login', exe: 'cmd.exe', args: ['/c', 'codex', 'login', 'status'] },
+      { action: 'check_cursor_about', exe: 'cmd.exe', args: ['/c', 'agent', 'about'] },
       { action: 'check_ollama_models', exe: 'ollama', args: ['list'] },
     ];
 
