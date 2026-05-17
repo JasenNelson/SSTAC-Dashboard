@@ -689,9 +689,9 @@ export default function JermilovaReviewPortal({
             aria-label="Hide table of contents"
             title="Hide table of contents"
             data-testid="twg-toc-collapse"
-            className="-mr-1 p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+            className="-mr-1 p-2 rounded-md bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 ring-1 ring-sky-200 dark:ring-sky-800 hover:bg-sky-200 dark:hover:bg-sky-800/60 hover:text-sky-900 dark:hover:text-sky-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
           >
-            <PanelLeftClose className="w-4 h-4" />
+            <PanelLeftClose className="w-5 h-5" />
           </button>
         </div>
         <div className="p-6 overflow-y-auto flex-1">
@@ -799,9 +799,9 @@ export default function JermilovaReviewPortal({
               aria-label="Hide section comments"
               title="Hide section comments"
               data-testid="twg-comments-collapse"
-              className="p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+              className="p-2 rounded-md bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 ring-1 ring-sky-200 dark:ring-sky-800 hover:bg-sky-200 dark:hover:bg-sky-800/60 hover:text-sky-900 dark:hover:text-sky-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
             >
-              <PanelRightClose className="w-4 h-4" />
+              <PanelRightClose className="w-5 h-5" />
             </button>
           </h3>
           <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800/50">
@@ -902,9 +902,10 @@ export default function JermilovaReviewPortal({
           aria-label="Show table of contents"
           title="Show table of contents"
           data-testid="twg-toc-reopen"
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white dark:bg-slate-800 border border-l-0 border-slate-200 dark:border-slate-700 rounded-r-lg shadow-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5 pr-3 pl-2 py-3 bg-sky-600 dark:bg-sky-700 hover:bg-sky-700 dark:hover:bg-sky-600 border border-l-0 border-sky-700 dark:border-sky-600 rounded-r-lg shadow-lg text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2"
         >
-          <PanelLeftOpen className="w-4 h-4" />
+          <PanelLeftOpen className="w-5 h-5" />
+          <span className="text-xs font-semibold whitespace-nowrap">Show TOC</span>
         </button>
       )}
 
@@ -920,9 +921,10 @@ export default function JermilovaReviewPortal({
           aria-label="Show section comments"
           title="Show section comments"
           data-testid="twg-comments-reopen"
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 bg-white dark:bg-slate-800 border border-r-0 border-slate-200 dark:border-slate-700 rounded-l-lg shadow-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5 pl-3 pr-2 py-3 bg-sky-600 dark:bg-sky-700 hover:bg-sky-700 dark:hover:bg-sky-600 border border-r-0 border-sky-700 dark:border-sky-600 rounded-l-lg shadow-lg text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2"
         >
-          <PanelRightOpen className="w-4 h-4" />
+          <span className="text-xs font-semibold whitespace-nowrap">Comments</span>
+          <PanelRightOpen className="w-5 h-5" />
         </button>
       )}
     </div>
