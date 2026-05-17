@@ -7,6 +7,7 @@ import { TrainingSites } from './TrainingSites';
 import { ExternalSites } from './ExternalSites';
 import { MethodComparison } from './MethodComparison';
 import { PublishedComparison } from './PublishedComparison';
+import { DetailedComparison } from './DetailedComparison';
 import { HowItWorksView } from './HowItWorksView';
 import { AiAssistedDevelopmentView } from './AiAssistedDevelopmentView';
 
@@ -15,6 +16,7 @@ type CaseStudySection =
   | 'external'
   | 'methods'
   | 'benchmark'
+  | 'detailed-comparison'
   | 'how-it-works'
   | 'ai-assisted';
 
@@ -39,7 +41,13 @@ const howItWorksSection: SectionDef = {
 const benchmarkSection: SectionDef = {
   id: 'benchmark',
   label: 'Published Benchmark',
-  description: 'Comparison with Jermilova et al. 2025',
+  description: 'Comparison with Jermilova et al. 2025 (headlines)',
+};
+
+const detailedComparisonSection: SectionDef = {
+  id: 'detailed-comparison',
+  label: 'Detailed Comparison',
+  description: 'Per-CPT-node + comparison-dimension status',
 };
 
 const aiAssistedSection: SectionDef = {
@@ -69,7 +77,7 @@ export function CaseStudiesView() {
   const sections: SectionDef[] = useMemo(() => {
     if (isBenchmark) {
       return isJermilova
-        ? [howItWorksSection, benchmarkSection, aiAssistedSection]
+        ? [howItWorksSection, benchmarkSection, detailedComparisonSection, aiAssistedSection]
         : [howItWorksSection, benchmarkSection];
     }
     return baseSections;
@@ -144,6 +152,7 @@ export function CaseStudiesView() {
         <div className="max-w-4xl mx-auto">
           {activeSection === 'how-it-works' && isBenchmark && <HowItWorksView />}
           {activeSection === 'benchmark' && isBenchmark && <PublishedComparison />}
+          {activeSection === 'detailed-comparison' && isJermilova && <DetailedComparison />}
           {activeSection === 'ai-assisted' && isJermilova && <AiAssistedDevelopmentView />}
           {activeSection === 'training' && !isBenchmark && <TrainingSites />}
           {activeSection === 'external' && !isBenchmark && <ExternalSites />}

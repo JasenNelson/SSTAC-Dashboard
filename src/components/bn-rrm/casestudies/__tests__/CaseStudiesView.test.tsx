@@ -42,6 +42,9 @@ vi.mock('../PublishedComparison', () => ({
 vi.mock('../AiAssistedDevelopmentView', () => ({
   AiAssistedDevelopmentView: () => <div data-testid="view-ai-assisted" />,
 }));
+vi.mock('../DetailedComparison', () => ({
+  DetailedComparison: () => <div data-testid="view-detailed-comparison" />,
+}));
 vi.mock('../TrainingSites', () => ({
   TrainingSites: () => <div data-testid="view-training" />,
 }));
@@ -87,6 +90,33 @@ describe('CaseStudiesView -- AI-assisted-development tab gating', () => {
     expect(
       screen.getByRole('button', { name: /Published Benchmark/i }),
     ).toBeInTheDocument();
+  });
+
+  it('renders the Detailed Comparison tab for the Jermilova pack', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    expect(
+      screen.getByRole('button', { name: /Detailed Comparison/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('does NOT render the Detailed Comparison tab for a non-Jermilova benchmark pack', () => {
+    (mockPackManifest as Mock).mockReturnValue(otherBenchmarkManifest);
+    render(<CaseStudiesView />);
+    expect(
+      screen.queryByRole('button', { name: /Detailed Comparison/i }),
+    ).toBeNull();
+  });
+
+  it('shows the Detailed Comparison content when activated AND isJermilova', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    fireEvent.click(
+      screen.getByRole('button', { name: /Detailed Comparison/i }),
+    );
+    expect(screen.getByTestId('view-detailed-comparison')).toBeInTheDocument();
+    // Hides the previously-active how-it-works view.
+    expect(screen.queryByTestId('view-how-it-works')).toBeNull();
   });
 
   it('does NOT render the AI-assisted tab for a non-Jermilova benchmark pack (P3)', () => {
