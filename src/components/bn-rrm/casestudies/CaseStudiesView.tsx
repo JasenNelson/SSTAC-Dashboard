@@ -8,8 +8,15 @@ import { ExternalSites } from './ExternalSites';
 import { MethodComparison } from './MethodComparison';
 import { PublishedComparison } from './PublishedComparison';
 import { HowItWorksView } from './HowItWorksView';
+import { AiAssistedDevelopmentView } from './AiAssistedDevelopmentView';
 
-type CaseStudySection = 'training' | 'external' | 'methods' | 'benchmark' | 'how-it-works';
+type CaseStudySection =
+  | 'training'
+  | 'external'
+  | 'methods'
+  | 'benchmark'
+  | 'how-it-works'
+  | 'ai-assisted';
 
 const baseSections: { id: CaseStudySection; label: string; description: string }[] = [
   { id: 'training', label: 'Training Sites', description: 'BN-RRM vs WOE for 8 training sites' },
@@ -29,6 +36,12 @@ const benchmarkSection: { id: CaseStudySection; label: string; description: stri
   description: 'Comparison with Jermilova et al. 2025',
 };
 
+const aiAssistedSection: { id: CaseStudySection; label: string; description: string } = {
+  id: 'ai-assisted',
+  label: 'AI-assisted BN-RRM development',
+  description: 'How the Jermilova model was reconstructed in Python',
+};
+
 export function CaseStudiesView() {
   const packManifest = usePackStore((s) => s.packManifest);
   const isBenchmark = packManifest?.scope_type === 'benchmark';
@@ -38,10 +51,12 @@ export function CaseStudiesView() {
     isBenchmark ? 'how-it-works' : 'training'
   );
 
-  // Build section list: benchmark packs show only how-it-works and published benchmark
-  // (Training Sites, External Sites, and Method Comparison are sediment-model-specific)
+  // Build section list: benchmark packs (currently only Jermilova) show
+  // how-it-works, published benchmark, and AI-assisted development.
+  // Training Sites, External Sites, and Method Comparison are
+  // sediment-model-specific.
   const sections = isBenchmark
-    ? [howItWorksSection, benchmarkSection]
+    ? [howItWorksSection, benchmarkSection, aiAssistedSection]
     : baseSections;
 
   return (
@@ -87,6 +102,7 @@ export function CaseStudiesView() {
         <div className="max-w-4xl mx-auto">
           {activeSection === 'how-it-works' && <HowItWorksView />}
           {activeSection === 'benchmark' && <PublishedComparison />}
+          {activeSection === 'ai-assisted' && <AiAssistedDevelopmentView />}
           {activeSection === 'training' && <TrainingSites />}
           {activeSection === 'external' && <ExternalSites />}
           {activeSection === 'methods' && <MethodComparison />}
