@@ -29,16 +29,22 @@
 // (~57k words / 7.4k lines; ASCII-clean per ascii_lint.py). Pointer to that
 // file is in the footer; nothing in this view supersedes the source.
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ExpandableSection } from '@/components/bn-rrm/shared/ExpandableSection';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
+import JermilovaReviewPortal from '@/components/document-reviews/JermilovaReviewPortal';
 import { cn } from '@/utils/cn';
 
 // ---------------------------------------------------------------------------
 // Audience tier type + badge colors (mirrors HowItWorksView for consistency)
 // ---------------------------------------------------------------------------
 
-type AudienceTier = 'everyone' | 'practitioner' | 'technical' | null;
+type AudienceTier =
+  | 'everyone'
+  | 'practitioner'
+  | 'technical'
+  | 'twg-review'
+  | null;
 
 const TIER_BADGE_COLORS: Record<string, string> = {
   everyone:
@@ -47,18 +53,22 @@ const TIER_BADGE_COLORS: Record<string, string> = {
     'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
   technical:
     'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
+  'twg-review':
+    'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
 };
 
 const TIER_LABELS: Record<string, string> = {
   everyone: 'For Everyone',
   practitioner: 'For Practitioners',
   technical: 'Technical',
+  'twg-review': 'TWG Review',
 };
 
 const TIER_ACCENT_COLORS: Record<string, string> = {
   everyone: 'bg-green-500',
   practitioner: 'bg-blue-500',
   technical: 'bg-violet-500',
+  'twg-review': 'bg-amber-500',
 };
 
 // ---------------------------------------------------------------------------
@@ -87,8 +97,12 @@ export function AiAssistedDevelopmentView() {
         </p>
       </header>
 
-      {/* Tier selector (same shape as HowItWorksView) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {/* Tier selector. TWG Review is the 4th tier: it is NOT just a
+          reading depth, it is the collaborative-review portal that opens
+          the full 57k-word methodology paper with section-by-section
+          comments + save/submit (writes to document_reviews per-user RLS).
+          See JermilovaReviewPortal for the data flow. */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <TierButton
           tier="everyone"
           title="For Everyone"
@@ -118,13 +132,113 @@ export function AiAssistedDevelopmentView() {
             setActiveTier(activeTier === 'technical' ? null : 'technical')
           }
         />
+        <TierButton
+          tier="twg-review"
+          title="TWG Review"
+          subtitle="Collaborative section-by-section feedback"
+          active={activeTier === 'twg-review'}
+          onClick={() =>
+            setActiveTier(activeTier === 'twg-review' ? null : 'twg-review')
+          }
+        />
       </div>
 
       {activeTier === 'everyone' && <EveryoneContent />}
       {activeTier === 'practitioner' && <PractitionerContent />}
       {activeTier === 'technical' && <TechnicalContent />}
+      {activeTier === 'twg-review' && <TwgReviewContent />}
 
-      <SourcePointerFooter />
+      {/* The source-pointer footer is hidden in the TWG Review tier: that
+          tier already shows the full methodology content inline (no need
+          to redirect the reader to a separate canonical path). The first
+          three tiers are curated summaries and rely on the footer to
+          point at the source of truth. */}
+      {activeTier !== 'twg-review' && <SourcePointerFooter />}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Tier 4: TWG Review (collaborative review portal)
+// ---------------------------------------------------------------------------
+//
+// Fetches the methodology MD from /public/bn-rrm/jermilova-methodology.md
+// on first render (the file is committed into the dashboard repo as a
+// versioned snapshot; see public/bn-rrm/ and the migration commit). Once
+// loaded, mounts JermilovaReviewPortal which handles auth, draft state,
+// per-key cross-tab merge, save-edit-resubmit, etc.
+//
+// The standalone route at /bn-rrm/jermilova-review reads the same MD
+// server-side. This in-page tier is the primary entry point per the
+// owner's UX preference; the standalone route is the deep-link
+// alternative.
+
+function TwgReviewContent() {
+  const [methodologyContent, setMethodologyContent] = useState<string | null>(
+    null,
+  );
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await fetch('/bn-rrm/jermilova-methodology.md', {
+          cache: 'force-cache',
+        });
+        if (cancelled) return;
+        if (!resp.ok) {
+          setFetchError(`HTTP ${resp.status} fetching methodology paper`);
+          return;
+        }
+        const text = await resp.text();
+        if (cancelled) return;
+        setMethodologyContent(text);
+      } catch (err) {
+        if (cancelled) return;
+        setFetchError(err instanceof Error ? err.message : String(err));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (fetchError) {
+    return (
+      <div className="p-6 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg space-y-1">
+        <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">
+          Could not load the methodology paper.
+        </p>
+        <p className="text-xs text-rose-700 dark:text-rose-300">{fetchError}</p>
+        <p className="text-xs text-rose-700 dark:text-rose-300">
+          The TWG Review tab requires the MD snapshot at{' '}
+          <code className="text-[11px] bg-rose-100 dark:bg-rose-900/50 px-1 rounded">
+            /bn-rrm/jermilova-methodology.md
+          </code>
+          . If this is a fresh deploy, confirm the dashboard repo includes
+          the public/bn-rrm/jermilova-methodology.md snapshot.
+        </p>
+      </div>
+    );
+  }
+
+  if (methodologyContent === null) {
+    return (
+      <div className="flex items-center gap-3 p-6 text-slate-500 dark:text-slate-400">
+        <div className="w-5 h-5 border-2 border-slate-300 dark:border-slate-600 border-t-amber-500 rounded-full animate-spin" />
+        <span className="text-sm">Loading methodology paper...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden h-[calc(100vh-20rem)] min-h-[600px]">
+      <JermilovaReviewPortal
+        methodologyContent={methodologyContent}
+        showLeftPanel
+        showRightPanel
+      />
     </div>
   );
 }
@@ -879,7 +993,9 @@ function TierButton({
               tier === 'practitioner' &&
                 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20',
               tier === 'technical' &&
-                'border-violet-500 dark:border-violet-400 bg-violet-50 dark:bg-violet-900/20'
+                'border-violet-500 dark:border-violet-400 bg-violet-50 dark:bg-violet-900/20',
+              tier === 'twg-review' &&
+                'border-amber-500 dark:border-amber-400 bg-amber-50 dark:bg-amber-900/20'
             )
           : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-sm'
       )}

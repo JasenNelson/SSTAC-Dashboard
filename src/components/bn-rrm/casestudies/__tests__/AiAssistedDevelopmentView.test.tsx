@@ -11,8 +11,17 @@
  * also appears as an ExpandableSection badge inside the tier content).
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+
+// JermilovaReviewPortal imports MathRenderer which pulls CSS via the
+// renderer chain; stub it here so this test focuses on tier-toggle
+// integration rather than re-testing the portal (covered in
+// src/components/document-reviews/__tests__/JermilovaReviewPortal.test.tsx).
+vi.mock('@/components/document-reviews/JermilovaReviewPortal', () => ({
+  default: () => <div data-testid="jermilova-review-portal-mock" />,
+}));
+
 import { AiAssistedDevelopmentView } from '../AiAssistedDevelopmentView';
 
 describe('AiAssistedDevelopmentView', () => {
@@ -103,6 +112,35 @@ describe('AiAssistedDevelopmentView', () => {
     // Clicking the active tier closes it -- aria-pressed=false; content gone.
     expect(everyone).toHaveAttribute('aria-pressed', 'false');
     expect(screen.queryByText(/Three parties were involved/i)).toBeNull();
+  });
+
+  it('renders the TWG Review tier button + opens the collaborative-review portal when clicked', async () => {
+    // Stub the global fetch (the TWG Review tier fetches the MD from
+    // /bn-rrm/jermilova-methodology.md on mount). vitest+jsdom has
+    // global.fetch via undici, so we override.
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve('# Methodology\n\n## Section A\nbody'),
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis as any).fetch = fetchMock;
+
+    render(<AiAssistedDevelopmentView />);
+    // 4th tier button is present.
+    const twg = screen.getByTestId('ai-assisted-tier-twg-review');
+    expect(twg).toBeInTheDocument();
+    fireEvent.click(twg);
+    // After click, the portal mock renders; the source-pointer footer
+    // hides for the TWG tier (the portal supplies its own canonical
+    // pointer in-line via the snapshot it loads).
+    expect(
+      await screen.findByTestId('jermilova-review-portal-mock'),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/bn-rrm/jermilova-methodology.md',
+      expect.any(Object),
+    );
   });
 
   it('always shows the source-of-truth pointer footer regardless of active tier', () => {
