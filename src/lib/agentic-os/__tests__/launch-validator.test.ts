@@ -48,7 +48,7 @@ describe('validateLaunchRequest', () => {
     }
   });
 
-  it('ships the three Pattern-A actions plus open_session (Pattern B) plus run_skill (Pattern C) plus run_agent (Pattern D) plus open_embedded (Pattern E); no per-skill / per-agent templates', () => {
+  it('ships the three Pattern-A actions plus open_session (Pattern B) plus run_skill (Pattern C) plus run_agent (Pattern D) plus open_embedded (Pattern E) plus 4 AI subscription check actions; no per-skill / per-agent templates', () => {
     expect(new Set(ALL_ACTIONS)).toEqual(
       new Set([
         'run_safe_exit',
@@ -58,8 +58,90 @@ describe('validateLaunchRequest', () => {
         'run_skill',
         'run_agent',
         'open_embedded',
+        // AI Subscriptions panel (2026-05-16). Each check_* template
+        // wraps a single CLI subcommand that returns useful auth-status
+        // / login-status / local-model-list data WITHOUT consuming
+        // subscription tokens. Slash commands (claude -p /cost etc.)
+        // are intentionally NOT used -- empirically verified
+        // 2026-05-16 that -p mode does not process slash commands AND
+        // sends them to the LLM as text (consumes tokens, useless output).
+        'check_claude_auth',
+        'check_codex_login',
+        'check_cursor_about',
+        'check_ollama_models',
       ]),
     );
+  });
+
+  // ---------------------------------------------------------------------------
+  // AI Subscriptions panel (2026-05-16): check_* templates.
+  // ---------------------------------------------------------------------------
+
+  describe('AI subscription check_* templates', () => {
+    const CHECK_TEMPLATE_FIXTURES: ReadonlyArray<{
+      action: string;
+      exe: string;
+      args: readonly string[];
+    }> = [
+      { action: 'check_claude_auth', exe: 'claude', args: ['auth', 'status'] },
+      { action: 'check_codex_login', exe: 'codex', args: ['login', 'status'] },
+      { action: 'check_cursor_about', exe: 'agent', args: ['about'] },
+      { action: 'check_ollama_models', exe: 'ollama', args: ['list'] },
+    ];
+
+    it('produces {exe, args} for each check_* template against an allowlisted project', () => {
+      for (const fixture of CHECK_TEMPLATE_FIXTURES) {
+        const result = validateLaunchRequest({
+          project: 'SSTAC-Dashboard',
+          action: fixture.action,
+        });
+        expect(result.ok, `expected ok for ${fixture.action}`).toBe(true);
+        if (result.ok) {
+          expect(result.value.exe).toBe(fixture.exe);
+          expect(result.value.args).toEqual(fixture.args);
+        }
+      }
+    });
+
+    it('check_* templates declare NO spawnOverrides (default stdout pipe + windowsHide:true)', () => {
+      // These checks stream their output back to the launch-runs registry
+      // for the SSE log-card path. They must NOT inherit Pattern B's
+      // detached / stdio:'ignore' overrides -- those would suppress the
+      // very output we want to surface.
+      for (const fixture of CHECK_TEMPLATE_FIXTURES) {
+        const result = validateLaunchRequest({
+          project: 'SSTAC-Dashboard',
+          action: fixture.action,
+        });
+        expect(result.ok).toBe(true);
+        if (result.ok) {
+          expect(result.value.spawnOverrides, `${fixture.action} should NOT declare spawnOverrides`).toBeUndefined();
+        }
+      }
+    });
+
+    it('check_* templates work against every allowlisted project', () => {
+      // The project name is project-agnostic for these system-level
+      // checks but still must pass the allowlist (the route's project
+      // gate runs first regardless of action). Validate against every
+      // ALL_PROJECTS entry to lock the cross-product.
+      for (const project of ALL_PROJECTS) {
+        for (const fixture of CHECK_TEMPLATE_FIXTURES) {
+          const result = validateLaunchRequest({ project, action: fixture.action });
+          expect(result.ok, `${project}/${fixture.action}`).toBe(true);
+        }
+      }
+    });
+
+    it('rejects check_* against an unknown project (allowlist runs first)', () => {
+      for (const fixture of CHECK_TEMPLATE_FIXTURES) {
+        const result = validateLaunchRequest({
+          project: 'NotAProject',
+          action: fixture.action,
+        });
+        expect(result).toEqual({ ok: false, reason: 'unknown_project' });
+      }
+    });
   });
 
   // ---------------------------------------------------------------------------
