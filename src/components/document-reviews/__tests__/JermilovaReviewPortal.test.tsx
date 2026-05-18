@@ -612,6 +612,24 @@ second body
     });
   });
 
+  it('renders the Download (PDF) button and calls window.print() on click', async () => {
+    const lookup = buildSelectChain({ data: null, error: null });
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
+    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+    try {
+      render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} />);
+      const pdfBtn = await screen.findByTestId('jermilova-review-download-pdf');
+      expect(pdfBtn).toBeInTheDocument();
+      expect(pdfBtn.tagName).toBe('BUTTON');
+      // Click invokes window.print() which the browser handles as
+      // "Save as PDF" or printer output.
+      fireEvent.click(pdfBtn);
+      expect(printSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      printSpy.mockRestore();
+    }
+  });
+
   it('initialShowRightPanel={false} starts with Comments collapsed (reopen handle visible, panel inert)', async () => {
     const lookup = buildSelectChain({ data: null, error: null });
     mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });

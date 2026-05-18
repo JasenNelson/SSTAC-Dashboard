@@ -128,9 +128,14 @@ export function CaseStudiesView() {
   }, [activeSection, activeTier]);
 
   return (
-    <div className="flex-1 flex overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 p-4 shrink-0">
+    // print:overflow-visible cascade so window.print() from the embedded
+    // TWG Review tier captures the full methodology body (MDN: ancestor
+    // overflow:hidden clips at its padding box; descendant
+    // print:overflow-visible cannot override it). Codex R3 P1-2.
+    <div className="flex-1 flex overflow-hidden print:block print:overflow-visible print:h-auto">
+      {/* Sidebar. print:hidden -- the section nav isn't part of the
+          document content. */}
+      <div className="w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 p-4 shrink-0 print:hidden">
         <div className="mb-5">
           <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Case Studies</h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -177,7 +182,7 @@ export function CaseStudiesView() {
             Jermilova and stays hidden on any future scope_type=benchmark
             pack without a Detailed Comparison view (PR #121). */}
       {activeSection === 'ai-assisted' && isJermilova ? (
-        <div className="flex-1 overflow-hidden flex flex-col p-6">
+        <div className="flex-1 overflow-hidden flex flex-col p-6 print:overflow-visible print:h-auto print:p-0">
           <AiAssistedDevelopmentView
             activeTier={activeTier}
             onTierChange={setActiveTier}

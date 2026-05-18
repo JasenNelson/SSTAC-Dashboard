@@ -71,8 +71,14 @@ export default async function JermilovaReviewPage() {
 
   const methodologyContent = readMethodologyMd();
 
+  // Codex P1-2: print:h-auto + print:overflow-visible override the
+  // viewport-fixed scroll shell so window.print() emits the full
+  // methodology body, not a clipped slice. MDN: overflow:hidden clips
+  // at the ancestor's padding box; descendants cannot cancel ancestor
+  // clipping, so every fixed-height/overflow-hidden ancestor on the
+  // print path needs its own print override.
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] w-full overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-4rem)] w-full overflow-hidden print:h-auto print:overflow-visible print:block">
       <JermilovaReviewPortal
         methodologyContent={methodologyContent}
         initialShowLeftPanel
