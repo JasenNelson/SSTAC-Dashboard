@@ -143,7 +143,102 @@ describe('AiAssistedDevelopmentView', () => {
     );
   });
 
-  it('always shows the source-of-truth pointer footer regardless of active tier', () => {
+  // -------------------------------------------------------------------------
+  // Controlled mode + tier-aware layout shell (2026-05-17 fix)
+  //
+  // AiAssistedDevelopmentView accepts optional `activeTier` + `onTierChange`
+  // props. When both are provided, the component runs in controlled mode --
+  // the parent owns the tier state, and the internal layout shell uses two
+  // data-testids ('ai-assisted-tier-content-twg-review' for the full-width
+  // tier 4 branch; 'ai-assisted-tier-content-narrow' for the capped tiers
+  // 1-3 branch) so CaseStudiesView's width-breakout integration is
+  // testable from above.
+  // -------------------------------------------------------------------------
+
+  it('controlled mode: respects external activeTier prop without internal state', () => {
+    const onTierChange = vi.fn();
+    render(
+      <AiAssistedDevelopmentView
+        activeTier="technical"
+        onTierChange={onTierChange}
+      />,
+    );
+    expect(screen.getByTestId('ai-assisted-tier-technical')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    // Technical tier content is visible.
+    expect(
+      screen.getByText(
+        /alpha_ijk = ESS \/ \(n_parent_configs \* n_states_target\)/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('controlled mode: clicking a tier button fires onTierChange instead of mutating internal state', () => {
+    const onTierChange = vi.fn();
+    render(
+      <AiAssistedDevelopmentView
+        activeTier="everyone"
+        onTierChange={onTierChange}
+      />,
+    );
+    fireEvent.click(screen.getByTestId('ai-assisted-tier-practitioner'));
+    expect(onTierChange).toHaveBeenCalledWith('practitioner');
+    // Without a re-render with the new prop, internal state remains
+    // (controlled mode does not update local state on click).
+    expect(screen.getByTestId('ai-assisted-tier-everyone')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('tier-aware layout: tiers 1-3 render inside the narrow content shell', () => {
+    render(<AiAssistedDevelopmentView />);
+    // Default (everyone) -> narrow shell.
+    expect(
+      screen.getByTestId('ai-assisted-tier-content-narrow'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('ai-assisted-tier-content-twg-review'),
+    ).toBeNull();
+    // Practitioner -> still narrow.
+    fireEvent.click(screen.getByTestId('ai-assisted-tier-practitioner'));
+    expect(
+      screen.getByTestId('ai-assisted-tier-content-narrow'),
+    ).toBeInTheDocument();
+    // Technical -> still narrow.
+    fireEvent.click(screen.getByTestId('ai-assisted-tier-technical'));
+    expect(
+      screen.getByTestId('ai-assisted-tier-content-narrow'),
+    ).toBeInTheDocument();
+  });
+
+  it('tier-aware layout: TWG Review tier renders inside the full-width content shell (no max-w-4xl)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve('# Methodology\n\n## Section A\nbody'),
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis as any).fetch = fetchMock;
+
+    render(<AiAssistedDevelopmentView />);
+    fireEvent.click(screen.getByTestId('ai-assisted-tier-twg-review'));
+    // Full-width shell appears; narrow shell goes away.
+    expect(
+      await screen.findByTestId('ai-assisted-tier-content-twg-review'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('ai-assisted-tier-content-narrow'),
+    ).toBeNull();
+    // The full-width shell wrapper must NOT carry the max-w-4xl class --
+    // that is the squish root cause that this fix removes.
+    const twgShell = screen.getByTestId('ai-assisted-tier-content-twg-review');
+    expect(twgShell.className).not.toMatch(/max-w-4xl/);
+  });
+
+  it('shows the source-of-truth pointer footer on the curated tiers (1-3) + the no-tier-active state', () => {
     render(<AiAssistedDevelopmentView />);
     // Footer with the canonical path is visible on default (Everyone) tier.
     expect(
@@ -159,5 +254,32 @@ describe('AiAssistedDevelopmentView', () => {
     expect(
       screen.getByText(/JERMILOVA_BNRRM_CONSTRUCTION_METHODOLOGY\.md/),
     ).toBeInTheDocument();
+  });
+
+  it('HIDES the source-of-truth pointer footer on the TWG Review tier (portal opens the canonical content in-line)', async () => {
+    // The TWG Review tier mounts the JermilovaReviewPortal which loads the
+    // canonical methodology MD inline -- a separate canonical-path pointer
+    // would be redundant. The layout-shell branch in
+    // AiAssistedDevelopmentView intentionally omits SourcePointerFooter
+    // when activeTier === 'twg-review'.
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: () => Promise.resolve('# Methodology\n\n## Section A\nbody'),
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (globalThis as any).fetch = fetchMock;
+
+    render(<AiAssistedDevelopmentView />);
+    // Footer is visible on the default Everyone tier.
+    expect(
+      screen.getByText(/JERMILOVA_BNRRM_CONSTRUCTION_METHODOLOGY\.md/),
+    ).toBeInTheDocument();
+    // Switch to TWG Review tier; footer disappears.
+    fireEvent.click(screen.getByTestId('ai-assisted-tier-twg-review'));
+    await screen.findByTestId('ai-assisted-tier-content-twg-review');
+    expect(
+      screen.queryByText(/JERMILOVA_BNRRM_CONSTRUCTION_METHODOLOGY\.md/),
+    ).toBeNull();
   });
 });

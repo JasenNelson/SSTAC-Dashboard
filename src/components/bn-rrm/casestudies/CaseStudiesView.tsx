@@ -9,7 +9,7 @@ import { MethodComparison } from './MethodComparison';
 import { PublishedComparison } from './PublishedComparison';
 import { DetailedComparison } from './DetailedComparison';
 import { HowItWorksView } from './HowItWorksView';
-import { AiAssistedDevelopmentView } from './AiAssistedDevelopmentView';
+import { AiAssistedDevelopmentView, type AudienceTier } from './AiAssistedDevelopmentView';
 
 type CaseStudySection =
   | 'training'
@@ -88,6 +88,16 @@ export function CaseStudiesView() {
     isBenchmark ? 'how-it-works' : 'training'
   );
 
+  // AI-assisted tier state lives here so the render branch can switch
+  // between the narrow cap (tiers 1-3) and the full-width shell (tier 4
+  // TWG Review). AiAssistedDevelopmentView accepts these as controlled
+  // props; if neither is provided, it falls back to internal state for
+  // legacy / test usage. Reset to 'everyone' whenever activeSection
+  // flips off 'ai-assisted' so a stale TWG-Review selection cannot
+  // strand a future re-entry on the wrong tier (a tiny UX nicety that
+  // also keeps the render-branch invariant clean).
+  const [activeTier, setActiveTier] = useState<AudienceTier>('everyone');
+
   // Reset activeSection when the pack changes so a section selected under
   // one pack does not "stick" onto another pack. Codex holistic 2026-05-17
   // P2: without this guard, switching from the Jermilova benchmark pack
@@ -105,6 +115,17 @@ export function CaseStudiesView() {
       setActiveSection(sections[0]?.id ?? (isBenchmark ? 'how-it-works' : 'training'));
     }
   }, [sections, activeSection, isBenchmark]);
+
+  // Reset the AI-assisted tier when activeSection leaves 'ai-assisted'.
+  // Keeps the tier-aware render branch's invariant clean (a stale
+  // activeTier='twg-review' carried into a section change cannot affect
+  // the other section render paths, but tidying it here avoids surprises
+  // if a future caller reads activeTier across section boundaries).
+  useEffect(() => {
+    if (activeSection !== 'ai-assisted' && activeTier !== 'everyone') {
+      setActiveTier('everyone');
+    }
+  }, [activeSection, activeTier]);
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -144,27 +165,42 @@ export function CaseStudiesView() {
         </div>
       </div>
 
-      {/* Content area. Each render branch is additionally guarded so a
-          stale activeSection (from a brief moment between pack switch +
-          useEffect reset) cannot render a section type for the wrong
-          pack family. Codex holistic 2026-05-17 P2. */}
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-4xl mx-auto">
-          {activeSection === 'how-it-works' && isBenchmark && <HowItWorksView />}
-          {activeSection === 'benchmark' && isBenchmark && (
-            <PublishedComparison
-              onNavigateToDetailedComparison={
-                isJermilova ? () => setActiveSection('detailed-comparison') : undefined
-              }
-            />
-          )}
-          {activeSection === 'detailed-comparison' && isJermilova && <DetailedComparison />}
-          {activeSection === 'ai-assisted' && isJermilova && <AiAssistedDevelopmentView />}
-          {activeSection === 'training' && !isBenchmark && <TrainingSites />}
-          {activeSection === 'external' && !isBenchmark && <ExternalSites />}
-          {activeSection === 'methods' && !isBenchmark && <MethodComparison />}
+      {/* Content area. Two-mode render branch (merge of PR #120 + PR #121):
+          - The ai-assisted section uses a flex column WITHOUT max-w-4xl so
+            the TWG Review tier's 3-column workspace (TOC + methodology MD
+            + per-section comments) gets full available width. Codex
+            holistic 2026-05-17 P2 (PR #120).
+          - All other sections (including Detailed Comparison) keep the
+            56rem max-w-4xl reading cap, which suits curated card content.
+          - PublishedComparison receives an onNavigateToDetailedComparison
+            callback ONLY when isJermilova, so the CTA banner appears on
+            Jermilova and stays hidden on any future scope_type=benchmark
+            pack without a Detailed Comparison view (PR #121). */}
+      {activeSection === 'ai-assisted' && isJermilova ? (
+        <div className="flex-1 overflow-hidden flex flex-col p-6">
+          <AiAssistedDevelopmentView
+            activeTier={activeTier}
+            onTierChange={setActiveTier}
+          />
         </div>
-      </div>
+      ) : (
+        <div className="flex-1 overflow-auto p-6">
+          <div className="max-w-4xl mx-auto">
+            {activeSection === 'how-it-works' && isBenchmark && <HowItWorksView />}
+            {activeSection === 'benchmark' && isBenchmark && (
+              <PublishedComparison
+                onNavigateToDetailedComparison={
+                  isJermilova ? () => setActiveSection('detailed-comparison') : undefined
+                }
+              />
+            )}
+            {activeSection === 'detailed-comparison' && isJermilova && <DetailedComparison />}
+            {activeSection === 'training' && !isBenchmark && <TrainingSites />}
+            {activeSection === 'external' && !isBenchmark && <ExternalSites />}
+            {activeSection === 'methods' && !isBenchmark && <MethodComparison />}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
