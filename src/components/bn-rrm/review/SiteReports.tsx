@@ -395,9 +395,23 @@ export function SiteReports() {
     return { total, withCoords, missing: total - withCoords };
   }, [selectedSite]);
 
+  // Reset activeDataTab to the default ONLY when the user picks a
+  // different site -- depend on the site_id, not the selectedSite object
+  // reference. The `data` and `selectedSite` useMemos can produce new
+  // references on unrelated state changes (e.g. when the user clicks a
+  // Chemistry/Toxicity/Community/Stations tab button, the component
+  // re-renders, and a new selectedSite reference is created by the
+  // useMemo even if it points at the same site). Using [selectedSite]
+  // here caused setActiveDataTab to fire on EVERY render, defeating the
+  // user's tab choice. Bug fix 2026-05-18.
   useEffect(() => {
     setActiveDataTab(getDefaultDataTab(selectedSite));
-  }, [selectedSite]);
+    // selectedSite is intentionally read inside the effect; the dep is
+    // selectedSite?.site_id so the effect only fires on actual site
+    // change. The lint rule will flag selectedSite as a missing dep --
+    // accept that rather than re-introduce the original bug.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSite?.site_id]);
 
   useEffect(() => {
     if (!data?.sites?.length || selectedSiteId === null) return;

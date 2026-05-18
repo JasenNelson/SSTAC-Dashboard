@@ -288,15 +288,56 @@ export function ValidationDashboard() {
   const correctCount = predictions.filter((p) => p.predicted === p.observed).length;
   const nComplete = validationData.n_complete;
 
+  // Benchmark packs (e.g. Jermilova) have CPT-level LOO data but no
+  // station-level predictions -- the confusion matrix and the predictions
+  // table are not applicable. Detect this case so we can show a targeted
+  // disclaimer + suppress the "no station predictions" empty-state which
+  // would otherwise read as a data-quality issue rather than a deliberate
+  // scope choice.
+  const isBenchmarkScope = packManifest?.scope_type === 'benchmark';
+
   return (
     <div className="space-y-8">
-      {/* Header */}
+      {/* Header. Benchmark packs (no station-level predictions) get a
+          per-CPT-flavored header line instead of the misleading
+          "n stations / m correct" station rollup. */}
       <div>
         <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">QA/QC & Validation</h2>
-        <p className="text-sm text-slate-500 dark:text-slate-400">
-          Leave-One-Out cross-validation results{nComplete ? ` for ${nComplete} stations` : ''}. {correctCount} correct{nComplete ? ` (${(correctCount / nComplete * 100).toFixed(1)}%)` : ''}.
-        </p>
+        {isBenchmarkScope ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Per-CPT Leave-One-Out kappa from the benchmark pack. Station-level
+            predictions are not part of this scope; see the disclaimer below
+            for the right surfaces.
+          </p>
+        ) : (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Leave-One-Out cross-validation results{nComplete ? ` for ${nComplete} stations` : ''}. {correctCount} correct{nComplete ? ` (${(correctCount / nComplete * 100).toFixed(1)}%)` : ''}.
+          </p>
+        )}
       </div>
+
+      {/* Benchmark-scope disclaimer: LOO is per-CPT not per-station, so
+          the confusion matrix + predictions table below render with the
+          empty/no-predictions state. The Detailed Comparison view in the
+          Case Studies tab is the right surface for per-CPT-node detail. */}
+      {isBenchmarkScope && (
+        <div
+          className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg p-4"
+          data-testid="validation-benchmark-disclaimer"
+        >
+          <p className="text-sm font-medium text-sky-800 dark:text-sky-200 mb-1">
+            Benchmark pack: per-CPT LOO, not per-station
+          </p>
+          <p className="text-sm text-sky-700 dark:text-sky-300">
+            This pack ships per-CPT Leave-One-Out kappa (see Case Studies &gt;
+            Published Benchmark &gt; LOO Validation Summary and Case Studies &gt;
+            Detailed Comparison for the per-node breakdown + the N-weighted
+            mean kappa). It does NOT include station-level predictions, so
+            the aggregate confusion matrix below is not applicable for this
+            scope.
+          </p>
+        </div>
+      )}
 
       {/* Validation semantics disclaimer */}
       {(validationData.disclaimer || validationData.status) && (
@@ -323,50 +364,61 @@ export function ValidationDashboard() {
         </div>
       )}
 
-      {predictions.length === 0 && (
+      {/* Station-level "no predictions" empty-state. Hidden for benchmark
+          packs because the new disclaimer above explicitly addresses the
+          per-CPT-not-per-station situation -- the redundant empty-state
+          would otherwise read as a data-quality issue. Codex H-1 fix. */}
+      {!isBenchmarkScope && predictions.length === 0 && (
         <div className="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-8 text-center">
           <p className="text-sm text-slate-500 dark:text-slate-400">No station-level predictions available for this pack.</p>
         </div>
       )}
 
-      {/* Confusion Matrix */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Confusion Matrix</h3>
-          <ExportButton data={predictions} filename="loo_predictions.csv" label="Export" />
-        </div>
-        <div className="flex justify-center">
-          <ConfusionMatrix predictions={predictions} />
-        </div>
-        {validationData.status === 'development_baseline_map' && (
-          <p className="text-xs text-amber-600 dark:text-amber-400 mt-3">
-            Confusion matrix and prediction table below reflect the MAP development baseline, not the publication-baseline entropy-aware rule.
-          </p>
-        )}
-      </div>
-
-      {/* LOO Predictions Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">LOO Predictions</h3>
-          <div className="flex gap-1">
-            {['all', 'correct', 'incorrect', 'low', 'moderate', 'high'].map((f) => (
-              <button
-                key={f}
-                onClick={() => setPredFilter(f)}
-                className={`px-2 py-1 text-xs rounded capitalize transition-colors ${
-                  predFilter === f
-                    ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
-                }`}
-              >
-                {f}
-              </button>
-            ))}
+      {/* Confusion Matrix + LOO Predictions table. Both surfaces require
+          station-level predictions; benchmark packs do not ship them.
+          Suppress for isBenchmarkScope so the page no longer renders an
+          all-zero confusion matrix below a disclaimer that says the
+          matrix is not applicable. Codex H-1 fix. */}
+      {!isBenchmarkScope && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Confusion Matrix</h3>
+            <ExportButton data={predictions} filename="loo_predictions.csv" label="Export" />
           </div>
+          <div className="flex justify-center">
+            <ConfusionMatrix predictions={predictions} />
+          </div>
+          {validationData.status === 'development_baseline_map' && (
+            <p className="text-xs text-amber-600 dark:text-amber-400 mt-3">
+              Confusion matrix and prediction table below reflect the MAP development baseline, not the publication-baseline entropy-aware rule.
+            </p>
+          )}
         </div>
-        <PredictionsTable predictions={predictions} filter={predFilter} />
-      </div>
+      )}
+
+      {!isBenchmarkScope && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">LOO Predictions</h3>
+            <div className="flex gap-1">
+              {['all', 'correct', 'incorrect', 'low', 'moderate', 'high'].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setPredFilter(f)}
+                  className={`px-2 py-1 text-xs rounded capitalize transition-colors ${
+                    predFilter === f
+                      ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+          <PredictionsTable predictions={predictions} filter={predFilter} />
+        </div>
+      )}
 
       {/* Model Comparison */}
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5">

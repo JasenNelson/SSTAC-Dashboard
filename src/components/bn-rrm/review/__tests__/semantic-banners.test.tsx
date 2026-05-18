@@ -181,6 +181,57 @@ describe('BN-RRM semantic banners', () => {
     expect(screen.getByText(/Confusion matrix and prediction table below reflect the MAP development baseline/i)).toBeInTheDocument();
   });
 
+  it('renders the benchmark-scope disclaimer in ValidationDashboard for Jermilova-like packs', () => {
+    // Override the default packStore mock to expose a benchmark-scope manifest.
+    const benchmarkState = {
+      packManifest: {
+        scope_type: 'benchmark',
+        pack_id: 'bnrrm-casestudy-jermilova2025-mackenzie-hg',
+        version_history: { model_version: '1.0' },
+        site_scope: null,
+        training_corpus: { n_stations: null },
+      },
+    };
+    usePackStoreMock.mockImplementation((selector) => selector(benchmarkState));
+    usePackArtifactMock.mockImplementation((key: string) => {
+      if (key === 'validation') {
+        return {
+          loading: false,
+          error: null,
+          data: {
+            // Per-CPT LOO summary; no station predictions for benchmark packs.
+            n_complete: null,
+            loo_accuracy: null,
+            loo_kappa: null,
+            predictions: [],
+            per_class: {},
+          },
+        };
+      }
+      if (key === 'comparison') {
+        return {
+          loading: false,
+          error: null,
+          data: { three_class: {} },
+        };
+      }
+      return { loading: false, error: null, data: null };
+    });
+
+    render(<ValidationDashboard />);
+
+    // The new benchmark disclaimer renders for scope_type=benchmark, and
+    // routes users to the Detailed Comparison + Published Benchmark
+    // surfaces in the Case Studies tab.
+    expect(screen.getByTestId('validation-benchmark-disclaimer')).toBeInTheDocument();
+    expect(screen.getByTestId('validation-benchmark-disclaimer')).toHaveTextContent(
+      /per-CPT LOO, not per-station/i,
+    );
+    expect(screen.getByTestId('validation-benchmark-disclaimer')).toHaveTextContent(
+      /Detailed Comparison/,
+    );
+  });
+
   it('renders the external-site semantics status banner in ExternalSites', () => {
     usePackArtifactMock.mockReturnValue({
       loading: false,

@@ -280,13 +280,55 @@ export function DataUploader({ onUploadComplete }: DataUploaderProps) {
             <p className="text-xs text-slate-500 dark:text-slate-400">Download our data template with example data</p>
           </div>
         </div>
-        <button className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+        <button
+          type="button"
+          onClick={downloadTemplateCsv}
+          data-testid="data-uploader-template-download"
+          aria-label="Download CSV data template with example rows"
+          className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+        >
           <Download className="w-4 h-4" />
           Template
         </button>
       </div>
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Template download
+//
+// Emits a CSV with the same headers parseCSV() below consumes (site_id,
+// site_name, latitude, longitude, site_type, region, waterbody, date,
+// sample_id + chemistry params: copper / zinc / lead / cadmium / mercury /
+// arsenic / chromium / total_pahs / toc / avs / percent_fines). Two
+// example rows showing a reference + exposure site so a new user can
+// reverse-engineer the schema. Triggered by the "Template" button above.
+// ---------------------------------------------------------------------------
+
+export const TEMPLATE_CSV_CONTENT = [
+  // Header row -- column names parseCSV() recognizes (case-insensitive).
+  'site_id,site_name,latitude,longitude,site_type,region,waterbody,date,sample_id,copper,zinc,lead,cadmium,mercury,arsenic,chromium,total_pahs,toc,avs,percent_fines',
+  // Example reference site (low contamination, comparison/background).
+  'SITE_REF_01,Reference Site Example,49.2827,-123.1207,reference,Lower Mainland,Burrard Inlet,2026-01-15,REF01_S1,15.2,72.0,18.5,0.4,0.08,5.1,42.3,820,1.2,2.1,28',
+  // Example exposure site (impacted, higher metals + PAHs).
+  'SITE_EXP_01,Exposure Site Example,49.2900,-123.1100,exposure,Lower Mainland,Burrard Inlet,2026-01-15,EXP01_S1,52.7,210.0,68.3,1.8,0.34,18.6,98.5,4250,3.8,5.5,62',
+  // Second sample for the same exposure site (multi-sample composite).
+  'SITE_EXP_01,Exposure Site Example,49.2900,-123.1100,exposure,Lower Mainland,Burrard Inlet,2026-01-15,EXP01_S2,48.1,198.4,71.2,1.6,0.31,17.2,91.0,3980,3.5,5.1,58',
+  '',
+].join('\n');
+
+export function downloadTemplateCsv() {
+  if (typeof window === 'undefined') return;
+  const blob = new Blob([TEMPLATE_CSV_CONTENT], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bn-rrm-site-data-template.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // Helper function to parse uploaded files

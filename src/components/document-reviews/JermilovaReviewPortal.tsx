@@ -26,15 +26,27 @@
 // user-controlled string could end up as a key.
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import MathRenderer from '../MathRenderer';
 import { cn } from '@/utils/cn';
 import { createClient } from '@/lib/supabase/client';
 
 interface JermilovaReviewPortalProps {
   methodologyContent: string;
-  showLeftPanel?: boolean;
-  showRightPanel?: boolean;
+  // Initial-state defaults for the side panels. Renamed from
+  // showLeftPanel/showRightPanel in 2026-05-17 layout fix: the portal now
+  // owns the LIVE toggle state internally so users can collapse / reopen the
+  // TOC and the Comments panel via the on-portal chevron controls. The props
+  // are honored once at mount; subsequent prop changes are intentionally
+  // ignored (React useState semantics) so a parent re-render does not
+  // overwrite a user's manual collapse.
+  initialShowLeftPanel?: boolean;
+  initialShowRightPanel?: boolean;
 }
+
+// Stable element ids for aria-controls wiring on the toggle buttons.
+const TOC_PANEL_ID = 'twg-toc-panel';
+const COMMENTS_PANEL_ID = 'twg-comments-panel';
 
 const DOCUMENT_ID = 'jermilova_bnrrm';
 const DRAFT_STORAGE_KEY = `document-review-draft-${DOCUMENT_ID}-v1`;
@@ -62,9 +74,33 @@ function makeBareRecord<T>(): Record<string, T> {
 
 export default function JermilovaReviewPortal({
   methodologyContent,
-  showLeftPanel = true,
-  showRightPanel = true,
+  initialShowLeftPanel = true,
+  initialShowRightPanel = true,
 }: JermilovaReviewPortalProps) {
+  // Live toggle state owned by the portal. The Initial* props seed only the
+  // first render; subsequent prop changes are intentionally NOT synced so a
+  // parent re-render does not override a user's manual collapse choice.
+  const [showLeftPanel, setShowLeftPanel] = useState(initialShowLeftPanel);
+  const [showRightPanel, setShowRightPanel] = useState(initialShowRightPanel);
+  // Refs for the four toggle controls + a "pending focus target" flag that
+  // a useEffect drains after the panel-collapse state update commits. Without
+  // this, a keyboard user pressing Enter on a collapse button has the focused
+  // button become `inert` (the panel it lives in collapses), which strips
+  // focus to <body> -- a WCAG 2.4.3 Focus Order regression. The pending-flag
+  // pattern moves focus to the reopen handle (or back to the collapse button
+  // on reopen) after the commit phase, so keyboard navigation flows
+  // continuously between paired controls.
+  const tocCollapseRef = useRef<HTMLButtonElement | null>(null);
+  const tocReopenRef = useRef<HTMLButtonElement | null>(null);
+  const commentsCollapseRef = useRef<HTMLButtonElement | null>(null);
+  const commentsReopenRef = useRef<HTMLButtonElement | null>(null);
+  type PendingFocusTarget =
+    | 'tocCollapse'
+    | 'tocReopen'
+    | 'commentsCollapse'
+    | 'commentsReopen'
+    | null;
+  const pendingFocusRef = useRef<PendingFocusTarget>(null);
   const [comments, setComments] = useState<Record<string, string>>(() => makeBareRecord<string>());
   const [status, setStatus] = useState<ReviewStatus>('IN_PROGRESS');
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
@@ -273,6 +309,50 @@ export default function JermilovaReviewPortal({
     // headings is intentionally included so changes to the source MD
     // (different displayLabel set) re-map DB comments correctly.
   }, [headings]);
+
+  // Drain the pending-focus flag after panel-collapse state commits. Runs
+  // exactly when showLeftPanel or showRightPanel changes; the target ref
+  // resolves to the freshly-rendered button (collapse or reopen handle
+  // depending on the new state).
+  useEffect(() => {
+    const target = pendingFocusRef.current;
+    if (target === null) return;
+    pendingFocusRef.current = null;
+    switch (target) {
+      case 'tocReopen':
+        tocReopenRef.current?.focus();
+        break;
+      case 'tocCollapse':
+        tocCollapseRef.current?.focus();
+        break;
+      case 'commentsReopen':
+        commentsReopenRef.current?.focus();
+        break;
+      case 'commentsCollapse':
+        commentsCollapseRef.current?.focus();
+        break;
+    }
+  }, [showLeftPanel, showRightPanel]);
+
+  // Paired toggle handlers. Set the pending-focus flag BEFORE the state
+  // update so the post-commit useEffect can move focus to the next visible
+  // control without flashing focus through <body>.
+  const collapseLeftPanel = () => {
+    pendingFocusRef.current = 'tocReopen';
+    setShowLeftPanel(false);
+  };
+  const reopenLeftPanel = () => {
+    pendingFocusRef.current = 'tocCollapse';
+    setShowLeftPanel(true);
+  };
+  const collapseRightPanel = () => {
+    pendingFocusRef.current = 'commentsReopen';
+    setShowRightPanel(false);
+  };
+  const reopenRightPanel = () => {
+    pendingFocusRef.current = 'commentsCollapse';
+    setShowRightPanel(true);
+  };
 
   const scrollToHeading = (idx: number) => {
     const root = contentRef.current;
@@ -579,21 +659,45 @@ export default function JermilovaReviewPortal({
   }
 
   return (
-    <div className="flex flex-1 overflow-hidden">
-      {/* Left Sidebar (TOC) */}
+    // Codex P1-2 fix: print:overflow-visible + print:block on the outer
+    // flex chain so window.print() captures the entire 7365-line
+    // methodology body, not just the visible viewport slice. Without
+    // these overrides, the print output gets clipped by the
+    // overflow-hidden / overflow-y-auto wrappers above the markdown.
+    <div className="flex flex-1 overflow-hidden relative print:block print:overflow-visible print:h-auto">
+      {/* Left Sidebar (TOC). aria-hidden + inert when collapsed so screen
+          readers + keyboard focus do not enter a visually hidden panel. */}
       <div
+        id={TOC_PANEL_ID}
+        aria-hidden={!showLeftPanel}
+        inert={!showLeftPanel}
         className={cn(
-          'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col',
-          showLeftPanel ? 'w-80' : 'w-0',
+          'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col print:hidden',
+          showLeftPanel ? 'w-72 md:w-80' : 'w-0',
         )}
       >
-        <div className="p-6 border-b border-slate-200 dark:border-slate-800 shrink-0">
-          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-            Table of Contents
-          </h3>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-            {headings.length} section{headings.length === 1 ? '' : 's'}
-          </p>
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800 shrink-0 flex items-start justify-between gap-3">
+          <div>
+            <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+              Table of Contents
+            </h3>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              {headings.length} section{headings.length === 1 ? '' : 's'}
+            </p>
+          </div>
+          <button
+            ref={tocCollapseRef}
+            type="button"
+            onClick={collapseLeftPanel}
+            aria-expanded={true}
+            aria-controls={TOC_PANEL_ID}
+            aria-label="Hide table of contents"
+            title="Hide table of contents"
+            data-testid="twg-toc-collapse"
+            className="-mr-1 p-2 rounded-md bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 ring-1 ring-sky-200 dark:ring-sky-800 hover:bg-sky-200 dark:hover:bg-sky-800/60 hover:text-sky-900 dark:hover:text-sky-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+          >
+            <PanelLeftClose className="w-5 h-5" />
+          </button>
         </div>
         <div className="p-6 overflow-y-auto flex-1">
           <ul className="space-y-3">
@@ -619,11 +723,18 @@ export default function JermilovaReviewPortal({
         </div>
       </div>
 
-      {/* Center Content (Document) */}
-      <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 px-8 py-10 sm:px-12">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Header with submitted-status badge */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+      {/* Center Content (Document). Codex P1-2: print-mode overrides so
+          window.print() emits the full document, not just the visible
+          slice in the overflow-y-auto scroll pane. */}
+      <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 px-8 py-10 sm:px-12 print:overflow-visible print:h-auto print:px-0 print:py-0 print:bg-white">
+        <div className="max-w-4xl mx-auto space-y-8 print:max-w-none">
+          {/* Header: title + submitted-status badge + Download (PDF) button.
+              Matches matrix-options TWGReviewPortal pattern (PDF button on
+              the right). The PDF flow uses window.print(), which routes
+              through the browser's native "Save as PDF" / printer dialog
+              -- no extra dependency required, and the rendered styling
+              (post-MathRenderer typography fix) prints cleanly. */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 print:hidden">
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
                 Jermilova BN-RRM Methodology Paper
@@ -631,26 +742,38 @@ export default function JermilovaReviewPortal({
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Read the construction record and leave section-by-section feedback.
               </p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {status === 'SUBMITTED' && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Submitted
+                  </span>
+                )}
+                {lastSavedAt && (
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Last saved {new Date(lastSavedAt).toLocaleString()}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex flex-col items-end gap-1">
-              {status === 'SUBMITTED' && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Submitted
-                </span>
-              )}
-              {lastSavedAt && (
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Last saved {new Date(lastSavedAt).toLocaleString()}
-                </span>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              data-testid="jermilova-review-download-pdf"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 shrink-0"
+              aria-label="Download methodology paper as PDF (opens browser print dialog)"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download (PDF)
+            </button>
           </div>
 
           {loadError && (
-            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg space-y-1">
+            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg space-y-1 print:hidden">
               <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">
                 Could not load your existing review.
               </p>
@@ -672,19 +795,38 @@ export default function JermilovaReviewPortal({
         </div>
       </div>
 
-      {/* Right Drawer (Comments) */}
+      {/* Right Drawer (Comments). aria-hidden + inert when collapsed for the
+          same reason as the TOC panel above. */}
       <div
+        id={COMMENTS_PANEL_ID}
+        aria-hidden={!showRightPanel}
+        inert={!showRightPanel}
         className={cn(
-          'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col relative',
-          showRightPanel ? 'w-96' : 'w-0',
+          'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col relative print:hidden',
+          showRightPanel ? 'w-72 md:w-96' : 'w-0',
         )}
       >
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 shrink-0 bg-slate-50 dark:bg-slate-900/50">
-          <h3 className="font-bold text-slate-900 dark:text-white flex items-center space-x-2 mb-3">
-            <svg className="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-            <span>Section Comments</span>
+          <h3 className="font-bold text-slate-900 dark:text-white flex items-center justify-between gap-2 mb-3">
+            <span className="flex items-center space-x-2">
+              <svg className="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+              </svg>
+              <span>Section Comments</span>
+            </span>
+            <button
+              ref={commentsCollapseRef}
+              type="button"
+              onClick={collapseRightPanel}
+              aria-expanded={true}
+              aria-controls={COMMENTS_PANEL_ID}
+              aria-label="Hide section comments"
+              title="Hide section comments"
+              data-testid="twg-comments-collapse"
+              className="p-2 rounded-md bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 ring-1 ring-sky-200 dark:ring-sky-800 hover:bg-sky-200 dark:hover:bg-sky-800/60 hover:text-sky-900 dark:hover:text-sky-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+            >
+              <PanelRightClose className="w-5 h-5" />
+            </button>
           </h3>
           <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800/50">
             Reviews can be saved and updated at any time, even after submission.
@@ -770,6 +912,45 @@ export default function JermilovaReviewPortal({
           </button>
         </div>
       </div>
+
+      {/* Floating reopen handle for the TOC. Renders only when the TOC is
+          collapsed; positioned at the left edge of the portal so the user
+          always has a way back. */}
+      {!showLeftPanel && (
+        <button
+          ref={tocReopenRef}
+          type="button"
+          onClick={reopenLeftPanel}
+          aria-expanded={false}
+          aria-controls={TOC_PANEL_ID}
+          aria-label="Show table of contents"
+          title="Show table of contents"
+          data-testid="twg-toc-reopen"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5 pr-3 pl-2 py-3 bg-sky-600 dark:bg-sky-700 hover:bg-sky-700 dark:hover:bg-sky-600 border border-l-0 border-sky-700 dark:border-sky-600 rounded-r-lg shadow-lg text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 print:hidden"
+        >
+          <PanelLeftOpen className="w-5 h-5" />
+          <span className="text-xs font-semibold whitespace-nowrap">Show TOC</span>
+        </button>
+      )}
+
+      {/* Floating reopen handle for the Comments panel. Same pattern, right
+          edge. */}
+      {!showRightPanel && (
+        <button
+          ref={commentsReopenRef}
+          type="button"
+          onClick={reopenRightPanel}
+          aria-expanded={false}
+          aria-controls={COMMENTS_PANEL_ID}
+          aria-label="Show section comments"
+          title="Show section comments"
+          data-testid="twg-comments-reopen"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5 pl-3 pr-2 py-3 bg-sky-600 dark:bg-sky-700 hover:bg-sky-700 dark:hover:bg-sky-600 border border-r-0 border-sky-700 dark:border-sky-600 rounded-l-lg shadow-lg text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 print:hidden"
+        >
+          <span className="text-xs font-semibold whitespace-nowrap">Comments</span>
+          <PanelRightOpen className="w-5 h-5" />
+        </button>
+      )}
     </div>
   );
 }

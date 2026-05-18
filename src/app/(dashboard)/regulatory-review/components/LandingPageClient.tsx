@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, LayoutGrid } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, LayoutGrid, BookOpen } from 'lucide-react';
 import { isLocalEngineClient } from '@/lib/feature-flags';
 import ReviewWizard from './wizard/ReviewWizard';
 import ActiveReviewsGrid from './ActiveReviewsGrid';
@@ -61,6 +62,17 @@ export default function LandingPageClient({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Methodology entry point */}
+      <div className="flex justify-end mb-4">
+        <Link
+          href="/regulatory-review/methodology"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 hover:border-amber-300 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+        >
+          <BookOpen className="h-4 w-4" />
+          About / Methodology
+        </Link>
+      </div>
+
       {/* Tab Navigation */}
       <div className="border-b border-slate-200 dark:border-slate-700 mb-6">
         <nav className="-mb-px flex space-x-8" aria-label="Tabs">

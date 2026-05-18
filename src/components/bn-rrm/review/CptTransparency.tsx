@@ -119,6 +119,22 @@ function NodeCard({ node }: { node: NormalizedCptNode }) {
                 </div>
               )}
               <div className="text-xs text-slate-400 mt-1">{node.ess_prior_weight.note}</div>
+              {/* ESS sensitivity callout. ESS is a load-bearing prior
+                  choice for the BDeu posterior; the dashboard surfaces it
+                  here per node but the family-level summary + sweep status
+                  live in the Case Studies > Detailed Comparison view's
+                  Uncertainty & Sensitivity Analysis section. */}
+              {node.ess_prior_weight.method === 'BDeu' && node.ess_prior_weight.ess === 1 && (
+                <div
+                  className="mt-2 px-2 py-1.5 rounded bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-700 dark:text-amber-300"
+                  data-testid="cpt-ess-sensitivity-callout"
+                >
+                  ESS=1.0 is a low-information BDeu prior. Family-level
+                  uncertainty + sensitivity analysis (including the planned
+                  ESS sweep at &#123;0.5, 1.0, 5.0, 10.0&#125;) lives in
+                  Case Studies &gt; Detailed Comparison.
+                </div>
+              )}
             </div>
           )}
 

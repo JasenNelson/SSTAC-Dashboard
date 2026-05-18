@@ -36,11 +36,58 @@ vi.mock('@/stores/bn-rrm/packStore', () => ({
 vi.mock('../HowItWorksView', () => ({
   HowItWorksView: () => <div data-testid="view-how-it-works" />,
 }));
-vi.mock('../PublishedComparison', () => ({
-  PublishedComparison: () => <div data-testid="view-benchmark" />,
-}));
+// AiAssistedDevelopmentView is rendered as a controlled component by
+// CaseStudiesView (activeTier + onTierChange props for the tier-aware
+// width breakout fix, 2026-05-17, PR #120). The mock surfaces the props
+// so tests can verify the prop wire-up. A small inline tier-switcher
+// button lets tests drive setActiveTier from the parent via the
+// onTierChange callback. Uses the exported AudienceTier type from the
+// real component so the union stays single-sourced.
+import type { AudienceTier } from '../AiAssistedDevelopmentView';
 vi.mock('../AiAssistedDevelopmentView', () => ({
-  AiAssistedDevelopmentView: () => <div data-testid="view-ai-assisted" />,
+  AiAssistedDevelopmentView: (props: {
+    activeTier?: AudienceTier;
+    onTierChange?: (tier: AudienceTier) => void;
+  }) => (
+    <div data-testid="view-ai-assisted">
+      <span data-testid="active-tier-prop">{String(props.activeTier ?? 'undefined')}</span>
+      <button
+        type="button"
+        data-testid="mock-pick-twg-tier"
+        onClick={() => props.onTierChange?.('twg-review')}
+      >
+        pick twg
+      </button>
+      <button
+        type="button"
+        data-testid="mock-pick-technical-tier"
+        onClick={() => props.onTierChange?.('technical')}
+      >
+        pick technical
+      </button>
+    </div>
+  ),
+}));
+vi.mock('../DetailedComparison', () => ({
+  DetailedComparison: () => <div data-testid="view-detailed-comparison" />,
+}));
+// Mock that surfaces the onNavigateToDetailedComparison callback so tests
+// can verify the deep-link wire-up from CaseStudiesView -> Published ->
+// Detailed.
+vi.mock('../PublishedComparison', () => ({
+  PublishedComparison: (props: { onNavigateToDetailedComparison?: () => void }) => (
+    <div data-testid="view-benchmark">
+      {props.onNavigateToDetailedComparison && (
+        <button
+          type="button"
+          data-testid="mock-published-cta"
+          onClick={props.onNavigateToDetailedComparison}
+        >
+          go to detailed
+        </button>
+      )}
+    </div>
+  ),
 }));
 vi.mock('../TrainingSites', () => ({
   TrainingSites: () => <div data-testid="view-training" />,
@@ -87,6 +134,62 @@ describe('CaseStudiesView -- AI-assisted-development tab gating', () => {
     expect(
       screen.getByRole('button', { name: /Published Benchmark/i }),
     ).toBeInTheDocument();
+  });
+
+  it('renders the Detailed Comparison tab for the Jermilova pack', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    expect(
+      screen.getByRole('button', { name: /Detailed Comparison/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('does NOT render the Detailed Comparison tab for a non-Jermilova benchmark pack', () => {
+    (mockPackManifest as Mock).mockReturnValue(otherBenchmarkManifest);
+    render(<CaseStudiesView />);
+    expect(
+      screen.queryByRole('button', { name: /Detailed Comparison/i }),
+    ).toBeNull();
+  });
+
+  it('shows the Detailed Comparison content when activated AND isJermilova', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    fireEvent.click(
+      screen.getByRole('button', { name: /Detailed Comparison/i }),
+    );
+    expect(screen.getByTestId('view-detailed-comparison')).toBeInTheDocument();
+    // Hides the previously-active how-it-works view.
+    expect(screen.queryByTestId('view-how-it-works')).toBeNull();
+  });
+
+  it('passes onNavigateToDetailedComparison to PublishedComparison only when isJermilova', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    // Navigate to Published Benchmark; CTA button appears via the prop wire.
+    fireEvent.click(screen.getByRole('button', { name: /Published Benchmark/i }));
+    expect(screen.getByTestId('mock-published-cta')).toBeInTheDocument();
+  });
+
+  it('does NOT pass onNavigateToDetailedComparison for a non-Jermilova benchmark pack', () => {
+    (mockPackManifest as Mock).mockReturnValue(otherBenchmarkManifest);
+    render(<CaseStudiesView />);
+    // Other benchmark packs default to Published Benchmark; CTA is hidden
+    // because the navigation target (Detailed Comparison) is Jermilova-only.
+    fireEvent.click(screen.getByRole('button', { name: /Published Benchmark/i }));
+    expect(screen.queryByTestId('mock-published-cta')).toBeNull();
+  });
+
+  it('clicking the published->detailed CTA navigates activeSection to detailed-comparison', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    fireEvent.click(screen.getByRole('button', { name: /Published Benchmark/i }));
+    expect(screen.getByTestId('view-benchmark')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('mock-published-cta'));
+    // After the CTA click, activeSection flips and the Detailed Comparison
+    // mount renders.
+    expect(screen.getByTestId('view-detailed-comparison')).toBeInTheDocument();
+    expect(screen.queryByTestId('view-benchmark')).toBeNull();
   });
 
   it('does NOT render the AI-assisted tab for a non-Jermilova benchmark pack (P3)', () => {
@@ -150,6 +253,105 @@ describe('CaseStudiesView -- AI-assisted-development tab gating', () => {
     });
     expect(screen.queryByTestId('view-ai-assisted')).toBeNull();
     expect(screen.getByTestId('view-training')).toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // Tier-aware width breakout (2026-05-17 fix)
+  //
+  // CaseStudiesView now lifts activeTier state so the content-area wrapper
+  // can be tier-aware: tiers 1-3 keep the max-w-4xl reading cap; tier 4
+  // (TWG Review) escapes the cap so the 3-column portal can fill the
+  // available width. AiAssistedDevelopmentView is rendered as a controlled
+  // component (activeTier + onTierChange props).
+  // -------------------------------------------------------------------------
+
+  it('passes activeTier as a controlled prop to AiAssistedDevelopmentView (defaults to everyone)', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    fireEvent.click(
+      screen.getByRole('button', { name: /AI-assisted BN-RRM development/i }),
+    );
+    expect(screen.getByTestId('active-tier-prop')).toHaveTextContent('everyone');
+  });
+
+  it('updates activeTier when AiAssistedDevelopmentView fires onTierChange', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    fireEvent.click(
+      screen.getByRole('button', { name: /AI-assisted BN-RRM development/i }),
+    );
+    fireEvent.click(screen.getByTestId('mock-pick-technical-tier'));
+    expect(screen.getByTestId('active-tier-prop')).toHaveTextContent('technical');
+  });
+
+  it('LOAD-BEARING width-breakout: the wrapper around AiAssistedDevelopmentView has no max-w-4xl ancestor (squish root cause)', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    // Navigate to ai-assisted so the special render branch mounts.
+    fireEvent.click(
+      screen.getByRole('button', { name: /AI-assisted BN-RRM development/i }),
+    );
+    // Walk the ancestor chain of the AiAssistedDevelopmentView mount and
+    // assert NO ancestor inside CaseStudiesView's content area carries the
+    // max-w-4xl class. This is the LOAD-BEARING regression guard: the
+    // original squish bug was the ANCESTOR wrapper at CaseStudiesView line
+    // 144 (pre-fix) capping the portal to 56rem. A future refactor that
+    // re-introduces max-w-4xl on the ai-assisted branch wrapper would
+    // bring the squish back, and this assertion catches it.
+    const mounted = screen.getByTestId('view-ai-assisted');
+    let node: HTMLElement | null = mounted.parentElement;
+    while (node) {
+      expect(
+        node.className,
+        `Ancestor of AiAssistedDevelopmentView mount carries max-w-4xl: ${node.className}`,
+      ).not.toMatch(/max-w-4xl/);
+      // Stop walking at the test-root container.
+      if (node.parentElement === document.body) break;
+      node = node.parentElement;
+    }
+  });
+
+  it('non-ai-assisted sections keep the original narrow content wrapper (max-w-4xl preserved for curated cards)', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    // Default benchmark section is how-it-works -- which should sit inside
+    // the original max-w-4xl wrapper. Verify by walking ancestors.
+    const howItWorksMount = screen.getByTestId('view-how-it-works');
+    let foundMaxWFourXl = false;
+    let node: HTMLElement | null = howItWorksMount.parentElement;
+    while (node) {
+      if (node.className.includes('max-w-4xl')) {
+        foundMaxWFourXl = true;
+        break;
+      }
+      if (node.parentElement === document.body) break;
+      node = node.parentElement;
+    }
+    expect(
+      foundMaxWFourXl,
+      'how-it-works content should remain inside the narrow max-w-4xl wrapper',
+    ).toBe(true);
+  });
+
+  it('resets activeTier to everyone when activeSection leaves ai-assisted', () => {
+    (mockPackManifest as Mock).mockReturnValue(jermilovaManifest);
+    render(<CaseStudiesView />);
+    // Go to ai-assisted + pick the technical tier.
+    fireEvent.click(
+      screen.getByRole('button', { name: /AI-assisted BN-RRM development/i }),
+    );
+    fireEvent.click(screen.getByTestId('mock-pick-technical-tier'));
+    expect(screen.getByTestId('active-tier-prop')).toHaveTextContent('technical');
+    // Now switch back to How It Works. The post-section useEffect resets
+    // activeTier to 'everyone' so re-entering ai-assisted later does not
+    // start on a stale tier.
+    fireEvent.click(screen.getByRole('button', { name: /How It Works/i }));
+    expect(screen.getByTestId('view-how-it-works')).toBeInTheDocument();
+    // Re-enter ai-assisted; the controlled prop should reset to 'everyone'.
+    fireEvent.click(
+      screen.getByRole('button', { name: /AI-assisted BN-RRM development/i }),
+    );
+    expect(screen.getByTestId('active-tier-prop')).toHaveTextContent('everyone');
   });
 
   it('resets activeSection when the pack switches from site_specific to Jermilova', () => {

@@ -511,4 +511,138 @@ second body
     );
     expect(Object.keys(payload)).not.toContain('__proto__');
   });
+
+  // -------------------------------------------------------------------------
+  // Panel-collapse controls (2026-05-17 layout fix)
+  //
+  // The portal now owns live toggle state for the TOC + Comments panels.
+  // Props are initial-state defaults only (initialShowLeftPanel /
+  // initialShowRightPanel). Toggle UI: in-header collapse buttons + floating
+  // reopen handles when collapsed. aria-expanded + aria-controls wired to
+  // stable element ids.
+  // -------------------------------------------------------------------------
+
+  it('renders both panels open by default with collapse buttons visible (no reopen handles)', async () => {
+    const lookup = buildSelectChain({ data: null, error: null });
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
+    render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} />);
+    // Wait for the load effect to settle so the loading spinner is gone.
+    await screen.findByPlaceholderText(/Overall thoughts/i);
+    expect(screen.getByTestId('twg-toc-collapse')).toBeInTheDocument();
+    expect(screen.getByTestId('twg-comments-collapse')).toBeInTheDocument();
+    expect(screen.queryByTestId('twg-toc-reopen')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('twg-comments-reopen')).not.toBeInTheDocument();
+  });
+
+  it('TOC collapse: clicking the in-header collapse button hides the panel and shows the floating reopen handle', async () => {
+    const lookup = buildSelectChain({ data: null, error: null });
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
+    render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} />);
+    await screen.findByPlaceholderText(/Overall thoughts/i);
+    const collapseBtn = screen.getByTestId('twg-toc-collapse');
+    expect(collapseBtn).toHaveAttribute('aria-expanded', 'true');
+    expect(collapseBtn).toHaveAttribute('aria-controls', 'twg-toc-panel');
+    fireEvent.click(collapseBtn);
+    // After collapse: the in-header collapse button is gone (inside the
+    // panel which becomes inert + visually w-0), and the floating reopen
+    // handle is now in the DOM.
+    const reopenHandle = await screen.findByTestId('twg-toc-reopen');
+    expect(reopenHandle).toHaveAttribute('aria-expanded', 'false');
+    expect(reopenHandle).toHaveAttribute('aria-controls', 'twg-toc-panel');
+  });
+
+  it('TOC reopen: clicking the floating reopen handle restores the panel', async () => {
+    const lookup = buildSelectChain({ data: null, error: null });
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
+    render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} initialShowLeftPanel={false} />);
+    await screen.findByPlaceholderText(/Overall thoughts/i);
+    // Starts collapsed: reopen handle visible.
+    const reopenHandle = screen.getByTestId('twg-toc-reopen');
+    fireEvent.click(reopenHandle);
+    // After reopen: in-header collapse button is back, floating handle gone.
+    await waitFor(() => {
+      expect(screen.getByTestId('twg-toc-collapse')).toBeInTheDocument();
+      expect(screen.queryByTestId('twg-toc-reopen')).not.toBeInTheDocument();
+    });
+  });
+
+  it('Comments collapse: clicking the in-header collapse button hides the panel and shows the floating reopen handle', async () => {
+    const lookup = buildSelectChain({ data: null, error: null });
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
+    render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} />);
+    await screen.findByPlaceholderText(/Overall thoughts/i);
+    const collapseBtn = screen.getByTestId('twg-comments-collapse');
+    expect(collapseBtn).toHaveAttribute('aria-expanded', 'true');
+    expect(collapseBtn).toHaveAttribute('aria-controls', 'twg-comments-panel');
+    fireEvent.click(collapseBtn);
+    const reopenHandle = await screen.findByTestId('twg-comments-reopen');
+    expect(reopenHandle).toHaveAttribute('aria-expanded', 'false');
+    expect(reopenHandle).toHaveAttribute('aria-controls', 'twg-comments-panel');
+  });
+
+  it('TOC collapse: focus moves from in-header collapse button to the floating reopen handle (WCAG 2.4.3)', async () => {
+    const lookup = buildSelectChain({ data: null, error: null });
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
+    render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} />);
+    const collapseBtn = await screen.findByTestId('twg-toc-collapse');
+    // Simulate keyboard focus on the collapse button.
+    collapseBtn.focus();
+    expect(document.activeElement).toBe(collapseBtn);
+    fireEvent.click(collapseBtn);
+    // After collapse, focus must move to the reopen handle, not fall back
+    // to <body> when the collapse button becomes inert. The portal-managed
+    // pendingFocusRef + post-commit useEffect handles this.
+    const reopenHandle = await screen.findByTestId('twg-toc-reopen');
+    await waitFor(() => {
+      expect(document.activeElement).toBe(reopenHandle);
+    });
+  });
+
+  it('TOC reopen: focus moves from the reopen handle back to the in-header collapse button', async () => {
+    const lookup = buildSelectChain({ data: null, error: null });
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
+    render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} initialShowLeftPanel={false} />);
+    const reopenHandle = await screen.findByTestId('twg-toc-reopen');
+    reopenHandle.focus();
+    expect(document.activeElement).toBe(reopenHandle);
+    fireEvent.click(reopenHandle);
+    const collapseBtn = await screen.findByTestId('twg-toc-collapse');
+    await waitFor(() => {
+      expect(document.activeElement).toBe(collapseBtn);
+    });
+  });
+
+  it('renders the Download (PDF) button and calls window.print() on click', async () => {
+    const lookup = buildSelectChain({ data: null, error: null });
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
+    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+    try {
+      render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} />);
+      const pdfBtn = await screen.findByTestId('jermilova-review-download-pdf');
+      expect(pdfBtn).toBeInTheDocument();
+      expect(pdfBtn.tagName).toBe('BUTTON');
+      // Click invokes window.print() which the browser handles as
+      // "Save as PDF" or printer output.
+      fireEvent.click(pdfBtn);
+      expect(printSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      printSpy.mockRestore();
+    }
+  });
+
+  it('initialShowRightPanel={false} starts with Comments collapsed (reopen handle visible, panel inert)', async () => {
+    const lookup = buildSelectChain({ data: null, error: null });
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
+    render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} initialShowRightPanel={false} />);
+    // Reopen handle appears for the right panel. The in-header collapse
+    // button is still in the DOM but unreachable: panel has aria-hidden +
+    // inert and w-0 (queryByTestId would still find it, so we assert via
+    // the panel element instead).
+    await screen.findByTestId('twg-comments-reopen');
+    const commentsPanel = document.getElementById('twg-comments-panel');
+    expect(commentsPanel).not.toBeNull();
+    expect(commentsPanel?.getAttribute('aria-hidden')).toBe('true');
+    // Left panel unaffected by right-panel prop.
+    expect(screen.getByTestId('twg-toc-collapse')).toBeInTheDocument();
+  });
 });
