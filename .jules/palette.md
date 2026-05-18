@@ -1,0 +1,3 @@
+## 2024-05-18 - Visual-only elements must include aria-labels
+**Learning:** Visual-only interactive elements, such as color swatches (`<button>` tags indicating color via background styles), must include `aria-label` attributes to provide text alternatives for screen readers. Relying solely on `title` attributes is insufficient for accessibility, and explicitly adding `focus-visible` properties is essential for keyboard navigation support.
+**Action:** When implementing visual-only buttons (like color pickers or icon buttons), always include an `aria-label` attribute and `focus-visible:ring` Tailwind classes.
