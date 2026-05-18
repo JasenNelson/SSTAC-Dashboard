@@ -684,7 +684,12 @@ export default function JermilovaReviewPortal({
   }
 
   return (
-    <div className="flex flex-1 overflow-hidden relative">
+    // Codex P1-2 fix: print:overflow-visible + print:block on the outer
+    // flex chain so window.print() captures the entire 7365-line
+    // methodology body, not just the visible viewport slice. Without
+    // these overrides, the print output gets clipped by the
+    // overflow-hidden / overflow-y-auto wrappers above the markdown.
+    <div className="flex flex-1 overflow-hidden relative print:block print:overflow-visible print:h-auto">
       {/* Left Sidebar (TOC). aria-hidden + inert when collapsed so screen
           readers + keyboard focus do not enter a visually hidden panel. */}
       <div
@@ -692,7 +697,7 @@ export default function JermilovaReviewPortal({
         aria-hidden={!showLeftPanel}
         inert={!showLeftPanel}
         className={cn(
-          'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col',
+          'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col print:hidden',
           showLeftPanel ? 'w-72 md:w-80' : 'w-0',
         )}
       >
@@ -743,11 +748,18 @@ export default function JermilovaReviewPortal({
         </div>
       </div>
 
-      {/* Center Content (Document) */}
-      <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 px-8 py-10 sm:px-12">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Header with submitted-status badge */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+      {/* Center Content (Document). Codex P1-2: print-mode overrides so
+          window.print() emits the full document, not just the visible
+          slice in the overflow-y-auto scroll pane. */}
+      <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 px-8 py-10 sm:px-12 print:overflow-visible print:h-auto print:px-0 print:py-0 print:bg-white">
+        <div className="max-w-4xl mx-auto space-y-8 print:max-w-none">
+          {/* Header: title + submitted-status badge + Download (PDF) button.
+              Matches matrix-options TWGReviewPortal pattern (PDF button on
+              the right). The PDF flow uses window.print(), which routes
+              through the browser's native "Save as PDF" / printer dialog
+              -- no extra dependency required, and the rendered styling
+              (post-MathRenderer typography fix) prints cleanly. */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 print:hidden">
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
                 Jermilova BN-RRM Methodology Paper
@@ -755,26 +767,38 @@ export default function JermilovaReviewPortal({
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Read the construction record and leave section-by-section feedback.
               </p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {status === 'SUBMITTED' && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Submitted
+                  </span>
+                )}
+                {lastSavedAt && (
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Last saved {new Date(lastSavedAt).toLocaleString()}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex flex-col items-end gap-1">
-              {status === 'SUBMITTED' && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Submitted
-                </span>
-              )}
-              {lastSavedAt && (
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Last saved {new Date(lastSavedAt).toLocaleString()}
-                </span>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              data-testid="jermilova-review-download-pdf"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 shrink-0"
+              aria-label="Download methodology paper as PDF (opens browser print dialog)"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Download (PDF)
+            </button>
           </div>
 
           {loadError && (
-            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg space-y-1">
+            <div className="p-4 bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg space-y-1 print:hidden">
               <p className="text-sm font-semibold text-rose-700 dark:text-rose-300">
                 Could not load your existing review.
               </p>
@@ -803,7 +827,7 @@ export default function JermilovaReviewPortal({
         aria-hidden={!showRightPanel}
         inert={!showRightPanel}
         className={cn(
-          'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col relative',
+          'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col relative print:hidden',
           showRightPanel ? 'w-72 md:w-96' : 'w-0',
         )}
       >
@@ -927,7 +951,7 @@ export default function JermilovaReviewPortal({
           aria-label="Show table of contents"
           title="Show table of contents"
           data-testid="twg-toc-reopen"
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5 pr-3 pl-2 py-3 bg-sky-600 dark:bg-sky-700 hover:bg-sky-700 dark:hover:bg-sky-600 border border-l-0 border-sky-700 dark:border-sky-600 rounded-r-lg shadow-lg text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5 pr-3 pl-2 py-3 bg-sky-600 dark:bg-sky-700 hover:bg-sky-700 dark:hover:bg-sky-600 border border-l-0 border-sky-700 dark:border-sky-600 rounded-r-lg shadow-lg text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 print:hidden"
         >
           <PanelLeftOpen className="w-5 h-5" />
           <span className="text-xs font-semibold whitespace-nowrap">Show TOC</span>
@@ -946,7 +970,7 @@ export default function JermilovaReviewPortal({
           aria-label="Show section comments"
           title="Show section comments"
           data-testid="twg-comments-reopen"
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5 pl-3 pr-2 py-3 bg-sky-600 dark:bg-sky-700 hover:bg-sky-700 dark:hover:bg-sky-600 border border-r-0 border-sky-700 dark:border-sky-600 rounded-l-lg shadow-lg text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 flex items-center gap-1.5 pl-3 pr-2 py-3 bg-sky-600 dark:bg-sky-700 hover:bg-sky-700 dark:hover:bg-sky-600 border border-r-0 border-sky-700 dark:border-sky-600 rounded-l-lg shadow-lg text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 focus-visible:ring-offset-2 print:hidden"
         >
           <span className="text-xs font-semibold whitespace-nowrap">Comments</span>
           <PanelRightOpen className="w-5 h-5" />

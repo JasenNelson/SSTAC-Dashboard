@@ -33,7 +33,7 @@ export function PackBanner() {
   return (
     <div
       className={cn(
-        'px-4 py-1.5 flex items-center gap-2 text-xs font-medium shrink-0',
+        'px-4 py-1.5 flex items-center gap-2 text-xs font-medium shrink-0 print:hidden',
         isWarning && 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-b border-yellow-200 dark:border-yellow-800',
         isInfo && 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-b border-blue-200 dark:border-blue-800',
         readOnly && 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-b border-purple-200 dark:border-purple-800',
