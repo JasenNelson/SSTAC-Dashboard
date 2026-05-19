@@ -128,9 +128,10 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   };
 
   return (
-    <div className="flex flex-col flex-1 w-full h-full bg-slate-100 dark:bg-slate-900 relative">
-      {/* Sub-header / Toolbar */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm overflow-x-auto">
+    <div className="flex flex-col flex-1 w-full h-full bg-slate-100 dark:bg-slate-900 relative print:block print:h-auto print:overflow-visible">
+      {/* Sub-header / Toolbar -- hidden in print so window.print() from the
+          TWG Review tab produces a chrome-free PDF of the paper body. */}
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm overflow-x-auto print:hidden">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3 pr-4 border-r border-slate-200 dark:border-slate-700">
              <div className="w-9 h-9 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg"><FileText className="w-5 h-5 text-white" /></div>
@@ -162,7 +163,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden print:block print:overflow-visible print:h-auto">
         {isToolMode ? (
           <>
             {/* Left Sidebar */}
@@ -217,7 +218,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
             </div>
           </>
         ) : isReviewMode ? (
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex overflow-hidden print:block print:overflow-visible print:h-auto">
             {renderContent()}
           </div>
         ) : (

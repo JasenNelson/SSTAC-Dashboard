@@ -408,3 +408,63 @@ html.dark .bn-rrm-wrapper ::-webkit-scrollbar-thumb {
 html.dark .bn-rrm-wrapper ::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
+
+/* ========================================
+   PRINT OVERRIDES (publication PDF style)
+   Forces light-mode publication colors for any window.print() invocation
+   (e.g., the TWG Review tab Download PDF button on /matrix-options).
+   Without these, dark-mode dashboard users get a dark-on-dark PDF because
+   the html.dark .bg-white { ... !important } catch-alls above + Tailwind
+   dark: variants apply on print just like on screen.
+   Codex 2026-05-19 P2 finding on the PR #124 hotfix lane; pattern follows
+   PR #121's never-merged 12-round resolution.
+   ======================================== */
+
+@media print {
+  /* Root: never inherit dark backgrounds for the printed page. */
+  html, body {
+    background: #ffffff !important;
+    color: #1f2937 !important; /* slate-800 */
+  }
+
+  /* Beat the html.dark legacy catch-alls + Tailwind dark: variant
+     compilations on the small subset of classes the printed document
+     actually uses (TWG Review center content + MathRenderer body). */
+  html.dark .bg-white,
+  html.dark .dark\:bg-slate-950,
+  html.dark .dark\:bg-slate-900,
+  html.dark .dark\:bg-slate-800,
+  html.dark .bg-slate-50,
+  html.dark .bg-slate-100 {
+    background: #ffffff !important;
+  }
+
+  html.dark .text-white,
+  html.dark .dark\:text-white,
+  html.dark .dark\:text-slate-100,
+  html.dark .dark\:text-slate-200,
+  html.dark .dark\:text-slate-300,
+  html.dark .dark\:text-slate-400 {
+    color: #1f2937 !important; /* slate-800 */
+  }
+
+  html.dark [class*="border-slate-"] {
+    border-color: #e2e8f0 !important; /* slate-200 */
+  }
+
+  /* MathRenderer applies prose-invert in dark mode. Revert for print. */
+  .dark\:prose-invert,
+  .prose.dark\:prose-invert {
+    color: #1f2937 !important;
+  }
+
+  /* Headings: deep slate for hierarchy. */
+  h1, h2, h3, h4, h5, h6 {
+    color: #0f172a !important; /* slate-900 */
+  }
+
+  /* KaTeX math text should also revert to dark on light. */
+  .katex, .math-display, .math-inline {
+    color: #1f2937 !important;
+  }
+}
