@@ -7,6 +7,8 @@ import MathRenderer from './MathRenderer';
 import ConceptualMatrix from './ConceptualMatrix';
 import TWGReviewPortal from './TWGReviewPortal';
 import DerivationSimulator from './DerivationSimulator';
+import Tier0Screen from './matrix-options/Tier0Screen';
+import EcoDirectEqPCalculator from './matrix-options/EcoDirectEqPCalculator';
 
 interface MatrixDashboardProps {
   eqpCaseStudyContent: string;
@@ -97,8 +99,18 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         );
       case 'Calculator':
         return (
-          <div className="w-full">
+          <div className="w-full space-y-6">
+            {/* v2 modular pre-screen lands above the legacy simulator. */}
+            <Tier0Screen />
             <DerivationSimulator />
+            <div className="flex items-center gap-3 py-2" aria-hidden="true">
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+              <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                v2 modular pathways (design v1)
+              </span>
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+            </div>
+            <EcoDirectEqPCalculator />
           </div>
         );
       default:
