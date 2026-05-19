@@ -16,12 +16,23 @@ import type { Pathway } from '@/lib/matrix-options/types';
 
 export type MatrixCategory = Exclude<Pathway, 'tier0'>;
 
-export const ALL_MATRIX_CATEGORIES: ReadonlyArray<MatrixCategory> = [
+// Tuple with literal types preserved so the exhaustiveness check below
+// can actually detect a missing member. cursor-agent review on Commit 2
+// (2026-05-19) caught that a `ReadonlyArray<MatrixCategory>` annotation
+// here widens the tuple's literal types to `MatrixCategory`, which made
+// the prior Exclude<>-based guard a tautology (always passed). The
+// `as const satisfies readonly MatrixCategory[]` pattern preserves the
+// literal tuple while still enforcing that every entry is a valid
+// MatrixCategory.
+const ALL_MATRIX_CATEGORIES_TUPLE = [
   'eco-direct',
   'eco-food',
   'hh-direct',
   'hh-food',
-];
+] as const satisfies readonly MatrixCategory[];
+
+export const ALL_MATRIX_CATEGORIES: ReadonlyArray<MatrixCategory> =
+  ALL_MATRIX_CATEGORIES_TUPLE;
 
 // Categories currently enabled for end-user selection in PR-A2.
 // HH categories enable in PR-A4 after HITL sign-off on the placeholder
@@ -38,13 +49,16 @@ export function isMatrixCategory(value: unknown): value is MatrixCategory {
   );
 }
 
-// Type-level exhaustiveness guard (codex review 2026-05-19 P3): if a future
-// Pathway addition widens MatrixCategory and ALL_MATRIX_CATEGORIES is not
-// updated to match, this conditional type resolves to `false` and the
-// assignment below fails to compile. Forces hand-maintained array to stay
-// in lockstep with the derived union.
+// Type-level exhaustiveness guard. If a future Pathway addition widens
+// MatrixCategory and the tuple above is not updated to match, Exclude<>
+// resolves to the missing member(s) (not `never`), which makes the
+// `true` literal incompatible with `false` and the assignment below
+// fails to compile. cursor-agent review 2026-05-19 P2 corrected the
+// earlier pattern (which used the `ReadonlyArray<MatrixCategory>`
+// annotation and reduced to a tautology).
 type AllCategoriesExhaustive =
-  MatrixCategory extends (typeof ALL_MATRIX_CATEGORIES)[number] ? true : false;
+  Exclude<MatrixCategory, (typeof ALL_MATRIX_CATEGORIES_TUPLE)[number]> extends never
+    ? true
+    : false;
 const _allCategoriesExhaustive: AllCategoriesExhaustive = true;
-// Reference to silence unused-var lint (the guard works at compile time).
 void _allCategoriesExhaustive;
