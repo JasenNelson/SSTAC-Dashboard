@@ -11,9 +11,15 @@ interface TWGReviewPortalProps {
   showRightPanel?: boolean;
 }
 
+// v3 bumped storage key because the rendered Phase 2 Options Paper expanded
+// from 7 H2 sections (1.0-7.0) to 11 (adds Appendices A-D) and Section 7.0
+// was rewritten with the Smart Stagger phasing -- any stale v2 draft for
+// Section 7 would critique content that no longer exists. v2 drafts are
+// intentionally discarded on first mount, matching the v1->v2 pattern.
+//
 // v2 bumped storage key because internal state keys changed from heading-text
 // to idx-stable form (v1 drafts are intentionally discarded on first mount).
-const DRAFT_STORAGE_KEY = 'twg-matrix-review-draft-v2';
+const DRAFT_STORAGE_KEY = 'twg-matrix-review-draft-v3';
 const MAX_CHARS = 5000;
 const GENERAL_KEY = 'general';
 
