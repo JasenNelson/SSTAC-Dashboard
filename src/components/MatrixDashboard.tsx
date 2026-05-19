@@ -7,7 +7,7 @@ import MathRenderer from './MathRenderer';
 import ConceptualMatrix from './ConceptualMatrix';
 import TWGReviewPortal from './TWGReviewPortal';
 import DerivationSimulator from './DerivationSimulator';
-import Tier0Screen from './matrix-options/Tier0Screen';
+import BackgroundAdjustment from './matrix-options/BackgroundAdjustment';
 import EcoDirectEqPCalculator from './matrix-options/EcoDirectEqPCalculator';
 import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
 
@@ -101,8 +101,6 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
       case 'Calculator':
         return (
           <div className="w-full space-y-6">
-            {/* v2 modular pre-screen lands above the legacy simulator. */}
-            <Tier0Screen />
             <DerivationSimulator />
             <div className="flex items-center gap-3 py-2" aria-hidden="true">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
@@ -113,6 +111,14 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
             </div>
             <EcoDirectEqPCalculator />
             <EcoFoodBSAFCalculator />
+            <div className="flex items-center gap-3 py-2" aria-hidden="true">
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+              <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                Background Adjustment (post-derivation)
+              </span>
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+            </div>
+            <BackgroundAdjustment />
           </div>
         );
       default:
