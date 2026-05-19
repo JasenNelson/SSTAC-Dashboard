@@ -1,9 +1,11 @@
 'use client';
 
-// CategorySelector -- 2x2 grid of matrix-category radio buttons for the
-// Calculator tab. PR-A2: HH categories are disabled (HH calculators ship
-// in PR-A4 after HITL sign-off on disclaimer copy). Mobile collapses to a
-// single column. Each button is >= 44px tall (WCAG 2.5.5 touch target).
+// CategorySelector -- 1x4 horizontal row of matrix-category radio buttons
+// for the Calculator tab (owner override of plan v3's 2x2 layout, applied
+// 2026-05-19 after PR-A2 commits 1-7 landed). PR-A2: HH categories are
+// disabled (HH calculators ship in PR-A4 after HITL sign-off on disclaimer
+// copy). Mobile collapses to a single column. Each button is >= 44px tall
+// (WCAG 2.5.5 touch target).
 //
 // Accessibility (plan v3 section 10 + v6):
 //   - role="radiogroup" on the container
@@ -32,7 +34,7 @@ export interface CategorySelectorProps {
 interface CategoryDescriptor {
   id: MatrixCategory;
   label: string;       // accessible label (full name)
-  shortLabel: string;  // visible label (2x2 grid space-constrained)
+  shortLabel: string;  // visible label (1x4 row space-constrained)
   group: 'eco' | 'hh';
 }
 
@@ -174,8 +176,9 @@ export default function CategorySelector({
       aria-label="Matrix category selector"
       data-testid="category-selector"
       className={cn(
-        // 2x2 grid on md+ viewports; single-column stack on mobile.
-        'grid grid-cols-1 md:grid-cols-2 gap-3 w-full',
+        // 1x4 horizontal row on md+ viewports; single-column stack on
+        // mobile. Owner override 2026-05-19 of plan v3's original 2x2.
+        'grid grid-cols-1 md:grid-cols-4 gap-3 w-full',
         className,
       )}
     >

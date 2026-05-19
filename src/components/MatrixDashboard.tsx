@@ -110,8 +110,11 @@ const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web
 export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent, finalDraftContent }: MatrixDashboardProps) {
   const [activeTopTab, setActiveTopTab] = useState('The Guide');
   const [activeSideTab, setActiveSideTab] = useState('Ecological: EqP & AVS');
+  // Both side panels open by default per owner UX preference 2026-05-19
+  // (was: right panel hidden by default). Users can still toggle each
+  // panel independently via the chrome buttons in the header.
   const [showLeftPanel, setShowLeftPanel] = useState(true);
-  const [showRightPanel, setShowRightPanel] = useState(false);
+  const [showRightPanel, setShowRightPanel] = useState(true);
 
   // Lifted Calculator-tab state (plan v3 section 4.3 + v5 Delta 1).
   // Initial values are the SSR-safe defaults; the mount-only hydrate
@@ -245,7 +248,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           <div className="w-full space-y-6" data-testid="calculator-tab-content">
             {/*
               Calculator-tab vertical flow per plan v3 section 1:
-                1. CategorySelector (2x2 grid at top; HH disabled in PR-A2)
+                1. CategorySelector (1x4 row at top; HH disabled in PR-A2)
                 2. SharedGlobalInputs (substance + jurisdiction selectors)
                 3. Active category calculator (switches on activeCategory)
                 4. BackgroundAdjustment (post-derivation panel; PR #127)

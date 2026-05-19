@@ -196,7 +196,7 @@ describe('CategorySelector (PR-A2 phase: HH disabled)', () => {
     ).toHaveAttribute('tabindex', '-1');
   });
 
-  it('renders the visible short labels expected by the 2x2 grid spec', () => {
+  it('renders the visible short labels expected by the 1x4 row spec', () => {
     render(
       <CategorySelector activeCategory="eco-direct" onChange={() => {}} />,
     );
