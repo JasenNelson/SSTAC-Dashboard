@@ -9,6 +9,7 @@ import TWGReviewPortal from './TWGReviewPortal';
 import DerivationSimulator from './DerivationSimulator';
 import Tier0Screen from './matrix-options/Tier0Screen';
 import EcoDirectEqPCalculator from './matrix-options/EcoDirectEqPCalculator';
+import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
 
 interface MatrixDashboardProps {
   eqpCaseStudyContent: string;
@@ -111,6 +112,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
             </div>
             <EcoDirectEqPCalculator />
+            <EcoFoodBSAFCalculator />
           </div>
         );
       default:

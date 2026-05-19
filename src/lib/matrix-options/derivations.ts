@@ -7,6 +7,8 @@ import type {
   AvsSemResult,
   EcoDirectEqPInput,
   EcoDirectEqPResult,
+  EcoFoodBSAFInput,
+  EcoFoodBSAFResult,
   Utl9595Result,
 } from './types';
 import { lookupK9595 } from './utlTable';
@@ -206,5 +208,244 @@ export function avsSemCheck(input: AvsSemInput): AvsSemResult {
   return {
     deltaSEMminusAVS: delta,
     nonToxic: delta <= 0,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Eco-Food BSAF pathway (slice 2)
+// ---------------------------------------------------------------------------
+
+// Lipid fraction screening window per design doc section 2.2 inputs table.
+// Outside the window the result is screening-only (warning, not blocked).
+const FLIPID_MIN = 0.01;
+const FLIPID_MAX = 0.15;
+// Site-use fraction screening window. Outside the window we surface a
+// warning but DO NOT block; the HITL may pick a defensible value outside
+// the tabulated range for unusual species / life histories.
+const FSITE_MIN = 0.05;
+const FSITE_MAX = 1.0;
+// Default protein fraction for the MeHg path (fish muscle).
+const F_PROTEIN_DEFAULT = 0.18;
+// Ecosystem multipliers per design doc sections 2.2 + 8.2.
+//  - freshwater: 1
+//  - estuarine: 5 (midpoint between freshwater 1 and coastal-marine PAH 15)
+//  - coastal-marine: 15 for PAH-class ONLY (organic-PAH); 1 otherwise. The
+//    BSAF DB rationale is bivalve passive accumulation of high-MW PAHs in
+//    the absence of hepatic CYP1A biotransformation; PCBs / dioxins
+//    biomagnify rather than passively accumulate so their library BSAFs
+//    are already trophic-corrected and must NOT be multiplied by 15.
+const M_ECO_FRESHWATER = 1;
+const M_ECO_ESTUARINE = 5;
+const M_ECO_COASTAL_PAH = 15;
+
+/**
+ * Eco-Food BSAF sediment standard (wildlife / fish receptor).
+ * See design doc section 2.2.
+ *
+ * General back-calculation:
+ *   BSAF_effective = BSAF_loc * (fLipid / foc) * M_eco
+ *   SedS = (TRV * BW) / (IR * BSAF_effective * Fsite)
+ *
+ * MeHg exception (design doc section 2.2 "Methylmercury exception" +
+ * section 8.3): MeHg binds covalently to protein thiols rather than
+ * partitioning into lipid. The library-supplied BSAF for MeHg is the
+ * protein-normalized form per the design doc definition:
+ *   BSAF_MeHg = (C_t / f_protein) / (C_s / f_oc), range 10-30, default 15.
+ * To back-calculate SedS we still need C_t / C_s, so the operative
+ * effective BSAF for the back-calculation is
+ *   BSAF_effective = BSAF_MeHg * (f_protein / f_oc) * M_eco
+ * (analogous to the lipid case BSAF_loc * (f_lipid / f_oc) * M_eco).
+ * f_protein defaults to 0.18 (fish muscle) when not supplied.
+ * Codex P1 finding 2026-05-19: an earlier interpretation dropped the
+ * (f_protein / f_oc) factor and produced MeHg SedS values about 9x too
+ * high at default f_protein=0.18 / f_oc=0.02 -- under-protective and
+ * unacceptable on a regulatory calculator.
+ *
+ * Coastal-marine multiplier (M_eco = 15) only applies to the
+ * organic-PAH class; all other contaminant classes use M_eco = 1 in
+ * coastal-marine systems AND surface a screening warning so the HITL
+ * is aware the selector did not produce the expected multiplier.
+ *
+ * Input validation:
+ *  - TRV, BW, IR, BSAF_loc must each be positive finite numbers (throw).
+ *  - foc must be positive finite (throw). Outside [0.002, 0.10] sets
+ *    blocked = true + warning. Above 0.30 requires acknowledgeBlackCarbon
+ *    or the function throws (mirroring the EcoDirect EqP pattern).
+ *  - fLipid outside [0.01, 0.15] -> screening warning, not blocked.
+ *  - Fsite outside [0.05, 1.0] -> screening warning, not blocked.
+ */
+export function ecoFoodBSAF(input: EcoFoodBSAFInput): EcoFoodBSAFResult {
+  const {
+    TRV_eco_mg_per_kg_bw_day,
+    BW_eco_kg,
+    IR_eco_kg_per_day,
+    BSAF_loc_freshwater,
+    fLipid,
+    foc,
+    Fsite,
+    ecosystem,
+    contaminantClass,
+    fProtein,
+    acknowledgeBlackCarbon,
+  } = input;
+
+  if (
+    !Number.isFinite(TRV_eco_mg_per_kg_bw_day) ||
+    TRV_eco_mg_per_kg_bw_day <= 0
+  ) {
+    throw new RangeError(
+      'ecoFoodBSAF: TRV_eco_mg_per_kg_bw_day must be a positive finite number',
+    );
+  }
+  if (!Number.isFinite(BW_eco_kg) || BW_eco_kg <= 0) {
+    throw new RangeError(
+      'ecoFoodBSAF: BW_eco_kg must be a positive finite number',
+    );
+  }
+  if (!Number.isFinite(IR_eco_kg_per_day) || IR_eco_kg_per_day <= 0) {
+    throw new RangeError(
+      'ecoFoodBSAF: IR_eco_kg_per_day must be a positive finite number',
+    );
+  }
+  if (
+    !Number.isFinite(BSAF_loc_freshwater) ||
+    BSAF_loc_freshwater <= 0
+  ) {
+    throw new RangeError(
+      'ecoFoodBSAF: BSAF_loc_freshwater must be a positive finite number',
+    );
+  }
+  if (!Number.isFinite(foc) || foc <= 0) {
+    throw new RangeError(
+      'ecoFoodBSAF: foc must be a positive finite number',
+    );
+  }
+  if (!Number.isFinite(fLipid) || fLipid <= 0) {
+    throw new RangeError(
+      'ecoFoodBSAF: fLipid must be a positive finite number',
+    );
+  }
+  if (!Number.isFinite(Fsite) || Fsite <= 0) {
+    throw new RangeError(
+      'ecoFoodBSAF: Fsite must be a positive finite number',
+    );
+  }
+  if (fProtein !== undefined) {
+    if (!Number.isFinite(fProtein) || fProtein <= 0) {
+      throw new RangeError(
+        'ecoFoodBSAF: fProtein, when supplied, must be a positive finite number',
+      );
+    }
+  }
+
+  if (foc > TOC_HARD_REJECT && !acknowledgeBlackCarbon) {
+    throw new RangeError(
+      `ecoFoodBSAF: foc = ${foc} exceeds 0.30 hard-reject threshold for ` +
+        'woodwaste / black-carbon sites. Pass acknowledgeBlackCarbon: true ' +
+        'after confirming the lab subtracted non-humic carbon fractions ' +
+        '(design doc section 8.6).',
+    );
+  }
+
+  const warnings: string[] = [];
+  let blocked = false;
+
+  // foc validity window (same as EcoDirect EqP).
+  if (foc < FOC_MIN) {
+    warnings.push(
+      `foc = ${foc} is below EqP validity window minimum (${FOC_MIN}); ` +
+        'mineral sorption dominates and the lipid/OC normalization is ' +
+        'invalid. Verdict suppressed (design doc section 2.1 caveats).',
+    );
+    blocked = true;
+  }
+  if (foc > FOC_MAX) {
+    warnings.push(
+      `foc = ${foc} is above EqP validity window maximum (${FOC_MAX}); ` +
+        'woody / black carbon distorts the OC-normalized BSAF. Sieve and ' +
+        're-measure, or cap foc at 0.10. Verdict suppressed ' +
+        '(design doc section 2.1 / 8.6).',
+    );
+    blocked = true;
+  }
+
+  // fLipid screening window: warn but do not block.
+  if (fLipid < FLIPID_MIN || fLipid > FLIPID_MAX) {
+    warnings.push(
+      `fLipid = ${fLipid} is outside the typical screening range ` +
+        `[${FLIPID_MIN}, ${FLIPID_MAX}]; result is screening-only. ` +
+        'Confirm tissue lipid content with site-specific data ' +
+        '(design doc section 2.2 inputs table).',
+    );
+  }
+
+  // Fsite screening window: warn but do not block.
+  if (Fsite < FSITE_MIN || Fsite > FSITE_MAX) {
+    warnings.push(
+      `Fsite = ${Fsite} is outside the typical range ` +
+        `[${FSITE_MIN}, ${FSITE_MAX}]; result is screening-only. ` +
+        'HITL should document species life-history rationale for the ' +
+        'value (design doc section 8.4).',
+    );
+  }
+
+  // Ecosystem multiplier resolution. Design doc section 8.2: the
+  // M_eco > 1 multiplier (15 coastal-marine / 5 estuarine) applies to
+  // PAH-class substances ONLY because PAHs accumulate passively in
+  // bivalve filter-feeders that lack hepatic CYP1A biotransformation.
+  // PCBs / dioxins / MeHg / metals biomagnify or follow different
+  // kinetics; their library BSAFs are already trophic-corrected.
+  // Codex P2 2026-05-19 round 2: the estuarine branch previously
+  // applied M_eco = 5 to ALL substances (including non-PAH), making
+  // estuarine non-PAH SedS 5x too low (over-protective).
+  let M_eco: number;
+  if (ecosystem === 'freshwater') {
+    M_eco = M_ECO_FRESHWATER;
+  } else if (contaminantClass === 'organic-PAH') {
+    M_eco = ecosystem === 'coastal-marine' ? M_ECO_COASTAL_PAH : M_ECO_ESTUARINE;
+  } else {
+    // Non-PAH in estuarine or coastal-marine: M_eco stays at 1 and we
+    // surface a warning so the user understands the selector did not
+    // produce the headline multiplier.
+    M_eco = M_ECO_FRESHWATER;
+    const expectedMultiplier =
+      ecosystem === 'coastal-marine' ? M_ECO_COASTAL_PAH : M_ECO_ESTUARINE;
+    warnings.push(
+      `${ecosystem} M_eco = ${expectedMultiplier} multiplier applies to ` +
+        'organic-PAH class only; this substance is ' +
+        `${contaminantClass} (e.g., PCBs / dioxins biomagnify rather ` +
+        'than passively accumulate; library BSAF is already ' +
+        'trophic-corrected). Using M_eco = 1 instead ' +
+        '(design doc section 8.2).',
+    );
+  }
+
+  // BSAF_effective branch: MeHg uses protein-normalized BSAF * (fProtein/foc);
+  // all other classes use lipid-normalized BSAF * (fLipid/foc).
+  // Both forms back-calculate C_t / C_s from the definitional form
+  // BSAF = (C_t / f_norm) / (C_s / f_oc), so the formula needs (f_norm / f_oc)
+  // to recover the operative tissue/sediment ratio. Codex P1 2026-05-19.
+  let BSAF_effective: number;
+  if (contaminantClass === 'methyl-Hg') {
+    const fProteinEffective = fProtein ?? F_PROTEIN_DEFAULT;
+    BSAF_effective = BSAF_loc_freshwater * (fProteinEffective / foc) * M_eco;
+  } else {
+    BSAF_effective = BSAF_loc_freshwater * (fLipid / foc) * M_eco;
+  }
+
+  // Final back-calculation:
+  //   SedS = (TRV * BW) / (IR * BSAF_effective * Fsite)
+  // Units: (mg/kg-bw/day) * kg / ((kg-wet/day) * dimensionless * dimensionless)
+  //   -> mg / (kg-wet) -> mg/kg dry under the BSAF normalization convention.
+  const sedS =
+    (TRV_eco_mg_per_kg_bw_day * BW_eco_kg) /
+    (IR_eco_kg_per_day * BSAF_effective * Fsite);
+
+  return {
+    M_eco,
+    BSAF_effective,
+    sedS,
+    warnings,
+    blocked,
   };
 }

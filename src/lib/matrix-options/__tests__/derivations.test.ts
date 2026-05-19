@@ -3,7 +3,12 @@
 // Plain ASCII only.
 
 import { describe, it, expect } from 'vitest';
-import { avsSemCheck, ecoDirectEqP, utl9595 } from '../derivations';
+import {
+  avsSemCheck,
+  ecoDirectEqP,
+  ecoFoodBSAF,
+  utl9595,
+} from '../derivations';
 import { lookupK9595 } from '../utlTable';
 
 describe('utl9595', () => {
@@ -246,5 +251,279 @@ describe('avsSemCheck', () => {
     const result = avsSemCheck({ semSum_umol_per_g: 8.0, avs_umol_per_g: 2.5 });
     expect(result.deltaSEMminusAVS).toBeCloseTo(5.5, 6);
     expect(result.nonToxic).toBe(false);
+  });
+});
+
+describe('ecoFoodBSAF', () => {
+  // Anchor Case B per design doc section 7: MeHg subsistence-style
+  // derivation. Note the design doc Anchor Case B prose mixes the
+  // Eco-Food formula with the HH-Food bioaccessibility term BA_o; the
+  // quoted 0.0022 mg/kg uses BA_o = 0.55 (HH-Food formula). For the pure
+  // Eco-Food pathway here (no BA_o), with codex P1 2026-05-19 fix
+  // applied (MeHg back-calc uses BSAF_loc * (f_protein / f_oc) * M_eco):
+  //   BSAF_effective = 15 * (0.18 / 0.02) * 1 = 135
+  //   SedS = (1e-4 * 70) / (0.388 * 135 * 1.0) = 0.007 / 52.38
+  //        = 0.0001336... mg/kg
+  // Pin reflects the protein-and-OC-normalized back-calc, which is the
+  // correct MeHg form per the design doc definition
+  //   BSAF_MeHg = (C_t / f_protein) / (C_s / f_oc).
+  // The HH-Food pathway lands in slice 4 with the BA_o term and will
+  // reproduce the 0.0022 design-doc number.
+  it('matches Anchor Case B (Eco-Food MeHg formula with protein/OC normalization)', () => {
+    const result = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 1.0e-4,
+      BW_eco_kg: 70,
+      IR_eco_kg_per_day: 0.388,
+      BSAF_loc_freshwater: 15,
+      fLipid: 0.05,
+      foc: 0.02,
+      Fsite: 1.0,
+      ecosystem: 'freshwater',
+      contaminantClass: 'methyl-Hg',
+      // fProtein not supplied -> defaults to 0.18 (fish muscle).
+    });
+    expect(result.sedS).toBeCloseTo(0.0001337, 6);
+    expect(result.M_eco).toBe(1);
+    // BSAF_effective = 15 * (0.18 / 0.02) * 1 = 135.
+    expect(result.BSAF_effective).toBeCloseTo(135, 6);
+    expect(result.blocked).toBe(false);
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it('estuarine non-PAH stays at M_eco = 1 with a screening warning (codex 2026-05-19 round 2)', () => {
+    // Section 8.2 rule applies equally to estuarine + coastal-marine:
+    // M_eco > 1 is PAH-only. Non-PAH classes (PCBs, MeHg, metals) keep
+    // M_eco = 1 in estuarine systems and surface a warning so the user
+    // understands the selector did not produce the headline multiplier.
+    const result = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 2.0e-5,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 2.0,
+      fLipid: 0.05,
+      foc: 0.01,
+      Fsite: 1.0,
+      ecosystem: 'estuarine',
+      contaminantClass: 'organic-halogenated', // PCBs
+    });
+    expect(result.M_eco).toBe(1);
+    expect(result.warnings.some((w) => /M_eco = 5/.test(w))).toBe(true);
+    expect(result.blocked).toBe(false);
+  });
+
+  it('estuarine PAH gets the documented M_eco = 5 (codex 2026-05-19 round 2)', () => {
+    // PAH-class IS the one substance class that receives M_eco > 1 in
+    // estuarine systems.
+    const result = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.05,
+      foc: 0.01,
+      Fsite: 1.0,
+      ecosystem: 'estuarine',
+      contaminantClass: 'organic-PAH',
+    });
+    expect(result.M_eco).toBe(5);
+    expect(result.blocked).toBe(false);
+  });
+
+  it('honors the supplied fProtein override on the MeHg branch', () => {
+    // If the HITL passes fProtein explicitly (e.g., 0.20 measured from
+    // site-specific tissue analysis), the factor changes accordingly.
+    const result = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 1.0e-4,
+      BW_eco_kg: 70,
+      IR_eco_kg_per_day: 0.388,
+      BSAF_loc_freshwater: 15,
+      fLipid: 0.05,
+      foc: 0.02,
+      Fsite: 1.0,
+      ecosystem: 'freshwater',
+      contaminantClass: 'methyl-Hg',
+      fProtein: 0.2,
+    });
+    // BSAF_effective = 15 * (0.20 / 0.02) * 1 = 150
+    expect(result.BSAF_effective).toBeCloseTo(150, 6);
+  });
+
+  it('applies the x15 coastal-marine multiplier for PAH-class substances', () => {
+    const freshwaterBaP = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.05,
+      foc: 0.02,
+      Fsite: 1.0,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-PAH',
+    });
+    const coastalBaP = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.05,
+      foc: 0.02,
+      Fsite: 1.0,
+      ecosystem: 'coastal-marine',
+      contaminantClass: 'organic-PAH',
+    });
+    expect(freshwaterBaP.M_eco).toBe(1);
+    expect(coastalBaP.M_eco).toBe(15);
+    // BSAF_effective scales by exactly 15x; SedS is inversely proportional
+    // so it drops by 15x.
+    expect(coastalBaP.BSAF_effective / freshwaterBaP.BSAF_effective).toBeCloseTo(
+      15,
+      6,
+    );
+    expect(freshwaterBaP.sedS / coastalBaP.sedS).toBeCloseTo(15, 6);
+  });
+
+  it('uses M_eco = 1 in freshwater for PAH-class substances', () => {
+    const result = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.05,
+      foc: 0.02,
+      Fsite: 1.0,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-PAH',
+    });
+    expect(result.M_eco).toBe(1);
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it('does NOT apply x15 multiplier for non-PAH classes in coastal-marine (emits warning)', () => {
+    // Design doc section 8.2: PCBs / dioxins biomagnify rather than
+    // passively accumulate; the library BSAF is already trophic-corrected
+    // and must not be multiplied by 15.
+    const result = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 0.00012,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 2.0,
+      fLipid: 0.05,
+      foc: 0.02,
+      Fsite: 1.0,
+      ecosystem: 'coastal-marine',
+      contaminantClass: 'organic-halogenated',
+    });
+    expect(result.M_eco).toBe(1);
+    expect(
+      result.warnings.some((w) => w.includes('organic-PAH class only')),
+    ).toBe(true);
+  });
+
+  it('blocks (warns + sets blocked=true) when foc is below 0.002', () => {
+    const result = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.05,
+      foc: 0.001,
+      Fsite: 1.0,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-PAH',
+    });
+    expect(result.blocked).toBe(true);
+    expect(result.warnings.some((w) => w.includes('below'))).toBe(true);
+    // Diagnostic SedS is still finite so the UI can show consequence.
+    expect(Number.isFinite(result.sedS)).toBe(true);
+  });
+
+  it('throws on non-positive TRV, BW, IR, or BSAF_loc', () => {
+    const validBase = {
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.05,
+      foc: 0.02,
+      Fsite: 1.0,
+      ecosystem: 'freshwater' as const,
+      contaminantClass: 'organic-PAH' as const,
+    };
+    expect(() =>
+      ecoFoodBSAF({ ...validBase, TRV_eco_mg_per_kg_bw_day: 0 }),
+    ).toThrow(RangeError);
+    expect(() =>
+      ecoFoodBSAF({ ...validBase, TRV_eco_mg_per_kg_bw_day: -1e-4 }),
+    ).toThrow(RangeError);
+    expect(() => ecoFoodBSAF({ ...validBase, BW_eco_kg: 0 })).toThrow(
+      RangeError,
+    );
+    expect(() => ecoFoodBSAF({ ...validBase, IR_eco_kg_per_day: 0 })).toThrow(
+      RangeError,
+    );
+    expect(() =>
+      ecoFoodBSAF({ ...validBase, BSAF_loc_freshwater: 0 }),
+    ).toThrow(RangeError);
+  });
+
+  it('anadromous Fsite = 0.2 produces a SedS 5x higher than Fsite = 1.0', () => {
+    // The quick-set button in the UI sets Fsite to 0.2 for anadromous
+    // salmon (design doc section 8.4); the operative formula has Fsite
+    // in the denominator so SedS scales as 1 / Fsite.
+    const resident = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.05,
+      foc: 0.02,
+      Fsite: 1.0,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-PAH',
+    });
+    const anadromous = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.05,
+      foc: 0.02,
+      Fsite: 0.2,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-PAH',
+    });
+    expect(anadromous.sedS / resident.sedS).toBeCloseTo(5, 6);
+  });
+
+  it('emits screening warning when Fsite is outside [0.05, 1.0] without blocking', () => {
+    const result = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.05,
+      foc: 0.02,
+      Fsite: 0.01,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-PAH',
+    });
+    expect(result.blocked).toBe(false);
+    expect(result.warnings.some((w) => w.includes('Fsite'))).toBe(true);
+  });
+
+  it('throws when foc > 0.30 without acknowledgeBlackCarbon flag', () => {
+    expect(() =>
+      ecoFoodBSAF({
+        TRV_eco_mg_per_kg_bw_day: 0.0025,
+        BW_eco_kg: 0.85,
+        IR_eco_kg_per_day: 0.18,
+        BSAF_loc_freshwater: 0.5,
+        fLipid: 0.05,
+        foc: 0.35,
+        Fsite: 1.0,
+        ecosystem: 'freshwater',
+        contaminantClass: 'organic-PAH',
+      }),
+    ).toThrow(RangeError);
   });
 });
