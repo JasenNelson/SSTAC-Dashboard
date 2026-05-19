@@ -82,6 +82,67 @@ export interface AvsSemResult {
 }
 
 // ---------------------------------------------------------------------------
+// Eco-Food BSAF path (slice 2)
+// ---------------------------------------------------------------------------
+
+export interface EcoFoodBSAFInput {
+  // Wildlife / fish TRV in mg/kg-bw/day. Strictly positive.
+  TRV_eco_mg_per_kg_bw_day: number;
+  // Receptor body weight in kg. Strictly positive.
+  BW_eco_kg: number;
+  // Receptor daily ingestion rate in kg-wet-tissue/day. Strictly positive.
+  IR_eco_kg_per_day: number;
+  // Lipid + OC normalized BSAF from the substance library (freshwater
+  // baseline). Strictly positive. For MeHg this is treated as the
+  // protein-normalized BSAF and the lipid normalization step is skipped
+  // (see design doc section 2.2 "Methylmercury exception").
+  BSAF_loc_freshwater: number;
+  // Tissue lipid fraction (unitless mass fraction). Typical 0.01 - 0.15.
+  // Outside that range emits a screening-only warning.
+  fLipid: number;
+  // Sediment fraction organic carbon (unitless). EqP validity window
+  // 0.002 - 0.10 enforced; outside that window sets blocked = true.
+  foc: number;
+  // Site-use fraction (unitless). 1.0 for resident species, 0.2 for
+  // anadromous salmonids (per design doc section 8.4). Outside [0.05, 1.0]
+  // emits a screening-only warning.
+  Fsite: number;
+  // Ecosystem selector. Drives the M_eco multiplier; only applies > 1 for
+  // PAH-class contaminants in coastal-marine systems per design doc 8.2.
+  ecosystem: Ecosystem;
+  // Contaminant class. Drives:
+  //  (a) MeHg protein-normalized BSAF branch, and
+  //  (b) coastal-marine M_eco = 15 multiplier eligibility (PAHs only).
+  contaminantClass: ContaminantClass;
+  // Protein fraction for the MeHg path. Defaults to 0.18 (fish muscle)
+  // when omitted on a MeHg substance. Ignored on non-MeHg substances.
+  fProtein?: number;
+  // Black-carbon override flag mirroring the EcoDirect EqP pattern. When
+  // omitted and foc > 0.30 the function throws. With the flag set the
+  // function still computes but emits warnings + blocked = true.
+  acknowledgeBlackCarbon?: boolean;
+}
+
+export interface EcoFoodBSAFResult {
+  // Ecosystem multiplier actually applied (1, 5, or 15 -- see design doc
+  // section 2.2 / 8.2). Surfaced so the UI can show the chain of reasoning.
+  M_eco: number;
+  // Effective BSAF after lipid/OC normalization (or pass-through for MeHg)
+  // and the ecosystem multiplier. Dimensionless.
+  BSAF_effective: number;
+  // Final sediment standard for the Eco-Food pathway, mg/kg dry. Always
+  // computed for diagnostic display; suppress quoting it as a regulatory
+  // benchmark when blocked === true.
+  sedS: number;
+  warnings: string[];
+  // True when an input violated a hard validity constraint from the design
+  // doc (foc outside the EqP validity window 0.002-0.10 OR foc > 0.30 with
+  // the black-carbon override). Verdict / output quoting MUST be suppressed
+  // by the caller in this case; the numeric value is diagnostic-only.
+  blocked: boolean;
+}
+
+// ---------------------------------------------------------------------------
 // Substance library entry shape
 // ---------------------------------------------------------------------------
 
@@ -98,6 +159,10 @@ export interface SubstanceEntry {
   // Default FCV / water-only chronic value for the EqP path. ug/L. Null when
   // the substance is metals / not partitioning. HITL may override.
   readonly fcv_ug_per_L: number | null;
+  // Wildlife / fish TRV for the Eco-Food BSAF path. mg/kg-bw/day. Null
+  // when no defensible eco-TRV is available (HITL must supply one before
+  // running the Eco-Food pathway).
+  readonly trv_eco_mg_per_kg_bw_day: number | null;
   readonly sources: string;
   readonly notes?: string;
 }

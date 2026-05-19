@@ -21,9 +21,13 @@ export const SUBSTANCE_LIBRARY = [
     // US EPA Tier II SCV for B[a]P narcosis, used as the EqP FCV anchor in
     // design doc section 7 Anchor Case A.
     fcv_ug_per_L: 0.014,
+    // US EPA Eco-SSL plant ingestion surrogate (NOAEL-derived). v1
+    // placeholder; HITL override expected for an avian/mammalian receptor.
+    trv_eco_mg_per_kg_bw_day: 0.0025,
     sources:
       'US EPA IRIS B[a]P (2017 reassessment); ERDC BSAF DB; ' +
-      'Indigenous-Consumption-Pacific-NW Section 4.3',
+      'Indigenous-Consumption-Pacific-NW Section 4.3; ' +
+      'US EPA Eco-SSL for PAH (TRV)',
     notes:
       'Coastal-marine bivalve scenarios: multiply freshwater BSAF by 15 ' +
       '(passive PAH accumulation; lack of hepatic CYP1A). See design ' +
@@ -42,7 +46,12 @@ export const SUBSTANCE_LIBRARY = [
     // PCB FCV (chronic AWQC) is substance-specific; use a screening
     // placeholder. HITL overrides per congener mixture.
     fcv_ug_per_L: 0.014,
-    sources: 'US EPA IRIS Aroclor 1254; BSAF-Translation Section 4',
+    // US EPA Eco-SSL mammalian wildlife TRV (Aroclor 1254 oral chronic
+    // NOAEL-derived). Used for the Eco-Food BSAF pathway.
+    trv_eco_mg_per_kg_bw_day: 0.00012,
+    sources:
+      'US EPA IRIS Aroclor 1254; BSAF-Translation Section 4; ' +
+      'US EPA Eco-SSL mammalian wildlife TRV (PCBs)',
     notes:
       'Do not apply coastal PAH multiplier; PCBs biomagnify rather than ' +
       'passively accumulate.',
@@ -58,9 +67,13 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 0.55,
     fcv_ug_per_L: null,
+    // CCME wildlife TRV for MeHg (chronic mammalian piscivore reference);
+    // used directly with the protein-normalized BSAF path in the Eco-Food
+    // derivation.
+    trv_eco_mg_per_kg_bw_day: 0.000064,
     sources:
       'Health Canada HHRA 2023; Indigenous-Consumption-Pacific-NW ' +
-      'Section 5; BSAF-Translation Section 7',
+      'Section 5; BSAF-Translation Section 7; CCME wildlife TRV (MeHg)',
     notes:
       'MeHg binds covalently to protein thiols. Use protein-normalized ' +
       'BSAF path (f_protein default 0.18 fish muscle). Do not ' +
@@ -77,8 +90,14 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
+    // US EPA Eco-SSL avian TRV for Pb (NOAEL-derived). The eco-food
+    // pathway for Pb has limited BSAF support in v1 (bsaf_loc_freshwater
+    // is null) so the UI will filter Pb out of the Eco-Food dropdown; we
+    // still record the TRV for future HITL workflows.
+    trv_eco_mg_per_kg_bw_day: 0.0080,
     sources:
-      'Health Canada HHRA 2023; ANZG; Bioavailability TOC-AVS Section 5',
+      'Health Canada HHRA 2023; ANZG; Bioavailability TOC-AVS Section 5; ' +
+      'US EPA Eco-SSL avian TRV (Pb)',
     notes: 'Use AVS/SEM path for ecological direct-contact derivation.',
   },
   {
@@ -92,7 +111,9 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
-    sources: 'US EPA IRIS Cu; ANZG',
+    // US EPA Eco-SSL avian TRV for Cu.
+    trv_eco_mg_per_kg_bw_day: 7.0,
+    sources: 'US EPA IRIS Cu; ANZG; US EPA Eco-SSL avian TRV (Cu)',
     notes: 'Use AVS/SEM path for ecological direct-contact derivation.',
   },
   {
@@ -108,7 +129,9 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
-    sources: 'US EPA IRIS Cd',
+    // US EPA Eco-SSL avian TRV for Cd.
+    trv_eco_mg_per_kg_bw_day: 0.0014,
+    sources: 'US EPA IRIS Cd; US EPA Eco-SSL avian TRV (Cd)',
     notes:
       'Drinking-water RfD (5.0e-4) available for water-pathway scenarios; ' +
       'default here is the dietary value (1.0e-3).',
@@ -124,7 +147,9 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
-    sources: 'US EPA IRIS Zn',
+    // US EPA Eco-SSL avian TRV for Zn.
+    trv_eco_mg_per_kg_bw_day: 14.0,
+    sources: 'US EPA IRIS Zn; US EPA Eco-SSL avian TRV (Zn)',
     notes: 'Use AVS/SEM path for ecological direct-contact derivation.',
   },
   {
@@ -138,7 +163,10 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 0.60,
     fcv_ug_per_L: null,
-    sources: 'US EPA IRIS iAs; ANZG; ACFN-WQCIU',
+    // US EPA Eco-SSL avian TRV for inorganic As.
+    trv_eco_mg_per_kg_bw_day: 0.043,
+    sources:
+      'US EPA IRIS iAs; ANZG; ACFN-WQCIU; US EPA Eco-SSL avian TRV (iAs)',
     notes:
       'AVS/SEM framework does NOT apply to arsenic (not a divalent ' +
       'transition metal in the Cd-Cu-Pb-Ni-Zn family). Use bulk-sediment ' +
