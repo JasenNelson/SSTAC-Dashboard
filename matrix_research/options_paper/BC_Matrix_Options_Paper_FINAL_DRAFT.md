@@ -1,11 +1,3 @@
-<!--
-  SOURCE: 2026 Matrix Derivation Options Paper v0.1
-  Canonical Google Doc: https://docs.google.com/document/d/1yz4OAIl7-pRFAtmoKD8sVs5-N0dw6qRznwGUdZ3LgZY/edit
-  This file is rendered into the TWG Review tab of /matrix-options.
-  Plain ASCII only (code point <= 127); maintained per L0 CLAUDE.md section 1.1.
-  H2 headings drive the per-section comment system in TWGReviewPortal.tsx.
--->
-
 # Matrix Sediment Standards Derivation Options Paper
 
 **Prepared for:**  The British Columbia Ministry of Environment & The Science and Standards Technical Advisory Committee (SSTAC)

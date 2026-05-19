@@ -221,8 +221,9 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
 
   return (
     <>
-      {/* Left Sidebar (TOC) */}
-      <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col', showLeftPanel ? 'w-80' : 'w-0')}>
+      {/* Left Sidebar (TOC). Hidden in print so window.print() produces a
+          chrome-free PDF of just the paper body. */}
+      <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col print:hidden', showLeftPanel ? 'w-80' : 'w-0')}>
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 shrink-0">
           <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">TABLE OF CONTENTS</h3>
         </div>
@@ -241,16 +242,27 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         </div>
       </div>
 
-      {/* Center Content (Document) */}
-      <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 px-8 py-10 sm:px-12">
+      {/* Center Content (Document). In print, override the scroll
+          container so the full paper expands instead of clipping to the
+          visible scrollport. */}
+      <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 px-8 py-10 sm:px-12 print:flex-none print:overflow-visible print:h-auto print:p-0">
         <div className="max-w-4xl mx-auto space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800">
+          {/* Header card with title + Download (PDF) action. The whole card
+              is hidden in print so the PDF starts at the paper body. */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 print:hidden">
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Final Master Draft</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">Review the concatenated policy options below.</p>
             </div>
-            <button className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined') window.print();
+              }}
+              aria-label="Download Final Master Draft as PDF (opens browser print dialog)"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
               Download Draft (PDF)
@@ -262,8 +274,9 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         </div>
       </div>
 
-      {/* Right Drawer (Comments) */}
-      <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col relative', showRightPanel ? 'w-96' : 'w-0')}>
+      {/* Right Drawer (Comments). Hidden in print -- reviewer drafts are
+          working notes, not part of the published PDF. */}
+      <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col relative print:hidden', showRightPanel ? 'w-96' : 'w-0')}>
         <div className="p-5 border-b border-slate-200 dark:border-slate-800 shrink-0 bg-slate-50 dark:bg-slate-900/50">
           <h3 className="font-bold text-slate-900 dark:text-white flex items-center space-x-2 mb-3">
             <svg className="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

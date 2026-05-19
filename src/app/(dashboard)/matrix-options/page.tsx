@@ -50,7 +50,7 @@ export default async function MatrixOptionsPage() {
   const finalDraftContent = readFinalPaper();
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] w-full overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-4rem)] w-full overflow-hidden print:block print:h-auto print:overflow-visible">
       <MatrixDashboard 
         eqpCaseStudyContent={eqpCaseStudyContent} 
         bsafCaseStudyContent={bsafCaseStudyContent}

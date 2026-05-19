@@ -206,4 +206,17 @@ second body
     expect(mockInsert).not.toHaveBeenCalled()
     expect(mockUpdate).not.toHaveBeenCalled()
   })
+
+  it('invokes window.print() exactly once when Download (PDF) is clicked', () => {
+    // Regression guard: prior to this fix the "Download Draft (PDF)" button
+    // had no onClick handler and silently did nothing on click. Owner
+    // reported the breakage on the live production deploy of PR #124.
+    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {})
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    fireEvent.click(
+      screen.getByRole('button', { name: /Download.*PDF/i }),
+    )
+    expect(printSpy).toHaveBeenCalledTimes(1)
+    printSpy.mockRestore()
+  })
 })
