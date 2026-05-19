@@ -66,8 +66,14 @@ export function utl9595(samples: number[]): Utl9595Result {
  *
  * Implements the Di Toro K_oc regression + EqP partitioning:
  *   log K_oc = 0.00028 + 0.983 * log K_ow
- *   ESB_oc   = FCV * K_oc * 1e-6     (mg/kg-OC)
+ *   ESB_oc   = FCV * K_oc * 1e-3     (mg/kg-OC; FCV ug/L -> mg/L is 1e-3)
  *   SedS     = ESB_oc * f_oc         (mg/kg dry)
+ *
+ * Note: the Phase 2 Options Paper section 2.1 prose says the FCV
+ * conversion factor is 1e-6, but that contradicts the doc's own Anchor
+ * Case A worked example (1e-3 is the correct ug/L -> mg/L conversion);
+ * implementation tracks the worked example. See the INTERPRETATION
+ * NOTE inside the function body for the audit trail.
  *
  * Input validation per design doc caveats:
  *  - Rejects (does not compute) if foc < 0.002 or foc > 0.10 by surfacing
