@@ -223,7 +223,14 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(wrapper.className).not.toMatch(/\bprint:hidden\b/);
   });
 
-  it('per-calculator local state is preserved across category swap', () => {
+  // Codex holistic review 2026-05-19 P3: the test name and the assertion
+  // disagreed in the prior version. Renamed to describe what is actually
+  // being verified -- per-calculator local state (foc) is UNMOUNT-FRESH,
+  // i.e., it resets to default when the user swaps categories away and
+  // back. This is the deliberate lift contract per plan v3 section 4.3:
+  // only substance + jurisdiction are lifted; per-pathway inputs stay
+  // local to each calculator and are lost on unmount.
+  it('per-calculator local state is unmount-fresh on category swap (foc resets when EcoDirect remounts)', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
     // Adjust Eco-Direct foc to 5%.
@@ -237,11 +244,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       screen.queryByTestId('eco-direct-eqp-calculator'),
     ).not.toBeInTheDocument();
     // Switch back to Eco-Direct: foc resets to default 2% because the
-    // component unmounted and lost local state (foc is NOT lifted -- it
-    // is a per-pathway input per plan v3 section 4.3, "Per-calculator
-    // pathway-specific inputs ... stay LOCAL to each calculator").
-    // This test documents the lift contract: only substance + jurisdiction
-    // are global; per-pathway inputs are unmount-fresh.
+    // component unmounted and lost local state.
     fireEvent.click(screen.getByTestId('category-selector-eco-direct'));
     expect(screen.getByText(/2\.00 %/)).toBeInTheDocument();
   });

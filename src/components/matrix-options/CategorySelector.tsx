@@ -36,7 +36,13 @@ interface CategoryDescriptor {
   group: 'eco' | 'hh';
 }
 
-const CATEGORIES: ReadonlyArray<CategoryDescriptor> = [
+// Same tuple-with-literals + Exclude<> exhaustiveness guard pattern used
+// for ALL_MATRIX_CATEGORIES_TUPLE in types.ts (codex holistic review P3
+// 2026-05-19). If a future MatrixCategory member is added and the
+// descriptor list below is not updated to match, the compile-time guard
+// below resolves the missing id(s) as a non-never type and the boolean
+// assignment fails.
+const CATEGORIES_TUPLE = [
   {
     id: 'eco-direct',
     label: 'Ecological Health -- Direct Contact',
@@ -61,7 +67,16 @@ const CATEGORIES: ReadonlyArray<CategoryDescriptor> = [
     shortLabel: 'Human Health: Food Web',
     group: 'hh',
   },
-];
+] as const satisfies readonly CategoryDescriptor[];
+
+const CATEGORIES: ReadonlyArray<CategoryDescriptor> = CATEGORIES_TUPLE;
+
+type CategoriesCoverAllIds =
+  Exclude<MatrixCategory, (typeof CATEGORIES_TUPLE)[number]['id']> extends never
+    ? true
+    : false;
+const _categoriesCoverAllIds: CategoriesCoverAllIds = true;
+void _categoriesCoverAllIds;
 
 const HH_DISABLED_TOOLTIP =
   'Coming soon -- calculator and guidance pending HITL sign-off';
