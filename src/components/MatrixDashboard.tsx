@@ -1,15 +1,100 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { cn } from '@/utils/cn';
 import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FileText } from 'lucide-react';
 import MathRenderer from './MathRenderer';
 import ConceptualMatrix from './ConceptualMatrix';
 import TWGReviewPortal from './TWGReviewPortal';
-import DerivationSimulator from './DerivationSimulator';
 import BackgroundAdjustment from './matrix-options/BackgroundAdjustment';
 import EcoDirectEqPCalculator from './matrix-options/EcoDirectEqPCalculator';
 import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
+import CategorySelector from './matrix-options/CategorySelector';
+import SharedGlobalInputs, {
+  DEFAULT_SUBSTANCE_KEY,
+} from './matrix-options/SharedGlobalInputs';
+import {
+  ENABLED_CATEGORIES_PR_A2,
+  isMatrixCategory,
+  type MatrixCategory,
+} from './matrix-options/guide/content/types';
+import {
+  ALL_JURISDICTIONS,
+  DEFAULT_JURISDICTION,
+  isJurisdiction,
+  type Jurisdiction,
+} from './matrix-options/guide/content/jurisdictions';
+import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
+
+// Audience tier for the sidebar guide (PR-A3 will consume; the state +
+// validate-on-load coercion is established here per kickoff memo so the
+// 4-state lifted contract is in place once PR-A3 wires the sidebar).
+type AudienceTier = 'general' | 'practitioner' | 'technical';
+const ALL_AUDIENCE_TIERS: ReadonlyArray<AudienceTier> = [
+  'general',
+  'practitioner',
+  'technical',
+];
+const DEFAULT_AUDIENCE_TIER: AudienceTier = 'general';
+
+const LS_KEY_CATEGORY = 'matrix-options-active-category-v1';
+const LS_KEY_TIER = 'matrix-options-guide-tier-v1';
+const LS_KEY_SUBSTANCE = 'matrix-options-substance-v1';
+const LS_KEY_JURISDICTION = 'matrix-options-jurisdiction-v1';
+
+// Validate-on-load coercion per plan v5 Delta 1. SSR-safe (typeof window
+// guard). On invalid / stale localStorage values: clear the entry so the
+// next mount does not re-restore the bad value, then fall back to the
+// default. Hydration runs in a mount-only useEffect to avoid Next.js
+// SSR/CSR hydration mismatches; the flash from default -> restored is
+// acceptable for this MVP audience scale (codex review notes accept this
+// trade-off vs the complexity of useSyncExternalStore).
+
+function restoreActiveCategory(): MatrixCategory {
+  if (typeof window === 'undefined') return 'eco-direct';
+  const raw = window.localStorage.getItem(LS_KEY_CATEGORY);
+  if (
+    raw &&
+    isMatrixCategory(raw) &&
+    (ENABLED_CATEGORIES_PR_A2 as readonly string[]).includes(raw)
+  ) {
+    return raw;
+  }
+  if (raw !== null) window.localStorage.removeItem(LS_KEY_CATEGORY);
+  return 'eco-direct';
+}
+
+function restoreActiveTier(): AudienceTier {
+  if (typeof window === 'undefined') return DEFAULT_AUDIENCE_TIER;
+  const raw = window.localStorage.getItem(LS_KEY_TIER);
+  if (raw && (ALL_AUDIENCE_TIERS as readonly string[]).includes(raw)) {
+    return raw as AudienceTier;
+  }
+  if (raw !== null) window.localStorage.removeItem(LS_KEY_TIER);
+  return DEFAULT_AUDIENCE_TIER;
+}
+
+function restoreSubstanceKey(): string {
+  if (typeof window === 'undefined') return DEFAULT_SUBSTANCE_KEY;
+  const raw = window.localStorage.getItem(LS_KEY_SUBSTANCE);
+  if (raw && findSubstance(raw)) return raw;
+  if (raw !== null) window.localStorage.removeItem(LS_KEY_SUBSTANCE);
+  return DEFAULT_SUBSTANCE_KEY;
+}
+
+function restoreJurisdiction(): Jurisdiction {
+  if (typeof window === 'undefined') return DEFAULT_JURISDICTION;
+  const raw = window.localStorage.getItem(LS_KEY_JURISDICTION);
+  if (
+    raw &&
+    isJurisdiction(raw) &&
+    (ALL_JURISDICTIONS as readonly string[]).includes(raw)
+  ) {
+    return raw;
+  }
+  if (raw !== null) window.localStorage.removeItem(LS_KEY_JURISDICTION);
+  return DEFAULT_JURISDICTION;
+}
 
 interface MatrixDashboardProps {
   eqpCaseStudyContent: string;
@@ -25,11 +110,71 @@ const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web
 export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent, finalDraftContent }: MatrixDashboardProps) {
   const [activeTopTab, setActiveTopTab] = useState('The Guide');
   const [activeSideTab, setActiveSideTab] = useState('Ecological: EqP & AVS');
+  // Both side panels open by default per owner UX preference 2026-05-19
+  // (was: right panel hidden by default). Users can still toggle each
+  // panel independently via the chrome buttons in the header.
   const [showLeftPanel, setShowLeftPanel] = useState(true);
-  const [showRightPanel, setShowRightPanel] = useState(false);
+  const [showRightPanel, setShowRightPanel] = useState(true);
+
+  // Lifted Calculator-tab state (plan v3 section 4.3 + v5 Delta 1).
+  // Initial values are the SSR-safe defaults; the mount-only hydrate
+  // effect below restores any valid persisted values from localStorage.
+  const [activeCategory, setActiveCategory] =
+    useState<MatrixCategory>('eco-direct');
+  const [activeTier, setActiveTier] = useState<AudienceTier>(
+    DEFAULT_AUDIENCE_TIER,
+  );
+  const [substanceKey, setSubstanceKey] = useState<string>(
+    DEFAULT_SUBSTANCE_KEY,
+  );
+  const [jurisdiction, setJurisdiction] = useState<Jurisdiction>(
+    DEFAULT_JURISDICTION,
+  );
+
+  // Hydrate from localStorage on mount (client-only). Each restore* helper
+  // validates the stored value against the current allowlist and clears
+  // stale entries. activeTier is wired here even though PR-A2 does not
+  // yet render the sidebar guide; PR-A3 will consume the state. The
+  // useState setters have stable identities per React contract so an
+  // empty deps array is correct here (no eslint-disable needed).
+  useEffect(() => {
+    setActiveCategory(restoreActiveCategory());
+    setActiveTier(restoreActiveTier());
+    setSubstanceKey(restoreSubstanceKey());
+    setJurisdiction(restoreJurisdiction());
+  }, []);
+
+  // Persist each piece of lifted state on change. Guarded by typeof
+  // window for SSR safety.
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LS_KEY_CATEGORY, activeCategory);
+    }
+  }, [activeCategory]);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LS_KEY_TIER, activeTier);
+    }
+  }, [activeTier]);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LS_KEY_SUBSTANCE, substanceKey);
+    }
+  }, [substanceKey]);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LS_KEY_JURISDICTION, jurisdiction);
+    }
+  }, [jurisdiction]);
 
   const isToolMode = activeTopTab === 'Calculator' || activeTopTab === 'Jurisdictional Frameworks';
   const isReviewMode = activeTopTab === 'TWG Review';
+  // print:hidden on the entire left sidebar column when the Calculator tab
+  // is active, per plan v3 section 4.2 + section 10. The sidebar stays
+  // visible on print for the Jurisdictional Frameworks tab (where the
+  // jurisdiction selector is the user's anchor) and for non-tool modes.
+  const hideSidebarOnPrint =
+    isToolMode && activeTopTab === 'Calculator';
 
   const renderSidebar = () => {
     switch (activeTopTab) {
@@ -100,17 +245,59 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         );
       case 'Calculator':
         return (
-          <div className="w-full space-y-6">
-            <DerivationSimulator />
-            <div className="flex items-center gap-3 py-2" aria-hidden="true">
-              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                v2 modular pathways (design v1)
-              </span>
-              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
-            </div>
-            <EcoDirectEqPCalculator />
-            <EcoFoodBSAFCalculator />
+          <div className="w-full space-y-6" data-testid="calculator-tab-content">
+            {/*
+              Calculator-tab vertical flow per plan v3 section 1:
+                1. CategorySelector (1x4 row at top; HH disabled in PR-A2)
+                2. SharedGlobalInputs (substance + jurisdiction selectors)
+                3. Active category calculator (switches on activeCategory)
+                4. BackgroundAdjustment (post-derivation panel; PR #127)
+              Legacy DerivationSimulator is retired in this commit per
+              plan v3 section 5.A.
+            */}
+            <CategorySelector
+              activeCategory={activeCategory}
+              onChange={setActiveCategory}
+            />
+            <SharedGlobalInputs
+              substanceKey={substanceKey}
+              jurisdiction={jurisdiction}
+              onSubstanceKeyChange={setSubstanceKey}
+              onJurisdictionChange={setJurisdiction}
+            />
+            {activeCategory === 'eco-direct' && (
+              <EcoDirectEqPCalculator
+                substanceKey={substanceKey}
+                jurisdiction={jurisdiction}
+              />
+            )}
+            {activeCategory === 'eco-food' && (
+              <EcoFoodBSAFCalculator
+                substanceKey={substanceKey}
+                jurisdiction={jurisdiction}
+              />
+            )}
+            {/*
+              HH categories are disabled in CategorySelector during PR-A2,
+              so users cannot reach this branch via UI. Defense-in-depth
+              (cursor-agent review on commit 6 P2): render a visible
+              unavailable stub if state ever does land on an HH category
+              (e.g., programmatic mutation or a future regression). PR-A4
+              replaces this stub with the HH placeholder components.
+            */}
+            {(activeCategory === 'hh-direct' ||
+              activeCategory === 'hh-food') && (
+              <div
+                role="status"
+                data-testid="hh-calculator-unavailable-stub"
+                className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-sm text-slate-600 dark:text-slate-300 text-center"
+              >
+                The Human Health calculator is not available in this
+                release. Use the enabled categories above (Eco-Direct or
+                Eco-Food); the Human Health pathway will land in a future
+                slice (PR-A4).
+              </div>
+            )}
             <div className="flex items-center gap-3 py-2" aria-hidden="true">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
               <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
@@ -175,7 +362,18 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         {isToolMode ? (
           <>
             {/* Left Sidebar */}
-            <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800', showLeftPanel ? 'w-80 p-6' : 'w-0')}>
+            <div
+              data-testid="left-sidebar-wrapper"
+              className={cn(
+                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800',
+                showLeftPanel ? 'w-80 p-6' : 'w-0',
+                // Plan v3 section 4.2 + section 10: hide the entire left
+                // sidebar when printing the Calculator tab so window.print()
+                // produces a chrome-free PDF anchored on the calculator
+                // body + Background Adjustment panel.
+                hideSidebarOnPrint && 'print:hidden',
+              )}
+            >
               <div className="w-full min-w-[270px]">
                 <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">JURISDICTION / REGION</h3>
                 {renderSidebar()}

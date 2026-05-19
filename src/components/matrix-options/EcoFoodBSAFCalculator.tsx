@@ -4,29 +4,39 @@
 // See .tmp_calculator_design_v1.md sections 2.2 + 5 + 8.2 + 8.4.
 // v1 single-substance, single-receptor; MeHg uses the protein-normalized
 // branch documented in design doc 2.2 / 8.3.
+//
+// PR-A2 commit 5 refactor (2026-05-19): substance + jurisdiction lifted to
+// MatrixDashboard via SharedGlobalInputs; this calculator now accepts both
+// as optional props with defaults sourced from canonical exports (same
+// pattern as EcoDirectEqPCalculator commit 4). TRV + BSAF_loc reset
+// contracts mirror EcoDirect's FCV contract per plan v3 section 4.6:
+//   - useEffect re-seeds TRV on substanceKey change unless trvIsOverride
+//   - useEffect re-seeds BSAF_loc on substanceKey change unless
+//     bsafIsOverride
+//   - User edit promotes the respective field to override; Reset clears it
+// Layout per plan v3 section 1 (vertical flow): inputs -> error -> the
+// prominent "Preliminary Toxicity-Based Standard" hero -> a Technical
+// details <details> disclosure (collapsed by default).
+//
+// jurisdiction is currently a passthrough prop. Future slices will wire
+// jurisdiction-aware TRV / BSAF selection logic onto it.
+//
 // Plain ASCII only.
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
 import { ecoFoodBSAF } from '@/lib/matrix-options/derivations';
-import {
-  SUBSTANCE_LIBRARY,
-  findSubstance,
-} from '@/lib/matrix-options/substanceLibrary';
+import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type {
   EcoFoodBSAFResult,
   Ecosystem,
 } from '@/lib/matrix-options/types';
 import { parseDecimalInput } from '@/lib/matrix-options/parseDecimal';
-
-// Default substance: the first library entry that carries a positive
-// freshwater BSAF (i.e., the Eco-Food path is meaningful). Falls back to
-// the first entry overall if none qualify.
-const BSAF_CAPABLE = SUBSTANCE_LIBRARY.filter(
-  (s) => s.bsaf_loc_freshwater !== null && s.bsaf_loc_freshwater > 0,
-);
-const DEFAULT_SUBSTANCE_KEY =
-  BSAF_CAPABLE[0]?.key ?? SUBSTANCE_LIBRARY[0].key;
+import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
+import {
+  DEFAULT_JURISDICTION,
+  type Jurisdiction,
+} from './guide/content/jurisdictions';
 
 const ECOSYSTEM_OPTIONS: ReadonlyArray<{ value: Ecosystem; label: string }> = [
   { value: 'freshwater', label: 'Freshwater' },
@@ -34,57 +44,93 @@ const ECOSYSTEM_OPTIONS: ReadonlyArray<{ value: Ecosystem; label: string }> = [
   { value: 'coastal-marine', label: 'Coastal-Marine' },
 ];
 
-export default function EcoFoodBSAFCalculator() {
-  const [substanceKey, setSubstanceKey] = useState<string>(
-    DEFAULT_SUBSTANCE_KEY,
-  );
+export interface EcoFoodBSAFCalculatorProps {
+  // Optional with defaults to keep the existing MatrixDashboard call site
+  // (`<EcoFoodBSAFCalculator />`) build-green between this commit and
+  // commit 6 (MatrixDashboard wire-up). Commit 6 always passes explicit
+  // values from lifted state; defaults remain a safety net for direct
+  // renders in stories / debug pages.
+  substanceKey?: string;
+  jurisdiction?: Jurisdiction;
+  className?: string;
+}
+
+export default function EcoFoodBSAFCalculator({
+  substanceKey = DEFAULT_SUBSTANCE_KEY,
+  jurisdiction: _jurisdiction = DEFAULT_JURISDICTION,
+  className,
+}: EcoFoodBSAFCalculatorProps) {
   const substance = findSubstance(substanceKey);
 
-  // Ecosystem selector (default freshwater per design doc 2.2).
+  // Ecosystem selector (default freshwater per design doc 2.2). LOCAL.
   const [ecosystem, setEcosystem] = useState<Ecosystem>('freshwater');
 
-  // Receptor inputs: default to mink piscivore (design doc 2.2 inputs table).
+  // Receptor inputs: default to mink piscivore (design doc 2.2 inputs table). LOCAL.
   const [bwInput, setBwInput] = useState<string>('0.85');
   const [irInput, setIrInput] = useState<string>('0.18');
 
-  // fLipid as percent (default 5%, screening window 1 - 15%).
+  // fLipid as percent (default 5%, screening window 1 - 15%). LOCAL.
   const [fLipidPercent, setFLipidPercent] = useState<number>(5);
-  // foc as percent. Design doc section 2.2 sets default = 0.01 (1.0 %);
-  // codex P2 2026-05-19 round 2 noted the previous 2 % initial state
-  // displayed an Eco-Food SedS double the spec's worked-example default
-  // until the user adjusted the slider. EqP validity window remains
-  // 0.2 - 10 %.
+  // foc as percent. Design doc section 2.2 sets default = 0.01 (1.0 %).
+  // codex P2 2026-05-19 round 2 caught the prior 2 % default. LOCAL.
   const [focPercent, setFocPercent] = useState<number>(1);
-  // F_site (default 1.0 resident; 0.2 quick-set for anadromous salmon).
+  // F_site (default 1.0 resident; 0.2 quick-set for anadromous salmon). LOCAL.
   const [fsiteInput, setFsiteInput] = useState<string>('1.0');
 
-  // TRV is editable; seeded from the substance library row.
+  // TRV + BSAF reset contract (plan v3 section 4.6). Both fields follow
+  // the same override pattern: user edit promotes to override; Reset
+  // clears it; useEffect on [substanceKey, *IsOverride] re-seeds from the
+  // current substance library row whenever override is false.
   const [trvInput, setTrvInput] = useState<string>(
     substance?.trv_eco_mg_per_kg_bw_day != null
       ? String(substance.trv_eco_mg_per_kg_bw_day)
       : '',
   );
-  // BSAF_loc is editable; seeded from the substance library row.
+  const [trvIsOverride, setTrvIsOverride] = useState<boolean>(false);
+
   const [bsafInput, setBsafInput] = useState<string>(
     substance?.bsaf_loc_freshwater != null
       ? String(substance.bsaf_loc_freshwater)
       : '',
   );
+  const [bsafIsOverride, setBsafIsOverride] = useState<boolean>(false);
 
-  const handleSubstanceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const next = e.target.value;
-    setSubstanceKey(next);
-    const nextSub = findSubstance(next);
+  useEffect(() => {
+    if (trvIsOverride) return;
+    const next = findSubstance(substanceKey);
     setTrvInput(
-      nextSub?.trv_eco_mg_per_kg_bw_day != null
-        ? String(nextSub.trv_eco_mg_per_kg_bw_day)
+      next?.trv_eco_mg_per_kg_bw_day != null
+        ? String(next.trv_eco_mg_per_kg_bw_day)
         : '',
     );
+  }, [substanceKey, trvIsOverride]);
+
+  useEffect(() => {
+    if (bsafIsOverride) return;
+    const next = findSubstance(substanceKey);
     setBsafInput(
-      nextSub?.bsaf_loc_freshwater != null
-        ? String(nextSub.bsaf_loc_freshwater)
+      next?.bsaf_loc_freshwater != null
+        ? String(next.bsaf_loc_freshwater)
         : '',
     );
+  }, [substanceKey, bsafIsOverride]);
+
+  const handleTrvInput = (next: string): void => {
+    setTrvInput(next);
+    setTrvIsOverride(true);
+  };
+
+  const handleResetTrv = (): void => {
+    setTrvIsOverride(false);
+  };
+
+  const handleBsafInput = (next: string): void => {
+    setBsafInput(next);
+    setBsafIsOverride(true);
+  };
+
+  const handleResetBsaf = (): void => {
+    setBsafIsOverride(false);
   };
 
   const handleAnadromousQuickSet = () => {
@@ -165,7 +211,10 @@ export default function EcoFoodBSAFCalculator() {
   const ecoResult = isResult ? (result as EcoFoodBSAFResult) : null;
 
   return (
-    <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+    <section
+      data-testid="eco-food-bsaf-calculator"
+      className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm${className ? ` ${className}` : ''}`}
+    >
       <header className="mb-4">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
           Eco-Food (BSAF) -- Wildlife / Fish Receptor
@@ -177,291 +226,358 @@ export default function EcoFoodBSAFCalculator() {
           PAH bivalves apply the x15 multiplier (design doc section 8.2);
           anadromous salmonids default F_site = 0.2 (design doc section 8.4).
         </p>
+        {substance && (
+          <p
+            className="text-xs text-slate-500 dark:text-slate-400 mt-2"
+            data-testid="ecofood-substance-summary"
+          >
+            Active substance: <span className="font-semibold">{substance.displayName}</span>{' '}
+            (class: {substance.contaminantClass}).
+          </p>
+        )}
       </header>
 
-      <div className="mb-4">
-        <MathRenderer
-          content={
-            'Formula: $SedS_{eco\\text{-}food} = \\dfrac{TRV_{eco} \\cdot ' +
-            'BW_{eco}}{IR_{eco} \\cdot BSAF_{effective} \\cdot F_{site}}$, ' +
-            'with $BSAF_{effective} = BSAF_{loc} \\cdot (f_{lipid} / f_{oc}) ' +
-            '\\cdot M_{eco}$ (MeHg path skips lipid normalization).'
-          }
-        />
-      </div>
+      {/*
+        Layout per plan v3 section 1 vertical flow: inputs -> error
+        -> Preliminary Toxicity-Based Standard hero -> Technical details
+        disclosure. Same pattern as EcoDirectEqPCalculator commit 4.
+      */}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-4">
+      {/* 1. INPUTS section */}
+      <div
+        className="space-y-4 mb-6"
+        data-testid="ecofood-inputs-section"
+        aria-label="Eco-Food BSAF inputs"
+      >
+        <fieldset>
+          <legend className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            Ecosystem
+          </legend>
+          <div
+            className="flex gap-2 flex-wrap"
+            role="radiogroup"
+            aria-label="Ecosystem"
+            data-testid="ecofood-ecosystem"
+          >
+            {ECOSYSTEM_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                role="radio"
+                aria-checked={ecosystem === opt.value}
+                onClick={() => setEcosystem(opt.value)}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                  ecosystem === opt.value
+                    ? 'bg-sky-100 dark:bg-sky-900/40 border-sky-400 dark:border-sky-600 text-sky-800 dark:text-sky-200 font-semibold'
+                    : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-sky-400'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
             <label
-              htmlFor="ecofood-substance"
+              htmlFor="ecofood-bw"
               className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
-              Substance
-            </label>
-            <select
-              id="ecofood-substance"
-              value={substanceKey}
-              onChange={handleSubstanceChange}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-            >
-              {SUBSTANCE_LIBRARY.filter(
-                (s) =>
-                  s.bsaf_loc_freshwater !== null && s.bsaf_loc_freshwater > 0,
-              ).map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.displayName}
-                </option>
-              ))}
-            </select>
-            {substance && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Class: {substance.contaminantClass}
-              </p>
-            )}
-          </div>
-
-          <fieldset>
-            <legend className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Ecosystem
-            </legend>
-            <div
-              className="flex gap-2 flex-wrap"
-              role="radiogroup"
-              aria-label="Ecosystem"
-              data-testid="ecofood-ecosystem"
-            >
-              {ECOSYSTEM_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={ecosystem === opt.value}
-                  onClick={() => setEcosystem(opt.value)}
-                  className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                    ecosystem === opt.value
-                      ? 'bg-sky-100 dark:bg-sky-900/40 border-sky-400 dark:border-sky-600 text-sky-800 dark:text-sky-200 font-semibold'
-                      : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-sky-400'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label
-                htmlFor="ecofood-bw"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-              >
-                BW_eco (kg)
-              </label>
-              <input
-                id="ecofood-bw"
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                value={bwInput}
-                onChange={(e) => setBwInput(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-              />
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Default 0.85 (mink piscivore).
-              </p>
-            </div>
-            <div>
-              <label
-                htmlFor="ecofood-ir"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-              >
-                IR_eco (kg-wet/day)
-              </label>
-              <input
-                id="ecofood-ir"
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                value={irInput}
-                onChange={(e) => setIrInput(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-              />
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Default 0.18 (mink daily diet).
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label
-                htmlFor="ecofood-flipid"
-                className="text-sm font-bold text-slate-700 dark:text-slate-300"
-              >
-                Tissue lipid fraction (f<sub>lipid</sub>)
-              </label>
-              <span className="text-sm font-mono text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded shadow-sm">
-                {fLipidPercent.toFixed(2)} %
-              </span>
-            </div>
-            <input
-              id="ecofood-flipid"
-              type="range"
-              min="1"
-              max="15"
-              step="0.1"
-              value={fLipidPercent}
-              onChange={(e) => {
-                const v = parseFloat(e.target.value);
-                if (Number.isFinite(v)) setFLipidPercent(v);
-              }}
-              className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-600"
-            />
-            <div className="flex justify-between text-xs text-slate-400 mt-1">
-              <span>1%</span>
-              <span>Screening window: 1% -- 15%</span>
-              <span>15%</span>
-            </div>
-          </div>
-
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <label
-                htmlFor="ecofood-foc"
-                className="text-sm font-bold text-slate-700 dark:text-slate-300"
-              >
-                Sediment f<sub>oc</sub>
-              </label>
-              <span className="text-sm font-mono text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded shadow-sm">
-                {focPercent.toFixed(2)} %
-              </span>
-            </div>
-            <input
-              id="ecofood-foc"
-              type="range"
-              min="0.1"
-              max="15"
-              step="0.1"
-              value={focPercent}
-              onChange={(e) => {
-                const v = parseFloat(e.target.value);
-                if (Number.isFinite(v)) setFocPercent(v);
-              }}
-              className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-600"
-            />
-            <div className="flex justify-between text-xs text-slate-400 mt-1">
-              <span>0.1%</span>
-              <span>EqP window: 0.2% -- 10%</span>
-              <span>15%</span>
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="ecofood-fsite"
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-            >
-              F_site (site-use fraction)
+              BW_eco (kg)
             </label>
             <input
-              id="ecofood-fsite"
+              id="ecofood-bw"
               type="number"
               inputMode="decimal"
               step="0.01"
-              value={fsiteInput}
-              onChange={(e) => setFsiteInput(e.target.value)}
+              value={bwInput}
+              onChange={(e) => setBwInput(e.target.value)}
               className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
             />
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={handleResidentQuickSet}
-                data-testid="ecofood-fsite-resident"
-                className="px-2.5 py-1 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-sky-400"
-              >
-                Resident (1.0)
-              </button>
-              <button
-                type="button"
-                onClick={handleAnadromousQuickSet}
-                data-testid="ecofood-fsite-anadromous"
-                className="px-2.5 py-1 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-sky-400"
-              >
-                Anadromous salmon (0.2)
-              </button>
-            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Default 0.85 (mink piscivore).
+            </p>
           </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label
-                htmlFor="ecofood-trv"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-              >
-                TRV_eco (mg/kg-bw/day)
-              </label>
-              <input
-                id="ecofood-trv"
-                type="number"
-                inputMode="decimal"
-                step="0.0001"
-                value={trvInput}
-                onChange={(e) => setTrvInput(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-              />
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Seeded from substance library; HITL overrides.
-              </p>
-            </div>
-            <div>
-              <label
-                htmlFor="ecofood-bsaf"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-              >
-                BSAF_loc (freshwater)
-              </label>
-              <input
-                id="ecofood-bsaf"
-                type="number"
-                inputMode="decimal"
-                step="0.1"
-                value={bsafInput}
-                onChange={(e) => setBsafInput(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-              />
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                MeHg uses protein-normalized BSAF directly.
-              </p>
-            </div>
+          <div>
+            <label
+              htmlFor="ecofood-ir"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >
+              IR_eco (kg-wet/day)
+            </label>
+            <input
+              id="ecofood-ir"
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              value={irInput}
+              onChange={(e) => setIrInput(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+            />
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Default 0.18 (mink daily diet).
+            </p>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="bg-sky-50 dark:bg-sky-900/20 rounded-xl p-6 text-center border border-sky-100 dark:border-sky-800 shadow-inner">
-            <div className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-widest mb-1">
-              SedS (Eco-Food BSAF)
-            </div>
-            <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
-              {ecoResult && !ecoResult.blocked
-                ? ecoResult.sedS.toPrecision(4)
-                : '--'}{' '}
-              <span className="text-lg text-slate-500 font-medium">
-                mg/kg dry
-              </span>
-            </div>
-            {ecoResult && ecoResult.blocked && (
-              <div
-                className="mt-3 inline-block px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200"
-                data-testid="ecofood-blocked"
-              >
-                Diagnostic only (blocked by input validity)
-              </div>
-            )}
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label
+              htmlFor="ecofood-flipid"
+              className="text-sm font-bold text-slate-700 dark:text-slate-300"
+            >
+              Tissue lipid fraction (f<sub>lipid</sub>)
+            </label>
+            <span className="text-sm font-mono text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded shadow-sm">
+              {fLipidPercent.toFixed(2)} %
+            </span>
           </div>
+          <input
+            id="ecofood-flipid"
+            type="range"
+            min="1"
+            max="15"
+            step="0.1"
+            value={fLipidPercent}
+            onChange={(e) => {
+              const v = parseFloat(e.target.value);
+              if (Number.isFinite(v)) setFLipidPercent(v);
+            }}
+            className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-600"
+          />
+          <div className="flex justify-between text-xs text-slate-400 mt-1">
+            <span>1%</span>
+            <span>Screening window: 1% -- 15%</span>
+            <span>15%</span>
+          </div>
+        </div>
+
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <label
+              htmlFor="ecofood-foc"
+              className="text-sm font-bold text-slate-700 dark:text-slate-300"
+            >
+              Sediment f<sub>oc</sub>
+            </label>
+            <span className="text-sm font-mono text-slate-500 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 rounded shadow-sm">
+              {focPercent.toFixed(2)} %
+            </span>
+          </div>
+          <input
+            id="ecofood-foc"
+            type="range"
+            min="0.1"
+            max="15"
+            step="0.1"
+            value={focPercent}
+            onChange={(e) => {
+              const v = parseFloat(e.target.value);
+              if (Number.isFinite(v)) setFocPercent(v);
+            }}
+            className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-sky-600"
+          />
+          <div className="flex justify-between text-xs text-slate-400 mt-1">
+            <span>0.1%</span>
+            <span>EqP window: 0.2% -- 10%</span>
+            <span>15%</span>
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="ecofood-fsite"
+            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+          >
+            F_site (site-use fraction)
+          </label>
+          <input
+            id="ecofood-fsite"
+            type="number"
+            inputMode="decimal"
+            step="0.01"
+            value={fsiteInput}
+            onChange={(e) => setFsiteInput(e.target.value)}
+            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+          />
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleResidentQuickSet}
+              data-testid="ecofood-fsite-resident"
+              className="px-2.5 py-1 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-sky-400"
+            >
+              Resident (1.0)
+            </button>
+            <button
+              type="button"
+              onClick={handleAnadromousQuickSet}
+              data-testid="ecofood-fsite-anadromous"
+              className="px-2.5 py-1 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-sky-400"
+            >
+              Anadromous salmon (0.2)
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label
+                htmlFor="ecofood-trv"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >
+                TRV_eco (mg/kg-bw/day)
+              </label>
+              {trvIsOverride && (
+                <span
+                  className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800"
+                  data-testid="ecofood-trv-override-badge"
+                >
+                  User override
+                </span>
+              )}
+            </div>
+            <input
+              id="ecofood-trv"
+              type="number"
+              inputMode="decimal"
+              step="0.0001"
+              value={trvInput}
+              onChange={(e) => handleTrvInput(e.target.value)}
+              data-testid="ecofood-trv-input"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+            />
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Seeded from substance library; HITL overrides.
+              </p>
+              {trvIsOverride && (
+                <button
+                  type="button"
+                  onClick={handleResetTrv}
+                  data-testid="ecofood-trv-reset"
+                  className="text-xs font-semibold text-sky-700 dark:text-sky-400 hover:text-sky-900 dark:hover:text-sky-200 underline underline-offset-2"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label
+                htmlFor="ecofood-bsaf"
+                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              >
+                BSAF_loc (freshwater)
+              </label>
+              {bsafIsOverride && (
+                <span
+                  className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800"
+                  data-testid="ecofood-bsaf-override-badge"
+                >
+                  User override
+                </span>
+              )}
+            </div>
+            <input
+              id="ecofood-bsaf"
+              type="number"
+              inputMode="decimal"
+              step="0.1"
+              value={bsafInput}
+              onChange={(e) => handleBsafInput(e.target.value)}
+              data-testid="ecofood-bsaf-input"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+            />
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                MeHg uses protein-normalized BSAF directly.
+              </p>
+              {bsafIsOverride && (
+                <button
+                  type="button"
+                  onClick={handleResetBsaf}
+                  data-testid="ecofood-bsaf-reset"
+                  className="text-xs font-semibold text-sky-700 dark:text-sky-400 hover:text-sky-900 dark:hover:text-sky-200 underline underline-offset-2"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. ERROR box */}
+      {result && 'error' in result && (
+        <div
+          className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-xl p-4 text-sm text-rose-800 dark:text-rose-200 mb-6"
+          data-testid="ecofood-error"
+        >
+          {result.error}
+        </div>
+      )}
+
+      {/* 3. PRELIMINARY TOXICITY-BASED STANDARD hero */}
+      <div
+        className="bg-sky-50 dark:bg-sky-900/20 rounded-xl p-6 text-center border border-sky-100 dark:border-sky-800 shadow-inner mb-6"
+        data-testid="ecofood-preliminary-standard"
+        aria-label="Preliminary Toxicity-Based Standard (Eco-Food BSAF)"
+      >
+        <div className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-widest mb-1">
+          Preliminary Toxicity-Based Standard (Eco-Food BSAF)
+        </div>
+        <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
+          {ecoResult && !ecoResult.blocked
+            ? ecoResult.sedS.toPrecision(4)
+            : '--'}{' '}
+          <span className="text-lg text-slate-500 font-medium">
+            mg/kg dry
+          </span>
+        </div>
+        {ecoResult && ecoResult.blocked && (
+          <div
+            className="mt-3 inline-block px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200"
+            data-testid="ecofood-blocked"
+          >
+            Diagnostic only (blocked by input validity)
+          </div>
+        )}
+        <p className="text-[11px] text-sky-700 dark:text-sky-400 mt-3 italic">
+          Preliminary -- not a final standard. HITL professional judgment +
+          Background Adjustment apply downstream.
+        </p>
+      </div>
+
+      {/* 4. TECHNICAL DETAILS disclosure */}
+      <details
+        className="group bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden"
+        data-testid="ecofood-technical-details"
+      >
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 select-none flex items-center justify-between">
+          <span>Technical details (formula + intermediate quantities)</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 group-open:hidden">
+            show
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 hidden group-open:inline">
+            hide
+          </span>
+        </summary>
+        <div className="px-4 py-4 space-y-4 border-t border-slate-200 dark:border-slate-800">
+          <MathRenderer
+            content={
+              'Formula: $SedS_{eco\\text{-}food} = \\dfrac{TRV_{eco} \\cdot ' +
+              'BW_{eco}}{IR_{eco} \\cdot BSAF_{effective} \\cdot F_{site}}$, ' +
+              'with $BSAF_{effective} = BSAF_{loc} \\cdot (f_{lipid} / f_{oc}) ' +
+              '\\cdot M_{eco}$ (MeHg path skips lipid normalization).'
+            }
+          />
 
           {ecoResult && (
-            <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 rounded-xl p-4 space-y-2 text-sm">
+            <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">M_eco</span>
                 <span
@@ -483,18 +599,9 @@ export default function EcoFoodBSAFCalculator() {
             </div>
           )}
 
-          {result && 'error' in result && (
-            <div
-              className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-xl p-4 text-sm text-rose-800 dark:text-rose-200"
-              data-testid="ecofood-error"
-            >
-              {result.error}
-            </div>
-          )}
-
           {ecoResult && ecoResult.warnings.length > 0 && (
             <div
-              className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 text-sm text-amber-800 dark:text-amber-200 space-y-2"
+              className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 text-sm text-amber-800 dark:text-amber-200 space-y-2"
               data-testid="ecofood-warnings"
             >
               <div className="font-semibold">Warnings</div>
@@ -506,7 +613,7 @@ export default function EcoFoodBSAFCalculator() {
             </div>
           )}
         </div>
-      </div>
+      </details>
     </section>
   );
 }
