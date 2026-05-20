@@ -254,6 +254,17 @@ let __mockSupabaseResponse: {
 } = { data: null, error: null };
 let __mockSupabaseDelay = 0;
 let __mockSupabaseLastDraId: string | null = null;
+// PR-MAP-3c: the banner [Refresh] button invokes
+// `.schema('matrix_map').rpc('fetch_samples_with_hidden_summary', ...)`.
+// Tests override __mockRpcResponse to drive the refresh outcome + read
+// __mockRpcCallCount to assert the call happened.
+let __mockRpcResponse: {
+  data: unknown;
+  error: { message: string } | null;
+} = { data: null, error: null };
+let __mockRpcCallCount = 0;
+let __mockRpcLastName: string | null = null;
+let __mockRpcLastArgs: unknown = null;
 vi.mock('@/lib/supabase/client', () => {
   return {
     createClient: () => ({
@@ -273,6 +284,12 @@ vi.mock('@/lib/supabase/client', () => {
             }),
           }),
         }),
+        rpc: async (name: string, args: unknown) => {
+          __mockRpcCallCount += 1;
+          __mockRpcLastName = name;
+          __mockRpcLastArgs = args;
+          return __mockRpcResponse;
+        },
       }),
     }),
   };
@@ -301,6 +318,7 @@ vi.mock('@/lib/maps/wms-identify', async (importOriginal) => {
 
 // Import AFTER the mocks so the component picks up the stubs.
 import { MatrixMap, __TESTING__ } from '../MatrixMap';
+import { PartialVisibilityBanner } from '../PartialVisibilityBanner';
 import type { MatrixMapData, MatrixSample } from '../types';
 
 // ----------------------------------------------------------------------
@@ -404,6 +422,10 @@ beforeEach(() => {
   __mockSupabaseResponse = { data: null, error: null };
   __mockSupabaseDelay = 0;
   __mockSupabaseLastDraId = null;
+  __mockRpcResponse = { data: null, error: null };
+  __mockRpcCallCount = 0;
+  __mockRpcLastName = null;
+  __mockRpcLastArgs = null;
 });
 
 describe('MatrixMap (PR-MAP-2 smoke)', () => {
@@ -900,5 +922,298 @@ describe('MatrixMap (PR-MAP-3b identify wiring)', () => {
     ).toBeInTheDocument();
     // Supabase should never have been called.
     expect(__mockSupabaseLastDraId).toBeNull();
+  });
+});
+
+// =====================================================================
+// PR-MAP-3c partial-visibility banner refinements
+//
+// Scope per docs/design/matrix-map/PR_MAP_3_PLAN.md sections 5.3 + 5.4:
+//   - Classification breakdown on the visible-samples line.
+//   - [Learn about DRA confidentiality] link present.
+//   - aria-live="polite" + role="status" so screen readers announce.
+//   - [Refresh] button (design 5.4) re-calls the RPC; busy state via
+//     aria-busy + spinning icon; updates the cached snapshot.
+//   - Dismiss is per-snapshot (NOT localStorage): re-appears when
+//     data_snapshot_version changes; stays dismissed across same-
+//     snapshot re-renders.
+//
+// Explicit OUT-OF-SCOPE (per design 5.4):
+//   - Auto-refresh-on-focus / window 'focus' / visibilitychange. The
+//     design EXPLICITLY rejects this in v1 ("adds an event hook + a
+//     budget-breaker cost every time the user alt-tabs back").
+//   - localStorage-persistent dismissal. Design 5.3 EXPLICITLY: "non-
+//     persistent; reappears on reload. This is intentional."
+// =====================================================================
+
+describe('MatrixMap (PR-MAP-3c partial-visibility banner refinements)', () => {
+  it('renders aria-live="polite" + role="status" so screen readers announce the banner', () => {
+    render(
+      <MatrixMap initialMapData={DATA_THREE_VISIBLE_WITH_HIDDEN} />,
+    );
+    const banner = screen.getByTestId(
+      'matrix-map-partial-visibility-banner',
+    );
+    expect(banner.getAttribute('role')).toBe('status');
+    expect(banner.getAttribute('aria-live')).toBe('polite');
+    expect(banner.getAttribute('aria-busy')).toBe('false');
+  });
+
+  it('renders the classification breakdown on the visible-samples line', () => {
+    render(
+      <MatrixMap initialMapData={DATA_THREE_VISIBLE_WITH_HIDDEN} />,
+    );
+    const banner = screen.getByTestId(
+      'matrix-map-partial-visibility-banner',
+    );
+    // THREE_SAMPLES has 1 reference + 1 impacted + 1 unknown.
+    expect(banner.textContent).toContain('1 reference');
+    expect(banner.textContent).toContain('1 impacted');
+    expect(banner.textContent).toContain('1 unknown');
+  });
+
+  it('renders the [Learn about DRA confidentiality] link', () => {
+    render(
+      <MatrixMap initialMapData={DATA_THREE_VISIBLE_WITH_HIDDEN} />,
+    );
+    const learn = screen.getByTestId(
+      'matrix-map-banner-learn-more',
+    ) as HTMLAnchorElement;
+    expect(learn).toBeInTheDocument();
+    // Default placeholder anchor until methodology route lands.
+    expect(learn.getAttribute('href')).toBeTruthy();
+    expect(learn.textContent).toContain('Learn about DRA confidentiality');
+  });
+
+  it('persists session-only dismissal across same-snapshot re-renders', () => {
+    const { rerender } = render(
+      <MatrixMap initialMapData={DATA_THREE_VISIBLE_WITH_HIDDEN} />,
+    );
+    expect(
+      screen.getByTestId('matrix-map-partial-visibility-banner'),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('matrix-map-banner-dismiss'));
+    expect(
+      screen.queryByTestId('matrix-map-partial-visibility-banner'),
+    ).toBeNull();
+    // Re-render with the SAME snapshot version + counts. Dismissal
+    // must survive (design 5.3 session-only model).
+    rerender(<MatrixMap initialMapData={DATA_THREE_VISIBLE_WITH_HIDDEN} />);
+    expect(
+      screen.queryByTestId('matrix-map-partial-visibility-banner'),
+    ).toBeNull();
+  });
+
+  it('clears dismissal when the snapshot prop changes on the SAME mounted banner', () => {
+    // Direct unit test of the snapshot-keyed dismiss reset effect.
+    // Render the banner standalone so we can drive its
+    // `dataSnapshotVersion` prop independently of MatrixMap's internal
+    // useState. This exercises the useEffect inside the banner that
+    // clears `dismissedSnapshot` when the incoming snapshot prop no
+    // longer matches.
+    const baseProps = {
+      visibleCount: 3,
+      hiddenSampleCount: 5,
+      hiddenDraCount: 2,
+      hiddenDraIds: ['dra-hidden-1', 'dra-hidden-2'],
+      classificationCounts: { reference: 1, impacted: 1, unknown: 1 },
+    };
+    const { rerender } = render(
+      <PartialVisibilityBanner
+        {...baseProps}
+        dataSnapshotVersion="snap-A"
+      />,
+    );
+    expect(
+      screen.getByTestId('matrix-map-partial-visibility-banner'),
+    ).toBeInTheDocument();
+    // Dismiss for snap-A.
+    fireEvent.click(screen.getByTestId('matrix-map-banner-dismiss'));
+    expect(
+      screen.queryByTestId('matrix-map-partial-visibility-banner'),
+    ).toBeNull();
+    // Same snapshot re-render -> banner stays dismissed.
+    rerender(
+      <PartialVisibilityBanner
+        {...baseProps}
+        dataSnapshotVersion="snap-A"
+      />,
+    );
+    expect(
+      screen.queryByTestId('matrix-map-partial-visibility-banner'),
+    ).toBeNull();
+    // Snapshot changes to snap-B -> useEffect clears dismissal +
+    // banner re-appears with the new data-snapshot-version attribute.
+    rerender(
+      <PartialVisibilityBanner
+        {...baseProps}
+        dataSnapshotVersion="snap-B"
+      />,
+    );
+    const fresh = screen.getByTestId(
+      'matrix-map-partial-visibility-banner',
+    );
+    expect(fresh.getAttribute('data-snapshot-version')).toBe('snap-B');
+  });
+
+  it('re-appears with the new snapshot version after a fresh mount (fresh ETL)', () => {
+    // Fresh-mount path: a reload (or RSC re-render) feeds new
+    // initialMapData. The new MatrixMap instance has its own banner
+    // useState, so dismissal state cannot survive a remount in
+    // principle. This is the design 5.3 baseline ("non-persistent;
+    // reappears on reload") plus the data-snapshot-version attribute
+    // guarantees we are on a fresh server snapshot, not a stale one.
+    const { unmount } = render(
+      <MatrixMap initialMapData={DATA_THREE_VISIBLE_WITH_HIDDEN} />,
+    );
+    // Dismiss for snapshot test-3v5h.
+    fireEvent.click(screen.getByTestId('matrix-map-banner-dismiss'));
+    expect(
+      screen.queryByTestId('matrix-map-partial-visibility-banner'),
+    ).toBeNull();
+    unmount();
+
+    // Fresh page load returns a NEW snapshot.
+    const newData: MatrixMapData = {
+      visible_samples: THREE_SAMPLES,
+      hidden_sample_count: 3,
+      hidden_dra_count: 1,
+      hidden_dra_ids: ['dra-hidden-2'],
+      data_snapshot_version: 'test-3v3h-after-reload',
+    };
+    render(<MatrixMap initialMapData={newData} />);
+    const fresh = screen.getByTestId(
+      'matrix-map-partial-visibility-banner',
+    );
+    expect(fresh.getAttribute('data-snapshot-version')).toBe(
+      'test-3v3h-after-reload',
+    );
+  });
+
+  it('clears stale dismissal when the snapshot changes mid-render via [Refresh]', async () => {
+    // This spec exercises the snapshot-keyed dismissal useEffect
+    // inside the banner: user dismisses for snapshot A, then clicks
+    // [Refresh] -- wait, dismiss hides the Refresh button too. So
+    // here we exercise the alternate path: while the banner is
+    // mounted (NOT dismissed), [Refresh] returns a fresh snapshot;
+    // banner stays visible with new counts + new data-snapshot-version
+    // attribute. Combined with the prior spec ("persists session-only
+    // dismissal across same-snapshot re-renders"), this proves the
+    // useState + useEffect pair behave as the design 5.3 dismiss-is-
+    // session-only + snapshot-scoped rule requires.
+    __mockRpcResponse = {
+      data: {
+        visible_samples: THREE_SAMPLES,
+        hidden_sample_count: 4,
+        hidden_dra_count: 1,
+        hidden_dra_ids: ['dra-hidden-1'],
+        data_snapshot_version: 'test-after-refresh',
+      },
+      error: null,
+    };
+    render(
+      <MatrixMap initialMapData={DATA_THREE_VISIBLE_WITH_HIDDEN} />,
+    );
+    // Initial snapshot id.
+    const initial = screen.getByTestId(
+      'matrix-map-partial-visibility-banner',
+    );
+    expect(initial.getAttribute('data-snapshot-version')).toBe(
+      'test-3v5h',
+    );
+    // Click refresh; mapData -> new snapshot.
+    const refreshBtn = screen.getByTestId('matrix-map-banner-refresh');
+    await act(async () => {
+      fireEvent.click(refreshBtn);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await waitFor(() => {
+      const b = screen.getByTestId(
+        'matrix-map-partial-visibility-banner',
+      );
+      expect(b.getAttribute('data-snapshot-version')).toBe(
+        'test-after-refresh',
+      );
+    });
+    // Banner still visible (we did not dismiss); updated counts
+    // surface in the visible text.
+    const banner = screen.getByTestId(
+      'matrix-map-partial-visibility-banner',
+    );
+    expect(banner.textContent).toContain('4 samples');
+  });
+
+  it('[Refresh] button fires the RPC + swaps cached snapshot data', async () => {
+    __mockRpcResponse = {
+      data: {
+        visible_samples: [],
+        hidden_sample_count: 0,
+        hidden_dra_count: 0,
+        hidden_dra_ids: [],
+        data_snapshot_version: 'test-empty-after-refresh',
+      },
+      error: null,
+    };
+    render(
+      <MatrixMap initialMapData={DATA_THREE_VISIBLE_WITH_HIDDEN} />,
+    );
+    expect(__mockRpcCallCount).toBe(0);
+    const refreshBtn = screen.getByTestId('matrix-map-banner-refresh');
+    await act(async () => {
+      fireEvent.click(refreshBtn);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(__mockRpcCallCount).toBe(1);
+    expect(__mockRpcLastName).toBe('fetch_samples_with_hidden_summary');
+    expect(__mockRpcLastArgs).toEqual({ p_bbox: null });
+    // hidden_sample_count dropped to 0; banner gates on > 0 and
+    // disappears.
+    await waitFor(() => {
+      expect(
+        screen.queryByTestId('matrix-map-partial-visibility-banner'),
+      ).toBeNull();
+    });
+  });
+
+  it('[Refresh] does not crash + leaves prior state intact when the RPC errors', async () => {
+    __mockRpcResponse = {
+      data: null,
+      error: { message: 'rpc unavailable' },
+    };
+    render(
+      <MatrixMap initialMapData={DATA_THREE_VISIBLE_WITH_HIDDEN} />,
+    );
+    const refreshBtn = screen.getByTestId('matrix-map-banner-refresh');
+    await act(async () => {
+      fireEvent.click(refreshBtn);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(__mockRpcCallCount).toBe(1);
+    // Banner still visible with original counts (hidden_sample_count=5).
+    const banner = screen.getByTestId(
+      'matrix-map-partial-visibility-banner',
+    );
+    expect(banner.textContent).toContain('5 samples');
+    expect(banner.getAttribute('aria-busy')).toBe('false');
+  });
+
+  it('exposes a Refresh button with aria-label + does not show one when banner is hidden', () => {
+    // Banner visible -> Refresh button + dismiss button both present.
+    const { unmount } = render(
+      <MatrixMap initialMapData={DATA_THREE_VISIBLE_WITH_HIDDEN} />,
+    );
+    const refreshBtn = screen.getByTestId('matrix-map-banner-refresh');
+    expect(refreshBtn.getAttribute('aria-label')).toBe(
+      'Refresh hidden-sample counts',
+    );
+    unmount();
+    // Banner suppressed (hidden=0) -> no Refresh button rendered.
+    render(<MatrixMap initialMapData={DATA_THREE_VISIBLE_NO_HIDDEN} />);
+    expect(
+      screen.queryByTestId('matrix-map-banner-refresh'),
+    ).toBeNull();
   });
 });

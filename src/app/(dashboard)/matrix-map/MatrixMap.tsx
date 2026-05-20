@@ -69,7 +69,10 @@ import {
 import { createClient } from '@/lib/supabase/client';
 
 import { IdentifyPanel } from './IdentifyPanel';
-import { PartialVisibilityBanner } from './PartialVisibilityBanner';
+import {
+  PartialVisibilityBanner,
+  type ClassificationCounts,
+} from './PartialVisibilityBanner';
 import { SampleLegend } from './SampleLegend';
 import { SampleMarkersLayer } from './SampleMarkersLayer';
 import {
@@ -324,13 +327,15 @@ export function MatrixMap({
 }: MatrixMapProps = {}) {
   const [state, setState] = useState<MapState>(INITIAL_STATE);
   const [panelExpanded, setPanelExpanded] = useState<boolean>(true);
-  // Sample data is stored in client state so future identify/refresh
-  // surfaces (PR-MAP-3b, PR-MAP-3c [Refresh] button) can mutate it. In
-  // 3a the setter is unused; that's intentional. The leading `_` opt-
-  // out keeps the unused-var lint clean until 3b wires the refresh path.
-  const [mapData] = useState<MatrixMapData>(
+  // Sample data is stored in client state so the PR-MAP-3c [Refresh]
+  // banner button can swap in a fresh RPC payload without a full page
+  // reload. The setter is wired into `handleBannerRefresh` below.
+  const [mapData, setMapData] = useState<MatrixMapData>(
     initialMapData ?? EMPTY_MATRIX_MAP_DATA,
   );
+  // PR-MAP-3c: tracks the in-flight Refresh-button RPC call so the
+  // banner can render a busy state + suppress double-clicks.
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // PR-MAP-3b identify state. null = nothing identified; the panel is
   // hidden. Setting to a sample/overlay variant opens the panel + (for
@@ -560,6 +565,69 @@ export function MatrixMap({
     setIdentifyState(null);
   }, []);
 
+  // -----------------------------------------------------------------
+  // PR-MAP-3c partial-visibility banner refinements
+  // -----------------------------------------------------------------
+
+  // Classification breakdown for the visible-samples line in the
+  // banner. Computed deterministically from the same array the markers
+  // render, so it matches what the user sees on the map. Stable across
+  // re-renders via useMemo so the banner receives a referentially-
+  // consistent prop while sample state is unchanged.
+  const classificationCounts = useMemo<ClassificationCounts>(() => {
+    const counts: ClassificationCounts = {
+      reference: 0,
+      impacted: 0,
+      unknown: 0,
+    };
+    for (const s of mapData.visible_samples) {
+      counts[s.classification] += 1;
+    }
+    return counts;
+  }, [mapData.visible_samples]);
+
+  // [Refresh] button handler. Per design 5.4: one supabase_reads
+  // increment per click; re-calls fetch_samples_with_hidden_summary and
+  // swaps the cached mapData. Errors are swallowed for v1 (the banner
+  // simply stops spinning + the prior state remains) -- a future PR
+  // can surface a toast / inline error if HITL feedback requests it.
+  const handleBannerRefresh = useCallback(async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .schema('matrix_map')
+        .rpc('fetch_samples_with_hidden_summary', { p_bbox: null });
+      if (error || !data) return;
+      const parsed = data as unknown as Partial<MatrixMapData>;
+      setMapData({
+        visible_samples: Array.isArray(parsed.visible_samples)
+          ? (parsed.visible_samples as MatrixSample[])
+          : [],
+        hidden_sample_count:
+          typeof parsed.hidden_sample_count === 'number'
+            ? parsed.hidden_sample_count
+            : 0,
+        hidden_dra_count:
+          typeof parsed.hidden_dra_count === 'number'
+            ? parsed.hidden_dra_count
+            : 0,
+        hidden_dra_ids: Array.isArray(parsed.hidden_dra_ids)
+          ? (parsed.hidden_dra_ids as string[])
+          : [],
+        data_snapshot_version:
+          typeof parsed.data_snapshot_version === 'string'
+            ? parsed.data_snapshot_version
+            : 'unknown',
+      });
+    } catch {
+      // Best-effort -- a transport failure leaves prior state intact.
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isRefreshing]);
+
   return (
     <div
       className="relative h-full w-full bg-slate-100"
@@ -743,13 +811,20 @@ export function MatrixMap({
           is null. */}
       <IdentifyPanel state={identifyState} onClose={handleIdentifyClose} />
 
-      {/* Partial-visibility banner -- Q-8: only when hidden_sample_count > 0 */}
+      {/* Partial-visibility banner -- Q-8: only when hidden_sample_count > 0.
+          PR-MAP-3c refinements: classification breakdown on visible-samples
+          line; [Refresh] button (design 5.4); snapshot-scoped dismiss so a
+          fresh RPC payload re-shows the banner without a reload. */}
       {mapData.hidden_sample_count > 0 ? (
         <PartialVisibilityBanner
           visibleCount={mapData.visible_samples.length}
           hiddenSampleCount={mapData.hidden_sample_count}
           hiddenDraCount={mapData.hidden_dra_count}
           hiddenDraIds={mapData.hidden_dra_ids}
+          dataSnapshotVersion={mapData.data_snapshot_version}
+          classificationCounts={classificationCounts}
+          onRefresh={handleBannerRefresh}
+          isRefreshing={isRefreshing}
         />
       ) : null}
 
