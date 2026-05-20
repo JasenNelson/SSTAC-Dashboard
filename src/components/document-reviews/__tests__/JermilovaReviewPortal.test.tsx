@@ -513,16 +513,31 @@ second body
   });
 
   // -------------------------------------------------------------------------
-  // Panel-collapse controls (2026-05-17 layout fix)
+  // REGRESSION GUARDS -- Panel-collapse controls (2026-05-17 layout fix)
   //
-  // The portal now owns live toggle state for the TOC + Comments panels.
+  // The portal owns live toggle state for the TOC + Comments panels.
   // Props are initial-state defaults only (initialShowLeftPanel /
   // initialShowRightPanel). Toggle UI: in-header collapse buttons + floating
   // reopen handles when collapsed. aria-expanded + aria-controls wired to
   // stable element ids.
+  //
+  // !! DO NOT DELETE THESE 7 TESTS DURING LINT / TEST / CODEX CLEANUP !!
+  // History: the feature + these tests were silently wiped from main in a
+  // prior cleanup pass (owner had to re-implement multiple times). The
+  // restoration PR #138 (2026-05-20) brought them back; the `REGRESSION:`
+  // prefix on the test names is the at-a-glance signal that these tests
+  // are LOAD-BEARING and exist to lock the panel-collapse feature.
+  //
+  // Standing rule: cross_project_never_delete_regression_tests_during_cleanup
+  // (HIGH AUTHORITY; load-bearing). If one of these tests starts failing,
+  // FIX the test (update prop name / import / selector) rather than
+  // delete it; deleting strips the safety net that prevents future
+  // regressions from passing gates silently.
+  //
+  // Registry: docs/regression-watch.md
   // -------------------------------------------------------------------------
 
-  it('renders both panels open by default with collapse buttons visible (no reopen handles)', async () => {
+  it('REGRESSION: renders both panels open by default with collapse buttons visible (no reopen handles)', async () => {
     const lookup = buildSelectChain({ data: null, error: null });
     mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
     render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} />);
@@ -534,7 +549,7 @@ second body
     expect(screen.queryByTestId('twg-comments-reopen')).not.toBeInTheDocument();
   });
 
-  it('TOC collapse: clicking the in-header collapse button hides the panel and shows the floating reopen handle', async () => {
+  it('REGRESSION: TOC collapse hides the panel and shows the floating reopen handle', async () => {
     const lookup = buildSelectChain({ data: null, error: null });
     mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
     render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} />);
@@ -551,7 +566,7 @@ second body
     expect(reopenHandle).toHaveAttribute('aria-controls', 'twg-toc-panel');
   });
 
-  it('TOC reopen: clicking the floating reopen handle restores the panel', async () => {
+  it('REGRESSION: TOC reopen restores the panel from the floating reopen handle', async () => {
     const lookup = buildSelectChain({ data: null, error: null });
     mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
     render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} initialShowLeftPanel={false} />);
@@ -566,7 +581,7 @@ second body
     });
   });
 
-  it('Comments collapse: clicking the in-header collapse button hides the panel and shows the floating reopen handle', async () => {
+  it('REGRESSION: Comments collapse hides the panel and shows the floating reopen handle', async () => {
     const lookup = buildSelectChain({ data: null, error: null });
     mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
     render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} />);
@@ -580,7 +595,7 @@ second body
     expect(reopenHandle).toHaveAttribute('aria-controls', 'twg-comments-panel');
   });
 
-  it('TOC collapse: focus moves from in-header collapse button to the floating reopen handle (WCAG 2.4.3)', async () => {
+  it('REGRESSION: TOC collapse moves focus to the floating reopen handle (WCAG 2.4.3)', async () => {
     const lookup = buildSelectChain({ data: null, error: null });
     mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
     render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} />);
@@ -598,7 +613,7 @@ second body
     });
   });
 
-  it('TOC reopen: focus moves from the reopen handle back to the in-header collapse button', async () => {
+  it('REGRESSION: TOC reopen moves focus back to the in-header collapse button', async () => {
     const lookup = buildSelectChain({ data: null, error: null });
     mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
     render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} initialShowLeftPanel={false} />);
@@ -612,7 +627,7 @@ second body
     });
   });
 
-  it('initialShowRightPanel={false} starts with Comments collapsed (reopen handle visible, panel inert)', async () => {
+  it('REGRESSION: initialShowRightPanel=false starts Comments collapsed (reopen handle visible, panel inert)', async () => {
     const lookup = buildSelectChain({ data: null, error: null });
     mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate });
     render(<JermilovaReviewPortal methodologyContent={'## A\nbody'} initialShowRightPanel={false} />);

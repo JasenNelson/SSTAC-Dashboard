@@ -24,6 +24,31 @@
 // Same prototype-pollution-safe shape as TWGReviewPortal: all comment
 // maps use Object.create(null), reserved keys are filtered everywhere a
 // user-controlled string could end up as a key.
+//
+// !! LOAD-BEARING UI FEATURES (do NOT remove during cleanup) !!
+//
+// Panel-collapse toggle controls (2026-05-17 layout fix; restored via
+// PR #138 on 2026-05-20 after silent regression):
+//   - The portal owns LIVE toggle state for the TOC + Comments side
+//     panels. Props `initialShowLeftPanel` / `initialShowRightPanel`
+//     seed the FIRST render only; subsequent prop changes are
+//     intentionally ignored so a parent re-render does not overwrite
+//     a user's manual collapse.
+//   - In-header collapse buttons (`twg-toc-collapse` + `twg-comments-collapse`)
+//     and floating reopen handles (`twg-toc-reopen` + `twg-comments-reopen`).
+//   - aria-expanded + aria-controls wired to stable element ids
+//     (`TOC_PANEL_ID` + `COMMENTS_PANEL_ID`); aria-hidden + inert on the
+//     collapsed panel so screen readers + keyboard focus do not enter it.
+//   - Focus handoff: on collapse, focus moves from the in-header button
+//     to the floating reopen handle (WCAG 2.4.3 visible-focus).
+//
+// 7 regression tests at JermilovaReviewPortal.test.tsx prefix with
+// `REGRESSION:` to lock these behaviors. Standing rule
+// `cross_project_never_delete_regression_tests_during_cleanup` (HIGH
+// AUTHORITY) forbids deleting those tests during lint / test / codex
+// cleanup; fix the test (update prop name / import / selector) instead.
+//
+// Registry: docs/regression-watch.md
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
