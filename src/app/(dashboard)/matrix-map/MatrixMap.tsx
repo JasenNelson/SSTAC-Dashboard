@@ -57,6 +57,11 @@ import {
 } from 'react-leaflet';
 import { ChevronDown, ChevronUp, Layers } from 'lucide-react';
 
+import { PartialVisibilityBanner } from './PartialVisibilityBanner';
+import { SampleLegend } from './SampleLegend';
+import { SampleMarkersLayer } from './SampleMarkersLayer';
+import { EMPTY_MATRIX_MAP_DATA, type MatrixMapData } from './types';
+
 // ---------------------------------------------------------------------
 // Base tile layers (4 choices; matches BN-RRM SiteMap.BASE_LAYERS).
 // ---------------------------------------------------------------------
@@ -270,9 +275,36 @@ const INITIAL_STATE: MapState = {
 // Component
 // ---------------------------------------------------------------------
 
-export function MatrixMap() {
+export interface MatrixMapProps {
+  /**
+   * Initial RPC payload fetched server-side in page.tsx via
+   * `matrix_map.fetch_samples_with_hidden_summary({})`. Omitted only by
+   * legacy callers (smoke tests that predate PR-MAP-3a); the runtime
+   * default is the empty payload so renders never crash.
+   */
+  initialMapData?: MatrixMapData;
+  /**
+   * Optional banner string surfaced when the server-side RPC fetch
+   * fails (e.g. before the RPC migration deploys). page.tsx populates
+   * this when the catch branch fires; MatrixMap renders it as a small
+   * inline warning at the top of the map area.
+   */
+  fetchErrorMessage?: string | null;
+}
+
+export function MatrixMap({
+  initialMapData,
+  fetchErrorMessage,
+}: MatrixMapProps = {}) {
   const [state, setState] = useState<MapState>(INITIAL_STATE);
   const [panelExpanded, setPanelExpanded] = useState<boolean>(true);
+  // Sample data is stored in client state so future identify/refresh
+  // surfaces (PR-MAP-3b, PR-MAP-3c [Refresh] button) can mutate it. In
+  // 3a the setter is unused; that's intentional. The leading `_` opt-
+  // out keeps the unused-var lint clean until 3b wires the refresh path.
+  const [mapData] = useState<MatrixMapData>(
+    initialMapData ?? EMPTY_MATRIX_MAP_DATA,
+  );
 
   const setBaseLayer = useCallback((key: BaseLayerKey) => {
     setState((prev) => ({ ...prev, baseLayer: key }));
@@ -466,8 +498,56 @@ export function MatrixMap() {
             );
           },
         )}
+        <SampleMarkersLayer samples={mapData.visible_samples} />
         <ZoomControl position="bottomright" />
       </MapContainer>
+
+      {/* Partial-visibility banner -- Q-8: only when hidden_sample_count > 0 */}
+      {mapData.hidden_sample_count > 0 ? (
+        <PartialVisibilityBanner
+          visibleCount={mapData.visible_samples.length}
+          hiddenSampleCount={mapData.hidden_sample_count}
+          hiddenDraCount={mapData.hidden_dra_count}
+          hiddenDraIds={mapData.hidden_dra_ids}
+        />
+      ) : null}
+
+      {/* Server-side fetch error inline notice. Surfaces ONLY when
+          page.tsx caught an RPC error (e.g. RPC migration not yet
+          deployed). Distinct from the empty-state overlay below, which
+          fires when the RPC returned successfully but with zero rows. */}
+      {fetchErrorMessage ? (
+        <div
+          className="absolute right-4 top-20 z-[1000] max-w-sm rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-800 shadow-md"
+          role="status"
+          data-testid="matrix-map-fetch-error"
+        >
+          {fetchErrorMessage}
+        </div>
+      ) : null}
+
+      {/* Empty-state overlay -- pinned top-right card; fires when the
+          RPC succeeded but returned zero visible samples (ETL pending
+          OR all rows hidden by RLS). */}
+      {mapData.visible_samples.length === 0 && !fetchErrorMessage ? (
+        <div
+          className="absolute right-4 top-20 z-[1000] max-w-sm rounded-md border border-slate-200 bg-white/95 px-3 py-2 text-xs text-slate-700 shadow-md backdrop-blur"
+          role="status"
+          data-testid="matrix-map-empty-state"
+        >
+          <p className="font-semibold">No samples yet</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">
+            ETL pending or all rows hidden by RLS. Check{' '}
+            <code className="rounded bg-slate-100 px-1 py-0.5 text-[10px]">
+              /admin/matrix-map/health
+            </code>{' '}
+            for status.
+          </p>
+        </div>
+      ) : null}
+
+      {/* Sample symbology legend -- pinned bottom-left; collapsed by default */}
+      <SampleLegend />
     </div>
   );
 }

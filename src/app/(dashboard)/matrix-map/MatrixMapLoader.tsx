@@ -26,6 +26,8 @@ import dynamic from 'next/dynamic';
 // (which is .mjs-based for Next/Tailwind and not loadable from Vite).
 import 'leaflet/dist/leaflet.css';
 
+import type { MatrixMapData } from './types';
+
 const MatrixMap = dynamic(
   () => import('./MatrixMap').then((mod) => mod.MatrixMap),
   {
@@ -41,6 +43,29 @@ const MatrixMap = dynamic(
   },
 );
 
-export default function MatrixMapLoader() {
-  return <MatrixMap />;
+export interface MatrixMapLoaderProps {
+  /**
+   * Initial sample + hidden-summary payload from the server-side
+   * `matrix_map.fetch_samples_with_hidden_summary` RPC call in
+   * page.tsx. Pass-through to the underlying MatrixMap client
+   * component.
+   */
+  initialMapData: MatrixMapData;
+  /**
+   * Optional error string surfaced when the server-side RPC fetch
+   * failed; renders as a small inline notice inside the map area.
+   */
+  fetchErrorMessage?: string | null;
+}
+
+export default function MatrixMapLoader({
+  initialMapData,
+  fetchErrorMessage,
+}: MatrixMapLoaderProps) {
+  return (
+    <MatrixMap
+      initialMapData={initialMapData}
+      fetchErrorMessage={fetchErrorMessage}
+    />
+  );
 }
