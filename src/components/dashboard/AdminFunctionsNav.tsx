@@ -13,6 +13,7 @@ const baseAdminNavItems = [
   { href: '/admin/twg-synthesis', label: 'TWG Review' },
   { href: '/admin/matrix-review', label: 'Matrix Review' },
   { href: '/admin/jermilova-review', label: 'Jermilova Review' },
+  { href: '/admin/matrix-map/health', label: 'Matrix Map Health' },
 ]
 
 // Agentic OS pill is only rendered when the feature flag is on (dev mode
