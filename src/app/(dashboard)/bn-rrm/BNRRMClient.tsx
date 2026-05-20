@@ -251,9 +251,10 @@ export default function BNRRMClient() {
   }, [sites, handleRunAssessment, setBatchProgress]);
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-slate-100 dark:bg-slate-900 bn-rrm-wrapper">
-      {/* Sub-header with tab navigation */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-slate-100 dark:bg-slate-900 bn-rrm-wrapper print:h-auto print:block print:bg-white">
+      {/* Sub-header with tab navigation. print:hidden so the PDF output
+          of the TWG Review tier doesn't include the BN-RRM tab strip. */}
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm print:hidden">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-blue-500 via-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25"><Network className="w-5 h-5 text-white" /></div>
@@ -290,16 +291,17 @@ export default function BNRRMClient() {
 
       <PackBanner />
 
-      {/* Pack system error banner */}
+      {/* Pack system error banner. print:hidden -- error chrome is not
+          document content (codex R5 P2). */}
       {(registryError || packError) && (
-        <div className="px-4 py-1.5 flex items-center gap-2 text-xs font-medium shrink-0 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-b border-red-200 dark:border-red-800">
+        <div className="px-4 py-1.5 flex items-center gap-2 text-xs font-medium shrink-0 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-b border-red-200 dark:border-red-800 print:hidden">
           <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
           <span>{registryError ? `Pack registry error: ${registryError}` : `Pack error: ${packError}`}</span>
           {registryError && <span className="ml-auto text-[10px] opacity-70">Using legacy expert model</span>}
         </div>
       )}
 
-      <main className="flex-1 overflow-hidden flex">
+      <main className="flex-1 overflow-hidden flex print:overflow-visible print:h-auto print:block">
         {activeTab === 'gettingstarted' && <GettingStartedView />}
         {activeTab === 'conceptual' && <ConceptualView key={selectedPackId ?? 'default'} />}
         {activeTab === 'detailed' && <DetailedView key={selectedPackId ?? 'default'} showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} onCloseLeftPanel={() => setShowLeftPanel(false)} />}

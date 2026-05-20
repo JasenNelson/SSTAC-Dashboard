@@ -114,7 +114,7 @@ export function AiAssistedDevelopmentView({
     <div className="flex flex-col gap-5 flex-1 min-h-0">
       {/* Header + tier-selector row -- always capped at max-w-4xl so the
           four buttons do not stretch ugly across a wide monitor. */}
-      <div className="max-w-4xl mx-auto w-full space-y-5 shrink-0">
+      <div className="max-w-4xl mx-auto w-full space-y-5 shrink-0 print:hidden">
         <header className="space-y-1.5">
           <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
             AI-assisted BN-RRM Development
@@ -293,7 +293,7 @@ function TwgReviewContent() {
     // scrolling (TOC list + center MD + comments form each scroll
     // independently). The `flex` here is needed so the portal -- which
     // is itself a flex row -- can fill the wrapper.
-    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden flex-1 min-h-0 w-full flex">
+    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden flex-1 min-h-0 w-full flex print:overflow-visible print:h-auto print:border-0 print:rounded-none">
       <JermilovaReviewPortal
         methodologyContent={methodologyContent}
         initialShowLeftPanel
