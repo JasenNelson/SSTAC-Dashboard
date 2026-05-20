@@ -1,0 +1,10 @@
+site_id,registry_id,bnrrm_site_name,bc_csr_site_name,region,waterbody,latitude,longitude,coordinate_source,coordinate_quality_tier,n_stations,n_stations_geocoded_before_pr_map_0,n_stations_geocoded_after_pr_map_0,n_reference,n_impacted_explicit,n_sampling_or_unknown,sediment_chem_rows
+6,,Toquaht Bay Marina and Campground,(already surveyed; not WFS-queried),Vancouver Island,Toquaht Bay,(per-station surveyed),(per-station surveyed),surveyed,high,20,20,20,0,20,0,140
+2,,CP Nelson Yard (Hall Mines Smelter),(already surveyed; not WFS-queried),Kootenay,Kootenay Lake,(per-station surveyed),(per-station surveyed),surveyed,high,8,8,8,2,6,0,56
+5,,IOCO Shoreline (2225 Ioco Road),(already surveyed; not WFS-queried),Lower Mainland,Burrard Inlet,(per-station surveyed),(per-station surveyed),surveyed,high,6,6,6,0,6,0,48
+8,,Hercules Forwarding ULC,(already surveyed; not WFS-queried),Metro Vancouver,Brunette River,(per-station surveyed),(per-station surveyed),surveyed,high,6,6,6,2,4,0,48
+1,9930,Woodfibre (Former Squamish Pulp Mill),Woodfibre Mill near Squamish,Sea-to-Sky,Howe Sound,49.666858,-123.2536,bc_csr_centroid,medium,198,0,198,8,14,176,7233
+4,15125,Blue Water (855 Centennial Road),855 Centennial Road Vancouver,Lower Mainland,Burrard Inlet,49.283644,-123.085022,bc_csr_centroid,medium,24,0,24,1,23,0,110
+3,4205,Island Copper Mine (Foreshore),BHP Minerals Island Copper Mine Site,Vancouver Island North,Rupert Inlet / Pacific Ocean,50.597253,-127.501833,bc_csr_centroid,medium,15,0,15,1,14,0,105
+9,5668,Pinchi Lake Mercury Mine,Pinchi Mine Fort St James,Central BC,Pinchi Lake,54.627231,-124.432461,bc_csr_centroid,medium,8,0,8,1,7,0,63
+7,331,Rio Tinto BC Works (ALCAN Smelter) Kitimat,Alcan Smelters Kitimat,North Coast,Kitimat Arm / Yacht Basin,54.015611,-128.691222,bc_csr_centroid,medium,5,0,5,0,5,0,44
