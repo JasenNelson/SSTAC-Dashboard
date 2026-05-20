@@ -9,12 +9,13 @@ import TWGReviewPortal from './TWGReviewPortal';
 import BackgroundAdjustment from './matrix-options/BackgroundAdjustment';
 import EcoDirectEqPCalculator from './matrix-options/EcoDirectEqPCalculator';
 import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
+import HHDirectPlaceholder from './matrix-options/HHDirectPlaceholder';
+import HHFoodPlaceholder from './matrix-options/HHFoodPlaceholder';
 import CategorySelector from './matrix-options/CategorySelector';
 import SharedGlobalInputs, {
   DEFAULT_SUBSTANCE_KEY,
 } from './matrix-options/SharedGlobalInputs';
 import {
-  ENABLED_CATEGORIES_PR_A2,
   isMatrixCategory,
   type MatrixCategory,
 } from './matrix-options/guide/content/types';
@@ -51,13 +52,14 @@ const LS_KEY_JURISDICTION = 'matrix-options-jurisdiction-v1';
 // trade-off vs the complexity of useSyncExternalStore).
 
 function restoreActiveCategory(): MatrixCategory {
+  // PR-A4 HH wire-up enabled by default: all four MatrixCategory members
+  // are user-selectable (eco-direct + eco-food render calculators;
+  // hh-direct + hh-food render the HITL-reviewed placeholder panels).
+  // The enabled-category allowlist that previously gated HH out has been
+  // dropped; isMatrixCategory already validates against the full union.
   if (typeof window === 'undefined') return 'eco-direct';
   const raw = window.localStorage.getItem(LS_KEY_CATEGORY);
-  if (
-    raw &&
-    isMatrixCategory(raw) &&
-    (ENABLED_CATEGORIES_PR_A2 as readonly string[]).includes(raw)
-  ) {
+  if (raw && isMatrixCategory(raw)) {
     return raw;
   }
   if (raw !== null) window.localStorage.removeItem(LS_KEY_CATEGORY);
@@ -278,26 +280,18 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               />
             )}
             {/*
-              HH categories are disabled in CategorySelector during PR-A2,
-              so users cannot reach this branch via UI. Defense-in-depth
-              (cursor-agent review on commit 6 P2): render a visible
-              unavailable stub if state ever does land on an HH category
-              (e.g., programmatic mutation or a future regression). PR-A4
-              replaces this stub with the HH placeholder components.
+              PR-A4 HH wire-up: CategorySelector enables HH categories by
+              default; selecting hh-direct or hh-food renders the
+              HITL-reviewed non-functional disclaimer panels (no numeric
+              output, amber alert block, pointers to canonical regulatory
+              science). The HH placeholders intentionally do NOT consume
+              substanceKey / jurisdiction -- they render fixed disclaimer
+              copy regardless of the shared inputs above. This is the
+              codebase-shaped PR-A4 unblock; the prior inline "unavailable
+              stub" (PR-A2 commit 6 defense-in-depth) is retired.
             */}
-            {(activeCategory === 'hh-direct' ||
-              activeCategory === 'hh-food') && (
-              <div
-                role="status"
-                data-testid="hh-calculator-unavailable-stub"
-                className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-sm text-slate-600 dark:text-slate-300 text-center"
-              >
-                The Human Health calculator is not available in this
-                release. Use the enabled categories above (Eco-Direct or
-                Eco-Food); the Human Health pathway will land in a future
-                slice (PR-A4).
-              </div>
-            )}
+            {activeCategory === 'hh-direct' && <HHDirectPlaceholder />}
+            {activeCategory === 'hh-food' && <HHFoodPlaceholder />}
             <div className="flex items-center gap-3 py-2" aria-hidden="true">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
               <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">

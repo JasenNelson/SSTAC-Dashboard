@@ -6,7 +6,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 
 import CategorySelector from '../CategorySelector';
 
-describe('CategorySelector (PR-A2 phase: HH disabled)', () => {
+describe('CategorySelector (PR-A4 phase: HH wire-up enabled by default)', () => {
   it('renders all four category buttons inside a single radiogroup', () => {
     render(
       <CategorySelector activeCategory="eco-direct" onChange={() => {}} />,
@@ -26,9 +26,38 @@ describe('CategorySelector (PR-A2 phase: HH disabled)', () => {
     expect(ecoDirect).toHaveAttribute('aria-checked', 'false');
   });
 
-  it('disables HH buttons by default (PR-A2) and surfaces the tooltip + coming-soon label', () => {
+  // PR-A4 HH wire-up enabled by default: hhEnabled defaults to true so
+  // all four category buttons are interactive (HH categories route to the
+  // HITL-reviewed placeholder panels in MatrixDashboard).
+  it('enables HH buttons by default (PR-A4 HH wire-up enabled by default)', () => {
+    const onChange = vi.fn();
     render(
-      <CategorySelector activeCategory="eco-direct" onChange={() => {}} />,
+      <CategorySelector activeCategory="eco-direct" onChange={onChange} />,
+    );
+    const hhDirect = screen.getByTestId('category-selector-hh-direct');
+    const hhFood = screen.getByTestId('category-selector-hh-food');
+    expect(hhDirect).not.toBeDisabled();
+    expect(hhDirect).not.toHaveAttribute('aria-disabled');
+    expect(hhDirect).not.toHaveAttribute('title');
+    expect(hhFood).not.toBeDisabled();
+    expect(hhFood).not.toHaveAttribute('aria-disabled');
+    // No "Coming soon" affordance on enabled buttons.
+    expect(hhDirect.textContent).not.toMatch(/Coming soon/i);
+    expect(hhFood.textContent).not.toMatch(/Coming soon/i);
+    // Click fires onChange with the HH id.
+    fireEvent.click(hhDirect);
+    expect(onChange).toHaveBeenCalledWith('hh-direct');
+  });
+
+  // Explicit hhEnabled=false preserves the PR-A2 disabled-by-default
+  // behavior for any future caller that wants to gate HH again.
+  it('disables HH buttons when hhEnabled=false (explicit PR-A2 opt-out) and surfaces tooltip + coming-soon label', () => {
+    render(
+      <CategorySelector
+        activeCategory="eco-direct"
+        onChange={() => {}}
+        hhEnabled={false}
+      />,
     );
     const hhDirect = screen.getByTestId('category-selector-hh-direct');
     const hhFood = screen.getByTestId('category-selector-hh-food');
@@ -39,34 +68,21 @@ describe('CategorySelector (PR-A2 phase: HH disabled)', () => {
       expect.stringMatching(/Coming soon/i),
     );
     expect(hhFood).toBeDisabled();
-    // Visible "Coming soon" affordance on each disabled button.
     expect(hhDirect.textContent).toMatch(/Coming soon/i);
     expect(hhFood.textContent).toMatch(/Coming soon/i);
   });
 
-  it('does NOT fire onChange when a disabled HH button is clicked (PR-A2)', () => {
-    const onChange = vi.fn();
-    render(
-      <CategorySelector activeCategory="eco-direct" onChange={onChange} />,
-    );
-    fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
-    expect(onChange).not.toHaveBeenCalled();
-  });
-
-  it('enables HH buttons when hhEnabled=true (PR-A4 phase)', () => {
+  it('does NOT fire onChange when a disabled HH button is clicked (hhEnabled=false)', () => {
     const onChange = vi.fn();
     render(
       <CategorySelector
         activeCategory="eco-direct"
         onChange={onChange}
-        hhEnabled
+        hhEnabled={false}
       />,
     );
-    const hhDirect = screen.getByTestId('category-selector-hh-direct');
-    expect(hhDirect).not.toBeDisabled();
-    expect(hhDirect).not.toHaveAttribute('aria-disabled');
-    fireEvent.click(hhDirect);
-    expect(onChange).toHaveBeenCalledWith('hh-direct');
+    fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('fires onChange with the new id when an enabled button is clicked', () => {
@@ -79,24 +95,54 @@ describe('CategorySelector (PR-A2 phase: HH disabled)', () => {
     expect(onChange).toHaveBeenCalledWith('eco-food');
   });
 
-  it('skips disabled HH buttons during arrow-key navigation (PR-A2)', () => {
-    // With HH disabled, ArrowRight from the last enabled button (eco-food)
+  it('skips disabled HH buttons during arrow-key navigation (hhEnabled=false)', () => {
+    // PR-A4 HH wire-up enabled by default flipped hhEnabled's default
+    // true; to exercise the disabled-skip path we pass hhEnabled={false}
+    // explicitly. ArrowRight from the last enabled button (eco-food)
     // wraps to the first enabled button (eco-direct), NOT to hh-direct.
     const onChange = vi.fn();
-    render(<CategorySelector activeCategory="eco-food" onChange={onChange} />);
+    render(
+      <CategorySelector
+        activeCategory="eco-food"
+        onChange={onChange}
+        hhEnabled={false}
+      />,
+    );
     const ecoFood = screen.getByTestId('category-selector-eco-food');
     fireEvent.keyDown(ecoFood, { key: 'ArrowRight' });
     expect(onChange).toHaveBeenLastCalledWith('eco-direct');
   });
 
-  it('cycles through enabled categories with ArrowLeft (PR-A2)', () => {
+  it('PR-A4 HH wire-up enabled by default: ArrowRight from eco-food advances to hh-direct (all 4 enabled)', () => {
+    const onChange = vi.fn();
+    render(<CategorySelector activeCategory="eco-food" onChange={onChange} />);
+    const ecoFood = screen.getByTestId('category-selector-eco-food');
+    fireEvent.keyDown(ecoFood, { key: 'ArrowRight' });
+    expect(onChange).toHaveBeenLastCalledWith('hh-direct');
+  });
+
+  it('cycles through enabled categories with ArrowLeft (hhEnabled=false)', () => {
+    const onChange = vi.fn();
+    render(
+      <CategorySelector
+        activeCategory="eco-direct"
+        onChange={onChange}
+        hhEnabled={false}
+      />,
+    );
+    const ecoDirect = screen.getByTestId('category-selector-eco-direct');
+    fireEvent.keyDown(ecoDirect, { key: 'ArrowLeft' });
+    expect(onChange).toHaveBeenLastCalledWith('eco-food');
+  });
+
+  it('PR-A4 HH wire-up enabled by default: ArrowLeft from eco-direct wraps to hh-food (all 4 enabled)', () => {
     const onChange = vi.fn();
     render(
       <CategorySelector activeCategory="eco-direct" onChange={onChange} />,
     );
     const ecoDirect = screen.getByTestId('category-selector-eco-direct');
     fireEvent.keyDown(ecoDirect, { key: 'ArrowLeft' });
-    expect(onChange).toHaveBeenLastCalledWith('eco-food');
+    expect(onChange).toHaveBeenLastCalledWith('hh-food');
   });
 
   it('applies roving tabindex: only the selected enabled button is tabbable', () => {
@@ -107,20 +153,39 @@ describe('CategorySelector (PR-A2 phase: HH disabled)', () => {
     expect(
       screen.getByTestId('category-selector-eco-direct'),
     ).toHaveAttribute('tabindex', '-1');
+    // Roving tabindex: enabled but non-selected HH buttons are -1 too;
+    // only the selected enabled button gets tabindex=0.
     expect(
       screen.getByTestId('category-selector-hh-direct'),
     ).toHaveAttribute('tabindex', '-1');
+    expect(
+      screen.getByTestId('category-selector-hh-food'),
+    ).toHaveAttribute('tabindex', '-1');
   });
 
-  it('Home jumps to the first enabled button and End to the last enabled (PR-A2)', () => {
+  it('Home jumps to the first enabled button and End to the last enabled (hhEnabled=false)', () => {
     const onChange = vi.fn();
-    render(<CategorySelector activeCategory="eco-food" onChange={onChange} />);
+    render(
+      <CategorySelector
+        activeCategory="eco-food"
+        onChange={onChange}
+        hhEnabled={false}
+      />,
+    );
     const ecoFood = screen.getByTestId('category-selector-eco-food');
     fireEvent.keyDown(ecoFood, { key: 'Home' });
     expect(onChange).toHaveBeenLastCalledWith('eco-direct');
     fireEvent.keyDown(ecoFood, { key: 'End' });
-    // With HH disabled in PR-A2, 'End' wraps to eco-food.
+    // With HH disabled, 'End' wraps to eco-food.
     expect(onChange).toHaveBeenLastCalledWith('eco-food');
+  });
+
+  it('PR-A4 HH wire-up enabled by default: End jumps to hh-food (last enabled of all four)', () => {
+    const onChange = vi.fn();
+    render(<CategorySelector activeCategory="eco-direct" onChange={onChange} />);
+    const ecoDirect = screen.getByTestId('category-selector-eco-direct');
+    fireEvent.keyDown(ecoDirect, { key: 'End' });
+    expect(onChange).toHaveBeenLastCalledWith('hh-food');
   });
 
   // Codex review 2026-05-19 P2: the spec requires Space + Enter to activate.
@@ -176,10 +241,15 @@ describe('CategorySelector (PR-A2 phase: HH disabled)', () => {
   // while hhEnabled=false, all buttons would resolve to tabIndex=-1 under
   // the naive rule and a keyboard-only user could not enter the radiogroup
   // at all. The component falls back to making the first enabled button
-  // tabbable.
-  it('falls back to first enabled button when activeCategory is disabled', () => {
+  // tabbable. PR-A4 HH wire-up enabled by default flipped the default, so
+  // this disabled-fallback path is exercised with explicit hhEnabled={false}.
+  it('falls back to first enabled button when activeCategory is disabled (hhEnabled=false)', () => {
     render(
-      <CategorySelector activeCategory="hh-direct" onChange={() => {}} />,
+      <CategorySelector
+        activeCategory="hh-direct"
+        onChange={() => {}}
+        hhEnabled={false}
+      />,
     );
     expect(
       screen.getByTestId('category-selector-eco-direct'),
