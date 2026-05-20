@@ -11,14 +11,9 @@ export const metadata = {
 export default async function MatrixOptionsPage() {
   const readDraft = (filename: string) => {
     try {
-      const filePath = path.join('C:\\Projects\\SSTAC-Dashboard\\matrix_research\\content_drafts', filename);
+      const filePath = path.join(process.cwd(), 'matrix_research', 'content_drafts', filename);
       if (fs.existsSync(filePath)) {
         return fs.readFileSync(filePath, 'utf8');
-      } else {
-        const fallbackPath = path.join(process.cwd(), 'matrix_research', 'content_drafts', filename);
-        if (fs.existsSync(fallbackPath)) {
-          return fs.readFileSync(fallbackPath, 'utf8');
-        }
       }
     } catch (error) {
       console.error(`Failed to load ${filename}`, error);
@@ -28,14 +23,9 @@ export default async function MatrixOptionsPage() {
 
   const readFinalPaper = () => {
     try {
-      const filePath = path.join('C:\\Projects\\SSTAC-Dashboard\\matrix_research\\options_paper\\BC_Matrix_Options_Paper_FINAL_DRAFT.md');
+      const filePath = path.join(process.cwd(), 'matrix_research', 'options_paper', 'BC_Matrix_Options_Paper_FINAL_DRAFT.md');
       if (fs.existsSync(filePath)) {
         return fs.readFileSync(filePath, 'utf8');
-      } else {
-        const fallbackPath = path.join(process.cwd(), 'matrix_research', 'options_paper', 'BC_Matrix_Options_Paper_FINAL_DRAFT.md');
-        if (fs.existsSync(fallbackPath)) {
-          return fs.readFileSync(fallbackPath, 'utf8');
-        }
       }
     } catch (error) {
       console.error('Failed to load final paper', error);
