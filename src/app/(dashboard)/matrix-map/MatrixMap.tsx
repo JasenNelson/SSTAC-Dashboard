@@ -1,165 +1,115 @@
+/**
+ * MatrixMap Component (Path-B fork of src/components/bn-rrm/map/SiteMap.tsx)
+ *
+ * Forked from SiteMap.tsx per Path-B recovery
+ * (memory anchor: dashboard_matrix_map_pr_map_3_post_mortem_2026_05_20).
+ * The fork is the canonical pattern; do not redesign from first principles.
+ *
+ * Deltas from SiteMap.tsx:
+ * - Data source: server-fetched MatrixMapData (initialMapData prop) from
+ *   matrix_map.fetch_samples_with_hidden_summary RPC (in page.tsx).
+ * - Types: MatrixSample from ./types replaces SiteLocation/SiteAssessment.
+ * - Symbology: 9-state combo per PLAN_V3_4_2 section 3.3
+ *   (classification x coord_tier).
+ * - Pack manifest code DELETED (matrix-map has no pack artifacts).
+ * - Identified-features panel storage: local React state.
+ * - Selection state: local React useState (Zustand hoist = PR-MAP-4).
+ *
+ * NOT in this fork (deferred):
+ * - Selection Stats panel (PR-MAP-4)
+ * - MeasurementWorkbench right drawer (PR-MAP-5)
+ * - Calculator bridge (PR-MAP-6)
+ * - Partial-visibility banner (hidden_summary available but not surfaced)
+ * - Zustand SelectionStore (PR-MAP-4)
+ *
+ * Plain ASCII only -- no em-dashes / smart quotes / Unicode arrows.
+ */
+
 'use client';
 
-// =====================================================================
-// MatrixMap -- empty map skeleton for PR-MAP-2
-// =====================================================================
-//
-// Lane:   Matrix Interactive Map
-// Branch: feat/matrix-map-pr-map-2-map-ui
-// Plan:   docs/design/matrix-map/PLAN_V3_4_2.md section 7 (PR-MAP-2 row)
-//         + R-7 (overlay set reused from BN-RRM SiteMap OVERLAY_LAYERS)
-//         + R-11 (ZERO Jermilova GeoJSON artifacts carry over).
-//
-// Scope in this file:
-//   - React-Leaflet 5 MapContainer rendering an empty BC-province map.
-//   - 4 base tile layer choices (Streets / Satellite / Topographic /
-//     Terrain) selected via radio buttons in the top toolbar. Only one
-//     is mounted at a time.
-//   - 14 BC public WMS overlays, one checkbox per overlay in the left-
-//     rail card. Default visibility = false for every overlay in v1
-//     (user opts in).
-//   - Single source-of-truth React state:
-//       { baseLayer: BaseLayerKey; visibleOverlays: Set<string> }
-//
-// NOT in this file (deferred to later PRs):
-//   - Sample markers / sample symbology / cluster (PR-MAP-3)
-//   - Identify + identify-area tools (PR-MAP-3..4)
-//   - Selection tools / Selection Stats panel (PR-MAP-4)
-//   - Measurement Workbench (PR-MAP-5)
-//   - Calculator bridge (PR-MAP-6)
-//   - Per-DRA grant UI (PR-MAP-7)
-//
-// R-11 Jermilova exclusion guard:
-//   Per plan section 6 ("ZERO Jermilova GeoJSON artifacts carry over"),
-//   we filter the overlay catalog to skip any overlay whose key matches
-//   /jermilova/i. The current BN-RRM OVERLAY_LAYERS catalog does NOT
-//   include a Jermilova entry, so the filter is a no-op today, but the
-//   guard is present so a future copy-paste from a Jermilova-bearing
-//   catalog cannot silently leak it into the Matrix Map.
-//
-// Plain ASCII only -- no em-dashes / smart quotes / Unicode arrows.
-// Literal '->' for arrow text. Per L0 CLAUDE.md section 1.1.
-// =====================================================================
-
-// NOTE: `leaflet/dist/leaflet.css` is imported by the parent wrapper
-// MatrixMapLoader.tsx (NOT here). Keeping the CSS side-effect import
-// out of this module lets the vitest smoke spec mock react-leaflet
-// without tripping over Vite's PostCSS pipeline. The CSS still loads
-// in production because MatrixMapLoader is the only entry into this
-// component tree (via next/dynamic).
-
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { cn } from '@/utils/cn';
 import {
-  MapContainer,
-  TileLayer,
-  useMapEvents,
-  WMSTileLayer,
-  ZoomControl,
-} from 'react-leaflet';
-import { ChevronDown, ChevronUp, Layers } from 'lucide-react';
-import type * as LeafletNS from 'leaflet';
-
+  formatIdentifyEmptyHtml,
+  formatIdentifyPopupHtml,
+} from '@/lib/maps/identify-format';
 import {
   getActiveOverlaysInZOrder,
   queryActiveOverlays,
+  queryActiveOverlaysInBounds,
   type IdentifiedFeature,
   type IdentifyOverlay,
   type LeafletMapLike,
 } from '@/lib/maps/wms-identify';
-import { createClient } from '@/lib/supabase/client';
-
-import { IdentifyPanel } from './IdentifyPanel';
 import {
-  PartialVisibilityBanner,
-  type ClassificationCounts,
-} from './PartialVisibilityBanner';
-import { SampleLegend } from './SampleLegend';
-import { SampleMarkersLayer } from './SampleMarkersLayer';
-import {
-  findSampleNearLatLng,
-  type DraDetail,
-  type IdentifyState,
-} from './identify-state';
-import {
-  EMPTY_MATRIX_MAP_DATA,
-  type MatrixMapData,
-  type MatrixSample,
+  ZoomIn,
+  ZoomOut,
+  MapPin,
+  Target,
+  Layers,
+  Download,
+  ChevronUp,
+  ChevronDown,
+  ExternalLink,
+  Hand,
+  BoxSelect,
+  MousePointer,
+  Crosshair,
+} from 'lucide-react';
+import type {
+  Classification,
+  CoordinateQualityTier,
+  MatrixMapData,
+  MatrixSample,
 } from './types';
 
-// ---------------------------------------------------------------------
-// Base tile layers (4 choices; matches BN-RRM SiteMap.BASE_LAYERS).
-// ---------------------------------------------------------------------
-
-type BaseLayerKey = 'streets' | 'satellite' | 'topo' | 'terrain';
-
-interface BaseLayerDef {
-  name: string;
-  url: string;
-  attribution: string;
-  /** Max native zoom for the tile source; used as TileLayer maxNativeZoom. */
-  maxNativeZoom?: number;
+export interface MatrixMapProps {
+  /** Server-fetched payload from matrix_map.fetch_samples_with_hidden_summary RPC. */
+  initialMapData: MatrixMapData;
+  /** Optional inline notice when server-side RPC failed. */
+  fetchErrorMessage?: string | null;
+  className?: string;
+  initialCenter?: [number, number];
+  initialZoom?: number;
 }
 
-const BASE_LAYERS: Record<BaseLayerKey, BaseLayerDef> = {
+// Layer definitions
+const BASE_LAYERS = {
   streets: {
     name: 'Streets',
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '(c) OpenStreetMap contributors',
-    maxNativeZoom: 19,
+    attribution: '© OpenStreetMap contributors',
   },
   satellite: {
     name: 'Satellite',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: '(c) Esri',
-    maxNativeZoom: 19,
+    attribution: '© Esri',
   },
   topo: {
     name: 'Topographic',
     url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-    attribution: '(c) OpenTopoMap',
-    maxNativeZoom: 17,
+    attribution: '© OpenTopoMap',
   },
   terrain: {
     name: 'Terrain',
     url: 'https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg',
-    attribution: '(c) Stamen Design',
-    maxNativeZoom: 18,
+    attribution: '© Stamen Design',
   },
 };
 
-const BASE_LAYER_ORDER: BaseLayerKey[] = [
-  'streets',
-  'satellite',
-  'topo',
-  'terrain',
-];
-
-// ---------------------------------------------------------------------
-// BC public WMS overlays (14 layers; mirrors BN-RRM SiteMap.OVERLAY_LAYERS
-// 1:1; do NOT add or remove without updating BN-RRM in lockstep).
-// ---------------------------------------------------------------------
-
 const BC_WMS_URL = 'https://openmaps.gov.bc.ca/geo/pub/ows';
-const BC_WMS_ATTRIBUTION = '(c) Province of British Columbia';
-
-type OverlayCategory =
-  | 'protected'
-  | 'aquatic'
-  | 'ecology'
-  | 'regulatory'
-  | 'waste';
+const BC_WMS_IDENTIFY_PROXY_URL = '/api/bn-rrm/wms-identify';
+const BC_WFS_IDENTIFY_PROXY_URL = '/api/bn-rrm/wfs-identify';
+const BC_ATTR = '© Province of British Columbia';
 
 interface OverlayDef {
-  /** Display name shown in the left-rail checkbox label. */
   name: string;
-  /** WMS layer identifier passed to TileLayer.WMS `layers` param. */
   layer: string;
-  /** Hex color used for the legend swatch alongside the checkbox. */
-  color: string;
-  category: OverlayCategory;
+  color: string; // Legend swatch color
+  category: 'protected' | 'aquatic' | 'ecology' | 'regulatory' | 'waste';
 }
 
-const OVERLAY_LAYERS_RAW: Record<string, OverlayDef> = {
+const OVERLAY_LAYERS: Record<string, OverlayDef> = {
   parks: {
     name: 'Parks & Protected Areas',
     layer: 'pub:WHSE_TANTALIS.TA_PARK_ECORES_PA_SVW',
@@ -246,25 +196,7 @@ const OVERLAY_LAYERS_RAW: Record<string, OverlayDef> = {
   },
 };
 
-// R-11 Jermilova exclusion guard. The BN-RRM catalog has no Jermilova
-// entry today, so this filter is a no-op. Kept in place so a future
-// catalog refresh cannot silently leak Jermilova GeoJSON / WMS data
-// into the Matrix Map (plan v3.4.2 section 6: "ZERO Jermilova GeoJSON
-// artifacts carry over"). Per codex PR-MAP-2 R1 P3-2: checks key + name
-// + the WMS layer field so a neutrally-named future layer that targets
-// a Jermilova WMS endpoint cannot pass through.
-const OVERLAY_LAYERS: Record<string, OverlayDef> = Object.fromEntries(
-  Object.entries(OVERLAY_LAYERS_RAW).filter(
-    ([key, def]) =>
-      !/jermilova/i.test(key) &&
-      !/jermilova/i.test(def.name) &&
-      !/jermilova/i.test(def.layer),
-  ),
-);
-
-const OVERLAY_KEY_ORDER: string[] = Object.keys(OVERLAY_LAYERS);
-
-const OVERLAY_CATEGORY_ORDER: { key: OverlayCategory; label: string }[] = [
+const OVERLAY_CATEGORIES: { key: string; label: string }[] = [
   { key: 'protected', label: 'Protected Areas & Habitat' },
   { key: 'aquatic', label: 'Aquatic Features' },
   { key: 'ecology', label: 'Ecosystem Classification' },
@@ -272,757 +204,1235 @@ const OVERLAY_CATEGORY_ORDER: { key: OverlayCategory; label: string }[] = [
   { key: 'waste', label: 'Waste & Remediation' },
 ];
 
-// ---------------------------------------------------------------------
-// Map defaults (BC centroid + province-wide zoom).
-// ---------------------------------------------------------------------
-
-const DEFAULT_CENTER: [number, number] = [53.7, -127.6];
-const DEFAULT_ZOOM = 5;
-const MIN_ZOOM = 4;
-const MAX_ZOOM = 18;
-
-// PR-MAP-3b Q-7: sample-hit-test radius in container pixels around the
-// click. Matches BN-RRM identify-buffer (8px) plus a small safety
-// margin because the sample divIcon visual extends past its centroid.
-const SAMPLE_HIT_RADIUS_PX = 10;
-
-// ---------------------------------------------------------------------
-// State model -- single source of truth
-// ---------------------------------------------------------------------
-
-interface MapState {
-  baseLayer: BaseLayerKey;
-  visibleOverlays: Set<string>;
-}
-
-const INITIAL_STATE: MapState = {
-  baseLayer: 'streets',
-  visibleOverlays: new Set<string>(),
+// PLAN_V3_4_2 section 3.3 -- classification color
+const CLASSIFICATION_COLOR: Record<Classification, string> = {
+  reference: '#10b981',
+  impacted: '#eab308',
+  unknown: '#94a3b8',
 };
 
-// ---------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------
+// PLAN_V3_4_2 section 3.3 -- coordinate quality tier outline pattern
+const COORD_TIER_DASH_ARRAY: Record<CoordinateQualityTier, string | undefined> = {
+  high: undefined,    // solid stroke (surveyed)
+  medium: '4 3',      // dashed (BC CSR centroid)
+  low: '1 3',         // dotted (manual steward fill)
+};
 
-export interface MatrixMapProps {
-  /**
-   * Initial RPC payload fetched server-side in page.tsx via
-   * `matrix_map.fetch_samples_with_hidden_summary({})`. Omitted only by
-   * legacy callers (smoke tests that predate PR-MAP-3a); the runtime
-   * default is the empty payload so renders never crash.
-   */
-  initialMapData?: MatrixMapData;
-  /**
-   * Optional banner string surfaced when the server-side RPC fetch
-   * fails (e.g. before the RPC migration deploys). page.tsx populates
-   * this when the catch branch fires; MatrixMap renders it as a small
-   * inline warning at the top of the map area.
-   */
-  fetchErrorMessage?: string | null;
-}
+const COORD_TIER_LABEL: Record<CoordinateQualityTier, string> = {
+  high: 'Surveyed',
+  medium: 'Centroid',
+  low: 'Manual',
+};
 
 export function MatrixMap({
   initialMapData,
   fetchErrorMessage,
-}: MatrixMapProps = {}) {
-  const [state, setState] = useState<MapState>(INITIAL_STATE);
-  const [panelExpanded, setPanelExpanded] = useState<boolean>(true);
-  // Sample data is stored in client state so the PR-MAP-3c [Refresh]
-  // banner button can swap in a fresh RPC payload without a full page
-  // reload. The setter is wired into `handleBannerRefresh` below.
-  const [mapData, setMapData] = useState<MatrixMapData>(
-    initialMapData ?? EMPTY_MATRIX_MAP_DATA,
-  );
-  // PR-MAP-3c: tracks the in-flight Refresh-button RPC call so the
-  // banner can render a busy state + suppress double-clicks.
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  className,
+  initialCenter = [54.7, -125.0],  // BC province center
+  initialZoom = 5,                  // province-wide default
+}: MatrixMapProps) {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mapInstanceRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markersLayerRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tileLayerRef = useRef<any>(null);
 
-  // PR-MAP-3b identify state. null = nothing identified; the panel is
-  // hidden. Setting to a sample/overlay variant opens the panel + (for
-  // sample variant) opens an L.popup at the sample's coordinates.
-  const [identifyState, setIdentifyState] = useState<IdentifyState | null>(
-    null,
-  );
+  const [isLoaded, setIsLoaded] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [leaflet, setLeaflet] = useState<any>(null);
+  const [activeLayer, setActiveLayer] = useState<keyof typeof BASE_LAYERS>('streets');
+  const [showLayerMenu, setShowLayerMenu] = useState(false);
+  const [activeOverlays, setActiveOverlays] = useState<Set<string>>(new Set());
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const overlayLayersRef = useRef<Map<string, any>>(new Map());
 
-  // Imperative refs used by the identify wiring:
-  //   - identifyPopupRef: tracks the L.Popup so it can be closed on
-  //     panel-close or before opening a new one.
-  //   - identifyRequestIdRef: monotonic counter for stale-response guard
-  //     against overlay-identify network races. Mirrors BN-RRM
-  //     SiteMap's requestIdRef pattern.
-  const identifyPopupRef = useRef<LeafletNS.Popup | null>(null);
+  const [sampleListExpanded, setSampleListExpanded] = useState(true);
+  const [interactionMode, setInteractionMode] = useState<
+    'pan' | 'select-individual' | 'select-area' | 'identify' | 'identify-area'
+  >('pan');
+  const interactionModeRef = useRef(interactionMode);
+  interactionModeRef.current = interactionMode;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const areaSelectRectRef = useRef<any>(null);
+  // Backup of marker popups while Identify mode is active. Iterable Map
+  // (NOT WeakMap) is required because restoration on mode exit iterates the
+  // saved entries. Keys are Leaflet markers; values carry content + options.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markerPopupBackupRef = useRef<Map<any, { content: any; options: any }>>(new Map());
+  // Ref mirror of the Identify writer so Leaflet handlers attached once (in
+  // the GeoJSON onEachFeature closure) can reach the latest implementation.
+  // Set/unset by the Identify-mode useEffect below.
+  const runIdentifyRef = useRef<
+    | ((latlng: { lat: number; lng: number }, geojsonHit: IdentifiedFeature | null) => void)
+    | null
+  >(null);
+  // Transient "no features" / "N features" popup owned by the Identify tool.
+  // We track it so it can be removed on mode exit.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const identifyPopupRef = useRef<any>(null);
+  // Monotonic request counter for the Identify tool. Every runIdentify call
+  // captures its own id at entry; after each await we bail if the ref has
+  // advanced, which means a newer click (or mode exit) superseded us. This is
+  // the correctness guarantee at the call site; queryActiveOverlays has its
+  // own internal timeoutMs but that does NOT discard stale successful replies.
   const identifyRequestIdRef = useRef<number>(0);
 
-  const setBaseLayer = useCallback((key: BaseLayerKey) => {
-    setState((prev) => ({ ...prev, baseLayer: key }));
+  const samples = initialMapData.visible_samples;
+  const sampleCount = samples.length;
+  const [selectedSampleId, setSelectedSampleId] = useState<string | null>(null);
+  const [selectedSampleIds, setSelectedSampleIds] = useState<string[]>([]);
+  // Identified-features local state. The list itself is not surfaced in this
+  // fork (the identify panel is deferred to PR-MAP-4/5); the setter is the
+  // single authoritative writer used by the identify + identify-area effects.
+  // The `_` prefix on the reader satisfies @typescript-eslint/no-unused-vars
+  // (allowed-unused pattern /^_/u).
+  const [_identifiedFeatures, setIdentifiedFeaturesState] = useState<IdentifiedFeature[]>([]);
+
+  const setIdentifiedFeatures = useCallback((features: IdentifiedFeature[]) => {
+    setIdentifiedFeaturesState(features);
   }, []);
 
+  const toggleSampleSelection = useCallback((id: string) => {
+    setSelectedSampleIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+    setSelectedSampleId(null);
+  }, []);
+  const selectSample = useCallback((id: string) => {
+    // Match BN-RRM siteDataStore.selectSite semantics: single-select replaces
+    // any multi-select. Without this, a single click after Ctrl/area selection
+    // leaves the prior selectedSampleIds highlighted + counted (codex P2-1).
+    setSelectedSampleId(id);
+    setSelectedSampleIds([id]);
+  }, []);
+  const selectMultipleSamples = useCallback((ids: string[]) => {
+    setSelectedSampleIds((prev) => [...new Set([...prev, ...ids])]);
+  }, []);
+  const selectAllSamples = useCallback(() => {
+    setSelectedSampleIds(samples.map((s) => s.id));
+    setSelectedSampleId(null);
+  }, [samples]);
+  const clearSampleSelection = useCallback(() => {
+    setSelectedSampleId(null);
+    setSelectedSampleIds([]);
+  }, []);
+
+  // Initialize map
+  useEffect(() => {
+    if (typeof window === 'undefined' || !mapContainerRef.current || mapInstanceRef.current) return;
+
+    let isMounted = true;
+
+    const initMap = async () => {
+      const L = (await import('leaflet')).default;
+      // CSS side-effects (leaflet + markercluster) are statically imported
+      // in MatrixMapLoader.tsx (the dynamic-import wrapper) so vitest can
+      // mock the dynamic JS import without Vite trying to process leaflet's
+      // .css through the project's PostCSS pipeline (which is .mjs-based for
+      // Next/Tailwind and not loadable from Vite directly). Pattern matches
+      // the existing MatrixMapLoader leaflet.css import.
+      await import('leaflet.markercluster');
+
+      if (!isMounted || !mapContainerRef.current || mapInstanceRef.current) return;
+
+      setLeaflet(L);
+
+      const map = L.map(mapContainerRef.current, {
+        center: initialCenter,
+        zoom: initialZoom,
+        zoomControl: false,
+      });
+
+      // Add initial tile layer
+      const tileLayer = L.tileLayer(BASE_LAYERS.streets.url, {
+        attribution: BASE_LAYERS.streets.attribution,
+      }).addTo(map);
+      tileLayerRef.current = tileLayer;
+
+      // Create marker cluster group
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const markers = (L as any).markerClusterGroup({
+        maxClusterRadius: 50,
+        spiderfyOnMaxZoom: true,
+        showCoverageOnHover: false,
+        zoomToBoundsOnClick: true,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        iconCreateFunction: (cluster: any) => {
+          const count = cluster.getChildCount();
+          let size = 'small';
+          if (count > 10) size = 'medium';
+          if (count > 25) size = 'large';
+
+          return L.divIcon({
+            html: `<div class="cluster-marker cluster-${size}">
+              <span>${count}</span>
+            </div>`,
+            className: 'custom-cluster-icon',
+            iconSize: L.point(40, 40),
+          });
+        },
+      });
+
+      // Ctrl+click on a cluster selects all its child markers.
+      // In Identify mode this handler must short-circuit at the top so that
+      // Ctrl/meta+cluster is fully inert (no selection, no zoom, no identify).
+      // The existing handler does NOT consult defaultPrevented, so a separate
+      // interceptor would not suppress it reliably - the gate MUST live here.
+      markers.on('clusterclick', (e: { layer?: { getAllChildMarkers?: () => { options?: { sampleId?: string } }[] }; originalEvent?: MouseEvent }) => {
+        if (
+          interactionModeRef.current === 'identify' ||
+          interactionModeRef.current === 'identify-area'
+        ) {
+          // Swallow the cluster click: in Identify mode we want cluster marker
+          // behavior fully disabled. Prevent default (zoom) and any selection.
+          e.originalEvent?.preventDefault?.();
+          e.originalEvent?.stopPropagation?.();
+          return;
+        }
+        const orig = e.originalEvent;
+        if (orig?.ctrlKey || orig?.metaKey) {
+          orig.preventDefault();
+          orig.stopPropagation();
+          const children = e.layer?.getAllChildMarkers?.() ?? [];
+          const childIds = children
+            .map((m: { options?: { sampleId?: string } }) => m.options?.sampleId)
+            .filter((id): id is string => !!id);
+          if (childIds.length > 0) {
+            // Add all cluster children to the current selection
+            selectMultipleSamples(childIds);
+          }
+        }
+        // Without Ctrl, default zoom behavior applies
+      });
+
+      map.addLayer(markers);
+      markersLayerRef.current = markers;
+
+      mapInstanceRef.current = map;
+      setIsLoaded(true);
+    };
+
+    initMap();
+
+    return () => {
+      isMounted = false;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+        markersLayerRef.current = null;
+        tileLayerRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Change base layer
+  useEffect(() => {
+    if (!mapInstanceRef.current || !leaflet || !tileLayerRef.current) return;
+
+    const map = mapInstanceRef.current;
+    const layerConfig = BASE_LAYERS[activeLayer];
+
+    map.removeLayer(tileLayerRef.current);
+    tileLayerRef.current = leaflet.tileLayer(layerConfig.url, {
+      attribution: layerConfig.attribution,
+    }).addTo(map);
+  }, [activeLayer, leaflet]);
+
+  // Manage WMS overlay layers
+  useEffect(() => {
+    if (!mapInstanceRef.current || !leaflet) return;
+    const map = mapInstanceRef.current;
+    const currentLayers = overlayLayersRef.current;
+
+    // Remove overlays no longer active
+    for (const [key, layer] of currentLayers.entries()) {
+      if (!activeOverlays.has(key)) {
+        map.removeLayer(layer);
+        currentLayers.delete(key);
+      }
+    }
+
+    // Add newly active overlays
+    for (const key of activeOverlays) {
+      if (!currentLayers.has(key)) {
+        const def = OVERLAY_LAYERS[key];
+        if (!def) continue;
+        const wmsLayer = leaflet.tileLayer.wms(BC_WMS_URL, {
+          layers: def.layer,
+          format: 'image/png',
+          transparent: true,
+          opacity: 0.6,
+          attribution: BC_ATTR,
+        }).addTo(map);
+        currentLayers.set(key, wmsLayer);
+      }
+    }
+  }, [activeOverlays, leaflet]);
+
   const toggleOverlay = useCallback((key: string) => {
-    setState((prev) => {
-      const next = new Set(prev.visibleOverlays);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return { ...prev, visibleOverlays: next };
+    setActiveOverlays(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
     });
   }, []);
 
-  const overlaysByCategory = useMemo(() => {
-    const out: Record<OverlayCategory, string[]> = {
-      protected: [],
-      aquatic: [],
-      ecology: [],
-      regulatory: [],
-      waste: [],
-    };
-    for (const key of OVERLAY_KEY_ORDER) {
-      const def = OVERLAY_LAYERS[key];
-      if (!def) continue;
-      out[def.category].push(key);
-    }
-    return out;
-  }, []);
+  // Track individual markers by sample ID so selection updates don't destroy cluster/spiderfy state
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const markerMapRef = useRef<Map<string, any>>(new Map());
 
-  const activeBase = BASE_LAYERS[state.baseLayer];
+  // Create/recreate markers only when samples change.
+  useEffect(() => {
+    if (!mapInstanceRef.current || !isLoaded || !leaflet || !markersLayerRef.current) return;
+    const L = leaflet;
+    const markersLayer = markersLayerRef.current;
+    markersLayer.clearLayers();
+    markerMapRef.current.clear();
 
-  // ---------------------------------------------------------------
-  // PR-MAP-3b identify wiring
-  // ---------------------------------------------------------------
+    samples.forEach((sample) => {
+      const color = CLASSIFICATION_COLOR[sample.classification];
+      const dashArray = COORD_TIER_DASH_ARRAY[sample.coordinate_quality_tier];
+      const isUnknown = sample.classification === 'unknown';
+      const isImpacted = sample.classification === 'impacted';
+      const lat = sample.geometry.coordinates[1];
+      const lng = sample.geometry.coordinates[0];
 
-  // Build the IdentifyOverlay defs once -- queryActiveOverlays needs
-  // {key, name, layer} per overlay. Derived from the static
-  // OVERLAY_LAYERS catalog so it is referentially stable.
-  const overlayDefsForIdentify = useMemo<
-    Record<string, Omit<IdentifyOverlay, 'key'>>
-  >(() => {
-    const out: Record<string, Omit<IdentifyOverlay, 'key'>> = {};
-    for (const [key, def] of Object.entries(OVERLAY_LAYERS)) {
-      out[key] = { name: def.name, layer: def.layer, category: def.category };
-    }
-    return out;
-  }, []);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let marker: any;
+      if (isImpacted) {
+        // Triangle via SVG divIcon (codex P1-1: pure CSS border-triangles cannot
+        // carry the coord-tier dash pattern; SVG polygon with strokeDasharray
+        // does, so all 9 spec states are visually distinguishable). PLAN_V3_4_2
+        // section 3.3: 3 classifications x 3 coord tiers.
+        const strokeDash = dashArray ?? '';
+        const html =
+          '<svg width="24" height="24" viewBox="0 0 24 24" ' +
+          'style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">' +
+          `<polygon points="12,2 22,22 2,22" fill="${color}" ` +
+          `stroke="white" stroke-width="2.5" stroke-linejoin="round" ` +
+          `stroke-dasharray="${strokeDash}" /></svg>`;
+        marker = L.marker([lat, lng], {
+          icon: L.divIcon({
+            html,
+            className: 'matrix-impacted-icon',
+            iconSize: [24, 24],
+            iconAnchor: [12, 22],
+          }),
+          sampleId: sample.id, // Custom option -- read by cluster click handler
+        });
+      } else {
+        // codex P1-2: unknown samples must show a GREY hollow ring, not a
+        // white-on-white invisible ring. Stroke color carries the classification
+        // color for unknown; selected state (set in the style-update effect
+        // below) overrides with the blue stroke #2563eb.
+        const strokeColor = isUnknown ? color : 'white';
+        marker = L.circleMarker([lat, lng], {
+          radius: 12,
+          fillColor: color,
+          color: strokeColor,
+          weight: 3,
+          opacity: 1,
+          fillOpacity: isUnknown ? 0 : 0.9, // hollow circle for unknown
+          dashArray,
+          sampleId: sample.id, // Custom option -- read by cluster click handler
+        });
+      }
 
-  // Sample-marker click handler. Opens the panel in sample-mode +
-  // queues the DRA fetch via the useEffect below (which watches the
-  // sample state via a draLoading=true sentinel). Closes any prior
-  // identify popup; the actual L.popup for the sample mode is opened
-  // by the PopupController child below (it owns the L.Map handle).
-  const handleSampleClick = useCallback(
-    (sample: MatrixSample, _latlng: { lat: number; lng: number }) => {
-      // Bump the request id so any in-flight overlay-identify resolves
-      // into a stale-response abandon. Sample-identify takes priority.
-      identifyRequestIdRef.current += 1;
-      setIdentifyState({
-        kind: 'sample',
-        sample,
-        dra: null,
-        // Skip the fetch (and therefore the loading state) when the
-        // sample has no DRA provenance. The panel renders
-        // "Source DRA: not recorded" in this branch.
-        draLoading: sample.source_dra_id !== null,
-        draError: null,
+      marker.bindPopup(createPopupContent(sample), { maxWidth: 320 });
+      if (
+        interactionModeRef.current === 'identify' ||
+        interactionModeRef.current === 'identify-area'
+      ) {
+        try {
+          const popup = marker.getPopup?.();
+          if (popup) {
+            const content = popup.getContent?.();
+            const options = popup.options;
+            markerPopupBackupRef.current.set(marker, { content, options });
+            marker.unbindPopup();
+          }
+        } catch (err) {
+          console.warn('[MatrixMap] identify: mid-mode unbindPopup failed', err);
+        }
+      }
+      marker.on('click', (e: { originalEvent?: MouseEvent; ctrlKey?: boolean; metaKey?: boolean }) => {
+        if (
+          interactionModeRef.current === 'identify' ||
+          interactionModeRef.current === 'identify-area'
+        ) return;
+        const orig = e.originalEvent;
+        const ctrlHeld = orig?.ctrlKey || orig?.metaKey || e.ctrlKey || e.metaKey;
+        if (ctrlHeld || interactionModeRef.current === 'select-individual') {
+          toggleSampleSelection(sample.id);
+        } else {
+          selectSample(sample.id);
+        }
       });
-    },
-    [],
-  );
 
-  // Overlay-click handler -- invoked by MapClickListener when the
-  // click was NOT near any sample marker. Fires queryActiveOverlays
-  // against the currently-visible overlays in topmost-first z-order
-  // and writes the result into identifyState. Stale-response guard
-  // via identifyRequestIdRef.
-  const handleOverlayClick = useCallback(
-    async (latlng: { lat: number; lng: number }, map: LeafletMapLike) => {
-      const myId = ++identifyRequestIdRef.current;
+      markerMapRef.current.set(sample.id, marker);
+      markersLayer.addLayer(marker);
+    });
+  }, [samples, isLoaded, leaflet, selectSample, toggleSampleSelection]);
 
-      // Build an insertion-ordered Map of visible-overlay keys so the
-      // z-order resolver can reverse-iterate to topmost-first. We use
-      // the toggle order recorded in state.visibleOverlays (a Set with
-      // insertion semantics) as the source of truth.
-      const visibleMap = new Map<string, unknown>();
-      for (const key of state.visibleOverlays) {
-        visibleMap.set(key, null);
-      }
-      const ordered = getActiveOverlaysInZOrder(
-        visibleMap,
-        overlayDefsForIdentify,
-      );
-
-      let features: IdentifiedFeature[] = [];
-      try {
-        features = await queryActiveOverlays(ordered, map, latlng);
-      } catch {
-        // Non-fatal -- drop into the empty-features branch below.
-      }
-
-      // Stale-response guard: if a newer click (sample or overlay)
-      // superseded this request, abandon silently.
-      if (identifyRequestIdRef.current !== myId) return;
-
-      // Only open the overlay panel when we have something to show.
-      // Empty overlay-click results are intentionally a no-op (no panel
-      // open, no popup). The reviewer's expectation is that clicking
-      // empty space outside of any sample + outside of any overlay
-      // feature should leave the UI quiet.
-      if (features.length === 0) {
-        // Clear any existing identify state on an empty overlay click
-        // so the panel does not stay open on a now-misleading row.
-        setIdentifyState((prev) =>
-          prev !== null && prev.kind === 'sample' ? prev : null,
-        );
+  // Update marker styles when selection changes -- without clearing/recreating layers.
+  useEffect(() => {
+    if (!isLoaded || !leaflet) return;
+    markerMapRef.current.forEach((marker, sampleId) => {
+      const sample = samples.find((s) => s.id === sampleId);
+      if (!sample) return;
+      if (sample.classification === 'impacted') {
+        // Triangle markers use divIcon; selection styling via list highlight,
+        // not marker restyle (divIcon has no setStyle method).
         return;
       }
-      setIdentifyState({ kind: 'overlay', latlng, features });
-    },
-    [overlayDefsForIdentify, state.visibleOverlays],
-  );
+      const isSelected =
+        selectedSampleIds.includes(sampleId) || selectedSampleId === sampleId;
+      // codex P1-2 follow-up: on deselect, restore the classification-aware
+      // stroke (grey for unknown, white for reference). Selected state always
+      // wins with the spec blue overlay.
+      const restingStroke =
+        sample.classification === 'unknown'
+          ? CLASSIFICATION_COLOR.unknown
+          : 'white';
+      const borderColor = isSelected ? '#2563eb' : restingStroke;
+      marker.setStyle({
+        radius: isSelected ? 16 : 12,
+        color: borderColor,
+        weight: isSelected ? 4 : 3,
+      });
+    });
+  }, [selectedSampleId, selectedSampleIds, samples, isLoaded, leaflet]);
 
-  // On-demand DRA fetch (Q-2). Fires whenever the identify state
-  // transitions into a sample-with-draLoading=true shape. The fetch
-  // is keyed off the sample.id so concurrent sample-clicks (rare;
-  // would require rapid double-click) are handled by capturing the
-  // expected id at fetch-time and discarding the resolved row if the
-  // identifyState has since moved off this sample.
+  // Area select (rectangle drag) mode
   useEffect(() => {
-    if (identifyState === null || identifyState.kind !== 'sample') return;
-    if (!identifyState.draLoading) return;
-    if (identifyState.sample.source_dra_id === null) return;
+    const map = mapInstanceRef.current;
+    if (!map || !isLoaded || !leaflet) return;
 
-    const expectedSampleId = identifyState.sample.id;
-    const expectedDraId = identifyState.sample.source_dra_id;
-    let cancelled = false;
+    if (interactionMode === 'select-area') {
+      map.dragging.disable();
+      map.getContainer().style.cursor = 'crosshair';
 
-    const run = async () => {
-      try {
-        const supabase = createClient();
-        const { data, error } = await supabase
-          .schema('matrix_map')
-          .from('dras')
-          .select(
-            'id, title, agency, year, site_id, citation, document_url, public, confidentiality_notes',
-          )
-          .eq('id', expectedDraId)
-          .maybeSingle();
-        if (cancelled) return;
-        // Stale-response guard: discard if the user has clicked a
-        // different sample (or cleared the panel) since we started.
-        setIdentifyState((prev) => {
-          if (
-            prev === null ||
-            prev.kind !== 'sample' ||
-            prev.sample.id !== expectedSampleId
-          ) {
-            return prev;
-          }
-          if (error) {
-            return {
-              ...prev,
-              dra: null,
-              draLoading: false,
-              draError: error.message ?? 'unknown error',
-            };
-          }
-          return {
-            ...prev,
-            dra: (data as DraDetail | null) ?? null,
-            draLoading: false,
-            draError: null,
-          };
-        });
-      } catch (err) {
-        if (cancelled) return;
-        const message =
-          err instanceof Error ? err.message : 'unexpected fetch failure';
-        setIdentifyState((prev) => {
-          if (
-            prev === null ||
-            prev.kind !== 'sample' ||
-            prev.sample.id !== expectedSampleId
-          ) {
-            return prev;
-          }
-          return {
-            ...prev,
-            dra: null,
-            draLoading: false,
-            draError: message,
-          };
-        });
+      let startLatLng: { lat: number; lng: number } | null = null;
+
+      const onMouseDown = (e: { latlng: { lat: number; lng: number }; originalEvent: MouseEvent }) => {
+        startLatLng = e.latlng;
+        if (areaSelectRectRef.current) {
+          map.removeLayer(areaSelectRectRef.current);
+          areaSelectRectRef.current = null;
+        }
+      };
+
+      const onMouseMove = (e: { latlng: { lat: number; lng: number } }) => {
+        if (!startLatLng) return;
+        if (areaSelectRectRef.current) {
+          map.removeLayer(areaSelectRectRef.current);
+        }
+        areaSelectRectRef.current = leaflet.rectangle(
+          [startLatLng, e.latlng],
+          { color: '#3b82f6', weight: 2, fillOpacity: 0.15, dashArray: '6 3' },
+        ).addTo(map);
+      };
+
+      const onMouseUp = (e: { latlng: { lat: number; lng: number } }) => {
+        if (!startLatLng) return;
+        const bounds = leaflet.latLngBounds(startLatLng, e.latlng);
+
+        // Find all samples within the rectangle
+        const insideIds = samples
+          .filter((s) => bounds.contains(leaflet.latLng(s.geometry.coordinates[1], s.geometry.coordinates[0])))
+          .map((s) => s.id);
+
+        if (insideIds.length > 0) {
+          selectMultipleSamples(insideIds);
+        }
+
+        // Clean up rectangle
+        if (areaSelectRectRef.current) {
+          map.removeLayer(areaSelectRectRef.current);
+          areaSelectRectRef.current = null;
+        }
+        startLatLng = null;
+      };
+
+      map.on('mousedown', onMouseDown);
+      map.on('mousemove', onMouseMove);
+      map.on('mouseup', onMouseUp);
+
+      return () => {
+        map.off('mousedown', onMouseDown);
+        map.off('mousemove', onMouseMove);
+        map.off('mouseup', onMouseUp);
+        map.dragging.enable();
+        map.getContainer().style.cursor = '';
+        if (areaSelectRectRef.current) {
+          map.removeLayer(areaSelectRectRef.current);
+          areaSelectRectRef.current = null;
+        }
+      };
+    } else {
+      map.dragging.enable();
+      map.getContainer().style.cursor = '';
+    }
+  }, [interactionMode, isLoaded, leaflet, samples, selectMultipleSamples]);
+
+  // Identify-area mode: drag a rectangle and query active WMS overlays for
+  // all features in the drawn bounds. Results replace the current identified
+  // feature list and the popup only summarizes the batch.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !isLoaded || !leaflet) return;
+    if (interactionMode !== 'identify-area') return;
+    const requestIdRef = identifyRequestIdRef;
+
+    map.dragging.disable();
+
+    let startLatLng: { lat: number; lng: number } | null = null;
+
+    const onMouseDown = (e: { latlng: { lat: number; lng: number } }) => {
+      startLatLng = e.latlng;
+      if (areaSelectRectRef.current) {
+        map.removeLayer(areaSelectRectRef.current);
+        areaSelectRectRef.current = null;
       }
     };
 
-    void run();
+    const onMouseMove = (e: { latlng: { lat: number; lng: number } }) => {
+      if (!startLatLng) return;
+      if (areaSelectRectRef.current) {
+        map.removeLayer(areaSelectRectRef.current);
+      }
+      areaSelectRectRef.current = leaflet.rectangle(
+        [startLatLng, e.latlng],
+        { color: '#7c3aed', weight: 2, fillOpacity: 0.12, dashArray: '6 3' },
+      ).addTo(map);
+    };
+
+    const onMouseUp = async (e: { latlng: { lat: number; lng: number } }) => {
+      if (!startLatLng) return;
+      const bounds = leaflet.latLngBounds(startLatLng, e.latlng);
+      const center = bounds.getCenter();
+      startLatLng = null;
+
+      if (areaSelectRectRef.current) {
+        map.removeLayer(areaSelectRectRef.current);
+        areaSelectRectRef.current = null;
+      }
+
+      const myId = ++requestIdRef.current;
+      const overlayDefs: Record<string, Omit<IdentifyOverlay, 'key'>> = {};
+      for (const [key, def] of Object.entries(OVERLAY_LAYERS)) {
+        overlayDefs[key] = {
+          name: def.name,
+          layer: def.layer,
+          category: def.category,
+        };
+      }
+      const ordered = getActiveOverlaysInZOrder(
+        overlayLayersRef.current as Map<string, unknown>,
+        overlayDefs,
+      );
+
+      let hits: IdentifiedFeature[] = [];
+      try {
+        hits = await queryActiveOverlaysInBounds(ordered, bounds, {
+          wfsUrl: BC_WFS_IDENTIFY_PROXY_URL,
+          maxFeaturesPerLayer: 250,
+        });
+      } catch (err) {
+        console.warn('[MatrixMap] identify-area: query failed', err);
+      }
+
+      if (requestIdRef.current !== myId) return;
+
+      if (identifyPopupRef.current) {
+        try {
+          map.closePopup(identifyPopupRef.current);
+        } catch {
+          // ignore
+        }
+        identifyPopupRef.current = null;
+      }
+
+      if (hits.length === 0) {
+        const reason: 'no_overlays' | 'no_hits' =
+          ordered.length === 0 ? 'no_overlays' : 'no_hits';
+        try {
+          const popup = leaflet
+            .popup({ closeButton: true, autoClose: true })
+            .setLatLng(center)
+            .setContent(formatIdentifyEmptyHtml(reason));
+          popup.openOn(map);
+          identifyPopupRef.current = popup;
+        } catch (err) {
+          console.warn('[MatrixMap] identify-area: no-hits popup failed', err);
+        }
+        return;
+      }
+
+      setIdentifiedFeatures(hits);
+      try {
+        const popup = leaflet
+          .popup({ closeButton: true, autoClose: true })
+          .setLatLng(center)
+          .setContent(
+            `<div style="min-width:220px;font-family:system-ui,sans-serif;">` +
+              `<p style="font-weight:700;color:#0f172a;margin:0 0 6px 0;">${hits.length} features identified in area</p>` +
+              `<p style="font-size:12px;color:#475569;margin:0;">Review the full result set in the side panel.</p>` +
+            `</div>`,
+          );
+        popup.openOn(map);
+        identifyPopupRef.current = popup;
+      } catch (err) {
+        console.warn('[MatrixMap] identify-area: popup open failed', err);
+      }
+    };
+
+    map.on('mousedown', onMouseDown);
+    map.on('mousemove', onMouseMove);
+    map.on('mouseup', onMouseUp);
 
     return () => {
-      cancelled = true;
+      requestIdRef.current++;
+      map.off('mousedown', onMouseDown);
+      map.off('mousemove', onMouseMove);
+      map.off('mouseup', onMouseUp);
+      map.dragging.enable();
+      if (areaSelectRectRef.current) {
+        map.removeLayer(areaSelectRectRef.current);
+        areaSelectRectRef.current = null;
+      }
     };
-  }, [identifyState]);
+  }, [interactionMode, isLoaded, leaflet, setIdentifiedFeatures]);
 
-  // Panel close handler -- clears identify state. The popup-cleanup
-  // effect inside PopupController picks up the state change and
-  // closes any open L.Popup.
-  const handleIdentifyClose = useCallback(() => {
-    identifyRequestIdRef.current += 1;
-    setIdentifyState(null);
+  // Identify mode wiring.
+  //
+  // Entry: set crosshair cursor, close any open popup, unbind all marker
+  // popups (saving content+options to markerPopupBackupRef) so Leaflet's
+  // internal popup-open logic cannot fire, attach map.on('click') for
+  // raster/empty clicks, install runIdentify as the single authoritative
+  // writer of identifiedFeatures.
+  //
+  // Exit (cleanup returned from useEffect): restore cursor, rebind all
+  // marker popups from the backup ref and clear it, detach map click
+  // handler, close any transient identify popup, clear runIdentifyRef.
+  // Cluster suppression lives inside the EXISTING clusterclick handler -
+  // flipping interactionModeRef alone restores cluster zoom behavior.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !isLoaded || !leaflet) return;
+    const isIdentifyMode =
+      interactionMode === 'identify' || interactionMode === 'identify-area';
+    if (!isIdentifyMode) return;
+    const requestIdRef = identifyRequestIdRef;
+
+    const L = leaflet;
+    const container = map.getContainer();
+    const prevCursor = container.style.cursor;
+    container.style.cursor = 'crosshair';
+    container.classList.add('matrix-identify-cursor');
+
+    // Close any currently-open popup so a prior marker popup does not linger.
+    try {
+      map.closePopup();
+    } catch {
+      // ignore
+    }
+
+    // Unbind every site marker's popup and save content+options. Leaflet's
+    // internal popup-open for bound popups fires independently of our click
+    // handler - unbind is the reliable suppression.
+    const backup = markerPopupBackupRef.current;
+    markerMapRef.current.forEach((marker) => {
+      try {
+        const popup = marker.getPopup?.();
+        if (popup) {
+          const content = popup.getContent?.();
+          const options = popup.options;
+          backup.set(marker, { content, options });
+          marker.unbindPopup();
+        }
+      } catch (err) {
+        console.warn('[MatrixMap] identify: unbindPopup failed', err);
+      }
+    });
+
+    // The writer. Single authoritative path into identifiedFeatures.
+    const runIdentify = async (
+      latlng: { lat: number; lng: number },
+      geojsonHit: IdentifiedFeature | null,
+    ) => {
+      // Capture a monotonic request id at entry. After each await we compare
+      // against the ref; if it has advanced, a newer click (or mode exit)
+      // superseded us and we silently discard this response.
+      const myId = ++requestIdRef.current;
+      // Resolve the active WMS overlays in topmost-first z-order. The
+      // overlayLayersRef Map is inserted-in-add-order, so reverse iteration
+      // gives topmost-first. Declaration order of OVERLAY_LAYERS is NOT used.
+      const overlayDefs: Record<string, Omit<IdentifyOverlay, 'key'>> = {};
+      for (const [key, def] of Object.entries(OVERLAY_LAYERS)) {
+        overlayDefs[key] = { name: def.name, layer: def.layer, category: def.category };
+      }
+      const ordered = getActiveOverlaysInZOrder(
+        overlayLayersRef.current as Map<string, unknown>,
+        overlayDefs,
+      );
+      let wmsHits: IdentifiedFeature[] = [];
+      try {
+        wmsHits = await queryActiveOverlays(
+          ordered,
+          map as unknown as LeafletMapLike,
+          latlng,
+          { wmsUrl: BC_WMS_IDENTIFY_PROXY_URL },
+        );
+      } catch (err) {
+        console.warn('[MatrixMap] identify: queryActiveOverlays failed', err);
+      }
+      // Stale-response guard: if a newer request has started (or mode exited),
+      // abandon this response without writing to the store or opening a popup.
+      if (requestIdRef.current !== myId) return;
+      const merged = geojsonHit ? [geojsonHit, ...wmsHits] : wmsHits;
+
+      // Remove any prior transient identify popup before opening a new one.
+      if (identifyPopupRef.current) {
+        try {
+          map.closePopup(identifyPopupRef.current);
+        } catch {
+          // ignore
+        }
+        identifyPopupRef.current = null;
+      }
+
+      if (merged.length === 0) {
+        // Distinguish the two empty cases so the popup copy is accurate:
+        //   - no_overlays: user has not enabled any WMS overlay AND the click
+        //     did not hit a GeoJSON feature. Identify has nothing to query;
+        //     the popup hints at the layer menu instead of misleadingly
+        //     saying "no features here".
+        //   - no_hits: at least one overlay was queryable (or a GeoJSON
+        //     feature was clicked) but the buffered search returned nothing.
+        const reason: 'no_overlays' | 'no_hits' =
+          ordered.length === 0 && !geojsonHit ? 'no_overlays' : 'no_hits';
+        // Do NOT write to the store when there are no hits.
+        try {
+          const popup = L.popup({ closeButton: true, autoClose: true })
+            .setLatLng(latlng)
+            .setContent(formatIdentifyEmptyHtml(reason));
+          popup.openOn(map);
+          identifyPopupRef.current = popup;
+        } catch (err) {
+          console.warn('[MatrixMap] identify: no-hits popup failed', err);
+        }
+        return;
+      }
+
+      setIdentifiedFeatures(merged);
+      try {
+        const popup = L.popup({ closeButton: true, autoClose: true })
+          .setLatLng(latlng)
+          .setContent(
+            formatIdentifyPopupHtml(
+              merged.map((f) => ({
+                layerLabel: f.layerLabel,
+                properties: f.properties,
+              })),
+            ),
+          );
+        popup.openOn(map);
+        identifyPopupRef.current = popup;
+      } catch (err) {
+        console.warn('[MatrixMap] identify: popup open failed', err);
+      }
+    };
+    runIdentifyRef.current =
+      interactionMode === 'identify' ? runIdentify : null;
+
+    const handleIdentifyClick = (e: { latlng: { lat: number; lng: number } }) => {
+      void runIdentify(e.latlng, null);
+    };
+    if (interactionMode === 'identify') {
+      map.on('click', handleIdentifyClick);
+    }
+
+    return () => {
+      // Bump the request id so any in-flight runIdentify call that resolves
+      // after mode exit will see a mismatch and abandon silently.
+      requestIdRef.current++;
+
+      // Restore cursor
+      container.style.cursor = prevCursor;
+      container.classList.remove('matrix-identify-cursor');
+
+      // Rebind marker popups from the backup
+      backup.forEach((saved, marker) => {
+        try {
+          marker.bindPopup(saved.content, saved.options);
+        } catch (err) {
+          console.warn('[MatrixMap] identify: bindPopup restore failed', err);
+        }
+      });
+      backup.clear();
+
+      if (interactionMode === 'identify') {
+        map.off('click', handleIdentifyClick);
+      }
+
+      if (identifyPopupRef.current) {
+        try {
+          map.closePopup(identifyPopupRef.current);
+        } catch {
+          // ignore
+        }
+        identifyPopupRef.current = null;
+      }
+
+      runIdentifyRef.current = null;
+    };
+  }, [interactionMode, isLoaded, leaflet, setIdentifiedFeatures]);
+
+  // Fit to samples on first load.
+  useEffect(() => {
+    if (!mapInstanceRef.current || !isLoaded || !leaflet || sampleCount === 0) return;
+    const bounds = leaflet.latLngBounds(
+      samples.map((s) => [s.geometry.coordinates[1], s.geometry.coordinates[0]])
+    );
+    mapInstanceRef.current.fitBounds(bounds.pad(0.2), { maxZoom: 13 });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sampleCount, isLoaded, leaflet]);
+
+  // Pan to sample function.
+  const panToSample = useCallback((sampleId: string) => {
+    const sample = samples.find((s) => s.id === sampleId);
+    if (!sample || !mapInstanceRef.current) return;
+    selectSample(sampleId);
+    mapInstanceRef.current.setView(
+      [sample.geometry.coordinates[1], sample.geometry.coordinates[0]],
+      14,
+      { animate: true }
+    );
+  }, [samples, selectSample]);
+
+  const handleZoomIn = () => mapInstanceRef.current?.zoomIn();
+  const handleZoomOut = () => mapInstanceRef.current?.zoomOut();
+
+  const handleFitToSamples = useCallback(() => {
+    if (!mapInstanceRef.current || !leaflet || samples.length === 0) return;
+    const bounds = leaflet.latLngBounds(
+      samples.map((s) => [s.geometry.coordinates[1], s.geometry.coordinates[0]])
+    );
+    mapInstanceRef.current.fitBounds(bounds.pad(0.2), { maxZoom: 13 });
+  }, [leaflet, samples]);
+
+  // Export map as image
+  const handleExportMap = useCallback(async () => {
+    if (!mapContainerRef.current) return;
+
+    try {
+      const { toPng } = await import('html-to-image');
+      const dataUrl = await toPng(mapContainerRef.current, {
+        quality: 0.95,
+        backgroundColor: '#f8fafc',
+      });
+
+      const link = document.createElement('a');
+      link.download = `matrix-map-${new Date().toISOString().split('T')[0]}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Failed to export map:', err);
+    }
   }, []);
 
-  // -----------------------------------------------------------------
-  // PR-MAP-3c partial-visibility banner refinements
-  // -----------------------------------------------------------------
-
-  // Classification breakdown for the visible-samples line in the
-  // banner. Computed deterministically from the same array the markers
-  // render, so it matches what the user sees on the map. Stable across
-  // re-renders via useMemo so the banner receives a referentially-
-  // consistent prop while sample state is unchanged.
-  const classificationCounts = useMemo<ClassificationCounts>(() => {
-    const counts: ClassificationCounts = {
-      reference: 0,
-      impacted: 0,
-      unknown: 0,
-    };
-    for (const s of mapData.visible_samples) {
-      counts[s.classification] += 1;
-    }
-    return counts;
-  }, [mapData.visible_samples]);
-
-  // [Refresh] button handler. Per design 5.4: one supabase_reads
-  // increment per click; re-calls fetch_samples_with_hidden_summary and
-  // swaps the cached mapData. Errors are swallowed for v1 (the banner
-  // simply stops spinning + the prior state remains) -- a future PR
-  // can surface a toast / inline error if HITL feedback requests it.
-  const handleBannerRefresh = useCallback(async () => {
-    if (isRefreshing) return;
-    setIsRefreshing(true);
-    try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .schema('matrix_map')
-        .rpc('fetch_samples_with_hidden_summary', { p_bbox: null });
-      if (error || !data) return;
-      const parsed = data as unknown as Partial<MatrixMapData>;
-      setMapData({
-        visible_samples: Array.isArray(parsed.visible_samples)
-          ? (parsed.visible_samples as MatrixSample[])
-          : [],
-        hidden_sample_count:
-          typeof parsed.hidden_sample_count === 'number'
-            ? parsed.hidden_sample_count
-            : 0,
-        hidden_dra_count:
-          typeof parsed.hidden_dra_count === 'number'
-            ? parsed.hidden_dra_count
-            : 0,
-        hidden_dra_ids: Array.isArray(parsed.hidden_dra_ids)
-          ? (parsed.hidden_dra_ids as string[])
-          : [],
-        data_snapshot_version:
-          typeof parsed.data_snapshot_version === 'string'
-            ? parsed.data_snapshot_version
-            : 'unknown',
-      });
-    } catch {
-      // Best-effort -- a transport failure leaves prior state intact.
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [isRefreshing]);
-
   return (
-    <div
-      className="relative h-full w-full bg-slate-100"
-      data-testid="matrix-map-root"
-    >
-      {/* Top toolbar: base-layer radio group */}
-      <div
-        className="absolute left-4 right-4 top-4 z-[1000] flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 shadow-md backdrop-blur"
-        data-testid="matrix-map-base-toolbar"
-      >
-        <span className="mr-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
-          Base map
-        </span>
-        <div
-          role="radiogroup"
-          aria-label="Base map tile layer"
-          className="flex flex-wrap gap-1"
+    <div className={cn('relative w-full h-full bg-slate-100 dark:bg-slate-700', className)}>
+      {/* Cluster marker styles */}
+      <style jsx global>{`
+        .custom-cluster-icon {
+          background: transparent;
+        }
+        .cluster-marker {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          color: white;
+          font-weight: bold;
+          font-size: 14px;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+        .cluster-small {
+          width: 36px;
+          height: 36px;
+          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        }
+        .cluster-medium {
+          width: 44px;
+          height: 44px;
+          background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        }
+        .cluster-large {
+          width: 52px;
+          height: 52px;
+          background: linear-gradient(135deg, #ec4899, #be185d);
+        }
+      `}</style>
+
+      <div ref={mapContainerRef} className="absolute inset-0 z-0" />
+
+      {!isLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-100 dark:bg-slate-700 z-10">
+          <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+            <div className="w-6 h-6 border-2 border-slate-400 border-t-blue-500 rounded-full animate-spin" />
+            <span>Loading map...</span>
+          </div>
+        </div>
+      )}
+
+      {fetchErrorMessage && (
+        <div className="absolute top-20 left-4 right-4 z-[1000] bg-amber-50 border border-amber-300 text-amber-800 text-xs px-3 py-2 rounded-lg shadow">
+          {fetchErrorMessage}
+        </div>
+      )}
+
+      {/* Zoom Controls */}
+      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+        <button aria-label="Zoom in" onClick={handleZoomIn} className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700" title="Zoom in">
+          <ZoomIn className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+        </button>
+        <button aria-label="Zoom out" onClick={handleZoomOut} className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700" title="Zoom out">
+          <ZoomOut className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+        </button>
+        <div className="h-px bg-slate-200 dark:bg-slate-600 my-1" />
+        <button
+          aria-label="Fit to samples"
+          onClick={handleFitToSamples}
+          className={cn("p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700", sampleCount > 0 ? "hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600" : "opacity-50 cursor-not-allowed")}
+          disabled={sampleCount === 0}
+          title="Fit to samples"
         >
-          {BASE_LAYER_ORDER.map((key) => {
-            const def = BASE_LAYERS[key];
-            const isActive = state.baseLayer === key;
-            return (
-              <label
-                key={key}
-                className={
-                  'cursor-pointer rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ' +
-                  (isActive
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50')
-                }
-              >
-                <input
-                  type="radio"
-                  name="matrix-map-base"
-                  value={key}
-                  checked={isActive}
-                  onChange={() => setBaseLayer(key)}
-                  className="sr-only"
-                  data-testid={`matrix-map-base-${key}`}
-                />
-                {def.name}
-              </label>
-            );
-          })}
+          <Target className="w-5 h-5" />
+        </button>
+
+        {/* Layer switcher */}
+        <div className="relative">
+          <button
+            aria-label="Change map layer"
+            aria-expanded={showLayerMenu}
+            onClick={() => setShowLayerMenu(!showLayerMenu)}
+            className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+            title="Change map layer"
+          >
+            <Layers className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          </button>
+
+          {showLayerMenu && (
+            <div className="absolute right-full mr-2 top-0 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 min-w-[220px] max-h-[70vh] overflow-y-auto">
+              {/* Base layers */}
+              <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Base Map</p>
+              {Object.entries(BASE_LAYERS).map(([key, layer]) => (
+                <button
+                  key={key}
+                  onClick={() => setActiveLayer(key as keyof typeof BASE_LAYERS)}
+                  className={cn("w-full px-3 py-1.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2", activeLayer === key && "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-medium")}
+                >
+                  <div className={cn("w-3 h-3 rounded-full border-2", activeLayer === key ? "border-blue-500 bg-blue-500" : "border-slate-300 dark:border-slate-600")} />
+                  {layer.name}
+                </button>
+              ))}
+
+              {/* Overlay layers by category */}
+              {OVERLAY_CATEGORIES.map(({ key: catKey, label }) => {
+                const overlaysInCat = Object.entries(OVERLAY_LAYERS).filter(([, def]) => def.category === catKey);
+                if (overlaysInCat.length === 0) return null;
+                return (
+                  <div key={catKey}>
+                    <div className="border-t border-slate-200 dark:border-slate-700 mt-1" />
+                    <p className="px-3 pt-2 pb-1 text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{label}</p>
+                    {overlaysInCat.map(([key, def]) => (
+                      <button
+                        key={key}
+                        onClick={() => toggleOverlay(key)}
+                        className={cn("w-full px-3 py-1.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2", activeOverlays.has(key) && "bg-green-50 dark:bg-green-900/20")}
+                      >
+                        <div className={cn(
+                          "w-3 h-3 rounded-sm border-2 transition-colors",
+                          activeOverlays.has(key)
+                            ? "border-green-500 bg-green-500"
+                            : "border-slate-300 dark:border-slate-600",
+                        )} />
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: def.color, opacity: 0.7 }} />
+                        <span className="truncate">{def.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="h-px bg-slate-200 dark:bg-slate-600 my-1" />
+        <button
+          aria-label="Export map image"
+          onClick={handleExportMap}
+          className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+          title="Export map image"
+        >
+          <Download className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+        </button>
+      </div>
+
+      {/* Interaction mode toggle */}
+      <div className="absolute top-4 right-[72px] z-[1000] flex bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <button
+          onClick={() => setInteractionMode('pan')}
+          className={cn(
+            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
+            interactionMode === 'pan'
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
+          )}
+          title="Pan mode — drag to move map"
+        >
+          <Hand className="w-4 h-4" />
+          <span className="hidden sm:inline">Pan</span>
+        </button>
+        <button
+          onClick={() => setInteractionMode('select-individual')}
+          className={cn(
+            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
+            interactionMode === 'select-individual'
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
+          )}
+          title="Select mode — click markers, Ctrl+click clusters"
+        >
+          <MousePointer className="w-4 h-4" />
+          <span className="hidden sm:inline">Select</span>
+        </button>
+        <button
+          onClick={() => setInteractionMode('select-area')}
+          className={cn(
+            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
+            interactionMode === 'select-area'
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
+          )}
+          title="Area select - drag rectangle to select markers"
+        >
+          <BoxSelect className="w-4 h-4" />
+          <span className="hidden sm:inline">Area</span>
+        </button>
+        <button
+          onClick={() => setInteractionMode('identify')}
+          aria-label="Identify mode"
+          aria-pressed={interactionMode === 'identify'}
+          className={cn(
+            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
+            interactionMode === 'identify'
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
+          )}
+          title="Identify - searches currently-enabled WMS overlays. Enable a layer from the layer menu first."
+        >
+          <Crosshair className="w-4 h-4" />
+          <span className="hidden sm:inline">Identify</span>
+        </button>
+        <button
+          onClick={() => setInteractionMode('identify-area')}
+          aria-label="Identify area mode"
+          aria-pressed={interactionMode === 'identify-area'}
+          className={cn(
+            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors',
+            interactionMode === 'identify-area'
+              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
+          )}
+          title="Identify Area - drag a box to collect features from currently-enabled WMS overlays."
+        >
+          <BoxSelect className="w-4 h-4" />
+          <span className="hidden sm:inline">Identify Area</span>
+        </button>
+      </div>
+
+      {/* Legend - 9-state symbology per PLAN_V3_4_2 section 3.3 */}
+      <div className="absolute bottom-4 left-4 z-[1000] bg-white dark:bg-slate-800 rounded-lg shadow-lg p-3 border border-slate-200 dark:border-slate-700">
+        <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Classification</p>
+        <div className="space-y-2">
+          <LegendSymbol shape="circle" color="#10b981" filled label="Reference" />
+          <LegendSymbol shape="triangle" color="#eab308" filled label="Impacted" />
+          <LegendSymbol shape="circle" color="#94a3b8" filled={false} label="Unknown" />
+        </div>
+        <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+          <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Coordinate quality</p>
+          <div className="space-y-1.5">
+            <LegendOutline dashArray={undefined} label="Surveyed (high)" />
+            <LegendOutline dashArray="4 3" label="Centroid (medium)" />
+            <LegendOutline dashArray="1 3" label="Manual (low)" />
+          </div>
         </div>
       </div>
 
-      {/* Left-rail panel: overlay toggles */}
-      <aside
-        className="absolute bottom-4 left-4 top-20 z-[1000] flex w-72 max-w-[calc(100vw-2rem)] flex-col rounded-lg border border-slate-200 bg-white/95 shadow-md backdrop-blur"
-        data-testid="matrix-map-overlay-panel"
-      >
-        <button
-          type="button"
-          onClick={() => setPanelExpanded((p) => !p)}
-          className="flex items-center justify-between border-b border-slate-200 px-3 py-2 text-left"
-          aria-expanded={panelExpanded}
-          aria-controls="matrix-map-overlay-list"
-          data-testid="matrix-map-overlay-toggle"
-        >
-          <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-            <Layers className="h-4 w-4" />
-            BC public overlays
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-mono text-slate-600">
-              {state.visibleOverlays.size}/{OVERLAY_KEY_ORDER.length}
-            </span>
-          </span>
-          {panelExpanded ? (
-            <ChevronUp className="h-4 w-4 text-slate-500" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-slate-500" />
-          )}
-        </button>
-        {panelExpanded ? (
-          <div
-            id="matrix-map-overlay-list"
-            className="flex-1 overflow-y-auto px-2 py-2"
-          >
-            {OVERLAY_CATEGORY_ORDER.map(({ key: catKey, label }) => {
-              const keys = overlaysByCategory[catKey];
-              if (keys.length === 0) return null;
-              return (
-                <div key={catKey} className="mb-3 last:mb-0">
-                  <p className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                    {label}
-                  </p>
-                  <ul className="space-y-0.5">
-                    {keys.map((key) => {
-                      const def = OVERLAY_LAYERS[key];
-                      const checked = state.visibleOverlays.has(key);
-                      return (
-                        <li key={key}>
-                          <label className="flex cursor-pointer items-start gap-2 rounded-md px-1.5 py-1 text-xs text-slate-700 hover:bg-slate-50">
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleOverlay(key)}
-                              className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                              data-testid={`matrix-map-overlay-${key}`}
-                            />
-                            <span
-                              aria-hidden
-                              className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-sm"
-                              style={{ backgroundColor: def.color }}
-                            />
-                            <span className="flex-1 leading-tight">
-                              {def.name}
-                            </span>
-                          </label>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
-            <p className="mt-3 border-t border-slate-100 px-1 pt-2 text-[10px] leading-tight text-slate-400">
-              PR-MAP-2: empty map. Sample rendering arrives in PR-MAP-3;
-              identify + selection in PR-MAP-3..4.
-            </p>
+      {/* Sample count header */}
+      <div className="absolute top-4 left-4 z-[1000] bg-white dark:bg-slate-800 rounded-lg shadow-lg px-4 py-3 border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
+            <MapPin className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
-        ) : null}
-      </aside>
-
-      {/* Leaflet map. Re-mount the base TileLayer per `baseLayer` key so
-          react-leaflet swaps tile sources cleanly (a `key` change forces
-          unmount-then-mount, which is the safe pattern in react-leaflet
-          5 for switching tile providers without leaking layers). */}
-      <MapContainer
-        center={DEFAULT_CENTER}
-        zoom={DEFAULT_ZOOM}
-        minZoom={MIN_ZOOM}
-        maxZoom={MAX_ZOOM}
-        scrollWheelZoom
-        zoomControl={false}
-        className="absolute inset-0 z-0 h-full w-full"
-        data-testid="matrix-map-container"
-      >
-        <TileLayer
-          key={state.baseLayer}
-          attribution={activeBase.attribution}
-          url={activeBase.url}
-          maxNativeZoom={activeBase.maxNativeZoom}
-          maxZoom={MAX_ZOOM}
-        />
-        {OVERLAY_KEY_ORDER.filter((k) => state.visibleOverlays.has(k)).map(
-          (key) => {
-            const def = OVERLAY_LAYERS[key];
-            return (
-              <WMSTileLayer
-                key={key}
-                url={BC_WMS_URL}
-                layers={def.layer}
-                format="image/png"
-                transparent
-                opacity={0.6}
-                attribution={BC_WMS_ATTRIBUTION}
-              />
-            );
-          },
-        )}
-        <SampleMarkersLayer
-          samples={mapData.visible_samples}
-          onSampleClick={handleSampleClick}
-        />
-        <MapClickListener
-          samples={mapData.visible_samples}
-          onSampleHit={handleSampleClick}
-          onEmptyMapClick={handleOverlayClick}
-        />
-        <PopupController
-          identifyState={identifyState}
-          identifyPopupRef={identifyPopupRef}
-        />
-        <ZoomControl position="bottomright" />
-      </MapContainer>
-
-      {/* PR-MAP-3b identify panel -- rendered as a sibling of the
-          MapContainer so it can layer above the Leaflet canvas at the
-          same z-tier as the legend + banner. Hidden when identifyState
-          is null. */}
-      <IdentifyPanel state={identifyState} onClose={handleIdentifyClose} />
-
-      {/* Partial-visibility banner -- Q-8: only when hidden_sample_count > 0.
-          PR-MAP-3c refinements: classification breakdown on visible-samples
-          line; [Refresh] button (design 5.4); snapshot-scoped dismiss so a
-          fresh RPC payload re-shows the banner without a reload. */}
-      {mapData.hidden_sample_count > 0 ? (
-        <PartialVisibilityBanner
-          visibleCount={mapData.visible_samples.length}
-          hiddenSampleCount={mapData.hidden_sample_count}
-          hiddenDraCount={mapData.hidden_dra_count}
-          hiddenDraIds={mapData.hidden_dra_ids}
-          dataSnapshotVersion={mapData.data_snapshot_version}
-          classificationCounts={classificationCounts}
-          onRefresh={handleBannerRefresh}
-          isRefreshing={isRefreshing}
-        />
-      ) : null}
-
-      {/* Server-side fetch error inline notice. Surfaces ONLY when
-          page.tsx caught an RPC error (e.g. RPC migration not yet
-          deployed). Distinct from the empty-state overlay below, which
-          fires when the RPC returned successfully but with zero rows. */}
-      {fetchErrorMessage ? (
-        <div
-          className="absolute right-4 top-20 z-[1000] max-w-sm rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-xs text-rose-800 shadow-md"
-          role="status"
-          data-testid="matrix-map-fetch-error"
-        >
-          {fetchErrorMessage}
+          <div>
+            <p className="text-lg font-bold text-slate-800 dark:text-slate-100">{sampleCount}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{sampleCount === 1 ? 'Sample' : 'Samples'} loaded</p>
+          </div>
         </div>
-      ) : null}
+      </div>
 
-      {/* Empty-state overlay -- pinned top-right card; fires when the
-          RPC succeeded but returned zero visible samples (ETL pending
-          OR all rows hidden by RLS). */}
-      {mapData.visible_samples.length === 0 && !fetchErrorMessage ? (
-        <div
-          className="absolute right-4 top-20 z-[1000] max-w-sm rounded-md border border-slate-200 bg-white/95 px-3 py-2 text-xs text-slate-700 shadow-md backdrop-blur"
-          role="status"
-          data-testid="matrix-map-empty-state"
-        >
-          <p className="font-semibold">No samples yet</p>
-          <p className="mt-0.5 text-[11px] text-slate-500">
-            ETL pending or all rows hidden by RLS. Check{' '}
-            <code className="rounded bg-slate-100 px-1 py-0.5 text-[10px]">
-              /admin/matrix-map/health
-            </code>{' '}
-            for status.
-          </p>
+      {/* Clickable Sample List */}
+      {sampleCount > 0 && (
+        <div className="absolute bottom-4 right-4 z-[1000] bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 w-64">
+          <button
+            aria-label={sampleListExpanded ? "Collapse sample list" : "Expand sample list"}
+            aria-expanded={sampleListExpanded}
+            onClick={() => setSampleListExpanded(!sampleListExpanded)}
+            className="w-full px-3 py-2 flex items-center justify-between border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Sample Locations</span>
+            {sampleListExpanded ? <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500" /> : <ChevronUp className="w-4 h-4 text-slate-400 dark:text-slate-500" />}
+          </button>
+
+          {sampleListExpanded && (
+            <>
+              {/* Multi-select controls */}
+              <div className="px-3 py-1.5 flex items-center justify-between border-b border-slate-100 dark:border-slate-700">
+                <span className="text-xs text-slate-400 dark:text-slate-500">
+                  {selectedSampleIds.length > 0 ? `${selectedSampleIds.length} selected` : 'Ctrl+click for multi-select'}
+                </span>
+                <div className="flex gap-1">
+                  <button
+                    onClick={selectAllSamples}
+                    className="text-xs text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 px-1"
+                  >
+                    All
+                  </button>
+                  <span className="text-slate-300 dark:text-slate-600">|</span>
+                  <button
+                    onClick={clearSampleSelection}
+                    className="text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 px-1"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+              <div className="max-h-40 overflow-y-auto">
+                {samples.map((sample) => {
+                  const isSelected = selectedSampleIds.includes(sample.id) || selectedSampleId === sample.id;
+                  const lat = sample.geometry.coordinates[1];
+                  const lng = sample.geometry.coordinates[0];
+                  return (
+                    <button
+                      key={sample.id}
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey) {
+                          toggleSampleSelection(sample.id);
+                        } else {
+                          panToSample(sample.id);
+                        }
+                      }}
+                      className={cn(
+                        "w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 border-b border-slate-50 dark:border-slate-700/50 last:border-0",
+                        isSelected && "bg-blue-50 dark:bg-blue-900/30"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "w-3 h-3 rounded-full flex-shrink-0 border-2",
+                          isSelected ? "border-blue-500" : "border-transparent"
+                        )}
+                        style={{ backgroundColor: getMarkerColor(sample) }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className={cn("text-sm font-medium truncate", isSelected ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300")}>
+                          {sample.display_name}
+                        </p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                          {sample.station_id} -- {lat.toFixed(4)}, {lng.toFixed(4)}
+                        </p>
+                      </div>
+                      <ExternalLink className="w-3 h-3 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
-      ) : null}
-
-      {/* Sample symbology legend -- pinned bottom-left; collapsed by default */}
-      <SampleLegend />
+      )}
     </div>
   );
 }
 
-// ---------------------------------------------------------------------
-// MapClickListener -- child component using useMapEvents
-// ---------------------------------------------------------------------
-//
-// Lives inside MapContainer so it can hook the Leaflet `click` event
-// + receive the live `L.Map` instance. Decides between sample-hit
-// (short-circuit; calls onSampleHit) and empty-space (calls
-// onEmptyMapClick) per the Q-7 10px proximity rule.
-//
-// React-leaflet's useMapEvents returns the L.Map; we pass that map
-// instance to the overlay-identify driver so it can build the WMS
-// GetFeatureInfo URL.
-
-interface MapClickListenerProps {
-  samples: MatrixSample[];
-  onSampleHit: (
-    sample: MatrixSample,
-    latlng: { lat: number; lng: number },
-  ) => void;
-  onEmptyMapClick: (
-    latlng: { lat: number; lng: number },
-    map: LeafletMapLike,
-  ) => void;
+function LegendSymbol({ shape, color, filled, label }: {
+  shape: 'circle' | 'triangle';
+  color: string;
+  filled: boolean;
+  label: string;
+}) {
+  if (shape === 'triangle') {
+    return (
+      <div className="flex items-center gap-2">
+        <div style={{
+          width: 0, height: 0,
+          borderLeft: '7px solid transparent',
+          borderRight: '7px solid transparent',
+          borderBottom: `12px solid ${color}`,
+        }} />
+        <span className="text-xs text-slate-600 dark:text-slate-400">{label}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        className="w-4 h-4 rounded-full border-2 border-white shadow"
+        style={{
+          backgroundColor: filled ? color : 'transparent',
+          borderColor: filled ? 'white' : color,
+        }}
+      />
+      <span className="text-xs text-slate-600 dark:text-slate-400">{label}</span>
+    </div>
+  );
 }
 
-function MapClickListener({
-  samples,
-  onSampleHit,
-  onEmptyMapClick,
-}: MapClickListenerProps) {
-  // useMapEvents returns the map instance + binds the click handler
-  // declaratively. Stable across re-renders -- the handler always
-  // sees the current samples + callbacks via closure-over-prop.
-  const map = useMapEvents({
-    click: (evt) => {
-      const latlng = { lat: evt.latlng.lat, lng: evt.latlng.lng };
-      // Step 1 (Q-7): sample-hit test in container-pixel space.
-      const hit = findSampleNearLatLng(
-        samples,
-        latlng.lat,
-        latlng.lng,
-        SAMPLE_HIT_RADIUS_PX,
-        map as unknown as {
-          latLngToContainerPoint: (ll: { lat: number; lng: number }) => {
-            x: number;
-            y: number;
-          };
-        },
-      );
-      if (hit) {
-        onSampleHit(hit, latlng);
-        return;
-      }
-      // Step 2: empty-map click -- route to overlay-identify.
-      onEmptyMapClick(latlng, map as unknown as LeafletMapLike);
-    },
-  });
-  return null;
+function LegendOutline({ dashArray, label }: { dashArray: string | undefined; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <svg width="20" height="14" aria-hidden="true">
+        <circle cx="10" cy="7" r="5" fill="none" stroke="#475569" strokeWidth="2"
+          strokeDasharray={dashArray} />
+      </svg>
+      <span className="text-xs text-slate-600 dark:text-slate-400">{label}</span>
+    </div>
+  );
 }
 
-// ---------------------------------------------------------------------
-// PopupController -- child component owning the L.Popup
-// ---------------------------------------------------------------------
-//
-// Opens an L.Popup at the sample's coordinates when identifyState
-// transitions into sample-mode (Q-4 popup half). Closes the popup
-// when the state clears or moves to overlay mode. Side-panel render
-// is handled by IdentifyPanel; the popup here is the on-map summary.
-
-interface PopupControllerProps {
-  identifyState: IdentifyState | null;
-  identifyPopupRef: React.MutableRefObject<LeafletNS.Popup | null>;
+function getMarkerColor(sample: MatrixSample): string {
+  return CLASSIFICATION_COLOR[sample.classification];
 }
 
-function PopupController({
-  identifyState,
-  identifyPopupRef,
-}: PopupControllerProps) {
-  const map = useMapEvents({});
-  useEffect(() => {
-    let cancelled = false;
-    const closePrior = () => {
-      const prior = identifyPopupRef.current;
-      if (prior) {
-        try {
-          map.closePopup(prior);
-        } catch {
-          // best-effort cleanup
-        }
-        identifyPopupRef.current = null;
-      }
-    };
-
-    if (identifyState === null || identifyState.kind !== 'sample') {
-      closePrior();
-      return;
-    }
-
-    const coords = identifyState.sample.geometry?.coordinates;
-    if (!coords || coords.length < 2) {
-      closePrior();
-      return;
-    }
-    const [lng, lat] = coords;
-    if (typeof lat !== 'number' || typeof lng !== 'number') {
-      closePrior();
-      return;
-    }
-
-    // Dynamic import of leaflet so the popup factory is available
-    // without statically importing the package at module load (keeps
-    // vitest stubs simple + SSR-safe).
-    void (async () => {
-      const L = (await import('leaflet')).default;
-      if (cancelled) return;
-      closePrior();
-      try {
-        const html =
-          '<div style="font-family:system-ui,sans-serif;font-size:12px;color:#1e293b;min-width:180px;">' +
-          '<p style="font-weight:700;font-size:13px;color:#0f172a;margin:0 0 4px 0;">' +
-          escapeHtmlForPopup(identifyState.sample.display_name) +
-          '</p>' +
-          '<p style="margin:2px 0;color:#475569;">' +
-          '<span style="font-weight:600;color:#334155;">Classification:</span> ' +
-          escapeHtmlForPopup(identifyState.sample.classification) +
-          '</p>' +
-          '<p style="margin:4px 0 0 0;font-style:italic;color:#64748b;font-size:11px;">' +
-          'See panel for full detail.' +
-          '</p>' +
-          '</div>';
-        const popup = L.popup({ closeButton: true, autoClose: true })
-          .setLatLng({ lat, lng })
-          .setContent(html);
-        popup.openOn(map);
-        identifyPopupRef.current = popup;
-      } catch {
-        // best-effort; if popup creation fails the side panel is still
-        // visible and the reviewer can continue.
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [identifyState, identifyPopupRef, map]);
-  return null;
-}
-
-/**
- * Lightweight HTML escaper for the popup-at-latlng content. Mirrors
- * the contract used in `@/lib/maps/identify-format` so the inline popup
- * cannot inject user-controlled HTML from the sample row.
- */
-function escapeHtmlForPopup(input: string): string {
-  return input
+// codex P2-2: Leaflet bindPopup renders content as HTML. Sample fields
+// come from the ETL/RPC payload (matrix_map.fetch_samples_with_hidden_summary)
+// and may carry user-entered station names, waterbody descriptions, or notes
+// from upstream sources. Escape every interpolated string field before
+// concatenation so a stray "<" or "&" never reaches the DOM as live markup.
+function escapeHtml(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return '';
+  return String(value)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -1030,12 +1440,52 @@ function escapeHtmlForPopup(input: string): string {
     .replace(/'/g, '&#39;');
 }
 
-// Exports for tests (so spec files can assert on the canonical catalogs
-// without re-declaring them). NOT part of the public component API.
-export const __TESTING__ = {
-  BASE_LAYERS,
-  BASE_LAYER_ORDER,
-  OVERLAY_LAYERS,
-  OVERLAY_KEY_ORDER,
-  OVERLAY_CATEGORY_ORDER,
-};
+function createPopupContent(sample: MatrixSample): string {
+  const classificationColor = CLASSIFICATION_COLOR[sample.classification];
+  const tierLabel = COORD_TIER_LABEL[sample.coordinate_quality_tier];
+  const lat = sample.geometry.coordinates[1];
+  const lng = sample.geometry.coordinates[0];
+
+  const displayName = escapeHtml(sample.display_name);
+  const stationId = escapeHtml(sample.station_id);
+  const classification = escapeHtml(sample.classification);
+  const classificationSource = escapeHtml(sample.classification_source);
+  const waterbody = escapeHtml(sample.waterbody);
+  const waterbodyType = escapeHtml(sample.waterbody_type);
+  const bcRegion = escapeHtml(sample.bc_region);
+  const confidenceLabel = sample.classification_confidence
+    ? ', ' + escapeHtml(sample.classification_confidence) + ' confidence'
+    : '';
+
+  const waterbodyLine = sample.waterbody
+    ? `<p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">${waterbody}${sample.waterbody_type ? ' (' + waterbodyType + ')' : ''}</p>`
+    : '';
+  const regionLine = sample.bc_region
+    ? `<p style="font-size: 12px; color: #64748b; margin: 4px 0 0 0;">${bcRegion}</p>`
+    : '';
+
+  return `
+    <div style="min-width: 240px; font-family: system-ui, sans-serif;">
+      <p style="font-weight: 800; color: #0f172a; margin-bottom: 6px; font-size: 16px;">${displayName}</p>
+      <p style="font-size: 12px; color: #475569; margin: 0;">Station: ${stationId}</p>
+      <p style="font-size: 12px; color: #475569; margin: 4px 0 0 0;">${lat.toFixed(4)}, ${lng.toFixed(4)}</p>
+      ${waterbodyLine}
+      ${regionLine}
+      <div style="margin-top: 12px; padding-top: 12px; border-top: 2px solid #e2e8f0;">
+        <p style="font-size: 11px; color: #64748b; margin-bottom: 6px; font-weight: 600;">CLASSIFICATION</p>
+        <div style="display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 8px 12px; border-radius: 8px;">
+          <div style="width: 16px; height: 16px; border-radius: 50%; background: ${classificationColor};"></div>
+          <div>
+            <p style="font-weight: 700; color: #1e293b; text-transform: capitalize; margin: 0; font-size: 14px;">${classification}</p>
+            <p style="font-size: 11px; color: #64748b; margin: 0;">Source: ${classificationSource}${confidenceLabel}</p>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top: 8px;">
+        <p style="font-size: 11px; color: #64748b;">Coordinate quality: <strong>${tierLabel}</strong></p>
+      </div>
+    </div>
+  `;
+}
+
+export default MatrixMap;
