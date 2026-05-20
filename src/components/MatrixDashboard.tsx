@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { cn } from '@/utils/cn';
-import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FileText } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FileText, Map as MapIcon, ArrowRight } from 'lucide-react';
 import MathRenderer from './MathRenderer';
 import ConceptualMatrix from './ConceptualMatrix';
 import TWGReviewPortal from './TWGReviewPortal';
@@ -300,6 +301,59 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
             </div>
             <BackgroundAdjustment />
+          </div>
+        );
+      case 'Interactive Map':
+        // PR-MAP lane: the live Matrix Interactive Map ships at the
+        // standalone route /matrix-map (sample rendering + identify
+        // tool + partial-visibility banner). This tab inside
+        // /matrix-options stays as a discoverability card pointing at
+        // the standalone route until PR-MAP-6 lands the Calculator
+        // bridge that embeds map-derived background statistics inline.
+        // Per The_Guide section 2 (Interactive Map paragraph) and
+        // PR_MAP_3_PLAN section 2 + 5.
+        return (
+          <div className="w-full max-w-3xl mx-auto pt-8">
+            <Link
+              href="/matrix-map"
+              data-testid="matrix-options-interactive-map-link"
+              className="group block rounded-2xl border border-sky-200 dark:border-sky-800 bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/20 p-8 shadow-sm hover:shadow-lg transition-all hover:border-sky-400 dark:hover:border-sky-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
+            >
+              <div className="flex items-start gap-5">
+                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-sky-100 dark:bg-sky-800/50 text-sky-700 dark:text-sky-200 flex items-center justify-center ring-1 ring-sky-200 dark:ring-sky-700">
+                  <MapIcon className="w-7 h-7" aria-hidden="true" />
+                </div>
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                      Province-wide Interactive Map
+                    </h2>
+                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-sky-700 dark:text-sky-300 group-hover:gap-2 transition-all whitespace-nowrap">
+                      Open map
+                      <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                    Geospatial visualization of BC sediment sample sites
+                    extracted from Detailed Risk Assessments. Filter by
+                    classification (reference / impacted / unknown) and
+                    coordinate-quality tier (high / medium / low). Identify
+                    individual samples to surface measurements + source DRA
+                    metadata. A reviewer-side partial-visibility banner
+                    flags samples behind private DRAs without leaking row
+                    identifiers (per BC EMA s.43).
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Every screening statistic the map surfaces carries
+                    the &quot;screening-only -- not regulator-submission-grade&quot;
+                    label per R-4 + R-8, lifted only after ProUCL
+                    validation in v1.x. The future Calculator bridge
+                    (PR-MAP-6) will port selected statistics directly into
+                    the Background Adjustment panel on the Calculator tab.
+                  </p>
+                </div>
+              </div>
+            </Link>
           </div>
         );
       default:
