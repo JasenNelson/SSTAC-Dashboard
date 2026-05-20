@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useSiteDataStore } from '../siteDataStore';
 import type { SiteData, SiteAssessment } from '@/types/bn-rrm/site-data';
-import type { IdentifiedFeature } from '@/lib/bn-rrm/wms-identify';
+import type { IdentifiedFeature } from '@/lib/maps/wms-identify';
 
 function makeFeature(layerKey: string, propId: number): IdentifiedFeature {
   return {

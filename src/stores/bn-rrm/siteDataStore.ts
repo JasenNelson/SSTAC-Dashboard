@@ -13,7 +13,7 @@ import type {
   SedimentChemistry,
   ValidationResult,
 } from '@/types/bn-rrm/site-data';
-import type { IdentifiedFeature } from '@/lib/bn-rrm/wms-identify';
+import type { IdentifiedFeature } from '@/lib/maps/wms-identify';
 
 interface SiteDataState {
   sites: Record<string, SiteData>;

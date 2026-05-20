@@ -46,7 +46,7 @@ import {
   type IdentifiedFeature,
   type IdentifyOverlay,
   type LeafletMapLike,
-} from '@/lib/bn-rrm/wms-identify';
+} from '@/lib/maps/wms-identify';
 import {
   ZoomIn,
   ZoomOut,
