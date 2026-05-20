@@ -43,6 +43,19 @@ import { buildSampleDivIcon } from './sample-icons';
 
 interface SampleMarkersLayerProps {
   samples: MatrixSample[];
+  /**
+   * PR-MAP-3b: invoked when a sample marker is clicked. The parent
+   * MatrixMap owns the identify state + popup-at-latlng (Q-4) so the
+   * markers layer is free of identify-mode coupling.
+   *
+   * Optional so the 3a smoke test that mounts this layer without an
+   * identify wiring continues to work (the no-op-handler shape was
+   * the contract before 3b).
+   */
+  onSampleClick?: (
+    sample: MatrixSample,
+    latlng: { lat: number; lng: number },
+  ) => void;
 }
 
 // Marker cluster group type. Cast through `unknown` because
@@ -59,10 +72,23 @@ interface LeafletWithMarkerCluster {
   markerClusterGroup(options: Record<string, unknown>): MarkerClusterGroup;
 }
 
-export function SampleMarkersLayer({ samples }: SampleMarkersLayerProps) {
+export function SampleMarkersLayer({
+  samples,
+  onSampleClick,
+}: SampleMarkersLayerProps) {
   const map = useMap();
   const clusterRef = useRef<MarkerClusterGroup | null>(null);
   const leafletRef = useRef<typeof LeafletNS | null>(null);
+  // Mirror onSampleClick into a ref so the populate effect does NOT
+  // re-run (and clear/repopulate the cluster) every time the parent
+  // re-renders with a fresh handler. Mirrors the runIdentifyRef pattern
+  // in BN-RRM SiteMap -- the click handler closes over the ref, not the
+  // direct prop value, so handler identity changes do not invalidate
+  // marker layers.
+  const onSampleClickRef = useRef(onSampleClick);
+  useEffect(() => {
+    onSampleClickRef.current = onSampleClick;
+  }, [onSampleClick]);
   // Per codex PR-MAP-3a R1 P1.1: a `clusterReady` version state forces
   // the population effect below to rerun AFTER the async init effect
   // finishes assigning leafletRef + clusterRef. Without this, the
@@ -145,10 +171,15 @@ export function SampleMarkersLayer({ samples }: SampleMarkersLayerProps) {
         : sample.display_name;
       marker.bindTooltip(stationLabel, { direction: 'top' });
 
-      // TODO(PR-MAP-3b): identify-sample wires here. For 3a, the click
-      // is a no-op; the marker simply renders + tooltips.
-      marker.on('click', () => {
-        // intentional no-op in 3a
+      // PR-MAP-3b: bubble marker clicks up to the parent MatrixMap so
+      // it can own identify state + the popup-at-latlng (Q-4). The
+      // handler is read from a ref so click responsiveness survives
+      // prop-identity churn in the parent.
+      marker.on('click', (evt: LeafletNS.LeafletMouseEvent) => {
+        const handler = onSampleClickRef.current;
+        if (!handler) return;
+        const latlng = evt?.latlng ?? { lat: lat, lng: lng };
+        handler(sample, { lat: latlng.lat, lng: latlng.lng });
       });
 
       // Attach the sample id to the marker options so 3b can resolve a

@@ -48,19 +48,40 @@
 // in production because MatrixMapLoader is the only entry into this
 // component tree (via next/dynamic).
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MapContainer,
   TileLayer,
+  useMapEvents,
   WMSTileLayer,
   ZoomControl,
 } from 'react-leaflet';
 import { ChevronDown, ChevronUp, Layers } from 'lucide-react';
+import type * as LeafletNS from 'leaflet';
 
+import {
+  getActiveOverlaysInZOrder,
+  queryActiveOverlays,
+  type IdentifiedFeature,
+  type IdentifyOverlay,
+  type LeafletMapLike,
+} from '@/lib/maps/wms-identify';
+import { createClient } from '@/lib/supabase/client';
+
+import { IdentifyPanel } from './IdentifyPanel';
 import { PartialVisibilityBanner } from './PartialVisibilityBanner';
 import { SampleLegend } from './SampleLegend';
 import { SampleMarkersLayer } from './SampleMarkersLayer';
-import { EMPTY_MATRIX_MAP_DATA, type MatrixMapData } from './types';
+import {
+  findSampleNearLatLng,
+  type DraDetail,
+  type IdentifyState,
+} from './identify-state';
+import {
+  EMPTY_MATRIX_MAP_DATA,
+  type MatrixMapData,
+  type MatrixSample,
+} from './types';
 
 // ---------------------------------------------------------------------
 // Base tile layers (4 choices; matches BN-RRM SiteMap.BASE_LAYERS).
@@ -257,6 +278,11 @@ const DEFAULT_ZOOM = 5;
 const MIN_ZOOM = 4;
 const MAX_ZOOM = 18;
 
+// PR-MAP-3b Q-7: sample-hit-test radius in container pixels around the
+// click. Matches BN-RRM identify-buffer (8px) plus a small safety
+// margin because the sample divIcon visual extends past its centroid.
+const SAMPLE_HIT_RADIUS_PX = 10;
+
 // ---------------------------------------------------------------------
 // State model -- single source of truth
 // ---------------------------------------------------------------------
@@ -306,6 +332,22 @@ export function MatrixMap({
     initialMapData ?? EMPTY_MATRIX_MAP_DATA,
   );
 
+  // PR-MAP-3b identify state. null = nothing identified; the panel is
+  // hidden. Setting to a sample/overlay variant opens the panel + (for
+  // sample variant) opens an L.popup at the sample's coordinates.
+  const [identifyState, setIdentifyState] = useState<IdentifyState | null>(
+    null,
+  );
+
+  // Imperative refs used by the identify wiring:
+  //   - identifyPopupRef: tracks the L.Popup so it can be closed on
+  //     panel-close or before opening a new one.
+  //   - identifyRequestIdRef: monotonic counter for stale-response guard
+  //     against overlay-identify network races. Mirrors BN-RRM
+  //     SiteMap's requestIdRef pattern.
+  const identifyPopupRef = useRef<LeafletNS.Popup | null>(null);
+  const identifyRequestIdRef = useRef<number>(0);
+
   const setBaseLayer = useCallback((key: BaseLayerKey) => {
     setState((prev) => ({ ...prev, baseLayer: key }));
   }, []);
@@ -336,6 +378,187 @@ export function MatrixMap({
   }, []);
 
   const activeBase = BASE_LAYERS[state.baseLayer];
+
+  // ---------------------------------------------------------------
+  // PR-MAP-3b identify wiring
+  // ---------------------------------------------------------------
+
+  // Build the IdentifyOverlay defs once -- queryActiveOverlays needs
+  // {key, name, layer} per overlay. Derived from the static
+  // OVERLAY_LAYERS catalog so it is referentially stable.
+  const overlayDefsForIdentify = useMemo<
+    Record<string, Omit<IdentifyOverlay, 'key'>>
+  >(() => {
+    const out: Record<string, Omit<IdentifyOverlay, 'key'>> = {};
+    for (const [key, def] of Object.entries(OVERLAY_LAYERS)) {
+      out[key] = { name: def.name, layer: def.layer, category: def.category };
+    }
+    return out;
+  }, []);
+
+  // Sample-marker click handler. Opens the panel in sample-mode +
+  // queues the DRA fetch via the useEffect below (which watches the
+  // sample state via a draLoading=true sentinel). Closes any prior
+  // identify popup; the actual L.popup for the sample mode is opened
+  // by the PopupController child below (it owns the L.Map handle).
+  const handleSampleClick = useCallback(
+    (sample: MatrixSample, _latlng: { lat: number; lng: number }) => {
+      // Bump the request id so any in-flight overlay-identify resolves
+      // into a stale-response abandon. Sample-identify takes priority.
+      identifyRequestIdRef.current += 1;
+      setIdentifyState({
+        kind: 'sample',
+        sample,
+        dra: null,
+        // Skip the fetch (and therefore the loading state) when the
+        // sample has no DRA provenance. The panel renders
+        // "Source DRA: not recorded" in this branch.
+        draLoading: sample.source_dra_id !== null,
+        draError: null,
+      });
+    },
+    [],
+  );
+
+  // Overlay-click handler -- invoked by MapClickListener when the
+  // click was NOT near any sample marker. Fires queryActiveOverlays
+  // against the currently-visible overlays in topmost-first z-order
+  // and writes the result into identifyState. Stale-response guard
+  // via identifyRequestIdRef.
+  const handleOverlayClick = useCallback(
+    async (latlng: { lat: number; lng: number }, map: LeafletMapLike) => {
+      const myId = ++identifyRequestIdRef.current;
+
+      // Build an insertion-ordered Map of visible-overlay keys so the
+      // z-order resolver can reverse-iterate to topmost-first. We use
+      // the toggle order recorded in state.visibleOverlays (a Set with
+      // insertion semantics) as the source of truth.
+      const visibleMap = new Map<string, unknown>();
+      for (const key of state.visibleOverlays) {
+        visibleMap.set(key, null);
+      }
+      const ordered = getActiveOverlaysInZOrder(
+        visibleMap,
+        overlayDefsForIdentify,
+      );
+
+      let features: IdentifiedFeature[] = [];
+      try {
+        features = await queryActiveOverlays(ordered, map, latlng);
+      } catch {
+        // Non-fatal -- drop into the empty-features branch below.
+      }
+
+      // Stale-response guard: if a newer click (sample or overlay)
+      // superseded this request, abandon silently.
+      if (identifyRequestIdRef.current !== myId) return;
+
+      // Only open the overlay panel when we have something to show.
+      // Empty overlay-click results are intentionally a no-op (no panel
+      // open, no popup). The reviewer's expectation is that clicking
+      // empty space outside of any sample + outside of any overlay
+      // feature should leave the UI quiet.
+      if (features.length === 0) {
+        // Clear any existing identify state on an empty overlay click
+        // so the panel does not stay open on a now-misleading row.
+        setIdentifyState((prev) =>
+          prev !== null && prev.kind === 'sample' ? prev : null,
+        );
+        return;
+      }
+      setIdentifyState({ kind: 'overlay', latlng, features });
+    },
+    [overlayDefsForIdentify, state.visibleOverlays],
+  );
+
+  // On-demand DRA fetch (Q-2). Fires whenever the identify state
+  // transitions into a sample-with-draLoading=true shape. The fetch
+  // is keyed off the sample.id so concurrent sample-clicks (rare;
+  // would require rapid double-click) are handled by capturing the
+  // expected id at fetch-time and discarding the resolved row if the
+  // identifyState has since moved off this sample.
+  useEffect(() => {
+    if (identifyState === null || identifyState.kind !== 'sample') return;
+    if (!identifyState.draLoading) return;
+    if (identifyState.sample.source_dra_id === null) return;
+
+    const expectedSampleId = identifyState.sample.id;
+    const expectedDraId = identifyState.sample.source_dra_id;
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .schema('matrix_map')
+          .from('dras')
+          .select(
+            'id, title, agency, year, site_id, citation, document_url, public, confidentiality_notes',
+          )
+          .eq('id', expectedDraId)
+          .maybeSingle();
+        if (cancelled) return;
+        // Stale-response guard: discard if the user has clicked a
+        // different sample (or cleared the panel) since we started.
+        setIdentifyState((prev) => {
+          if (
+            prev === null ||
+            prev.kind !== 'sample' ||
+            prev.sample.id !== expectedSampleId
+          ) {
+            return prev;
+          }
+          if (error) {
+            return {
+              ...prev,
+              dra: null,
+              draLoading: false,
+              draError: error.message ?? 'unknown error',
+            };
+          }
+          return {
+            ...prev,
+            dra: (data as DraDetail | null) ?? null,
+            draLoading: false,
+            draError: null,
+          };
+        });
+      } catch (err) {
+        if (cancelled) return;
+        const message =
+          err instanceof Error ? err.message : 'unexpected fetch failure';
+        setIdentifyState((prev) => {
+          if (
+            prev === null ||
+            prev.kind !== 'sample' ||
+            prev.sample.id !== expectedSampleId
+          ) {
+            return prev;
+          }
+          return {
+            ...prev,
+            dra: null,
+            draLoading: false,
+            draError: message,
+          };
+        });
+      }
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [identifyState]);
+
+  // Panel close handler -- clears identify state. The popup-cleanup
+  // effect inside PopupController picks up the state change and
+  // closes any open L.Popup.
+  const handleIdentifyClose = useCallback(() => {
+    identifyRequestIdRef.current += 1;
+    setIdentifyState(null);
+  }, []);
 
   return (
     <div
@@ -498,9 +721,27 @@ export function MatrixMap({
             );
           },
         )}
-        <SampleMarkersLayer samples={mapData.visible_samples} />
+        <SampleMarkersLayer
+          samples={mapData.visible_samples}
+          onSampleClick={handleSampleClick}
+        />
+        <MapClickListener
+          samples={mapData.visible_samples}
+          onSampleHit={handleSampleClick}
+          onEmptyMapClick={handleOverlayClick}
+        />
+        <PopupController
+          identifyState={identifyState}
+          identifyPopupRef={identifyPopupRef}
+        />
         <ZoomControl position="bottomright" />
       </MapContainer>
+
+      {/* PR-MAP-3b identify panel -- rendered as a sibling of the
+          MapContainer so it can layer above the Leaflet canvas at the
+          same z-tier as the legend + banner. Hidden when identifyState
+          is null. */}
+      <IdentifyPanel state={identifyState} onClose={handleIdentifyClose} />
 
       {/* Partial-visibility banner -- Q-8: only when hidden_sample_count > 0 */}
       {mapData.hidden_sample_count > 0 ? (
@@ -550,6 +791,168 @@ export function MatrixMap({
       <SampleLegend />
     </div>
   );
+}
+
+// ---------------------------------------------------------------------
+// MapClickListener -- child component using useMapEvents
+// ---------------------------------------------------------------------
+//
+// Lives inside MapContainer so it can hook the Leaflet `click` event
+// + receive the live `L.Map` instance. Decides between sample-hit
+// (short-circuit; calls onSampleHit) and empty-space (calls
+// onEmptyMapClick) per the Q-7 10px proximity rule.
+//
+// React-leaflet's useMapEvents returns the L.Map; we pass that map
+// instance to the overlay-identify driver so it can build the WMS
+// GetFeatureInfo URL.
+
+interface MapClickListenerProps {
+  samples: MatrixSample[];
+  onSampleHit: (
+    sample: MatrixSample,
+    latlng: { lat: number; lng: number },
+  ) => void;
+  onEmptyMapClick: (
+    latlng: { lat: number; lng: number },
+    map: LeafletMapLike,
+  ) => void;
+}
+
+function MapClickListener({
+  samples,
+  onSampleHit,
+  onEmptyMapClick,
+}: MapClickListenerProps) {
+  // useMapEvents returns the map instance + binds the click handler
+  // declaratively. Stable across re-renders -- the handler always
+  // sees the current samples + callbacks via closure-over-prop.
+  const map = useMapEvents({
+    click: (evt) => {
+      const latlng = { lat: evt.latlng.lat, lng: evt.latlng.lng };
+      // Step 1 (Q-7): sample-hit test in container-pixel space.
+      const hit = findSampleNearLatLng(
+        samples,
+        latlng.lat,
+        latlng.lng,
+        SAMPLE_HIT_RADIUS_PX,
+        map as unknown as {
+          latLngToContainerPoint: (ll: { lat: number; lng: number }) => {
+            x: number;
+            y: number;
+          };
+        },
+      );
+      if (hit) {
+        onSampleHit(hit, latlng);
+        return;
+      }
+      // Step 2: empty-map click -- route to overlay-identify.
+      onEmptyMapClick(latlng, map as unknown as LeafletMapLike);
+    },
+  });
+  return null;
+}
+
+// ---------------------------------------------------------------------
+// PopupController -- child component owning the L.Popup
+// ---------------------------------------------------------------------
+//
+// Opens an L.Popup at the sample's coordinates when identifyState
+// transitions into sample-mode (Q-4 popup half). Closes the popup
+// when the state clears or moves to overlay mode. Side-panel render
+// is handled by IdentifyPanel; the popup here is the on-map summary.
+
+interface PopupControllerProps {
+  identifyState: IdentifyState | null;
+  identifyPopupRef: React.MutableRefObject<LeafletNS.Popup | null>;
+}
+
+function PopupController({
+  identifyState,
+  identifyPopupRef,
+}: PopupControllerProps) {
+  const map = useMapEvents({});
+  useEffect(() => {
+    let cancelled = false;
+    const closePrior = () => {
+      const prior = identifyPopupRef.current;
+      if (prior) {
+        try {
+          map.closePopup(prior);
+        } catch {
+          // best-effort cleanup
+        }
+        identifyPopupRef.current = null;
+      }
+    };
+
+    if (identifyState === null || identifyState.kind !== 'sample') {
+      closePrior();
+      return;
+    }
+
+    const coords = identifyState.sample.geometry?.coordinates;
+    if (!coords || coords.length < 2) {
+      closePrior();
+      return;
+    }
+    const [lng, lat] = coords;
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+      closePrior();
+      return;
+    }
+
+    // Dynamic import of leaflet so the popup factory is available
+    // without statically importing the package at module load (keeps
+    // vitest stubs simple + SSR-safe).
+    void (async () => {
+      const L = (await import('leaflet')).default;
+      if (cancelled) return;
+      closePrior();
+      try {
+        const html =
+          '<div style="font-family:system-ui,sans-serif;font-size:12px;color:#1e293b;min-width:180px;">' +
+          '<p style="font-weight:700;font-size:13px;color:#0f172a;margin:0 0 4px 0;">' +
+          escapeHtmlForPopup(identifyState.sample.display_name) +
+          '</p>' +
+          '<p style="margin:2px 0;color:#475569;">' +
+          '<span style="font-weight:600;color:#334155;">Classification:</span> ' +
+          escapeHtmlForPopup(identifyState.sample.classification) +
+          '</p>' +
+          '<p style="margin:4px 0 0 0;font-style:italic;color:#64748b;font-size:11px;">' +
+          'See panel for full detail.' +
+          '</p>' +
+          '</div>';
+        const popup = L.popup({ closeButton: true, autoClose: true })
+          .setLatLng({ lat, lng })
+          .setContent(html);
+        popup.openOn(map);
+        identifyPopupRef.current = popup;
+      } catch {
+        // best-effort; if popup creation fails the side panel is still
+        // visible and the reviewer can continue.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [identifyState, identifyPopupRef, map]);
+  return null;
+}
+
+/**
+ * Lightweight HTML escaper for the popup-at-latlng content. Mirrors
+ * the contract used in `@/lib/maps/identify-format` so the inline popup
+ * cannot inject user-controlled HTML from the sample row.
+ */
+function escapeHtmlForPopup(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // Exports for tests (so spec files can assert on the canonical catalogs
