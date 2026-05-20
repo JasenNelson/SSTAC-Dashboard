@@ -157,6 +157,25 @@ BEGIN
 END
 $$;
 
+-- GRANT membership in matrix_map_owner to postgres so the migration
+-- runner can ALTER FUNCTION ... OWNER TO matrix_map_owner below.
+-- Per codex PR-MAP-1 amend #2 caught at deploy gate 2026-05-19: the
+-- Supabase SQL editor runs queries as the postgres role (rolsuper=false
+-- per state-discovery), and Postgres requires the executing role to be
+-- a member of the target role to transfer object ownership to it. The
+-- error without this line is "42501: must be able to SET ROLE
+-- matrix_map_owner". supabase CLI db push runs as supabase_admin
+-- (rolsuper=true) which doesn't hit this; the SQL editor does.
+--
+-- Membership formally confers matrix_map_owner's privileges to postgres
+-- via SET ROLE, but adds NO new effective privileges since postgres
+-- already has broader power than matrix_map_owner (BYPASSRLS via its
+-- own attribute; CREATEDB; etc.). matrix_map_owner is strictly less
+-- privileged (NOLOGIN; no SUPERUSER; no CREATEROLE) and stays NOLOGIN
+-- so nobody can use it interactively. The grant just lets postgres
+-- temporarily SET ROLE for the ALTER OWNER transfer.
+GRANT matrix_map_owner TO postgres;
+
 -- BYPASSRLS attribute: per codex PR-MAP-1 R2 P1-1 -- the 3 SECURITY DEFINER
 -- functions matrix_map_owner owns must read/write base tables that are
 -- FORCE ROW LEVEL SECURITY (FORCE applies RLS to the table owner too,
@@ -203,6 +222,15 @@ GRANT USAGE  ON SCHEMA auth                                TO matrix_map_owner;
 GRANT USAGE  ON SCHEMA public                              TO matrix_map_owner;
 GRANT SELECT ON public.user_roles                          TO matrix_map_owner;
 GRANT SELECT ON auth.users                                 TO matrix_map_owner;
+
+-- Transient CREATE privilege on matrix_map schema, granted ONLY for
+-- the ALTER FUNCTION OWNER statements below (Postgres requires the new
+-- owner to hold CREATE on the function's schema, in addition to the
+-- membership grant above per codex amend #2). REVOKEd at end of
+-- SECTION 4 once all 3 OWNER transfers are done -- matrix_map_owner
+-- never needs CREATE in steady state (it owns 3 functions; can't and
+-- shouldn't create more).
+GRANT CREATE  ON SCHEMA matrix_map                         TO matrix_map_owner;
 GRANT SELECT ON matrix_map.private_data_grants             TO matrix_map_owner;
 GRANT SELECT, UPDATE ON matrix_map.dras                    TO matrix_map_owner;
 GRANT INSERT ON matrix_map.dra_visibility_audit            TO matrix_map_owner;
@@ -442,6 +470,13 @@ COMMENT ON FUNCTION matrix_map.flip_dra_public(uuid, boolean, uuid, text) IS
   'matrix_map_owner. EXECUTE granted to authenticated ONLY (service_role '
   'explicitly REVOKED per grants-v2.1 deferred action; ETL has separate '
   'internal helpers out of v1 scope).';
+
+-- Revoke the transient CREATE privilege on matrix_map schema now that
+-- all 3 ALTER FUNCTION OWNER transfers (SECTIONS 2/3/4) are complete.
+-- Per codex amend #2: matrix_map_owner never needs CREATE in steady
+-- state; granting it only for the transfer keeps the role's privileges
+-- minimal.
+REVOKE CREATE ON SCHEMA matrix_map FROM matrix_map_owner;
 
 
 -- =====================================================================
