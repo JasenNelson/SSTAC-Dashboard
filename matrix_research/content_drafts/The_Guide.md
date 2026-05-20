@@ -43,7 +43,7 @@ To ensure rigorous scientific review and policy alignment, the project will foll
 
 ## 4. Recently Added on the Calculator Tab
 
-*   **Four-category selector at the top.** A horizontal row of buttons -- Ecological: Direct Contact, Ecological: Food Web, Human Health: Direct Contact, Human Health: Food Web -- lets the reviewer pick the regulatory pathway under review. Ecological categories are live; the two Human Health categories are visible but disabled as "Coming soon" placeholders until the HH calculators land in a future slice.
+*   **Four-category selector at the top.** A horizontal row of buttons -- Ecological: Direct Contact, Ecological: Food Web, Human Health: Direct Contact, Human Health: Food Web -- lets the reviewer pick the regulatory pathway under review. Ecological categories ship with full calculators; the two Human Health categories ship with HITL-reviewed disclaimer placeholders that explain the in-progress methodology + why HH is meaningfully different from the ecological pathways. The real HH calculators are deferred to a future slice.
 *   **Shared substance and jurisdictional frame controls.** The substance dropdown and jurisdiction selector below the category row are now global: changing either applies to whichever calculator is active. The substance default re-seeds the per-pathway library values (FCV for Eco-Direct; TRV and BSAF for Eco-Food) automatically; if you edit a field manually a "User override" badge appears with a Reset button that re-syncs to the library value.
 *   **Preliminary Toxicity-Based Standard hero card.** The calculator's prominent result is now labeled "Preliminary Toxicity-Based Standard" (not the bare "SedS" identifier) and includes a PASS/FAIL verdict pill when a measured sediment concentration is provided. The label and the in-card disclaimer make it explicit that the value is preliminary -- HITL professional judgment plus the Background Adjustment panel determine the final defensible standard.
 *   **Technical details disclosure.** The formula, intermediate quantities, and screening warnings now live in a collapsible disclosure below the hero so reviewers see the bottom-line result first and can drill into the math on demand.
@@ -65,6 +65,6 @@ A **Background Adjustment** panel renders below every active calculator so the P
 
 ## 5. Coming Soon
 
-*   **Human Health calculators** (Direct Contact + Food Web). The placeholder buttons in the category row turn on once HITL sign-off lands on the disclaimer copy that frames why an HH calculator is meaningfully different from the ecological pathways.
+*   **Human Health calculators** (Direct Contact + Food Web). The HH category buttons are already live and route to HITL-reviewed disclaimer placeholders; the real calculators replace those placeholder bodies in a future slice (likely PR-A5 or later) without re-routing the UI surface.
 *   **Sidebar Calculator Guide** with a three-tier audience toggle (General, Practitioner, Technical) so the same review panel can serve a wide audience.
 *   **Interactive provincial sediment map** (see the Interactive Map tab description above) -- province-wide sediment database extracted from DRAs, wired into the Background Adjustment panel for one-click site-specific recalculations.
