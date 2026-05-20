@@ -367,7 +367,7 @@ export default function AdminUsersManager() {
           <button
             type="submit"
             disabled={isAddingUser || !newUserEmail.trim()}
-            className="px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:bg-sky-400 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-sky-700 text-white rounded-md hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500 disabled:bg-sky-400 disabled:cursor-not-allowed"
           >
             {isAddingUser ? 'Processing...' : 'Check User Role'}
           </button>
@@ -476,7 +476,7 @@ export default function AdminUsersManager() {
                          user.isAdmin
                            ? 'bg-red-600 hover:bg-red-700 disabled:bg-red-400'
                            : 'bg-sky-700 hover:bg-sky-800 disabled:bg-sky-400'
-                       } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:cursor-not-allowed transition-colors`}
+                       } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500 disabled:cursor-not-allowed transition-colors`}
                      >
                        {updatingUser === user.id ? (
                          <>
