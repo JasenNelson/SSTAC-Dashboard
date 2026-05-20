@@ -137,3 +137,9 @@ cython_debug/
 .tmp_*
 *.xml
 *.docx
+
+# PR-MAP-1 ETL: regenerable SQL artifact emitted by
+# scripts/matrix-map/etl_bnrrm_to_supabase.py (~4.7MB, deterministic
+# from bnrrm_training.db + PR_MAP_0_GEOCODING_DATA.csv; the .py source
+# is the canonical artifact).
+scripts/matrix-map/etl_bnrrm_to_supabase_output.sql

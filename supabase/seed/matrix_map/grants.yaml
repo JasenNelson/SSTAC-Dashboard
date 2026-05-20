@@ -1,0 +1,64 @@
+# Matrix Interactive Map -- private_data_grants seed template
+# ---
+# Per PR-MAP-1 (plan v3.4.2 section 7 + grants design v2.3):
+# - Each entry creates one row in matrix_map.private_data_grants.
+# - Granularity: per-user, per-DRA. One active grant per (user_id, dra_id)
+#   where revoked_at IS NULL is enforced by UNIQUE partial index.
+# - DUA acceptance is OUT OF SCOPE per owner override 2026-05-19 (codex E-1
+#   dropped); do NOT add a dua_accepted_at column.
+# - Apply via supabase/seed/matrix_map/apply_grants.ts (TypeScript runner)
+#   or psql -f scripts/matrix-map/apply_grants.sql (generated).
+# - All fields except expires_at are required.
+#
+# Schema reference (private_data_grants):
+#   user_id            uuid       FK -> auth.users(id)
+#   user_email         text       (denormalized for audit readability)
+#   dra_id             uuid       FK -> matrix_map.dras(id) ON DELETE RESTRICT
+#   granted_by         uuid       (matrix_admin auth.uid())
+#   granted_by_email   text       (denormalized; granted_by is canonical)
+#   granted_at         timestamptz default now()
+#   rationale          text       (free-form; required; surfaces in admin UI)
+#   expires_at         timestamptz nullable
+#   revoked_at         timestamptz (NULL = active)
+#   revoked_by         uuid       (NULL until revoke)
+#   revoke_reason      text       (NULL until revoke)
+#
+# Plain ASCII only. No emoji, no smart quotes, no em-dashes.
+
+# ---
+# Initial dev allowlist (R-5): jasen.nelson@gmail.com only.
+# DRA IDs below are placeholders -- replace with actual uuid values from
+# matrix_map.dras after ETL completes. Run:
+#
+#   psql ... -c "SELECT id, title, agency, year FROM matrix_map.dras
+#                WHERE public = false ORDER BY year DESC;"
+#
+# then paste the uuid into dra_id.
+
+grants:
+  # Example entry (commented out -- uncomment + fill in dra_id after ETL):
+  #
+  # - user_email: jasen.nelson@gmail.com
+  #   dra_id: 00000000-0000-0000-0000-000000000000   # REPLACE: matrix_map.dras.id
+  #   granted_by_email: jasen.nelson@gmail.com
+  #   rationale: |
+  #     Owner / matrix_admin seeding access to own DRA for end-to-end
+  #     PR-MAP-1 smoke test. Per R-5 dev allowlist + plan v3.4.2 sec 7.
+  #   expires_at: null   # nullable; null = no expiry
+  []
+
+# ---
+# Notes for steward:
+#
+# 1. Atomic apply: the runner INSERTs ON CONFLICT (user_id, dra_id)
+#    WHERE revoked_at IS NULL DO NOTHING -- safe to re-apply.
+# 2. Renewing an expired grant: revoke the prior row first, then add a
+#    fresh entry here. Renew-vs-new disambiguation is enforced in the
+#    admin UI (PR-MAP-7 per codex A-1); from YAML, treat each entry as
+#    create-new with explicit rationale.
+# 3. Service-role autocomplete (codex A-3) populates user_id from
+#    user_email at apply-time via auth.users lookup; service-role
+#    invocation is logged to matrix_map.service_role_audit.
+# 4. Every apply run writes one summary row to service_role_audit with
+#    rpc_name = 'apply_grants_yaml' and args_summary listing the count
+#    of grants added / skipped / errored.
