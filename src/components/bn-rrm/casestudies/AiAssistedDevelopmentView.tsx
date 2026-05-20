@@ -39,7 +39,10 @@ import { cn } from '@/utils/cn';
 // Audience tier type + badge colors (mirrors HowItWorksView for consistency)
 // ---------------------------------------------------------------------------
 
-type AudienceTier =
+// Exported so CaseStudiesView (the controlled-mode parent) + test mocks
+// can share a single type definition. A duplicated union across files
+// becomes drift bait the first time a tier is added or renamed.
+export type AudienceTier =
   | 'everyone'
   | 'practitioner'
   | 'technical'
@@ -73,87 +76,139 @@ const TIER_ACCENT_COLORS: Record<string, string> = {
 
 // ---------------------------------------------------------------------------
 // Public entry point: AiAssistedDevelopmentView
+//
+// Hybrid controlled/uncontrolled component. Pass `activeTier` +
+// `onTierChange` for controlled mode (used by CaseStudiesView so the
+// parent can make the content-area width tier-aware -- the TWG Review
+// tier needs to escape the narrow max-w-4xl cap that tiers 1-3 sit in).
+// Omit both props for the legacy uncontrolled mode (used by tests + any
+// future standalone usage).
 // ---------------------------------------------------------------------------
 
-export function AiAssistedDevelopmentView() {
-  const [activeTier, setActiveTier] = useState<AudienceTier>('everyone');
+export interface AiAssistedDevelopmentViewProps {
+  activeTier?: AudienceTier;
+  onTierChange?: (tier: AudienceTier) => void;
+}
+
+export function AiAssistedDevelopmentView({
+  activeTier: controlledActiveTier,
+  onTierChange,
+}: AiAssistedDevelopmentViewProps = {}) {
+  const [internalTier, setInternalTier] = useState<AudienceTier>('everyone');
+  const isControlled = controlledActiveTier !== undefined;
+  const activeTier = isControlled ? controlledActiveTier : internalTier;
+  const setActiveTier = (tier: AudienceTier) => {
+    if (isControlled) {
+      onTierChange?.(tier);
+    } else {
+      setInternalTier(tier);
+    }
+  };
 
   return (
-    <div className="space-y-5">
-      <header className="space-y-1.5">
-        <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
-          AI-assisted BN-RRM Development
-        </h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
-          A construction record of how the Jermilova et al. 2025 Mackenzie
-          mercury BN-RRM was reconstructed in Python and surfaced in this
-          dashboard. Audience-tiered: pick the depth that fits your role.
-        </p>
-        <p className="text-xs text-slate-500 dark:text-slate-500 italic">
-          The dashboard view below is a curated summary. The full
-          peer-reviewer-grade construction record lives in the methodology
-          paper (linked in the footer) -- ~57k words across nine Parts and
-          six appendices.
-        </p>
-      </header>
+    // Outer flex column: when the parent provides a flex parent (the
+    // tier-aware CaseStudiesView branch), the layout fills available
+    // height + restricts width per tier. When the parent is a plain
+    // block container (tests, future standalone usage), `flex-1` /
+    // `min-h-0` are inert and the layout auto-sizes to content.
+    <div className="flex flex-col gap-5 flex-1 min-h-0">
+      {/* Header + tier-selector row -- always capped at max-w-4xl so the
+          four buttons do not stretch ugly across a wide monitor. */}
+      <div className="max-w-4xl mx-auto w-full space-y-5 shrink-0">
+        <header className="space-y-1.5">
+          <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+            AI-assisted BN-RRM Development
+          </h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            A construction record of how the Jermilova et al. 2025 Mackenzie
+            mercury BN-RRM was reconstructed in Python and surfaced in this
+            dashboard. Audience-tiered: pick the depth that fits your role.
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-500 italic">
+            The dashboard view below is a curated summary. The full
+            peer-reviewer-grade construction record lives in the methodology
+            paper (linked in the footer) -- ~57k words across nine Parts and
+            six appendices.
+          </p>
+        </header>
 
-      {/* Tier selector. TWG Review is the 4th tier: it is NOT just a
-          reading depth, it is the collaborative-review portal that opens
-          the full 57k-word methodology paper with section-by-section
-          comments + save/submit (writes to document_reviews per-user RLS).
-          See JermilovaReviewPortal for the data flow. */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-        <TierButton
-          tier="everyone"
-          title="For Everyone"
-          subtitle="Communities and curious readers"
-          active={activeTier === 'everyone'}
-          onClick={() =>
-            setActiveTier(activeTier === 'everyone' ? null : 'everyone')
-          }
-        />
-        <TierButton
-          tier="practitioner"
-          title="For Practitioners"
-          subtitle="Managers and regulators"
-          active={activeTier === 'practitioner'}
-          onClick={() =>
-            setActiveTier(
-              activeTier === 'practitioner' ? null : 'practitioner'
-            )
-          }
-        />
-        <TierButton
-          tier="technical"
-          title="Technical"
-          subtitle="Scientists and QPs"
-          active={activeTier === 'technical'}
-          onClick={() =>
-            setActiveTier(activeTier === 'technical' ? null : 'technical')
-          }
-        />
-        <TierButton
-          tier="twg-review"
-          title="TWG Review"
-          subtitle="Collaborative section-by-section feedback"
-          active={activeTier === 'twg-review'}
-          onClick={() =>
-            setActiveTier(activeTier === 'twg-review' ? null : 'twg-review')
-          }
-        />
+        {/* Tier selector. TWG Review is the 4th tier: it is NOT just a
+            reading depth, it is the collaborative-review portal that opens
+            the full 57k-word methodology paper with section-by-section
+            comments + save/submit (writes to document_reviews per-user
+            RLS). See JermilovaReviewPortal for the data flow. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <TierButton
+            tier="everyone"
+            title="For Everyone"
+            subtitle="Communities and curious readers"
+            active={activeTier === 'everyone'}
+            onClick={() =>
+              setActiveTier(activeTier === 'everyone' ? null : 'everyone')
+            }
+          />
+          <TierButton
+            tier="practitioner"
+            title="For Practitioners"
+            subtitle="Managers and regulators"
+            active={activeTier === 'practitioner'}
+            onClick={() =>
+              setActiveTier(
+                activeTier === 'practitioner' ? null : 'practitioner',
+              )
+            }
+          />
+          <TierButton
+            tier="technical"
+            title="Technical"
+            subtitle="Scientists and QPs"
+            active={activeTier === 'technical'}
+            onClick={() =>
+              setActiveTier(activeTier === 'technical' ? null : 'technical')
+            }
+          />
+          <TierButton
+            tier="twg-review"
+            title="TWG Review"
+            subtitle="Collaborative section-by-section feedback"
+            active={activeTier === 'twg-review'}
+            onClick={() =>
+              setActiveTier(
+                activeTier === 'twg-review' ? null : 'twg-review',
+              )
+            }
+          />
+        </div>
       </div>
 
-      {activeTier === 'everyone' && <EveryoneContent />}
-      {activeTier === 'practitioner' && <PractitionerContent />}
-      {activeTier === 'technical' && <TechnicalContent />}
-      {activeTier === 'twg-review' && <TwgReviewContent />}
-
-      {/* The source-pointer footer is hidden in the TWG Review tier: that
-          tier already shows the full methodology content inline (no need
-          to redirect the reader to a separate canonical path). The first
-          three tiers are curated summaries and rely on the footer to
-          point at the source of truth. */}
-      {activeTier !== 'twg-review' && <SourcePointerFooter />}
+      {/* Tier content area. The TWG Review tier renders a 3-column
+          workspace that needs the full available width AND a bounded
+          height (the portal does its own internal scrolling). Tiers
+          1-3 are curated summaries that stay in the narrow cap with
+          outer scroll. */}
+      {activeTier === 'twg-review' ? (
+        <div
+          className="flex-1 min-h-0 flex w-full"
+          data-testid="ai-assisted-tier-content-twg-review"
+        >
+          <TwgReviewContent />
+        </div>
+      ) : (
+        <div
+          className="max-w-4xl mx-auto w-full overflow-y-auto flex-1 min-h-0 space-y-5"
+          data-testid="ai-assisted-tier-content-narrow"
+        >
+          {activeTier === 'everyone' && <EveryoneContent />}
+          {activeTier === 'practitioner' && <PractitionerContent />}
+          {activeTier === 'technical' && <TechnicalContent />}
+          {/* The source-pointer footer renders in the curated-tier branch
+              (tiers 1-3 + the no-tier-active state). The TWG Review tier
+              hides it because the portal opens the canonical content
+              inline; redirecting the reader to a separate path would be
+              redundant. */}
+          <SourcePointerFooter />
+        </div>
+      )}
     </div>
   );
 }
@@ -233,11 +288,16 @@ function TwgReviewContent() {
   }
 
   return (
-    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden h-[calc(100vh-20rem)] min-h-[600px]">
+    // Wraps the portal so the parent's `flex-1 min-h-0` flex slot bounds
+    // the portal's height + width. The portal handles its own internal
+    // scrolling (TOC list + center MD + comments form each scroll
+    // independently). The `flex` here is needed so the portal -- which
+    // is itself a flex row -- can fill the wrapper.
+    <div className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden flex-1 min-h-0 w-full flex">
       <JermilovaReviewPortal
         methodologyContent={methodologyContent}
-        showLeftPanel
-        showRightPanel
+        initialShowLeftPanel
+        initialShowRightPanel
       />
     </div>
   );
