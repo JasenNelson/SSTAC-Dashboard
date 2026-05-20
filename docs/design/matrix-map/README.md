@@ -55,12 +55,33 @@ memory anchor `dashboard_matrix_interactive_map_lane_2026_05_19.md`.
 ## PR-MAP-1 Deployment Runbook
 
 Required steps after applying the PR-MAP-1 migrations to a Supabase project
-(staging or prod). Migrations alone do not configure these; they live in
-Supabase Dashboard / project API settings and must be applied manually.
+(staging or prod). Migrations alone do not configure all of these; some live
+in Supabase Dashboard / project API settings and must be applied manually.
+
+### Pre-flight verification (2026-05-19 SQL state-discovery output)
+
+The PR-MAP-1 migrations were authored against the target project's actually-
+verified state on 2026-05-19. Re-run the 8-section state-discovery packet
+(in chat history) on the target project IMMEDIATELY before apply to confirm
+nothing has drifted. Especially:
+- `matrix_map` schema does NOT exist yet (collision on apply)
+- `matrix_map_owner` role does NOT exist yet
+- `postgis` extension state (see step 0 below)
+
+### Steps
+
+0. **PostGIS extension (one-time per project).**
+   The schema migration self-installs `postgis` via
+   `CREATE EXTENSION IF NOT EXISTS postgis WITH SCHEMA extensions;`. If
+   the `postgres` role lacks `CREATE EXTENSION` privilege on your tier,
+   enable manually FIRST via Supabase Dashboard > Database > Extensions
+   > postgis > Enable. Then proceed.
 
 1. **Apply migrations in order** (Supabase CLI or Studio):
    1. `20260519000001_matrix_map_schema.sql` -- schema + indexes + seed caps
    2. `20260519000002_matrix_map_rls.sql`    -- helpers + RPC + RLS policies + GRANTs
+   3. `20260519000003_matrix_map_layers_seed.sql` -- 4 base + 14 BC WMS overlay rows
+      (ships in PR-MAP-2; can be applied as part of the same `db push` batch)
 
 2. **Expose `matrix_map` schema to the API** (per codex PR-MAP-1 R1 P2-2):
    Supabase Dashboard -> Project Settings -> API -> "Exposed schemas".
@@ -78,21 +99,44 @@ Supabase Dashboard / project API settings and must be applied manually.
    sample_events, measurements) use `ON CONFLICT DO NOTHING` per codex
    PR-MAP-1 R1 P2-1. Safe to re-run.
 
-4. **Layer catalog (deferred to PR-MAP-2)**:
-   PR-MAP-1 leaves `matrix_map.layers` EMPTY by design (codex PR-MAP-1
-   holistic P2 disposition). PR-MAP-2 (map UI commit) will seed the 4
-   base tile layers + 14 BC WMS overlays alongside the React-Leaflet
-   wiring that consumes them. The /admin/matrix-map/health page does
-   NOT query `layers`, so this deferral does not impact PR-MAP-1
-   verification.
+4. **Layer catalog (lands in PR-MAP-2 migration)**:
+   PR-MAP-2 ships `20260519000003_matrix_map_layers_seed.sql` (4 base
+   tile layers + 14 BC WMS overlays from BN-RRM `OVERLAY_LAYERS`,
+   idempotent). If you apply migrations sequentially via `db push`,
+   this lands automatically. The /admin/matrix-map/health page does
+   NOT query `layers`, so the PR-MAP-1 deploy is verifiable independently
+   of this seed.
 
-5. **Seed initial grants** (optional; matrix_admin only):
+5. **Grant `matrix_admin` to TWG matrix-map admins** (one row per admin):
+   Per 2026-05-19 state-discovery: `public.user_roles.role` currently has
+   3 `admin` rows + 50 `member` rows + ZERO `matrix_admin` rows. PR-MAP-1
+   introduces `matrix_admin` as a new value of `public.user_roles.role`
+   but does NOT auto-populate. Until you insert matrix_admin rows, only
+   the 3 existing global `admin` users can call `flip_dra_public`, manage
+   grants, or read audit tables -- which IS the intended v1 dev-allowlist
+   posture per R-5.
+   To grant matrix_admin to a TWG user (any global admin can run this).
+   The PR-MAP-1 RLS migration widens `user_roles_role_check` to permit
+   the `matrix_admin` value (live check before this migration was
+   `IN ('admin','member')`; widened on 2026-05-19 to add `'matrix_admin'`).
+   `ON CONFLICT` keys on the existing `UNIQUE(user_id, role)` index so
+   re-runs are safe:
+   ```sql
+   INSERT INTO public.user_roles (user_id, role)
+   SELECT id, 'matrix_admin'
+   FROM auth.users
+   WHERE email = 'twg.member@example.com'
+   ON CONFLICT (user_id, role) DO NOTHING;
+   ```
+   Revoke with `DELETE FROM public.user_roles WHERE user_id = ... AND role = 'matrix_admin';`.
+
+6. **Seed initial grants** (optional; matrix_admin only):
    Edit `supabase/seed/matrix_map/grants.yaml` with real DRA UUIDs (look them
    up via `SELECT id, title FROM matrix_map.dras WHERE public = false;`) then
    apply (apply runner ships with PR-MAP-7 admin UI; for v1 dev, hand-write
    the INSERT statements following the YAML template).
 
-6. **Verify post-deploy** (admin SQL session):
+7. **Verify post-deploy** (admin SQL session):
    - 13 tables in matrix_map (`SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'matrix_map'`)
    - 9 RLS-armed tables (verify block in `20260519000002_matrix_map_rls.sql` section 5)
    - 14 RLS policies (verify block; admin select + cascade select counts)

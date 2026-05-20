@@ -35,9 +35,13 @@
 --
 -- PRE-FLIGHT VERIFICATION (run READ-ONLY before applying):
 --
---   -- Confirm postgis is installed (geography type used by samples.geometry)
+--   -- Confirm postgis is installed (geography type used by samples.geometry).
+--   -- This migration self-installs via SECTION 0 CREATE EXTENSION IF NOT
+--   -- EXISTS, so the pre-flight check is informational. If the install
+--   -- statement fails (insufficient privileges), enable via Supabase
+--   -- Dashboard > Database > Extensions > postgis BEFORE re-running.
 --   SELECT extname, extversion FROM pg_extension WHERE extname = 'postgis';
---   -- Expected: 1 row with extversion >= 3.0
+--   -- Expected after apply: 1 row with extversion >= 3.0
 --
 --   -- Confirm pgcrypto / gen_random_uuid is available
 --   SELECT extname FROM pg_extension WHERE extname IN ('pgcrypto');
@@ -54,17 +58,25 @@
 BEGIN;
 
 -- =====================================================================
--- SECTION 0 -- SCHEMA + SEARCH_PATH
+-- SECTION 0 -- EXTENSIONS + SCHEMA + SEARCH_PATH
 -- =====================================================================
--- search_path scoped to matrix_map + public + pg_catalog for this
--- migration so unqualified type lookups (geography, jsonb, inet) resolve
--- against postgis (typically installed in public or its own schema) and
--- core catalog without surprises. The search_path SET is statement-local
--- to this transaction; production session search_path is not modified.
+-- PostGIS required by matrix_map.samples.geometry (geography type).
+-- Verified 2026-05-19 via state-discovery SQL packet: extension NOT
+-- present on target Supabase project (only pg_stat_statements, pgcrypto,
+-- plpgsql, supabase_vault, uuid-ossp installed). Adding it here as
+-- CREATE EXTENSION IF NOT EXISTS keeps the migration self-sufficient
+-- on a fresh project; existing-postgis projects no-op safely. Standard
+-- Supabase pattern per https://supabase.com/docs/guides/database/extensions/postgis.
+CREATE EXTENSION IF NOT EXISTS postgis WITH SCHEMA extensions;
+
+-- search_path includes the `extensions` schema so unqualified type
+-- lookups (geography, jsonb, inet) resolve against postgis without
+-- surprises. The search_path SET is statement-local to this transaction;
+-- production session search_path is not modified.
 
 CREATE SCHEMA IF NOT EXISTS matrix_map;
 
-SET LOCAL search_path = matrix_map, public, pg_catalog;
+SET LOCAL search_path = matrix_map, public, extensions, pg_catalog;
 
 COMMENT ON SCHEMA matrix_map IS
   'Matrix Interactive Map lane (PR-MAP-1..PR-MAP-7). Holds sediment-data '

@@ -38,6 +38,19 @@
 --   the fine-grained role for TWG matrix-map admins who should NOT
 --   gain global admin powers across the SSTAC dashboard.
 --
+--   STATE AS OF 2026-05-19 (verified via Supabase state-discovery SQL):
+--     public.user_roles.role distinct values currently in use:
+--       'admin'   -- 3 rows (existing global admins)
+--       'member'  -- 50 rows (existing regular dashboard users)
+--     ZERO existing rows have role = 'matrix_admin'. This migration
+--     does NOT auto-populate matrix_admin grants. Owner / global admin
+--     must INSERT user_roles rows manually to grant matrix_admin to
+--     TWG matrix-map admins as they opt in (sample INSERT in the
+--     deployment runbook at docs/design/matrix-map/README.md). Until
+--     such inserts land, only the 3 existing 'admin' rows can call
+--     flip_dra_public / manage grants / read audit tables -- which
+--     IS the intended v1 dev-allowlist posture per R-5.
+--
 -- DEV ALLOWLIST CONVENTION (R-5):
 --   is_email_allowlisted(jwt_email) returns true iff the email
 --   corresponds to a user_id that has ANY row in public.user_roles.
@@ -84,6 +97,41 @@ BEGIN;
 -- resolve cleanly. Production session search_path is not modified.
 
 SET LOCAL search_path = matrix_map, public, pg_catalog;
+
+
+-- =====================================================================
+-- SECTION 0.1 -- WIDEN public.user_roles.role CHECK CONSTRAINT
+-- =====================================================================
+-- Verified 2026-05-19 via Supabase state-discovery SQL (pg_constraint
+-- query against public.user_roles): the live CHECK is
+--   CHECK (role = ANY (ARRAY['admin'::text, 'member'::text]))
+-- and matrix_admin is NOT yet allowed. PR-MAP-1 introduces matrix_admin
+-- as a fine-grained role for TWG matrix-map admins (admin > matrix_admin
+-- hierarchy). Without widening the constraint, the runbook step that
+-- INSERTs user_roles(user_id, 'matrix_admin', ...) fails on the CHECK.
+--
+-- Approach: DROP IF EXISTS + ADD with the widened set. Idempotent.
+-- Preserves existing 'admin' (3 rows) + 'member' (50 rows). Adds
+-- 'matrix_admin' as a permitted value with zero auto-population.
+--
+-- This is a PUBLIC-schema change (not matrix_map), but it is logically
+-- a prerequisite for the matrix_admin role-gating that the matrix_map
+-- RLS policies + flip_dra_public RPC depend on. Keeping it in this
+-- migration (rather than a separate file) preserves atomicity: if any
+-- later section of this transaction fails, the constraint widening
+-- rolls back with it.
+
+ALTER TABLE public.user_roles
+  DROP CONSTRAINT IF EXISTS user_roles_role_check;
+
+ALTER TABLE public.user_roles
+  ADD CONSTRAINT user_roles_role_check
+  CHECK (role IN ('admin', 'member', 'matrix_admin'));
+
+COMMENT ON CONSTRAINT user_roles_role_check ON public.user_roles IS
+  'Widened by PR-MAP-1 RLS migration on 2026-05-19 to include '
+  'matrix_admin per plan v3.4.2 + grants v2.3 fine-grained role design. '
+  'Prior values admin + member preserved.';
 
 
 -- =====================================================================
