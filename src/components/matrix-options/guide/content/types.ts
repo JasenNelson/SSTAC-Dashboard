@@ -34,14 +34,6 @@ const ALL_MATRIX_CATEGORIES_TUPLE = [
 export const ALL_MATRIX_CATEGORIES: ReadonlyArray<MatrixCategory> =
   ALL_MATRIX_CATEGORIES_TUPLE;
 
-// Categories currently enabled for end-user selection in PR-A2.
-// HH categories enable in PR-A4 after HITL sign-off on the placeholder
-// disclaimer copy (plan v3 section 2 + v4 Delta 2).
-export const ENABLED_CATEGORIES_PR_A2: ReadonlyArray<MatrixCategory> = [
-  'eco-direct',
-  'eco-food',
-];
-
 export function isMatrixCategory(value: unknown): value is MatrixCategory {
   return (
     typeof value === 'string' &&
