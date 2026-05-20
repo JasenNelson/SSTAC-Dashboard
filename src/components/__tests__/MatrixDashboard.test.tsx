@@ -71,6 +71,51 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(screen.getByRole('heading', { name: /Background Adjustment/i })).toBeInTheDocument();
   });
 
+  // PR-A4 HH wire-up enabled by default: clicking the hh-direct category
+  // button renders HHDirectPlaceholder (HITL-reviewed disclaimer panel; no
+  // numeric output) instead of the prior inline "unavailable stub". The
+  // eco calculators unmount when an HH category is active.
+  it('clicking hh-direct renders HHDirectPlaceholder and unmounts the eco calculators (PR-A4)', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    clickCalculatorTab();
+    fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+    expect(
+      screen.getByTestId('hh-direct-placeholder'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('eco-direct-eqp-calculator'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('eco-food-bsaf-calculator'),
+    ).not.toBeInTheDocument();
+    // HHFoodPlaceholder NOT rendered when on hh-direct.
+    expect(
+      screen.queryByTestId('hh-food-placeholder'),
+    ).not.toBeInTheDocument();
+    // Prior inline unavailable stub no longer rendered.
+    expect(
+      screen.queryByTestId('hh-calculator-unavailable-stub'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('clicking hh-food renders HHFoodPlaceholder and unmounts the eco calculators (PR-A4)', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    clickCalculatorTab();
+    fireEvent.click(screen.getByTestId('category-selector-hh-food'));
+    expect(
+      screen.getByTestId('hh-food-placeholder'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('eco-direct-eqp-calculator'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('eco-food-bsaf-calculator'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('hh-direct-placeholder'),
+    ).not.toBeInTheDocument();
+  });
+
   it('switching CategorySelector to eco-food re-renders Eco-Food calculator (and unmounts Eco-Direct)', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
@@ -154,22 +199,23 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     ).toBe('federal-ccme');
   });
 
-  // Validate-on-load clears the stale entry inside restoreX(); the persist
-  // effect then immediately re-writes the default value. The end-state
-  // invariant we care about is "user no longer sees the stale value":
-  // both the rendered state AND the persisted value reflect the default,
-  // NOT the stale input.
-  it('falls back to default activeCategory when a disabled HH category is persisted (e.g., hh-direct)', () => {
+  // PR-A4 HH wire-up enabled by default: hh-direct + hh-food are now
+  // user-selectable and route to the HITL-reviewed placeholder panels.
+  // restoreActiveCategory no longer rejects HH categories; a persisted
+  // hh-direct value hydrates as-is.
+  it('hydrates hh-direct from localStorage and renders the HHDirectPlaceholder (PR-A4 HH wire-up enabled by default)', () => {
     window.localStorage.setItem(LS_CATEGORY, 'hh-direct');
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
-    // HH categories disabled in PR-A2 -> fall back to default 'eco-direct'.
     expect(
-      screen.getByTestId('eco-direct-eqp-calculator'),
+      screen.getByTestId('hh-direct-placeholder'),
     ).toBeInTheDocument();
-    // After hydrate clear + persist re-write, the entry holds the default
-    // (NOT the stale 'hh-direct' value the test seeded).
-    expect(window.localStorage.getItem(LS_CATEGORY)).toBe('eco-direct');
+    // EcoDirect calculator NOT rendered when on hh-direct.
+    expect(
+      screen.queryByTestId('eco-direct-eqp-calculator'),
+    ).not.toBeInTheDocument();
+    // localStorage retains the persisted value (no longer cleared).
+    expect(window.localStorage.getItem(LS_CATEGORY)).toBe('hh-direct');
   });
 
   it('falls back to default substanceKey when an unknown substance is persisted', () => {

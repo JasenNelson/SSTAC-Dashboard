@@ -2,9 +2,12 @@
 
 // CategorySelector -- 1x4 horizontal row of matrix-category radio buttons
 // for the Calculator tab (owner override of plan v3's 2x2 layout, applied
-// 2026-05-19 after PR-A2 commits 1-7 landed). PR-A2: HH categories are
-// disabled (HH calculators ship in PR-A4 after HITL sign-off on disclaimer
-// copy). Mobile collapses to a single column. Each button is >= 44px tall
+// 2026-05-19 after PR-A2 commits 1-7 landed). PR-A4: HH categories are
+// enabled by default (hhEnabled default flipped from false -> true) and
+// route to the HITL-reviewed HHDirectPlaceholder / HHFoodPlaceholder
+// components in MatrixDashboard. Callers can still pass hhEnabled={false}
+// explicitly to restore the PR-A2 disabled-by-default behavior if needed.
+// Mobile collapses to a single column. Each button is >= 44px tall
 // (WCAG 2.5.5 touch target).
 //
 // Accessibility (plan v3 section 10 + v6):
@@ -25,8 +28,10 @@ import type { MatrixCategory } from './guide/content/types';
 export interface CategorySelectorProps {
   activeCategory: MatrixCategory;
   onChange: (category: MatrixCategory) => void;
-  // Whether HH categories are enabled. Defaults to false (PR-A2 ships HH
-  // disabled; PR-A4 will pass true after HITL sign-off).
+  // Whether HH categories are enabled. Defaults to true (PR-A4 HH wire-up
+  // enabled by default; HITL-reviewed disclaimer copy ships in
+  // HHDirectPlaceholder + HHFoodPlaceholder). Callers can pass false
+  // explicitly to restore the PR-A2 disabled-by-default behavior.
   hhEnabled?: boolean;
   className?: string;
 }
@@ -86,7 +91,7 @@ const HH_DISABLED_TOOLTIP =
 export default function CategorySelector({
   activeCategory,
   onChange,
-  hhEnabled = false,
+  hhEnabled = true,
   className,
 }: CategorySelectorProps) {
   const buttonRefs = useRef<Record<MatrixCategory, HTMLButtonElement | null>>({
