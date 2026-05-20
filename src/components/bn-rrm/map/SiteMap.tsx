@@ -32,13 +32,15 @@ import {
   HEAVY_LAYERS,
   MAP_ARTIFACT_LABELS,
   formatFeaturePopup,
-  formatIdentifyEmptyHtml,
-  formatIdentifyPopupHtml,
   getStyleForKey,
   packHasMapArtifacts,
   type GeoJsonFeature,
   type GeoJsonFeatureCollection,
 } from '@/lib/bn-rrm/map-overlay-helpers';
+import {
+  formatIdentifyEmptyHtml,
+  formatIdentifyPopupHtml,
+} from '@/lib/maps/identify-format';
 import {
   getActiveOverlaysInZOrder,
   queryActiveOverlays,

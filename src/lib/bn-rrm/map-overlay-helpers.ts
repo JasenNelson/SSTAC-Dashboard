@@ -452,105 +452,12 @@ export function formatFeaturePopup(
 
 // ---------------------------------------------------------------------------
 // Identify-tool popup formatter (WMS + GeoJSON hits)
+//
+// HOISTED 2026-05-20 per PR-MAP-3b Q-3 to `src/lib/maps/identify-format.ts`
+// so the matrix-map surface can consume it without importing from `bn-rrm/*`.
+// Symmetric to the PR-MAP-2 hoist of `wms-identify.ts`. See
+// `docs/design/matrix-map/PR_MAP_3_PLAN.md` section 4.1 + 4.2.
 // ---------------------------------------------------------------------------
-
-/**
- * Minimal subset of IdentifiedFeature needed to render the popup teaser.
- * Intentionally structural - avoids importing the full type from wms-identify
- * so this helper stays isolated from that module.
- */
-export interface IdentifyPopupFeature {
-  layerLabel: string;
-  properties: Record<string, unknown>;
-}
-
-function isPopupEmptyValue(v: unknown): boolean {
-  if (v === null || v === undefined) return true;
-  if (typeof v === 'string' && v.trim() === '') return true;
-  return false;
-}
-
-function popupValueAsString(v: unknown): string {
-  if (typeof v === 'string') return v;
-  if (typeof v === 'number' || typeof v === 'boolean') return String(v);
-  try {
-    return JSON.stringify(v);
-  } catch {
-    return String(v);
-  }
-}
-
-/**
- * Reason for an empty Identify result. Determines the popup copy so the user
- * can distinguish "clicked empty space on an enabled overlay" from "no
- * identify-enabled overlays are currently active."
- */
-export type IdentifyEmptyReason = 'no_hits' | 'no_overlays';
-
-/**
- * Popup body for the two empty cases:
- *   - no_hits:    overlays are active but no feature under the click
- *   - no_overlays: no WMS overlays active, so Identify has nothing to query
- *
- * The no_overlays copy includes a short hint directing the user to the layer
- * menu, because a user who toggled every overlay off (or never toggled one
- * on) will otherwise see a misleading "no features here" message.
- */
-export function formatIdentifyEmptyHtml(
-  reason: IdentifyEmptyReason,
-): string {
-  if (reason === 'no_overlays') {
-    const body =
-      `<p style="${POPUP_ROW_STYLE}">` +
-      'Identify searches only overlays that are currently enabled. ' +
-      'Open the layer menu and turn on a WMS overlay ' +
-      '(for example "Contaminated Sites Registry") to inspect features here.' +
-      '</p>';
-    return wrap('No overlays enabled for Identify', body);
-  }
-  return wrap('No features at this location', '');
-}
-
-/**
- * Compact popup body used by the Identify tool. Shows:
- *   - A count header ("N features identified")
- *   - Primary layer label + up to 3 non-empty property rows
- *   - A footer hint directing the user to the side panel for full detail
- *
- * features[0] is treated as the primary hit (topmost-first z-order upstream).
- *
- * For the zero-features case callers should prefer formatIdentifyEmptyHtml
- * with an explicit reason; this function keeps a no_hits fallback for
- * backward compatibility with any caller that still passes [].
- */
-export function formatIdentifyPopupHtml(
-  features: IdentifyPopupFeature[],
-): string {
-  if (!features || features.length === 0) {
-    return formatIdentifyEmptyHtml('no_hits');
-  }
-  const total = features.length;
-  const primary = features[0];
-  const title =
-    total === 1 ? '1 feature identified' : `${total} features identified`;
-
-  const entries = Object.entries(primary.properties).filter(
-    ([, v]) => !isPopupEmptyValue(v),
-  );
-  const shown = entries.slice(0, 3);
-
-  let rows = row('Layer', escapeHtml(primary.layerLabel));
-  for (const [k, v] of shown) {
-    rows += row(k, escapeHtml(popupValueAsString(v)));
-  }
-  if (total > 1) {
-    rows +=
-      `<p style="${POPUP_ROW_STYLE};font-style:italic;">` +
-      `See all ${total} in side panel.` +
-      '</p>';
-  }
-  return wrap(title, rows);
-}
 
 // ---------------------------------------------------------------------------
 // Pack-presence helper
