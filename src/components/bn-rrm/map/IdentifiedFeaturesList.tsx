@@ -24,7 +24,7 @@
 
 import { cn } from '@/utils/cn';
 import { Layers, X } from 'lucide-react';
-import type { IdentifiedFeature } from '@/lib/bn-rrm/wms-identify';
+import type { IdentifiedFeature } from '@/lib/maps/wms-identify';
 
 export interface IdentifiedFeaturesListProps {
   features: IdentifiedFeature[];
