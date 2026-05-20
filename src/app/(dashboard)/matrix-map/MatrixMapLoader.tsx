@@ -20,11 +20,14 @@
 
 import dynamic from 'next/dynamic';
 
-// Leaflet's CSS lives here (NOT in MatrixMap.tsx) so the vitest smoke
-// spec for MatrixMap.tsx can mock react-leaflet cleanly without Vite
-// trying to process leaflet.css through the project's PostCSS config
-// (which is .mjs-based for Next/Tailwind and not loadable from Vite).
+// Leaflet + markercluster CSS lives here (NOT in MatrixMap.tsx) so the
+// vitest smoke spec for MatrixMap.tsx can mock the dynamic JS imports
+// cleanly without Vite trying to process .css through the project's
+// PostCSS config (which is .mjs-based for Next/Tailwind and not loadable
+// from Vite directly). Pattern matches BNRRMClient -> SiteMap.
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 import type { MatrixMapData } from './types';
 
