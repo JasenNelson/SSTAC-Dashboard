@@ -131,3 +131,13 @@ export const EMPTY_MATRIX_MAP_DATA: MatrixMapData = {
   hidden_dra_ids: [],
   data_snapshot_version: 'unavailable',
 };
+
+// PR-MAP-3b identify state (re-exported from identify-state.ts so any
+// downstream consumer that already imports from `./types` keeps a
+// single import surface).
+export type {
+  DraDetail,
+  IdentifyOverlayState,
+  IdentifySampleState,
+  IdentifyState,
+} from './identify-state';
