@@ -41,6 +41,7 @@ import {
   type IdentifyOverlay,
   type LeafletMapLike,
 } from '@/lib/maps/wms-identify';
+import { useMatrixMapIdentifyStore } from '@/stores/matrix-map/identifyStore';
 import {
   ZoomIn,
   ZoomOut,
@@ -283,16 +284,15 @@ export function MatrixMap({
   const sampleCount = samples.length;
   const [selectedSampleId, setSelectedSampleId] = useState<string | null>(null);
   const [selectedSampleIds, setSelectedSampleIds] = useState<string[]>([]);
-  // Identified-features local state. The list itself is not surfaced in this
-  // fork (the identify panel is deferred to PR-MAP-4/5); the setter is the
-  // single authoritative writer used by the identify + identify-area effects.
-  // The `_` prefix on the reader satisfies @typescript-eslint/no-unused-vars
-  // (allowed-unused pattern /^_/u).
-  const [_identifiedFeatures, setIdentifiedFeaturesState] = useState<IdentifiedFeature[]>([]);
-
-  const setIdentifiedFeatures = useCallback((features: IdentifiedFeature[]) => {
-    setIdentifiedFeaturesState(features);
-  }, []);
+  // PR-MAP-10 (bugfix): identifiedFeatures now lives in
+  // src/stores/matrix-map/identifyStore.ts so MatrixMapLeftPanel can
+  // subscribe to identify-tool / identify-area results across the
+  // sibling-component boundary. The Path-B fork originally used local
+  // React state because the panel was deferred; the dedicated store
+  // keeps the coupling surface minimal while restoring the read path.
+  const setIdentifiedFeatures = useMatrixMapIdentifyStore(
+    (state) => state.setIdentifiedFeatures,
+  );
 
   const toggleSampleSelection = useCallback((id: string) => {
     setSelectedSampleIds((prev) =>
