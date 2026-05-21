@@ -23,6 +23,18 @@ vi.mock('../ConceptualMatrix', () => ({
 vi.mock('../TWGReviewPortal', () => ({
   default: () => <div data-testid="twg-review-portal-mock" />,
 }));
+// MatrixMapLoader statically imports leaflet + markercluster CSS;
+// Vite's CSS pipeline cannot load the project's .mjs PostCSS config in
+// the vitest worker. Mock the loader + its CSS dependencies for the
+// MatrixDashboard tests; the Interactive Map tab is not exercised by
+// this suite (Calculator + Guide + TWG-tab assertions only).
+// Same pattern as MatrixMap.test.tsx (2026-05-20 fork commit 89eee3f).
+vi.mock('@/app/(dashboard)/matrix-map/MatrixMapLoader', () => ({
+  default: () => <div data-testid="matrix-map-loader-mock" />,
+}));
+vi.mock('leaflet/dist/leaflet.css', () => ({}));
+vi.mock('leaflet.markercluster/dist/MarkerCluster.css', () => ({}));
+vi.mock('leaflet.markercluster/dist/MarkerCluster.Default.css', () => ({}));
 
 import MatrixDashboard from '../MatrixDashboard';
 
