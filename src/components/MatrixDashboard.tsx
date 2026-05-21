@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
 import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FileText } from 'lucide-react';
 import MatrixMapLoader from '@/app/(dashboard)/matrix-map/MatrixMapLoader';
+import PartialVisibilityBanner from '@/app/(dashboard)/matrix-map/PartialVisibilityBanner';
 import { EMPTY_MATRIX_MAP_DATA, type MatrixMapData } from '@/app/(dashboard)/matrix-map/types';
 import MathRenderer from './MathRenderer';
 import ConceptualMatrix from './ConceptualMatrix';
@@ -44,6 +46,8 @@ const LS_KEY_CATEGORY = 'matrix-options-active-category-v1';
 const LS_KEY_TIER = 'matrix-options-guide-tier-v1';
 const LS_KEY_SUBSTANCE = 'matrix-options-substance-v1';
 const LS_KEY_JURISDICTION = 'matrix-options-jurisdiction-v1';
+const MATRIX_ADMIN_CONTACT_EMAIL =
+  process.env.NEXT_PUBLIC_MATRIX_ADMIN_CONTACT_EMAIL;
 
 // Validate-on-load coercion per plan v5 Delta 1. SSR-safe (typeof window
 // guard). On invalid / stale localStorage values: clear the entry so the
@@ -131,6 +135,7 @@ const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'Int
 const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
 
 export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent, finalDraftContent, initialMapData = EMPTY_MATRIX_MAP_DATA, fetchErrorMessage = null }: MatrixDashboardProps) {
+  const router = useRouter();
   const [activeTopTab, setActiveTopTab] = useState('The Guide');
   const [activeSideTab, setActiveSideTab] = useState('Ecological: EqP & AVS');
   // Both side panels open by default per owner UX preference 2026-05-19
@@ -205,6 +210,9 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   // jurisdiction selector is the user's anchor) and for non-tool modes.
   const hideSidebarOnPrint =
     isToolMode && activeTopTab === 'Calculator';
+  const handleRefreshMapData = useCallback(() => {
+    router.refresh();
+  }, [router]);
 
   const renderSidebar = () => {
     switch (activeTopTab) {
@@ -348,37 +356,46 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         // pattern for PR-MAP-5 MeasurementWorkbench content.
         return (
           <div
-            className="flex-1 flex overflow-hidden"
+            className="flex-1 flex flex-col overflow-hidden"
             data-testid="matrix-options-interactive-map-embed"
           >
-            {/* Left panel: Selection Stats (PR-MAP-4 scaffold) */}
-            <div
-              data-testid="matrix-map-left-panel-wrapper"
-              className={cn(
-                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shadow-sm',
-                showLeftPanel ? 'w-80' : 'w-0',
-              )}
-            >
-              <MatrixMapLeftPanelScaffold />
-            </div>
+            <PartialVisibilityBanner
+              hiddenSampleCount={initialMapData.hidden_sample_count}
+              hiddenDraCount={initialMapData.hidden_dra_count}
+              hiddenDraIds={initialMapData.hidden_dra_ids}
+              contactEmail={MATRIX_ADMIN_CONTACT_EMAIL}
+              onRefresh={handleRefreshMapData}
+            />
+            <div className="flex min-h-0 flex-1 overflow-hidden">
+              {/* Left panel: Selection Stats (PR-MAP-4 scaffold) */}
+              <div
+                data-testid="matrix-map-left-panel-wrapper"
+                className={cn(
+                  'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shadow-sm',
+                  showLeftPanel ? 'w-80' : 'w-0',
+                )}
+              >
+                <MatrixMapLeftPanelScaffold />
+              </div>
 
-            {/* Center: map */}
-            <div className="flex-1 relative">
-              <MatrixMapLoader
-                initialMapData={initialMapData}
-                fetchErrorMessage={fetchErrorMessage}
-              />
-            </div>
+              {/* Center: map */}
+              <div className="flex-1 relative">
+                <MatrixMapLoader
+                  initialMapData={initialMapData}
+                  fetchErrorMessage={fetchErrorMessage}
+                />
+              </div>
 
-            {/* Right panel: MeasurementWorkbench (PR-MAP-5 scaffold) */}
-            <div
-              data-testid="matrix-map-right-panel-wrapper"
-              className={cn(
-                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-sm',
-                showRightPanel ? 'w-96' : 'w-0',
-              )}
-            >
-              <MatrixMapRightPanelScaffold />
+              {/* Right panel: MeasurementWorkbench (PR-MAP-5 scaffold) */}
+              <div
+                data-testid="matrix-map-right-panel-wrapper"
+                className={cn(
+                  'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-sm',
+                  showRightPanel ? 'w-96' : 'w-0',
+                )}
+              >
+                <MatrixMapRightPanelScaffold />
+              </div>
             </div>
           </div>
         );
