@@ -428,6 +428,43 @@ export function MatrixMap({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Codex P2 (2026-05-20 panel-scaffold review): when the matrix-map is
+  // embedded in /matrix-options as a 3-column layout with collapsible
+  // left + right side panels (PR-MAP-4 scaffold), toggling a panel
+  // changes the map container's width via a transition-all animation.
+  // Leaflet does NOT auto-detect container resizes -- the visible tile
+  // viewport stays at the original size until the next manual recompute.
+  // ResizeObserver on the container ref calls map.invalidateSize() any
+  // time the container's dimensions change; debounced via rAF so rapid
+  // resize events (during the 300ms transition) coalesce into one
+  // recompute after settling. Self-contained inside MatrixMap so the
+  // panel toggles in MatrixDashboard don't need any explicit signal
+  // wiring, AND so the bare /matrix-map standalone route also benefits
+  // if some other consumer ever embeds it in a resizing container.
+  useEffect(() => {
+    if (!mapInstanceRef.current || !mapContainerRef.current) return;
+    const container = mapContainerRef.current;
+    const mapInstance = mapInstanceRef.current;
+    let rafId: number | null = null;
+    const observer = new ResizeObserver(() => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (mapInstance as any).invalidateSize?.();
+        } catch {
+          // Best-effort; ignore if map was disposed mid-resize.
+        }
+      });
+    });
+    observer.observe(container);
+    return () => {
+      observer.disconnect();
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, [isLoaded]);
+
   // Change base layer
   useEffect(() => {
     if (!mapInstanceRef.current || !leaflet || !tileLayerRef.current) return;
