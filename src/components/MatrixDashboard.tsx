@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { cn } from '@/utils/cn';
-import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FileText, Map as MapIcon, ArrowRight } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FileText } from 'lucide-react';
+import MatrixMapLoader from '@/app/(dashboard)/matrix-map/MatrixMapLoader';
+import { EMPTY_MATRIX_MAP_DATA, type MatrixMapData } from '@/app/(dashboard)/matrix-map/types';
 import MathRenderer from './MathRenderer';
 import ConceptualMatrix from './ConceptualMatrix';
 import TWGReviewPortal from './TWGReviewPortal';
@@ -105,12 +106,31 @@ interface MatrixDashboardProps {
   humanHealthContent: string;
   guideContent: string;
   finalDraftContent: string;
+  /**
+   * Server-fetched matrix-map RPC payload. Embedded in the 'Interactive Map'
+   * tab (BN-RRM tab pattern, owner directive 2026-05-20). Replaces the
+   * prior discoverability-card pattern that linked out to /matrix-map.
+   * The /matrix-map standalone route still exists; the embed is the
+   * primary entry point.
+   *
+   * Optional ONLY for backward compatibility with existing
+   * MatrixDashboard.test.tsx unit tests that pre-date the embed refactor.
+   * Production callsite (/matrix-options/page.tsx) always passes it.
+   * When omitted, defaults to EMPTY_MATRIX_MAP_DATA so the embedded
+   * MatrixMapLoader renders the loading state cleanly in test environments.
+   */
+  initialMapData?: MatrixMapData;
+  /**
+   * Optional inline notice surfaced inside the embedded map when the
+   * server-side RPC fetch failed; pass-through to MatrixMapLoader.
+   */
+  fetchErrorMessage?: string | null;
 }
 
 const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'Interactive Map', 'TWG Review', 'Calculator'];
 const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
 
-export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent, finalDraftContent }: MatrixDashboardProps) {
+export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent, finalDraftContent, initialMapData = EMPTY_MATRIX_MAP_DATA, fetchErrorMessage = null }: MatrixDashboardProps) {
   const [activeTopTab, setActiveTopTab] = useState('The Guide');
   const [activeSideTab, setActiveSideTab] = useState('Ecological: EqP & AVS');
   // Both side panels open by default per owner UX preference 2026-05-19
@@ -172,6 +192,13 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
 
   const isToolMode = activeTopTab === 'Calculator' || activeTopTab === 'Jurisdictional Frameworks';
   const isReviewMode = activeTopTab === 'TWG Review';
+  // 2026-05-20 embed refactor: the Interactive Map tab renders the live
+  // matrix-map full-bleed (mirrors BN-RRM MapView tab pattern). Distinct
+  // from isToolMode because the matrix-map has its own internal floating
+  // chrome (legend / tool palette / count card) and does NOT use the
+  // dashboard-level left-sidebar / right-drawer until PR-MAP-4 + PR-MAP-5
+  // populate Selection Stats + MeasurementWorkbench.
+  const isMapMode = activeTopTab === 'Interactive Map';
   // print:hidden on the entire left sidebar column when the Calculator tab
   // is active, per plan v3 section 4.2 + section 10. The sidebar stays
   // visible on print for the Jurisdictional Frameworks tab (where the
@@ -304,56 +331,32 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           </div>
         );
       case 'Interactive Map':
-        // PR-MAP lane: the live Matrix Interactive Map ships at the
-        // standalone route /matrix-map (sample rendering + identify
-        // tool + partial-visibility banner). This tab inside
-        // /matrix-options stays as a discoverability card pointing at
-        // the standalone route until PR-MAP-6 lands the Calculator
-        // bridge that embeds map-derived background statistics inline.
-        // Per The_Guide section 2 (Interactive Map paragraph) and
-        // PR_MAP_3_PLAN section 2 + 5.
+        // Live Matrix Interactive Map embed (owner directive 2026-05-20):
+        // the 'Interactive Map' tab now hosts the map inline (BN-RRM tab
+        // pattern -- the MapView tab in BNRRMClient.tsx renders SiteMap
+        // directly inside the tab content area). This replaces the prior
+        // discoverability-card-linking-to-/matrix-map pattern that lost
+        // the matrix-options top tabs on navigation. The /matrix-map
+        // standalone route still exists for direct linking (e.g. from
+        // emails / Slack); the embed is the primary entry point.
+        //
+        // initialMapData + fetchErrorMessage are server-fetched in
+        // matrix-options/page.tsx via the shared helper @/lib/matrix-map/
+        // fetch-samples-server and passed through props (server-component
+        // boundary). Selection Stats left panel + MeasurementWorkbench
+        // right panel are deferred to PR-MAP-4 + PR-MAP-5 per the
+        // 2026-05-20 post-mortem; for now the embed shows the map
+        // component only.
+        //
+        // The 'h-full' wrapper makes the map fill the tab content area
+        // (the parent <main> container already has flex-1 + overflow-
+        // hidden so the leaflet container sizes correctly).
         return (
-          <div className="w-full max-w-3xl mx-auto pt-8">
-            <Link
-              href="/matrix-map"
-              data-testid="matrix-options-interactive-map-link"
-              className="group block rounded-2xl border border-sky-200 dark:border-sky-800 bg-gradient-to-br from-sky-50 to-blue-50 dark:from-sky-900/20 dark:to-blue-900/20 p-8 shadow-sm hover:shadow-lg transition-all hover:border-sky-400 dark:hover:border-sky-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
-            >
-              <div className="flex items-start gap-5">
-                <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-sky-100 dark:bg-sky-800/50 text-sky-700 dark:text-sky-200 flex items-center justify-center ring-1 ring-sky-200 dark:ring-sky-700">
-                  <MapIcon className="w-7 h-7" aria-hidden="true" />
-                </div>
-                <div className="flex-1 min-w-0 space-y-2">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                      Province-wide Interactive Map
-                    </h2>
-                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-sky-700 dark:text-sky-300 group-hover:gap-2 transition-all whitespace-nowrap">
-                      Open map
-                      <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                    </span>
-                  </div>
-                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                    Geospatial visualization of BC sediment sample sites
-                    extracted from Detailed Risk Assessments. Filter by
-                    classification (reference / impacted / unknown) and
-                    coordinate-quality tier (high / medium / low). Identify
-                    individual samples to surface measurements + source DRA
-                    metadata. A reviewer-side partial-visibility banner
-                    flags samples behind private DRAs without leaking row
-                    identifiers (per BC EMA s.43).
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    Every screening statistic the map surfaces carries
-                    the &quot;screening-only -- not regulator-submission-grade&quot;
-                    label per R-4 + R-8, lifted only after ProUCL
-                    validation in v1.x. The future Calculator bridge
-                    (PR-MAP-6) will port selected statistics directly into
-                    the Background Adjustment panel on the Calculator tab.
-                  </p>
-                </div>
-              </div>
-            </Link>
+          <div className="h-full w-full" data-testid="matrix-options-interactive-map-embed">
+            <MatrixMapLoader
+              initialMapData={initialMapData}
+              fetchErrorMessage={fetchErrorMessage}
+            />
           </div>
         );
       default:
@@ -473,6 +476,17 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           </>
         ) : isReviewMode ? (
           <div className="flex-1 flex overflow-hidden print:block print:overflow-visible print:h-auto">
+            {renderContent()}
+          </div>
+        ) : isMapMode ? (
+          // Interactive Map tab: full-bleed embed of the matrix-map
+          // component (BN-RRM MapView pattern). flex-1 + overflow-hidden
+          // so the leaflet container sizes to the available area; the
+          // map's internal floating widgets (legend / tool palette /
+          // count card) are absolutely positioned inside this box.
+          // PR-MAP-4 + PR-MAP-5 will introduce left + right side panels
+          // around the map inside this same container.
+          <div className="flex-1 flex overflow-hidden print:hidden">
             {renderContent()}
           </div>
         ) : (

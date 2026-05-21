@@ -41,8 +41,8 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
+import { fetchMatrixMapSamplesServerSide } from '@/lib/matrix-map/fetch-samples-server';
 import MatrixMapLoader from './MatrixMapLoader';
-import { EMPTY_MATRIX_MAP_DATA, type MatrixMapData } from './types';
 
 export const metadata = {
   title: 'Matrix Interactive Map | SSTAC Dashboard',
@@ -104,78 +104,17 @@ export default async function MatrixMapPage() {
   //    caller auth + email allowlist internally; the client never sees
   //    hidden DRA titles or rows.
   //
-  //    Try/catch around the call so the page still renders if the RPC
-  //    migration has not yet deployed -- the MatrixMap surfaces an
-  //    inline "samples data temporarily unavailable" notice.
-  let initialMapData: MatrixMapData = EMPTY_MATRIX_MAP_DATA;
-  let fetchErrorMessage: string | null = null;
-  try {
-    // Schema-scoped per codex PR-MAP-3a R1 P1.2: the RPC lives in
-    // matrix_map, which is exposed via "Exposed schemas" (Project
-    // Settings -> API). Without .schema('matrix_map'), PostgREST
-    // routes the call to the default schema (public) and fails with
-    // PGRST202 function not found. Mirrors the /admin/matrix-map/health
-    // pattern using .schema('matrix_map').from(...).
-    const { data: rpcData, error: rpcErr } = await supabase
-      .schema('matrix_map')
-      .rpc('fetch_samples_with_hidden_summary', { p_bbox: null });
-    if (rpcErr) {
-      // Diagnostic logging 2026-05-20: owner reported the "samples data
-      // temporarily unavailable" notice still showing after the JWT-via-
-      // current-setting refactor (PR #145) applied. Surface the actual
-      // PostgREST error to the dev server terminal + production logs so
-      // we can diagnose the remaining failure mode. Logs structured
-      // fields explicitly (message + details + hint + code) because
-      // supabase-js wraps PostgREST errors in a non-Error object that
-      // console.log({...err}) would otherwise serialize as '[object]'.
-      console.error('[matrix-map page] RPC fetch_samples_with_hidden_summary failed:', {
-        message: rpcErr.message,
-        details: (rpcErr as { details?: unknown }).details,
-        hint: (rpcErr as { hint?: unknown }).hint,
-        code: (rpcErr as { code?: unknown }).code,
-        user_id: user.id,
-      });
-      fetchErrorMessage =
-        'Samples data temporarily unavailable -- check ' +
-        '/admin/matrix-map/health';
-    } else if (rpcData) {
-      // The RPC returns a JSON object (jsonb on the wire). Cast through
-      // unknown so we are explicit about the boundary; downstream code
-      // trusts MatrixMapData (the canonical contract from
-      // PR_MAP_3_PLAN section 2.2) and structurally validates the
-      // critical fields below.
-      const parsed = rpcData as unknown as Partial<MatrixMapData>;
-      initialMapData = {
-        visible_samples: Array.isArray(parsed.visible_samples)
-          ? parsed.visible_samples
-          : [],
-        hidden_sample_count:
-          typeof parsed.hidden_sample_count === 'number'
-            ? parsed.hidden_sample_count
-            : 0,
-        hidden_dra_count:
-          typeof parsed.hidden_dra_count === 'number'
-            ? parsed.hidden_dra_count
-            : 0,
-        hidden_dra_ids: Array.isArray(parsed.hidden_dra_ids)
-          ? parsed.hidden_dra_ids
-          : [],
-        data_snapshot_version:
-          typeof parsed.data_snapshot_version === 'string'
-            ? parsed.data_snapshot_version
-            : 'unknown',
-      };
-    }
-  } catch (thrownErr) {
-    // Defensive -- supabase-js may throw on transport errors before
-    // returning an { error } shape. Pin the same user-visible message.
-    // Diagnostic logging 2026-05-20: same rationale as the rpcErr path
-    // above; surface the thrown error to dev terminal + production logs.
-    console.error('[matrix-map page] RPC fetch_samples_with_hidden_summary THREW:', thrownErr);
-    fetchErrorMessage =
-      'Samples data temporarily unavailable -- check ' +
-      '/admin/matrix-map/health';
-  }
+  //    Logic lives in the shared helper @/lib/matrix-map/fetch-samples-
+  //    server so /matrix-options/page.tsx (the embed entry-point) can
+  //    call the same code path without duplication. The helper logs the
+  //    PostgREST error to the server console (dev terminal + Vercel
+  //    function logs) on failure -- equivalent to the inline logging
+  //    that landed on /matrix-map only in PR #147 -- and returns an
+  //    empty-data + user-visible-message fallback so the page always
+  //    renders. Merge resolution 2026-05-20: keep the helper-using
+  //    version (PR #148); the helper carries the equivalent logging.
+  const { initialMapData, fetchErrorMessage } =
+    await fetchMatrixMapSamplesServerSide(supabase);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] w-full flex-col bg-slate-50 dark:bg-slate-900">
