@@ -331,32 +331,55 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           </div>
         );
       case 'Interactive Map':
-        // Live Matrix Interactive Map embed (owner directive 2026-05-20):
-        // the 'Interactive Map' tab now hosts the map inline (BN-RRM tab
-        // pattern -- the MapView tab in BNRRMClient.tsx renders SiteMap
-        // directly inside the tab content area). This replaces the prior
-        // discoverability-card-linking-to-/matrix-map pattern that lost
-        // the matrix-options top tabs on navigation. The /matrix-map
-        // standalone route still exists for direct linking (e.g. from
-        // emails / Slack); the embed is the primary entry point.
+        // Matrix Interactive Map 3-column layout (owner directive
+        // 2026-05-20): mirrors BN-RRM MapView pattern -- left panel
+        // | map | right panel. Panel toggles live in the dashboard
+        // sub-header (showLeftPanel + showRightPanel state, see
+        // chrome buttons block below). Both panels collapse to w-0
+        // with the same transition pattern BNRRMClient.tsx uses for
+        // its DetailedView + MapView tabs.
         //
-        // initialMapData + fetchErrorMessage are server-fetched in
-        // matrix-options/page.tsx via the shared helper @/lib/matrix-map/
-        // fetch-samples-server and passed through props (server-component
-        // boundary). Selection Stats left panel + MeasurementWorkbench
-        // right panel are deferred to PR-MAP-4 + PR-MAP-5 per the
-        // 2026-05-20 post-mortem; for now the embed shows the map
-        // component only.
-        //
-        // The 'h-full' wrapper makes the map fill the tab content area
-        // (the parent <main> container already has flex-1 + overflow-
-        // hidden so the leaflet container sizes correctly).
+        // PR-MAP-4 (this PR) ships the LAYOUT scaffold with placeholder
+        // content -- so owner sees the 3-column shape immediately.
+        // Selection Stats CONTENT per PLAN_V3_4_2 sec 3.5 (composition
+        // line, Provincial/Site-specific Background stats with UTL
+        // 95/95, censoring fraction, methodology badge, Calculator
+        // action buttons) lands in PR-MAP-4-content follow-on. Same
+        // pattern for PR-MAP-5 MeasurementWorkbench content.
         return (
-          <div className="h-full w-full" data-testid="matrix-options-interactive-map-embed">
-            <MatrixMapLoader
-              initialMapData={initialMapData}
-              fetchErrorMessage={fetchErrorMessage}
-            />
+          <div
+            className="flex-1 flex overflow-hidden"
+            data-testid="matrix-options-interactive-map-embed"
+          >
+            {/* Left panel: Selection Stats (PR-MAP-4 scaffold) */}
+            <div
+              data-testid="matrix-map-left-panel-wrapper"
+              className={cn(
+                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shadow-sm',
+                showLeftPanel ? 'w-80' : 'w-0',
+              )}
+            >
+              <MatrixMapLeftPanelScaffold />
+            </div>
+
+            {/* Center: map */}
+            <div className="flex-1 relative">
+              <MatrixMapLoader
+                initialMapData={initialMapData}
+                fetchErrorMessage={fetchErrorMessage}
+              />
+            </div>
+
+            {/* Right panel: MeasurementWorkbench (PR-MAP-5 scaffold) */}
+            <div
+              data-testid="matrix-map-right-panel-wrapper"
+              className={cn(
+                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-sm',
+                showRightPanel ? 'w-96' : 'w-0',
+              )}
+            >
+              <MatrixMapRightPanelScaffold />
+            </div>
           </div>
         );
       default:
@@ -396,7 +419,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           </nav>
         </div>
         <div className="flex items-center gap-1 ml-auto pl-4 border-l border-slate-200 dark:border-slate-700">
-           {(isToolMode || isReviewMode) && (
+           {(isToolMode || isReviewMode || isMapMode) && (
              <>
                <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('p-2 rounded-lg transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'}>
                  {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
@@ -496,6 +519,100 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------
+// PR-MAP-4 Selection Stats LEFT PANEL scaffold
+// ---------------------------------------------------------------------
+// Owner directive 2026-05-20: ship the 3-column LAYOUT immediately so
+// the matrix-options Interactive Map tab visually matches the BN-RRM
+// MapView pattern. Real Selection Stats CONTENT (composition line,
+// Provincial / Site-specific Background stats with UTL 95/95, censoring
+// fraction, methodology badge, Calculator action buttons -- per
+// PLAN_V3_4_2 section 3.5) lands in a follow-on PR-MAP-4-content PR.
+//
+// Scaffold is intentionally minimal: a header strip + a placeholder
+// body block. Mirrors BN-RRM's SiteDetails panel chrome (header bar +
+// scrollable body + footer action area) so the follow-on content PR
+// drops into a familiar shape.
+// ---------------------------------------------------------------------
+function MatrixMapLeftPanelScaffold() {
+  return (
+    <div className="w-80 h-full flex flex-col">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          Map Selection
+        </p>
+        <h3 className="mt-0.5 text-sm font-bold text-slate-900 dark:text-slate-100">
+          Selection Stats
+        </h3>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/30 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+            PR-MAP-4 content -- coming next
+          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Per PLAN_V3_4_2 section 3.5: selection summary with classification
+            composition; Provincial Background stats (n, mean, median, sd, min,
+            max, 95th percentile, UTL 95/95, 90% UCL, censoring fraction);
+            Site-specific Background stats (same 10 stats); methodology badge;
+            Calculator action buttons; admin-only CSV export.
+          </p>
+        </div>
+        <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/30 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+            State A: identify just fired
+          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            When no samples are selected but identify has fired on a WMS layer:
+            scrollable identified-features list grouped by layer with
+            collapse/expand and per-layer suppress filter.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------
+// PR-MAP-5 MeasurementWorkbench RIGHT PANEL scaffold
+// ---------------------------------------------------------------------
+// Same scaffolding rationale as MatrixMapLeftPanelScaffold. Real content
+// (tabular view of raw measurements with columns Sample / Date / Medium /
+// Substance / Value / Unit / DL Flag / Censoring / Coord Quality /
+// Source DRA; filter chips; pagination 100/page; click-to-zoom on map;
+// admin-only CSV export -- per PLAN_V3_4_2 section 3.6) lands in
+// PR-MAP-5-content follow-on.
+// ---------------------------------------------------------------------
+function MatrixMapRightPanelScaffold() {
+  return (
+    <div className="w-96 h-full flex flex-col">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          Map Selection
+        </p>
+        <h3 className="mt-0.5 text-sm font-bold text-slate-900 dark:text-slate-100">
+          Measurement Workbench
+        </h3>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/30 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+            PR-MAP-5 content -- coming next
+          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            Per PLAN_V3_4_2 section 3.6: tabular view of raw measurements
+            behind the current selection. Columns: Sample, Date, Medium,
+            Substance, Value, Unit, DL Flag, Censoring, Coord Quality,
+            Source DRA. Filter chips for medium / QA flag / date range /
+            classification. Pagination at 100 rows/page. Click row to
+            highlight + scroll to sample on map. Admin-only CSV export.
+          </p>
+        </div>
       </div>
     </div>
   );
