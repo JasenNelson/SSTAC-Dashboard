@@ -12,6 +12,20 @@ import { render, screen, fireEvent } from '@testing-library/react';
 // suite. The Calculator-tab assertions exercise the real CategorySelector
 // + SharedGlobalInputs + Eco* calculators + BackgroundAdjustment so the
 // wire-up is end-to-end tested at that layer.
+
+// Mock next/navigation router because MatrixDashboard now calls useRouter
+// (PR-MAP-9 banner Refresh callback). Tests do not render an App Router.
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({
+    refresh: vi.fn(),
+    push: vi.fn(),
+    replace: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+}));
+
 vi.mock('@/components/MathRenderer', () => ({
   default: ({ content }: { content: string }) => (
     <div data-testid="math-renderer-mock">{content}</div>
