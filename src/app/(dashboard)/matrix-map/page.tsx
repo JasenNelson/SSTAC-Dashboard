@@ -160,15 +160,15 @@ export default async function MatrixMapPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] w-full flex-col bg-slate-50">
-      <header className="border-b border-slate-200 bg-white px-6 py-3">
-        <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+    <div className="flex h-[calc(100vh-4rem)] w-full flex-col bg-slate-50 dark:bg-slate-900">
+      <header className="border-b border-slate-200 bg-white px-6 py-3 dark:border-slate-700 dark:bg-slate-800">
+        <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
           Matrix Options
         </p>
-        <h1 className="mt-0.5 text-lg font-bold text-slate-900">
+        <h1 className="mt-0.5 text-lg font-bold text-slate-900 dark:text-slate-100">
           Interactive Map -- PR-MAP-3a (samples + symbology)
         </h1>
-        <p className="mt-1 max-w-3xl text-xs text-slate-600">
+        <p className="mt-1 max-w-3xl text-xs text-slate-600 dark:text-slate-300">
           PR-MAP-3a renders matrix-map samples with the 9-state symbology
           (3 classifications x 3 coordinate-quality tiers) + the partial-
           visibility banner. Identify (PR-MAP-3b) + selection (PR-MAP-4)
