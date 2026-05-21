@@ -429,7 +429,7 @@ def build_sql(
     out.append("-- Idempotent: each INSERT uses ON CONFLICT DO NOTHING.")
     out.append("")
     out.append("BEGIN;")
-    out.append("SET LOCAL search_path = matrix_map, public;")
+    out.append("SET LOCAL search_path = matrix_map, public, extensions;")
     out.append("SET LOCAL statement_timeout = '10min';")
     out.append("")
 
@@ -773,8 +773,8 @@ def build_sql(
         + counters.sample_events + counters.measurements
     )
     out.append(
-        "INSERT INTO matrix_map.service_role_audit (rpc_name, args_summary, affected_rows) "
-        f"VALUES ({sql_text(RPC_NAME)}, {sql_jsonb(args_summary)}, {sql_text(affected)});"
+        "INSERT INTO matrix_map.service_role_audit (rpc_name, invoked_by_role, args_summary, affected_rows) "
+        f"VALUES ({sql_text(RPC_NAME)}, current_user, {sql_jsonb(args_summary)}, {sql_text(affected)});"
     )
     out.append("")
     out.append("COMMIT;")
