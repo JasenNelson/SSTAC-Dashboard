@@ -120,6 +120,21 @@ export default async function MatrixMapPage() {
       .schema('matrix_map')
       .rpc('fetch_samples_with_hidden_summary', { p_bbox: null });
     if (rpcErr) {
+      // Diagnostic logging 2026-05-20: owner reported the "samples data
+      // temporarily unavailable" notice still showing after the JWT-via-
+      // current-setting refactor (PR #145) applied. Surface the actual
+      // PostgREST error to the dev server terminal + production logs so
+      // we can diagnose the remaining failure mode. Logs structured
+      // fields explicitly (message + details + hint + code) because
+      // supabase-js wraps PostgREST errors in a non-Error object that
+      // console.log({...err}) would otherwise serialize as '[object]'.
+      console.error('[matrix-map page] RPC fetch_samples_with_hidden_summary failed:', {
+        message: rpcErr.message,
+        details: (rpcErr as { details?: unknown }).details,
+        hint: (rpcErr as { hint?: unknown }).hint,
+        code: (rpcErr as { code?: unknown }).code,
+        user_id: user.id,
+      });
       fetchErrorMessage =
         'Samples data temporarily unavailable -- check ' +
         '/admin/matrix-map/health';
@@ -151,9 +166,12 @@ export default async function MatrixMapPage() {
             : 'unknown',
       };
     }
-  } catch {
+  } catch (thrownErr) {
     // Defensive -- supabase-js may throw on transport errors before
     // returning an { error } shape. Pin the same user-visible message.
+    // Diagnostic logging 2026-05-20: same rationale as the rpcErr path
+    // above; surface the thrown error to dev terminal + production logs.
+    console.error('[matrix-map page] RPC fetch_samples_with_hidden_summary THREW:', thrownErr);
     fetchErrorMessage =
       'Samples data temporarily unavailable -- check ' +
       '/admin/matrix-map/health';
