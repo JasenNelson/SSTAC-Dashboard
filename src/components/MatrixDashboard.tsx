@@ -30,6 +30,7 @@ import {
   type Jurisdiction,
 } from './matrix-options/guide/content/jurisdictions';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
+import { MatrixMapLeftPanel } from './matrix-options/MatrixMapLeftPanel';
 
 // Audience tier for the sidebar guide (PR-A3 will consume; the state +
 // validate-on-load coercion is established here per kickoff memo so the
@@ -375,7 +376,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                   showLeftPanel ? 'w-80' : 'w-0',
                 )}
               >
-                <MatrixMapLeftPanelScaffold />
+                <MatrixMapLeftPanel />
               </div>
 
               {/* Center: map */}
@@ -542,58 +543,12 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
 }
 
 // ---------------------------------------------------------------------
-// PR-MAP-4 Selection Stats LEFT PANEL scaffold
-// ---------------------------------------------------------------------
-// Owner directive 2026-05-20: ship the 3-column LAYOUT immediately so
-// the matrix-options Interactive Map tab visually matches the BN-RRM
-// MapView pattern. Real Selection Stats CONTENT (composition line,
-// Provincial / Site-specific Background stats with UTL 95/95, censoring
-// fraction, methodology badge, Calculator action buttons -- per
-// PLAN_V3_4_2 section 3.5) lands in a follow-on PR-MAP-4-content PR.
-//
-// Scaffold is intentionally minimal: a header strip + a placeholder
-// body block. Mirrors BN-RRM's SiteDetails panel chrome (header bar +
-// scrollable body + footer action area) so the follow-on content PR
-// drops into a familiar shape.
-// ---------------------------------------------------------------------
-function MatrixMapLeftPanelScaffold() {
-  return (
-    <div className="w-80 h-full flex flex-col">
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          Map Selection
-        </p>
-        <h3 className="mt-0.5 text-sm font-bold text-slate-900 dark:text-slate-100">
-          Selection Stats
-        </h3>
-      </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/30 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
-            PR-MAP-4 content -- coming next
-          </p>
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            Per PLAN_V3_4_2 section 3.5: selection summary with classification
-            composition; Provincial Background stats (n, mean, median, sd, min,
-            max, 95th percentile, UTL 95/95, 90% UCL, censoring fraction);
-            Site-specific Background stats (same 10 stats); methodology badge;
-            Calculator action buttons; admin-only CSV export.
-          </p>
-        </div>
-        <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/30 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
-            State A: identify just fired
-          </p>
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            When no samples are selected but identify has fired on a WMS layer:
-            scrollable identified-features list grouped by layer with
-            collapse/expand and per-layer suppress filter.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
+// PR-MAP-4 Selection Stats LEFT PANEL extracted in PR-MAP-10 to
+// src/components/matrix-options/MatrixMapLeftPanel.tsx so the identify-
+// tool list can wire to the shared bn-rrm Zustand store without bloating
+// this file. The PR-MAP-4 Selection Stats placeholder card stays in the
+// extracted component; the State A identify placeholder is now replaced
+// by a live IdentifiedFeaturesList when features arrive.
 
 // ---------------------------------------------------------------------
 // PR-MAP-5 MeasurementWorkbench RIGHT PANEL scaffold
