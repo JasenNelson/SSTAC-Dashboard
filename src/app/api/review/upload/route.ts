@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth'
+import { randomBytes } from 'crypto'
 
 /**
  * Task 2.3: File Upload Validation
@@ -84,8 +85,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Submission not found or access denied' }, { status: 404 })
     }
 
-    // Generate unique filename
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    // Generate unique filename securely
+    const randomSuffix = randomBytes(16).toString('hex')
+    const fileName = `${Date.now()}-${randomSuffix}.${fileExt}`
     const filePath = `review-files/${user.id}/${fileName}`
 
     // Upload file to Supabase Storage

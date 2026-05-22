@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClientForPagePath, getAuthenticatedUser } from '@/lib/supabase-auth';
+import { randomBytes } from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
       // This allows multiple people to submit and be counted as separate responses
       // Note: Using inline generation to maintain exact backward compatibility with existing format
       const timestamp = Date.now();
-      const randomSuffix = Math.random().toString(36).substring(2, 8);
+      const randomSuffix = randomBytes(4).toString('hex').substring(0, 6);
       finalUserId = `${authCode || 'CEW2025'}_${timestamp}_${randomSuffix}`;
       if (process.env.NODE_ENV === 'development') {
         console.log(`[Ranking Poll Submit] CEW page, using unique userId: ${finalUserId}`);

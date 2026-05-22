@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClientForPagePath, getAuthenticatedUser, generateCEWUserId } from '@/lib/supabase-auth';
+import { createClientForPagePath, getAuthenticatedUser } from '@/lib/supabase-auth';
+import { randomBytes } from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,8 +12,10 @@ export async function POST(request: NextRequest) {
 
     if (isCEWPage) {
       // CEW pages: Generate unique user ID for anonymous submissions
-      const sessionId = request.headers.get('x-session-id');
-      finalUserId = generateCEWUserId(authCode || 'CEW2025', sessionId);
+      // Note: Using inline generation to maintain exact backward compatibility with existing format
+      const timestamp = Date.now();
+      const randomSuffix = randomBytes(4).toString('hex').substring(0, 6);
+      finalUserId = `${authCode || 'CEW2025'}_${timestamp}_${randomSuffix}`;
     } else {
       // Authenticated pages: Get user ID from authenticated user
       const user = await getAuthenticatedUser(supabase);
