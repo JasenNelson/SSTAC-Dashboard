@@ -31,6 +31,8 @@ import {
 } from './matrix-options/guide/content/jurisdictions';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import { MatrixMapLeftPanel } from './matrix-options/MatrixMapLeftPanel';
+import { MatrixMapMobileFallback } from './matrix-options/MatrixMapMobileFallback';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 // Audience tier for the sidebar guide (PR-A3 will consume; the state +
 // validate-on-load coercion is established here per kickoff memo so the
@@ -144,6 +146,12 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   // panel independently via the chrome buttons in the header.
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
+
+  // PR-MAP-17a mobile fallback: when the viewport is narrower than
+  // 768 px (docs/design/matrix-map/PLAN_V3_4_2.md section 3.8), the
+  // Interactive Map tab renders MatrixMapMobileFallback instead of the
+  // 3-column desktop layout. Other tabs are unaffected.
+  const isMobile = useIsMobile();
 
   // Lifted Calculator-tab state (plan v3 section 4.3 + v5 Delta 1).
   // Initial values are the SSR-safe defaults; the mount-only hydrate
@@ -348,13 +356,22 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         // with the same transition pattern BNRRMClient.tsx uses for
         // its DetailedView + MapView tabs.
         //
-        // PR-MAP-4 (this PR) ships the LAYOUT scaffold with placeholder
-        // content -- so owner sees the 3-column shape immediately.
-        // Selection Stats CONTENT per PLAN_V3_4_2 sec 3.5 (composition
-        // line, Provincial/Site-specific Background stats with UTL
-        // 95/95, censoring fraction, methodology badge, Calculator
-        // action buttons) lands in PR-MAP-4-content follow-on. Same
-        // pattern for PR-MAP-5 MeasurementWorkbench content.
+        // PR-MAP-17a: below 768 px we render MatrixMapMobileFallback
+        // (banner only; the read-only summary view per PLAN_V3_4_2
+        // section 3.8 is deferred to PR-MAP-17b). The desktop layout
+        // assumes >= 768 px width (left w-80 + right w-96 alone
+        // exceeds 700 px) so the early-return prevents the broken
+        // overflow that mobile viewports otherwise hit.
+        if (isMobile) {
+          return (
+            <div
+              className="flex-1 flex flex-col overflow-hidden"
+              data-testid="matrix-options-interactive-map-embed"
+            >
+              <MatrixMapMobileFallback />
+            </div>
+          );
+        }
         return (
           <div
             className="flex-1 flex flex-col overflow-hidden"
@@ -437,7 +454,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           </nav>
         </div>
         <div className="flex items-center gap-1 ml-auto pl-4 border-l border-slate-200 dark:border-slate-700">
-           {(isToolMode || isReviewMode || isMapMode) && (
+           {(isToolMode || isReviewMode || (isMapMode && !isMobile)) && (
              <>
                <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('p-2 rounded-lg transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'}>
                  {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
