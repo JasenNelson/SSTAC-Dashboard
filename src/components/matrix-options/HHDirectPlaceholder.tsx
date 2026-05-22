@@ -1,11 +1,8 @@
 'use client';
 
 // HHDirectPlaceholder -- non-functional disclaimer panel for the Human
-// Health -- Direct Contact pathway. PR-A2 ships this file but does NOT
-// render it (the HH category buttons in CategorySelector are disabled in
-// PR-A2; MatrixDashboard's render branch will not reach this component
-// until PR-A4, which enables the HH category buttons after HITL sign-off
-// on the disclaimer copy below).
+// Health -- Direct Contact pathway. The category is intentionally visible,
+// but numeric output remains blocked until methodology sign-off.
 //
 // Plan v3 section 2 fixes the disclaimer wording. Visual treatment:
 // amber-bordered alert block; no sky hero card; no "Preliminary
@@ -26,12 +23,17 @@ export default function HHDirectPlaceholder() {
       className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 dark:border-amber-400 p-6 rounded-r-2xl shadow-sm"
     >
       <h3 className="text-base font-bold text-amber-900 dark:text-amber-100 tracking-tight">
-        Not a calculator. Not a defensible standard. Not for decision use.
+        Human Health Direct Contact is under methodology review.
       </h3>
       <p className="text-sm text-amber-900 dark:text-amber-100 mt-3 leading-relaxed">
-        The Human Health -- Direct Contact pathway calculator is planned for
-        a future slice. In the interim, consult the canonical regulatory
-        science:
+        This pathway is available in the category selector so reviewers can
+        see the intended Matrix shape, but it does not calculate a value yet.
+        Direct-contact exposure factors, receptor assumptions, and endpoint
+        mapping still require HITL sign-off before this panel can produce a
+        defensible screening number.
+      </p>
+      <p className="text-sm text-amber-900 dark:text-amber-100 mt-3 leading-relaxed">
+        For current review, use the canonical regulatory science:
       </p>
       <ul className="list-disc pl-5 mt-3 text-sm text-amber-900 dark:text-amber-100 space-y-2">
         <li>

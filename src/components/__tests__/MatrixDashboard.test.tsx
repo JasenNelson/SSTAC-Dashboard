@@ -88,6 +88,10 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     ).toBeInTheDocument();
     expect(screen.getByTestId('category-selector')).toBeInTheDocument();
     expect(screen.getByTestId('shared-global-inputs')).toBeInTheDocument();
+    expect(screen.getByTestId('calculator-guide-sidebar')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /^General$/ }),
+    ).toHaveAttribute('aria-pressed', 'true');
     // Default activeCategory = 'eco-direct' -> Eco-Direct calculator renders.
     expect(
       screen.getByTestId('eco-direct-eqp-calculator'),
@@ -273,9 +277,38 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
   it('falls back to default audience-tier when an unknown tier is persisted', () => {
     window.localStorage.setItem(LS_TIER, 'expert-mode');
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    // activeTier is not rendered yet (PR-A3 wires the sidebar guide), so
-    // we observe via localStorage end-state only.
+    clickCalculatorTab();
+    expect(
+      screen.getByRole('button', { name: /^General$/ }),
+    ).toHaveAttribute('aria-pressed', 'true');
     expect(window.localStorage.getItem(LS_TIER)).toBe('general');
+  });
+
+  it('switches and persists the Calculator sidebar audience guide tier', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    clickCalculatorTab();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Technical$/ }));
+
+    expect(window.localStorage.getItem(LS_TIER)).toBe('technical');
+    expect(
+      screen.getByRole('button', { name: /^Technical$/ }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(/Methodology notes/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Human Health calculations are blocked/i),
+    ).toBeInTheDocument();
+  });
+
+  it('hydrates the Calculator sidebar audience guide tier from localStorage', () => {
+    window.localStorage.setItem(LS_TIER, 'practitioner');
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    clickCalculatorTab();
+
+    expect(
+      screen.getByRole('button', { name: /^Practitioner$/ }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(/Review workflow/i)).toBeInTheDocument();
   });
 
   // Plan v3 section 4.2 + section 10: print:hidden on left sidebar when
