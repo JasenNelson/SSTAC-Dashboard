@@ -25,6 +25,8 @@ interface ExportPayload {
   selected_sample_ids: string[];
   filters?: {
     medium?: MediumFilter;
+    mediums?: Exclude<MediumFilter, 'all'>[];
+    substance_ids?: string[];
     qa?: QaFilter;
     classification?: ClassificationFilter;
     date_from?: string;
@@ -38,6 +40,8 @@ interface MeasurementRow {
   sample_station_id: string;
   event_date: string;
   medium: string;
+  substance_id: string | null;
+  substance_key: string | null;
   substance_display_name: string;
   value: string | number | null;
   unit: string | null;
@@ -220,6 +224,8 @@ function parsePayload(value: unknown): ExportPayload {
       : {};
   const filters = {
     medium: isOneOf(rawFilters.medium, MEDIUMS) ? rawFilters.medium : 'all',
+    mediums: parseMediumArray(rawFilters.mediums, rawFilters.medium),
+    substance_ids: parseUuidArray(rawFilters.substance_ids, 'substance_ids'),
     qa: isOneOf(rawFilters.qa, QA_FLAGS) ? rawFilters.qa : 'all',
     classification: isOneOf(rawFilters.classification, CLASSIFICATIONS)
       ? rawFilters.classification
@@ -252,6 +258,34 @@ function dateOrEmpty(value: unknown) {
     throw new Error('date filters must use YYYY-MM-DD');
   }
   return value;
+}
+
+function parseMediumArray(value: unknown, legacyMedium: unknown): Exclude<MediumFilter, 'all'>[] {
+  if (Array.isArray(value)) {
+    const next = Array.from(new Set(value));
+    if (!next.every((item) => isOneOf(item, MEDIUMS) && item !== 'all')) {
+      throw new Error('mediums must contain allowed medium values');
+    }
+    return next as Exclude<MediumFilter, 'all'>[];
+  }
+
+  if (isOneOf(legacyMedium, MEDIUMS) && legacyMedium !== 'all') {
+    return [legacyMedium];
+  }
+
+  return [];
+}
+
+function parseUuidArray(value: unknown, fieldName: string) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    throw new Error(`${fieldName} must be an array`);
+  }
+  const next = Array.from(new Set(value));
+  if (!next.every((id) => typeof id === 'string' && UUID_RE.test(id))) {
+    throw new Error(`${fieldName} must contain UUID strings`);
+  }
+  return next;
 }
 
 async function buildSelectionExport(
@@ -323,7 +357,11 @@ async function buildMeasurementsExport(
   }
 
   const filters = payload.filters ?? {};
+  const mediumSet = new Set(filters.mediums ?? []);
+  const substanceIdSet = new Set(filters.substance_ids ?? []);
   const rows = normalizeMeasurements(data).filter((row) => {
+    if (substanceIdSet.size > 0 && (!row.substance_id || !substanceIdSet.has(row.substance_id))) return false;
+    if (mediumSet.size > 0 && !mediumSet.has(row.medium as Exclude<MediumFilter, 'all'>)) return false;
     if (filters.medium && filters.medium !== 'all' && row.medium !== filters.medium) return false;
     if (filters.qa === 'detected' && row.censored) return false;
     if (filters.qa === 'censored' && !row.censored) return false;
@@ -343,6 +381,8 @@ async function buildMeasurementsExport(
       'sample_station_id',
       'event_date',
       'medium',
+      'substance_id',
+      'substance_key',
       'substance',
       'value',
       'unit',
@@ -359,6 +399,8 @@ async function buildMeasurementsExport(
       row.sample_station_id,
       row.event_date,
       row.medium,
+      row.substance_id ?? '',
+      row.substance_key ?? '',
       row.substance_display_name,
       formatCell(row.value),
       row.unit ?? '',
@@ -413,6 +455,8 @@ function normalizeMeasurements(value: unknown): MeasurementRow[] {
       sample_station_id: stringField(item.sample_station_id) || stringField(item.station_id),
       event_date: stringField(item.event_date),
       medium: stringField(item.medium),
+      substance_id: nullableString(item.substance_id),
+      substance_key: nullableString(item.substance_key),
       substance_display_name:
         stringField(item.substance_display_name) || stringField(item.substance),
       value: scalarField(item.value),

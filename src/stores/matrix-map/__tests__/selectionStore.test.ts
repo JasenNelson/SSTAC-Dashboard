@@ -35,15 +35,20 @@ describe('useMatrixMapSelectionStore', () => {
     expect(state.selectedSampleIds).toEqual(['x']);
   });
 
-  it('requestPanToSample selects the sample and increments the pan request sequence', () => {
-    useMatrixMapSelectionStore.getState().requestPanToSample('x');
+  it('requestPanToSample highlights and pans without replacing the selection set', () => {
+    useMatrixMapSelectionStore.setState({
+      selectedSampleId: null,
+      selectedSampleIds: ['a', 'b'],
+    });
+
+    useMatrixMapSelectionStore.getState().requestPanToSample('a');
     const first = useMatrixMapSelectionStore.getState();
-    expect(first.selectedSampleId).toBe('x');
-    expect(first.selectedSampleIds).toEqual(['x']);
-    expect(first.panRequestedSampleId).toBe('x');
+    expect(first.selectedSampleId).toBe('a');
+    expect(first.selectedSampleIds).toEqual(['a', 'b']);
+    expect(first.panRequestedSampleId).toBe('a');
     expect(first.panRequestSeq).toBe(1);
 
-    useMatrixMapSelectionStore.getState().requestPanToSample('x');
+    useMatrixMapSelectionStore.getState().requestPanToSample('a');
     expect(useMatrixMapSelectionStore.getState().panRequestSeq).toBe(2);
   });
 

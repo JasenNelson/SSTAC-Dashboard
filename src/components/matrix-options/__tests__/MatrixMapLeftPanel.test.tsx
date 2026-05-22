@@ -182,8 +182,12 @@ function makeMeasurementRow(over: Partial<MatrixMapMeasurementRow> = {}): Matrix
     sample_id: 'sample-a',
     sample_display_name: 'Station 1',
     sample_station_id: 'STA-1',
+    sample_event_id: 'event-a',
     event_date: '2026-01-02',
+    measurement_id: 'measurement-a',
     medium: 'sediment',
+    substance_id: '11111111-1111-4111-8111-111111111111',
+    substance_key: 'copper',
     substance_display_name: 'Copper',
     value: 12.5,
     unit: 'mg/kg',
@@ -194,6 +198,7 @@ function makeMeasurementRow(over: Partial<MatrixMapMeasurementRow> = {}): Matrix
     classification: 'reference' as const,
     source_dra_id: 'dra-1',
     source_dra_title: 'Source DRA',
+    source_dra_citation: null,
     ...over,
   };
 }

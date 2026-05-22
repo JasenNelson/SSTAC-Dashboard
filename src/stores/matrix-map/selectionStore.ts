@@ -41,6 +41,10 @@
  *                               clears selectedSampleId.
  *   toggleSampleSelection(id):  legacy toggle wrapper used by older
  *                               call sites/tests; clears selectedSampleId.
+ *   requestPanToSample(id):     requests a map pan/highlight without changing
+ *                               selectedSampleIds. The workbench uses this
+ *                               so row clicks do not collapse a multi-sample
+ *                               selection.
  *   selectAllSamples(allIds):   replaces selectedSampleIds with allIds;
  *                               clears selectedSampleId. Caller passes
  *                               the full sample-ID list -- the store
@@ -89,7 +93,6 @@ export const useMatrixMapSelectionStore = create<SelectionState>()((set) => ({
   requestPanToSample: (id) => {
     set((state) => ({
       selectedSampleId: id,
-      selectedSampleIds: [id],
       panRequestedSampleId: id,
       panRequestSeq: state.panRequestSeq + 1,
     }));

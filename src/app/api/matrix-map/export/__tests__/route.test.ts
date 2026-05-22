@@ -27,6 +27,8 @@ vi.mock('@/lib/engine-v2/csrf', () => ({
 import { POST } from '../route';
 
 const SAMPLE_ID = '11111111-1111-4111-8111-111111111111';
+const COPPER_ID = '33333333-3333-4333-8333-333333333333';
+const LEAD_ID = '44444444-4444-4444-8444-444444444444';
 
 function makeRequest(body: unknown) {
   return new NextRequest('http://localhost/api/matrix-map/export', {
@@ -72,9 +74,29 @@ describe('POST /api/matrix-map/export', () => {
           sample_station_id: 'STA-1',
           event_date: '2026-01-02',
           medium: 'sediment',
+          substance_id: COPPER_ID,
+          substance_key: 'copper',
           substance_display_name: 'Copper',
           value: 12.5,
           unit: 'mg/kg',
+          detection_limit: null,
+          qualifier: null,
+          censored: false,
+          coordinate_quality_tier: 'high',
+          classification: 'reference',
+          source_dra_id: 'dra-1',
+          source_dra_title: 'Source DRA',
+        },
+        {
+          sample_id: SAMPLE_ID,
+          sample_station_id: 'STA-1',
+          event_date: '2026-01-02',
+          medium: 'water',
+          substance_id: LEAD_ID,
+          substance_key: 'lead',
+          substance_display_name: 'Lead',
+          value: 3,
+          unit: 'ug/L',
           detection_limit: null,
           qualifier: null,
           censored: false,
@@ -115,14 +137,17 @@ describe('POST /api/matrix-map/export', () => {
       export_type: 'measurements',
       selected_sample_ids: [SAMPLE_ID],
       filters: {
-        medium: 'sediment',
+        mediums: ['sediment'],
+        substance_ids: [COPPER_ID],
         qa: 'detected',
         classification: 'reference',
       },
     }));
 
     expect(response.status).toBe(200);
-    await expect(response.text()).resolves.toContain('Copper');
+    const csv = await response.text();
+    expect(csv).toContain('Copper');
+    expect(csv).not.toContain('Lead');
     expect(response.headers.get('content-disposition')).toContain('matrix-map-measurements');
     expect(rpc).toHaveBeenCalledWith('fetch_measurements_for_samples', {
       p_sample_ids: [SAMPLE_ID],

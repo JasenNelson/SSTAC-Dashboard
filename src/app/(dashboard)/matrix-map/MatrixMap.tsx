@@ -27,7 +27,7 @@
 
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { cn } from '@/utils/cn';
 import {
   formatIdentifyEmptyHtml,
@@ -43,6 +43,11 @@ import {
 } from '@/lib/maps/wms-identify';
 import { useMatrixMapIdentifyStore } from '@/stores/matrix-map/identifyStore';
 import { useMatrixMapSelectionStore } from '@/stores/matrix-map/selectionStore';
+import {
+  getMapFilteredSamples,
+  hasActiveMatrixMapFilters,
+  useMatrixMapFilterStore,
+} from '@/stores/matrix-map/filterStore';
 import {
   ZoomIn,
   ZoomOut,
@@ -301,8 +306,7 @@ export function MatrixMap({
   // own internal timeoutMs but that does NOT discard stale successful replies.
   const identifyRequestIdRef = useRef<number>(0);
 
-  const samples = initialMapData.visible_samples;
-  const sampleCount = samples.length;
+  const allSamples = initialMapData.visible_samples;
   // PR-MAP-10 (bugfix): identifiedFeatures lives in
   // src/stores/matrix-map/identifyStore.ts so MatrixMapLeftPanel can
   // subscribe to identify-tool / identify-area results across the
@@ -348,6 +352,32 @@ export function MatrixMap({
   const removeMultipleSamples = useMatrixMapSelectionStore((s) => s.removeMultipleSamples);
   const clearSampleSelection = useMatrixMapSelectionStore((s) => s.clearSampleSelection);
   const selectAllSamplesAction = useMatrixMapSelectionStore((s) => s.selectAllSamples);
+  const filterState = useMatrixMapFilterStore((s) => s.filterState);
+  const matchingSampleIds = useMatrixMapFilterStore((s) => s.matchingSampleIds);
+  const matchingSampleIdsReady = useMatrixMapFilterStore((s) => s.matchingSampleIdsReady);
+  const showSelectedDespiteFilters = useMatrixMapFilterStore((s) => s.showSelectedDespiteFilters);
+  const resetMapFilters = useMatrixMapFilterStore((s) => s.resetFilters);
+  const activeMapFilters = hasActiveMatrixMapFilters(filterState);
+  const samples = useMemo(
+    () =>
+      getMapFilteredSamples({
+        samples: allSamples,
+        filterState,
+        matchingSampleIds,
+        matchingSampleIdsReady,
+        selectedSampleIds,
+        showSelectedDespiteFilters,
+      }),
+    [
+      allSamples,
+      filterState,
+      matchingSampleIds,
+      matchingSampleIdsReady,
+      selectedSampleIds,
+      showSelectedDespiteFilters,
+    ],
+  );
+  const sampleCount = samples.length;
   // Wrap selectAllSamples to preserve the no-arg signature used at the
   // call sites in this file. The store action takes an explicit ID list
   // so it stays independent of the samples prop.
@@ -365,7 +395,8 @@ export function MatrixMap({
   // ref so this effect runs exactly once per mount.
   useEffect(() => {
     clearSampleSelection();
-  }, [clearSampleSelection]);
+    resetMapFilters();
+  }, [clearSampleSelection, resetMapFilters]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -1139,17 +1170,17 @@ export function MatrixMap({
 
   // Fit to samples on first load.
   useEffect(() => {
-    if (!mapInstanceRef.current || !isLoaded || !leaflet || sampleCount === 0) return;
+    if (!mapInstanceRef.current || !isLoaded || !leaflet || allSamples.length === 0) return;
     const bounds = leaflet.latLngBounds(
-      samples.map((s) => [s.geometry.coordinates[1], s.geometry.coordinates[0]])
+      allSamples.map((s) => [s.geometry.coordinates[1], s.geometry.coordinates[0]])
     );
     mapInstanceRef.current.fitBounds(bounds.pad(0.2), { maxZoom: 13 });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sampleCount, isLoaded, leaflet]);
+  }, [allSamples.length, isLoaded, leaflet]);
 
   // Pan to sample function.
   const panToSample = useCallback((sampleId: string) => {
-    const sample = samples.find((s) => s.id === sampleId);
+    const sample = allSamples.find((s) => s.id === sampleId);
     if (!sample || !mapInstanceRef.current) return;
     selectSample(sampleId);
     mapInstanceRef.current.setView(
@@ -1157,18 +1188,18 @@ export function MatrixMap({
       14,
       { animate: true }
     );
-  }, [samples, selectSample]);
+  }, [allSamples, selectSample]);
 
   useEffect(() => {
     if (!panRequestedSampleId || panRequestSeq === 0) return;
-    const sample = samples.find((s) => s.id === panRequestedSampleId);
+    const sample = allSamples.find((s) => s.id === panRequestedSampleId);
     if (!sample || !mapInstanceRef.current) return;
     mapInstanceRef.current.setView(
       [sample.geometry.coordinates[1], sample.geometry.coordinates[0]],
       14,
       { animate: true },
     );
-  }, [panRequestedSampleId, panRequestSeq, samples]);
+  }, [allSamples, panRequestedSampleId, panRequestSeq]);
 
   const handleZoomIn = () => mapInstanceRef.current?.zoomIn();
   const handleZoomOut = () => mapInstanceRef.current?.zoomOut();
@@ -1455,7 +1486,9 @@ export function MatrixMap({
           </div>
           <div>
             <p className="text-lg font-bold text-slate-800 dark:text-slate-100">{sampleCount}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{sampleCount === 1 ? 'Sample' : 'Samples'} loaded</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {activeMapFilters ? `${allSamples.length} loaded` : `${sampleCount === 1 ? 'Sample' : 'Samples'} loaded`}
+            </p>
           </div>
         </div>
       </div>

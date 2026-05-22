@@ -8,8 +8,12 @@ export interface MatrixMapMeasurementRow {
   sample_id: string;
   sample_display_name: string;
   sample_station_id: string;
+  sample_event_id: string | null;
   event_date: string;
+  measurement_id: string | null;
   medium: string;
+  substance_id: string | null;
+  substance_key: string | null;
   substance_display_name: string;
   value: number | string | null;
   unit: string | null;
@@ -20,6 +24,7 @@ export interface MatrixMapMeasurementRow {
   classification: Classification;
   source_dra_id: string | null;
   source_dra_title: string | null;
+  source_dra_citation: string | null;
 }
 
 interface MatrixMapMeasurementState {
