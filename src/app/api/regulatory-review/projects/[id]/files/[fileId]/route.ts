@@ -71,11 +71,13 @@ export async function DELETE(
 
     // Try to remove from disk
     if (fileRecord.filename && project.folder_path) {
+      // 🛡️ Sentinel: Sanitize filename from DB to prevent path traversal
+      const sanitizedFilename = path.basename(fileRecord.filename);
       const filePath = path.join(
         ACTIVE_REVIEWS_BASE,
         project.folder_path,
         '0_Source_Documents',
-        fileRecord.filename
+        sanitizedFilename
       );
       try {
         await unlink(filePath);
