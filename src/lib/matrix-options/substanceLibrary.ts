@@ -21,8 +21,8 @@ export const SUBSTANCE_LIBRARY = [
     // US EPA Tier II SCV for B[a]P narcosis, used as the EqP FCV anchor in
     // design doc section 7 Anchor Case A.
     fcv_ug_per_L: 0.014,
-    // US EPA Eco-SSL plant ingestion surrogate (NOAEL-derived). v1
-    // placeholder; HITL override expected for an avian/mammalian receptor.
+    // US EPA Eco-SSL plant ingestion surrogate (NOAEL-derived). v1 starter
+    // value; HITL override expected for an avian/mammalian receptor.
     trv_eco_mg_per_kg_bw_day: 0.0025,
     sources:
       'US EPA IRIS B[a]P (2017 reassessment); ERDC BSAF DB; ' +
@@ -44,7 +44,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.14,
     ba_oral: 1.0,
     // PCB FCV (chronic AWQC) is substance-specific; use a screening
-    // placeholder. HITL overrides per congener mixture.
+    // starter value. HITL overrides per congener mixture.
     fcv_ug_per_L: 0.014,
     // US EPA Eco-SSL mammalian wildlife TRV (Aroclor 1254 oral chronic
     // NOAEL-derived). Used for the Eco-Food BSAF pathway.

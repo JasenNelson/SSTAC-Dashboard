@@ -2,7 +2,7 @@
 
 This workspace supports the 2026 Matrix Sediment Standards Derivation Options Analysis for British Columbia. It brings the current scientific framework, jurisdictional examples, map data, calculators, and Technical Working Group review tools into one place.
 
-The dashboard is a working analysis environment. Some tools already calculate screening values. Some tools show methodology-gated pathways where the science is still under review. The goal is to make that distinction obvious, so reviewers can use the live tools without mistaking a screening result for a final sediment standard.
+The dashboard is a working analysis environment. It calculates screening values, shows the assumptions behind those values, and keeps review notes close to the science. The goal is to let reviewers test options without mistaking a screening result for a final sediment standard.
 
 ---
 
@@ -32,7 +32,7 @@ Use the top tabs to move between the main review surfaces. Each tab is meant to 
 *   **Conceptual Model** explains the structure of the matrix approach. Use it first when you need to understand the exposure pathways and why a single generic sediment number may not be enough.
 *   **Jurisdictional Frameworks** compares examples from other regulatory programs. Use it to see how different jurisdictions handle sediment chemistry, bioavailability, food-web exposure, and receptor protection.
 *   **Interactive Map** shows available sediment sample locations and measurements. Use the map to inspect samples, filter the Measurement Workbench, export current views, and understand where available data are complete or incomplete.
-*   **Calculator** estimates preliminary, screening-level values for active derivation pathways. Use it to test assumptions, compare pathway-specific results, and see the calculation steps. Human Health pathways are visible in the same interface, but numeric results remain methodology-gated until the exposure assumptions and endpoint mapping are signed off.
+*   **Calculator** estimates preliminary, screening-level values for all four matrix pathways. Use it to test assumptions, compare pathway-specific results, and see the calculation steps.
 *   **TWG Review** supports Technical Working Group feedback. Use it for structured review, voting, and discussion of key assumptions.
 
 The workspace is designed so the map, calculators, and review tools can be read together. For example, a reviewer can inspect measurements on the map, test a screening calculation, then record feedback in the review tab.
@@ -48,8 +48,8 @@ The current dashboard includes:
 *   A province-wide sediment map with sample selection, visible/private-data indicators, medium controls, and a Measurement Workbench.
 *   A Measurement Workbench with table scrolling, focused view, substance filtering, CSV export, and map marker filtering based on the full active filter result set.
 *   Ecological calculator pathways for direct contact and food-web screening calculations.
+*   Human Health calculator pathways for direct contact and food-web screening calculations.
 *   A Background Adjustment panel that compares preliminary values with provincial or regional upper tolerance limits.
-*   Methodology-gated Human Health panels for direct contact and food-web pathways.
 *   A tiered Calculator Guide for general, practitioner, and technical audiences.
 *   Technical Working Group review and polling tools.
 
@@ -62,7 +62,7 @@ Calculator outputs are preliminary screening results. They are useful for compar
 When reading a calculator result:
 
 *   Start with the large result card.
-*   Check whether the pathway is fully active or methodology-gated.
+*   Check which assumptions drive the pathway result.
 *   Open the technical details only when you need the formula and intermediate values.
 *   Review the Background Adjustment panel if natural or regional background concentrations may be higher than the generic screening value.
 *   Treat warnings and qualifiers as part of the result, not as fine print.
@@ -78,4 +78,4 @@ The Background Adjustment panel applies the practical rule that a screening valu
 *   **Matrix sediment standards**: A standards approach that considers more than one exposure pathway, receptor group, or site condition instead of relying only on a single generic value.
 *   **Technical Working Group (TWG)**: The review group providing technical input on the sediment standards modernization work.
 *   **Upper tolerance limit (UTL)**: A statistical estimate used to describe an upper bound for background concentrations.
-*   **Methodology-gated**: Visible in the workspace, but not yet allowed to produce final numeric output because the underlying scientific assumptions still need review or sign-off.
+*   **Screening-grade**: Useful for options analysis and internal review, but still requires professional judgment before regulator-facing use.

@@ -143,6 +143,71 @@ export interface EcoFoodBSAFResult {
 }
 
 // ---------------------------------------------------------------------------
+// Human Health Direct Contact path
+// ---------------------------------------------------------------------------
+
+export type HumanHealthRiskDriver = 'non-cancer' | 'cancer';
+
+export interface HumanHealthDirectContactInput {
+  rfd_oral_mg_per_kg_bw_day: number | null;
+  sf_oral_per_mg_per_kg_bw_per_day: number | null;
+  targetRisk: number;
+  hazardQuotient: number;
+  BW_kg: number;
+  ED_years: number;
+  EF_days_per_year: number;
+  AT_cancer_years: number;
+  IR_sed_mg_per_day: number;
+  SA_cm2: number;
+  AF_sed_mg_per_cm2: number;
+  abs_dermal: number;
+  ba_oral: number;
+}
+
+export interface HumanHealthDirectContactResult {
+  sedS: number;
+  driver: HumanHealthRiskDriver;
+  nonCancerSedS: number | null;
+  cancerSedS: number | null;
+  contactRate_mg_per_day: number;
+  ingestionRateAdjusted_mg_per_day: number;
+  dermalRateAdjusted_mg_per_day: number;
+  warnings: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Human Health Food Web path
+// ---------------------------------------------------------------------------
+
+export interface HumanHealthFoodWebInput {
+  rfd_oral_mg_per_kg_bw_day: number | null;
+  sf_oral_per_mg_per_kg_bw_per_day: number | null;
+  targetRisk: number;
+  hazardQuotient: number;
+  BW_kg: number;
+  IR_food_kg_per_day: number;
+  ba_oral: number;
+  BSAF_loc_freshwater: number;
+  fLipid: number;
+  foc: number;
+  ecosystem: Ecosystem;
+  contaminantClass: ContaminantClass;
+  fProtein?: number;
+}
+
+export interface HumanHealthFoodWebResult {
+  sedS: number;
+  driver: HumanHealthRiskDriver;
+  nonCancerTissue_mg_per_kg: number | null;
+  cancerTissue_mg_per_kg: number | null;
+  tissueTarget_mg_per_kg: number;
+  M_eco: number;
+  BSAF_effective: number;
+  warnings: string[];
+  blocked: boolean;
+}
+
+// ---------------------------------------------------------------------------
 // Substance library entry shape
 // ---------------------------------------------------------------------------
 

@@ -155,7 +155,7 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(screen.queryByTestId('eqp-fcv-reset')).not.toBeInTheDocument();
   });
 
-  it('accepts jurisdiction prop without crashing (passthrough until future slice wires derivation)', () => {
+  it('accepts jurisdiction prop without crashing (passthrough until jurisdiction-specific derivation lands)', () => {
     // Smoke test -- every Jurisdiction value renders successfully.
     const jurisdictions = ['bc-csr', 'federal-ccme', 'site-specific'] as const;
     for (const j of jurisdictions) {

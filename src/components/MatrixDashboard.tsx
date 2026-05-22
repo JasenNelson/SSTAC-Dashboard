@@ -13,8 +13,8 @@ import TWGReviewPortal from './TWGReviewPortal';
 import BackgroundAdjustment from './matrix-options/BackgroundAdjustment';
 import EcoDirectEqPCalculator from './matrix-options/EcoDirectEqPCalculator';
 import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
-import HHDirectPlaceholder from './matrix-options/HHDirectPlaceholder';
-import HHFoodPlaceholder from './matrix-options/HHFoodPlaceholder';
+import HHDirectContactCalculator from './matrix-options/HHDirectContactCalculator';
+import HHFoodWebCalculator from './matrix-options/HHFoodWebCalculator';
 import CategorySelector from './matrix-options/CategorySelector';
 import SharedGlobalInputs, {
   DEFAULT_SUBSTANCE_KEY,
@@ -63,8 +63,8 @@ const GUIDE_TIER_CONTENT: Record<
     summary:
       'Use this tab to compare screening-level sediment standards by pathway, substance, and jurisdictional frame.',
     bullets: [
-      'Eco pathways compute preliminary values today.',
-      'Human Health pathways are visible but held at methodology review.',
+      'All four pathways provide screening calculations today.',
+      'Human Health pathways expose their assumptions so they can be tested and challenged.',
       'Background Adjustment keeps a result from falling below reference-site background.',
     ],
   },
@@ -84,8 +84,9 @@ const GUIDE_TIER_CONTENT: Record<
       'Calculator outputs remain screening-only until the full methodology package and validation gates are complete.',
     bullets: [
       'Eco-Direct uses EqP inputs; Eco-Food uses TRV and BSAF inputs.',
+      'Human Health Direct Contact combines incidental ingestion and dermal contact.',
+      'Human Health Food Web derives a tissue target before back-calculating through BSAF.',
       'Background UTL uses the current screening-grade K-table and one-half detection-limit substitution.',
-      'Human Health calculations are blocked from numeric output until exposure assumptions and endpoint mapping are signed off.',
     ],
   },
 };
@@ -127,11 +128,9 @@ function clampMatrixMapRightPanelWidth(width: number, showLeftPanel: boolean) {
 // trade-off vs the complexity of useSyncExternalStore).
 
 function restoreActiveCategory(): MatrixCategory {
-  // PR-A4 HH wire-up enabled by default: all four MatrixCategory members
-  // are user-selectable (eco-direct + eco-food render calculators;
-  // hh-direct + hh-food render the HITL-reviewed placeholder panels).
-  // The enabled-category allowlist that previously gated HH out has been
-  // dropped; isMatrixCategory already validates against the full union.
+  // All four MatrixCategory members are user-selectable in the v1.0
+  // calculator surface; isMatrixCategory already validates against the
+  // full union.
   if (typeof window === 'undefined') return 'eco-direct';
   const raw = window.localStorage.getItem(LS_KEY_CATEGORY);
   if (raw && isMatrixCategory(raw)) {
@@ -503,19 +502,18 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                 jurisdiction={jurisdiction}
               />
             )}
-            {/*
-              PR-A4 HH wire-up: CategorySelector enables HH categories by
-              default; selecting hh-direct or hh-food renders the
-              HITL-reviewed non-functional disclaimer panels (no numeric
-              output, amber alert block, pointers to canonical regulatory
-              science). The HH placeholders intentionally do NOT consume
-              substanceKey / jurisdiction -- they render fixed disclaimer
-              copy regardless of the shared inputs above. This is the
-              codebase-shaped PR-A4 unblock; the prior inline "unavailable
-              stub" (PR-A2 commit 6 defense-in-depth) is retired.
-            */}
-            {activeCategory === 'hh-direct' && <HHDirectPlaceholder />}
-            {activeCategory === 'hh-food' && <HHFoodPlaceholder />}
+            {activeCategory === 'hh-direct' && (
+              <HHDirectContactCalculator
+                substanceKey={substanceKey}
+                jurisdiction={jurisdiction}
+              />
+            )}
+            {activeCategory === 'hh-food' && (
+              <HHFoodWebCalculator
+                substanceKey={substanceKey}
+                jurisdiction={jurisdiction}
+              />
+            )}
             <div className="flex items-center gap-3 py-2" aria-hidden="true">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
               <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
@@ -766,9 +764,6 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
 }
 
 // ---------------------------------------------------------------------
-// PR-MAP-4 Selection Stats LEFT PANEL extracted in PR-MAP-10 to
-// src/components/matrix-options/MatrixMapLeftPanel.tsx so the identify-
-// tool list can wire to the shared bn-rrm Zustand store without bloating
-// this file. The PR-MAP-4 Selection Stats placeholder card stays in the
-// extracted component; the State A identify placeholder is now replaced
-// by a live IdentifiedFeaturesList when features arrive.
+// Matrix Map left and right panels live in src/components/matrix-options
+// so map selection, identify results, and measurement workbench state do
+// not bloat this dashboard shell.
