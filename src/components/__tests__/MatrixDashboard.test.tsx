@@ -93,6 +93,18 @@ describe('MatrixDashboard -- Matrix Options guide copy', () => {
     expect(GUIDE_MARKDOWN).not.toMatch(/placeholder/i);
     expect(GUIDE_MARKDOWN).not.toMatch(/What Is Working Now/i);
   });
+
+  it('renders the v1 guide workflow copy in the Guide tab', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} guideContent={GUIDE_MARKDOWN} />);
+
+    expect(screen.getByTestId('math-renderer-mock')).toHaveTextContent(
+      /How to Use This Workspace/,
+    );
+    expect(screen.getByTestId('math-renderer-mock')).toHaveTextContent(
+      /Reviewer Checklist/,
+    );
+    expect(screen.queryByText(/Coming Soon/i)).not.toBeInTheDocument();
+  });
 });
 
 describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
