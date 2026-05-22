@@ -147,10 +147,19 @@ export default function InteractivePieChart({
                     opacity={opacity}
                     transform={`scale(${scale})`}
                     style={{ transformOrigin: `${centerX}px ${centerY}px` }}
-                    className={`transition-all duration-300 ${interactive ? 'cursor-pointer' : ''}`}
+                    className={`transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${interactive ? 'cursor-pointer' : ''}`}
                     onClick={() => handleSliceClick(index)}
                     onMouseEnter={() => handleSliceHover(index)}
                     onMouseLeave={() => handleSliceHover(null)}
+                    role={interactive ? "button" : undefined}
+                    tabIndex={interactive ? 0 : undefined}
+                    aria-label={`${slice.label}: ${slice.percentage.toFixed(1)}%`}
+                    onKeyDown={(e) => {
+                      if (interactive && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        handleSliceClick(index);
+                      }
+                    }}
                   />
                   
                   {/* Center text for selected slice */}
@@ -188,10 +197,19 @@ export default function InteractivePieChart({
                 key={index}
                 className={`flex items-center space-x-3 p-2 rounded-lg transition-all duration-200 ${
                   hoveredSlice === index ? 'bg-slate-100' : ''
-                } ${selectedSlice === index ? 'bg-sky-50 border border-sky-200' : ''}`}
+                } ${selectedSlice === index ? 'bg-sky-50 border border-sky-200' : ''} ${interactive ? 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500' : ''}`}
                 onMouseEnter={() => handleSliceHover(index)}
                 onMouseLeave={() => handleSliceHover(null)}
                 onClick={() => handleSliceClick(index)}
+                role={interactive ? "button" : undefined}
+                tabIndex={interactive ? 0 : undefined}
+                aria-label={`Select ${slice.label}`}
+                onKeyDown={(e) => {
+                  if (interactive && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    handleSliceClick(index);
+                  }
+                }}
               >
                 <div
                   className="w-4 h-4 rounded-full"

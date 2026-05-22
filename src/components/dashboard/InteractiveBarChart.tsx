@@ -84,10 +84,19 @@ export default function InteractiveBarChart({
             return (
               <div
                 key={index}
-                className="group relative"
+                className={`group relative ${interactive ? 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-md' : ''}`}
                 onMouseEnter={() => handleBarHover(index)}
                 onMouseLeave={() => handleBarHover(null)}
                 onClick={() => handleBarClick(index)}
+                role={interactive ? "button" : undefined}
+                tabIndex={interactive ? 0 : undefined}
+                aria-label={`${bar.label}: ${bar.value} (${bar.percentage.toFixed(1)}%)`}
+                onKeyDown={(e) => {
+                  if (interactive && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    handleBarClick(index);
+                  }
+                }}
               >
                 <div className="flex items-center space-x-3">
                   {/* Label - responsive width for mobile */}
