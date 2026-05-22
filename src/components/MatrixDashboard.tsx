@@ -64,8 +64,8 @@ const GUIDE_TIER_CONTENT: Record<
       'Use this tab to compare screening-level sediment standards by pathway, substance, and jurisdictional frame.',
     bullets: [
       'All four pathways provide screening calculations today.',
-      'Human Health pathways expose their assumptions so they can be tested and challenged.',
-      'Background Adjustment keeps a result from falling below reference-site background.',
+      'Each pathway shows the assumptions behind the result.',
+      'Background Adjustment compares the pathway result with reference-site background.',
     ],
   },
   practitioner: {
@@ -73,20 +73,21 @@ const GUIDE_TIER_CONTENT: Record<
     summary:
       'Pick the pathway, confirm the shared substance and jurisdiction, then read the hero result before expanding the technical details.',
     bullets: [
-      'Substance changes re-seed pathway defaults unless a field has a user override.',
-      'The PASS/FAIL pill is diagnostic when a measured sediment concentration is supplied.',
-      'Use the Background Adjustment panel after the pathway value, not as a replacement for it.',
+      'Changing the substance refreshes defaults unless you typed your own value.',
+      'If a measured sediment concentration is entered, read the PASS/FAIL pill as a screening signal.',
+      'Use Background Adjustment after the pathway value, not as a replacement for it.',
     ],
   },
   technical: {
-    title: 'Methodology notes',
+    title: 'Technical notes',
     summary:
       'Calculator outputs remain screening-only until the full methodology package and validation gates are complete.',
     bullets: [
-      'Eco-Direct uses EqP inputs; Eco-Food uses TRV and BSAF inputs.',
+      'Eco-Direct uses equilibrium partitioning (EqP) inputs.',
+      'Eco-Food uses toxicity reference value (TRV) and biota-sediment accumulation factor (BSAF) inputs.',
       'Human Health Direct Contact combines incidental ingestion and dermal contact.',
       'Human Health Food Web derives a tissue target before back-calculating through BSAF.',
-      'Background UTL uses the current screening-grade K-table and one-half detection-limit substitution.',
+      'Background uses upper tolerance limit (UTL) calculations and one-half detection-limit substitution.',
     ],
   },
 };
@@ -415,13 +416,13 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         );
       }
       case 'The Guide':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Welcome to the Matrix Options Dashboard. Please read the full guide in the main content area.</p>;
+        return <p className="text-sm text-slate-500 dark:text-slate-400">Use the guide to understand the project phases, workspace tabs, and key terms.</p>;
       case 'Conceptual Model':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Explore the scientific and regulatory pathways in the main content area.</p>;
+        return <p className="text-sm text-slate-500 dark:text-slate-400">Review how pathways, receptors, and site conditions fit together.</p>;
       case 'Interactive Map':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Geospatial visualization of sediment sample sites.</p>;
+        return <p className="text-sm text-slate-500 dark:text-slate-400">Inspect sediment samples, measurements, filters, and map-linked selections.</p>;
       case 'TWG Review':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Workspace for formal evaluation and feedback. See the main content area.</p>;
+        return <p className="text-sm text-slate-500 dark:text-slate-400">Use the review tools to record Technical Working Group feedback.</p>;
       default:
         return null;
     }
@@ -433,6 +434,53 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
       : activeTopTab === 'Jurisdictional Frameworks'
         ? 'JURISDICTION / REGION'
         : 'CONTEXT';
+
+  const renderToolReference = () => {
+    if (activeTopTab === 'Calculator') {
+      return (
+        <div className="space-y-4" data-testid="matrix-options-right-reference">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300">
+              Calculator Quick Reference
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              Use this tray as a final check while comparing pathway results.
+            </p>
+          </div>
+          <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            <li>Confirm the shared substance and jurisdiction.</li>
+            <li>Choose the pathway that matches the receptor and exposure route.</li>
+            <li>Read the large result card before expanding technical details.</li>
+            <li>Apply Background Adjustment only after the pathway value is calculated.</li>
+          </ol>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+            Screening values support options analysis. They are not final
+            sediment standards.
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4" data-testid="matrix-options-right-reference">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300">
+            Framework Quick Reference
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            Use the jurisdictional material to compare methods, not to copy a
+            single standard.
+          </p>
+        </div>
+        <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+          <li>Start with the selected pathway: {activeSideTab}.</li>
+          <li>Look for receptor groups, exposure routes, and endpoint choices.</li>
+          <li>Note how each program handles bioavailability and uncertainty.</li>
+          <li>Carry useful assumptions into the calculator for testing.</li>
+        </ol>
+      </div>
+    );
+  };
 
   const renderContent = () => {
     switch (activeTopTab) {
@@ -472,13 +520,11 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         return (
           <div className="w-full space-y-6" data-testid="calculator-tab-content">
             {/*
-              Calculator-tab vertical flow per plan v3 section 1:
-                1. CategorySelector (1x4 row at top; HH disabled in PR-A2)
+              Calculator-tab vertical flow:
+                1. CategorySelector (1x4 row at top)
                 2. SharedGlobalInputs (substance + jurisdiction selectors)
                 3. Active category calculator (switches on activeCategory)
-                4. BackgroundAdjustment (post-derivation panel; PR #127)
-              Legacy DerivationSimulator is retired in this commit per
-              plan v3 section 5.A.
+                4. BackgroundAdjustment (post-derivation panel)
             */}
             <CategorySelector
               activeCategory={activeCategory}
@@ -628,7 +674,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
             <p className="text-lg font-medium text-slate-500 dark:text-slate-400">
-              Content for <span className="text-slate-700 dark:text-slate-300 font-bold">{activeTopTab}</span> is currently under construction.
+              Select a Matrix Options tab to continue.
             </p>
           </div>
         );
@@ -698,7 +744,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               {renderContent()}
             </div>
 
-            {/* Right Drawer (Smart Tray) */}
+            {/* Right Drawer (Quick Reference) */}
             <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl', showRightPanel ? 'w-80' : 'w-0')}>
               <div className="w-[320px] h-full flex flex-col">
                 <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
@@ -706,32 +752,11 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                     <svg className="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <span>Quick Reference / Polls</span>
+                    <span>Quick Reference</span>
                   </h3>
                 </div>
                 <div className="p-5 overflow-y-auto flex-1">
-                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 leading-relaxed">
-                    Live polling and reference material will dynamically appear here during active Technical Working Group (TWG) sessions.
-                  </p>
-                  
-                  <div className="p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-100 dark:border-sky-800/50 rounded-xl">
-                    <div className="flex items-center space-x-2 mb-3">
-                      <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-sky-500"></span>
-                      </span>
-                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Active Poll: AVS/SEM Ratio</p>
-                    </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mb-4">Which molar valency multiplier for silver do you support adopting for the unified matrix framework?</p>
-                    <div className="space-y-3">
-                      <button className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:border-sky-400 dark:hover:border-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-all shadow-sm">
-                        Support US EPA (0.5 Ag multiplier)
-                      </button>
-                      <button className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg hover:border-sky-400 dark:hover:border-sky-500 hover:bg-sky-50 dark:hover:bg-sky-900/30 transition-all shadow-sm">
-                        Support ANZG (2.0 Ag multiplier)
-                      </button>
-                    </div>
-                  </div>
+                  {renderToolReference()}
                 </div>
               </div>
             </div>

@@ -284,10 +284,36 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(
       screen.getByRole('button', { name: /^Technical$/ }),
     ).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText(/Methodology notes/i)).toBeInTheDocument();
+    expect(screen.getByText(/Technical notes/i)).toBeInTheDocument();
     expect(
       screen.getByText(/Human Health Direct Contact combines/i),
     ).toBeInTheDocument();
+  });
+
+  it('shows real calculator quick-reference copy instead of fake poll content', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    clickCalculatorTab();
+
+    expect(screen.getByTestId('matrix-options-right-reference')).toHaveTextContent(
+      /Calculator Quick Reference/i,
+    );
+    expect(screen.queryByText(/Active Poll/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/will dynamically appear/i)).not.toBeInTheDocument();
+  });
+
+  it('shows framework quick-reference copy on Jurisdictional Frameworks', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: /^Jurisdictional Frameworks$/ }),
+    );
+
+    expect(screen.getByTestId('matrix-options-right-reference')).toHaveTextContent(
+      /Framework Quick Reference/i,
+    );
+    expect(screen.getByText(/Start with the selected pathway/i)).toHaveTextContent(
+      /Ecological: EqP & AVS/i,
+    );
+    expect(screen.queryByText(/Active Poll/i)).not.toBeInTheDocument();
   });
 
   it('hydrates the Calculator sidebar audience guide tier from localStorage', () => {
