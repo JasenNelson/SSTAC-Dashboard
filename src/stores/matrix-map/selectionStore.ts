@@ -19,8 +19,9 @@
  * State shape mirrors the prior MatrixMap.tsx local useState exactly:
  *   selectedSampleId  -- single-select / pan-to highlight; null when
  *                        the user is in multi-select mode.
- *   selectedSampleIds -- multi-select array; covers Ctrl+click, Area
- *                        drag-rectangle, and cluster-pin Ctrl+click.
+ *   selectedSampleIds -- multi-select array; covers Shift-add,
+ *                        Ctrl-remove, Area drag-rectangle, and
+ *                        cluster-pin selection.
  *
  * Action contracts preserved from MatrixMap.tsx:285-320 (the prior
  * useCallback declarations):
@@ -30,10 +31,16 @@
  *                                semantics; single click replaces any
  *                                prior multi-select per codex PR-MAP-1
  *                                P2-1).
- *   toggleSampleSelection(id):  toggles id in selectedSampleIds;
+ *   addSampleSelection(id):     adds id to selectedSampleIds via Set
+ *                               dedup; clears selectedSampleId.
+ *   addMultipleSamples(ids):    adds ids to selectedSampleIds via Set
+ *                               dedup; clears selectedSampleId.
+ *   removeSampleSelection(id):  removes id from selectedSampleIds;
  *                               clears selectedSampleId.
- *   selectMultipleSamples(ids): adds ids to selectedSampleIds via Set
- *                               dedup (does NOT touch selectedSampleId).
+ *   removeMultipleSamples(ids): removes ids from selectedSampleIds;
+ *                               clears selectedSampleId.
+ *   toggleSampleSelection(id):  legacy toggle wrapper used by older
+ *                               call sites/tests; clears selectedSampleId.
  *   selectAllSamples(allIds):   replaces selectedSampleIds with allIds;
  *                               clears selectedSampleId. Caller passes
  *                               the full sample-ID list -- the store
@@ -55,7 +62,14 @@ import { create } from 'zustand';
 export interface SelectionState {
   selectedSampleId: string | null;
   selectedSampleIds: string[];
+  panRequestedSampleId: string | null;
+  panRequestSeq: number;
   selectSample: (id: string) => void;
+  requestPanToSample: (id: string) => void;
+  addSampleSelection: (id: string) => void;
+  addMultipleSamples: (ids: string[]) => void;
+  removeSampleSelection: (id: string) => void;
+  removeMultipleSamples: (ids: string[]) => void;
   toggleSampleSelection: (id: string) => void;
   selectMultipleSamples: (ids: string[]) => void;
   selectAllSamples: (allIds: string[]) => void;
@@ -65,9 +79,49 @@ export interface SelectionState {
 export const useMatrixMapSelectionStore = create<SelectionState>()((set) => ({
   selectedSampleId: null,
   selectedSampleIds: [],
+  panRequestedSampleId: null,
+  panRequestSeq: 0,
 
   selectSample: (id) => {
     set({ selectedSampleId: id, selectedSampleIds: [id] });
+  },
+
+  requestPanToSample: (id) => {
+    set((state) => ({
+      selectedSampleId: id,
+      selectedSampleIds: [id],
+      panRequestedSampleId: id,
+      panRequestSeq: state.panRequestSeq + 1,
+    }));
+  },
+
+  addSampleSelection: (id) => {
+    set((state) => ({
+      selectedSampleIds: Array.from(new Set([...state.selectedSampleIds, id])),
+      selectedSampleId: null,
+    }));
+  },
+
+  addMultipleSamples: (ids) => {
+    set((state) => ({
+      selectedSampleIds: Array.from(new Set([...state.selectedSampleIds, ...ids])),
+      selectedSampleId: null,
+    }));
+  },
+
+  removeSampleSelection: (id) => {
+    set((state) => ({
+      selectedSampleIds: state.selectedSampleIds.filter((x) => x !== id),
+      selectedSampleId: null,
+    }));
+  },
+
+  removeMultipleSamples: (ids) => {
+    const idsToRemove = new Set(ids);
+    set((state) => ({
+      selectedSampleIds: state.selectedSampleIds.filter((id) => !idsToRemove.has(id)),
+      selectedSampleId: null,
+    }));
   },
 
   toggleSampleSelection: (id) => {
@@ -82,6 +136,7 @@ export const useMatrixMapSelectionStore = create<SelectionState>()((set) => ({
   selectMultipleSamples: (ids) => {
     set((state) => ({
       selectedSampleIds: Array.from(new Set([...state.selectedSampleIds, ...ids])),
+      selectedSampleId: null,
     }));
   },
 
@@ -90,6 +145,6 @@ export const useMatrixMapSelectionStore = create<SelectionState>()((set) => ({
   },
 
   clearSampleSelection: () => {
-    set({ selectedSampleId: null, selectedSampleIds: [] });
+    set({ selectedSampleId: null, selectedSampleIds: [], panRequestedSampleId: null });
   },
 }));

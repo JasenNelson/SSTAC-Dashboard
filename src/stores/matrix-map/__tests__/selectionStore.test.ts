@@ -11,6 +11,8 @@ describe('useMatrixMapSelectionStore', () => {
     useMatrixMapSelectionStore.setState({
       selectedSampleId: null,
       selectedSampleIds: [],
+      panRequestedSampleId: null,
+      panRequestSeq: 0,
     });
   });
 
@@ -18,6 +20,8 @@ describe('useMatrixMapSelectionStore', () => {
     const state = useMatrixMapSelectionStore.getState();
     expect(state.selectedSampleId).toBeNull();
     expect(state.selectedSampleIds).toEqual([]);
+    expect(state.panRequestedSampleId).toBeNull();
+    expect(state.panRequestSeq).toBe(0);
   });
 
   it('selectSample sets both single and array (single-replaces-multi BN-RRM semantic)', () => {
@@ -30,6 +34,19 @@ describe('useMatrixMapSelectionStore', () => {
     expect(state.selectedSampleId).toBe('x');
     expect(state.selectedSampleIds).toEqual(['x']);
   });
+
+  it('requestPanToSample selects the sample and increments the pan request sequence', () => {
+    useMatrixMapSelectionStore.getState().requestPanToSample('x');
+    const first = useMatrixMapSelectionStore.getState();
+    expect(first.selectedSampleId).toBe('x');
+    expect(first.selectedSampleIds).toEqual(['x']);
+    expect(first.panRequestedSampleId).toBe('x');
+    expect(first.panRequestSeq).toBe(1);
+
+    useMatrixMapSelectionStore.getState().requestPanToSample('x');
+    expect(useMatrixMapSelectionStore.getState().panRequestSeq).toBe(2);
+  });
+
 
   it('toggleSampleSelection adds to array on first call, removes on second; always clears selectedSampleId', () => {
     useMatrixMapSelectionStore.setState({ selectedSampleId: 'sole', selectedSampleIds: [] });
@@ -46,7 +63,30 @@ describe('useMatrixMapSelectionStore', () => {
     expect(useMatrixMapSelectionStore.getState().selectedSampleIds).toEqual(['b']);
   });
 
-  it('selectMultipleSamples merges via Set dedup, never duplicates, leaves selectedSampleId alone', () => {
+  it('addSampleSelection adds via Set dedup and clears selectedSampleId', () => {
+    useMatrixMapSelectionStore.setState({
+      selectedSampleId: 'sole',
+      selectedSampleIds: ['a'],
+    });
+    useMatrixMapSelectionStore.getState().addSampleSelection('a');
+    useMatrixMapSelectionStore.getState().addSampleSelection('b');
+    const state = useMatrixMapSelectionStore.getState();
+    expect(state.selectedSampleIds).toEqual(['a', 'b']);
+    expect(state.selectedSampleId).toBeNull();
+  });
+
+  it('removeSampleSelection removes an id and clears selectedSampleId', () => {
+    useMatrixMapSelectionStore.setState({
+      selectedSampleId: 'sole',
+      selectedSampleIds: ['a', 'b', 'c'],
+    });
+    useMatrixMapSelectionStore.getState().removeSampleSelection('b');
+    const state = useMatrixMapSelectionStore.getState();
+    expect(state.selectedSampleIds).toEqual(['a', 'c']);
+    expect(state.selectedSampleId).toBeNull();
+  });
+
+  it('selectMultipleSamples merges via Set dedup, never duplicates, and clears selectedSampleId', () => {
     useMatrixMapSelectionStore.setState({
       selectedSampleId: 'sole',
       selectedSampleIds: ['a', 'b'],
@@ -54,7 +94,18 @@ describe('useMatrixMapSelectionStore', () => {
     useMatrixMapSelectionStore.getState().selectMultipleSamples(['b', 'c', 'd', 'c']);
     const state = useMatrixMapSelectionStore.getState();
     expect(state.selectedSampleIds).toEqual(['a', 'b', 'c', 'd']);
-    expect(state.selectedSampleId).toBe('sole');
+    expect(state.selectedSampleId).toBeNull();
+  });
+
+  it('removeMultipleSamples removes all passed ids and clears selectedSampleId', () => {
+    useMatrixMapSelectionStore.setState({
+      selectedSampleId: 'sole',
+      selectedSampleIds: ['a', 'b', 'c', 'd'],
+    });
+    useMatrixMapSelectionStore.getState().removeMultipleSamples(['b', 'd']);
+    const state = useMatrixMapSelectionStore.getState();
+    expect(state.selectedSampleIds).toEqual(['a', 'c']);
+    expect(state.selectedSampleId).toBeNull();
   });
 
   it('selectAllSamples replaces selectedSampleIds with the passed list and clears selectedSampleId', () => {
@@ -68,15 +119,19 @@ describe('useMatrixMapSelectionStore', () => {
     expect(state.selectedSampleId).toBeNull();
   });
 
-  it('clearSampleSelection resets both fields', () => {
+  it('clearSampleSelection resets selection fields and clears pending pan target', () => {
     useMatrixMapSelectionStore.setState({
       selectedSampleId: 'sole',
       selectedSampleIds: ['a', 'b', 'c'],
+      panRequestedSampleId: 'sole',
+      panRequestSeq: 3,
     });
     useMatrixMapSelectionStore.getState().clearSampleSelection();
     const state = useMatrixMapSelectionStore.getState();
     expect(state.selectedSampleId).toBeNull();
     expect(state.selectedSampleIds).toEqual([]);
+    expect(state.panRequestedSampleId).toBeNull();
+    expect(state.panRequestSeq).toBe(3);
   });
 
   it('REGRESSION: selectSample then toggleSampleSelection of a different id does not retain the prior single', () => {

@@ -226,6 +226,26 @@ const COORD_TIER_LABEL: Record<CoordinateQualityTier, string> = {
   low: 'Manual',
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function createImpactedMarkerIcon(L: any, color: string, dashArray: string | undefined, selected: boolean) {
+  const strokeDash = dashArray ?? '';
+  const strokeColor = selected ? '#2563eb' : 'white';
+  const strokeWidth = selected ? '3' : '2.5';
+  const html =
+    '<svg width="24" height="24" viewBox="0 0 24 24" ' +
+    'style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">' +
+    `<polygon points="12,2 22,22 2,22" fill="${color}" ` +
+    `stroke="${strokeColor}" stroke-width="${strokeWidth}" stroke-linejoin="round" ` +
+    `stroke-dasharray="${strokeDash}" /></svg>`;
+
+  return L.divIcon({
+    html,
+    className: 'matrix-impacted-icon',
+    iconSize: [24, 24],
+    iconAnchor: [12, 22],
+  });
+}
+
 export function MatrixMap({
   initialMapData,
   fetchErrorMessage,
@@ -312,15 +332,20 @@ export function MatrixMap({
   // hoist pattern -- the inlined Sample Locations panel reads directly
   // from the store, and PR-MAP-12 Selection Stats + PR-MAP-13
   // MeasurementWorkbench will subscribe to the same surface. Action
-  // contracts (selectSample's single-replaces-multi semantic; toggle
-  // clearing selectedSampleId; selectMultipleSamples Set-dedup) are
-  // preserved from the prior local useCallback declarations and locked
-  // by src/stores/matrix-map/__tests__/selectionStore.test.ts.
+  // contracts (single-click replace, Shift-add, Ctrl-remove, area
+  // replace) are locked by
+  // src/stores/matrix-map/__tests__/selectionStore.test.ts.
   const selectedSampleId = useMatrixMapSelectionStore((s) => s.selectedSampleId);
   const selectedSampleIds = useMatrixMapSelectionStore((s) => s.selectedSampleIds);
+  const selectedSampleIdsRef = useRef<string[]>(selectedSampleIds);
+  selectedSampleIdsRef.current = selectedSampleIds;
+  const panRequestedSampleId = useMatrixMapSelectionStore((s) => s.panRequestedSampleId);
+  const panRequestSeq = useMatrixMapSelectionStore((s) => s.panRequestSeq);
   const selectSample = useMatrixMapSelectionStore((s) => s.selectSample);
-  const toggleSampleSelection = useMatrixMapSelectionStore((s) => s.toggleSampleSelection);
-  const selectMultipleSamples = useMatrixMapSelectionStore((s) => s.selectMultipleSamples);
+  const addSampleSelection = useMatrixMapSelectionStore((s) => s.addSampleSelection);
+  const addMultipleSamples = useMatrixMapSelectionStore((s) => s.addMultipleSamples);
+  const removeSampleSelection = useMatrixMapSelectionStore((s) => s.removeSampleSelection);
+  const removeMultipleSamples = useMatrixMapSelectionStore((s) => s.removeMultipleSamples);
   const clearSampleSelection = useMatrixMapSelectionStore((s) => s.clearSampleSelection);
   const selectAllSamplesAction = useMatrixMapSelectionStore((s) => s.selectAllSamples);
   // Wrap selectAllSamples to preserve the no-arg signature used at the
@@ -341,6 +366,38 @@ export function MatrixMap({
   useEffect(() => {
     clearSampleSelection();
   }, [clearSampleSelection]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const tagName = target?.tagName?.toLowerCase();
+      if (
+        tagName === 'input' ||
+        tagName === 'textarea' ||
+        tagName === 'select' ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      if (key === 'escape') {
+        setInteractionMode('pan');
+        return;
+      }
+
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+
+      if (key === 'p') setInteractionMode('pan');
+      if (key === 's') setInteractionMode('select-individual');
+      if (key === 'a') setInteractionMode('select-area');
+      if (key === 'i') setInteractionMode('identify');
+      if (key === 'b') setInteractionMode('identify-area');
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   // Initialize map
   useEffect(() => {
@@ -380,17 +437,27 @@ export function MatrixMap({
         maxClusterRadius: 50,
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: false,
-        zoomToBoundsOnClick: true,
+        zoomToBoundsOnClick: false,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         iconCreateFunction: (cluster: any) => {
           const count = cluster.getChildCount();
+          const childMarkers = cluster.getAllChildMarkers?.() ?? [];
+          const selectedIds = new Set(selectedSampleIdsRef.current);
+          const selectedCount = childMarkers.filter(
+            (marker: { options?: { sampleId?: string } }) =>
+              marker.options?.sampleId && selectedIds.has(marker.options.sampleId),
+          ).length;
           let size = 'small';
           if (count > 10) size = 'medium';
           if (count > 25) size = 'large';
+          const selectedBadge = selectedCount > 0
+            ? `<span class="cluster-selected-badge">${selectedCount} of ${count} selected</span>`
+            : '';
 
           return L.divIcon({
             html: `<div class="cluster-marker cluster-${size}">
               <span>${count}</span>
+              ${selectedBadge}
             </div>`,
             className: 'custom-cluster-icon',
             iconSize: L.point(40, 40),
@@ -398,12 +465,19 @@ export function MatrixMap({
         },
       });
 
-      // Ctrl+click on a cluster selects all its child markers.
+      // Shift+click on a cluster adds children; Ctrl/meta+click removes them.
       // In Identify mode this handler must short-circuit at the top so that
       // Ctrl/meta+cluster is fully inert (no selection, no zoom, no identify).
       // The existing handler does NOT consult defaultPrevented, so a separate
       // interceptor would not suppress it reliably - the gate MUST live here.
-      markers.on('clusterclick', (e: { layer?: { getAllChildMarkers?: () => { options?: { sampleId?: string } }[] }; originalEvent?: MouseEvent }) => {
+      markers.on('clusterclick', (e: {
+        layer?: {
+          getAllChildMarkers?: () => { options?: { sampleId?: string } }[];
+          getBounds?: () => unknown;
+          zoomToBounds?: (options?: { padding?: [number, number] }) => void;
+        };
+        originalEvent?: MouseEvent;
+      }) => {
         if (
           interactionModeRef.current === 'identify' ||
           interactionModeRef.current === 'identify-area'
@@ -415,7 +489,7 @@ export function MatrixMap({
           return;
         }
         const orig = e.originalEvent;
-        if (orig?.ctrlKey || orig?.metaKey) {
+        if (orig?.shiftKey) {
           orig.preventDefault();
           orig.stopPropagation();
           const children = e.layer?.getAllChildMarkers?.() ?? [];
@@ -423,11 +497,22 @@ export function MatrixMap({
             .map((m: { options?: { sampleId?: string } }) => m.options?.sampleId)
             .filter((id): id is string => !!id);
           if (childIds.length > 0) {
-            // Add all cluster children to the current selection
-            selectMultipleSamples(childIds);
+            addMultipleSamples(childIds);
           }
+        } else if (orig?.ctrlKey || orig?.metaKey) {
+          orig.preventDefault();
+          orig.stopPropagation();
+          const children = e.layer?.getAllChildMarkers?.() ?? [];
+          const childIds = children
+            .map((m: { options?: { sampleId?: string } }) => m.options?.sampleId)
+            .filter((id): id is string => !!id);
+          if (childIds.length > 0) {
+            removeMultipleSamples(childIds);
+          }
+        } else {
+          e.layer?.zoomToBounds?.({ padding: [20, 20] });
         }
-        // Without Ctrl, default zoom behavior applies
+        // Without a selection modifier, preserve the expected cluster zoom.
       });
 
       map.addLayer(markers);
@@ -571,20 +656,8 @@ export function MatrixMap({
         // carry the coord-tier dash pattern; SVG polygon with strokeDasharray
         // does, so all 9 spec states are visually distinguishable). PLAN_V3_4_2
         // section 3.3: 3 classifications x 3 coord tiers.
-        const strokeDash = dashArray ?? '';
-        const html =
-          '<svg width="24" height="24" viewBox="0 0 24 24" ' +
-          'style="filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));">' +
-          `<polygon points="12,2 22,22 2,22" fill="${color}" ` +
-          `stroke="white" stroke-width="2.5" stroke-linejoin="round" ` +
-          `stroke-dasharray="${strokeDash}" /></svg>`;
         marker = L.marker([lat, lng], {
-          icon: L.divIcon({
-            html,
-            className: 'matrix-impacted-icon',
-            iconSize: [24, 24],
-            iconAnchor: [12, 22],
-          }),
+          icon: createImpactedMarkerIcon(L, color, dashArray, false),
           sampleId: sample.id, // Custom option -- read by cluster click handler
         });
       } else {
@@ -622,15 +695,18 @@ export function MatrixMap({
           console.warn('[MatrixMap] identify: mid-mode unbindPopup failed', err);
         }
       }
-      marker.on('click', (e: { originalEvent?: MouseEvent; ctrlKey?: boolean; metaKey?: boolean }) => {
+      marker.on('click', (e: { originalEvent?: MouseEvent; shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => {
         if (
           interactionModeRef.current === 'identify' ||
           interactionModeRef.current === 'identify-area'
         ) return;
         const orig = e.originalEvent;
+        const shiftHeld = orig?.shiftKey || e.shiftKey;
         const ctrlHeld = orig?.ctrlKey || orig?.metaKey || e.ctrlKey || e.metaKey;
-        if (ctrlHeld || interactionModeRef.current === 'select-individual') {
-          toggleSampleSelection(sample.id);
+        if (shiftHeld) {
+          addSampleSelection(sample.id);
+        } else if (ctrlHeld) {
+          removeSampleSelection(sample.id);
         } else {
           selectSample(sample.id);
         }
@@ -639,7 +715,7 @@ export function MatrixMap({
       markerMapRef.current.set(sample.id, marker);
       markersLayer.addLayer(marker);
     });
-  }, [samples, isLoaded, leaflet, selectSample, toggleSampleSelection]);
+  }, [samples, isLoaded, leaflet, selectSample, addSampleSelection, removeSampleSelection]);
 
   // Update marker styles when selection changes -- without clearing/recreating layers.
   useEffect(() => {
@@ -647,13 +723,19 @@ export function MatrixMap({
     markerMapRef.current.forEach((marker, sampleId) => {
       const sample = samples.find((s) => s.id === sampleId);
       if (!sample) return;
-      if (sample.classification === 'impacted') {
-        // Triangle markers use divIcon; selection styling via list highlight,
-        // not marker restyle (divIcon has no setStyle method).
-        return;
-      }
       const isSelected =
         selectedSampleIds.includes(sampleId) || selectedSampleId === sampleId;
+      if (sample.classification === 'impacted') {
+        marker.setIcon(
+          createImpactedMarkerIcon(
+            leaflet,
+            CLASSIFICATION_COLOR.impacted,
+            COORD_TIER_DASH_ARRAY[sample.coordinate_quality_tier],
+            isSelected,
+          ),
+        );
+        return;
+      }
       // codex P1-2 follow-up: on deselect, restore the classification-aware
       // stroke (grey for unknown, white for reference). Selected state always
       // wins with the spec blue overlay.
@@ -668,6 +750,7 @@ export function MatrixMap({
         weight: isSelected ? 4 : 3,
       });
     });
+    markersLayerRef.current?.refreshClusters?.();
   }, [selectedSampleId, selectedSampleIds, samples, isLoaded, leaflet]);
 
   // Area select (rectangle drag) mode
@@ -709,9 +792,7 @@ export function MatrixMap({
           .filter((s) => bounds.contains(leaflet.latLng(s.geometry.coordinates[1], s.geometry.coordinates[0])))
           .map((s) => s.id);
 
-        if (insideIds.length > 0) {
-          selectMultipleSamples(insideIds);
-        }
+        selectAllSamplesAction(insideIds);
 
         // Clean up rectangle
         if (areaSelectRectRef.current) {
@@ -740,7 +821,7 @@ export function MatrixMap({
       map.dragging.enable();
       map.getContainer().style.cursor = '';
     }
-  }, [interactionMode, isLoaded, leaflet, samples, selectMultipleSamples]);
+  }, [interactionMode, isLoaded, leaflet, samples, selectAllSamplesAction]);
 
   // Identify-area mode: drag a rectangle and query active WMS overlays for
   // all features in the drawn bounds. Results replace the current identified
@@ -1078,6 +1159,17 @@ export function MatrixMap({
     );
   }, [samples, selectSample]);
 
+  useEffect(() => {
+    if (!panRequestedSampleId || panRequestSeq === 0) return;
+    const sample = samples.find((s) => s.id === panRequestedSampleId);
+    if (!sample || !mapInstanceRef.current) return;
+    mapInstanceRef.current.setView(
+      [sample.geometry.coordinates[1], sample.geometry.coordinates[0]],
+      14,
+      { animate: true },
+    );
+  }, [panRequestedSampleId, panRequestSeq, samples]);
+
   const handleZoomIn = () => mapInstanceRef.current?.zoomIn();
   const handleZoomOut = () => mapInstanceRef.current?.zoomOut();
 
@@ -1117,6 +1209,7 @@ export function MatrixMap({
           background: transparent;
         }
         .cluster-marker {
+          position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1140,6 +1233,21 @@ export function MatrixMap({
           width: 52px;
           height: 52px;
           background: linear-gradient(135deg, #ec4899, #be185d);
+        }
+        .cluster-selected-badge {
+          position: absolute;
+          left: 50%;
+          bottom: -10px;
+          transform: translateX(-50%);
+          min-width: max-content;
+          border-radius: 999px;
+          border: 1px solid rgba(37,99,235,0.35);
+          background: #eff6ff;
+          color: #1d4ed8;
+          font-size: 10px;
+          line-height: 1;
+          padding: 3px 6px;
+          box-shadow: 0 1px 4px rgba(15,23,42,0.2);
         }
       `}</style>
 
@@ -1271,7 +1379,7 @@ export function MatrixMap({
               ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
           )}
-          title="Select mode — click markers, Ctrl+click clusters"
+          title="Select mode - click replaces, Shift+click adds, Ctrl+click removes"
         >
           <MousePointer className="w-4 h-4" />
           <span className="hidden sm:inline">Select</span>
@@ -1370,7 +1478,7 @@ export function MatrixMap({
               {/* Multi-select controls */}
               <div className="px-3 py-1.5 flex items-center justify-between border-b border-slate-100 dark:border-slate-700">
                 <span className="text-xs text-slate-400 dark:text-slate-500">
-                  {selectedSampleIds.length > 0 ? `${selectedSampleIds.length} selected` : 'Ctrl+click for multi-select'}
+                  {selectedSampleIds.length > 0 ? `${selectedSampleIds.length} selected` : 'Shift+click add, Ctrl+click remove'}
                 </span>
                 <div className="flex gap-1">
                   <button
@@ -1397,8 +1505,10 @@ export function MatrixMap({
                     <button
                       key={sample.id}
                       onClick={(e) => {
-                        if (e.ctrlKey || e.metaKey) {
-                          toggleSampleSelection(sample.id);
+                        if (e.shiftKey) {
+                          addSampleSelection(sample.id);
+                        } else if (e.ctrlKey || e.metaKey) {
+                          removeSampleSelection(sample.id);
                         } else {
                           panToSample(sample.id);
                         }

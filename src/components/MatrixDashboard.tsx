@@ -31,6 +31,7 @@ import {
 } from './matrix-options/guide/content/jurisdictions';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import { MatrixMapLeftPanel } from './matrix-options/MatrixMapLeftPanel';
+import { MatrixMapRightPanel } from './matrix-options/MatrixMapRightPanel';
 import { MatrixMapMobileFallback } from './matrix-options/MatrixMapMobileFallback';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
@@ -393,7 +394,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                   showLeftPanel ? 'w-80' : 'w-0',
                 )}
               >
-                <MatrixMapLeftPanel />
+                <MatrixMapLeftPanel initialMapData={initialMapData} />
               </div>
 
               {/* Center: map */}
@@ -412,7 +413,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                   showRightPanel ? 'w-96' : 'w-0',
                 )}
               >
-                <MatrixMapRightPanelScaffold />
+                <MatrixMapRightPanel initialMapData={initialMapData} />
               </div>
             </div>
           </div>
@@ -566,43 +567,3 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
 // this file. The PR-MAP-4 Selection Stats placeholder card stays in the
 // extracted component; the State A identify placeholder is now replaced
 // by a live IdentifiedFeaturesList when features arrive.
-
-// ---------------------------------------------------------------------
-// PR-MAP-5 MeasurementWorkbench RIGHT PANEL scaffold
-// ---------------------------------------------------------------------
-// Same scaffolding rationale as MatrixMapLeftPanelScaffold. Real content
-// (tabular view of raw measurements with columns Sample / Date / Medium /
-// Substance / Value / Unit / DL Flag / Censoring / Coord Quality /
-// Source DRA; filter chips; pagination 100/page; click-to-zoom on map;
-// admin-only CSV export -- per PLAN_V3_4_2 section 3.6) lands in
-// PR-MAP-5-content follow-on.
-// ---------------------------------------------------------------------
-function MatrixMapRightPanelScaffold() {
-  return (
-    <div className="w-96 h-full flex flex-col">
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          Map Selection
-        </p>
-        <h3 className="mt-0.5 text-sm font-bold text-slate-900 dark:text-slate-100">
-          Measurement Workbench
-        </h3>
-      </div>
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/30 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
-            PR-MAP-5 content -- coming next
-          </p>
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            Per PLAN_V3_4_2 section 3.6: tabular view of raw measurements
-            behind the current selection. Columns: Sample, Date, Medium,
-            Substance, Value, Unit, DL Flag, Censoring, Coord Quality,
-            Source DRA. Filter chips for medium / QA flag / date range /
-            classification. Pagination at 100 rows/page. Click row to
-            highlight + scroll to sample on map. Admin-only CSV export.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
