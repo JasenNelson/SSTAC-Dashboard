@@ -1,8 +1,8 @@
 # The Guide: Matrix Options Workspace
 
-This workspace supports the 2026 Matrix Sediment Standards Derivation Options Analysis for British Columbia. It brings the current scientific framework, jurisdictional examples, map data, calculators, and Technical Working Group review tools into one place.
+This workspace supports the 2026 Matrix Sediment Standards Derivation Options Analysis for British Columbia. It brings the scientific framework, jurisdictional examples, map data, screening calculators, and Technical Working Group review tools into one place.
 
-The dashboard is a working analysis environment. It calculates screening values, shows the assumptions behind those values, and keeps review notes close to the science. The goal is to let reviewers test options without mistaking a screening result for a final sediment standard.
+The dashboard is a working analysis environment. It calculates screening values, shows the assumptions behind those values, and keeps review notes close to the science. The goal is to help reviewers test options without mistaking a screening result for a final sediment standard.
 
 ---
 
@@ -11,13 +11,13 @@ The dashboard is a working analysis environment. It calculates screening values,
 The sediment standards modernization work is moving through three broad phases:
 
 *   **Phase 1 (2025): Scientific Framework Development**
-    *   Developed the scientific foundation for considering matrix sediment standards.
-    *   Organized the main exposure pathways, receptor groups, and decision points.
-    *   Established the framework that the current options analysis builds on.
+    *   Included a Scientific Literature Search and Jurisdictional Scan.
+    *   Collaboratively developed the scientific framework for developing modern sediment standards.
+    *   Multi-faceted engagement informed the strategic phased approach currently underway.
 *   **Phase 2 (2026): Foundational Research**
-    *   Supports the **Matrix Sediment Standards Derivation Options Analysis**.
-    *   Supports development of a scientific model for bioavailability adjustment, such as the **Bayesian Network Relative Risk Model (BN-RRM)**.
-    *   Uses jurisdictional review, data analysis, calculator prototypes, map review, and Technical Working Group feedback to test practical derivation options.
+    *   Supports the Matrix Sediment Standards Derivation Options Analysis.
+    *   Supports development of a scientific model for bioavailability adjustment, such as the Bayesian Network Relative Risk Model.
+    *   Uses jurisdictional review, data analysis, calculators, map review, and Technical Working Group feedback to test practical derivation options.
 *   **Phase 3 (2027): Framework Development and Prioritized Standards**
     *   May include development of Matrix Sediment Standards Derivation Frameworks.
     *   May end with new sediment standards for prioritized substances.
@@ -41,17 +41,15 @@ The workspace is designed so the map, calculators, and review tools can be read 
 
 ## 3. What Is Working Now
 
-The current dashboard includes:
+The current dashboard lets reviewers:
 
-*   A visual conceptual model for the matrix approach.
-*   Jurisdictional comparison material for sediment standards methods.
-*   A province-wide sediment map with sample selection, visible/private-data indicators, medium controls, and a Measurement Workbench.
-*   A Measurement Workbench with table scrolling, focused view, substance filtering, CSV export, and map marker filtering based on the full active filter result set.
-*   Ecological calculator pathways for direct contact and food-web screening calculations.
-*   Human Health calculator pathways for direct contact and food-web screening calculations.
-*   A Background Adjustment panel that compares preliminary values with provincial or regional upper tolerance limits.
-*   A tiered Calculator Guide for general, practitioner, and technical audiences.
-*   Technical Working Group review and polling tools.
+*   Review the conceptual model for the matrix approach.
+*   Compare jurisdictional examples for sediment standards methods.
+*   Inspect sediment sample locations and measurements on the map.
+*   Filter the Measurement Workbench by medium and substance, then export the current view.
+*   Calculate ecological and human health screening values for direct contact and food-web pathways.
+*   Compare preliminary values with provincial or regional background estimates.
+*   Record Technical Working Group feedback through the review tools.
 
 ---
 
@@ -75,7 +73,11 @@ The Background Adjustment panel applies the practical rule that a screening valu
 
 *   **BC**: British Columbia.
 *   **BN-RRM**: Bayesian Network Relative Risk Model. A probabilistic model being developed to support bioavailability adjustment.
+*   **BSAF**: Biota-sediment accumulation factor. A value used to link sediment concentrations with tissue concentrations in food-web calculations.
+*   **EqP**: Equilibrium partitioning. A method that estimates sediment values from water-quality toxicity benchmarks and sediment chemistry.
+*   **Jurisdictional Scan**: Review of how other regulatory programs approach sediment standards, exposure pathways, and receptor protection.
 *   **Matrix sediment standards**: A standards approach that considers more than one exposure pathway, receptor group, or site condition instead of relying only on a single generic value.
+*   **Scientific Literature Search**: Review of technical and scientific sources used to support the framework and identify relevant methods.
 *   **Technical Working Group (TWG)**: The review group providing technical input on the sediment standards modernization work.
 *   **Upper tolerance limit (UTL)**: A statistical estimate used to describe an upper bound for background concentrations.
 *   **Screening-grade**: Useful for options analysis and internal review, but still requires professional judgment before regulator-facing use.
