@@ -142,7 +142,7 @@ describe('POST /api/ranking-polls/submit', () => {
       expect(mockInsert).toHaveBeenCalled();
       const insertCall = mockInsert.mock.calls[0][0];
       expect(Array.isArray(insertCall)).toBe(true);
-      expect(insertCall[0].user_id).toMatch(/^CEW2025_\d+_[a-z0-9]+$/);
+      expect(insertCall[0].user_id).toMatch(/^CEW2025_[a-f0-9]+$/);
       expect(mockSelect).toHaveBeenCalled();
     });
 
