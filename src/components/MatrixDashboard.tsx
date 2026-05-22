@@ -465,15 +465,15 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
       <div className="space-y-4" data-testid="matrix-options-right-reference">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300">
-            Framework Quick Reference
+            Jurisdictional Quick Reference
           </p>
           <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            Use the jurisdictional material to compare methods, not to copy a
-            single standard.
+            Use the jurisdictional material to compare method choices, not to
+            copy a single standard.
           </p>
         </div>
         <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-          <li>Start with the selected pathway: {activeSideTab}.</li>
+          <li>Start with the selected pathway group: {activeSideTab}.</li>
           <li>Look for receptor groups, exposure routes, and endpoint choices.</li>
           <li>Note how each program handles bioavailability and uncertainty.</li>
           <li>Carry useful assumptions into the calculator for testing.</li>

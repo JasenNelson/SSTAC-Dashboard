@@ -5,6 +5,8 @@
 // Plain ASCII only.
 
 import React from 'react';
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
@@ -67,12 +69,31 @@ const LS_CATEGORY = 'matrix-options-active-category-v1';
 const LS_TIER = 'matrix-options-guide-tier-v1';
 const LS_SUBSTANCE = 'matrix-options-substance-v1';
 const LS_JURISDICTION = 'matrix-options-jurisdiction-v1';
+const GUIDE_MARKDOWN = fs.readFileSync(
+  path.join(process.cwd(), 'matrix_research', 'content_drafts', 'The_Guide.md'),
+  'utf8',
+);
 
 function clickCalculatorTab() {
   // The Calculator top-tab nav button.
   const tabBtn = screen.getByRole('button', { name: /^Calculator$/ });
   fireEvent.click(tabBtn);
 }
+
+describe('MatrixDashboard -- Matrix Options guide copy', () => {
+  it('keeps the v1 guide focused on workflow instead of placeholder status copy', () => {
+    expect(GUIDE_MARKDOWN).toMatch(/## 1\. How to Use This Workspace/);
+    expect(GUIDE_MARKDOWN).toMatch(/\*\s+\*\*The Guide\*\*/);
+    expect(GUIDE_MARKDOWN).toMatch(/## 3\. Reviewer Checklist/);
+    expect(GUIDE_MARKDOWN).toMatch(/Scientific Literature Search/);
+    expect(GUIDE_MARKDOWN).toMatch(/Jurisdictional Scan/);
+    expect(GUIDE_MARKDOWN).toMatch(/\*\s+\*\*AVS\/SEM\*\*/);
+    expect(GUIDE_MARKDOWN).toMatch(/\*\s+\*\*TRV\*\*/);
+    expect(GUIDE_MARKDOWN).not.toMatch(/Coming Soon/i);
+    expect(GUIDE_MARKDOWN).not.toMatch(/placeholder/i);
+    expect(GUIDE_MARKDOWN).not.toMatch(/What Is Working Now/i);
+  });
+});
 
 describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
   beforeEach(() => {
@@ -301,16 +322,16 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(screen.queryByText(/will dynamically appear/i)).not.toBeInTheDocument();
   });
 
-  it('shows framework quick-reference copy on Jurisdictional Frameworks', () => {
+  it('shows jurisdictional quick-reference copy on Jurisdictional Frameworks', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     fireEvent.click(
       screen.getByRole('button', { name: /^Jurisdictional Frameworks$/ }),
     );
 
     expect(screen.getByTestId('matrix-options-right-reference')).toHaveTextContent(
-      /Framework Quick Reference/i,
+      /Jurisdictional Quick Reference/i,
     );
-    expect(screen.getByText(/Start with the selected pathway/i)).toHaveTextContent(
+    expect(screen.getByText(/Start with the selected pathway group/i)).toHaveTextContent(
       /Ecological: EqP & AVS/i,
     );
     expect(screen.queryByText(/Active Poll/i)).not.toBeInTheDocument();
