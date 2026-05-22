@@ -8,8 +8,10 @@ import {
 // Mock Supabase client
 const mockGetUser = vi.fn();
 const mockMaybeSingle = vi.fn();
+const mockLimit = vi.fn(() => ({ maybeSingle: mockMaybeSingle }));
+const mockIn = vi.fn(() => ({ limit: mockLimit }));
 const mockEq2 = vi.fn(() => ({ maybeSingle: mockMaybeSingle }));
-const mockEq1 = vi.fn(() => ({ eq: mockEq2 }));
+const mockEq1 = vi.fn(() => ({ eq: mockEq2, in: mockIn }));
 const mockSelect = vi.fn(() => ({ eq: mockEq1 }));
 const mockFrom = vi.fn(() => ({ select: mockSelect }));
 
@@ -41,8 +43,15 @@ describe('admin-utils', () => {
     });
     mockEq1.mockReturnValue({
       eq: mockEq2,
+      in: mockIn,
     });
     mockEq2.mockReturnValue({
+      maybeSingle: mockMaybeSingle,
+    });
+    mockIn.mockReturnValue({
+      limit: mockLimit,
+    });
+    mockLimit.mockReturnValue({
       maybeSingle: mockMaybeSingle,
     });
     
@@ -279,8 +288,30 @@ describe('admin-utils', () => {
       const result = await checkCurrentUserAdminStatus();
 
       expect(result).toBe(true);
+      expect(mockIn).toHaveBeenCalledWith('role', ['admin', 'matrix_admin']);
+      expect(mockLimit).toHaveBeenCalledWith(1);
       // SECURITY: Admin status no longer uses localStorage (Phase 2 fix)
       // Server-side verification only
+    });
+
+    it('should return true for matrix_map admin users', async () => {
+      const mockUser = { id: 'user-789', email: 'matrix-admin@test.com' };
+
+      mockGetUser.mockResolvedValue({
+        data: { user: mockUser },
+        error: null,
+      });
+
+      mockMaybeSingle.mockResolvedValue({
+        data: { role: 'matrix_admin' },
+        error: null,
+      });
+
+      const result = await checkCurrentUserAdminStatus();
+
+      expect(result).toBe(true);
+      expect(mockIn).toHaveBeenCalledWith('role', ['admin', 'matrix_admin']);
+      expect(mockLimit).toHaveBeenCalledWith(1);
     });
 
     it('should return false for non-admin users', async () => {

@@ -31,6 +31,7 @@ import {
 } from './matrix-options/guide/content/jurisdictions';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import { MatrixMapLeftPanel } from './matrix-options/MatrixMapLeftPanel';
+import { MatrixMapRightPanel } from './matrix-options/MatrixMapRightPanel';
 import { MatrixMapMobileFallback } from './matrix-options/MatrixMapMobileFallback';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
@@ -51,6 +52,27 @@ const LS_KEY_SUBSTANCE = 'matrix-options-substance-v1';
 const LS_KEY_JURISDICTION = 'matrix-options-jurisdiction-v1';
 const MATRIX_ADMIN_CONTACT_EMAIL =
   process.env.NEXT_PUBLIC_MATRIX_ADMIN_CONTACT_EMAIL;
+const MATRIX_MAP_RIGHT_PANEL_MIN_WIDTH = 360;
+const MATRIX_MAP_RIGHT_PANEL_DEFAULT_WIDTH = 480;
+const MATRIX_MAP_RIGHT_PANEL_MAX_WIDTH = 720;
+const MATRIX_MAP_MIN_MAP_WIDTH = 360;
+
+function clampMatrixMapRightPanelWidth(width: number, showLeftPanel: boolean) {
+  if (typeof window === 'undefined') {
+    return Math.min(
+      MATRIX_MAP_RIGHT_PANEL_MAX_WIDTH,
+      Math.max(MATRIX_MAP_RIGHT_PANEL_MIN_WIDTH, width),
+    );
+  }
+
+  const leftPanelWidth = showLeftPanel ? 320 : 0;
+  const viewportMax = window.innerWidth - leftPanelWidth - MATRIX_MAP_MIN_MAP_WIDTH;
+  const maxWidth = Math.max(
+    MATRIX_MAP_RIGHT_PANEL_MIN_WIDTH,
+    Math.min(MATRIX_MAP_RIGHT_PANEL_MAX_WIDTH, viewportMax),
+  );
+  return Math.min(maxWidth, Math.max(MATRIX_MAP_RIGHT_PANEL_MIN_WIDTH, width));
+}
 
 // Validate-on-load coercion per plan v5 Delta 1. SSR-safe (typeof window
 // guard). On invalid / stale localStorage values: clear the entry so the
@@ -146,6 +168,10 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   // panel independently via the chrome buttons in the header.
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
+  const [matrixMapRightPanelWidth, setMatrixMapRightPanelWidth] = useState(
+    MATRIX_MAP_RIGHT_PANEL_DEFAULT_WIDTH,
+  );
+  const [matrixMapWorkbenchFocused, setMatrixMapWorkbenchFocused] = useState(false);
 
   // PR-MAP-17a mobile fallback: when the viewport is narrower than
   // 768 px (docs/design/matrix-map/PLAN_V3_4_2.md section 3.8), the
@@ -222,6 +248,61 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   const handleRefreshMapData = useCallback(() => {
     router.refresh();
   }, [router]);
+  const toggleRightPanel = useCallback(() => {
+    setShowRightPanel((current) => {
+      if (current) setMatrixMapWorkbenchFocused(false);
+      return !current;
+    });
+  }, []);
+  const handleRightPanelResizePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      const startX = event.clientX;
+      const startWidth = matrixMapRightPanelWidth;
+      const previousCursor = document.body.style.cursor;
+      const previousUserSelect = document.body.style.userSelect;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      const onPointerMove = (moveEvent: PointerEvent) => {
+        const nextWidth = startWidth + (startX - moveEvent.clientX);
+        setMatrixMapRightPanelWidth(
+          clampMatrixMapRightPanelWidth(nextWidth, showLeftPanel),
+        );
+      };
+      const onPointerUp = () => {
+        document.body.style.cursor = previousCursor;
+        document.body.style.userSelect = previousUserSelect;
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+      };
+
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+    },
+    [matrixMapRightPanelWidth, showLeftPanel],
+  );
+
+  useEffect(() => {
+    setMatrixMapRightPanelWidth((current) =>
+      clampMatrixMapRightPanelWidth(current, showLeftPanel),
+    );
+  }, [showLeftPanel]);
+
+  useEffect(() => {
+    if (!showRightPanel) setMatrixMapWorkbenchFocused(false);
+  }, [showRightPanel]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onResize = () => {
+      setMatrixMapRightPanelWidth((current) =>
+        clampMatrixMapRightPanelWidth(current, showLeftPanel),
+      );
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [showLeftPanel]);
 
   const renderSidebar = () => {
     switch (activeTopTab) {
@@ -384,7 +465,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               contactEmail={MATRIX_ADMIN_CONTACT_EMAIL}
               onRefresh={handleRefreshMapData}
             />
-            <div className="flex min-h-0 flex-1 overflow-hidden">
+            <div className="relative flex min-h-0 flex-1 overflow-hidden">
               {/* Left panel: Selection Stats (PR-MAP-4 scaffold) */}
               <div
                 data-testid="matrix-map-left-panel-wrapper"
@@ -393,7 +474,10 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                   showLeftPanel ? 'w-80' : 'w-0',
                 )}
               >
-                <MatrixMapLeftPanel />
+                <MatrixMapLeftPanel
+                  initialMapData={initialMapData}
+                  substanceKey={substanceKey}
+                />
               </div>
 
               {/* Center: map */}
@@ -408,11 +492,35 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               <div
                 data-testid="matrix-map-right-panel-wrapper"
                 className={cn(
-                  'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-sm',
-                  showRightPanel ? 'w-96' : 'w-0',
+                  'relative transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-sm',
+                  matrixMapWorkbenchFocused &&
+                    'absolute inset-y-4 right-4 z-[1200] rounded-lg border border-slate-200 shadow-2xl dark:border-slate-700',
+                  !showRightPanel && !matrixMapWorkbenchFocused && 'pointer-events-none',
                 )}
+                style={{
+                  width: matrixMapWorkbenchFocused
+                    ? 'min(960px, calc(100% - 96px))'
+                    : showRightPanel
+                      ? `${matrixMapRightPanelWidth}px`
+                      : '0px',
+                }}
               >
-                <MatrixMapRightPanelScaffold />
+                {showRightPanel && !matrixMapWorkbenchFocused && (
+                  <button
+                    type="button"
+                    role="separator"
+                    aria-orientation="vertical"
+                    aria-label="Resize measurement workbench"
+                    onPointerDown={handleRightPanelResizePointerDown}
+                    className="absolute inset-y-0 left-0 z-10 w-2 cursor-col-resize border-l border-transparent hover:border-blue-300 focus:border-blue-500 focus:outline-none dark:hover:border-blue-700"
+                  />
+                )}
+                <MatrixMapRightPanel
+                  initialMapData={initialMapData}
+                  substanceKey={substanceKey}
+                  isFocused={matrixMapWorkbenchFocused}
+                  onToggleFocus={() => setMatrixMapWorkbenchFocused((current) => !current)}
+                />
               </div>
             </div>
           </div>
@@ -459,7 +567,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('p-2 rounded-lg transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'}>
                  {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
                </button>
-               <button onClick={() => setShowRightPanel(!showRightPanel)} className={cn('p-2 rounded-lg transition-colors', showRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showRightPanel ? 'Hide right panel' : 'Show right panel'}>
+               <button onClick={toggleRightPanel} className={cn('p-2 rounded-lg transition-colors', showRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showRightPanel ? 'Hide right panel' : 'Show right panel'}>
                  {showRightPanel ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
                </button>
              </>
@@ -566,43 +674,3 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
 // this file. The PR-MAP-4 Selection Stats placeholder card stays in the
 // extracted component; the State A identify placeholder is now replaced
 // by a live IdentifiedFeaturesList when features arrive.
-
-// ---------------------------------------------------------------------
-// PR-MAP-5 MeasurementWorkbench RIGHT PANEL scaffold
-// ---------------------------------------------------------------------
-// Same scaffolding rationale as MatrixMapLeftPanelScaffold. Real content
-// (tabular view of raw measurements with columns Sample / Date / Medium /
-// Substance / Value / Unit / DL Flag / Censoring / Coord Quality /
-// Source DRA; filter chips; pagination 100/page; click-to-zoom on map;
-// admin-only CSV export -- per PLAN_V3_4_2 section 3.6) lands in
-// PR-MAP-5-content follow-on.
-// ---------------------------------------------------------------------
-function MatrixMapRightPanelScaffold() {
-  return (
-    <div className="w-96 h-full flex flex-col">
-      <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          Map Selection
-        </p>
-        <h3 className="mt-0.5 text-sm font-bold text-slate-900 dark:text-slate-100">
-          Measurement Workbench
-        </h3>
-      </div>
-      <div className="flex-1 overflow-y-auto p-4">
-        <div className="rounded-lg border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/30 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
-            PR-MAP-5 content -- coming next
-          </p>
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-            Per PLAN_V3_4_2 section 3.6: tabular view of raw measurements
-            behind the current selection. Columns: Sample, Date, Medium,
-            Substance, Value, Unit, DL Flag, Censoring, Coord Quality,
-            Source DRA. Filter chips for medium / QA flag / date range /
-            classification. Pagination at 100 rows/page. Click row to
-            highlight + scroll to sample on map. Admin-only CSV export.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}

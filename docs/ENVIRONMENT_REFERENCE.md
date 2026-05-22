@@ -131,11 +131,17 @@
 - **Default:** Unset → in-memory fallback (see `REDIS_URL`).
 - **Sensitivity:** **Secret.** Treat as a credential. Do not commit; do not log.
 
+### `SUPABASE_SERVICE_ROLE_KEY`
+
+- **Required:** For audited Matrix Map CSV exports.
+- **Read by:** `src/app/api/matrix-map/export/route.ts`.
+- **Default:** Unset -> `POST /api/matrix-map/export` returns `500 service_role_not_configured`.
+- **Effect:** Server-only service-role client writes `matrix_map.export_audit` and `matrix_map.service_role_audit` after export data is refetched under the authenticated admin session. `csv_exports` budget increment still requires a DB-side atomic increment RPC before it should be enabled in the route.
+- **Sensitivity:** **Secret.** Treat as a privileged database credential. Never expose to browser code, logs, or client bundles.
+
 ## Variables in `.env.example` that are not currently consumed
 
 `.env.example` ships commented-out entries for `REG_REVIEW_EXTRACTIONS_PATH`, `REG_REVIEW_OUTPUT_PATH`, and `REG_REVIEW_TEMP_UPLOAD_PATH`. A repo-wide grep finds **no readers** for these names in `src/` or `scripts/` as of 2026-04-20. They are aspirational / historical placeholders. Either wire them up at the call sites that currently hardcode equivalent paths, or remove them in a future cleanup pass.
-
-`SUPABASE_SERVICE_ROLE_KEY` is not read anywhere in `src/` or `scripts/` today. If a future server-side admin script needs it, document it here when added.
 
 ## Adding a new env var
 

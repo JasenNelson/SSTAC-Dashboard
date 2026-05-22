@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client';
 // Throttling mechanism to prevent excessive calls
 let lastRefreshTime = 0;
 const REFRESH_THROTTLE_MS = 50; // 50ms minimum between calls
+const MATRIX_MAP_ADMIN_ROLES = ['admin', 'matrix_admin'];
 
 /**
  * Refresh admin status - ALWAYS checks server, never falls back to localStorage
@@ -81,7 +82,7 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
 }
 
 /**
- * Check if current user has admin role
+ * Check if current user has admin or matrix-map admin role.
  * SECURITY: ALWAYS verifies against server, no localStorage fallback
  */
 export async function checkCurrentUserAdminStatus(): Promise<boolean> {
@@ -98,7 +99,8 @@ export async function checkCurrentUserAdminStatus(): Promise<boolean> {
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
-      .eq('role', 'admin')
+      .in('role', MATRIX_MAP_ADMIN_ROLES)
+      .limit(1)
       .maybeSingle();
 
     if (roleError) {

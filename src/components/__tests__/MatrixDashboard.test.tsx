@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 // Mock heavy children we do not need full coverage of in this integration
 // suite. The Calculator-tab assertions exercise the real CategorySelector
@@ -49,6 +49,9 @@ vi.mock('@/app/(dashboard)/matrix-map/MatrixMapLoader', () => ({
 vi.mock('leaflet/dist/leaflet.css', () => ({}));
 vi.mock('leaflet.markercluster/dist/MarkerCluster.css', () => ({}));
 vi.mock('leaflet.markercluster/dist/MarkerCluster.Default.css', () => ({}));
+vi.mock('@/lib/admin-utils', () => ({
+  checkCurrentUserAdminStatus: vi.fn(() => new Promise<boolean>(() => {})),
+}));
 
 import MatrixDashboard from '../MatrixDashboard';
 
@@ -319,5 +322,44 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     // component unmounted and lost local state.
     fireEvent.click(screen.getByTestId('category-selector-eco-direct'));
     expect(screen.getByText(/2\.00 %/)).toBeInTheDocument();
+  });
+
+  it('renders Matrix Map right drawer at the default resizable width', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
+    expect(wrapper).toHaveStyle({ width: '480px' });
+    expect(screen.getByRole('separator', { name: /Resize measurement workbench/i })).toBeInTheDocument();
+  });
+
+  it('focuses and collapses the Matrix Map workbench without remounting the drawer surface', async () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
+    fireEvent.click(screen.getByRole('button', { name: /Focus measurement workbench/i }));
+    await waitFor(() => {
+      expect(wrapper.className).toContain('absolute');
+      expect(
+        screen.getByRole('button', { name: /Collapse measurement workbench focus/i }),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Collapse measurement workbench focus/i }));
+    await waitFor(() => {
+      expect(wrapper.className).not.toContain('absolute');
+      expect(wrapper).toHaveStyle({ width: '480px' });
+    });
   });
 });
