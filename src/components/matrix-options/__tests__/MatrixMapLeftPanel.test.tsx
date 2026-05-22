@@ -10,7 +10,7 @@ import React from 'react';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import type { IdentifiedFeature } from '@/lib/maps/wms-identify';
-import { useSiteDataStore } from '@/stores/bn-rrm/siteDataStore';
+import { useMatrixMapIdentifyStore } from '@/stores/matrix-map/identifyStore';
 import { MatrixMapLeftPanel } from '../MatrixMapLeftPanel';
 
 function makeFeature(over: Partial<IdentifiedFeature> = {}): IdentifiedFeature {
@@ -27,7 +27,7 @@ function makeFeature(over: Partial<IdentifiedFeature> = {}): IdentifiedFeature {
 
 describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
   beforeEach(() => {
-    useSiteDataStore.setState({
+    useMatrixMapIdentifyStore.setState({
       identifiedFeatures: [],
       primaryFeatureIndex: null,
     });
@@ -50,7 +50,7 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
   });
 
   it('replaces the State A placeholder with IdentifiedFeaturesList when a single feature lands', () => {
-    useSiteDataStore.setState({
+    useMatrixMapIdentifyStore.setState({
       identifiedFeatures: [makeFeature({ layerLabel: 'Aquifers' })],
       primaryFeatureIndex: 0,
     });
@@ -62,7 +62,7 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
   });
 
   it('renders multi-hit IdentifiedFeaturesList with the count header and a Primary badge', () => {
-    useSiteDataStore.setState({
+    useMatrixMapIdentifyStore.setState({
       identifiedFeatures: [
         makeFeature({ layerLabel: 'Aquifers' }),
         makeFeature({ layerLabel: 'Watershed Groups' }),
@@ -75,14 +75,14 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
   });
 
   it('wires the clear callback to clearIdentifiedFeatures store mutation', () => {
-    useSiteDataStore.setState({
+    useMatrixMapIdentifyStore.setState({
       identifiedFeatures: [makeFeature()],
       primaryFeatureIndex: 0,
     });
     render(<MatrixMapLeftPanel />);
     const clearButton = screen.getByLabelText(/clear identified/i);
     fireEvent.click(clearButton);
-    expect(useSiteDataStore.getState().identifiedFeatures).toEqual([]);
-    expect(useSiteDataStore.getState().primaryFeatureIndex).toBeNull();
+    expect(useMatrixMapIdentifyStore.getState().identifiedFeatures).toEqual([]);
+    expect(useMatrixMapIdentifyStore.getState().primaryFeatureIndex).toBeNull();
   });
 });

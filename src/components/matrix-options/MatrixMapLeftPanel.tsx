@@ -1,20 +1,20 @@
 'use client';
 
 // PR-MAP-10: Left "Selection Stats" panel for the matrix_map Interactive Map.
-// Subscribes to the shared bn-rrm Zustand identify store so identify-tool
-// results from src/components/bn-rrm/map/SiteMap.tsx render here in addition
-// to the existing Leaflet popup at click coords. The integration pattern
-// mirrors src/components/bn-rrm/map/SiteDetails.tsx:271-279 so both surfaces
-// stay visually + behaviorally consistent.
+// Subscribes to the matrix-map identify store so identify-tool / identify-area
+// results from src/app/(dashboard)/matrix-map/MatrixMap.tsx (Path-B fork)
+// render in the side panel in addition to the Leaflet popup at click coords.
+// IdentifiedFeaturesList is reused from src/components/bn-rrm/map/ since
+// the presentational contract is the same across the two map surfaces.
 
-import { useSiteDataStore } from '@/stores/bn-rrm/siteDataStore';
+import { useMatrixMapIdentifyStore } from '@/stores/matrix-map/identifyStore';
 import { IdentifiedFeaturesList } from '@/components/bn-rrm/map/IdentifiedFeaturesList';
 
 export function MatrixMapLeftPanel() {
-  const identifiedFeatures = useSiteDataStore((s) => s.identifiedFeatures);
-  const primaryFeatureIndex = useSiteDataStore((s) => s.primaryFeatureIndex);
-  const setPrimaryFeatureIndex = useSiteDataStore((s) => s.setPrimaryFeatureIndex);
-  const clearIdentifiedFeatures = useSiteDataStore((s) => s.clearIdentifiedFeatures);
+  const identifiedFeatures = useMatrixMapIdentifyStore((s) => s.identifiedFeatures);
+  const primaryFeatureIndex = useMatrixMapIdentifyStore((s) => s.primaryFeatureIndex);
+  const setPrimaryFeatureIndex = useMatrixMapIdentifyStore((s) => s.setPrimaryFeatureIndex);
+  const clearIdentifiedFeatures = useMatrixMapIdentifyStore((s) => s.clearIdentifiedFeatures);
 
   const hasIdentified = identifiedFeatures.length > 0;
 
