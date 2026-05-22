@@ -85,7 +85,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique filename
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    const { randomBytes } = await import('crypto');
+    const fileName = `${Date.now()}-${randomBytes(8).toString('hex')}.${fileExt}`
     const filePath = `review-files/${user.id}/${fileName}`
 
     // Upload file to Supabase Storage

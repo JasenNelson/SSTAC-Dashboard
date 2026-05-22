@@ -49,7 +49,7 @@ export default function PollWithResults({
     if (typeof window !== 'undefined') {
       let sessionId = sessionStorage.getItem('cew-session-id');
       if (!sessionId) {
-        sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        sessionId = `session_${Date.now()}_${crypto.randomUUID().substring(0, 8)}`;
         sessionStorage.setItem('cew-session-id', sessionId);
       }
       return sessionId;
