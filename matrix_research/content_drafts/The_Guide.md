@@ -67,4 +67,3 @@ A **Background Adjustment** panel renders below every active calculator so the P
 
 *   **Human Health calculators** (Direct Contact + Food Web). The HH category buttons are already live and route to HITL-reviewed disclaimer placeholders; the real calculators replace those placeholder bodies in a future slice (likely PR-A5 or later) without re-routing the UI surface.
 *   **Sidebar Calculator Guide** with a three-tier audience toggle (General, Practitioner, Technical) so the same review panel can serve a wide audience.
-*   **Interactive provincial sediment map** (see the Interactive Map tab description above) -- province-wide sediment database extracted from DRAs, wired into the Background Adjustment panel for one-click site-specific recalculations.
