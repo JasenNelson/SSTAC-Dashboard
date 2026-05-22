@@ -5,6 +5,10 @@ import { createClient } from '@/lib/supabase/client';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { cn } from '@/utils/cn';
 import { useMatrixMapSelectionStore } from '@/stores/matrix-map/selectionStore';
+import {
+  useMatrixMapMeasurementStore,
+  type MatrixMapMeasurementRow,
+} from '@/stores/matrix-map/measurementStore';
 import type {
   Classification,
   CoordinateQualityTier,
@@ -24,27 +28,15 @@ interface MatrixMapRightPanelProps {
   initialMapData: MatrixMapData;
 }
 
-interface MeasurementRow {
-  sample_id: string;
-  sample_display_name: string;
-  sample_station_id: string;
-  event_date: string;
-  medium: string;
-  substance_display_name: string;
-  value: number | string | null;
-  unit: string | null;
-  detection_limit: number | string | null;
-  qualifier: string | null;
-  censored: boolean | null;
-  coordinate_quality_tier: CoordinateQualityTier;
-  classification: Classification;
-  source_dra_id: string | null;
-  source_dra_title: string | null;
-}
+type MeasurementRow = MatrixMapMeasurementRow;
 
 export function MatrixMapRightPanel({ initialMapData }: MatrixMapRightPanelProps) {
   const selectedSampleIds = useMatrixMapSelectionStore((s) => s.selectedSampleIds);
   const requestPanToSample = useMatrixMapSelectionStore((s) => s.requestPanToSample);
+  const setMeasurementLoading = useMatrixMapMeasurementStore((s) => s.setLoading);
+  const setMeasurementRows = useMatrixMapMeasurementStore((s) => s.setRows);
+  const setMeasurementError = useMatrixMapMeasurementStore((s) => s.setError);
+  const clearMeasurements = useMatrixMapMeasurementStore((s) => s.clear);
   const [rows, setRows] = useState<MeasurementRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -72,11 +64,13 @@ export function MatrixMapRightPanel({ initialMapData }: MatrixMapRightPanelProps
         setRows([]);
         setErrorMessage(null);
         setIsLoading(false);
+        clearMeasurements();
         return;
       }
 
       setIsLoading(true);
       setErrorMessage(null);
+      setMeasurementLoading(selectedIdKey);
       try {
         const supabase = createClient();
         const { data, error } = await supabase
@@ -88,14 +82,20 @@ export function MatrixMapRightPanel({ initialMapData }: MatrixMapRightPanelProps
         if (cancelled) return;
         if (error) {
           setRows([]);
-          setErrorMessage('Unable to load measurements for this selection. Check RPC permissions or try again.');
+          const message = 'Unable to load measurements for this selection. Check RPC permissions or try again.';
+          setErrorMessage(message);
+          setMeasurementError(selectedIdKey, message);
         } else {
-          setRows(normalizeMeasurementRows(data));
+          const nextRows = normalizeMeasurementRows(data);
+          setRows(nextRows);
+          setMeasurementRows(selectedIdKey, nextRows);
         }
       } catch {
         if (cancelled) return;
         setRows([]);
-        setErrorMessage('Unable to load measurements for this selection. Check RPC permissions or try again.');
+        const message = 'Unable to load measurements for this selection. Check RPC permissions or try again.';
+        setErrorMessage(message);
+        setMeasurementError(selectedIdKey, message);
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -106,7 +106,14 @@ export function MatrixMapRightPanel({ initialMapData }: MatrixMapRightPanelProps
     return () => {
       cancelled = true;
     };
-  }, [selectedIdKey, selectedIdsForFetch]);
+  }, [
+    clearMeasurements,
+    selectedIdKey,
+    selectedIdsForFetch,
+    setMeasurementError,
+    setMeasurementLoading,
+    setMeasurementRows,
+  ]);
 
   useEffect(() => {
     let cancelled = false;

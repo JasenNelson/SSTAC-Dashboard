@@ -394,7 +394,10 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                   showLeftPanel ? 'w-80' : 'w-0',
                 )}
               >
-                <MatrixMapLeftPanel initialMapData={initialMapData} />
+                <MatrixMapLeftPanel
+                  initialMapData={initialMapData}
+                  substanceKey={substanceKey}
+                />
               </div>
 
               {/* Center: map */}

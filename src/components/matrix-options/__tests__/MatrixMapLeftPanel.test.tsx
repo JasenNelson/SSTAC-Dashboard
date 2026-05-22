@@ -8,11 +8,13 @@
 
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { IdentifiedFeature } from '@/lib/maps/wms-identify';
 import type { MatrixMapData, MatrixSample } from '@/app/(dashboard)/matrix-map/types';
 import { useMatrixMapIdentifyStore } from '@/stores/matrix-map/identifyStore';
 import { useMatrixMapSelectionStore } from '@/stores/matrix-map/selectionStore';
+import { useMatrixMapMeasurementStore } from '@/stores/matrix-map/measurementStore';
+import type { MatrixMapMeasurementRow } from '@/stores/matrix-map/measurementStore';
 import { MatrixMapLeftPanel } from '../MatrixMapLeftPanel';
 
 vi.mock('@/lib/admin-utils', () => ({
@@ -66,7 +68,12 @@ const MAP_DATA: MatrixMapData = {
 };
 
 function renderPanel() {
-  return render(<MatrixMapLeftPanel initialMapData={MAP_DATA} />);
+  return render(
+    <MatrixMapLeftPanel
+      initialMapData={MAP_DATA}
+      substanceKey="benzo_a_pyrene"
+    />,
+  );
 }
 
 describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
@@ -81,6 +88,7 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
       panRequestedSampleId: null,
       panRequestSeq: 0,
     });
+    useMatrixMapMeasurementStore.getState().clear();
   });
 
   it('renders the Selection Stats heading when no samples are selected', () => {
@@ -133,14 +141,59 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
     expect(useMatrixMapIdentifyStore.getState().primaryFeatureIndex).toBeNull();
   });
 
-  it('renders selected-sample composition counts above identify state', () => {
+  it('renders selected-sample composition counts above identify state', async () => {
     useMatrixMapSelectionStore.setState({
       selectedSampleIds: ['ref-1', 'imp-1', 'unk-1'],
       selectedSampleId: null,
     });
+    useMatrixMapMeasurementStore.getState().setRows('ref-1|imp-1|unk-1', [
+      makeMeasurementRow({ sample_id: 'ref-1', medium: 'sediment' }),
+    ]);
     renderPanel();
     expect(screen.getByTestId('matrix-map-left-panel-selection-stats')).toBeInTheDocument();
     expect(screen.getByText('3 selected (1 reference, 1 impacted, 1 unknown)')).toBeInTheDocument();
     expect(screen.getByText(/1 selected station has unclassified status/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole('radio', { name: /^sediment$/i })).toBeEnabled();
+    });
+  });
+
+  it('renders Calculator-controlled substance and enables only media with measurements', async () => {
+    useMatrixMapSelectionStore.setState({
+      selectedSampleIds: ['ref-1'],
+      selectedSampleId: 'ref-1',
+    });
+    useMatrixMapMeasurementStore.getState().setRows('ref-1', [
+      makeMeasurementRow({ sample_id: 'ref-1', medium: 'sediment' }),
+      makeMeasurementRow({ sample_id: 'ref-1', medium: 'toxicity' }),
+    ]);
+
+    renderPanel();
+
+    expect(screen.getByTestId('matrix-map-left-panel-substance')).toHaveTextContent('Benzo[a]pyrene');
+    expect(await screen.findByRole('radio', { name: /^sediment$/i })).toBeEnabled();
+    expect(screen.getByRole('radio', { name: /^toxicity$/i })).toBeEnabled();
+    expect(screen.getByRole('radio', { name: /^water$/i })).toBeDisabled();
   });
 });
+
+function makeMeasurementRow(over: Partial<MatrixMapMeasurementRow> = {}): MatrixMapMeasurementRow {
+  return {
+    sample_id: 'sample-a',
+    sample_display_name: 'Station 1',
+    sample_station_id: 'STA-1',
+    event_date: '2026-01-02',
+    medium: 'sediment',
+    substance_display_name: 'Copper',
+    value: 12.5,
+    unit: 'mg/kg',
+    detection_limit: null,
+    qualifier: null,
+    censored: false,
+    coordinate_quality_tier: 'high' as const,
+    classification: 'reference' as const,
+    source_dra_id: 'dra-1',
+    source_dra_title: 'Source DRA',
+    ...over,
+  };
+}

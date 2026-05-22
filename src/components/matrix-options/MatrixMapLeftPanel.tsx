@@ -7,26 +7,37 @@
 // IdentifiedFeaturesList is reused from src/components/bn-rrm/map/ since
 // the presentational contract is the same across the two map surfaces.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMatrixMapIdentifyStore } from '@/stores/matrix-map/identifyStore';
 import { useMatrixMapSelectionStore } from '@/stores/matrix-map/selectionStore';
+import { useMatrixMapMeasurementStore } from '@/stores/matrix-map/measurementStore';
 import { IdentifiedFeaturesList } from '@/components/bn-rrm/map/IdentifiedFeaturesList';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
+import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type { MatrixMapData, MatrixSample } from '@/app/(dashboard)/matrix-map/types';
+
+const MEDIUM_OPTIONS = ['sediment', 'water', 'tissue', 'toxicity', 'community'] as const;
+type MatrixMapMedium = (typeof MEDIUM_OPTIONS)[number];
 
 interface MatrixMapLeftPanelProps {
   initialMapData: MatrixMapData;
+  substanceKey: string;
 }
 
-export function MatrixMapLeftPanel({ initialMapData }: MatrixMapLeftPanelProps) {
+export function MatrixMapLeftPanel({ initialMapData, substanceKey }: MatrixMapLeftPanelProps) {
   const identifiedFeatures = useMatrixMapIdentifyStore((s) => s.identifiedFeatures);
   const primaryFeatureIndex = useMatrixMapIdentifyStore((s) => s.primaryFeatureIndex);
   const setPrimaryFeatureIndex = useMatrixMapIdentifyStore((s) => s.setPrimaryFeatureIndex);
   const clearIdentifiedFeatures = useMatrixMapIdentifyStore((s) => s.clearIdentifiedFeatures);
   const selectedSampleIds = useMatrixMapSelectionStore((s) => s.selectedSampleIds);
+  const measurementSelectedIdKey = useMatrixMapMeasurementStore((s) => s.selectedIdKey);
+  const measurementRows = useMatrixMapMeasurementStore((s) => s.rows);
+  const measurementsLoading = useMatrixMapMeasurementStore((s) => s.isLoading);
+  const measurementError = useMatrixMapMeasurementStore((s) => s.errorMessage);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [selectedMedium, setSelectedMedium] = useState<MatrixMapMedium>('sediment');
 
   const hasIdentified = identifiedFeatures.length > 0;
   const selectedSamples = initialMapData.visible_samples.filter((sample) =>
@@ -35,6 +46,17 @@ export function MatrixMapLeftPanel({ initialMapData }: MatrixMapLeftPanelProps) 
   const composition = countSelectionComposition(selectedSamples);
   const unknownCount = composition.unknown;
   const hasSelection = selectedSamples.length > 0;
+  const substance = findSubstance(substanceKey);
+  const selectedIdKey = selectedSampleIds.join('|');
+  const selectionMeasurementsReady = measurementSelectedIdKey === selectedIdKey;
+  const availableMedia = useMemo(
+    () =>
+      selectionMeasurementsReady
+        ? extractAvailableMedia(measurementRows)
+        : new Set<MatrixMapMedium>(),
+    [measurementRows, selectionMeasurementsReady],
+  );
+  const mediaError = selectionMeasurementsReady ? measurementError : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +67,12 @@ export function MatrixMapLeftPanel({ initialMapData }: MatrixMapLeftPanelProps) 
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    setSelectedMedium((current) =>
+      availableMedia.has(current) ? current : availableMedia.values().next().value ?? 'sediment',
+    );
+  }, [availableMedia]);
 
   return (
     <div className="w-80 h-full flex flex-col">
@@ -69,6 +97,64 @@ export function MatrixMapLeftPanel({ initialMapData }: MatrixMapLeftPanelProps) 
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 {formatSelectionSummary(selectedSamples.length, composition)}
               </p>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                Substance
+              </p>
+              <p
+                data-testid="matrix-map-left-panel-substance"
+                className="text-sm font-semibold text-slate-900 dark:text-slate-100"
+              >
+                {substance?.displayName ?? substanceKey}
+              </p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                Controlled by Calculator shared inputs.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                Medium
+              </p>
+              <div className="space-y-2">
+                {MEDIUM_OPTIONS.map((medium) => {
+                  const enabled = availableMedia.has(medium);
+                  return (
+                    <label
+                      key={medium}
+                      className="flex items-center gap-2 text-xs font-semibold capitalize text-slate-700 dark:text-slate-200"
+                    >
+                      <input
+                        type="radio"
+                        name="matrix-map-selection-medium"
+                        value={medium}
+                        checked={selectedMedium === medium}
+                        disabled={!enabled}
+                        onChange={() => setSelectedMedium(medium)}
+                        className="h-3 w-3"
+                      />
+                      <span className={enabled ? '' : 'text-slate-400 dark:text-slate-500'}>
+                        {medium}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              {mediaError ? (
+                <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                  Unable to check media availability for this selection.
+                </p>
+              ) : measurementsLoading || !selectionMeasurementsReady ? (
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  Checking measurement media...
+                </p>
+              ) : availableMedia.size === 0 ? (
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  No measurement media found for this selection.
+                </p>
+              ) : null}
             </div>
 
             {unknownCount > 0 && (
@@ -171,6 +257,20 @@ function formatSelectionSummary(
   composition: ReturnType<typeof countSelectionComposition>,
 ) {
   return `${selectedCount} selected (${composition.reference} reference, ${composition.impacted} impacted, ${composition.unknown} unknown)`;
+}
+
+function extractAvailableMedia(value: { medium?: unknown }[]): Set<MatrixMapMedium> {
+  const media = new Set<MatrixMapMedium>();
+
+  for (const row of value) {
+    if (isMatrixMapMedium(row.medium)) media.add(row.medium);
+  }
+
+  return media;
+}
+
+function isMatrixMapMedium(value: unknown): value is MatrixMapMedium {
+  return typeof value === 'string' && (MEDIUM_OPTIONS as readonly string[]).includes(value);
 }
 
 async function exportSelectionCsv({
