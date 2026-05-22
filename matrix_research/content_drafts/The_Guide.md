@@ -1,69 +1,81 @@
-# The Guide: TWG Onboarding & Project Overview
+# The Guide: Matrix Options Workspace
 
-Welcome to the collaborative workspace for the Technical Working Group (TWG). This dashboard is designed to facilitate transparent, data-driven discussions regarding the modernization of sediment quality standards.
+This workspace supports the 2026 Matrix Sediment Standards Derivation Options Analysis for British Columbia. It brings the current scientific framework, jurisdictional examples, map data, calculators, and Technical Working Group review tools into one place.
+
+The dashboard is a working analysis environment. It calculates screening values, shows the assumptions behind those values, and keeps review notes close to the science. The goal is to let reviewers test options without mistaking a screening result for a final sediment standard.
 
 ---
 
-## 1. The 2026 Objective
+## 1. Project Roadmap
 
-The primary objective of this phase is to research, synthesize, and develop the **Matrix Sediment Standards Derivation Options Paper for BC**. As sediment contamination operates across highly complex ecological and human pathways, a one-size-fits-all approach is insufficient. Our goal is to leverage advanced mathematical derivations, localized exposure vectors, and international best practices to engineer a flexible, multi-dimensional policy framework that adequately protects both apex ecological receptors and highly-exposed human populations.
+The sediment standards modernization work is moving through three broad phases:
+
+*   **Phase 1 (2025): Scientific Framework Development**
+    *   Developed the scientific foundation for considering matrix sediment standards.
+    *   Organized the main exposure pathways, receptor groups, and decision points.
+    *   Established the framework that the current options analysis builds on.
+*   **Phase 2 (2026): Foundational Research**
+    *   Supports the **Matrix Sediment Standards Derivation Options Analysis**.
+    *   Supports development of a scientific model for bioavailability adjustment, such as the **Bayesian Network Relative Risk Model (BN-RRM)**.
+    *   Uses jurisdictional review, data analysis, calculator prototypes, map review, and Technical Working Group feedback to test practical derivation options.
+*   **Phase 3 (2027): Framework Development and Prioritized Standards**
+    *   May include development of Matrix Sediment Standards Derivation Frameworks.
+    *   May end with new sediment standards for prioritized substances.
+    *   Continues research and database development needed to support defensible standards over time.
 
 ---
 
 ## 2. How to Use This Workspace
 
-This dashboard serves as the central hub for policy review, mathematical analysis, and active TWG collaboration. Navigate through the top tabs to access specific project components:
+Use the top tabs to move between the main review surfaces. Each tab is meant to answer a different question.
 
-*   **Conceptual Model:** Explore the visual architecture of the four matrix quadrants. This section outlines the structural pathways connecting the benthic environment to both Ecological and Human Health endpoints.
-*   **Jurisdictional Frameworks:** Drill down into the specific mathematical derivations used by major regulatory bodies. You can toggle the sidebar to review how the US EPA (EqP & AVS/SEM), the California SWRCB (BSAF back-calculations), and Indigenous frameworks (WQCIU) handle complex exposure variables and thermodynamic ratios.
-*   **Interactive Map:** The province-wide sediment map is shipping on a separate `/matrix-map` lane and will eventually link in from the placeholder tab above. PR-MAP-1 (schema + RLS + ETL) and PR-MAP-2 (empty-map UI skeleton with 4 base tile layers, 14 BC public WMS overlays, and the R-11 Jermilova exclusion guard) have already landed; an admin smoke page lives at `/admin/matrix-map/health`. PR-MAP-3 is in design and will add sample-point rendering with classification + coordinate-quality symbology, a click-to-identify tool for both samples and overlays, and a reviewer-side partial-visibility banner that honestly reports hidden private-DRA samples without leaking row identifiers. PR-MAP-4 through PR-MAP-7 follow with selection stats, the measurement workbench, the Calculator bridge, and the admin grants UI. Until the bridge lands in PR-MAP-6, the "Interactive Map" tab inside Matrix Options remains a placeholder; the live map is reached from its own route. Every screening statistic the map surfaces -- including the future one-click port into the Background Adjustment panel -- carries the "screening-only -- not regulator-submission-grade" label per R-4 and R-8, lifted only after ProUCL validation lands in v1.x and the R-13 methodology appendix has been signed off between PR-MAP-3 and PR-MAP-4.
-*   **Calculator:** Derive a Preliminary Toxicity-Based Standard for a site under review. Pick one of four matrix categories at the top (Ecological: Direct Contact via EqP; Ecological: Food Web via BSAF; Human Health Direct Contact and Human Health Food Web ship as HITL-reviewed disclaimer placeholders that explain the in-progress methodology), choose a substance and a jurisdictional frame, then read the prominent hero result with the full chain of reasoning available under a collapsible Technical details disclosure. A Background Adjustment panel below the calculator lets the reviewer apply a Provincial or Regional UTL post-derivation, transparent adjustment.
-*   **TWG Review:** Utilize this active workspace to provide formal evaluation and feedback. The dynamic "Quick Reference / Polls" tray on the right side of your screen allows you to vote on key derivation variables (e.g., AVS/SEM molar valency multipliers) in real-time during our working sessions.
+*   **Conceptual Model** explains the structure of the matrix approach. Use it first when you need to understand the exposure pathways and why a single generic sediment number may not be enough.
+*   **Jurisdictional Frameworks** compares examples from other regulatory programs. Use it to see how different jurisdictions handle sediment chemistry, bioavailability, food-web exposure, and receptor protection.
+*   **Interactive Map** shows available sediment sample locations and measurements. Use the map to inspect samples, filter the Measurement Workbench, export current views, and understand where available data are complete or incomplete.
+*   **Calculator** estimates preliminary, screening-level values for all four matrix pathways. Use it to test assumptions, compare pathway-specific results, and see the calculation steps.
+*   **TWG Review** supports Technical Working Group feedback. Use it for structured review, voting, and discussion of key assumptions.
 
----
-
-## 3. Project Roadmap
-
-To ensure rigorous scientific review and policy alignment, the project will follow a structured developmental timeline:
-
-*   **Phase 1: Discovery & Synthesis**
-    *   Ingestion of international policy derivations (US EPA, CCME, ANZG, RIVM).
-    *   Translation of raw mathematical frameworks into accessible TWG case studies.
-    *   *Status: Complete*
-*   **Phase 2: TWG Review & Polling**
-    *   Active dashboard collaboration.
-    *   Review of proposed derivation options and localized parameter modifications (e.g., Indigenous consumption rates).
-    *   *Status: In Progress*
-*   **Phase 3: Final Options Paper Drafting**
-    *   Consolidation of TWG feedback.
-    *   Final formulation of the Matrix Sediment Standards Derivation Options Paper for implementation.
-    *   *Status: Pending*
+The workspace is designed so the map, calculators, and review tools can be read together. For example, a reviewer can inspect measurements on the map, test a screening calculation, then record feedback in the review tab.
 
 ---
 
-## 4. Recently Added on the Calculator Tab
+## 3. What Is Working Now
 
-*   **Four-category selector at the top.** A horizontal row of buttons -- Ecological: Direct Contact, Ecological: Food Web, Human Health: Direct Contact, Human Health: Food Web -- lets the reviewer pick the regulatory pathway under review. Ecological categories ship with full calculators; the two Human Health categories ship with HITL-reviewed disclaimer placeholders that explain the in-progress methodology + why HH is meaningfully different from the ecological pathways. The real HH calculators are deferred to a future slice.
-*   **Shared substance and jurisdictional frame controls.** The substance dropdown and jurisdiction selector below the category row are now global: changing either applies to whichever calculator is active. The substance default re-seeds the per-pathway library values (FCV for Eco-Direct; TRV and BSAF for Eco-Food) automatically; if you edit a field manually a "User override" badge appears with a Reset button that re-syncs to the library value.
-*   **Preliminary Toxicity-Based Standard hero card.** The calculator's prominent result is now labeled "Preliminary Toxicity-Based Standard" (not the bare "SedS" identifier) and includes a PASS/FAIL verdict pill when a measured sediment concentration is provided. The label and the in-card disclaimer make it explicit that the value is preliminary -- HITL professional judgment plus the Background Adjustment panel determine the final defensible standard.
-*   **Technical details disclosure.** The formula, intermediate quantities, and screening warnings now live in a collapsible disclosure below the hero so reviewers see the bottom-line result first and can drill into the math on demand.
+The current dashboard includes:
 
----
-
-## 4.5 Background Adjustment Panel
-
-A **Background Adjustment** panel renders below every active calculator so the Preliminary Toxicity-Based Standard from section 4 above is never set lower than what would already occur naturally on a regional reference site. This matters because for some substances the natural background concentration in BC sediments exceeds the Tier 1 lookup value -- without an adjustment, the regulator-facing threshold would be impossible to meet at sites whose contamination is indistinguishable from background.
-
-*   **What the panel computes.** The reviewer pastes (or accepts the seeded defaults for) a list of comma- or whitespace-separated reference-set concentrations in mg/kg. The panel computes the sample mean, the (n - 1) standard deviation, and the one-sided 95 percent coverage / 95 percent confidence tolerance factor `K` for the sample size `n`, then surfaces the upper tolerance limit `UTL_{95/95} = mean + K * sd` as a hero card. `K` is looked up by linear interpolation from a small NIST/SEMATECH e-Handbook 7.2.6.3 table (n = 5, 10, 20, 30, 50, 100) stored in `src/lib/matrix-options/utlTable.ts`; values for `n` outside the tabulated range are clamped and flagged with a K-factor screening qualifier banner. For regulatory submissions the assessor should compute `K` exactly from the noncentral t-distribution rather than relying on this lookup.
-*   **The max(Tier 1 generic, UTL) adjustment rule.** Per BC CSR practice (Phase 2 Paper Appendix D.4), the regulator-facing adjusted standard is `max(Tier 1 generic, UTL)`. The Background Adjustment panel surfaces the UTL hero card and the literal adjustment string ("Apply as adjustment: max(Tier 1 generic, ...)") so the reviewer can read the adjusted value off the panel directly. If the measured site concentration `C_s` is provided, the panel also tells the reviewer whether `C_s` is at or below the active scope's UTL -- diagnostic only; it does NOT determine compliance, which always runs against `max(Tier 1 generic, UTL)`.
-*   **Provincial vs Regional scope.** A radio group switches the panel between a BC province-wide reference set (fallback when regional reference data is unavailable) and a site-specific Regional reference set (preferred where geochemical equivalence is met). Both reference sample sets are persisted across scope flips so flipping the radio does not lose the reviewer's work.
-*   **Censored data handling (v1).** Censored values (below detection limit) are substituted at one-half of the detection limit before they enter the mean and standard deviation calculation. This `1/2 DL` substitution is a screening-grade convention; v1.x will graduate to a ROS (regression on order statistics) estimator under ProUCL.
-*   **Screening-only label.** Every UTL the panel produces is labeled "screening-only -- not regulator-submission-grade" per R-4 and R-8 of the matrix-options scope. The label propagates through the K-factor qualifier banner, through the Selection Stats panel of the future Interactive Map, and through the audit token of the future Calculator bridge in PR-MAP-6. The label is lifted only when ProUCL validation lands in v1.x and the R-13 methodology appendix sign-off gate (between PR-MAP-3 and PR-MAP-4) has been cleared.
-*   **Full methodology.** The complete UTL methodology -- censoring policy, ROS-vs-substitution flag, K-factor source, screening-vs-submission posture, and the contract for the future map-to-Calculator bridge token -- is signed off as part of the methodology appendix outlined in the Matrix Map plan v3.4.2 section 5 (`.tmp_interactive_map_plan_v3.md` until promoted to `docs/design/matrix-map/`), gated by R-13 before PR-MAP-4 ships any Selection Stats.
+*   A visual conceptual model for the matrix approach.
+*   Jurisdictional comparison material for sediment standards methods.
+*   A province-wide sediment map with sample selection, visible/private-data indicators, medium controls, and a Measurement Workbench.
+*   A Measurement Workbench with table scrolling, focused view, substance filtering, CSV export, and map marker filtering based on the full active filter result set.
+*   Ecological calculator pathways for direct contact and food-web screening calculations.
+*   Human Health calculator pathways for direct contact and food-web screening calculations.
+*   A Background Adjustment panel that compares preliminary values with provincial or regional upper tolerance limits.
+*   A tiered Calculator Guide for general, practitioner, and technical audiences.
+*   Technical Working Group review and polling tools.
 
 ---
 
-## 5. Coming Soon
+## 4. Reading Calculator Results
 
-*   **Human Health calculators** (Direct Contact + Food Web). The HH category buttons are already live and route to HITL-reviewed disclaimer placeholders; the real calculators replace those placeholder bodies in a future slice (likely PR-A5 or later) without re-routing the UI surface.
-*   **Sidebar Calculator Guide** with a three-tier audience toggle (General, Practitioner, Technical) so the same review panel can serve a wide audience.
+Calculator outputs are preliminary screening results. They are useful for comparing options, testing assumptions, and identifying where a method needs more review. They are not final sediment standards.
+
+When reading a calculator result:
+
+*   Start with the large result card.
+*   Check which assumptions drive the pathway result.
+*   Open the technical details only when you need the formula and intermediate values.
+*   Review the Background Adjustment panel if natural or regional background concentrations may be higher than the generic screening value.
+*   Treat warnings and qualifiers as part of the result, not as fine print.
+
+The Background Adjustment panel applies the practical rule that a screening value should not be lower than an appropriate background concentration estimate. This keeps the tool aligned with the reality that some substances can occur naturally at concentrations above a generic Tier 1 value.
+
+---
+
+## 5. Key Terms
+
+*   **BC**: British Columbia.
+*   **BN-RRM**: Bayesian Network Relative Risk Model. A probabilistic model being developed to support bioavailability adjustment.
+*   **Matrix sediment standards**: A standards approach that considers more than one exposure pathway, receptor group, or site condition instead of relying only on a single generic value.
+*   **Technical Working Group (TWG)**: The review group providing technical input on the sediment standards modernization work.
+*   **Upper tolerance limit (UTL)**: A statistical estimate used to describe an upper bound for background concentrations.
+*   **Screening-grade**: Useful for options analysis and internal review, but still requires professional judgment before regulator-facing use.

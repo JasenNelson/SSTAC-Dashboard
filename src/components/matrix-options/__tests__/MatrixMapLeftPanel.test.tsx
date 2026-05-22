@@ -1,6 +1,6 @@
 // PR-MAP-10 tests: live identify-tool list in the matrix-options
-// left "Selection Stats" panel. Locks the placeholder-vs-live swap
-// behaviour and the store wiring so future cleanup passes do not
+// left "Selection Stats" panel. Locks the empty-state-vs-live swap
+// behavior and the store wiring so future cleanup passes do not
 // silently regress identify routing back to map-popup-only.
 //
 // REGRESSION discipline (per cross_project_never_delete_regression_tests_during_cleanup):
@@ -96,22 +96,22 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
     expect(screen.getByText(/Selection Stats/)).toBeInTheDocument();
   });
 
-  it('renders the State A identify placeholder when identifiedFeatures is empty', () => {
+  it('renders the no-selection empty state when identifiedFeatures is empty', () => {
     renderPanel();
     expect(
-      screen.getByTestId('matrix-map-left-panel-state-a-placeholder'),
+      screen.getByTestId('matrix-map-left-panel-empty-state'),
     ).toBeInTheDocument();
-    expect(screen.getByText(/State A: identify just fired/i)).toBeInTheDocument();
+    expect(screen.getByText(/No sample selected/i)).toBeInTheDocument();
   });
 
-  it('replaces the State A placeholder with IdentifiedFeaturesList when a single feature lands', () => {
+  it('replaces the empty state with IdentifiedFeaturesList when a single feature lands', () => {
     useMatrixMapIdentifyStore.setState({
       identifiedFeatures: [makeFeature({ layerLabel: 'Aquifers' })],
       primaryFeatureIndex: 0,
     });
     renderPanel();
     expect(
-      screen.queryByTestId('matrix-map-left-panel-state-a-placeholder'),
+      screen.queryByTestId('matrix-map-left-panel-empty-state'),
     ).not.toBeInTheDocument();
     expect(screen.getByText('Aquifers')).toBeInTheDocument();
   });

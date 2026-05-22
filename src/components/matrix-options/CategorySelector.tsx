@@ -2,11 +2,10 @@
 
 // CategorySelector -- 1x4 horizontal row of matrix-category radio buttons
 // for the Calculator tab (owner override of plan v3's 2x2 layout, applied
-// 2026-05-19 after PR-A2 commits 1-7 landed). PR-A4: HH categories are
-// enabled by default (hhEnabled default flipped from false -> true) and
-// route to the HITL-reviewed HHDirectPlaceholder / HHFoodPlaceholder
-// components in MatrixDashboard. Callers can still pass hhEnabled={false}
-// explicitly to restore the PR-A2 disabled-by-default behavior if needed.
+// 2026-05-19 after PR-A2 commits 1-7 landed). HH categories are enabled
+// by default and route to the Human Health screening calculators in
+// MatrixDashboard. Callers can still pass hhEnabled={false} explicitly
+// when a review mode wants to suppress those categories.
 // Mobile collapses to a single column. Each button is >= 44px tall
 // (WCAG 2.5.5 touch target).
 //
@@ -28,10 +27,8 @@ import type { MatrixCategory } from './guide/content/types';
 export interface CategorySelectorProps {
   activeCategory: MatrixCategory;
   onChange: (category: MatrixCategory) => void;
-  // Whether HH categories are enabled. Defaults to true (PR-A4 HH wire-up
-  // enabled by default; HITL-reviewed disclaimer copy ships in
-  // HHDirectPlaceholder + HHFoodPlaceholder). Callers can pass false
-  // explicitly to restore the PR-A2 disabled-by-default behavior.
+  // Whether HH categories are enabled. Defaults to true so all four v1.0
+  // screening calculator pathways are available.
   hhEnabled?: boolean;
   className?: string;
 }
@@ -86,7 +83,7 @@ const _categoriesCoverAllIds: CategoriesCoverAllIds = true;
 void _categoriesCoverAllIds;
 
 const HH_DISABLED_TOOLTIP =
-  'Coming soon -- calculator and guidance pending HITL sign-off';
+  'Unavailable in this review mode';
 
 export default function CategorySelector({
   activeCategory,
@@ -233,7 +230,7 @@ export default function CategorySelector({
             <span className="block">{cat.shortLabel}</span>
             {!enabled && (
               <span className="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400">
-                Coming soon
+                Not available
               </span>
             )}
           </button>

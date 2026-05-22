@@ -13,8 +13,8 @@ import TWGReviewPortal from './TWGReviewPortal';
 import BackgroundAdjustment from './matrix-options/BackgroundAdjustment';
 import EcoDirectEqPCalculator from './matrix-options/EcoDirectEqPCalculator';
 import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
-import HHDirectPlaceholder from './matrix-options/HHDirectPlaceholder';
-import HHFoodPlaceholder from './matrix-options/HHFoodPlaceholder';
+import HHDirectContactCalculator from './matrix-options/HHDirectContactCalculator';
+import HHFoodWebCalculator from './matrix-options/HHFoodWebCalculator';
 import CategorySelector from './matrix-options/CategorySelector';
 import SharedGlobalInputs, {
   DEFAULT_SUBSTANCE_KEY,
@@ -35,9 +35,9 @@ import { MatrixMapRightPanel } from './matrix-options/MatrixMapRightPanel';
 import { MatrixMapMobileFallback } from './matrix-options/MatrixMapMobileFallback';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
-// Audience tier for the sidebar guide (PR-A3 will consume; the state +
-// validate-on-load coercion is established here per kickoff memo so the
-// 4-state lifted contract is in place once PR-A3 wires the sidebar).
+// Audience tier for the Calculator sidebar guide. The value is persisted
+// with the rest of the lifted Calculator state so the chosen explanation
+// depth survives tab changes and reloads.
 type AudienceTier = 'general' | 'practitioner' | 'technical';
 const ALL_AUDIENCE_TIERS: ReadonlyArray<AudienceTier> = [
   'general',
@@ -45,6 +45,51 @@ const ALL_AUDIENCE_TIERS: ReadonlyArray<AudienceTier> = [
   'technical',
 ];
 const DEFAULT_AUDIENCE_TIER: AudienceTier = 'general';
+const GUIDE_TIER_LABELS: Record<AudienceTier, string> = {
+  general: 'General',
+  practitioner: 'Practitioner',
+  technical: 'Technical',
+};
+const GUIDE_TIER_CONTENT: Record<
+  AudienceTier,
+  {
+    title: string;
+    summary: string;
+    bullets: string[];
+  }
+> = {
+  general: {
+    title: 'What this calculator can tell you',
+    summary:
+      'Use this tab to compare screening-level sediment standards by pathway, substance, and jurisdictional frame.',
+    bullets: [
+      'All four pathways provide screening calculations today.',
+      'Human Health pathways expose their assumptions so they can be tested and challenged.',
+      'Background Adjustment keeps a result from falling below reference-site background.',
+    ],
+  },
+  practitioner: {
+    title: 'Review workflow',
+    summary:
+      'Pick the pathway, confirm the shared substance and jurisdiction, then read the hero result before expanding the technical details.',
+    bullets: [
+      'Substance changes re-seed pathway defaults unless a field has a user override.',
+      'The PASS/FAIL pill is diagnostic when a measured sediment concentration is supplied.',
+      'Use the Background Adjustment panel after the pathway value, not as a replacement for it.',
+    ],
+  },
+  technical: {
+    title: 'Methodology notes',
+    summary:
+      'Calculator outputs remain screening-only until the full methodology package and validation gates are complete.',
+    bullets: [
+      'Eco-Direct uses EqP inputs; Eco-Food uses TRV and BSAF inputs.',
+      'Human Health Direct Contact combines incidental ingestion and dermal contact.',
+      'Human Health Food Web derives a tissue target before back-calculating through BSAF.',
+      'Background UTL uses the current screening-grade K-table and one-half detection-limit substitution.',
+    ],
+  },
+};
 
 const LS_KEY_CATEGORY = 'matrix-options-active-category-v1';
 const LS_KEY_TIER = 'matrix-options-guide-tier-v1';
@@ -83,11 +128,9 @@ function clampMatrixMapRightPanelWidth(width: number, showLeftPanel: boolean) {
 // trade-off vs the complexity of useSyncExternalStore).
 
 function restoreActiveCategory(): MatrixCategory {
-  // PR-A4 HH wire-up enabled by default: all four MatrixCategory members
-  // are user-selectable (eco-direct + eco-food render calculators;
-  // hh-direct + hh-food render the HITL-reviewed placeholder panels).
-  // The enabled-category allowlist that previously gated HH out has been
-  // dropped; isMatrixCategory already validates against the full union.
+  // All four MatrixCategory members are user-selectable in the v1.0
+  // calculator surface; isMatrixCategory already validates against the
+  // full union.
   if (typeof window === 'undefined') return 'eco-direct';
   const raw = window.localStorage.getItem(LS_KEY_CATEGORY);
   if (raw && isMatrixCategory(raw)) {
@@ -196,8 +239,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
 
   // Hydrate from localStorage on mount (client-only). Each restore* helper
   // validates the stored value against the current allowlist and clears
-  // stale entries. activeTier is wired here even though PR-A2 does not
-  // yet render the sidebar guide; PR-A3 will consume the state. The
+  // stale entries. activeTier renders the Calculator sidebar guide. The
   // useState setters have stable identities per React contract so an
   // empty deps array is correct here (no eslint-disable needed).
   useEffect(() => {
@@ -324,6 +366,54 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
             ))}
           </ul>
         );
+      case 'Calculator': {
+        const tierContent = GUIDE_TIER_CONTENT[activeTier];
+        return (
+          <div
+            className="space-y-5"
+            data-testid="calculator-guide-sidebar"
+          >
+            <div
+              className="grid grid-cols-3 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800"
+              aria-label="Calculator guide audience"
+            >
+              {ALL_AUDIENCE_TIERS.map((tier) => (
+                <button
+                  key={tier}
+                  type="button"
+                  aria-pressed={activeTier === tier}
+                  onClick={() => setActiveTier(tier)}
+                  className={cn(
+                    'rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors',
+                    activeTier === tier
+                      ? 'bg-sky-600 text-white shadow-sm dark:bg-sky-500'
+                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700',
+                  )}
+                >
+                  {GUIDE_TIER_LABELS[tier]}
+                </button>
+              ))}
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                {tierContent.title}
+              </h4>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                {tierContent.summary}
+              </p>
+              <ul className="mt-3 list-disc space-y-2 pl-5 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                {tierContent.bullets.map((bullet) => (
+                  <li key={bullet}>{bullet}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+              Screening-only outputs still require professional judgment before
+              regulator-facing use.
+            </div>
+          </div>
+        );
+      }
       case 'The Guide':
         return <p className="text-sm text-slate-500 dark:text-slate-400">Welcome to the Matrix Options Dashboard. Please read the full guide in the main content area.</p>;
       case 'Conceptual Model':
@@ -336,6 +426,13 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         return null;
     }
   };
+
+  const leftSidebarHeading =
+    activeTopTab === 'Calculator'
+      ? 'CALCULATOR GUIDE'
+      : activeTopTab === 'Jurisdictional Frameworks'
+        ? 'JURISDICTION / REGION'
+        : 'CONTEXT';
 
   const renderContent = () => {
     switch (activeTopTab) {
@@ -405,19 +502,18 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                 jurisdiction={jurisdiction}
               />
             )}
-            {/*
-              PR-A4 HH wire-up: CategorySelector enables HH categories by
-              default; selecting hh-direct or hh-food renders the
-              HITL-reviewed non-functional disclaimer panels (no numeric
-              output, amber alert block, pointers to canonical regulatory
-              science). The HH placeholders intentionally do NOT consume
-              substanceKey / jurisdiction -- they render fixed disclaimer
-              copy regardless of the shared inputs above. This is the
-              codebase-shaped PR-A4 unblock; the prior inline "unavailable
-              stub" (PR-A2 commit 6 defense-in-depth) is retired.
-            */}
-            {activeCategory === 'hh-direct' && <HHDirectPlaceholder />}
-            {activeCategory === 'hh-food' && <HHFoodPlaceholder />}
+            {activeCategory === 'hh-direct' && (
+              <HHDirectContactCalculator
+                substanceKey={substanceKey}
+                jurisdiction={jurisdiction}
+              />
+            )}
+            {activeCategory === 'hh-food' && (
+              <HHFoodWebCalculator
+                substanceKey={substanceKey}
+                jurisdiction={jurisdiction}
+              />
+            )}
             <div className="flex items-center gap-3 py-2" aria-hidden="true">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
               <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
@@ -592,7 +688,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               )}
             >
               <div className="w-full min-w-[270px]">
-                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">JURISDICTION / REGION</h3>
+                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">{leftSidebarHeading}</h3>
                 {renderSidebar()}
               </div>
             </div>
@@ -668,9 +764,6 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
 }
 
 // ---------------------------------------------------------------------
-// PR-MAP-4 Selection Stats LEFT PANEL extracted in PR-MAP-10 to
-// src/components/matrix-options/MatrixMapLeftPanel.tsx so the identify-
-// tool list can wire to the shared bn-rrm Zustand store without bloating
-// this file. The PR-MAP-4 Selection Stats placeholder card stays in the
-// extracted component; the State A identify placeholder is now replaced
-// by a live IdentifiedFeaturesList when features arrive.
+// Matrix Map left and right panels live in src/components/matrix-options
+// so map selection, identify results, and measurement workbench state do
+// not bloat this dashboard shell.

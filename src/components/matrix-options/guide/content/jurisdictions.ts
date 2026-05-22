@@ -1,5 +1,5 @@
 // Jurisdiction / regulatory-frame options for the matrix-options calculator
-// shared global inputs. v1 carries a small starter set; future slices will
+// shared global inputs. v1 carries a small starter set; later versions can
 // wire jurisdiction-aware derivation logic (e.g., FCV / TRV selection by
 // frame, applicability filters) onto these identifiers.
 //

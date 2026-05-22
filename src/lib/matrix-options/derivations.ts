@@ -9,6 +9,10 @@ import type {
   EcoDirectEqPResult,
   EcoFoodBSAFInput,
   EcoFoodBSAFResult,
+  HumanHealthDirectContactInput,
+  HumanHealthDirectContactResult,
+  HumanHealthFoodWebInput,
+  HumanHealthFoodWebResult,
   Utl9595Result,
 } from './types';
 import { lookupK9595 } from './utlTable';
@@ -226,6 +230,7 @@ const FSITE_MIN = 0.05;
 const FSITE_MAX = 1.0;
 // Default protein fraction for the MeHg path (fish muscle).
 const F_PROTEIN_DEFAULT = 0.18;
+const KG_PER_MG = 1e-6;
 // Ecosystem multipliers per design doc sections 2.2 + 8.2.
 //  - freshwater: 1
 //  - estuarine: 5 (midpoint between freshwater 1 and coastal-marine PAH 15)
@@ -445,6 +450,288 @@ export function ecoFoodBSAF(input: EcoFoodBSAFInput): EcoFoodBSAFResult {
     M_eco,
     BSAF_effective,
     sedS,
+    warnings,
+    blocked,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Human Health screening pathways
+// ---------------------------------------------------------------------------
+
+function assertPositiveFinite(name: string, value: number): void {
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new RangeError(`${name} must be a positive finite number`);
+  }
+}
+
+function assertUnitFraction(name: string, value: number): void {
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    throw new RangeError(`${name} must be a finite value between 0 and 1`);
+  }
+}
+
+function pickHumanHealthEndpoint(
+  nonCancerSedS: number | null,
+  cancerSedS: number | null,
+): { sedS: number; driver: 'non-cancer' | 'cancer' } {
+  if (nonCancerSedS === null && cancerSedS === null) {
+    throw new RangeError(
+      'At least one of RfD or oral slope factor is required for the Human Health pathway',
+    );
+  }
+  if (nonCancerSedS !== null && cancerSedS !== null) {
+    return nonCancerSedS <= cancerSedS
+      ? { sedS: nonCancerSedS, driver: 'non-cancer' }
+      : { sedS: cancerSedS, driver: 'cancer' };
+  }
+  return nonCancerSedS !== null
+    ? { sedS: nonCancerSedS, driver: 'non-cancer' }
+    : { sedS: cancerSedS as number, driver: 'cancer' };
+}
+
+/**
+ * Human Health Direct Contact screening value.
+ *
+ * Screening model:
+ *   Dose = Cs * CF * EF * ED * (IR_sed * BA_o + SA * AF_sed * ABS_d)
+ *          / (BW * AT)
+ *
+ * Solve for Cs using both non-cancer and cancer endpoints when available,
+ * then choose the lower value. The result is a screening calculator surface,
+ * not a regulator-submission-grade HHRA.
+ */
+export function humanHealthDirectContact(
+  input: HumanHealthDirectContactInput,
+): HumanHealthDirectContactResult {
+  const {
+    rfd_oral_mg_per_kg_bw_day,
+    sf_oral_per_mg_per_kg_bw_per_day,
+    targetRisk,
+    hazardQuotient,
+    BW_kg,
+    ED_years,
+    EF_days_per_year,
+    AT_cancer_years,
+    IR_sed_mg_per_day,
+    SA_cm2,
+    AF_sed_mg_per_cm2,
+    abs_dermal,
+    ba_oral,
+  } = input;
+
+  assertPositiveFinite('targetRisk', targetRisk);
+  assertPositiveFinite('hazardQuotient', hazardQuotient);
+  assertPositiveFinite('BW_kg', BW_kg);
+  assertPositiveFinite('ED_years', ED_years);
+  assertPositiveFinite('EF_days_per_year', EF_days_per_year);
+  assertPositiveFinite('AT_cancer_years', AT_cancer_years);
+  assertPositiveFinite('IR_sed_mg_per_day', IR_sed_mg_per_day);
+  assertPositiveFinite('SA_cm2', SA_cm2);
+  assertPositiveFinite('AF_sed_mg_per_cm2', AF_sed_mg_per_cm2);
+  assertUnitFraction('abs_dermal', abs_dermal);
+  assertUnitFraction('ba_oral', ba_oral);
+  if (ba_oral === 0) {
+    throw new RangeError('ba_oral must be greater than zero');
+  }
+
+  if (
+    rfd_oral_mg_per_kg_bw_day !== null &&
+    (!Number.isFinite(rfd_oral_mg_per_kg_bw_day) ||
+      rfd_oral_mg_per_kg_bw_day <= 0)
+  ) {
+    throw new RangeError('RfD must be null or a positive finite number');
+  }
+  if (
+    sf_oral_per_mg_per_kg_bw_per_day !== null &&
+    (!Number.isFinite(sf_oral_per_mg_per_kg_bw_per_day) ||
+      sf_oral_per_mg_per_kg_bw_per_day <= 0)
+  ) {
+    throw new RangeError(
+      'Oral slope factor must be null or a positive finite number',
+    );
+  }
+
+  const ingestionRateAdjusted = IR_sed_mg_per_day * ba_oral;
+  const dermalRateAdjusted = SA_cm2 * AF_sed_mg_per_cm2 * abs_dermal;
+  const contactRate = ingestionRateAdjusted + dermalRateAdjusted;
+  assertPositiveFinite('contactRate_mg_per_day', contactRate);
+
+  const exposureDays = EF_days_per_year * ED_years;
+  const nonCancerATDays = ED_years * 365;
+  const cancerATDays = AT_cancer_years * 365;
+
+  const nonCancerSedS =
+    rfd_oral_mg_per_kg_bw_day === null
+      ? null
+      : (hazardQuotient *
+          rfd_oral_mg_per_kg_bw_day *
+          BW_kg *
+          nonCancerATDays) /
+        (KG_PER_MG * exposureDays * contactRate);
+  const cancerSedS =
+    sf_oral_per_mg_per_kg_bw_per_day === null
+      ? null
+      : (targetRisk * BW_kg * cancerATDays) /
+        (sf_oral_per_mg_per_kg_bw_per_day *
+          KG_PER_MG *
+          exposureDays *
+          contactRate);
+  const { sedS, driver } = pickHumanHealthEndpoint(nonCancerSedS, cancerSedS);
+
+  const warnings: string[] = [];
+  if (rfd_oral_mg_per_kg_bw_day === null) {
+    warnings.push('Non-cancer endpoint not available for this substance.');
+  }
+  if (sf_oral_per_mg_per_kg_bw_per_day === null) {
+    warnings.push('Cancer endpoint not available for this substance.');
+  }
+
+  return {
+    sedS,
+    driver,
+    nonCancerSedS,
+    cancerSedS,
+    contactRate_mg_per_day: contactRate,
+    ingestionRateAdjusted_mg_per_day: ingestionRateAdjusted,
+    dermalRateAdjusted_mg_per_day: dermalRateAdjusted,
+    warnings,
+  };
+}
+
+/**
+ * Human Health Food Web screening value.
+ *
+ * First derive an allowable tissue concentration for human consumption,
+ * then back-calculate sediment concentration through the BSAF path:
+ *   C_tissue = targetDose * BW / (IR_food * BA_o)
+ *   SedS = C_tissue / BSAF_effective
+ */
+export function humanHealthFoodWeb(
+  input: HumanHealthFoodWebInput,
+): HumanHealthFoodWebResult {
+  const {
+    rfd_oral_mg_per_kg_bw_day,
+    sf_oral_per_mg_per_kg_bw_per_day,
+    targetRisk,
+    hazardQuotient,
+    BW_kg,
+    IR_food_kg_per_day,
+    ba_oral,
+    BSAF_loc_freshwater,
+    fLipid,
+    foc,
+    ecosystem,
+    contaminantClass,
+    fProtein,
+  } = input;
+
+  assertPositiveFinite('targetRisk', targetRisk);
+  assertPositiveFinite('hazardQuotient', hazardQuotient);
+  assertPositiveFinite('BW_kg', BW_kg);
+  assertPositiveFinite('IR_food_kg_per_day', IR_food_kg_per_day);
+  assertUnitFraction('ba_oral', ba_oral);
+  if (ba_oral === 0) {
+    throw new RangeError('ba_oral must be greater than zero');
+  }
+  if (
+    rfd_oral_mg_per_kg_bw_day !== null &&
+    (!Number.isFinite(rfd_oral_mg_per_kg_bw_day) ||
+      rfd_oral_mg_per_kg_bw_day <= 0)
+  ) {
+    throw new RangeError('RfD must be null or a positive finite number');
+  }
+  if (
+    sf_oral_per_mg_per_kg_bw_per_day !== null &&
+    (!Number.isFinite(sf_oral_per_mg_per_kg_bw_per_day) ||
+      sf_oral_per_mg_per_kg_bw_per_day <= 0)
+  ) {
+    throw new RangeError(
+      'Oral slope factor must be null or a positive finite number',
+    );
+  }
+  assertPositiveFinite('BSAF_loc_freshwater', BSAF_loc_freshwater);
+  assertPositiveFinite('foc', foc);
+  assertPositiveFinite('fLipid', fLipid);
+  if (fProtein !== undefined) assertPositiveFinite('fProtein', fProtein);
+
+  const warnings: string[] = [];
+  let blocked = false;
+
+  if (foc < FOC_MIN) {
+    warnings.push(
+      `foc = ${foc} is below EqP validity window minimum (${FOC_MIN}); ` +
+        'food-web back-calculation is diagnostic-only.',
+    );
+    blocked = true;
+  }
+  if (foc > FOC_MAX) {
+    warnings.push(
+      `foc = ${foc} is above EqP validity window maximum (${FOC_MAX}); ` +
+        'food-web back-calculation is diagnostic-only.',
+    );
+    blocked = true;
+  }
+
+  if (fLipid < FLIPID_MIN || fLipid > FLIPID_MAX) {
+    warnings.push(
+      `fLipid = ${fLipid} is outside the typical screening range ` +
+        `[${FLIPID_MIN}, ${FLIPID_MAX}].`,
+    );
+  }
+
+  let M_eco: number;
+  if (ecosystem === 'freshwater') {
+    M_eco = M_ECO_FRESHWATER;
+  } else if (contaminantClass === 'organic-PAH') {
+    M_eco = ecosystem === 'coastal-marine' ? M_ECO_COASTAL_PAH : M_ECO_ESTUARINE;
+  } else {
+    M_eco = M_ECO_FRESHWATER;
+    warnings.push(
+      `${ecosystem} multiplier applies to organic-PAH class only; ` +
+        `using M_eco = 1 for ${contaminantClass}.`,
+    );
+  }
+
+  const BSAF_effective =
+    contaminantClass === 'methyl-Hg'
+      ? BSAF_loc_freshwater * ((fProtein ?? F_PROTEIN_DEFAULT) / foc) * M_eco
+      : BSAF_loc_freshwater * (fLipid / foc) * M_eco;
+
+  const nonCancerTissue =
+    rfd_oral_mg_per_kg_bw_day === null
+      ? null
+      : (hazardQuotient * rfd_oral_mg_per_kg_bw_day * BW_kg) /
+        (IR_food_kg_per_day * ba_oral);
+  const cancerTissue =
+    sf_oral_per_mg_per_kg_bw_per_day === null
+      ? null
+      : (targetRisk * BW_kg) /
+        (sf_oral_per_mg_per_kg_bw_per_day * IR_food_kg_per_day * ba_oral);
+
+  const nonCancerSedS =
+    nonCancerTissue === null ? null : nonCancerTissue / BSAF_effective;
+  const cancerSedS = cancerTissue === null ? null : cancerTissue / BSAF_effective;
+  const { sedS, driver } = pickHumanHealthEndpoint(nonCancerSedS, cancerSedS);
+  const tissueTarget = driver === 'non-cancer'
+    ? nonCancerTissue as number
+    : cancerTissue as number;
+
+  if (rfd_oral_mg_per_kg_bw_day === null) {
+    warnings.push('Non-cancer endpoint not available for this substance.');
+  }
+  if (sf_oral_per_mg_per_kg_bw_per_day === null) {
+    warnings.push('Cancer endpoint not available for this substance.');
+  }
+
+  return {
+    sedS,
+    driver,
+    nonCancerTissue_mg_per_kg: nonCancerTissue,
+    cancerTissue_mg_per_kg: cancerTissue,
+    tissueTarget_mg_per_kg: tissueTarget,
+    M_eco,
+    BSAF_effective,
     warnings,
     blocked,
   };

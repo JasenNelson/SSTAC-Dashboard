@@ -7,6 +7,8 @@ import {
   avsSemCheck,
   ecoDirectEqP,
   ecoFoodBSAF,
+  humanHealthDirectContact,
+  humanHealthFoodWeb,
   utl9595,
 } from '../derivations';
 import { lookupK9595 } from '../utlTable';
@@ -525,5 +527,100 @@ describe('ecoFoodBSAF', () => {
         contaminantClass: 'organic-PAH',
       }),
     ).toThrow(RangeError);
+  });
+});
+
+describe('humanHealthDirectContact', () => {
+  it('computes the lower of non-cancer and cancer direct-contact values', () => {
+    const result = humanHealthDirectContact({
+      rfd_oral_mg_per_kg_bw_day: 3.0e-4,
+      sf_oral_per_mg_per_kg_bw_per_day: 1.5,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 15,
+      ED_years: 6,
+      EF_days_per_year: 40,
+      AT_cancer_years: 70,
+      IR_sed_mg_per_day: 200,
+      SA_cm2: 2800,
+      AF_sed_mg_per_cm2: 0.2,
+      abs_dermal: 0.03,
+      ba_oral: 0.6,
+    });
+
+    expect(result.nonCancerSedS).toBeCloseTo(300.16, 2);
+    expect(result.cancerSedS).toBeCloseTo(77.82, 2);
+    expect(result.sedS).toBeCloseTo(result.cancerSedS as number, 6);
+    expect(result.driver).toBe('cancer');
+    expect(result.contactRate_mg_per_day).toBeCloseTo(136.8, 6);
+  });
+
+  it('uses the available endpoint when only RfD is present', () => {
+    const result = humanHealthDirectContact({
+      rfd_oral_mg_per_kg_bw_day: 3.5e-3,
+      sf_oral_per_mg_per_kg_bw_per_day: null,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 15,
+      ED_years: 6,
+      EF_days_per_year: 40,
+      AT_cancer_years: 70,
+      IR_sed_mg_per_day: 200,
+      SA_cm2: 2800,
+      AF_sed_mg_per_cm2: 0.2,
+      abs_dermal: 0.001,
+      ba_oral: 0.5,
+    });
+
+    expect(result.driver).toBe('non-cancer');
+    expect(result.cancerSedS).toBeNull();
+    expect(result.warnings.some((w) => w.includes('Cancer endpoint'))).toBe(true);
+  });
+});
+
+describe('humanHealthFoodWeb', () => {
+  it('back-calculates a human-health food-web value through BSAF', () => {
+    const result = humanHealthFoodWeb({
+      rfd_oral_mg_per_kg_bw_day: 2.0e-5,
+      sf_oral_per_mg_per_kg_bw_per_day: 2.0,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 70,
+      IR_food_kg_per_day: 0.142,
+      ba_oral: 1,
+      BSAF_loc_freshwater: 2,
+      fLipid: 0.05,
+      foc: 0.02,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-halogenated',
+    });
+
+    expect(result.BSAF_effective).toBeCloseTo(5, 6);
+    expect(result.nonCancerTissue_mg_per_kg).toBeCloseTo(0.009859, 6);
+    expect(result.cancerTissue_mg_per_kg).toBeCloseTo(0.002465, 6);
+    expect(result.sedS).toBeCloseTo(0.000493, 6);
+    expect(result.driver).toBe('cancer');
+  });
+
+  it('supports the MeHg protein-normalized BSAF branch', () => {
+    const result = humanHealthFoodWeb({
+      rfd_oral_mg_per_kg_bw_day: 1.0e-4,
+      sf_oral_per_mg_per_kg_bw_per_day: null,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 70,
+      IR_food_kg_per_day: 0.388,
+      ba_oral: 0.55,
+      BSAF_loc_freshwater: 15,
+      fLipid: 0.05,
+      foc: 0.02,
+      ecosystem: 'freshwater',
+      contaminantClass: 'methyl-Hg',
+    });
+
+    expect(result.BSAF_effective).toBeCloseTo(135, 6);
+    expect(result.tissueTarget_mg_per_kg).toBeCloseTo(0.0328, 4);
+    expect(result.sedS).toBeCloseTo(0.000243, 6);
+    expect(result.driver).toBe('non-cancer');
   });
 });
