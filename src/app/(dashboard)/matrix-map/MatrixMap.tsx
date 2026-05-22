@@ -42,6 +42,7 @@ import {
   type LeafletMapLike,
 } from '@/lib/maps/wms-identify';
 import { useMatrixMapIdentifyStore } from '@/stores/matrix-map/identifyStore';
+import { useMatrixMapSelectionStore } from '@/stores/matrix-map/selectionStore';
 import {
   ZoomIn,
   ZoomOut,
@@ -282,42 +283,47 @@ export function MatrixMap({
 
   const samples = initialMapData.visible_samples;
   const sampleCount = samples.length;
-  const [selectedSampleId, setSelectedSampleId] = useState<string | null>(null);
-  const [selectedSampleIds, setSelectedSampleIds] = useState<string[]>([]);
-  // PR-MAP-10 (bugfix): identifiedFeatures now lives in
+  // PR-MAP-10 (bugfix): identifiedFeatures lives in
   // src/stores/matrix-map/identifyStore.ts so MatrixMapLeftPanel can
   // subscribe to identify-tool / identify-area results across the
-  // sibling-component boundary. The Path-B fork originally used local
-  // React state because the panel was deferred; the dedicated store
-  // keeps the coupling surface minimal while restoring the read path.
+  // sibling-component boundary.
   const setIdentifiedFeatures = useMatrixMapIdentifyStore(
     (state) => state.setIdentifiedFeatures,
   );
-
-  const toggleSampleSelection = useCallback((id: string) => {
-    setSelectedSampleIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-    setSelectedSampleId(null);
-  }, []);
-  const selectSample = useCallback((id: string) => {
-    // Match BN-RRM siteDataStore.selectSite semantics: single-select replaces
-    // any multi-select. Without this, a single click after Ctrl/area selection
-    // leaves the prior selectedSampleIds highlighted + counted (codex P2-1).
-    setSelectedSampleId(id);
-    setSelectedSampleIds([id]);
-  }, []);
-  const selectMultipleSamples = useCallback((ids: string[]) => {
-    setSelectedSampleIds((prev) => [...new Set([...prev, ...ids])]);
-  }, []);
+  // PR-MAP-11: sample selection state lives in
+  // src/stores/matrix-map/selectionStore.ts. Mirrors the identifyStore
+  // hoist pattern -- the inlined Sample Locations panel reads directly
+  // from the store, and PR-MAP-12 Selection Stats + PR-MAP-13
+  // MeasurementWorkbench will subscribe to the same surface. Action
+  // contracts (selectSample's single-replaces-multi semantic; toggle
+  // clearing selectedSampleId; selectMultipleSamples Set-dedup) are
+  // preserved from the prior local useCallback declarations and locked
+  // by src/stores/matrix-map/__tests__/selectionStore.test.ts.
+  const selectedSampleId = useMatrixMapSelectionStore((s) => s.selectedSampleId);
+  const selectedSampleIds = useMatrixMapSelectionStore((s) => s.selectedSampleIds);
+  const selectSample = useMatrixMapSelectionStore((s) => s.selectSample);
+  const toggleSampleSelection = useMatrixMapSelectionStore((s) => s.toggleSampleSelection);
+  const selectMultipleSamples = useMatrixMapSelectionStore((s) => s.selectMultipleSamples);
+  const clearSampleSelection = useMatrixMapSelectionStore((s) => s.clearSampleSelection);
+  const selectAllSamplesAction = useMatrixMapSelectionStore((s) => s.selectAllSamples);
+  // Wrap selectAllSamples to preserve the no-arg signature used at the
+  // call sites in this file. The store action takes an explicit ID list
+  // so it stays independent of the samples prop.
   const selectAllSamples = useCallback(() => {
-    setSelectedSampleIds(samples.map((s) => s.id));
-    setSelectedSampleId(null);
-  }, [samples]);
-  const clearSampleSelection = useCallback(() => {
-    setSelectedSampleId(null);
-    setSelectedSampleIds([]);
-  }, []);
+    selectAllSamplesAction(samples.map((s) => s.id));
+  }, [samples, selectAllSamplesAction]);
+
+  // Lifecycle reset (codex P2 review on PR-MAP-11): the pre-hoist local
+  // useState reset to (null, []) on every MatrixMap unmount, so SPA
+  // navigations to/from /matrix-options always rendered with a fresh
+  // selection state. Hoisting to a module-level Zustand singleton
+  // changes that lifecycle by default; without this reset, a return
+  // visit could surface stale selected IDs against a newly-fetched
+  // initialMapData. clearSampleSelection is a stable Zustand selector
+  // ref so this effect runs exactly once per mount.
+  useEffect(() => {
+    clearSampleSelection();
+  }, [clearSampleSelection]);
 
   // Initialize map
   useEffect(() => {
