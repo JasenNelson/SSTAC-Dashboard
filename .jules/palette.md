@@ -1,0 +1,3 @@
+## 2026-02-28 - Visual-Only Interactive Element Accessibility
+**Learning:** Visual-only interactive elements like color swatches that convey information solely via CSS (e.g., `style={{ backgroundColor: color }}`) must include `aria-label` attributes for screen readers. Relying only on `title` attributes is insufficient for a11y. They also frequently lack explicit keyboard focus indicators if they only define hover borders.
+**Action:** Always verify that icon-only or visual-only buttons include an explicitly defined `aria-label` and `focus-visible` or equivalent explicit focus ring styles (e.g., `focus:ring-2`) to ensure full keyboard navigation and screen reader support.
