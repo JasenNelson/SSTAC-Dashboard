@@ -55,6 +55,8 @@ export function MatrixMapRightPanel({ initialMapData }: MatrixMapRightPanelProps
   const [dateTo, setDateTo] = useState('');
   const [page, setPage] = useState(1);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const selectedIdKey = selectedSampleIds.join('|');
   const selectedIdsForFetch = useMemo(
@@ -185,19 +187,37 @@ export function MatrixMapRightPanel({ initialMapData }: MatrixMapRightPanelProps
             />
 
             {isAdmin && (
-              <button
-                type="button"
-                onClick={() => exportMeasurementRows(filteredRows)}
-                disabled={filteredRows.length === 0}
-                className={cn(
-                  'w-full rounded-md px-3 py-2 text-xs font-semibold',
-                  filteredRows.length === 0
-                    ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed'
-                    : 'bg-slate-900 text-white hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white',
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => void exportMeasurementRows({
+                    selectedSampleIds,
+                    filters: {
+                      medium: mediumFilter,
+                      qa: qaFilter,
+                      classification: classificationFilter,
+                      date_from: dateFrom,
+                      date_to: dateTo,
+                    },
+                    setIsExporting,
+                    setExportError,
+                  })}
+                  disabled={filteredRows.length === 0 || isExporting}
+                  className={cn(
+                    'w-full rounded-md px-3 py-2 text-xs font-semibold',
+                    filteredRows.length === 0 || isExporting
+                      ? 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed'
+                      : 'bg-slate-900 text-white hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white',
+                  )}
+                >
+                  {isExporting ? 'Exporting...' : 'Export current view as CSV'}
+                </button>
+                {exportError && (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {exportError}
+                  </p>
                 )}
-              >
-                Export current view as CSV
-              </button>
+              </div>
             )}
 
             {isLoading ? (
@@ -460,58 +480,57 @@ function classification(value: unknown): Classification {
     : 'unknown';
 }
 
-function exportMeasurementRows(rows: MeasurementRow[]) {
-  if (typeof window === 'undefined' || rows.length === 0) return;
-  const headers = [
-    'sample_id',
-    'sample_station_id',
-    'event_date',
-    'medium',
-    'substance',
-    'value',
-    'unit',
-    'detection_limit',
-    'qualifier',
-    'censored',
-    'coordinate_quality_tier',
-    'classification',
-    'source_dra_id',
-    'source_dra_title',
-  ];
-  const csvRows = rows.map((row) => [
-    row.sample_id,
-    row.sample_station_id,
-    row.event_date,
-    row.medium,
-    row.substance_display_name,
-    formatCell(row.value),
-    row.unit ?? '',
-    formatCell(row.detection_limit),
-    row.qualifier ?? '',
-    row.censored === null ? '' : String(row.censored),
-    row.coordinate_quality_tier,
-    row.classification,
-    row.source_dra_id ?? '',
-    row.source_dra_title ?? '',
-  ]);
-  downloadCsv('matrix-map-measurements.csv', [headers, ...csvRows]);
+async function exportMeasurementRows({
+  selectedSampleIds,
+  filters,
+  setIsExporting,
+  setExportError,
+}: {
+  selectedSampleIds: string[];
+  filters: {
+    medium: MediumFilter;
+    qa: QaFilter;
+    classification: ClassificationFilter;
+    date_from: string;
+    date_to: string;
+  };
+  setIsExporting: (value: boolean) => void;
+  setExportError: (value: string | null) => void;
+}) {
+  if (typeof window === 'undefined' || selectedSampleIds.length === 0) return;
+  setIsExporting(true);
+  setExportError(null);
+  try {
+    const response = await fetch('/api/matrix-map/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        export_type: 'measurements',
+        selected_sample_ids: selectedSampleIds,
+        filters,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Measurement export failed.');
+    }
+    await downloadCsvResponse(response);
+  } catch (err) {
+    setExportError(err instanceof Error ? err.message : 'Measurement export failed.');
+  } finally {
+    setIsExporting(false);
+  }
 }
 
-function downloadCsv(filename: string, rows: string[][]) {
-  const csv = rows.map((row) => row.map(escapeCsvCell).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+async function downloadCsvResponse(response: Response) {
+  const blob = await response.blob();
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
+  const disposition = response.headers.get('content-disposition') ?? '';
+  const filenameMatch = /filename="([^"]+)"/.exec(disposition);
   anchor.href = url;
-  anchor.download = filename;
+  anchor.download = filenameMatch?.[1] ?? 'matrix-map-measurements.csv';
   anchor.click();
   URL.revokeObjectURL(url);
-}
-
-function escapeCsvCell(value: string) {
-  const safeValue = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
-  if (!/[",\n\r]/.test(safeValue)) return safeValue;
-  return `"${safeValue.replace(/"/g, '""')}"`;
 }
 
 function formatCell(value: string | number | null) {

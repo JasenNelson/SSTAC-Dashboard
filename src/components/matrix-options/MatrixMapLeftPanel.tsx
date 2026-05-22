@@ -25,6 +25,8 @@ export function MatrixMapLeftPanel({ initialMapData }: MatrixMapLeftPanelProps) 
   const clearIdentifiedFeatures = useMatrixMapIdentifyStore((s) => s.clearIdentifiedFeatures);
   const selectedSampleIds = useMatrixMapSelectionStore((s) => s.selectedSampleIds);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const hasIdentified = identifiedFeatures.length > 0;
   const selectedSamples = initialMapData.visible_samples.filter((sample) =>
@@ -106,13 +108,25 @@ export function MatrixMapLeftPanel({ initialMapData }: MatrixMapLeftPanelProps) 
             </div>
 
             {isAdmin && (
-              <button
-                type="button"
-                onClick={() => exportSelectionCsv(selectedSamples)}
-                className="w-full rounded-md bg-slate-900 dark:bg-slate-100 px-3 py-2 text-xs font-semibold text-white dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-white"
-              >
-                Export selection as CSV
-              </button>
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => void exportSelectionCsv({
+                    selectedSampleIds,
+                    setIsExporting,
+                    setExportError,
+                  })}
+                  disabled={isExporting}
+                  className="w-full rounded-md bg-slate-900 dark:bg-slate-100 px-3 py-2 text-xs font-semibold text-white dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isExporting ? 'Exporting...' : 'Export selection as CSV'}
+                </button>
+                {exportError && (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    {exportError}
+                  </p>
+                )}
+              </div>
             )}
           </div>
         ) : hasIdentified ? (
@@ -159,49 +173,46 @@ function formatSelectionSummary(
   return `${selectedCount} selected (${composition.reference} reference, ${composition.impacted} impacted, ${composition.unknown} unknown)`;
 }
 
-function exportSelectionCsv(samples: MatrixSample[]) {
-  if (typeof window === 'undefined' || samples.length === 0) return;
-
-  const headers = [
-    'sample_id',
-    'station_id',
-    'display_name',
-    'classification',
-    'coordinate_quality_tier',
-    'source_dra_id',
-    'bc_region',
-    'waterbody',
-    'longitude',
-    'latitude',
-  ];
-  const rows = samples.map((sample) => [
-    sample.id,
-    sample.station_id,
-    sample.display_name,
-    sample.classification,
-    sample.coordinate_quality_tier,
-    sample.source_dra_id ?? '',
-    sample.bc_region ?? '',
-    sample.waterbody ?? '',
-    String(sample.geometry.coordinates[0]),
-    String(sample.geometry.coordinates[1]),
-  ]);
-  downloadCsv('matrix-map-selection.csv', [headers, ...rows]);
+async function exportSelectionCsv({
+  selectedSampleIds,
+  setIsExporting,
+  setExportError,
+}: {
+  selectedSampleIds: string[];
+  setIsExporting: (value: boolean) => void;
+  setExportError: (value: string | null) => void;
+}) {
+  if (typeof window === 'undefined' || selectedSampleIds.length === 0) return;
+  setIsExporting(true);
+  setExportError(null);
+  try {
+    const response = await fetch('/api/matrix-map/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        export_type: 'selection',
+        selected_sample_ids: selectedSampleIds,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error('Selection export failed.');
+    }
+    await downloadCsvResponse(response);
+  } catch (err) {
+    setExportError(err instanceof Error ? err.message : 'Selection export failed.');
+  } finally {
+    setIsExporting(false);
+  }
 }
 
-function downloadCsv(filename: string, rows: string[][]) {
-  const csv = rows.map((row) => row.map(escapeCsvCell).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+async function downloadCsvResponse(response: Response) {
+  const blob = await response.blob();
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
+  const disposition = response.headers.get('content-disposition') ?? '';
+  const filenameMatch = /filename="([^"]+)"/.exec(disposition);
   anchor.href = url;
-  anchor.download = filename;
+  anchor.download = filenameMatch?.[1] ?? 'matrix-map-selection.csv';
   anchor.click();
   URL.revokeObjectURL(url);
-}
-
-function escapeCsvCell(value: string) {
-  const safeValue = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
-  if (!/[",\n\r]/.test(safeValue)) return safeValue;
-  return `"${safeValue.replace(/"/g, '""')}"`;
 }
