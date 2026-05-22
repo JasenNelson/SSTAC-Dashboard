@@ -307,11 +307,21 @@ export default function LikeButton({
         <span className="text-sm font-medium">{formatLikeText(likes)}</span>
         {likes > 0 && (
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="View like details"
             onClick={(e) => {
               e.stopPropagation();
               setShowDetails(!showDetails);
             }}
-            className="ml-1 p-1 hover:bg-slate-200 rounded transition-colors cursor-pointer"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowDetails(!showDetails);
+              }
+            }}
+            className="ml-1 p-1 hover:bg-slate-200 rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           >
             <Users className="w-3 h-3" />
           </div>
