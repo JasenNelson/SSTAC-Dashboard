@@ -288,35 +288,50 @@ export default function LikeButton({
 
   return (
     <div className={`relative ${className}`} style={{ overflow: 'visible' }}>
-      <button
-        onClick={handleLike}
-        disabled={isLoading}
-        data-like-button={actualDiscussionId || actualReplyId}
+      <div
         className={`
-          flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200
+          inline-flex items-center space-x-1 px-1 py-1 rounded-lg transition-all duration-200
           ${liked 
-            ? 'bg-green-100 text-green-600 hover:bg-green-200' 
-            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            ? 'bg-green-100 text-green-600'
+            : 'bg-slate-100 text-slate-600'
           }
-          ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         `}
       >
-        <Heart 
-          className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} 
-        />
-        <span className="text-sm font-medium">{formatLikeText(likes)}</span>
+        <button
+          onClick={handleLike}
+          disabled={isLoading}
+          data-like-button={actualDiscussionId || actualReplyId}
+          className={`
+            flex items-center space-x-2 px-2 py-1 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500
+            ${liked
+              ? 'hover:bg-green-200'
+              : 'hover:bg-slate-200'
+            }
+            ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          `}
+        >
+          <Heart
+            className={`w-4 h-4 ${liked ? 'fill-current' : ''}`}
+          />
+          <span className="text-sm font-medium">{formatLikeText(likes)}</span>
+        </button>
+
         {likes > 0 && (
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowDetails(!showDetails);
-            }}
-            className="ml-1 p-1 hover:bg-slate-200 rounded transition-colors cursor-pointer"
+          <button
+            type="button"
+            onClick={() => setShowDetails(!showDetails)}
+            aria-label={showDetails ? "Hide like details" : "View who liked this"}
+            aria-expanded={showDetails}
+            aria-controls="like-popup"
+            className={`
+              p-1 rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500
+              ${liked ? 'hover:bg-green-200' : 'hover:bg-slate-200'}
+            `}
           >
             <Users className="w-3 h-3" />
-          </div>
+          </button>
         )}
-      </button>
+      </div>
 
       {/* Like Details Popup */}
       {showDetails && likes > 0 && (
