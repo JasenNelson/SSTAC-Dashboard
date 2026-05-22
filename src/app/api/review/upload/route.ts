@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth'
 
 /**
@@ -85,7 +86,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique filename
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    // Use cryptographically secure random generation
+    const fileName = `${Date.now()}-${crypto.randomUUID()}.${fileExt}`
     const filePath = `review-files/${user.id}/${fileName}`
 
     // Upload file to Supabase Storage

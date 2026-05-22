@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClientForPagePath, getAuthenticatedUser } from '@/lib/supabase-auth';
+import { createClientForPagePath, getAuthenticatedUser, generateCEWUserId } from '@/lib/supabase-auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,10 +58,9 @@ export async function POST(request: NextRequest) {
     if (isCEWPage) {
       // CEW pages: Generate unique user_id for each CEW submission to count unique participants
       // This allows multiple people to submit and be counted as separate responses
-      // Note: Using inline generation to maintain exact backward compatibility with existing format
-      const timestamp = Date.now();
-      const randomSuffix = Math.random().toString(36).substring(2, 8);
-      finalUserId = `${authCode || 'CEW2025'}_${timestamp}_${randomSuffix}`;
+      // Use cryptographically secure random generation
+      const sessionId = request.headers.get('x-session-id');
+      finalUserId = generateCEWUserId(authCode || 'CEW2025', sessionId);
       if (process.env.NODE_ENV === 'development') {
         console.log(`[Wordcloud Submit] CEW page, using unique userId: ${finalUserId}`);
       }
