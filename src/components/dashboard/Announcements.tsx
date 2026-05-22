@@ -127,10 +127,19 @@ export default function Announcements() {
         {announcements.map((announcement) => (
                      <div
              key={announcement.id}
-             className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md ${
+             className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:border-transparent ${
                priorityColors[announcement.priority as keyof typeof priorityColors]
              } ${expandedAnnouncement === announcement.id ? 'shadow-lg ring-2 ring-sky-300 dark:ring-sky-600' : ''}`}
              onClick={() => toggleAnnouncement(announcement.id)}
+             role="button"
+             tabIndex={0}
+             aria-expanded={expandedAnnouncement === announcement.id}
+             onKeyDown={(e) => {
+               if (e.key === 'Enter' || e.key === ' ') {
+                 e.preventDefault();
+                 toggleAnnouncement(announcement.id);
+               }
+             }}
            >
             <div className="flex items-start justify-between mb-2">
               <h3 className="font-semibold text-lg text-slate-900 dark:text-white">{announcement.title}</h3>
