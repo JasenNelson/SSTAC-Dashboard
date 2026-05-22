@@ -260,9 +260,10 @@ export default function TagManagement() {
                         const colorInput = document.getElementById('color') as HTMLInputElement;
                         if (colorInput) colorInput.value = color;
                       }}
-                      className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors"
+                      className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
                       style={{ backgroundColor: color }}
                       title={color}
+                      aria-label={`Select color ${color}`}
                     />
                   ))}
                 </div>
@@ -379,9 +380,10 @@ export default function TagManagement() {
                             const colorInput = document.getElementById('edit-color') as HTMLInputElement;
                             if (colorInput) colorInput.value = color;
                           }}
-                          className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors"
+                          className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
                           style={{ backgroundColor: color }}
                           title={color}
+                          aria-label={`Select color ${color}`}
                         />
                       ))}
                     </div>
