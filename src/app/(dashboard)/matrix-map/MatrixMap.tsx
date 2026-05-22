@@ -290,6 +290,23 @@ export function MatrixMap({
   const setIdentifiedFeatures = useMatrixMapIdentifyStore(
     (state) => state.setIdentifiedFeatures,
   );
+  const clearIdentifiedFeatures = useMatrixMapIdentifyStore(
+    (state) => state.clearIdentifiedFeatures,
+  );
+
+  // Lifecycle reset parity with PR-MAP-11 selection-store: the
+  // identify-store is a module-level Zustand singleton, so without
+  // this useEffect it would survive MatrixMap unmounts. SPA navigations
+  // away from /matrix-options and back would surface stale identify
+  // results in the left panel until the user fired a new identify
+  // click or hit Clear. Pre-PR-MAP-10 the identifiedFeatures lived in
+  // local useState that reset on each remount; this restores that
+  // lifecycle. clearIdentifiedFeatures is a stable Zustand selector
+  // ref so this effect runs exactly once per mount.
+  useEffect(() => {
+    clearIdentifiedFeatures();
+  }, [clearIdentifiedFeatures]);
+
   // PR-MAP-11: sample selection state lives in
   // src/stores/matrix-map/selectionStore.ts. Mirrors the identifyStore
   // hoist pattern -- the inlined Sample Locations panel reads directly
