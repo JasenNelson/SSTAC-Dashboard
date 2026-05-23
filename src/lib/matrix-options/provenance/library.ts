@@ -14,6 +14,9 @@ import type {
   EvidenceLibraryFilters,
   ParameterValueRecord,
   ProvenancePathway,
+  CalculatorSourceRole,
+  CanonicalSourceStatus,
+  SourceAuthorityTier,
   SourceCurrentnessStatus,
   SourceRelationship,
   SourceRelationshipRole,
@@ -63,6 +66,10 @@ export interface EvidenceLibraryFacetOptions {
   extractionStatuses: EvidenceLibraryFacetOption[];
   jurisdictions: EvidenceLibraryFacetOption[];
   authorityScopes: EvidenceLibraryFacetOption[];
+  sourceAuthorityTiers: EvidenceLibraryFacetOption[];
+  sourceRoles: EvidenceLibraryFacetOption[];
+  canonicalSourceStatuses: EvidenceLibraryFacetOption[];
+  bcProtocolAlignments: EvidenceLibraryFacetOption[];
   currentnessStatuses: EvidenceLibraryFacetOption[];
   zoteroStatuses: EvidenceLibraryFacetOption[];
   receptorGroups: EvidenceLibraryFacetOption[];
@@ -76,6 +83,7 @@ export interface EvidenceLibrarySourceLeadSummary {
   status: string;
   rule: string | null;
   primarySourceId: string | null;
+  primarySourceRole: CalculatorSourceRole | null;
   counts: {
     equationLeads: number;
     parameterValueLeads: number;
@@ -124,6 +132,7 @@ export interface EvidenceLibraryAudit {
     zoteroLinked: number;
     zoteroPending: number;
     referenceMining: number;
+    policyCompilations: number;
     implementationScaffold: number;
   };
   sourceLeads: {
@@ -161,6 +170,10 @@ const EMPTY_FILTERS: EvidenceLibraryFilters = {
   extractionStatuses: [],
   jurisdictions: [],
   authorityScopes: [],
+  sourceAuthorityTiers: [],
+  sourceRoles: [],
+  canonicalSourceStatuses: [],
+  bcProtocolAlignments: [],
   currentnessStatuses: [],
   zoteroStatuses: [],
   receptorGroups: [],
@@ -218,6 +231,9 @@ function sourceRelationshipRole(source: SourceRecord): SourceRelationshipRole {
   }
   if (source.calculator_source_role === 'reference_mining') {
     return 'reference_mining';
+  }
+  if (source.calculator_source_role === 'policy_compilation') {
+    return 'policy_compilation';
   }
   return 'canonical_candidate';
 }
@@ -298,8 +314,33 @@ export function isEvidenceSource(source: SourceRecord): boolean {
 export function isCalculatorEvidenceSource(source: SourceRecord): boolean {
   return (
     isEvidenceSource(source) &&
-    source.calculator_source_role !== 'reference_mining'
+    source.calculator_source_role !== 'reference_mining' &&
+    source.calculator_source_role !== 'policy_compilation'
   );
+}
+
+function sourceRolesForRecord(source: SourceRecord): CalculatorSourceRole[] {
+  return [source.calculator_source_role ?? 'canonical_candidate'];
+}
+
+function sourceAuthorityTiersForSources(
+  sources: SourceRecord[],
+): SourceAuthorityTier[] {
+  return uniqueArray(
+    sources
+      .map((source) => source.source_authority_tier)
+      .filter((tier): tier is SourceAuthorityTier => Boolean(tier)),
+  );
+}
+
+function canonicalStatusesForRecord(
+  record: SourceRecord | ParameterValueRecord | EquationRecord,
+): CanonicalSourceStatus[] {
+  const statuses: CanonicalSourceStatus[] = [];
+  if ('canonical_source_status' in record && record.canonical_source_status) {
+    statuses.push(record.canonical_source_status);
+  }
+  return uniqueArray(statuses);
 }
 
 function linkedParameterRecordsForSource(sourceId: string): ParameterValueRecord[] {
@@ -365,6 +406,11 @@ function valueMatchesFilters(
     record.qa_status,
     record.candidate_group_id,
     record.jurisdiction,
+    record.source_authority_tier,
+    record.canonical_source_status,
+    record.bc_protocol_alignment,
+    record.bc_protocol_basis,
+    record.source_crystallization_date,
     record.applicability,
     record.uncertainty,
     record.review_notes,
@@ -416,6 +462,38 @@ function valueMatchesFilters(
     (filters.authorityScopes.length === 0 ||
       evidenceSources.some((source) =>
         filters.authorityScopes.includes(source.authority_scope),
+      )) &&
+    (filters.sourceAuthorityTiers.length === 0 ||
+      sourceAuthorityTiersForSources(row.sources).some((tier) =>
+        filters.sourceAuthorityTiers.includes(tier),
+      ) ||
+      (record.source_authority_tier
+        ? filters.sourceAuthorityTiers.includes(record.source_authority_tier)
+        : false)) &&
+    (filters.sourceRoles.length === 0 ||
+      row.sources.some((source) =>
+        sourceRolesForRecord(source).some((role) =>
+          filters.sourceRoles.includes(role),
+        ),
+      )) &&
+    (filters.canonicalSourceStatuses.length === 0 ||
+      canonicalStatusesForRecord(record).some((status) =>
+        filters.canonicalSourceStatuses.includes(status),
+      ) ||
+      row.sources.some((source) =>
+        canonicalStatusesForRecord(source).some((status) =>
+          filters.canonicalSourceStatuses.includes(status),
+        ),
+      )) &&
+    (filters.bcProtocolAlignments.length === 0 ||
+      (record.bc_protocol_alignment
+        ? filters.bcProtocolAlignments.includes(record.bc_protocol_alignment)
+        : false) ||
+      row.sources.some(
+        (source) =>
+          source.bc_protocol_alignment !== undefined &&
+          source.bc_protocol_alignment !== null &&
+          filters.bcProtocolAlignments.includes(source.bc_protocol_alignment),
       )) &&
     (filters.zoteroStatuses.length === 0 ||
       evidenceSources.some((source) =>
@@ -512,6 +590,32 @@ function equationMatchesFilters(
       evidenceSources.some((source) =>
         filters.authorityScopes.includes(source.authority_scope),
       )) &&
+    (filters.sourceAuthorityTiers.length === 0 ||
+      sourceAuthorityTiersForSources(row.sources).some((tier) =>
+        filters.sourceAuthorityTiers.includes(tier),
+      )) &&
+    (filters.sourceRoles.length === 0 ||
+      row.sources.some((source) =>
+        sourceRolesForRecord(source).some((role) =>
+          filters.sourceRoles.includes(role),
+        ),
+      )) &&
+    (filters.canonicalSourceStatuses.length === 0 ||
+      canonicalStatusesForRecord(record).some((status) =>
+        filters.canonicalSourceStatuses.includes(status),
+      ) ||
+      row.sources.some((source) =>
+        canonicalStatusesForRecord(source).some((status) =>
+          filters.canonicalSourceStatuses.includes(status),
+        ),
+      )) &&
+    (filters.bcProtocolAlignments.length === 0 ||
+      row.sources.some(
+        (source) =>
+          source.bc_protocol_alignment !== undefined &&
+          source.bc_protocol_alignment !== null &&
+          filters.bcProtocolAlignments.includes(source.bc_protocol_alignment),
+      )) &&
     (filters.zoteroStatuses.length === 0 ||
       evidenceSources.some((source) =>
         filters.zoteroStatuses.includes(source.zotero_status),
@@ -562,6 +666,12 @@ function sourceMatchesFilters(
     record.external_file_hint,
     record.notes,
     record.authority_scope,
+    record.source_authority_tier,
+    record.calculator_source_role,
+    record.canonical_source_status,
+    record.bc_protocol_alignment,
+    record.bc_protocol_basis,
+    record.source_crystallization_date,
     record.currentness_status,
     record.version,
     record.page_last_modified,
@@ -601,6 +711,19 @@ function sourceMatchesFilters(
   return (
     matchesSearch(searchable, filters.search) &&
     arrayIncludesSelected(filters.authorityScopes, record.authority_scope) &&
+    arrayIntersectsSelected(
+      filters.sourceAuthorityTiers,
+      record.source_authority_tier ? [record.source_authority_tier] : [],
+    ) &&
+    arrayIntersectsSelected(filters.sourceRoles, sourceRolesForRecord(record)) &&
+    arrayIntersectsSelected(
+      filters.canonicalSourceStatuses,
+      canonicalStatusesForRecord(record),
+    ) &&
+    arrayIntersectsSelected(
+      filters.bcProtocolAlignments,
+      record.bc_protocol_alignment ? [record.bc_protocol_alignment] : [],
+    ) &&
     arrayIncludesSelected(filters.currentnessStatuses, record.currentness_status) &&
     arrayIncludesSelected(filters.zoteroStatuses, record.zotero_status) &&
     arrayIntersectsSelected(filters.sourceIds, [record.source_id]) &&
@@ -677,6 +800,10 @@ export function emptyEvidenceLibraryFilters(): EvidenceLibraryFilters {
     extractionStatuses: [],
     jurisdictions: [],
     authorityScopes: [],
+    sourceAuthorityTiers: [],
+    sourceRoles: [],
+    canonicalSourceStatuses: [],
+    bcProtocolAlignments: [],
     currentnessStatuses: [],
     zoteroStatuses: [],
     receptorGroups: [],
@@ -704,6 +831,10 @@ export function createEvidenceLibraryFilters(
     extractionStatuses: request.extractionStatuses ?? [],
     jurisdictions: request.jurisdictions ?? [],
     authorityScopes: request.authorityScopes ?? [],
+    sourceAuthorityTiers: request.sourceAuthorityTiers ?? [],
+    sourceRoles: request.sourceRoles ?? [],
+    canonicalSourceStatuses: request.canonicalSourceStatuses ?? [],
+    bcProtocolAlignments: request.bcProtocolAlignments ?? [],
     currentnessStatuses: request.currentnessStatuses ?? [],
     zoteroStatuses: request.zoteroStatuses ?? [],
     receptorGroups: request.receptorGroups ?? [],
@@ -727,7 +858,18 @@ export function humanizeCatalogLabel(value: string): string {
     user_entered_or_derived: 'user-entered or derived',
     canonical_candidate: 'canonical candidate',
     supporting_context: 'supporting context',
+    policy_compilation: 'policy compilation',
     implementation_scaffold: 'implementation scaffold',
+    tier_1_government_or_regulatory: 'Tier 1 government or regulatory',
+    tier_2_peer_reviewed_literature: 'Tier 2 peer-reviewed literature',
+    tier_3_supporting_science: 'Tier 3 supporting science',
+    direct_source_verified: 'direct source verified',
+    needs_direct_source_check: 'needs direct source check',
+    needs_exact_source_locator: 'needs exact source locator',
+    protocol_1_v5_0_effective_2027_01_15:
+      'Protocol 1 v5.0 effective 2027-01-15',
+    protocol_28_v3_0_policy_compilation:
+      'Protocol 28 v3.0 policy compilation',
   };
   if (labels[value]) return labels[value];
   return value.replaceAll('_', ' ').replaceAll('-', ' ');
@@ -758,6 +900,15 @@ function sourceLeadSummary(raw: unknown): EvidenceLibrarySourceLeadSummary {
     ...leadArray(raw, 'next_steps'),
   ].filter((item): item is string => typeof item === 'string');
 
+  const primarySourceId =
+    typeof primary?.source_id === 'string' ? primary.source_id : null;
+  const primarySourceRole =
+    typeof primary?.calculator_source_role === 'string'
+      ? (primary.calculator_source_role as CalculatorSourceRole)
+      : primarySourceId
+        ? getSourceRecord(primarySourceId)?.calculator_source_role ?? null
+        : null;
+
   return {
     leadSetId: String(record.lead_set_id ?? 'source-leads'),
     label: String(
@@ -771,8 +922,8 @@ function sourceLeadSummary(raw: unknown): EvidenceLibrarySourceLeadSummary {
       typeof record.source_of_sources_rule === 'string'
         ? record.source_of_sources_rule
         : null,
-    primarySourceId:
-      typeof primary?.source_id === 'string' ? primary.source_id : null,
+    primarySourceId,
+    primarySourceRole,
     counts: {
       equationLeads: leadArray(raw, 'equation_leads').length,
       parameterValueLeads: leadArray(raw, 'parameter_value_leads').length,
@@ -798,6 +949,7 @@ function sourceLeadMatchesFilters(
     lead.status,
     lead.rule,
     lead.primarySourceId,
+    lead.primarySourceRole,
     ...lead.nextActions,
   ]);
 
@@ -807,7 +959,10 @@ function sourceLeadMatchesFilters(
       (lead.primarySourceId !== null &&
         filters.sourceIds.includes(lead.primarySourceId))) &&
     (filters.evidenceSupportStatuses.length === 0 ||
-      filters.evidenceSupportStatuses.includes('reference_mining_lead'))
+      filters.evidenceSupportStatuses.includes('reference_mining_lead')) &&
+    (filters.sourceRoles.length === 0 ||
+      (lead.primarySourceRole !== null &&
+        filters.sourceRoles.includes(lead.primarySourceRole)))
   );
 }
 
@@ -954,6 +1109,9 @@ function buildAudit(
       referenceMining: evidenceSourceRecords.filter(
         (record) => record.calculator_source_role === 'reference_mining',
       ).length,
+      policyCompilations: evidenceSourceRecords.filter(
+        (record) => record.calculator_source_role === 'policy_compilation',
+      ).length,
       implementationScaffold: SOURCE_RECORDS.filter(
         (record) => record.calculator_source_role === 'implementation_scaffold',
       ).length,
@@ -1038,6 +1196,31 @@ export function buildEvidenceLibraryView(
       ),
       authorityScopes: facet(
         evidenceSourceRecords.map((record) => record.authority_scope),
+      ),
+      sourceAuthorityTiers: facet(
+        evidenceSourceRecords
+          .map((record) => record.source_authority_tier)
+          .filter((tier): tier is SourceAuthorityTier => Boolean(tier)),
+      ),
+      sourceRoles: facet(
+        evidenceSourceRecords.flatMap((record) => sourceRolesForRecord(record)),
+      ),
+      canonicalSourceStatuses: facet(
+        evidenceSourceRecords
+          .flatMap((record) => canonicalStatusesForRecord(record))
+          .concat(
+            PARAMETER_VALUE_RECORDS.flatMap((record) =>
+              canonicalStatusesForRecord(record),
+            ),
+          ),
+      ),
+      bcProtocolAlignments: facet(
+        [
+          ...evidenceSourceRecords.map((record) => record.bc_protocol_alignment),
+          ...PARAMETER_VALUE_RECORDS.map(
+            (record) => record.bc_protocol_alignment,
+          ),
+        ].filter((alignment): alignment is string => Boolean(alignment)),
       ),
       currentnessStatuses: facet(
         evidenceSourceRecords.map((record) => record.currentness_status),

@@ -14,6 +14,7 @@ import {
 import wqciuSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/wqciu_reference_leads_2026_05_23.json';
 import epaEcoSslSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/epa_ecossl_reference_leads_2026_05_23.json';
 import erdcBsafSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/erdc_bsaf_reference_leads_2026_05_23.json';
+import bcProtocol28TrvSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/bc_protocol28_trv_reference_leads_2026_05_23.json';
 
 function expectUnique(values: string[]): void {
   expect(new Set(values).size).toBe(values.length);
@@ -71,6 +72,31 @@ const ERDC_BSAF_SOURCE_LEADS = erdcBsafSourceLeadsRaw as {
     lead_id: string;
     url: string;
     promotion_status: string;
+    canonical_source_status: string;
+  }>;
+};
+
+const BC_PROTOCOL28_TRV_SOURCE_LEADS = bcProtocol28TrvSourceLeadsRaw as {
+  status: string;
+  source_of_sources_rule: string;
+  primary_document: {
+    source_id: string;
+    calculator_source_role: string;
+    canonical_source_status: string;
+    source_crystallization_date: string;
+  };
+  section_leads: Array<{
+    lead_id: string;
+    canonical_source_status: string;
+  }>;
+  parameter_value_leads: Array<{
+    lead_id: string;
+    parameter_value_ids?: string[];
+    promotion_status: string;
+    canonical_source_status: string;
+  }>;
+  document_leads: Array<{
+    lead_id: string;
     canonical_source_status: string;
   }>;
 };
@@ -228,6 +254,7 @@ describe('matrix options provenance catalog', () => {
     );
 
     expect([...defaultStatuses].sort()).toEqual([
+      'available_option',
       'current_default',
       'not_default',
     ]);
@@ -463,6 +490,101 @@ describe('matrix options provenance catalog', () => {
         expect(evidence.locator_type, evidence.evidence_id).toBe(
           'current_calculator',
         );
+      }
+    }
+  });
+
+  it('catalogs Protocol 28 as a policy compilation, not calculator evidence', () => {
+    const protocol28 = getSourceRecord('src-bc-protocol-28-v3-0-2024');
+
+    expect(protocol28?.calculator_source_role).toBe('policy_compilation');
+    expect(protocol28?.source_authority_tier).toBe(
+      'tier_1_government_or_regulatory',
+    );
+    expect(protocol28?.canonical_source_status).toBe(
+      'needs_direct_source_check',
+    );
+    expect(protocol28?.bc_protocol_alignment).toBe(
+      'protocol_28_v3_0_policy_compilation',
+    );
+    expect(protocol28?.source_crystallization_date).toBe('2015-11-30');
+    expect(protocol28?.notes).toMatch(/source-mining/i);
+    expect(protocol28?.conflict_rule).toMatch(/Do not treat Protocol 28/i);
+  });
+
+  it('keeps Protocol 28 TRV candidates pending until original sources are checked', () => {
+    const protocol28Values = PARAMETER_VALUE_RECORDS.filter((record) =>
+      record.source_ids.includes('src-bc-protocol-28-v3-0-2024'),
+    );
+
+    expect(protocol28Values).toHaveLength(6);
+    for (const record of protocol28Values) {
+      expect(record.default_status, record.parameter_value_id).toBe(
+        'available_option',
+      );
+      expect(record.evidence_support_status, record.parameter_value_id).toBe(
+        'pending_source_locator',
+      );
+      expect(record.canonical_source_status, record.parameter_value_id).toBe(
+        'needs_direct_source_check',
+      );
+      expect(record.qa_status, record.parameter_value_id).toBe('needs_review');
+      expect(record.extraction_status, record.parameter_value_id).toBe(
+        'extracted_from_source',
+      );
+      expect(record.source_relationships?.[0]?.role).toBe(
+        'policy_compilation',
+      );
+      expect(record.review_notes, record.parameter_value_id).toMatch(
+        /policy compilation/i,
+      );
+      for (const evidence of record.evidence_items) {
+        expect(evidence.extraction_method, evidence.evidence_id).toBe(
+          'manual_source_extraction',
+        );
+        expect(evidence.locator_type, evidence.evidence_id).toBe(
+          'source_table',
+        );
+        expect(evidence.note, evidence.evidence_id).toMatch(
+          /Original source/i,
+        );
+      }
+    }
+  });
+
+  it('keeps Protocol 28 source leads as unpromoted TRV workbench records', () => {
+    expect(BC_PROTOCOL28_TRV_SOURCE_LEADS.status).toBe('needs_review');
+    expect(
+      BC_PROTOCOL28_TRV_SOURCE_LEADS.source_of_sources_rule,
+    ).toMatch(/original cited government or regulatory source/i);
+    expect(
+      BC_PROTOCOL28_TRV_SOURCE_LEADS.primary_document.source_id,
+    ).toBe('src-bc-protocol-28-v3-0-2024');
+    expect(
+      BC_PROTOCOL28_TRV_SOURCE_LEADS.primary_document.calculator_source_role,
+    ).toBe('policy_compilation');
+    expect(
+      BC_PROTOCOL28_TRV_SOURCE_LEADS.primary_document.canonical_source_status,
+    ).toBe('needs_direct_source_check');
+    expect(
+      BC_PROTOCOL28_TRV_SOURCE_LEADS.primary_document.source_crystallization_date,
+    ).toBe('2015-11-30');
+    expect(BC_PROTOCOL28_TRV_SOURCE_LEADS.section_leads).toHaveLength(2);
+    expect(BC_PROTOCOL28_TRV_SOURCE_LEADS.parameter_value_leads).toHaveLength(4);
+    expect(BC_PROTOCOL28_TRV_SOURCE_LEADS.document_leads).toHaveLength(2);
+
+    for (const lead of BC_PROTOCOL28_TRV_SOURCE_LEADS.parameter_value_leads) {
+      expect(lead.promotion_status, lead.lead_id).toBe('needs_review');
+      expect(lead.canonical_source_status, lead.lead_id).toBe(
+        'needs_direct_source_check',
+      );
+      for (const valueId of lead.parameter_value_ids ?? []) {
+        expect(
+          PARAMETER_VALUE_RECORDS.some(
+            (record) => record.parameter_value_id === valueId,
+          ),
+          valueId,
+        ).toBe(true);
       }
     }
   });

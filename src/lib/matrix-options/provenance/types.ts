@@ -28,9 +28,22 @@ export type SourceCurrentnessStatus =
   | 'superseded'
   | 'unknown';
 
+export type SourceAuthorityTier =
+  | 'tier_1_government_or_regulatory'
+  | 'tier_2_peer_reviewed_literature'
+  | 'tier_3_supporting_science'
+  | 'implementation_scaffold';
+
+export type CanonicalSourceStatus =
+  | 'direct_source_verified'
+  | 'needs_direct_source_check'
+  | 'needs_exact_source_locator'
+  | 'not_applicable';
+
 export type CalculatorSourceRole =
   | 'canonical_candidate'
   | 'reference_mining'
+  | 'policy_compilation'
   | 'implementation_scaffold';
 
 export type CatalogQaStatus =
@@ -77,6 +90,7 @@ export type EvidenceLocatorType =
 export type SourceRelationshipRole =
   | 'canonical_candidate'
   | 'supporting_context'
+  | 'policy_compilation'
   | 'reference_mining'
   | 'implementation_scaffold';
 
@@ -126,6 +140,7 @@ export interface SourceRecord {
   file_storage: SourceFileStorage;
   notes: string | null;
   authority_scope: SourceAuthorityScope;
+  source_authority_tier?: SourceAuthorityTier;
   currentness_status: SourceCurrentnessStatus;
   version: string | null;
   page_last_modified: string | null;
@@ -133,6 +148,10 @@ export interface SourceRecord {
   conflict_rule: string | null;
   supersedes_source_ids: string[];
   calculator_source_role?: CalculatorSourceRole;
+  canonical_source_status?: CanonicalSourceStatus;
+  bc_protocol_alignment?: string | null;
+  bc_protocol_basis?: string | null;
+  source_crystallization_date?: string | null;
 }
 
 export interface EquationRecord {
@@ -172,12 +191,19 @@ export interface ParameterValueRecord {
   extraction_status: ExtractionStatus;
   qa_status: CatalogQaStatus;
   source_ids: string[];
+  canonical_source_ids?: string[];
+  compilation_source_ids?: string[];
   equation_ids: string[];
   jurisdiction: string;
   applicability: string;
   uncertainty: string | null;
   evidence_items: EvidenceItem[];
   review_notes: string;
+  source_authority_tier?: SourceAuthorityTier;
+  canonical_source_status?: CanonicalSourceStatus;
+  bc_protocol_alignment?: string | null;
+  bc_protocol_basis?: string | null;
+  source_crystallization_date?: string | null;
   source_relationships?: SourceRelationship[];
   receptor_groups?: string[];
   population_groups?: string[];
@@ -212,7 +238,6 @@ export interface ResolvedProvenanceRow {
 }
 
 export type EvidenceLibraryViewMode =
-  | 'all'
   | 'by-parameter'
   | 'sources'
   | 'source-leads'
@@ -230,6 +255,10 @@ export interface EvidenceLibraryFilters {
   extractionStatuses: ExtractionStatus[];
   jurisdictions: string[];
   authorityScopes: SourceAuthorityScope[];
+  sourceAuthorityTiers: SourceAuthorityTier[];
+  sourceRoles: CalculatorSourceRole[];
+  canonicalSourceStatuses: CanonicalSourceStatus[];
+  bcProtocolAlignments: string[];
   currentnessStatuses: SourceCurrentnessStatus[];
   zoteroStatuses: ZoteroStatus[];
   receptorGroups: string[];

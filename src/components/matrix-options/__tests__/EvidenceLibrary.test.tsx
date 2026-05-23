@@ -29,30 +29,55 @@ describe('EvidenceLibrary', () => {
     renderControlled();
 
     expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^All$/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /Candidate values are read-only/,
+    );
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /Protocol 28/,
+    );
+    expect(screen.getByText(/Approved values/)).toBeInTheDocument();
+    expect(screen.getByText(/Pending locators/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Benzo\[a\]pyrene log Kow/,
-    );
-    expect(screen.getByTestId('evidence-library-equations')).toHaveTextContent(
-      /Human Health Direct Contact sediment screen/,
     );
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Current calculator scaffold only/,
     );
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /original source pending/i,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
+    expect(screen.getByTestId('evidence-library-equations')).toHaveTextContent(
+      /Human Health Direct Contact sediment screen/,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
     expect(screen.getByTestId('evidence-library-sources')).not.toHaveTextContent(
       /calculator scaffold/i,
     );
     expect(screen.getByTestId('evidence-library-sources')).toHaveTextContent(
       /Zotero link pending/,
     );
+    expect(screen.getByTestId('evidence-library-sources')).toHaveTextContent(
+      /policy compilation/i,
+    );
     expect(screen.getByTestId('references-values-tab')).not.toHaveTextContent(
       /pending owner export/i,
     );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getAllByText(/Arsenic oral RfD/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/current calculator scaffold/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Approved values/)).toBeInTheDocument();
-    expect(screen.getByText(/Pending locators/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Source Leads$/ }));
     expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Source-of-sources only; not canonical calculator evidence/i,
+      /Source-of-sources or policy-compilation context only/i,
     );
   });
 
@@ -64,8 +89,11 @@ describe('EvidenceLibrary', () => {
     });
 
     expect(handleChange).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByText(/Aroclor 1254 freshwater BSAF for human food web/)).toBeInTheDocument();
     expect(screen.queryByText(/Benzo\[a\]pyrene log Kow/)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
     expect(screen.getByTestId('evidence-library-equations')).toHaveTextContent(
       /Human Health Food Web sediment screen/,
     );
@@ -77,6 +105,7 @@ describe('EvidenceLibrary', () => {
     fireEvent.change(screen.getByLabelText(/^Species$/), {
       target: { value: 'fish or shellfish' },
     });
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByText(/Aroclor 1254 oral RfD/)).toBeInTheDocument();
     expect(screen.queryByText(/Benzo\[a\]pyrene log Kow/)).not.toBeInTheDocument();
 
@@ -84,11 +113,13 @@ describe('EvidenceLibrary', () => {
       target: { value: 'general' },
     });
     expect(screen.getAllByText(/Jurisdiction: general/).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Current calculator scaffold only/,
     );
 
     fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
     fireEvent.change(screen.getByLabelText(/^Authority$/), {
       target: { value: 'federal-guidance' },
     });
@@ -101,6 +132,7 @@ describe('EvidenceLibrary', () => {
   it('searches and clears active filters', () => {
     renderControlled();
 
+    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
     fireEvent.change(screen.getByLabelText(/^Search$/), {
       target: { value: 'NIST' },
     });
@@ -112,6 +144,7 @@ describe('EvidenceLibrary', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
     expect(screen.queryByText(/search: NIST/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByText(/Benzo\[a\]pyrene log Kow/)).toBeInTheDocument();
   });
 
@@ -144,6 +177,12 @@ describe('EvidenceLibrary', () => {
 
     expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
       /ACFN WQCIU report/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /BC Protocol 28 v3\.0/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /policy compilation/i,
     );
     expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
       /underlying cited source as canonical/i,

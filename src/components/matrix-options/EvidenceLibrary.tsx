@@ -27,9 +27,8 @@ interface EvidenceLibraryProps {
 }
 
 const VIEW_MODES: Array<{ id: EvidenceLibraryViewMode; label: string }> = [
-  { id: 'all', label: 'All' },
-  { id: 'values', label: 'Values' },
   { id: 'by-parameter', label: 'By Parameter' },
+  { id: 'values', label: 'Values' },
   { id: 'equations', label: 'Equations' },
   { id: 'sources', label: 'Sources' },
   { id: 'source-leads', label: 'Source Leads' },
@@ -51,6 +50,10 @@ const FILTER_LABELS: Partial<Record<keyof EvidenceLibraryFilters, string>> = {
   extractionStatuses: 'Extraction',
   jurisdictions: 'Jurisdiction',
   sourceIds: 'Source',
+  sourceAuthorityTiers: 'Tier',
+  sourceRoles: 'Source role',
+  canonicalSourceStatuses: 'Canonical status',
+  bcProtocolAlignments: 'Policy alignment',
   parameterValueIds: 'Value',
   candidateGroupIds: 'Parameter',
   equationIds: 'Equation',
@@ -154,7 +157,21 @@ function tagList(values: string[]): string {
 
 function sourceLabels(row: EvidenceLibraryValueRow): string {
   const evidenceSources = row.sources.filter(isCalculatorEvidenceSource);
+  const policyCompilationSources = row.sources.filter(
+    (source) => source.calculator_source_role === 'policy_compilation',
+  );
+  const referenceMiningSources = row.sources.filter(
+    (source) => source.calculator_source_role === 'reference_mining',
+  );
   if (evidenceSources.length === 0) {
+    if (policyCompilationSources.length > 0) {
+      const first = policyCompilationSources[0].short_citation;
+      return `${first}; original source pending`;
+    }
+    if (referenceMiningSources.length > 0) {
+      const first = referenceMiningSources[0].short_citation;
+      return `${first}; reference-mining only`;
+    }
     return row.record.evidence_support_status === 'user_entered_or_derived'
       ? 'User-entered or derived value'
       : 'Current calculator scaffold only';
@@ -371,12 +388,12 @@ function SourceLeadCard({ lead }: { lead: EvidenceLibrarySourceLeadSummary }) {
               {lead.label}
             </div>
             <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Source-of-sources only; not canonical calculator evidence.
+              Source-of-sources or policy-compilation context only; not canonical calculator evidence.
             </div>
           </div>
           <div className="flex flex-wrap gap-1 sm:justify-end">
             <StatusBadge value={lead.status} />
-            <StatusBadge value="reference_mining_lead" />
+            <StatusBadge value={lead.primarySourceRole ?? 'reference_mining_lead'} />
           </div>
         </div>
       </summary>
@@ -410,7 +427,7 @@ export default function EvidenceLibrary({
   onFiltersChange,
   className,
 }: EvidenceLibraryProps) {
-  const [viewMode, setViewMode] = useState<EvidenceLibraryViewMode>('all');
+  const [viewMode, setViewMode] = useState<EvidenceLibraryViewMode>('by-parameter');
   const library = useMemo(() => buildEvidenceLibraryView(filters), [filters]);
   const activeLabels = activeFilterLabels(filters);
   const assumptionValues = library.values.filter(
@@ -425,12 +442,73 @@ export default function EvidenceLibrary({
     onFiltersChange(setSingleFilter(filters, key, value));
   };
 
-  const showValues =
-    viewMode === 'all' || viewMode === 'values' || viewMode === 'assumptions';
+  const showValues = viewMode === 'values' || viewMode === 'assumptions';
   const showValueGroups = viewMode === 'by-parameter';
-  const showEquations = viewMode === 'all' || viewMode === 'equations';
-  const showSources = viewMode === 'all' || viewMode === 'sources';
-  const showSourceLeads = viewMode === 'all' || viewMode === 'source-leads';
+  const showEquations = viewMode === 'equations';
+  const showSources = viewMode === 'sources';
+  const showSourceLeads = viewMode === 'source-leads';
+  const filterControls: Array<{
+    key: FilterArrayKey;
+    label: string;
+    options: EvidenceLibraryFacetOption[];
+  }> =
+    viewMode === 'sources'
+      ? [
+          { key: 'authorityScopes', label: 'Authority', options: library.facets.authorityScopes },
+          { key: 'sourceAuthorityTiers', label: 'Tier', options: library.facets.sourceAuthorityTiers },
+          { key: 'sourceRoles', label: 'Source role', options: library.facets.sourceRoles },
+          {
+            key: 'canonicalSourceStatuses',
+            label: 'Canonical status',
+            options: library.facets.canonicalSourceStatuses,
+          },
+          {
+            key: 'currentnessStatuses',
+            label: 'Currentness',
+            options: library.facets.currentnessStatuses,
+          },
+          { key: 'zoteroStatuses', label: 'Zotero', options: library.facets.zoteroStatuses },
+          {
+            key: 'bcProtocolAlignments',
+            label: 'Policy alignment',
+            options: library.facets.bcProtocolAlignments,
+          },
+        ]
+      : viewMode === 'equations'
+        ? [
+            { key: 'pathways', label: 'Pathway', options: library.facets.pathways },
+            { key: 'evidenceSupportStatuses', label: 'Evidence', options: library.facets.evidenceSupportStatuses },
+            { key: 'qaStatuses', label: 'QA', options: library.facets.qaStatuses },
+            { key: 'authorityScopes', label: 'Authority', options: library.facets.authorityScopes },
+            { key: 'sourceAuthorityTiers', label: 'Tier', options: library.facets.sourceAuthorityTiers },
+            { key: 'sourceRoles', label: 'Source role', options: library.facets.sourceRoles },
+            {
+              key: 'currentnessStatuses',
+              label: 'Currentness',
+              options: library.facets.currentnessStatuses,
+            },
+          ]
+        : viewMode === 'source-leads'
+          ? [
+              { key: 'sourceRoles', label: 'Source role', options: library.facets.sourceRoles },
+            ]
+          : [
+              { key: 'pathways', label: 'Pathway', options: library.facets.pathways },
+              { key: 'substanceKeys', label: 'Substance', options: library.facets.substances },
+              { key: 'evidenceSupportStatuses', label: 'Evidence', options: library.facets.evidenceSupportStatuses },
+              { key: 'defaultStatuses', label: 'Default', options: library.facets.defaultStatuses },
+              { key: 'qaStatuses', label: 'QA', options: library.facets.qaStatuses },
+              { key: 'extractionStatuses', label: 'Extraction', options: library.facets.extractionStatuses },
+              { key: 'jurisdictions', label: 'Jurisdiction', options: library.facets.jurisdictions },
+              {
+                key: 'bcProtocolAlignments',
+                label: 'Policy alignment',
+                options: library.facets.bcProtocolAlignments,
+              },
+              { key: 'receptorGroups', label: 'Receptor', options: library.facets.receptorGroups },
+              { key: 'populationGroups', label: 'Population', options: library.facets.populationGroups },
+              { key: 'speciesGroups', label: 'Species', options: library.facets.speciesGroups },
+            ];
 
   return (
     <section
@@ -449,7 +527,7 @@ export default function EvidenceLibrary({
           </div>
         </div>
         <div
-          className="grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900 sm:inline-grid sm:w-auto sm:grid-cols-7"
+          className="grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900 sm:inline-grid sm:w-auto sm:grid-cols-6"
           aria-label="Evidence library view"
         >
           {VIEW_MODES.map((mode) => (
@@ -474,7 +552,7 @@ export default function EvidenceLibrary({
       <AuditStrip audit={library.audit} />
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/40">
-        <div className="grid gap-3 lg:grid-cols-[minmax(220px,1.2fr)_repeat(4,minmax(150px,1fr))]">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
             <span className="mb-1 block">Search</span>
             <span className="relative block">
@@ -488,88 +566,15 @@ export default function EvidenceLibrary({
               />
             </span>
           </label>
-          <FilterSelect
-            label="Pathway"
-            value={firstValue(filters, 'pathways')}
-            options={library.facets.pathways}
-            onChange={(value) => updateFilter('pathways', value)}
-          />
-          <FilterSelect
-            label="Substance"
-            value={firstValue(filters, 'substanceKeys')}
-            options={library.facets.substances}
-            onChange={(value) => updateFilter('substanceKeys', value)}
-          />
-          <FilterSelect
-            label="QA"
-            value={firstValue(filters, 'qaStatuses')}
-            options={library.facets.qaStatuses}
-            onChange={(value) => updateFilter('qaStatuses', value)}
-          />
-          <FilterSelect
-            label="Currentness"
-            value={firstValue(filters, 'currentnessStatuses')}
-            options={library.facets.currentnessStatuses}
-            onChange={(value) => updateFilter('currentnessStatuses', value)}
-          />
-        </div>
-        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-          <FilterSelect
-            label="Extraction"
-            value={firstValue(filters, 'extractionStatuses')}
-            options={library.facets.extractionStatuses}
-            onChange={(value) => updateFilter('extractionStatuses', value)}
-          />
-          <FilterSelect
-            label="Default"
-            value={firstValue(filters, 'defaultStatuses')}
-            options={library.facets.defaultStatuses}
-            onChange={(value) => updateFilter('defaultStatuses', value)}
-          />
-          <FilterSelect
-            label="Evidence"
-            value={firstValue(filters, 'evidenceSupportStatuses')}
-            options={library.facets.evidenceSupportStatuses}
-            onChange={(value) => updateFilter('evidenceSupportStatuses', value)}
-          />
-          <FilterSelect
-            label="Zotero"
-            value={firstValue(filters, 'zoteroStatuses')}
-            options={library.facets.zoteroStatuses}
-            onChange={(value) => updateFilter('zoteroStatuses', value)}
-          />
-          <FilterSelect
-            label="Authority"
-            value={firstValue(filters, 'authorityScopes')}
-            options={library.facets.authorityScopes}
-            onChange={(value) => updateFilter('authorityScopes', value)}
-          />
-          <FilterSelect
-            label="Jurisdiction"
-            value={firstValue(filters, 'jurisdictions')}
-            options={library.facets.jurisdictions}
-            onChange={(value) => updateFilter('jurisdictions', value)}
-          />
-        </div>
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
-          <FilterSelect
-            label="Receptor"
-            value={firstValue(filters, 'receptorGroups')}
-            options={library.facets.receptorGroups}
-            onChange={(value) => updateFilter('receptorGroups', value)}
-          />
-          <FilterSelect
-            label="Population"
-            value={firstValue(filters, 'populationGroups')}
-            options={library.facets.populationGroups}
-            onChange={(value) => updateFilter('populationGroups', value)}
-          />
-          <FilterSelect
-            label="Species"
-            value={firstValue(filters, 'speciesGroups')}
-            options={library.facets.speciesGroups}
-            onChange={(value) => updateFilter('speciesGroups', value)}
-          />
+          {filterControls.map((control) => (
+            <FilterSelect
+              key={control.key}
+              label={control.label}
+              value={firstValue(filters, control.key)}
+              options={control.options}
+              onChange={(value) => updateFilter(control.key, value)}
+            />
+          ))}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {activeLabels.map((label) => (
@@ -679,6 +684,22 @@ export default function EvidenceLibrary({
                             <div>Jurisdiction: {row.record.jurisdiction}</div>
                             <div>Candidate group: {row.record.candidate_group_id}</div>
                             <div>Evidence: {row.record.evidence_items.length}</div>
+                            <div>
+                              Canonical source:{' '}
+                              {row.record.canonical_source_status
+                                ? humanizeCatalogLabel(row.record.canonical_source_status)
+                                : 'Not recorded'}
+                            </div>
+                            <div>
+                              Policy alignment:{' '}
+                              {row.record.bc_protocol_alignment
+                                ? humanizeCatalogLabel(row.record.bc_protocol_alignment)
+                                : 'Not recorded'}
+                            </div>
+                            <div>
+                              Source crystallization:{' '}
+                              {row.record.source_crystallization_date ?? 'Not recorded'}
+                            </div>
                           </div>
                           <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
                             Source relationships: {sourceRelationshipLabels(row)}
@@ -778,6 +799,7 @@ export default function EvidenceLibrary({
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
                 <tr>
                   <th className="px-3 py-2 font-semibold">Source</th>
+                  <th className="px-3 py-2 font-semibold">Role / tier</th>
                   <th className="px-3 py-2 font-semibold">Authority</th>
                   <th className="px-3 py-2 font-semibold">Currentness</th>
                   <th className="px-3 py-2 font-semibold">Zotero</th>
@@ -816,6 +838,32 @@ export default function EvidenceLibrary({
                       )}
                     </td>
                     <td className="px-3 py-2">
+                      <div className="flex flex-wrap gap-1">
+                        <StatusBadge
+                          value={
+                            row.record.calculator_source_role ??
+                            'canonical_candidate'
+                          }
+                        />
+                        {row.record.source_authority_tier && (
+                          <StatusBadge value={row.record.source_authority_tier} />
+                        )}
+                        {row.record.canonical_source_status && (
+                          <StatusBadge value={row.record.canonical_source_status} />
+                        )}
+                      </div>
+                      {row.record.bc_protocol_alignment && (
+                        <div className="mt-1 text-xs text-slate-500">
+                          {humanizeCatalogLabel(row.record.bc_protocol_alignment)}
+                        </div>
+                      )}
+                      {row.record.source_crystallization_date && (
+                        <div className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                          crystallized {row.record.source_crystallization_date}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
                       <StatusBadge value={row.record.authority_scope} />
                     </td>
                     <td className="px-3 py-2">
@@ -842,7 +890,7 @@ export default function EvidenceLibrary({
                 ))}
                 {library.sources.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-3 py-6 text-center text-sm text-slate-500">
+                    <td colSpan={6} className="px-3 py-6 text-center text-sm text-slate-500">
                       No sources match.
                     </td>
                   </tr>

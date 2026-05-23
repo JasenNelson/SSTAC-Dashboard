@@ -1,0 +1,143 @@
+{
+  "lead_set_id": "bc-protocol28-trv-reference-leads-2026-05-23",
+  "status": "needs_review",
+  "created_at": "2026-05-23",
+  "created_by": "codex",
+  "policy": "metadata_only_no_source_file_copy",
+  "source_of_sources_rule": "Protocol 28 is a BC policy compilation and TRV source-mining aid. Promote the original cited government or regulatory source after direct currentness, value, unit, applicability, and exact-locator checks; do not approve a calculator value solely because Protocol 28 lists it.",
+  "source_checked_at": "2026-05-23",
+  "target_policy_alignment": {
+    "protocol": "Protocol 1 v5.0",
+    "effective_date": "2027-01-15",
+    "reason": "Sediment standards work is expected to land after Protocol 1 v5.0 is in force."
+  },
+  "primary_document": {
+    "source_id": "src-bc-protocol-28-v3-0-2024",
+    "short_citation": "BC Protocol 28 v3.0, 2024",
+    "title": "2016 Standards Derivation Methods",
+    "url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/p28__jan_2021_revisions_final_signed.pdf",
+    "version": "3.0",
+    "approved_at": "2024-04-30",
+    "effective_at": "2024-05-01",
+    "calculator_source_role": "policy_compilation",
+    "promotion_status": "needs_review",
+    "canonical_source_status": "needs_direct_source_check",
+    "source_crystallization_date": "2015-11-30"
+  },
+  "section_leads": [
+    {
+      "lead_id": "p28-section-2-6-human-health-trvs",
+      "locator": "Section 2.6 and Chapter 8, Appendix 8A",
+      "summary": "Human-health soil TRVs compiled for Protocol 28 standards derivation.",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_direct_source_check"
+    },
+    {
+      "lead_id": "p28-section-3-3-ecological-health-trvs",
+      "locator": "Section 3.3 and Chapter 8, Appendix 8B",
+      "summary": "Ecological-health soil TRVs compiled for Protocol 28 standards derivation. These are soil organism TRVs and are not automatically equivalent to the current Matrix Options wildlife BSAF TRV input.",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_direct_source_check"
+    }
+  ],
+  "parameter_value_leads": [
+    {
+      "lead_id": "p28-appendix-8a-bap-sfo",
+      "parameter_value_ids": [
+        "pv-p28-bap-hh-direct-slope",
+        "pv-p28-bap-hh-food-slope"
+      ],
+      "substance": "Benzo[a]pyrene",
+      "locator": "Appendix 8A, PDF page 96",
+      "value": 7.3,
+      "unit": "per mg/kg-bw/day",
+      "trv_type": "SFO",
+      "calculator_relevance": [
+        "human-health-direct",
+        "human-health-food"
+      ],
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_direct_source_check"
+    },
+    {
+      "lead_id": "p28-appendix-8a-arsenic-rfd-sfo",
+      "parameter_value_ids": [
+        "pv-p28-arsenic-hh-food-rfd",
+        "pv-p28-arsenic-hh-food-slope"
+      ],
+      "substance": "Arsenic",
+      "locator": "Appendix 8A, PDF page 96",
+      "values": [
+        {
+          "name": "RfD",
+          "value": 0.0003,
+          "unit": "mg/kg-bw/day"
+        },
+        {
+          "name": "SFO",
+          "value": 1.5,
+          "unit": "per mg/kg-bw/day"
+        }
+      ],
+      "calculator_relevance": [
+        "human-health-food"
+      ],
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_direct_source_check"
+    },
+    {
+      "lead_id": "p28-appendix-8a-pcb-rfd",
+      "parameter_value_ids": [
+        "pv-p28-pcb-hh-food-rfd"
+      ],
+      "substance": "Polychlorinated biphenyls, total",
+      "locator": "Appendix 8A, PDF page 99",
+      "value": 0.00013,
+      "unit": "mg/kg-bw/day",
+      "trv_type": "RfD",
+      "calculator_relevance": [
+        "human-health-food"
+      ],
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_direct_source_check"
+    },
+    {
+      "lead_id": "p28-appendix-8a-zinc-rfd",
+      "parameter_value_ids": [
+        "pv-p28-zinc-hh-food-rfd"
+      ],
+      "substance": "Zinc",
+      "locator": "Appendix 8A, PDF page 100",
+      "value": 0.3,
+      "unit": "mg/kg-bw/day",
+      "trv_type": "RfD",
+      "calculator_relevance": [
+        "human-health-food"
+      ],
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_direct_source_check"
+    }
+  ],
+  "document_leads": [
+    {
+      "lead_id": "p28-appendix-8a-human-health-soil-trvs",
+      "title": "Appendix 8A - TRVs Used to Derive Human Health Soil Standards",
+      "locator": "PDF pages 96-100",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_direct_source_check"
+    },
+    {
+      "lead_id": "p28-appendix-8b-ecological-health-soil-trvs",
+      "title": "Appendix 8B - TRVs Used to Derive Ecological Health Soil Standards",
+      "locator": "PDF pages 101-211",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_direct_source_check"
+    }
+  ],
+  "next_actions": [
+    "Use Protocol 28 to identify BC-aligned TRV candidates and the source hierarchy that produced them.",
+    "Check current Protocol 1 v5.0 hierarchy before choosing canonical source priority.",
+    "Verify each value against the original government or regulatory source before marking it approved source-backed.",
+    "Do not use Appendix 8B soil organism TRVs as wildlife BSAF TRVs without a pathway mapping review."
+  ]
+}

@@ -3800,5 +3800,429 @@
     ],
     "candidate_group_id": "human-health-food__arsenic_inorganic__ba_oral__general",
     "evidence_support_status": "current_calculator_scaffold"
+  },
+  {
+    "parameter_value_id": "pv-p28-bap-hh-direct-slope",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Benzo[a]pyrene oral slope factor - Protocol 28 lead",
+    "value": 7.3,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-bc-protocol-28-v3-0-2024"
+    ],
+    "canonical_source_ids": [],
+    "compilation_source_ids": [
+      "src-bc-protocol-28-v3-0-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "BC",
+    "applicability": "Protocol 28 Appendix 8A human-health soil TRV lead for benzo(a)pyrene. Candidate only; direct canonical source check is pending before use as a calculator default.",
+    "uncertainty": "Protocol 28 crystallization date is 2015-11-30; original-source currentness and exact source locator are pending.",
+    "review_notes": "Listed in Protocol 28 Appendix 8A as an SFO for benzo(a)pyrene. Treat Protocol 28 as a policy compilation and source-mining lead, not the canonical scientific source.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "Protocol 28 lead"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-bc-protocol-28-v3-0-2024",
+        "locator": "Appendix 8A, PDF page 96, benzo(a)pyrene row",
+        "locator_type": "source_table",
+        "value_text": "7.30 (mg/kg/d)-1 SFO",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Original source and current value must be checked directly before promotion.",
+        "evidence_id": "ev-pv-p28-bap-hh-direct-slope-1"
+      }
+    ],
+    "candidate_group_id": "human-health-direct__benzo_a_pyrene__sf_oral_per_mg_per_kg_bw_per_day__BC",
+    "evidence_support_status": "pending_source_locator",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_effective_2027_01_15",
+    "bc_protocol_basis": "Protocol 28 Appendix 8A provides the compiled value; Protocol 1 v5.0 is the target hierarchy for 2027 standards work.",
+    "source_crystallization_date": "2015-11-30",
+    "source_relationships": [
+      {
+        "source_id": "src-bc-protocol-28-v3-0-2024",
+        "role": "policy_compilation",
+        "note": "BC policy compilation showing a TRV value and source hierarchy; original source pending direct check."
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-p28-bap-hh-food-slope",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Benzo[a]pyrene oral slope factor - Protocol 28 lead",
+    "value": 7.3,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-bc-protocol-28-v3-0-2024"
+    ],
+    "canonical_source_ids": [],
+    "compilation_source_ids": [
+      "src-bc-protocol-28-v3-0-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "BC",
+    "applicability": "Protocol 28 Appendix 8A human-health soil TRV lead for benzo(a)pyrene. Candidate only; direct canonical source check is pending before use as a calculator default.",
+    "uncertainty": "Protocol 28 crystallization date is 2015-11-30; original-source currentness and exact source locator are pending.",
+    "review_notes": "Listed in Protocol 28 Appendix 8A as an SFO for benzo(a)pyrene. Treat Protocol 28 as a policy compilation and source-mining lead, not the canonical scientific source.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "Protocol 28 lead"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-bc-protocol-28-v3-0-2024",
+        "locator": "Appendix 8A, PDF page 96, benzo(a)pyrene row",
+        "locator_type": "source_table",
+        "value_text": "7.30 (mg/kg/d)-1 SFO",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Original source and current value must be checked directly before promotion.",
+        "evidence_id": "ev-pv-p28-bap-hh-food-slope-1"
+      }
+    ],
+    "candidate_group_id": "human-health-food__benzo_a_pyrene__sf_oral_per_mg_per_kg_bw_per_day__BC",
+    "evidence_support_status": "pending_source_locator",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_effective_2027_01_15",
+    "bc_protocol_basis": "Protocol 28 Appendix 8A provides the compiled value; Protocol 1 v5.0 is the target hierarchy for 2027 standards work.",
+    "source_crystallization_date": "2015-11-30",
+    "source_relationships": [
+      {
+        "source_id": "src-bc-protocol-28-v3-0-2024",
+        "role": "policy_compilation",
+        "note": "BC policy compilation showing a TRV value and source hierarchy; original source pending direct check."
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-p28-arsenic-hh-food-rfd",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Arsenic oral RfD - Protocol 28 lead",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-bc-protocol-28-v3-0-2024"
+    ],
+    "canonical_source_ids": [],
+    "compilation_source_ids": [
+      "src-bc-protocol-28-v3-0-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "BC",
+    "applicability": "Protocol 28 Appendix 8A human-health soil TRV lead for inorganic arsenic. Candidate only; direct canonical source check is pending before use as a calculator default.",
+    "uncertainty": "Protocol 28 crystallization date is 2015-11-30; original-source currentness and exact source locator are pending.",
+    "review_notes": "Listed in Protocol 28 Appendix 8A as an RfD for arsenic. Treat Protocol 28 as a policy compilation and source-mining lead, not the canonical scientific source.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "Protocol 28 lead"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-bc-protocol-28-v3-0-2024",
+        "locator": "Appendix 8A, PDF page 96, arsenic row",
+        "locator_type": "source_table",
+        "value_text": "3.00E-04 mg/kg/d RfD",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Original source and current value must be checked directly before promotion.",
+        "evidence_id": "ev-pv-p28-arsenic-hh-food-rfd-1"
+      }
+    ],
+    "candidate_group_id": "human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__BC",
+    "evidence_support_status": "pending_source_locator",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_effective_2027_01_15",
+    "bc_protocol_basis": "Protocol 28 Appendix 8A provides the compiled value; Protocol 1 v5.0 is the target hierarchy for 2027 standards work.",
+    "source_crystallization_date": "2015-11-30",
+    "source_relationships": [
+      {
+        "source_id": "src-bc-protocol-28-v3-0-2024",
+        "role": "policy_compilation",
+        "note": "BC policy compilation showing a TRV value and source hierarchy; original source pending direct check."
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-p28-arsenic-hh-food-slope",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Arsenic oral slope factor - Protocol 28 lead",
+    "value": 1.5,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-bc-protocol-28-v3-0-2024"
+    ],
+    "canonical_source_ids": [],
+    "compilation_source_ids": [
+      "src-bc-protocol-28-v3-0-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "BC",
+    "applicability": "Protocol 28 Appendix 8A human-health soil TRV lead for inorganic arsenic. Candidate only; direct canonical source check is pending before use as a calculator default.",
+    "uncertainty": "Protocol 28 crystallization date is 2015-11-30; original-source currentness and exact source locator are pending.",
+    "review_notes": "Listed in Protocol 28 Appendix 8A as an SFO for arsenic. Treat Protocol 28 as a policy compilation and source-mining lead, not the canonical scientific source.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "Protocol 28 lead"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-bc-protocol-28-v3-0-2024",
+        "locator": "Appendix 8A, PDF page 96, arsenic row",
+        "locator_type": "source_table",
+        "value_text": "1.50 (mg/kg/d)-1 SFO",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Original source and current value must be checked directly before promotion.",
+        "evidence_id": "ev-pv-p28-arsenic-hh-food-slope-1"
+      }
+    ],
+    "candidate_group_id": "human-health-food__arsenic_inorganic__sf_oral_per_mg_per_kg_bw_per_day__BC",
+    "evidence_support_status": "pending_source_locator",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_effective_2027_01_15",
+    "bc_protocol_basis": "Protocol 28 Appendix 8A provides the compiled value; Protocol 1 v5.0 is the target hierarchy for 2027 standards work.",
+    "source_crystallization_date": "2015-11-30",
+    "source_relationships": [
+      {
+        "source_id": "src-bc-protocol-28-v3-0-2024",
+        "role": "policy_compilation",
+        "note": "BC policy compilation showing a TRV value and source hierarchy; original source pending direct check."
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-p28-pcb-hh-food-rfd",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Total PCBs oral RfD - Protocol 28 lead",
+    "value": 0.00013,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-bc-protocol-28-v3-0-2024"
+    ],
+    "canonical_source_ids": [],
+    "compilation_source_ids": [
+      "src-bc-protocol-28-v3-0-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "BC",
+    "applicability": "Protocol 28 Appendix 8A human-health soil TRV lead for total PCBs. Candidate only; direct canonical source check and Aroclor/congener applicability review are pending before use.",
+    "uncertainty": "Protocol 28 crystallization date is 2015-11-30; original-source currentness, exact source locator, and mixture applicability are pending.",
+    "review_notes": "Listed in Protocol 28 Appendix 8A as an RfD for total PCBs. Treat Protocol 28 as a policy compilation and source-mining lead, not the canonical scientific source.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "Protocol 28 lead"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-bc-protocol-28-v3-0-2024",
+        "locator": "Appendix 8A, PDF page 99, polychlorinated biphenyls total row",
+        "locator_type": "source_table",
+        "value_text": "1.30E-04 mg/kg/d RfD",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Original source and current value must be checked directly before promotion.",
+        "evidence_id": "ev-pv-p28-pcb-hh-food-rfd-1"
+      }
+    ],
+    "candidate_group_id": "human-health-food__total_pcbs_aroclor_1254__rfd_oral_mg_per_kg_bw_day__BC",
+    "evidence_support_status": "pending_source_locator",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_effective_2027_01_15",
+    "bc_protocol_basis": "Protocol 28 Appendix 8A provides the compiled value; Protocol 1 v5.0 is the target hierarchy for 2027 standards work.",
+    "source_crystallization_date": "2015-11-30",
+    "source_relationships": [
+      {
+        "source_id": "src-bc-protocol-28-v3-0-2024",
+        "role": "policy_compilation",
+        "note": "BC policy compilation showing a TRV value and source hierarchy; original source pending direct check."
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-p28-zinc-hh-food-rfd",
+    "substance_key": "zinc",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Zinc oral RfD - Protocol 28 lead",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-bc-protocol-28-v3-0-2024"
+    ],
+    "canonical_source_ids": [],
+    "compilation_source_ids": [
+      "src-bc-protocol-28-v3-0-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "BC",
+    "applicability": "Protocol 28 Appendix 8A human-health soil TRV lead for zinc. Candidate only; direct canonical source check is pending before use as a calculator default.",
+    "uncertainty": "Protocol 28 crystallization date is 2015-11-30; original-source currentness and exact source locator are pending.",
+    "review_notes": "Listed in Protocol 28 Appendix 8A as an RfD for zinc. Treat Protocol 28 as a policy compilation and source-mining lead, not the canonical scientific source.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "Protocol 28 lead"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-bc-protocol-28-v3-0-2024",
+        "locator": "Appendix 8A, PDF page 100, zinc row",
+        "locator_type": "source_table",
+        "value_text": "3.00E-01 mg/kg/d RfD",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Original source and current value must be checked directly before promotion.",
+        "evidence_id": "ev-pv-p28-zinc-hh-food-rfd-1"
+      }
+    ],
+    "candidate_group_id": "human-health-food__zinc__rfd_oral_mg_per_kg_bw_day__BC",
+    "evidence_support_status": "pending_source_locator",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_effective_2027_01_15",
+    "bc_protocol_basis": "Protocol 28 Appendix 8A provides the compiled value; Protocol 1 v5.0 is the target hierarchy for 2027 standards work.",
+    "source_crystallization_date": "2015-11-30",
+    "source_relationships": [
+      {
+        "source_id": "src-bc-protocol-28-v3-0-2024",
+        "role": "policy_compilation",
+        "note": "BC policy compilation showing a TRV value and source hierarchy; original source pending direct check."
+      }
+    ]
   }
 ]

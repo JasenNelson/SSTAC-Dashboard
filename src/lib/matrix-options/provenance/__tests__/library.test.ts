@@ -18,22 +18,23 @@ describe('matrix options evidence library helpers', () => {
     expect(view.totalCounts.sources).toBeGreaterThan(20);
     expect(view.totalCounts.values).toBeGreaterThan(20);
     expect(view.totalCounts.equations).toBe(5);
-    expect(view.totalCounts.sourceLeads).toBe(3);
+    expect(view.totalCounts.sourceLeads).toBe(4);
     expect(view.values.length).toBe(view.totalCounts.values);
     expect(view.equations.length).toBe(view.totalCounts.equations);
     expect(view.valueGroups).toHaveLength(view.totalCounts.values);
     expect(view.audit.values.approvedSourceBacked).toBe(0);
-    expect(view.audit.values.pendingSourceLocator).toBe(9);
+    expect(view.audit.values.pendingSourceLocator).toBe(15);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
+    expect(view.audit.values.availableOptions).toBe(6);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
     expect(view.audit.equations.currentCalculatorScaffold).toBe(3);
     expect(view.audit.sourceLeads.equationLeads).toBe(10);
-    expect(view.audit.sourceLeads.parameterValueLeads).toBe(5);
+    expect(view.audit.sourceLeads.parameterValueLeads).toBe(9);
     expect(view.audit.sourceLeads.canonicalSourceLeads).toBe(22);
-    expect(view.audit.sourceLeads.documentLeads).toBe(23);
+    expect(view.audit.sourceLeads.documentLeads).toBe(25);
   });
 
   it('filters values and equations by human-health pathway', () => {
@@ -49,7 +50,9 @@ describe('matrix options evidence library helpers', () => {
     expect(view.equations[0].record.equation_id).toBe(
       'eq-human-health-direct-contact',
     );
-    expect(view.sources).toHaveLength(0);
+    expect(view.sources.map((row) => row.record.source_id)).toEqual([
+      'src-bc-protocol-28-v3-0-2024',
+    ]);
   });
 
   it('filters by receptor and population scaffolds', () => {
@@ -166,8 +169,10 @@ describe('matrix options evidence library helpers', () => {
   });
 
   it('keeps HH scaffolds as current-calculator needs-review records', () => {
-    const hhRecords = PARAMETER_VALUE_RECORDS.filter((record) =>
-      record.pathway.startsWith('human-health'),
+    const hhRecords = PARAMETER_VALUE_RECORDS.filter(
+      (record) =>
+        record.pathway.startsWith('human-health') &&
+        record.source_ids.includes('src-current-calculator-design-v1'),
     );
 
     expect(hhRecords.length).toBeGreaterThan(0);

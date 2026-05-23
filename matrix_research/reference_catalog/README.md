@@ -55,6 +55,12 @@ values, cite the underlying referenced source as canonical for the calculator
 record unless the extracted record is specifically about the compilation
 document's own contextual framing and has an exact locator.
 
+Policy compilation records, such as BC Protocol 28, can be used as structured
+source-mining workbenches for values and cited-source leads. They should be
+shown to users as BC-aligned compilations, not as the final scientific source.
+Values copied from a policy compilation remain pending until the original
+government, regulatory, or scientific source has been checked directly.
+
 ## Authority and Currentness
 
 Zotero is a source inventory, not proof that a record is current or controlling.

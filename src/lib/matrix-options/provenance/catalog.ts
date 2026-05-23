@@ -4,6 +4,7 @@ import parameterValuesRaw from '../../../../matrix_research/reference_catalog/pa
 import wqciuSourceLeadsRaw from '../../../../matrix_research/reference_catalog/source_leads/wqciu_reference_leads_2026_05_23.json';
 import epaEcoSslSourceLeadsRaw from '../../../../matrix_research/reference_catalog/source_leads/epa_ecossl_reference_leads_2026_05_23.json';
 import erdcBsafSourceLeadsRaw from '../../../../matrix_research/reference_catalog/source_leads/erdc_bsaf_reference_leads_2026_05_23.json';
+import bcProtocol28TrvSourceLeadsRaw from '../../../../matrix_research/reference_catalog/source_leads/bc_protocol28_trv_reference_leads_2026_05_23.json';
 import type {
   EquationRecord,
   ParameterValueRecord,
@@ -19,6 +20,7 @@ export const SOURCE_LEAD_SETS = [
   wqciuSourceLeadsRaw,
   epaEcoSslSourceLeadsRaw,
   erdcBsafSourceLeadsRaw,
+  bcProtocol28TrvSourceLeadsRaw,
 ];
 
 export function getSourceRecord(sourceId: string): SourceRecord | undefined {
