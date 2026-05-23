@@ -88,7 +88,7 @@
     "value_type": "single_value",
     "default_status": "placeholder_default",
     "extraction_status": "extracted_from_current_calculator",
-    "qa_status": "needs_owner_review",
+    "qa_status": "needs_review",
     "source_ids": [
       "src-us-epa-eco-ssl-pah"
     ],
@@ -107,7 +107,7 @@
         "extraction_method": "current_calculator_scaffold",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",
-        "qa_status": "needs_owner_review",
+        "qa_status": "needs_review",
         "reviewed_by": null,
         "reviewed_at": null,
         "note": "Placeholder needs owner confirmation before it can be promoted.",
@@ -125,7 +125,7 @@
     "value": 0.5,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "source_backed_default",
+    "default_status": "placeholder_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -136,8 +136,8 @@
     ],
     "jurisdiction": "general",
     "applicability": "Freshwater Eco-Food BSAF starter value.",
-    "uncertainty": null,
-    "review_notes": "Confirm against exact ERDC BSAF database record and receptor/tissue basis.",
+    "uncertainty": "Current calculator scaffold; exact ERDC BSAF spreadsheet row locator pending.",
+    "review_notes": "Confirm against exact ERDC BSAF database record and receptor/tissue basis. Do not treat as source-backed until exact ERDC spreadsheet row and basis are confirmed.",
     "evidence_items": [
       {
         "source_id": "src-erdc-bsaf-db",
@@ -205,7 +205,7 @@
     "value_type": "single_value",
     "default_status": "placeholder_default",
     "extraction_status": "extracted_from_current_calculator",
-    "qa_status": "needs_owner_review",
+    "qa_status": "needs_review",
     "source_ids": [
       "src-current-calculator-design-v1"
     ],
@@ -224,7 +224,7 @@
         "extraction_method": "current_calculator_scaffold",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",
-        "qa_status": "needs_owner_review",
+        "qa_status": "needs_review",
         "reviewed_by": null,
         "reviewed_at": null,
         "note": "Placeholder needs owner confirmation before it can be promoted.",
@@ -281,7 +281,7 @@
     "value": 2,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "source_backed_default",
+    "default_status": "placeholder_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -292,8 +292,8 @@
     ],
     "jurisdiction": "general",
     "applicability": "Freshwater Eco-Food BSAF starter value.",
-    "uncertainty": null,
-    "review_notes": "Confirm against exact ERDC BSAF database record and congener or Aroclor basis.",
+    "uncertainty": "Current calculator scaffold; exact ERDC BSAF spreadsheet row locator pending.",
+    "review_notes": "Confirm against exact ERDC BSAF database record and congener or Aroclor basis. Do not treat as source-backed until exact ERDC spreadsheet row and basis are confirmed.",
     "evidence_items": [
       {
         "source_id": "src-erdc-bsaf-db",
@@ -385,6 +385,3270 @@
         "reviewed_at": null,
         "note": "Exact source locator must be confirmed before approval.",
         "evidence_id": "ev-pv-mehg-bsaf-protein-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-bap-hh-direct-slope",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Benzo[a]pyrene oral slope factor",
+    "value": 1,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "1 per mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-bap-hh-direct-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-bap-hh-direct-abs-dermal",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-direct",
+    "input_key": "abs_dermal",
+    "display_name": "Benzo[a]pyrene dermal absorption fraction",
+    "value": 0.13,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact dermal exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "dermal contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.13",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-bap-hh-direct-abs-dermal-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-bap-hh-direct-ba-oral",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-direct",
+    "input_key": "ba_oral",
+    "display_name": "Benzo[a]pyrene oral bioavailability",
+    "value": 1,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "sediment ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "1",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-bap-hh-direct-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-arsenic-hh-direct-rfd",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Arsenic oral RfD",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.0003 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-arsenic-hh-direct-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-arsenic-hh-direct-slope",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Arsenic oral slope factor",
+    "value": 1.5,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "1.5 per mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-arsenic-hh-direct-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-arsenic-hh-direct-abs-dermal",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-direct",
+    "input_key": "abs_dermal",
+    "display_name": "Arsenic dermal absorption fraction",
+    "value": 0.03,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact dermal exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "dermal contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.03",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-arsenic-hh-direct-abs-dermal-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-arsenic-hh-direct-ba-oral",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-direct",
+    "input_key": "ba_oral",
+    "display_name": "Arsenic oral bioavailability",
+    "value": 0.6,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "sediment ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.6",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-arsenic-hh-direct-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-pcb-hh-food-rfd",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Aroclor 1254 oral RfD",
+    "value": 0.00002,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.00002 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-pcb-hh-food-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-pcb-hh-food-slope",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Aroclor 1254 oral slope factor",
+    "value": 2,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "2 per mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-pcb-hh-food-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-pcb-hh-food-bsaf",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-food",
+    "input_key": "bsaf_loc_freshwater",
+    "display_name": "Aroclor 1254 freshwater BSAF for human food web",
+    "value": 2,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web BSAF scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "BSAF",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "2",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-pcb-hh-food-bsaf-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-pcb-hh-food-ba-oral",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-food",
+    "input_key": "ba_oral",
+    "display_name": "Aroclor 1254 oral bioavailability",
+    "value": 1,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioavailability",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "1",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-pcb-hh-food-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-lead-hh-food-rfd",
+    "substance_key": "lead",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Lead oral RfD",
+    "value": 0.0035,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web endpoint scaffold. The current UI still requires a site-specific BSAF for lead.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.0035 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-lead-hh-food-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-lead-hh-food-ba-oral",
+    "substance_key": "lead",
+    "pathway": "human-health-food",
+    "input_key": "ba_oral",
+    "display_name": "Lead oral bioavailability",
+    "value": 0.5,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web oral exposure scaffold. The current UI still requires a site-specific BSAF for lead.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioavailability",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.5",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-lead-hh-food-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-bap-hh-direct-rfd",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Benzo[a]pyrene oral RfD",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact non-cancer endpoint scaffold. No current default is provided for this substance.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-bap-hh-direct-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-bap-hh-food-rfd",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Benzo[a]pyrene oral RfD",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web non-cancer endpoint scaffold. No current default is provided for this substance.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-bap-hh-food-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-bap-hh-food-slope",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Benzo[a]pyrene oral slope factor",
+    "value": 1,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "1 per mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-bap-hh-food-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-bap-hh-food-bsaf",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-food",
+    "input_key": "bsaf_loc_freshwater",
+    "display_name": "Benzo[a]pyrene freshwater BSAF for human food web",
+    "value": 0.5,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web BSAF scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioaccumulation",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.5",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-bap-hh-food-bsaf-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-bap-hh-food-ba-oral",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-food",
+    "input_key": "ba_oral",
+    "display_name": "Benzo[a]pyrene oral bioavailability",
+    "value": 1,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioavailability",
+      "food ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "1",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-bap-hh-food-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-pcb-hh-direct-rfd",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Aroclor 1254 oral RfD",
+    "value": 0.00002,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.00002 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-pcb-hh-direct-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-pcb-hh-direct-slope",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Aroclor 1254 oral slope factor",
+    "value": 2,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "2 per mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-pcb-hh-direct-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-pcb-hh-direct-abs-dermal",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-direct",
+    "input_key": "abs_dermal",
+    "display_name": "Aroclor 1254 dermal absorption fraction",
+    "value": 0.14,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact dermal exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "dermal contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.14",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-pcb-hh-direct-abs-dermal-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-pcb-hh-direct-ba-oral",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-direct",
+    "input_key": "ba_oral",
+    "display_name": "Aroclor 1254 oral bioavailability",
+    "value": 1,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "sediment ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "1",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-pcb-hh-direct-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-mehg-hh-direct-rfd",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Methylmercury oral RfD",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.0001 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-mehg-hh-direct-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-mehg-hh-direct-slope",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Methylmercury oral slope factor",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact cancer endpoint scaffold. No current default is provided for this substance.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-mehg-hh-direct-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-mehg-hh-direct-abs-dermal",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-direct",
+    "input_key": "abs_dermal",
+    "display_name": "Methylmercury dermal absorption fraction",
+    "value": 0.001,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact dermal exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "dermal contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.001",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-mehg-hh-direct-abs-dermal-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-mehg-hh-direct-ba-oral",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-direct",
+    "input_key": "ba_oral",
+    "display_name": "Methylmercury oral bioavailability",
+    "value": 0.55,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "sediment ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.55",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-mehg-hh-direct-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-mehg-hh-food-rfd",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Methylmercury oral RfD",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.0001 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-mehg-hh-food-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-mehg-hh-food-slope",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Methylmercury oral slope factor",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web cancer endpoint scaffold. No current default is provided for this substance.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-mehg-hh-food-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-mehg-hh-food-bsaf",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-food",
+    "input_key": "bsaf_loc_freshwater",
+    "display_name": "Methylmercury freshwater BSAF for human food web",
+    "value": 15,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web BSAF scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioaccumulation",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "15",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-mehg-hh-food-bsaf-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-mehg-hh-food-ba-oral",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-food",
+    "input_key": "ba_oral",
+    "display_name": "Methylmercury oral bioavailability",
+    "value": 0.55,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioavailability",
+      "food ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.55",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-mehg-hh-food-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-lead-hh-direct-rfd",
+    "substance_key": "lead",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Lead oral RfD",
+    "value": 0.0035,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.0035 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-lead-hh-direct-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-lead-hh-direct-slope",
+    "substance_key": "lead",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Lead oral slope factor",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact cancer endpoint scaffold. No current default is provided for this substance.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-lead-hh-direct-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-lead-hh-direct-abs-dermal",
+    "substance_key": "lead",
+    "pathway": "human-health-direct",
+    "input_key": "abs_dermal",
+    "display_name": "Lead dermal absorption fraction",
+    "value": 0.001,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact dermal exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "dermal contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.001",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-lead-hh-direct-abs-dermal-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-lead-hh-direct-ba-oral",
+    "substance_key": "lead",
+    "pathway": "human-health-direct",
+    "input_key": "ba_oral",
+    "display_name": "Lead oral bioavailability",
+    "value": 0.5,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "sediment ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.5",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-lead-hh-direct-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-lead-hh-food-slope",
+    "substance_key": "lead",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Lead oral slope factor",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web cancer endpoint scaffold. No current default is provided for this substance.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-lead-hh-food-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-lead-hh-food-bsaf",
+    "substance_key": "lead",
+    "pathway": "human-health-food",
+    "input_key": "bsaf_loc_freshwater",
+    "display_name": "Lead freshwater BSAF for human food web",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web BSAF scaffold. Site-specific or reviewed BSAF input is required before calculation.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioaccumulation",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-lead-hh-food-bsaf-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-copper-hh-direct-rfd",
+    "substance_key": "copper",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Copper oral RfD",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.04 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-copper-hh-direct-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-copper-hh-direct-slope",
+    "substance_key": "copper",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Copper oral slope factor",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact cancer endpoint scaffold. No current default is provided for this substance.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-copper-hh-direct-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-copper-hh-direct-abs-dermal",
+    "substance_key": "copper",
+    "pathway": "human-health-direct",
+    "input_key": "abs_dermal",
+    "display_name": "Copper dermal absorption fraction",
+    "value": 0.001,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact dermal exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "dermal contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.001",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-copper-hh-direct-abs-dermal-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-copper-hh-direct-ba-oral",
+    "substance_key": "copper",
+    "pathway": "human-health-direct",
+    "input_key": "ba_oral",
+    "display_name": "Copper oral bioavailability",
+    "value": 0.5,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "sediment ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.5",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-copper-hh-direct-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-copper-hh-food-rfd",
+    "substance_key": "copper",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Copper oral RfD",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.04 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-copper-hh-food-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-copper-hh-food-slope",
+    "substance_key": "copper",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Copper oral slope factor",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web cancer endpoint scaffold. No current default is provided for this substance.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-copper-hh-food-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-copper-hh-food-bsaf",
+    "substance_key": "copper",
+    "pathway": "human-health-food",
+    "input_key": "bsaf_loc_freshwater",
+    "display_name": "Copper freshwater BSAF for human food web",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web BSAF scaffold. Site-specific or reviewed BSAF input is required before calculation.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioaccumulation",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-copper-hh-food-bsaf-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-copper-hh-food-ba-oral",
+    "substance_key": "copper",
+    "pathway": "human-health-food",
+    "input_key": "ba_oral",
+    "display_name": "Copper oral bioavailability",
+    "value": 0.5,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioavailability",
+      "food ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.5",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-copper-hh-food-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-cadmium-hh-direct-rfd",
+    "substance_key": "cadmium",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Cadmium oral RfD",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.001 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-cadmium-hh-direct-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-cadmium-hh-direct-slope",
+    "substance_key": "cadmium",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Cadmium oral slope factor",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact cancer endpoint scaffold. No current default is provided for this substance.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-cadmium-hh-direct-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-cadmium-hh-direct-abs-dermal",
+    "substance_key": "cadmium",
+    "pathway": "human-health-direct",
+    "input_key": "abs_dermal",
+    "display_name": "Cadmium dermal absorption fraction",
+    "value": 0.001,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact dermal exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "dermal contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.001",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-cadmium-hh-direct-abs-dermal-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-cadmium-hh-direct-ba-oral",
+    "substance_key": "cadmium",
+    "pathway": "human-health-direct",
+    "input_key": "ba_oral",
+    "display_name": "Cadmium oral bioavailability",
+    "value": 0.5,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "sediment ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.5",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-cadmium-hh-direct-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-cadmium-hh-food-rfd",
+    "substance_key": "cadmium",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Cadmium oral RfD",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.001 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-cadmium-hh-food-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-cadmium-hh-food-slope",
+    "substance_key": "cadmium",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Cadmium oral slope factor",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web cancer endpoint scaffold. No current default is provided for this substance.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-cadmium-hh-food-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-cadmium-hh-food-bsaf",
+    "substance_key": "cadmium",
+    "pathway": "human-health-food",
+    "input_key": "bsaf_loc_freshwater",
+    "display_name": "Cadmium freshwater BSAF for human food web",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web BSAF scaffold. Site-specific or reviewed BSAF input is required before calculation.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioaccumulation",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-cadmium-hh-food-bsaf-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-cadmium-hh-food-ba-oral",
+    "substance_key": "cadmium",
+    "pathway": "human-health-food",
+    "input_key": "ba_oral",
+    "display_name": "Cadmium oral bioavailability",
+    "value": 0.5,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioavailability",
+      "food ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.5",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-cadmium-hh-food-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-zinc-hh-direct-rfd",
+    "substance_key": "zinc",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Zinc oral RfD",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.3 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-zinc-hh-direct-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-zinc-hh-direct-slope",
+    "substance_key": "zinc",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Zinc oral slope factor",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact cancer endpoint scaffold. No current default is provided for this substance.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-zinc-hh-direct-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-zinc-hh-direct-abs-dermal",
+    "substance_key": "zinc",
+    "pathway": "human-health-direct",
+    "input_key": "abs_dermal",
+    "display_name": "Zinc dermal absorption fraction",
+    "value": 0.001,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact dermal exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "dermal contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.001",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-zinc-hh-direct-abs-dermal-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-zinc-hh-direct-ba-oral",
+    "substance_key": "zinc",
+    "pathway": "human-health-direct",
+    "input_key": "ba_oral",
+    "display_name": "Zinc oral bioavailability",
+    "value": 0.5,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human direct-contact oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "bioavailability",
+      "sediment ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.5",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-zinc-hh-direct-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-zinc-hh-food-rfd",
+    "substance_key": "zinc",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Zinc oral RfD",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.3 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-zinc-hh-food-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-zinc-hh-food-slope",
+    "substance_key": "zinc",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Zinc oral slope factor",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web cancer endpoint scaffold. No current default is provided for this substance.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-zinc-hh-food-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-zinc-hh-food-bsaf",
+    "substance_key": "zinc",
+    "pathway": "human-health-food",
+    "input_key": "bsaf_loc_freshwater",
+    "display_name": "Zinc freshwater BSAF for human food web",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web BSAF scaffold. Site-specific or reviewed BSAF input is required before calculation.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioaccumulation",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-zinc-hh-food-bsaf-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-zinc-hh-food-ba-oral",
+    "substance_key": "zinc",
+    "pathway": "human-health-food",
+    "input_key": "ba_oral",
+    "display_name": "Zinc oral bioavailability",
+    "value": 0.5,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioavailability",
+      "food ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.5",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-zinc-hh-food-ba-oral-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-arsenic-hh-food-rfd",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Arsenic oral RfD",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web non-cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.0003 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-arsenic-hh-food-rfd-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-arsenic-hh-food-slope",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Arsenic oral slope factor",
+    "value": 1.5,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web cancer endpoint scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "1.5 per mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-arsenic-hh-food-slope-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-arsenic-hh-food-bsaf",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-food",
+    "input_key": "bsaf_loc_freshwater",
+    "display_name": "Arsenic freshwater BSAF for human food web",
+    "value": "not provided by current calculator",
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web BSAF scaffold. Site-specific or reviewed BSAF input is required before calculation.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current calculator does not provide a default value for this input; retained as a scaffold so the missing input remains review-visible.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioaccumulation",
+      "food web"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; no default value configured",
+        "value_text": "not provided by current calculator",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "No source-backed value is asserted by this scaffold.",
+        "evidence_id": "ev-pv-arsenic-hh-food-bsaf-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "parameter_value_id": "pv-arsenic-hh-food-ba-oral",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-food",
+    "input_key": "ba_oral",
+    "display_name": "Arsenic oral bioavailability",
+    "value": 0.6,
+    "unit": "unitless",
+    "value_type": "single_value",
+    "default_status": "placeholder_default",
+    "extraction_status": "extracted_from_current_calculator",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "Human food-web oral exposure scaffold.",
+    "uncertainty": "Current calculator scaffold; exact source locator pending.",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "bioavailability",
+      "food ingestion"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.6",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-arsenic-hh-food-ba-oral-1",
         "locator_type": "current_calculator"
       }
     ]

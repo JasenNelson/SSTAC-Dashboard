@@ -64,4 +64,28 @@ describe('HHDirectContactCalculator', () => {
       /At least one of RfD or oral slope factor/i,
     );
   });
+
+  it('renders conservative provenance scaffolds for HH direct inputs', () => {
+    render(
+      <HHDirectContactCalculator
+        substanceKey="arsenic_inorganic"
+        jurisdiction="bc-csr"
+      />,
+    );
+
+    const panel = screen.getByTestId('calculator-provenance-panel');
+    expect(panel).toHaveTextContent(/References and provenance/);
+    expect(panel).toHaveTextContent(/13 used values/);
+    expect(panel).toHaveTextContent(/Oral RfD/);
+    expect(panel).toHaveTextContent(/0\.0003 mg\/kg-bw\/day/);
+    expect(panel).toHaveTextContent(/Exposure duration/);
+    expect(panel).toHaveTextContent(/Cancer averaging time/);
+    expect(panel).toHaveTextContent(/Skin surface area/);
+    expect(panel).toHaveTextContent(/Sediment adherence/);
+    expect(panel).toHaveTextContent(/placeholder default/);
+    expect(panel).toHaveTextContent(/needs review/);
+    expect(panel).toHaveTextContent(
+      /source review pending; current calculator scaffold only/,
+    );
+  });
 });

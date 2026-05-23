@@ -1,0 +1,848 @@
+{
+  "lead_set_id": "wqciu-reference-leads-2026-05-23",
+  "status": "needs_review",
+  "created_at": "2026-05-23",
+  "created_by": "codex",
+  "policy": "metadata_only_no_source_file_copy",
+  "source_of_sources_rule": "WQCIU is a reference-mining and Indigenous-use framing source. For calculator values and equations, promote the underlying cited source as canonical unless the record is specifically about WQCIU contextual framing and has an exact locator.",
+  "primary_document": {
+    "source_id": "src-acfn-wqciu",
+    "short_citation": "ACFN WQCIU report",
+    "title": "Lower Athabasca Surface Water and Sediment Quality Criteria for Protection of Indigenous Use",
+    "zotero_item_key": "BHHDGZI9",
+    "zotero_attachment_keys": [
+      "T7T5IV8S"
+    ],
+    "external_file_hints": [
+      "G:\\My Drive\\SABCS - Sediment Project\\References\\WQCIU Report.pdf",
+      "C:\\Users\\jasen\\OneDrive - Government of BC\\My Documents\\Science Projects & Groups\\SABCS\\2025 Sediment Standards Project\\References\\WQCIU Report.pdf"
+    ],
+    "text_sources_checked": [
+      "matrix_research/legacy_reference/WQCIU.md",
+      "external PDF text extraction, not stored in repo"
+    ],
+    "limitation": "The legacy markdown only contains Chapter 1 and summary tables. Equation and literature-cited locators below were checked against the external PDF."
+  },
+  "zotero_metadata_checked": {
+    "exports": [
+      ".tmp_zotero_items_all_with_children.json",
+      ".tmp_zotero_sediment_project_items_with_children.json"
+    ],
+    "api_used": false,
+    "api_blocker": "No Zotero API call was made in this pass; existing repo-local exports were used."
+  },
+  "equation_leads": [
+    {
+      "lead_id": "wqciu-eq-3-1-wildlife-food-water",
+      "wqciu_locator": "Chapter 3, section 3.3.3, PDF pages 152-153, Equation 3.1",
+      "calculator_relevance": [
+        "eco-food-bsaf",
+        "human-health-food"
+      ],
+      "summary": "Wildlife piscivore food-and-water benchmark equation from Sample et al. for surface water concentrations protective of mammals and birds consuming fish and water.",
+      "important_inputs": [
+        "NOAEL in wildlife species",
+        "body weight",
+        "water ingestion rate",
+        "food ingestion rate",
+        "ratio of tissue concentration to water concentration"
+      ],
+      "canonical_source_leads": [
+        "sample-1996-toxicological-benchmarks-wildlife"
+      ],
+      "promotion_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "wqciu-eq-3-2-human-fish-water",
+      "wqciu_locator": "Chapter 3, section 3.3.5, PDF pages 153-155, Equation 3.2; local ingestion discussion at PDF pages 206-207",
+      "calculator_relevance": [
+        "human-health-food"
+      ],
+      "summary": "Human health water criterion for traditional foods plus drinking water, modified from US EPA human-health AWQC methodology.",
+      "important_inputs": [
+        "toxicity value = RfD x RSC for non-cancer effects",
+        "toxicity value = 1e-5 / CSF for cancer effects",
+        "RSC = 0.2 unless otherwise stated",
+        "body weight = 80 kg",
+        "drinking water intake = 2.4 L/day",
+        "fish consumption rate = 0.388 kg/day",
+        "BAFs for trophic levels 2, 3, and 4"
+      ],
+      "canonical_source_leads": [
+        "us-epa-2000b-human-health-awqc-methodology",
+        "us-epa-2015a-human-health-awqc-update",
+        "us-epa-2015b-national-bioaccumulation-factors",
+        "us-epa-2015c-human-health-criteria-table",
+        "us-epa-iris-current",
+        "alberta-health-2019-hhra-eia",
+        "chan-2016-fnfnes-alberta"
+      ],
+      "promotion_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "wqciu-eq-3-3-human-medicinal-plants",
+      "wqciu_locator": "Chapter 3, section 3.3.5, PDF page 156, Equation 3.3; Table 3.7 discussion at PDF pages 228-229",
+      "calculator_relevance": [
+        "human-health-food"
+      ],
+      "summary": "Human health water criterion for medicinal plant consumption, modified from US EPA human-health AWQC methodology.",
+      "important_inputs": [
+        "toxicity value = RfD x RSC for non-cancer effects",
+        "toxicity value = 1e-5 / CSF for cancer effects",
+        "RSC = 0.2 unless otherwise stated",
+        "body weight = 80 kg",
+        "medicinal plant consumption rate = 0.007 kg/day in Equation 3.3",
+        "rat root consumption rate = 0.0068 kg/day in Table 3.7 text",
+        "sediment-to-plant bioconcentration factor"
+      ],
+      "canonical_source_leads": [
+        "us-epa-2000b-human-health-awqc-methodology",
+        "us-epa-iris-current",
+        "chan-2016-fnfnes-alberta"
+      ],
+      "promotion_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "wqciu-eq-3-4-bap-equivalent",
+      "wqciu_locator": "Chapter 3, section 3.4.5, PDF page 206, Equation 3.4; notes at PDF pages 205 and 227",
+      "calculator_relevance": [
+        "human-health-food",
+        "human-health-direct"
+      ],
+      "summary": "BaP equivalent concentration is calculated from PAH congener concentrations and Health Canada relative potency factors, then compared to BaP risk criteria.",
+      "important_inputs": [
+        "PAH congener concentration",
+        "Health Canada BaP relative potency factor",
+        "summed BaP-equivalent concentration"
+      ],
+      "canonical_source_leads": [
+        "health-canada-2021-pqra-v3",
+        "health-canada-trv-current"
+      ],
+      "promotion_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "wqciu-eq-4-1-eqp-noncarcinogenic-organics",
+      "wqciu_locator": "Chapter 4, section 4.3.5.1, PDF pages 255-256, Equation 4.1",
+      "calculator_relevance": [
+        "eco-direct-eqp"
+      ],
+      "summary": "US EPA equilibrium partitioning method to derive sediment quality criteria for non-carcinogenic organic contaminants from a water quality objective/guideline, Koc, organic carbon, water density, and sediment moisture.",
+      "important_inputs": [
+        "water quality objective or guideline",
+        "organic carbon partitioning coefficient Koc",
+        "fraction organic carbon",
+        "water density at 20 C = 0.9982",
+        "assumed sediment moisture = 0.3"
+      ],
+      "canonical_source_leads": [
+        "us-epa-2018-region4-ecological-risk-supplemental-guidance",
+        "src-us-epa-esb-pah-mixtures-2003",
+        "src-us-epa-esb-tier2-nonionic-organics-2008"
+      ],
+      "promotion_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "wqciu-eq-4-2-risk-specific-dose",
+      "wqciu_locator": "Chapter 4, section 4.3.5.1, PDF page 257, Equation 4.2",
+      "calculator_relevance": [
+        "human-health-food",
+        "human-health-direct"
+      ],
+      "summary": "Converts oral slope factor to a risk-specific dose using an acceptable risk level of 1e-5.",
+      "important_inputs": [
+        "acceptable risk level = 1e-5",
+        "oral slope factor",
+        "risk-specific dose"
+      ],
+      "canonical_source_leads": [
+        "alberta-health-2019-hhra-eia",
+        "health-canada-2021-pqra-v3",
+        "us-epa-iris-current"
+      ],
+      "promotion_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "wqciu-eq-4-3-baseline-baf",
+      "wqciu_locator": "Chapter 4, section 4.3.5.1, PDF pages 257-258, Equation 4.3",
+      "calculator_relevance": [
+        "eco-food-bsaf",
+        "human-health-food"
+      ],
+      "summary": "Baseline bioaccumulation factor from octanol-water partitioning coefficient and food-chain multiplier.",
+      "important_inputs": [
+        "Kow",
+        "food-chain multiplier by trophic level"
+      ],
+      "canonical_source_leads": [
+        "nysdec-2014-screening-assessment-contaminated-sediment",
+        "us-epa-2015b-national-bioaccumulation-factors"
+      ],
+      "promotion_status": "needs_formula_verification"
+    },
+    {
+      "lead_id": "wqciu-eq-4-4-freely-dissolved-fraction",
+      "wqciu_locator": "Chapter 4, section 4.3.5.1, PDF page 258, Equation 4.4",
+      "calculator_relevance": [
+        "eco-direct-eqp",
+        "eco-food-bsaf"
+      ],
+      "summary": "Freely dissolved fraction in pore water using DOC and POC. WQCIU cites NYSDEC 2014 default DOC = 0.000002 kg/L and POC = 0.",
+      "important_inputs": [
+        "DOC = 0.000002 kg/L",
+        "POC = 0",
+        "Kow"
+      ],
+      "canonical_source_leads": [
+        "nysdec-2014-screening-assessment-contaminated-sediment"
+      ],
+      "promotion_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "wqciu-eq-4-5-trophic-level-baf",
+      "wqciu_locator": "Chapter 4, section 4.3.5.1, PDF pages 258-259, Equation 4.5",
+      "calculator_relevance": [
+        "eco-food-bsaf",
+        "human-health-food"
+      ],
+      "summary": "Trophic-level fish BAF derived from baseline BAF, freely dissolved fraction, and lipid content. WQCIU cites NYSDEC 2014 lipid examples of 6.46 percent for trophic level 3 and 10.31 percent for trophic level 4.",
+      "important_inputs": [
+        "baseline BAF",
+        "percent lipid in fish by trophic level",
+        "freely dissolved fraction"
+      ],
+      "canonical_source_leads": [
+        "nysdec-2014-screening-assessment-contaminated-sediment"
+      ],
+      "promotion_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "wqciu-eq-4-6-sqc-oc",
+      "wqciu_locator": "Chapter 4, section 4.3.5.1, PDF pages 259-260, Equation 4.6",
+      "calculator_relevance": [
+        "eco-direct-eqp",
+        "eco-food-bsaf",
+        "human-health-food"
+      ],
+      "summary": "Sediment quality criterion normalized to organic carbon, using acceptable daily intake, allocation factor, trophic-level BAF, diet fraction by trophic level, and Koc. WQCIU cites wildlife AF = 0.75 and human AF = 0.2, with no AF for carcinogenic human SQC because RsD already accounts for background exposure.",
+      "important_inputs": [
+        "acceptable daily intake",
+        "allocation factor",
+        "BAF by trophic level",
+        "diet fraction by trophic level",
+        "Koc"
+      ],
+      "canonical_source_leads": [
+        "aep-2019-alberta-tier1",
+        "ccme-2007-water-guideline-protocol",
+        "nysdec-2014-screening-assessment-contaminated-sediment"
+      ],
+      "promotion_status": "needs_formula_verification"
+    }
+  ],
+  "parameter_value_leads": [
+    {
+      "lead_id": "wqciu-table-3-1-modifying-factors",
+      "wqciu_locator": "Chapter 3, section 3.4.3, PDF pages 161-162, Table 3.1",
+      "calculator_relevance": [
+        "eco-direct-eqp",
+        "background-adjustment"
+      ],
+      "values": [
+        {
+          "name": "Alkalinity as CaCO3",
+          "value": 110.0,
+          "unit": "mg/L",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator"
+        },
+        {
+          "name": "Field pH",
+          "value": 8.0,
+          "unit": "pH units",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator"
+        },
+        {
+          "name": "Water temperature",
+          "value": 10.9,
+          "unit": "C",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator"
+        },
+        {
+          "name": "Total suspended solids",
+          "value": 24.0,
+          "unit": "mg/L",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator"
+        },
+        {
+          "name": "Chloride",
+          "value": 12.0,
+          "unit": "mg/L",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator"
+        },
+        {
+          "name": "Total hardness as CaCO3",
+          "value": 120.0,
+          "unit": "mg/L",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator"
+        },
+        {
+          "name": "Dissolved organic carbon",
+          "value": 7.9,
+          "unit": "mg/L",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator"
+        },
+        {
+          "name": "Total organic carbon",
+          "value": 8.9,
+          "unit": "mg/L",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator"
+        }
+      ],
+      "applicability": "Median open-water Old Fort values from 2011-2019; not a generic BC default.",
+      "promotion_status": "needs_review"
+    },
+    {
+      "lead_id": "wqciu-fish-ingestion-rate",
+      "wqciu_locator": "Chapter 3, section 3.4.5, PDF pages 206-207; Equation 3.2 at PDF page 155",
+      "calculator_relevance": [
+        "human-health-food"
+      ],
+      "value": 0.388,
+      "unit": "kg/day",
+      "display_value": "388 g/day",
+      "summary": "Adopted fish ingestion rate from the highest calculated community rate, using the upper range from traditional food survey results.",
+      "canonical_source_leads": [
+        "wqciu-own-survey-results",
+        "chan-2016-fnfnes-alberta"
+      ],
+      "promotion_status": "needs_review"
+    },
+    {
+      "lead_id": "wqciu-medicinal-plant-ingestion-rate",
+      "wqciu_locator": "Chapter 3, Equation 3.3 at PDF page 156; Table 3.7 text at PDF page 228; discussion at PDF page 207",
+      "calculator_relevance": [
+        "human-health-food"
+      ],
+      "value": 0.0068,
+      "unit": "kg/day",
+      "display_value": "6.8 g/day",
+      "summary": "Rat root consumption rate adopted as the medicinal plant ingestion rate. Equation 3.3 displays 0.007 kg/day, which appears to be rounded.",
+      "canonical_source_leads": [
+        "wqciu-own-survey-results",
+        "chan-2016-fnfnes-alberta"
+      ],
+      "promotion_status": "needs_review"
+    },
+    {
+      "lead_id": "wqciu-human-health-defaults",
+      "wqciu_locator": "Chapter 3, section 3.3.5, PDF pages 154-156",
+      "calculator_relevance": [
+        "human-health-food",
+        "human-health-direct"
+      ],
+      "values": [
+        {
+          "name": "Adult body weight",
+          "value": 80,
+          "unit": "kg",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "canonical_source_leads": [
+            "us-epa-2015c-human-health-criteria-table"
+          ]
+        },
+        {
+          "name": "Drinking water intake",
+          "value": 2.4,
+          "unit": "L/day",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "canonical_source_leads": [
+            "us-epa-2015c-human-health-criteria-table"
+          ]
+        },
+        {
+          "name": "Relative source contribution",
+          "value": 0.2,
+          "unit": "unitless",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "canonical_source_leads": [
+            "us-epa-2000b-human-health-awqc-methodology"
+          ]
+        },
+        {
+          "name": "Incremental lifetime cancer risk",
+          "value": 0.00001,
+          "unit": "unitless",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "canonical_source_leads": [
+            "alberta-health-2019-hhra-eia"
+          ]
+        }
+      ],
+      "promotion_status": "needs_review"
+    },
+    {
+      "lead_id": "wqciu-current-substance-water-and-sediment-rows",
+      "wqciu_locator": "Chapter 1 summary Table 1.2 and Table 1.3; detailed water criteria in Tables 3.5-3.7; detailed sediment criteria in Table 4.1",
+      "calculator_relevance": [
+        "eco-direct-eqp",
+        "eco-food-bsaf",
+        "human-health-food",
+        "human-health-direct"
+      ],
+      "rows": [
+        {
+          "substance": "Arsenic",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "water_rows": [
+            "Total: 0.03 ug/L, human, HH DW+Org derived",
+            "Dissolved: 150 ug/L, aquatic biota, US EPA Aquatic Life Criteria"
+          ],
+          "sediment_rows": [
+            "SQC 4.1 mg/kg, Quebec DSEE REL"
+          ]
+        },
+        {
+          "substance": "Benzo[a]pyrene",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "water_rows": [
+            "0.0001 ug/L, human, HH DW+Org derived"
+          ],
+          "sediment_rows": [
+            "SQC 0.0006 mg/kg, derived EqP fish tissue carcinogenicity"
+          ]
+        },
+        {
+          "substance": "Total PCBs",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "water_rows": [
+            "0.00064 ug/L, human, USEPA WQC HH Org"
+          ],
+          "sediment_rows": []
+        },
+        {
+          "substance": "Methylmercury",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "water_rows": [
+            "Total: 0.001 ug/L, aquatic biota, AEP Water PAL",
+            "Dissolved: 0.004 ug/L, aquatic biota, CCME Water PAL"
+          ],
+          "sediment_rows": []
+        },
+        {
+          "substance": "Lead",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "water_rows": [
+            "Total: 4.01 ug/L, aquatic biota, AEP Water PAL",
+            "Dissolved: 3.07 ug/L, aquatic biota, US EPA Aquatic Life Criteria"
+          ],
+          "sediment_rows": [
+            "SQC 25 mg/kg, Quebec DSEE REL"
+          ]
+        },
+        {
+          "substance": "Copper",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "water_rows": [
+            "Total: 2.76 ug/L, aquatic biota, CCME Water PAL",
+            "Dissolved: 0.53 ug/L, aquatic biota, FEQG Water PAL"
+          ],
+          "sediment_rows": [
+            "SQC 8.6 mg/kg, SST Benchmark Approach derived"
+          ]
+        },
+        {
+          "substance": "Cadmium",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "water_rows": [
+            "Total: 0.002 ug/L, human, HH DW+Org derived",
+            "Dissolved: 0.824 ug/L, aquatic biota, US EPA Aquatic Life Criteria"
+          ],
+          "sediment_rows": [
+            "SQC 0.33 mg/kg, Quebec DSEE REL"
+          ]
+        },
+        {
+          "substance": "Zinc",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "water_rows": [
+            "Total: 12.72 ug/L, human, HH DW+Org derived",
+            "Dissolved: 31.35 ug/L, aquatic biota, CCME Water PAL"
+          ],
+          "sediment_rows": [
+            "SQC 7.4 mg/kg, SST Benchmark Approach derived"
+          ]
+        },
+        {
+          "substance": "Low molecular weight PAHs",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "water_rows": [
+            "1 ug/L, aquatic biota, AEP Water PAL; compare summed LMW PAHs to naphthalene surrogate"
+          ],
+          "sediment_rows": [
+            "SQC 0.552 mg/kg, US EPA OSWER ER-L"
+          ]
+        },
+        {
+          "substance": "High molecular weight PAHs",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "water_rows": [
+            "0.0001 ug/L, human, HH DW+Org derived; compare summed HMW PAHs as BaP equivalents where applicable"
+          ],
+          "sediment_rows": [
+            "SQC 0.655 mg/kg, US EPA Region IV/FDEP TEL"
+          ]
+        },
+        {
+          "substance": "Total PAHs",
+          "promotion_status": "needs_review",
+          "canonical_source_status": "needs_exact_source_locator",
+          "water_rows": [],
+          "sediment_rows": [
+            "SQC 1.684 mg/kg, US EPA Region IV/FDEP TEL"
+          ]
+        }
+      ],
+      "promotion_status": "needs_review",
+      "review_notes": "Reference values only. Each row needs exact canonical source locators before promotion into parameter_values.json or equation-backed defaults."
+    }
+  ],
+  "canonical_source_leads": [
+    {
+      "lead_id": "us-epa-2000b-human-health-awqc-methodology",
+      "wqciu_citation": "US EPA (2000b)",
+      "wqciu_locator": "PDF pages 153, 155-156, 295",
+      "title_from_wqciu": "Methodology for Deriving Ambient Water Quality Criteria for the Protection of Human Health",
+      "role": "Canonical method for human-health AWQC equations modified by WQCIU.",
+      "zotero_match_status": "not_found_in_existing_exports",
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "us-epa-2015a-human-health-awqc-update",
+      "wqciu_citation": "US EPA (2015a)",
+      "wqciu_locator": "PDF pages 154, 205, 230, 295",
+      "title_from_wqciu": "Human Health Ambient Water Quality Criteria: 2015 Update",
+      "role": "Canonical source for HH DW+Org criteria that WQCIU modified for community fish consumption.",
+      "zotero_match_status": "not_found_in_existing_exports",
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "us-epa-2015b-national-bioaccumulation-factors",
+      "wqciu_citation": "US EPA (2015b)",
+      "wqciu_locator": "PDF pages 154, 295",
+      "title_from_wqciu": "National Bioaccumulation Factors - Supplemental Information table",
+      "role": "Canonical source for BAFs, BCFs, food-chain multipliers, and lipid fractions for organic substances.",
+      "zotero_match_status": "not_found_in_existing_exports",
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "us-epa-2015c-human-health-criteria-table",
+      "wqciu_citation": "US EPA (2015c)",
+      "wqciu_locator": "PDF pages 154, 206-207, 295",
+      "title_from_wqciu": "National Recommended Water Quality Criteria - Human Health Criteria Table (revised)",
+      "role": "Canonical source for default body weight and drinking water intake cited by WQCIU.",
+      "zotero_match_status": "not_found_in_existing_exports",
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "us-epa-1999-ecological-risk-appendix-c",
+      "wqciu_citation": "US EPA (1999)",
+      "wqciu_locator": "PDF pages 154, 295",
+      "title_from_wqciu": "Screening Level Ecological Risk Assessment Protocol, Appendix C: Media-to-Receptor Bioconcentration Factors",
+      "role": "Canonical source for inorganic BCFs and food-chain multipliers cited by WQCIU.",
+      "zotero_match_status": "not_found_in_existing_exports",
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "sample-1996-toxicological-benchmarks-wildlife",
+      "wqciu_citation": "Sample et al. (1996)",
+      "wqciu_locator": "PDF pages 152-153, 154, 205, 293",
+      "title_from_wqciu": "Toxicological Benchmarks for Wildlife: 1996 Revision",
+      "role": "Canonical source for wildlife piscivore food-and-water benchmark equation and inorganic BAFs.",
+      "zotero_match_status": "not_found_in_existing_exports",
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "alberta-health-2019-hhra-eia",
+      "wqciu_citation": "Alberta Health (2019)",
+      "wqciu_locator": "PDF pages 154, 157, 227, 285",
+      "title_from_wqciu": "Guidance on Human Health Risk Assessment for Environmental Impact Assessment in Alberta, Version 2.0",
+      "role": "Source for 1e-5 incremental lifetime cancer risk framing used by WQCIU.",
+      "zotero_match_status": "not_found_in_existing_exports",
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "health-canada-2021-pqra-v3",
+      "wqciu_citation": "Health Canada (2021)",
+      "wqciu_locator": "PDF pages 157, 206-207, 227, 290",
+      "title_from_wqciu": "Federal contaminated site risk assessment in Canada: Guidance on human health preliminary quantitative risk assessment (PQRA), version 3.0",
+      "role": "Source cited by WQCIU for PAH carcinogen/RPF handling and HHRA context.",
+      "zotero_match_status": "matched_superseded_version",
+      "zotero_matches": [
+        {
+          "key": "KFHYSV72",
+          "item_type": "webpage",
+          "title": "Federal contaminated site risk assessment in Canada : guidance on human health preliminary quantitative risk assessment (PQRA).: H129-114/2021E-PDF"
+        }
+      ],
+      "catalog_match_status": "current_replacement_in_catalog",
+      "catalog_matches": [
+        "src-health-canada-pqra-v4-2024",
+        "src-health-canada-trv-v4-2025"
+      ]
+    },
+    {
+      "lead_id": "health-canada-2020a-drinking-water",
+      "wqciu_citation": "Health Canada (2020a)",
+      "wqciu_locator": "PDF pages 150, 205, 230, 290",
+      "title_from_wqciu": "Guidelines for Canadian Drinking Water Quality - Summary Tables",
+      "role": "Canadian drinking-water guideline source used in WQCIU water criteria comparisons.",
+      "zotero_match_status": "not_found_in_existing_exports",
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "health-canada-country-foods-and-hhra",
+      "wqciu_citation": "Health Canada (2010, 2018, 2019)",
+      "wqciu_locator": "PDF pages 157, 289-290",
+      "title_from_wqciu": "Health Canada country-foods and environmental-assessment HHRA guidance",
+      "role": "Contextual HHRA/country-food guidance for human exposure pathways.",
+      "zotero_match_status": "partial_current_catalog_match",
+      "catalog_matches": [
+        "src-health-canada-country-foods-2011-current-page",
+        "src-health-canada-hhra-2023"
+      ]
+    },
+    {
+      "lead_id": "goa-2018-alberta-surface-water-guidelines",
+      "wqciu_citation": "GoA (2018)",
+      "wqciu_locator": "PDF pages 149, 162, 205, 230, 260-261, 289",
+      "title_from_wqciu": "Environmental Quality Guidelines for Alberta Surface Waters",
+      "role": "Alberta surface-water guideline inventory and PAL/agriculture/wildlife source.",
+      "zotero_match_status": "matched_exact",
+      "zotero_matches": [
+        {
+          "key": "JANGA8N2",
+          "attachment_key": "XSAKGMVF",
+          "title": "Environmental Quality Guidelines for Alberta Surface Waters"
+        }
+      ],
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "ccme-1995-sediment-guideline-protocol",
+      "wqciu_citation": "CCME (1995)",
+      "wqciu_locator": "PDF pages 256-257, 261, 286",
+      "title_from_wqciu": "Protocol for the derivation of Canadian sediment quality guidelines for the protection of aquatic life",
+      "role": "Canonical source for Canadian sediment guideline derivation and SST safety-factor context.",
+      "zotero_match_status": "matched_duplicate_candidates",
+      "zotero_matches": [
+        {
+          "key": "PS22HGR6",
+          "title": "Protocol for the Derivation of Canadian Sediment Quality Guidelines for the Protection of Aquatic Life"
+        },
+        {
+          "key": "9EN63VMD",
+          "title": "Protocol for the derivation of Canadian sediment quality guidelines for the protection of aquatic life"
+        },
+        {
+          "key": "LJ9ZBWE6",
+          "title": "Protocol for the Derivation of Canadian Sediment Quality Guidelines..."
+        }
+      ],
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "ccme-2007-water-guideline-protocol",
+      "wqciu_citation": "CCME (2007)",
+      "wqciu_locator": "PDF pages 150, 259, 286",
+      "title_from_wqciu": "A protocol for the derivation of water quality guidelines for the protection of aquatic life",
+      "role": "Source cited for water guideline derivation protocol and allocation-factor assumptions.",
+      "zotero_match_status": "not_found_in_existing_exports",
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "ccme-2010-pah-soil-quality-guidelines",
+      "wqciu_citation": "CCME (2010)",
+      "wqciu_locator": "PDF pages 205, 227, 264, 287",
+      "title_from_wqciu": "Canadian Soil Quality Guidelines for the Protection of Environmental and Human Health: Polycyclic aromatic hydrocarbons",
+      "role": "Source cited for LMW/HMW PAH grouping notes.",
+      "zotero_match_status": "not_found_exact_in_existing_exports",
+      "catalog_match_status": "related_catalog_sources",
+      "catalog_matches": [
+        "src-ccme-pah-sediment-guidelines-1999"
+      ]
+    },
+    {
+      "lead_id": "quebec-dsee-2007-sediment-quality",
+      "wqciu_citation": "Environment Canada and Quebec DSEE (2007)",
+      "wqciu_locator": "PDF pages 251, 263, 288",
+      "title_from_wqciu": "Criteria for the Assessment of Sediment Quality in Quebec and Application Frameworks",
+      "role": "Canonical source for several REL sediment rows adopted in WQCIU Table 4.1.",
+      "zotero_match_status": "matched_duplicate_candidates",
+      "zotero_matches": [
+        {
+          "key": "D9Z4X52K",
+          "item_type": "report",
+          "title": "Criteria for the Assessment of Sediment Quality in Quebec and Application Frameworks"
+        },
+        {
+          "key": "QA8VNNBH",
+          "attachment_key": "DMV5ZKCZ",
+          "title": "Criteria for the assessment of sediment quality in Quebec and application frameworks: prevention, dredging and remediation"
+        }
+      ],
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "src-us-epa-esb-pah-mixtures-2003",
+      "wqciu_citation": "US EPA EqP/ESB supporting source candidate",
+      "wqciu_locator": "Related to Chapter 4 EqP method at PDF pages 255-260; already cataloged from first source batch",
+      "title_from_wqciu": "Procedures for the Derivation of Equilibrium Partitioning Sediment Benchmarks: PAH Mixtures",
+      "role": "Canonical EqP/PAH mixture method candidate for Matrix Options Eco-Direct review.",
+      "zotero_match_status": "matched_exact",
+      "zotero_matches": [
+        {
+          "key": "WKBQDLVS",
+          "attachment_key": "2RRKZG6Q"
+        }
+      ],
+      "catalog_match_status": "in_catalog",
+      "catalog_matches": [
+        "src-us-epa-esb-pah-mixtures-2003"
+      ]
+    },
+    {
+      "lead_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
+      "wqciu_citation": "US EPA EqP/ESB supporting source candidate",
+      "wqciu_locator": "Related to Chapter 4 EqP method at PDF pages 255-260; already cataloged from first source batch",
+      "title_from_wqciu": "Procedures for the Derivation of Equilibrium Partitioning Sediment Benchmarks: Compendium of Tier 2 Values for Nonionic Organics",
+      "role": "Canonical EqP/Tier 2 value source candidate for Matrix Options Eco-Direct review.",
+      "zotero_match_status": "matched_exact",
+      "zotero_matches": [
+        {
+          "key": "I2YMU9MP",
+          "attachment_keys": [
+            "BLZ4TUYB",
+            "AYX4658R"
+          ]
+        }
+      ],
+      "catalog_match_status": "in_catalog",
+      "catalog_matches": [
+        "src-us-epa-esb-tier2-nonionic-organics-2008"
+      ]
+    },
+    {
+      "lead_id": "nysdec-2014-screening-assessment-contaminated-sediment",
+      "wqciu_citation": "NYSDEC (2014)",
+      "wqciu_locator": "PDF pages 257-259, 292",
+      "title_from_wqciu": "Screening and Assessment of Contaminated Sediment",
+      "role": "Source for BBSGV, freely dissolved fraction, trophic-level lipid defaults, and BAF calculations.",
+      "zotero_match_status": "not_found_in_existing_exports",
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "macdonald-1994-florida-sediment-quality",
+      "wqciu_citation": "MacDonald (1994)",
+      "wqciu_locator": "PDF pages 261, 292",
+      "title_from_wqciu": "Approach to the assessment of sediment quality in Florida coastal waters. Volume 1",
+      "role": "Underlying source for Florida/TEL sediment-quality methods.",
+      "zotero_match_status": "matched_exact",
+      "zotero_matches": [
+        {
+          "key": "RINNYECP",
+          "title": "Approach to the Assessment of Sediment Quality in Florida Coastal Waters (Vol. 1)"
+        },
+        {
+          "key": "NVSVL9P6",
+          "title": "Approach to the Assessment of Sediment Quality in Florida Coastal Waters. (Volumes I,II & III)"
+        }
+      ],
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "macdonald-2003-florida-inland-sediment-guidelines",
+      "wqciu_citation": "MacDonald et al. (2003)",
+      "wqciu_locator": "PDF page 292",
+      "title_from_wqciu": "Development and evaluation of numerical sediment quality assessment guidelines for Florida inland waters",
+      "role": "Underlying source for Florida/TEL sediment rows.",
+      "zotero_match_status": "matched_exact",
+      "zotero_matches": [
+        {
+          "key": "IRRPS6YN",
+          "attachment_key": "H635VSC6",
+          "title": "Development and Evaluation of Numerical Sediment Quality Assessment Guidelines for Florida Inland Waters"
+        }
+      ],
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "washington-sediment-cleanup-users-manual",
+      "wqciu_citation": "WS DOE (2019)",
+      "wqciu_locator": "PDF pages 252, 295",
+      "title_from_wqciu": "Sediment Cleanup Users Manual",
+      "role": "Washington sediment guideline reference for WQCIU sediment inventory.",
+      "zotero_match_status": "possible_version_mismatch",
+      "zotero_matches": [
+        {
+          "key": "JCTBJMUY",
+          "title": "Sediment Cleanup Users Manual II (SCUM II)",
+          "date": "2013"
+        },
+        {
+          "key": "8TDI33KN",
+          "title": "Sediment cleanup users manual II"
+        }
+      ],
+      "catalog_match_status": "not_in_catalog"
+    },
+    {
+      "lead_id": "chan-2016-fnfnes-alberta",
+      "wqciu_citation": "Chan et al. (2016)",
+      "wqciu_locator": "PDF pages 252, 206-207, 287",
+      "title_from_wqciu": "First Nations Food, Nutrition, and Environment Study: Results from Alberta 2013",
+      "role": "Source for consumption-rate calculation method comparison; WQCIU survey values remain WQCIU-owned local data.",
+      "zotero_match_status": "not_found_in_existing_exports",
+      "catalog_match_status": "not_in_catalog"
+    }
+  ],
+  "unmatched_high_priority_zotero_targets": [
+    "US EPA (2000b) Methodology for Deriving Ambient Water Quality Criteria for the Protection of Human Health",
+    "US EPA (2015a) Human Health Ambient Water Quality Criteria: 2015 Update",
+    "US EPA (2015b) National Bioaccumulation Factors - Supplemental Information table",
+    "US EPA (2015c) National Recommended Water Quality Criteria - Human Health Criteria Table (revised)",
+    "US EPA (1999) Screening Level Ecological Risk Assessment Protocol, Appendix C",
+    "Sample et al. (1996) Toxicological Benchmarks for Wildlife: 1996 Revision",
+    "Alberta Health (2019) Guidance on Human Health Risk Assessment for Environmental Impact Assessment in Alberta, Version 2.0",
+    "Health Canada (2020a) Guidelines for Canadian Drinking Water Quality - Summary Tables",
+    "NYSDEC (2014) Screening and Assessment of Contaminated Sediment",
+    "Chan et al. (2016) First Nations Food, Nutrition, and Environment Study: Results from Alberta 2013"
+  ],
+  "next_actions": [
+    "Use Zotero UI/API metadata lookup to add or deduplicate unmatched high-priority targets.",
+    "For each calculator value, promote only the underlying canonical source with exact table/page/equation locator.",
+    "Do not promote WQCIU table values as generic BC calculator defaults without owner review of applicability.",
+    "Use WQCIU's fish ingestion and medicinal plant rates only as WQCIU/local Indigenous-use scenario inputs unless owner approves broader defaults."
+  ]
+}

@@ -8,17 +8,23 @@ import MathRenderer from '@/components/MathRenderer';
 import { humanHealthDirectContact } from '@/lib/matrix-options/derivations';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type { HumanHealthDirectContactResult } from '@/lib/matrix-options/types';
+import type {
+  CalculatorUsedValue,
+  EvidenceLibraryFilterRequest,
+} from '@/lib/matrix-options/provenance/types';
 import { parseDecimalInput } from '@/lib/matrix-options/parseDecimal';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
   type Jurisdiction,
 } from './guide/content/jurisdictions';
+import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 
 export interface HHDirectContactCalculatorProps {
   substanceKey?: string;
   jurisdiction?: Jurisdiction;
   className?: string;
+  onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
 }
 
 function positiveInput(value: string, label: string): number | { error: string } {
@@ -42,6 +48,7 @@ export default function HHDirectContactCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
   jurisdiction: _jurisdiction = DEFAULT_JURISDICTION,
   className,
+  onOpenEvidenceLibrary,
 }: HHDirectContactCalculatorProps) {
   const substance = findSubstance(substanceKey);
   const [bwInput, setBwInput] = useState('15');
@@ -145,6 +152,121 @@ export default function HHDirectContactCalculator({
   ]);
 
   const hhResult = 'error' in result ? null : result;
+  const provenanceValues: CalculatorUsedValue[] = useMemo(
+    () => [
+      {
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        label: 'Oral RfD',
+        value: rfdInput === '' ? null : rfdInput,
+        unit: 'mg/kg-bw/day',
+        role: 'placeholder default',
+        pathway: 'human-health-direct',
+        substance_key: substanceKey,
+      },
+      {
+        input_key: 'sf_oral_per_mg_per_kg_bw_per_day',
+        label: 'Oral slope factor',
+        value: slopeInput === '' ? null : slopeInput,
+        unit: 'per mg/kg-bw/day',
+        role: 'placeholder default',
+        pathway: 'human-health-direct',
+        substance_key: substanceKey,
+      },
+      {
+        input_key: 'abs_dermal',
+        label: 'Dermal absorption',
+        value: absDermalInput,
+        role: 'placeholder default',
+        pathway: 'human-health-direct',
+        substance_key: substanceKey,
+      },
+      {
+        input_key: 'ba_oral',
+        label: 'Oral bioavailability',
+        value: baOralInput,
+        role: 'placeholder default',
+        pathway: 'human-health-direct',
+        substance_key: substanceKey,
+      },
+      {
+        input_key: 'BW_kg',
+        label: 'Body weight',
+        value: bwInput,
+        unit: 'kg',
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'ED_years',
+        label: 'Exposure duration',
+        value: edInput,
+        unit: 'years',
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'IR_sed_mg_per_day',
+        label: 'Sediment ingestion',
+        value: irSedInput,
+        unit: 'mg/day',
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'AT_cancer_years',
+        label: 'Cancer averaging time',
+        value: atCancerInput,
+        unit: 'years',
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'SA_cm2',
+        label: 'Skin surface area',
+        value: skinAreaInput,
+        unit: 'cm2',
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'AF_sed_mg_per_cm2',
+        label: 'Sediment adherence',
+        value: adherenceInput,
+        unit: 'mg/cm2',
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'EF_days_per_year',
+        label: 'Exposure frequency',
+        value: efInput,
+        unit: 'days/year',
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'targetRisk',
+        label: 'Target risk',
+        value: targetRiskInput,
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'hazardQuotient',
+        label: 'Hazard quotient',
+        value: hazardQuotientInput,
+        role: 'screening assumption',
+      },
+    ],
+    [
+      absDermalInput,
+      adherenceInput,
+      atCancerInput,
+      baOralInput,
+      bwInput,
+      edInput,
+      efInput,
+      hazardQuotientInput,
+      irSedInput,
+      rfdInput,
+      skinAreaInput,
+      slopeInput,
+      substanceKey,
+      targetRiskInput,
+    ],
+  );
 
   return (
     <section
@@ -318,6 +440,11 @@ export default function HHDirectContactCalculator({
           )}
         </div>
       </details>
+      <CalculatorProvenancePanel
+        pathway="human-health-direct"
+        usedValues={provenanceValues}
+        onOpenEvidenceLibrary={onOpenEvidenceLibrary}
+      />
     </section>
   );
 }

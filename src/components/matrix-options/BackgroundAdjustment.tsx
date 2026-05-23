@@ -17,7 +17,10 @@ import {
   DECIMAL_NUMBER_RE,
   parseDecimalInput,
 } from '@/lib/matrix-options/parseDecimal';
-import type { CalculatorUsedValue } from '@/lib/matrix-options/provenance/types';
+import type {
+  CalculatorUsedValue,
+  EvidenceLibraryFilterRequest,
+} from '@/lib/matrix-options/provenance/types';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 
 interface ParseResult {
@@ -53,7 +56,13 @@ const PROVINCIAL_DEFAULT_SAMPLES =
   '4.8, 5.1, 4.9, 5.3, 4.7, 5.0, 5.2, 4.6, 5.4, 5.0';
 const REGIONAL_DEFAULT_SAMPLES = '5.7, 5.9, 5.5, 5.8, 6.0, 5.6, 5.9, 5.7';
 
-export default function BackgroundAdjustment() {
+interface BackgroundAdjustmentProps {
+  onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
+}
+
+export default function BackgroundAdjustment({
+  onOpenEvidenceLibrary,
+}: BackgroundAdjustmentProps) {
   // Persist BOTH reference sample sets so flipping the Scope radio does not
   // lose the user's work (UX choice 2026-05-19 -- single-textarea + scope-radio
   // option, with both sets preserved internally).
@@ -363,6 +372,7 @@ export default function BackgroundAdjustment() {
       <CalculatorProvenancePanel
         pathway="background-adjustment"
         usedValues={provenanceValues}
+        onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
     </section>
   );

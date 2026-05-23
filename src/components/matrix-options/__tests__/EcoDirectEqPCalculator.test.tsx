@@ -306,23 +306,13 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(panel).toHaveTextContent(/Final Chronic Value/);
     expect(panel).toHaveTextContent(/0\.014 ug\/L/);
     expect(panel).toHaveTextContent(/US EPA IRIS, Benzo\[a\]pyrene/);
-    expect(panel).toHaveTextContent(/Current calculator substance library/);
-    expect(panel).toHaveTextContent(/source equation citation pending/);
-    expect(panel).toHaveTextContent(/Catalog values for active substance/);
-    expect(panel).toHaveTextContent(/Catalog sources referenced here/);
+    expect(panel).toHaveTextContent(
+      /source review pending; current calculator scaffold only/,
+    );
     expect(panel).toHaveTextContent(/source linked default/);
-    expect(
-      (screen.getByTestId('provenance-catalog-values') as HTMLDetailsElement)
-        .open,
-    ).toBe(false);
-    expect(
-      (screen.getByTestId('provenance-equation-records') as HTMLDetailsElement)
-        .open,
-    ).toBe(false);
-    expect(
-      (screen.getByTestId('provenance-source-records') as HTMLDetailsElement)
-        .open,
-    ).toBe(false);
+    expect(screen.queryByTestId('provenance-catalog-values')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('provenance-equation-records')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('provenance-source-records')).not.toBeInTheDocument();
   });
 
   it('labels placeholder FCV defaults as placeholder, not source-backed', () => {

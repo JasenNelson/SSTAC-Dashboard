@@ -32,7 +32,10 @@ import type {
   Ecosystem,
 } from '@/lib/matrix-options/types';
 import { parseDecimalInput } from '@/lib/matrix-options/parseDecimal';
-import type { CalculatorUsedValue } from '@/lib/matrix-options/provenance/types';
+import type {
+  CalculatorUsedValue,
+  EvidenceLibraryFilterRequest,
+} from '@/lib/matrix-options/provenance/types';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
@@ -55,12 +58,14 @@ export interface EcoFoodBSAFCalculatorProps {
   substanceKey?: string;
   jurisdiction?: Jurisdiction;
   className?: string;
+  onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
 }
 
 export default function EcoFoodBSAFCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
   jurisdiction: _jurisdiction = DEFAULT_JURISDICTION,
   className,
+  onOpenEvidenceLibrary,
 }: EcoFoodBSAFCalculatorProps) {
   const substance = findSubstance(substanceKey);
 
@@ -701,6 +706,7 @@ export default function EcoFoodBSAFCalculator({
       <CalculatorProvenancePanel
         pathway="eco-food-bsaf"
         usedValues={provenanceValues}
+        onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
     </section>
   );

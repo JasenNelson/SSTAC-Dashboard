@@ -1,0 +1,342 @@
+{
+  "queue_id": "epa-ecossl-metadata-2026",
+  "description": "US EPA Eco-SSL source-index pages and contaminant-specific PDF records to add to Zotero as metadata-only items. No PDFs or attachments are downloaded, uploaded, or stored in the repo.",
+  "library_type": "user",
+  "library_id": "17150559",
+  "target_collection_keys": ["M4BSJ3KN", "HN6H2W6Z"],
+  "target_collection_names": ["Sediment Project", "Regulatory_Frameworks"],
+  "batch_id": "epa-ecossl-metadata-2026-v1",
+  "default_tags": [
+    "matrix-options",
+    "us-epa",
+    "eco-ssl",
+    "ecological-soil-screening-level",
+    "reference-mining",
+    "metadata-only",
+    "zotero-api-added"
+  ],
+  "items": [
+    {
+      "source_id": "src-us-epa-eco-ssl-overview-2026",
+      "item": {
+        "itemType": "webpage",
+        "title": "Ecological Soil Screening Level",
+        "websiteTitle": "EPA Chemical Research",
+        "date": "2026-04-21",
+        "url": "https://www.epa.gov/chemical-research/ecological-soil-screening-level",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "US EPA overview and reference-mining page for Ecological Soil Screening Levels, including links to guidance, literature identification resources, and interim Eco-SSL documents.",
+        "extra": "Matrix Options provenance source-index candidate.\nAuthority scope: international guidance.\nCurrentness status: official EPA page checked 2026-05-23; page shows last updated 2026-04-21.\nBoundary: source-index page only; promote individual linked PDFs and exact locators for values.\nNo source files attached by this queue.\nSource ID: src-us-epa-eco-ssl-overview-2026"
+      }
+    },
+    {
+      "source_id": "src-us-epa-interim-eco-ssl-documents-2026",
+      "item": {
+        "itemType": "webpage",
+        "title": "Interim Ecological Soil Screening Level Documents",
+        "websiteTitle": "EPA Chemical Research",
+        "date": "2026-04-21",
+        "url": "https://www.epa.gov/chemical-research/interim-ecological-soil-screening-level-documents",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "US EPA source-index page for separate contaminant-specific interim Eco-SSL PDF documents.",
+        "extra": "Matrix Options provenance source-index candidate.\nAuthority scope: international guidance.\nCurrentness status: official EPA page checked 2026-05-23; page shows last updated 2026-04-21.\nBoundary: source-index page only; promote individual linked PDFs and exact locators for values.\nNo source files attached by this queue.\nSource ID: src-us-epa-interim-eco-ssl-documents-2026"
+      }
+    },
+    {
+      "source_id": "epa-ecossl-aluminum",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Level for Aluminum, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_aluminum.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-aluminum.\nSubstance: Aluminum.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-antimony",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Antimony, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_antimony.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-antimony.\nSubstance: Antimony.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-arsenic",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Arsenic, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_arsenic.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-arsenic.\nSubstance: Arsenic.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-barium",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Barium, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_barium.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-barium.\nSubstance: Barium.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-beryllium",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Beryllium, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_beryllium.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-beryllium.\nSubstance: Beryllium.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-cadmium",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Cadmium, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_cadmium.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-cadmium.\nSubstance: Cadmium.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-chromium",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Chromium, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_chromium.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-chromium.\nSubstance: Chromium.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-cobalt",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Cobalt, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_cobalt_.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-cobalt.\nSubstance: Cobalt.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-copper",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Copper, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_copper.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-copper.\nSubstance: Copper.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-iron",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Level for Iron, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_iron.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-iron.\nSubstance: Iron.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-lead",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Lead, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_lead.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-lead.\nSubstance: Lead.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-manganese",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Manganese, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_manganese.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-manganese.\nSubstance: Manganese.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-nickel",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Nickel, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_nickel.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-nickel.\nSubstance: Nickel.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-selenium",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Selenium, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_selenium.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-selenium.\nSubstance: Selenium.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-silver",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Silver, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_silver.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-silver.\nSubstance: Silver.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-vanadium",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Vanadium, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_vanadium.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-vanadium.\nSubstance: Vanadium.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-zinc",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Zinc, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_zinc.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-zinc.\nSubstance: Zinc.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-ddt-metabolites",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for DDT and Metabolites",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_ddt.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-ddt-metabolites.\nSubstance: DDT and metabolites.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-dieldrin",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Dieldrin, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_dieldrin.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-dieldrin.\nSubstance: Dieldrin.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-pentachlorophenol",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Pentachlorophenol, Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_pcp.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-pentachlorophenol.\nSubstance: Pentachlorophenol.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    },
+    {
+      "source_id": "epa-ecossl-pahs",
+      "item": {
+        "itemType": "report",
+        "title": "Ecological Soil Screening Levels for Polycyclic Aromatic Hydrocarbons (PAHs), Interim Final",
+        "institution": "US Environmental Protection Agency",
+        "reportType": "Eco-SSL contaminant-specific document",
+        "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_pah.pdf",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "EPA Eco-SSL contaminant-specific PDF metadata record. Source file is not attached by this queue.",
+        "extra": "Matrix Options source lead: epa-ecossl-pahs.\nSubstance: Polycyclic aromatic hydrocarbons.\nCanonical source status: needs exact source locator before value promotion.\nApplicability note: Eco-SSL values are ecological soil screening values and are not cleanup levels.\nNo source files attached by this queue."
+      }
+    }
+  ]
+}

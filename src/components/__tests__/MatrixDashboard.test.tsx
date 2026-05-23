@@ -8,7 +8,7 @@ import React from 'react';
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 
 // Mock heavy children we do not need full coverage of in this integration
 // suite. The Calculator-tab assertions exercise the real CategorySelector
@@ -332,6 +332,43 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     );
     expect(screen.queryByText(/Active Poll/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/will dynamically appear/i)).not.toBeInTheDocument();
+  });
+
+  it('renders the References & Values tab with the evidence library', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^References & Values$/ }));
+
+    expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Benzo\[a\]pyrene log Kow/,
+    );
+    expect(screen.getByTestId('evidence-library-equations')).toHaveTextContent(
+      /Human Health Direct Contact sediment screen/,
+    );
+  });
+
+  it('opens References & Values from a calculator provenance receipt', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    clickCalculatorTab();
+
+    const calculatorPanel = screen.getAllByTestId('calculator-provenance-panel')[0];
+    fireEvent.click(
+      within(calculatorPanel).getByText(/References and provenance/),
+    );
+    fireEvent.click(
+      within(calculatorPanel).getByRole('button', {
+        name: /Open References & Values/i,
+      }),
+    );
+
+    expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
+    expect(screen.getByText(/Value: pv bap fcv/i)).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Benzo\[a\]pyrene FCV/,
+    );
+    expect(screen.getByTestId('evidence-library-equations')).toHaveTextContent(
+      /Eco-Direct EqP sediment benchmark/,
+    );
   });
 
   it('shows jurisdictional quick-reference copy on Jurisdictional Frameworks', () => {

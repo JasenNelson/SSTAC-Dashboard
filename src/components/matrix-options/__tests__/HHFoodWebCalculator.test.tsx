@@ -62,4 +62,25 @@ describe('HHFoodWebCalculator', () => {
       /--\s*mg\/kg/,
     );
   });
+
+  it('renders conservative provenance scaffolds for HH food-web inputs', () => {
+    render(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-csr"
+      />,
+    );
+
+    const panel = screen.getByTestId('calculator-provenance-panel');
+    expect(panel).toHaveTextContent(/References and provenance/);
+    expect(panel).toHaveTextContent(/11 used values/);
+    expect(panel).toHaveTextContent(/Local BSAF/);
+    expect(panel).toHaveTextContent(/Target risk/);
+    expect(panel).toHaveTextContent(/Hazard quotient/);
+    expect(panel).toHaveTextContent(/placeholder default/);
+    expect(panel).toHaveTextContent(/needs review/);
+    expect(panel).toHaveTextContent(
+      /source review pending; current calculator scaffold only/,
+    );
+  });
 });

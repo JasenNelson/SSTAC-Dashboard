@@ -16,6 +16,7 @@ Use the top tabs to move between the main review surfaces:
 *   **Interactive Map** shows available sediment sample locations and measurements.
 *   **TWG Review** records Technical Working Group feedback on the options under review.
 *   **Calculator** estimates preliminary values for ecological and human-health pathways.
+*   **References & Values** shows the repo-local metadata catalog for sources, values, equations, assumptions, and QA states.
 
 A typical review flow is: read the Guide, check the conceptual model, compare jurisdictional approaches, inspect data on the map, test assumptions in the Calculator, then record feedback in TWG Review.
 
@@ -73,9 +74,9 @@ Before relying on a result or submitting feedback:
 
 ## 5. Calculator References and Provenance
 
-Every active calculator now has a bottom-of-panel **References and provenance** disclosure. It shows the values used in the current calculation, whether each value is a source-backed default, user-entered value, derived value, or screening assumption, and the source/equation records currently linked to that value.
+Every active calculator now has a bottom-of-panel **References and provenance** disclosure. It stays compact: values used in the current calculation, role, review status, and the first linked source. Use **References & Values** for the larger evidence library.
 
-The provenance catalog is repo-managed under `matrix_research/reference_catalog/` and is intentionally metadata-only. It stores source IDs, citation fields, pending Zotero item keys, equation records, current calculator parameter records, extraction status, QA status, and review notes. It does not store PDFs, datasets, Word files, Zotero attachments, or other source reference files.
+The provenance catalog is repo-managed under `matrix_research/reference_catalog/` and is intentionally metadata-only. It stores source IDs, citation fields, pending Zotero item keys, equation records, current calculator parameter records, extraction status, QA status, default status, currentness status, applicability, uncertainty, and review notes. It does not store PDFs, datasets, Word files, Zotero attachments, or other source reference files.
 
 Zotero remains the reference manager and file vault. Google Drive and OneDrive reference folders can be inventoried as external source locations, but source files are not copied into the app repo or Supabase. Future Supabase work may mirror structured metadata for querying, but source files stay outside Supabase unless the owner explicitly changes that policy.
 

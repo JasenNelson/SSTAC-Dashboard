@@ -26,7 +26,10 @@ import { ecoDirectEqP } from '@/lib/matrix-options/derivations';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type { EcoDirectEqPResult } from '@/lib/matrix-options/types';
 import { parseDecimalInput } from '@/lib/matrix-options/parseDecimal';
-import type { CalculatorUsedValue } from '@/lib/matrix-options/provenance/types';
+import type {
+  CalculatorUsedValue,
+  EvidenceLibraryFilterRequest,
+} from '@/lib/matrix-options/provenance/types';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
@@ -45,12 +48,14 @@ export interface EcoDirectEqPCalculatorProps {
   substanceKey?: string;
   jurisdiction?: Jurisdiction;
   className?: string;
+  onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
 }
 
 export default function EcoDirectEqPCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
   jurisdiction: _jurisdiction = DEFAULT_JURISDICTION,
   className,
+  onOpenEvidenceLibrary,
 }: EcoDirectEqPCalculatorProps) {
   const substance = findSubstance(substanceKey);
 
@@ -441,6 +446,7 @@ export default function EcoDirectEqPCalculator({
       <CalculatorProvenancePanel
         pathway="eco-direct-eqp"
         usedValues={provenanceValues}
+        onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
     </section>
   );

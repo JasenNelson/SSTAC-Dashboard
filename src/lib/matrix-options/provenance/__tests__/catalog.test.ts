@@ -11,10 +11,75 @@ import {
   resolveEquationsForPathway,
   resolveProvenanceRows,
 } from '../resolver';
+import wqciuSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/wqciu_reference_leads_2026_05_23.json';
+import epaEcoSslSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/epa_ecossl_reference_leads_2026_05_23.json';
+import erdcBsafSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/erdc_bsaf_reference_leads_2026_05_23.json';
 
 function expectUnique(values: string[]): void {
   expect(new Set(values).size).toBe(values.length);
 }
+
+type WqciuLeadRecord = {
+  lead_id: string;
+  promotion_status?: string;
+  canonical_source_status?: string;
+  canonical_source_leads?: string[];
+  rows?: WqciuLeadRecord[];
+  values?: WqciuLeadRecord[];
+};
+
+const WQCIU_SOURCE_LEADS = wqciuSourceLeadsRaw as {
+  status: string;
+  source_of_sources_rule: string;
+  equation_leads: WqciuLeadRecord[];
+  parameter_value_leads: WqciuLeadRecord[];
+  canonical_source_leads: Array<{
+    lead_id: string;
+    zotero_match_status: string;
+    catalog_match_status: string;
+  }>;
+};
+
+const EPA_ECOSSL_SOURCE_LEADS = epaEcoSslSourceLeadsRaw as {
+  status: string;
+  source_of_sources_rule: string;
+  hub_pages: Array<{
+    source_id: string;
+    calculator_source_role: string;
+    promotion_status: string;
+  }>;
+  document_leads: Array<{
+    lead_id: string;
+    substance: string;
+    url: string;
+    promotion_status: string;
+    canonical_source_status: string;
+  }>;
+};
+
+const ERDC_BSAF_SOURCE_LEADS = erdcBsafSourceLeadsRaw as {
+  status: string;
+  primary_source: {
+    source_id: string;
+    homepage_url: string;
+    database_spreadsheet_url: string;
+    version: string;
+    promotion_status: string;
+    canonical_source_status: string;
+  };
+  document_leads: Array<{
+    lead_id: string;
+    url: string;
+    promotion_status: string;
+    canonical_source_status: string;
+  }>;
+};
+
+const ALLOWED_WQCIU_PROMOTION_STATUSES = [
+  'needs_review',
+  'needs_exact_source_locator',
+  'needs_formula_verification',
+];
 
 describe('matrix options provenance catalog', () => {
   it('uses unique source, equation, and parameter identifiers', () => {
@@ -154,14 +219,24 @@ describe('matrix options provenance catalog', () => {
     }
   });
 
-  it('marks placeholder defaults as requiring owner review', () => {
+  it('keeps placeholder defaults in an unapproved review state', () => {
     const placeholders = PARAMETER_VALUE_RECORDS.filter(
       (record) => record.default_status === 'placeholder_default',
     );
     expect(placeholders.length).toBeGreaterThan(0);
     for (const placeholder of placeholders) {
-      expect(placeholder.qa_status).toBe('needs_owner_review');
+      expect(placeholder.qa_status).toBe('needs_review');
     }
+    expect(
+      PARAMETER_VALUE_RECORDS.find(
+        (record) => record.parameter_value_id === 'pv-bap-trv-eco',
+      )?.qa_status,
+    ).toBe('needs_review');
+    expect(
+      PARAMETER_VALUE_RECORDS.find(
+        (record) => record.parameter_value_id === 'pv-pcb-fcv',
+      )?.qa_status,
+    ).toBe('needs_review');
   });
 
   it('records currentness metadata for current Health Canada sources', () => {
@@ -192,6 +267,172 @@ describe('matrix options provenance catalog', () => {
     }
   });
 
+  it('treats WQCIU as a source-of-sources lead, not a canonical value shortcut', () => {
+    const wqciu = getSourceRecord('src-acfn-wqciu');
+
+    expect(wqciu?.notes).toMatch(/source-of-sources/i);
+    expect(wqciu?.notes).toMatch(/underlying modern equations/i);
+    expect(wqciu?.conflict_rule).toMatch(/Underlying cited sources/i);
+    expect(wqciu?.calculator_source_role).toBe('reference_mining');
+  });
+
+  it('does not use reference-mining sources as canonical value or equation sources', () => {
+    const referenceMiningSourceIds = new Set(
+      SOURCE_RECORDS.filter(
+        (source) => source.calculator_source_role === 'reference_mining',
+      ).map((source) => source.source_id),
+    );
+    expect([...referenceMiningSourceIds]).toContain('src-acfn-wqciu');
+
+    const valueOffenders = PARAMETER_VALUE_RECORDS.flatMap((record) =>
+      record.source_ids
+        .filter((sourceId) => referenceMiningSourceIds.has(sourceId))
+        .map((sourceId) => `${record.parameter_value_id}:${sourceId}`),
+    );
+    const equationOffenders = EQUATION_RECORDS.flatMap((record) =>
+      record.source_ids
+        .filter((sourceId) => referenceMiningSourceIds.has(sourceId))
+        .map((sourceId) => `${record.equation_id}:${sourceId}`),
+    );
+
+    expect([...valueOffenders, ...equationOffenders]).toEqual([]);
+  });
+
+  it('keeps the current calculator scaffold as implementation provenance only', () => {
+    const scaffold = getSourceRecord('src-current-calculator-design-v1');
+
+    expect(scaffold?.file_storage).toBe('repo_metadata_only');
+    expect(scaffold?.calculator_source_role).toBe('implementation_scaffold');
+    expect(scaffold?.notes).toMatch(/Do not cite/i);
+  });
+
+  it('keeps WQCIU source leads unpromoted until canonical locators are verified', () => {
+    expect(WQCIU_SOURCE_LEADS.status).toBe('needs_review');
+    expect(WQCIU_SOURCE_LEADS.source_of_sources_rule).toMatch(
+      /underlying cited source as canonical/i,
+    );
+    expect(WQCIU_SOURCE_LEADS.canonical_source_leads.length).toBeGreaterThan(0);
+
+    for (const lead of WQCIU_SOURCE_LEADS.equation_leads) {
+      expect(
+        ALLOWED_WQCIU_PROMOTION_STATUSES,
+        lead.lead_id,
+      ).toContain(lead.promotion_status);
+      expect(lead.canonical_source_leads?.length, lead.lead_id).toBeGreaterThan(0);
+    }
+
+    for (const lead of WQCIU_SOURCE_LEADS.parameter_value_leads) {
+      expect(
+        ALLOWED_WQCIU_PROMOTION_STATUSES,
+        lead.lead_id,
+      ).toContain(lead.promotion_status);
+      const extractedItems = [...(lead.rows ?? []), ...(lead.values ?? [])];
+      for (const item of extractedItems) {
+        expect(item.promotion_status, item.lead_id).toBe('needs_review');
+        expect(item.canonical_source_status, item.lead_id).toBe(
+          'needs_exact_source_locator',
+        );
+      }
+    }
+  });
+
+  it('catalogs EPA Eco-SSL pages as reference-mining hubs only', () => {
+    const overview = getSourceRecord('src-us-epa-eco-ssl-overview-2026');
+    const index = getSourceRecord('src-us-epa-interim-eco-ssl-documents-2026');
+
+    expect(overview?.calculator_source_role).toBe('reference_mining');
+    expect(index?.calculator_source_role).toBe('reference_mining');
+    expect(overview?.currentness_status).toBe('current');
+    expect(index?.currentness_status).toBe('current');
+    expect(overview?.conflict_rule).toMatch(/not cleanup levels/i);
+    expect(index?.conflict_rule).toMatch(/not cleanup levels/i);
+  });
+
+  it('keeps EPA Eco-SSL linked PDF leads unpromoted pending exact locators', () => {
+    expect(EPA_ECOSSL_SOURCE_LEADS.status).toBe('needs_review');
+    expect(EPA_ECOSSL_SOURCE_LEADS.source_of_sources_rule).toMatch(
+      /individual linked PDF/i,
+    );
+    expect(EPA_ECOSSL_SOURCE_LEADS.hub_pages).toHaveLength(2);
+    expect(EPA_ECOSSL_SOURCE_LEADS.document_leads).toHaveLength(21);
+
+    for (const hub of EPA_ECOSSL_SOURCE_LEADS.hub_pages) {
+      expect(hub.calculator_source_role, hub.source_id).toBe('reference_mining');
+      expect(hub.promotion_status, hub.source_id).toBe('needs_review');
+    }
+
+    for (const lead of EPA_ECOSSL_SOURCE_LEADS.document_leads) {
+      expect(lead.url, lead.lead_id).toMatch(/^https:\/\/www\.epa\.gov\//);
+      expect(lead.promotion_status, lead.lead_id).toBe('needs_review');
+      expect(lead.canonical_source_status, lead.lead_id).toBe(
+        'needs_exact_source_locator',
+      );
+    }
+  });
+
+  it('catalogs the ERDC BSAF database homepage and spreadsheet locator', () => {
+    const source = getSourceRecord('src-erdc-bsaf-db');
+
+    expect(source?.url).toBe('https://bsaf.el.erdc.dren.mil/');
+    expect(source?.version).toBe('October 2022');
+    expect(source?.currentness_status).toBe('current');
+    expect(source?.external_file_hint).toContain(
+      'USACE_ERDC_BSAF_Database_October2022.xlsx',
+    );
+    expect(source?.notes).toMatch(/exact record\/row locator review/i);
+  });
+
+  it('keeps ERDC BSAF database leads unpromoted pending exact row locators', () => {
+    expect(ERDC_BSAF_SOURCE_LEADS.status).toBe('needs_review');
+    expect(ERDC_BSAF_SOURCE_LEADS.primary_source.source_id).toBe(
+      'src-erdc-bsaf-db',
+    );
+    expect(ERDC_BSAF_SOURCE_LEADS.primary_source.version).toBe('October 2022');
+    expect(ERDC_BSAF_SOURCE_LEADS.primary_source.promotion_status).toBe(
+      'needs_review',
+    );
+    expect(ERDC_BSAF_SOURCE_LEADS.primary_source.canonical_source_status).toBe(
+      'needs_exact_source_locator',
+    );
+    expect(ERDC_BSAF_SOURCE_LEADS.document_leads).toHaveLength(2);
+
+    for (const lead of ERDC_BSAF_SOURCE_LEADS.document_leads) {
+      expect(lead.url, lead.lead_id).toMatch(/^https:\/\/bsaf\.el\.erdc\.dren\.mil\//);
+      expect(lead.promotion_status, lead.lead_id).toBe('needs_review');
+      expect(lead.canonical_source_status, lead.lead_id).toBe(
+        'needs_exact_source_locator',
+      );
+    }
+  });
+
+  it('does not mark ERDC BSAF scaffold values as source-backed defaults', () => {
+    const erdcBsafValues = PARAMETER_VALUE_RECORDS.filter((record) =>
+      record.source_ids.includes('src-erdc-bsaf-db'),
+    );
+
+    expect(erdcBsafValues.length).toBeGreaterThan(0);
+    for (const record of erdcBsafValues) {
+      expect(record.default_status, record.parameter_value_id).toBe(
+        'placeholder_default',
+      );
+      expect(record.qa_status, record.parameter_value_id).toBe('needs_review');
+      expect(record.extraction_status, record.parameter_value_id).toBe(
+        'extracted_from_current_calculator',
+      );
+      expect(record.review_notes, record.parameter_value_id).toMatch(
+        /exact ERDC spreadsheet row/i,
+      );
+      for (const evidence of record.evidence_items) {
+        expect(evidence.extraction_method, evidence.evidence_id).toBe(
+          'current_calculator_scaffold',
+        );
+        expect(evidence.locator_type, evidence.evidence_id).toBe(
+          'current_calculator',
+        );
+      }
+    }
+  });
+
   it('resolves current Benzo[a]pyrene Eco-Direct defaults', () => {
     expect(
       getParameterValueRecord(
@@ -213,6 +454,8 @@ describe('matrix options provenance catalog', () => {
     expect(getPathwayEquationRecords('eco-direct-eqp')).toHaveLength(1);
     expect(resolveEquationsForPathway('eco-food-bsaf')).toHaveLength(1);
     expect(resolveEquationsForPathway('background-adjustment')).toHaveLength(1);
+    expect(resolveEquationsForPathway('human-health-direct')).toHaveLength(1);
+    expect(resolveEquationsForPathway('human-health-food')).toHaveLength(1);
   });
 
   it('resolves display rows with catalog metadata and user-entered rows', () => {

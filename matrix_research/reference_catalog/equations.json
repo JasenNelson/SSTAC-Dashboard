@@ -125,5 +125,131 @@
         "locator_type": "current_calculator"
       }
     ]
+  },
+  {
+    "equation_id": "eq-human-health-direct-contact",
+    "pathway": "human-health-direct",
+    "display_name": "Human Health Direct Contact sediment screen",
+    "equation_latex": "Dose = C_s CF EF ED (IR_sed BA_o + SA AF_sed ABS_d) / (BW AT)",
+    "plain_language": "Solve the direct-contact exposure equation for sediment concentration using the available non-cancer and cancer endpoints, then use the lower screening value.",
+    "input_keys": [
+      "rfd_oral_mg_per_kg_bw_day",
+      "sf_oral_per_mg_per_kg_bw_per_day",
+      "targetRisk",
+      "hazardQuotient",
+      "BW_kg",
+      "ED_years",
+      "EF_days_per_year",
+      "AT_cancer_years",
+      "IR_sed_mg_per_day",
+      "SA_cm2",
+      "AF_sed_mg_per_cm2",
+      "abs_dermal",
+      "ba_oral"
+    ],
+    "output_keys": [
+      "sedS_mg_per_kg_dry",
+      "nonCancerSedS",
+      "cancerSedS",
+      "contactRate_mg_per_day"
+    ],
+    "unit_notes": "Calculator output is mg/kg dry sediment. Oral slope factor is entered as per mg/kg-bw/day.",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "applicability": "Screening-grade human direct-contact pathway for incidental ingestion plus dermal contact with wet sediment.",
+    "qa_status": "needs_review",
+    "review_notes": "Formula matches current implementation. Exact guidance locators for exposure defaults and endpoints are pending.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "direct contact",
+      "sediment ingestion",
+      "dermal contact"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator implementation; source equation citation pending",
+        "value_text": "Dose = C_s CF EF ED (IR_sed BA_o + SA AF_sed ABS_d) / (BW AT)",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Equation behavior matches the current implementation, but source-level citation review is still pending.",
+        "evidence_id": "ev-eq-human-health-direct-contact-1",
+        "locator_type": "current_calculator"
+      }
+    ]
+  },
+  {
+    "equation_id": "eq-human-health-food-web",
+    "pathway": "human-health-food",
+    "display_name": "Human Health Food Web sediment screen",
+    "equation_latex": "C_tissue = targetDose BW / (IR_food BA_o); SedS = C_tissue / BSAF_effective",
+    "plain_language": "Derive a protective tissue concentration from the selected dose endpoint and food ingestion rate, then back-calculate a sediment value through the effective BSAF.",
+    "input_keys": [
+      "rfd_oral_mg_per_kg_bw_day",
+      "sf_oral_per_mg_per_kg_bw_per_day",
+      "targetRisk",
+      "hazardQuotient",
+      "BW_kg",
+      "IR_food_kg_per_day",
+      "ba_oral",
+      "bsaf_loc_freshwater",
+      "fLipid",
+      "foc",
+      "ecosystem"
+    ],
+    "output_keys": [
+      "sedS_mg_per_kg_dry",
+      "tissueTarget_mg_per_kg",
+      "BSAF_effective",
+      "M_eco"
+    ],
+    "unit_notes": "Calculator output is mg/kg dry sediment. Tissue target is mg/kg tissue. Oral slope factor is entered as per mg/kg-bw/day.",
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "applicability": "Screening-grade human food-web pathway for fish or shellfish consumption.",
+    "qa_status": "needs_review",
+    "review_notes": "Formula matches current implementation. Exact guidance locators for food ingestion assumptions, endpoints, and BSAF translation are pending.",
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "food web",
+      "fish consumption",
+      "BSAF"
+    ],
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator implementation; source equation citation pending",
+        "value_text": "C_tissue = targetDose BW / (IR_food BA_o); SedS = C_tissue / BSAF_effective",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Equation behavior matches the current implementation, but source-level citation review is still pending.",
+        "evidence_id": "ev-eq-human-health-food-web-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   }
 ]

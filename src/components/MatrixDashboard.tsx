@@ -15,10 +15,18 @@ import EcoDirectEqPCalculator from './matrix-options/EcoDirectEqPCalculator';
 import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
 import HHDirectContactCalculator from './matrix-options/HHDirectContactCalculator';
 import HHFoodWebCalculator from './matrix-options/HHFoodWebCalculator';
+import EvidenceLibrary from './matrix-options/EvidenceLibrary';
 import CategorySelector from './matrix-options/CategorySelector';
 import SharedGlobalInputs, {
   DEFAULT_SUBSTANCE_KEY,
 } from './matrix-options/SharedGlobalInputs';
+import {
+  createEvidenceLibraryFilters,
+} from '@/lib/matrix-options/provenance/library';
+import type {
+  EvidenceLibraryFilterRequest,
+  EvidenceLibraryFilters,
+} from '@/lib/matrix-options/provenance/types';
 import {
   isMatrixCategory,
   type MatrixCategory,
@@ -200,7 +208,7 @@ interface MatrixDashboardProps {
   fetchErrorMessage?: string | null;
 }
 
-const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'Interactive Map', 'TWG Review', 'Calculator'];
+const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'Interactive Map', 'TWG Review', 'Calculator', 'References & Values'];
 const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
 
 export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent, finalDraftContent, initialMapData = EMPTY_MATRIX_MAP_DATA, fetchErrorMessage = null }: MatrixDashboardProps) {
@@ -237,6 +245,8 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   const [jurisdiction, setJurisdiction] = useState<Jurisdiction>(
     DEFAULT_JURISDICTION,
   );
+  const [evidenceLibraryFilters, setEvidenceLibraryFilters] =
+    useState<EvidenceLibraryFilters>(() => createEvidenceLibraryFilters());
 
   // Hydrate from localStorage on mount (client-only). Each restore* helper
   // validates the stored value against the current allowlist and clears
@@ -275,6 +285,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
 
   const isToolMode = activeTopTab === 'Calculator' || activeTopTab === 'Jurisdictional Frameworks';
   const isReviewMode = activeTopTab === 'TWG Review';
+  const isEvidenceLibraryMode = activeTopTab === 'References & Values';
   // 2026-05-20 embed refactor: the Interactive Map tab renders the live
   // matrix-map full-bleed (mirrors BN-RRM MapView tab pattern). Distinct
   // from isToolMode because the matrix-map has its own internal floating
@@ -291,6 +302,13 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   const handleRefreshMapData = useCallback(() => {
     router.refresh();
   }, [router]);
+  const handleOpenEvidenceLibrary = useCallback(
+    (request: EvidenceLibraryFilterRequest) => {
+      setEvidenceLibraryFilters(createEvidenceLibraryFilters(request));
+      setActiveTopTab('References & Values');
+    },
+    [],
+  );
   const toggleRightPanel = useCallback(() => {
     setShowRightPanel((current) => {
       if (current) setMatrixMapWorkbenchFocused(false);
@@ -423,6 +441,8 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         return <p className="text-sm text-slate-500 dark:text-slate-400">Inspect sediment samples, measurements, filters, and map-linked selections.</p>;
       case 'TWG Review':
         return <p className="text-sm text-slate-500 dark:text-slate-400">Use the review tools to record Technical Working Group feedback.</p>;
+      case 'References & Values':
+        return <p className="text-sm text-slate-500 dark:text-slate-400">Review source metadata, calculator values, equations, and QA states.</p>;
       default:
         return null;
     }
@@ -516,6 +536,15 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         return (
           <TWGReviewPortal finalDraftContent={finalDraftContent} showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} />
         );
+      case 'References & Values':
+        return (
+          <div className="w-full">
+            <EvidenceLibrary
+              filters={evidenceLibraryFilters}
+              onFiltersChange={setEvidenceLibraryFilters}
+            />
+          </div>
+        );
       case 'Calculator':
         return (
           <div className="w-full space-y-6" data-testid="calculator-tab-content">
@@ -540,24 +569,28 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               <EcoDirectEqPCalculator
                 substanceKey={substanceKey}
                 jurisdiction={jurisdiction}
+                onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
               />
             )}
             {activeCategory === 'eco-food' && (
               <EcoFoodBSAFCalculator
                 substanceKey={substanceKey}
                 jurisdiction={jurisdiction}
+                onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
               />
             )}
             {activeCategory === 'hh-direct' && (
               <HHDirectContactCalculator
                 substanceKey={substanceKey}
                 jurisdiction={jurisdiction}
+                onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
               />
             )}
             {activeCategory === 'hh-food' && (
               <HHFoodWebCalculator
                 substanceKey={substanceKey}
                 jurisdiction={jurisdiction}
+                onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
               />
             )}
             <div className="flex items-center gap-3 py-2" aria-hidden="true">
@@ -567,7 +600,9 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               </span>
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
             </div>
-            <BackgroundAdjustment />
+            <BackgroundAdjustment
+              onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+            />
           </div>
         );
       case 'Interactive Map':
@@ -775,6 +810,12 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           // around the map inside this same container.
           <div className="flex-1 flex overflow-hidden print:hidden">
             {renderContent()}
+          </div>
+        ) : isEvidenceLibraryMode ? (
+          <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-950">
+            <div className="mx-auto w-full max-w-7xl px-4 py-10 lg:px-8">
+              {renderContent()}
+            </div>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900">

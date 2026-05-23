@@ -1,0 +1,225 @@
+{
+  "lead_set_id": "epa-ecossl-reference-leads-2026-05-23",
+  "status": "needs_review",
+  "created_at": "2026-05-23",
+  "created_by": "codex",
+  "policy": "metadata_only_no_source_file_copy",
+  "source_of_sources_rule": "EPA Eco-SSL web pages are official source-index hubs. Promote the individual linked PDF, not the hub page, as the canonical calculator source after exact value or equation locators are extracted and reviewed.",
+  "source_checked_at": "2026-05-23",
+  "official_page_last_updated": "2026-04-21",
+  "hub_pages": [
+    {
+      "source_id": "src-us-epa-eco-ssl-overview-2026",
+      "title": "Ecological Soil Screening Level",
+      "url": "https://www.epa.gov/chemical-research/ecological-soil-screening-level",
+      "role": "Overview page for Eco-SSL derivation process, guidance links, literature identification links, and the interim document index.",
+      "promotion_status": "needs_review",
+      "calculator_source_role": "reference_mining"
+    },
+    {
+      "source_id": "src-us-epa-interim-eco-ssl-documents-2026",
+      "title": "Interim Ecological Soil Screening Level Documents",
+      "url": "https://www.epa.gov/chemical-research/interim-ecological-soil-screening-level-documents",
+      "role": "Official EPA index page for separate Eco-SSL contaminant PDFs.",
+      "promotion_status": "needs_review",
+      "calculator_source_role": "reference_mining"
+    }
+  ],
+  "applicability_note": "Eco-SSL values are ecological soil screening values and are not cleanup levels. Do not promote them into sediment Matrix Options defaults without pathway-specific applicability review.",
+  "document_leads": [
+    {
+      "lead_id": "epa-ecossl-aluminum",
+      "substance": "Aluminum",
+      "title": "Ecological Soil Screening Level for Aluminum, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_aluminum.pdf",
+      "listed_file_size": "296.06 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-antimony",
+      "substance": "Antimony",
+      "title": "Ecological Soil Screening Levels for Antimony, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_antimony.pdf",
+      "listed_file_size": "445.79 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-arsenic",
+      "substance": "Arsenic",
+      "title": "Ecological Soil Screening Levels for Arsenic, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_arsenic.pdf",
+      "listed_file_size": "916.87 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-barium",
+      "substance": "Barium",
+      "title": "Ecological Soil Screening Levels for Barium, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_barium.pdf",
+      "listed_file_size": "722.78 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-beryllium",
+      "substance": "Beryllium",
+      "title": "Ecological Soil Screening Levels for Beryllium, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_beryllium.pdf",
+      "listed_file_size": "545.24 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-cadmium",
+      "substance": "Cadmium",
+      "title": "Ecological Soil Screening Levels for Cadmium, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_cadmium.pdf",
+      "listed_file_size": "1.43 MB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-chromium",
+      "substance": "Chromium",
+      "title": "Ecological Soil Screening Levels for Chromium, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_chromium.pdf",
+      "listed_file_size": "562.15 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-cobalt",
+      "substance": "Cobalt",
+      "title": "Ecological Soil Screening Levels for Cobalt, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_cobalt_.pdf",
+      "listed_file_size": "1018.98 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-copper",
+      "substance": "Copper",
+      "title": "Ecological Soil Screening Levels for Copper, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_copper.pdf",
+      "listed_file_size": "1.7 MB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-iron",
+      "substance": "Iron",
+      "title": "Ecological Soil Screening Level for Iron, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_iron.pdf",
+      "listed_file_size": "438.39 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-lead",
+      "substance": "Lead",
+      "title": "Ecological Soil Screening Levels for Lead, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_lead.pdf",
+      "listed_file_size": "1.43 MB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-manganese",
+      "substance": "Manganese",
+      "title": "Ecological Soil Screening Levels for Manganese, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_manganese.pdf",
+      "listed_file_size": "1.43 MB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-nickel",
+      "substance": "Nickel",
+      "title": "Ecological Soil Screening Levels for Nickel, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_nickel.pdf",
+      "listed_file_size": "829.03 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-selenium",
+      "substance": "Selenium",
+      "title": "Ecological Soil Screening Levels for Selenium, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_selenium.pdf",
+      "listed_file_size": "1.04 MB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-silver",
+      "substance": "Silver",
+      "title": "Ecological Soil Screening Levels for Silver, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_silver.pdf",
+      "listed_file_size": "620.59 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-vanadium",
+      "substance": "Vanadium",
+      "title": "Ecological Soil Screening Levels for Vanadium, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_vanadium.pdf",
+      "listed_file_size": "935.35 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-zinc",
+      "substance": "Zinc",
+      "title": "Ecological Soil Screening Levels for Zinc, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_zinc.pdf",
+      "listed_file_size": "4.74 MB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-ddt-metabolites",
+      "substance": "DDT and metabolites",
+      "title": "Ecological Soil Screening Levels for DDT and Metabolites",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_ddt.pdf",
+      "listed_file_size": "900.83 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-dieldrin",
+      "substance": "Dieldrin",
+      "title": "Ecological Soil Screening Levels for Dieldrin, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_dieldrin.pdf",
+      "listed_file_size": "786.21 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-pentachlorophenol",
+      "substance": "Pentachlorophenol",
+      "title": "Ecological Soil Screening Levels for Pentachlorophenol, Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_pcp.pdf",
+      "listed_file_size": "698.92 KB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "epa-ecossl-pahs",
+      "substance": "Polycyclic aromatic hydrocarbons",
+      "title": "Ecological Soil Screening Levels for Polycyclic Aromatic Hydrocarbons (PAHs), Interim Final",
+      "url": "https://www.epa.gov/sites/default/files/2015-09/documents/eco-ssl_pah.pdf",
+      "listed_file_size": "1.72 MB",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    }
+  ],
+  "next_steps": [
+    "Deduplicate each PDF against Zotero before adding source-backed values.",
+    "Extract exact Eco-SSL value table locators only for substances and receptor groups that map to an approved Matrix Options pathway.",
+    "Keep the EPA hub pages as reference-mining sources, not value/equation authorities."
+  ]
+}

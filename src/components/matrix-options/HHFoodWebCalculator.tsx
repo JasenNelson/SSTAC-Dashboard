@@ -11,12 +11,17 @@ import type {
   Ecosystem,
   HumanHealthFoodWebResult,
 } from '@/lib/matrix-options/types';
+import type {
+  CalculatorUsedValue,
+  EvidenceLibraryFilterRequest,
+} from '@/lib/matrix-options/provenance/types';
 import { parseDecimalInput } from '@/lib/matrix-options/parseDecimal';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
   type Jurisdiction,
 } from './guide/content/jurisdictions';
+import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 
 const ECOSYSTEM_OPTIONS: ReadonlyArray<{ value: Ecosystem; label: string }> = [
   { value: 'freshwater', label: 'Freshwater' },
@@ -28,6 +33,7 @@ export interface HHFoodWebCalculatorProps {
   substanceKey?: string;
   jurisdiction?: Jurisdiction;
   className?: string;
+  onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
 }
 
 function positiveInput(value: string, label: string): number | { error: string } {
@@ -51,6 +57,7 @@ export default function HHFoodWebCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
   jurisdiction: _jurisdiction = DEFAULT_JURISDICTION,
   className,
+  onOpenEvidenceLibrary,
 }: HHFoodWebCalculatorProps) {
   const substance = findSubstance(substanceKey);
   const [ecosystem, setEcosystem] = useState<Ecosystem>('freshwater');
@@ -159,6 +166,104 @@ export default function HHFoodWebCalculator({
   ]);
 
   const hhResult = 'error' in result ? null : result;
+  const provenanceValues: CalculatorUsedValue[] = useMemo(
+    () => [
+      {
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        label: 'Oral RfD',
+        value: rfdInput === '' ? null : rfdInput,
+        unit: 'mg/kg-bw/day',
+        role: 'placeholder default',
+        pathway: 'human-health-food',
+        substance_key: substanceKey,
+      },
+      {
+        input_key: 'sf_oral_per_mg_per_kg_bw_per_day',
+        label: 'Oral slope factor',
+        value: slopeInput === '' ? null : slopeInput,
+        unit: 'per mg/kg-bw/day',
+        role: 'placeholder default',
+        pathway: 'human-health-food',
+        substance_key: substanceKey,
+      },
+      {
+        input_key: 'bsaf_loc_freshwater',
+        label: 'Local BSAF',
+        value: bsafInput === '' ? null : bsafInput,
+        role: 'placeholder default',
+        pathway: 'human-health-food',
+        substance_key: substanceKey,
+      },
+      {
+        input_key: 'ba_oral',
+        label: 'Oral bioavailability',
+        value: baOralInput,
+        role: 'placeholder default',
+        pathway: 'human-health-food',
+        substance_key: substanceKey,
+      },
+      {
+        input_key: 'BW_kg',
+        label: 'Body weight',
+        value: bwInput,
+        unit: 'kg',
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'IR_food_kg_per_day',
+        label: 'Food ingestion',
+        value: foodIrInput,
+        unit: 'kg/day',
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'targetRisk',
+        label: 'Target risk',
+        value: targetRiskInput,
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'hazardQuotient',
+        label: 'Hazard quotient',
+        value: hazardQuotientInput,
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'fLipid',
+        label: 'Tissue lipid fraction',
+        value: fLipidPercent.toFixed(2),
+        unit: '%',
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'foc',
+        label: 'Sediment organic carbon',
+        value: focPercent.toFixed(2),
+        unit: '%',
+        role: 'screening assumption',
+      },
+      {
+        input_key: 'ecosystem',
+        label: 'Ecosystem',
+        value: ecosystem,
+        role: 'screening assumption',
+      },
+    ],
+    [
+      baOralInput,
+      bsafInput,
+      bwInput,
+      ecosystem,
+      fLipidPercent,
+      focPercent,
+      foodIrInput,
+      hazardQuotientInput,
+      rfdInput,
+      slopeInput,
+      substanceKey,
+      targetRiskInput,
+    ],
+  );
 
   return (
     <section
@@ -374,6 +479,11 @@ export default function HHFoodWebCalculator({
           )}
         </div>
       </details>
+      <CalculatorProvenancePanel
+        pathway="human-health-food"
+        usedValues={provenanceValues}
+        onOpenEvidenceLibrary={onOpenEvidenceLibrary}
+      />
     </section>
   );
 }

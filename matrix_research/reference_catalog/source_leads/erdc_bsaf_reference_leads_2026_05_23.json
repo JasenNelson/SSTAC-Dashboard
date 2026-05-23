@@ -1,0 +1,44 @@
+{
+  "lead_set_id": "erdc-bsaf-reference-leads-2026-05-23",
+  "status": "needs_review",
+  "created_at": "2026-05-23",
+  "created_by": "codex",
+  "policy": "metadata_only_no_source_file_copy",
+  "source_checked_at": "2026-05-23",
+  "primary_source": {
+    "source_id": "src-erdc-bsaf-db",
+    "short_citation": "ERDC BSAF database",
+    "title": "Biota-Sediment Accumulation Factor Database",
+    "homepage_url": "https://bsaf.el.erdc.dren.mil/",
+    "database_spreadsheet_url": "https://bsaf.el.erdc.dren.mil/data/USACE_ERDC_BSAF_Database_October2022.xlsx",
+    "version": "October 2022",
+    "publisher": "US Army Engineer Research and Development Center",
+    "calculator_source_role": "canonical_candidate",
+    "promotion_status": "needs_review",
+    "canonical_source_status": "needs_exact_source_locator"
+  },
+  "applicability_note": "Use the ERDC BSAF database as supporting science for candidate BSAF records. Do not promote spreadsheet values into Matrix Options defaults until the exact row, chemical, organism, tissue, sediment basis, units, and applicability have been extracted and reviewed.",
+  "document_leads": [
+    {
+      "lead_id": "erdc-bsaf-database-homepage",
+      "title": "Biota-Sediment Accumulation Factor Database",
+      "url": "https://bsaf.el.erdc.dren.mil/",
+      "role": "Official database homepage and source-index page.",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    },
+    {
+      "lead_id": "erdc-bsaf-database-october-2022-xlsx",
+      "title": "USACE ERDC BSAF Database October 2022",
+      "url": "https://bsaf.el.erdc.dren.mil/data/USACE_ERDC_BSAF_Database_October2022.xlsx",
+      "role": "Official Excel database export linked from the ERDC BSAF homepage.",
+      "promotion_status": "needs_review",
+      "canonical_source_status": "needs_exact_source_locator"
+    }
+  ],
+  "next_steps": [
+    "Deduplicate the homepage and spreadsheet metadata against Zotero.",
+    "If the spreadsheet is added to Zotero, add metadata only unless owner explicitly approves attaching the file.",
+    "Extract BSAF candidate rows only for Matrix Options substances and receptor/pathway combinations with exact spreadsheet row locators."
+  ]
+}

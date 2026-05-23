@@ -9,6 +9,11 @@ files stay in Zotero, Google Drive, OneDrive, or another approved external
 library. Supabase may later hold queryable metadata, but source files must not
 be stored in Supabase.
 
+The dashboard renders this metadata in the Matrix Options `References & Values`
+tab. Calculator provenance panels should remain compact receipts and link into
+the larger tab when reviewers need source, value, equation, currentness, Zotero,
+or QA details.
+
 ## Files
 
 - `sources.json` records citation metadata, DOI/URL fields, Zotero identifiers,
@@ -16,6 +21,9 @@ be stored in Supabase.
 - `equations.json` records calculator equation provenance and applicability.
 - `parameter_values.json` records extracted or starter parameter values used by
   the calculators.
+- `source_leads/` records unpromoted source-of-sources extraction work. These
+  files can identify candidate canonical references and Zotero matches, but do
+  not by themselves approve a source for calculator use.
 
 Parameter and equation records include `evidence_items`. Each evidence item
 stores a stable evidence ID, source ID, locator type, source locator, extracted
@@ -32,9 +40,7 @@ source review confirms it.
 - `pending_extraction`: source or equation exists but the value has not been
   extracted yet.
 - `needs_review`: value is present but requires human review before it can be
-  treated as defended.
-- `needs_owner_review`: value is a placeholder or high-impact default that
-  requires owner review before promotion.
+  treated as defended or promoted.
 - `approved`: owner or delegated reviewer has approved the record.
 - `superseded`: record is retained for history but should not be used as a
   default.
@@ -42,6 +48,12 @@ source review confirms it.
 Current calculator values were lifted into this scaffold as starter records.
 Many are intentionally marked `needs_review` until the first source batch is
 checked against Zotero or the local reference folders.
+
+Compilation reports and source-of-sources documents can be cataloged as
+reference-mining leads. When they point to original equations or parameter
+values, cite the underlying referenced source as canonical for the calculator
+record unless the extracted record is specifically about the compilation
+document's own contextual framing and has an exact locator.
 
 ## Authority and Currentness
 
@@ -51,6 +63,9 @@ show:
 
 - `authority_scope`: BC legal, BC guidance, federal guidance, international
   guidance, supporting science, or repo design.
+- `repo_metadata_only` records are implementation provenance markers, not
+  evidence sources. The dashboard hides them from source tables and shows source
+  review as pending until exact Zotero/source locators are confirmed.
 - `currentness_status`: current, needs currentness check, superseded, or
   unknown.
 - `checked_at`: date the source was checked against its official source page.

@@ -1,0 +1,48 @@
+{
+  "queue_id": "erdc-bsaf-metadata-2026",
+  "description": "USACE ERDC BSAF database homepage and October 2022 spreadsheet metadata to add to Zotero as metadata-only items. No spreadsheet file is downloaded, uploaded, or stored in the repo.",
+  "library_type": "user",
+  "library_id": "17150559",
+  "target_collection_keys": ["M4BSJ3KN"],
+  "target_collection_names": ["Sediment Project"],
+  "batch_id": "erdc-bsaf-metadata-2026-v1",
+  "default_tags": [
+    "matrix-options",
+    "erdc",
+    "usace",
+    "bsaf",
+    "sediment",
+    "metadata-only",
+    "zotero-api-added"
+  ],
+  "items": [
+    {
+      "source_id": "src-erdc-bsaf-db",
+      "item": {
+        "itemType": "webpage",
+        "title": "Biota-Sediment Accumulation Factor Database",
+        "websiteTitle": "USACE ERDC BSAF Database",
+        "date": "2022",
+        "url": "https://bsaf.el.erdc.dren.mil/",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "Official USACE ERDC Biota-Sediment Accumulation Factor database homepage.",
+        "extra": "Matrix Options provenance candidate.\nAuthority scope: supporting science.\nCurrentness status: homepage checked 2026-05-23; linked spreadsheet version October 2022.\nBoundary: source-index and database homepage; promote exact spreadsheet rows only after locator review.\nNo source files attached by this queue.\nSource ID: src-erdc-bsaf-db"
+      }
+    },
+    {
+      "source_id": "erdc-bsaf-database-october-2022-xlsx",
+      "item": {
+        "itemType": "document",
+        "title": "USACE ERDC BSAF Database October 2022",
+        "publisher": "US Army Engineer Research and Development Center",
+        "date": "2022-10",
+        "url": "https://bsaf.el.erdc.dren.mil/data/USACE_ERDC_BSAF_Database_October2022.xlsx",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "Metadata record for the official October 2022 USACE ERDC BSAF Excel database export. The spreadsheet file is not attached by this queue.",
+        "extra": "Matrix Options source lead: erdc-bsaf-database-october-2022-xlsx.\nCanonical source status: needs exact spreadsheet row locator before value promotion.\nApplicability note: use as supporting science for candidate BSAF values only after chemical, organism, tissue, sediment basis, units, and applicability review.\nNo source files attached by this queue."
+      }
+    }
+  ]
+}

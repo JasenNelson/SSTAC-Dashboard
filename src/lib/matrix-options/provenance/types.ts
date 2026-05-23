@@ -28,9 +28,13 @@ export type SourceCurrentnessStatus =
   | 'superseded'
   | 'unknown';
 
+export type CalculatorSourceRole =
+  | 'canonical_candidate'
+  | 'reference_mining'
+  | 'implementation_scaffold';
+
 export type CatalogQaStatus =
   | 'needs_review'
-  | 'needs_owner_review'
   | 'approved'
   | 'superseded';
 
@@ -109,6 +113,7 @@ export interface SourceRecord {
   checked_at: string | null;
   conflict_rule: string | null;
   supersedes_source_ids: string[];
+  calculator_source_role?: CalculatorSourceRole;
 }
 
 export interface EquationRecord {
@@ -125,6 +130,10 @@ export interface EquationRecord {
   qa_status: CatalogQaStatus;
   evidence_items: EvidenceItem[];
   review_notes: string;
+  receptor_groups?: string[];
+  population_groups?: string[];
+  species_groups?: string[];
+  assumption_tags?: string[];
 }
 
 export interface ParameterValueRecord {
@@ -146,6 +155,10 @@ export interface ParameterValueRecord {
   uncertainty: string | null;
   evidence_items: EvidenceItem[];
   review_notes: string;
+  receptor_groups?: string[];
+  population_groups?: string[];
+  species_groups?: string[];
+  assumption_tags?: string[];
 }
 
 export interface CalculatorUsedValue {
@@ -171,3 +184,35 @@ export interface ResolvedProvenanceRow {
   default_status: DefaultStatus | 'not_cataloged';
   note: string | null;
 }
+
+export type EvidenceLibraryViewMode =
+  | 'all'
+  | 'sources'
+  | 'values'
+  | 'equations'
+  | 'assumptions';
+
+export interface EvidenceLibraryFilters {
+  search: string;
+  pathways: ProvenancePathway[];
+  substanceKeys: string[];
+  qaStatuses: CatalogQaStatus[];
+  defaultStatuses: DefaultStatus[];
+  extractionStatuses: ExtractionStatus[];
+  jurisdictions: string[];
+  authorityScopes: SourceAuthorityScope[];
+  currentnessStatuses: SourceCurrentnessStatus[];
+  zoteroStatuses: ZoteroStatus[];
+  receptorGroups: string[];
+  populationGroups: string[];
+  speciesGroups: string[];
+  sourceIds: string[];
+  parameterValueIds: string[];
+  equationIds: string[];
+}
+
+export type EvidenceLibraryFilterRequest = Partial<
+  Omit<EvidenceLibraryFilters, 'search'>
+> & {
+  search?: string;
+};
