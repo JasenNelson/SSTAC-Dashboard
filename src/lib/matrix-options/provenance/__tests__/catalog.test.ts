@@ -74,6 +74,78 @@ describe('matrix options provenance catalog', () => {
     }
   });
 
+  it('records extraction evidence metadata for values and equations', () => {
+    const allowedMethods = [
+      'current_calculator_scaffold',
+      'manual_source_extraction',
+      'zotero_metadata_import',
+      'external_inventory',
+    ];
+    const allowedLocatorTypes = [
+      'current_calculator',
+      'source_page',
+      'source_table',
+      'source_section',
+      'equation_citation',
+      'external_file',
+    ];
+    const evidenceIds: string[] = [];
+
+    for (const parameter of PARAMETER_VALUE_RECORDS) {
+      expect(parameter.evidence_items.length, parameter.parameter_value_id).toBeGreaterThan(0);
+      for (const evidence of parameter.evidence_items) {
+        evidenceIds.push(evidence.evidence_id);
+        expect(evidence.evidence_id, parameter.parameter_value_id).toBeTruthy();
+        expect(evidence.locator, parameter.parameter_value_id).toBeTruthy();
+        expect(allowedLocatorTypes).toContain(evidence.locator_type);
+        expect(allowedMethods).toContain(evidence.extraction_method);
+        expect(evidence.extracted_at, parameter.parameter_value_id).toMatch(
+          /^\d{4}-\d{2}-\d{2}$/,
+        );
+        expect(evidence.qa_status).toBe(parameter.qa_status);
+        if (evidence.source_id) {
+          expect(getSourceRecord(evidence.source_id), evidence.source_id).toBeDefined();
+        }
+      }
+    }
+
+    for (const equation of EQUATION_RECORDS) {
+      expect(equation.evidence_items.length, equation.equation_id).toBeGreaterThan(0);
+      for (const evidence of equation.evidence_items) {
+        evidenceIds.push(evidence.evidence_id);
+        expect(evidence.evidence_id, equation.equation_id).toBeTruthy();
+        expect(evidence.locator, equation.equation_id).toBeTruthy();
+        expect(allowedLocatorTypes).toContain(evidence.locator_type);
+        expect(allowedMethods).toContain(evidence.extraction_method);
+        expect(evidence.qa_status).toBe(equation.qa_status);
+        if (evidence.source_id) {
+          expect(getSourceRecord(evidence.source_id), evidence.source_id).toBeDefined();
+        }
+      }
+    }
+
+    expectUnique(evidenceIds);
+  });
+
+  it('does not allow pending scaffold evidence to be marked approved', () => {
+    const allEvidence = [
+      ...PARAMETER_VALUE_RECORDS.flatMap((record) => record.evidence_items),
+      ...EQUATION_RECORDS.flatMap((record) => record.evidence_items),
+    ];
+
+    for (const evidence of allEvidence) {
+      if (evidence.qa_status !== 'approved') continue;
+      expect(evidence.locator, evidence.evidence_id).not.toMatch(/pending/i);
+      expect(evidence.extraction_method, evidence.evidence_id).not.toBe(
+        'current_calculator_scaffold',
+      );
+      expect(evidence.reviewed_by, evidence.evidence_id).toBeTruthy();
+      expect(evidence.reviewed_at, evidence.evidence_id).toMatch(
+        /^\d{4}-\d{2}-\d{2}$/,
+      );
+    }
+  });
+
   it('resolves every equation source reference', () => {
     for (const equation of EQUATION_RECORDS) {
       for (const sourceId of equation.source_ids) {
@@ -172,6 +244,7 @@ describe('matrix options provenance catalog', () => {
 
     expect(rows[0].catalog_record?.parameter_value_id).toBe('pv-bap-fcv');
     expect(rows[0].sources.length).toBeGreaterThan(0);
+    expect(rows[0].evidence_items[0]?.locator).toMatch(/source page\/table pending/i);
     expect(rows[1].catalog_record).toBeNull();
     expect(rows[1].qa_status).toBe('not_cataloged');
     expect(rows[2].catalog_record?.default_status).toBe('placeholder_default');

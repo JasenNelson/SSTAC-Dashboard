@@ -11,12 +11,32 @@
     "default_status": "source_backed_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
-    "source_ids": ["src-us-epa-iris-bap-2017"],
-    "equation_ids": ["eq-eco-direct-eqp-di-toro"],
+    "source_ids": [
+      "src-us-epa-iris-bap-2017"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
     "jurisdiction": "general",
     "applicability": "Non-ionic organic EqP pathway.",
     "uncertainty": null,
-    "review_notes": "Starter value from current substance library. Confirm exact source table or physicochemical property database."
+    "review_notes": "Starter value from current substance library. Confirm exact source table or physicochemical property database.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-bap-2017",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "6.13",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-bap-logkow-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   },
   {
     "parameter_value_id": "pv-bap-fcv",
@@ -30,12 +50,32 @@
     "default_status": "source_backed_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
-    "source_ids": ["src-us-epa-iris-bap-2017"],
-    "equation_ids": ["eq-eco-direct-eqp-di-toro"],
+    "source_ids": [
+      "src-us-epa-iris-bap-2017"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
     "jurisdiction": "general",
     "applicability": "Eco-Direct EqP water chronic value anchor.",
     "uncertainty": null,
-    "review_notes": "Current source-library comment calls this a US EPA Tier II SCV anchor. Needs exact source and table."
+    "review_notes": "Current source-library comment calls this a US EPA Tier II SCV anchor. Needs exact source and table.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-bap-2017",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.014 ug/L",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-bap-fcv-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   },
   {
     "parameter_value_id": "pv-bap-trv-eco",
@@ -49,12 +89,32 @@
     "default_status": "placeholder_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_owner_review",
-    "source_ids": ["src-us-epa-eco-ssl-pah"],
-    "equation_ids": ["eq-eco-food-bsaf"],
+    "source_ids": [
+      "src-us-epa-eco-ssl-pah"
+    ],
+    "equation_ids": [
+      "eq-eco-food-bsaf"
+    ],
     "jurisdiction": "general",
     "applicability": "Eco-Food BSAF starter TRV.",
     "uncertainty": null,
-    "review_notes": "Current library explicitly labels this as a placeholder and expects HITL override for avian or mammalian receptor."
+    "review_notes": "Current library explicitly labels this as a placeholder and expects HITL override for avian or mammalian receptor.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-eco-ssl-pah",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.0025 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_owner_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Placeholder needs owner confirmation before it can be promoted.",
+        "evidence_id": "ev-pv-bap-trv-eco-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   },
   {
     "parameter_value_id": "pv-bap-bsaf-freshwater",
@@ -68,12 +128,32 @@
     "default_status": "source_backed_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
-    "source_ids": ["src-erdc-bsaf-db"],
-    "equation_ids": ["eq-eco-food-bsaf"],
+    "source_ids": [
+      "src-erdc-bsaf-db"
+    ],
+    "equation_ids": [
+      "eq-eco-food-bsaf"
+    ],
     "jurisdiction": "general",
     "applicability": "Freshwater Eco-Food BSAF starter value.",
     "uncertainty": null,
-    "review_notes": "Confirm against exact ERDC BSAF database record and receptor/tissue basis."
+    "review_notes": "Confirm against exact ERDC BSAF database record and receptor/tissue basis.",
+    "evidence_items": [
+      {
+        "source_id": "src-erdc-bsaf-db",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.5",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-bap-bsaf-freshwater-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   },
   {
     "parameter_value_id": "pv-pcb-logkow",
@@ -87,12 +167,32 @@
     "default_status": "source_backed_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
-    "source_ids": ["src-us-epa-iris-aroclor-1254"],
-    "equation_ids": ["eq-eco-direct-eqp-di-toro"],
+    "source_ids": [
+      "src-us-epa-iris-aroclor-1254"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
     "jurisdiction": "general",
     "applicability": "Non-ionic organic EqP pathway.",
     "uncertainty": null,
-    "review_notes": "Starter value from current substance library. Confirm mixture basis."
+    "review_notes": "Starter value from current substance library. Confirm mixture basis.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-aroclor-1254",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "6.5",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-pcb-logkow-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   },
   {
     "parameter_value_id": "pv-pcb-fcv",
@@ -106,12 +206,32 @@
     "default_status": "placeholder_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_owner_review",
-    "source_ids": ["src-current-calculator-design-v1"],
-    "equation_ids": ["eq-eco-direct-eqp-di-toro"],
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
     "jurisdiction": "general",
     "applicability": "Eco-Direct EqP screening placeholder.",
     "uncertainty": null,
-    "review_notes": "Current library says PCB FCV is substance-specific and this is a screening placeholder pending congener-mixture review."
+    "review_notes": "Current library says PCB FCV is substance-specific and this is a screening placeholder pending congener-mixture review.",
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.014 ug/L",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_owner_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Placeholder needs owner confirmation before it can be promoted.",
+        "evidence_id": "ev-pv-pcb-fcv-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   },
   {
     "parameter_value_id": "pv-pcb-trv-eco",
@@ -125,12 +245,32 @@
     "default_status": "source_backed_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
-    "source_ids": ["src-us-epa-eco-ssl-pcb"],
-    "equation_ids": ["eq-eco-food-bsaf"],
+    "source_ids": [
+      "src-us-epa-eco-ssl-pcb"
+    ],
+    "equation_ids": [
+      "eq-eco-food-bsaf"
+    ],
     "jurisdiction": "general",
     "applicability": "Eco-Food BSAF pathway.",
     "uncertainty": null,
-    "review_notes": "Confirm exact Eco-SSL TRV derivation basis."
+    "review_notes": "Confirm exact Eco-SSL TRV derivation basis.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-eco-ssl-pcb",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.00012 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-pcb-trv-eco-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   },
   {
     "parameter_value_id": "pv-pcb-bsaf-freshwater",
@@ -138,18 +278,38 @@
     "pathway": "eco-food-bsaf",
     "input_key": "bsaf_loc_freshwater",
     "display_name": "Aroclor 1254 freshwater BSAF",
-    "value": 2.0,
+    "value": 2,
     "unit": "unitless",
     "value_type": "single_value",
     "default_status": "source_backed_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
-    "source_ids": ["src-erdc-bsaf-db"],
-    "equation_ids": ["eq-eco-food-bsaf"],
+    "source_ids": [
+      "src-erdc-bsaf-db"
+    ],
+    "equation_ids": [
+      "eq-eco-food-bsaf"
+    ],
     "jurisdiction": "general",
     "applicability": "Freshwater Eco-Food BSAF starter value.",
     "uncertainty": null,
-    "review_notes": "Confirm against exact ERDC BSAF database record and congener or Aroclor basis."
+    "review_notes": "Confirm against exact ERDC BSAF database record and congener or Aroclor basis.",
+    "evidence_items": [
+      {
+        "source_id": "src-erdc-bsaf-db",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "2",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-pcb-bsaf-freshwater-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   },
   {
     "parameter_value_id": "pv-mehg-trv-eco",
@@ -163,12 +323,32 @@
     "default_status": "source_backed_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
-    "source_ids": ["src-ccme-wildlife-trv-mehg"],
-    "equation_ids": ["eq-eco-food-bsaf"],
+    "source_ids": [
+      "src-ccme-wildlife-trv-mehg"
+    ],
+    "equation_ids": [
+      "eq-eco-food-bsaf"
+    ],
     "jurisdiction": "general",
     "applicability": "MeHg protein-normalized Eco-Food path.",
     "uncertainty": null,
-    "review_notes": "Confirm exact CCME wildlife TRV source and receptor basis."
+    "review_notes": "Confirm exact CCME wildlife TRV source and receptor basis.",
+    "evidence_items": [
+      {
+        "source_id": "src-ccme-wildlife-trv-mehg",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "0.000064 mg/kg-bw/day",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-mehg-trv-eco-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   },
   {
     "parameter_value_id": "pv-mehg-bsaf-protein",
@@ -182,11 +362,31 @@
     "default_status": "source_backed_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
-    "source_ids": ["src-health-canada-hhra-2023"],
-    "equation_ids": ["eq-eco-food-bsaf"],
+    "source_ids": [
+      "src-health-canada-hhra-2023"
+    ],
+    "equation_ids": [
+      "eq-eco-food-bsaf"
+    ],
     "jurisdiction": "general",
     "applicability": "MeHg protein-normalized Eco-Food path.",
     "uncertainty": null,
-    "review_notes": "Current library says MeHg skips lipid normalization. Confirm source and protein basis."
+    "review_notes": "Current library says MeHg skips lipid normalization. Confirm source and protein basis.",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-hhra-2023",
+        "locator": "Current calculator substance library; source page/table pending",
+        "value_text": "15",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Exact source locator must be confirmed before approval.",
+        "evidence_id": "ev-pv-mehg-bsaf-protein-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   }
 ]

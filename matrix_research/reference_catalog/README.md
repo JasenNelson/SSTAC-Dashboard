@@ -17,6 +17,13 @@ be stored in Supabase.
 - `parameter_values.json` records extracted or starter parameter values used by
   the calculators.
 
+Parameter and equation records include `evidence_items`. Each evidence item
+stores a stable evidence ID, source ID, locator type, source locator, extracted
+value or equation text, extraction method, extractor, extraction date, QA status,
+reviewer fields, and a short note. For current scaffold records, the locator is
+intentionally marked as source page/table or equation citation pending until a
+source review confirms it.
+
 ## Status Rules
 
 - `extracted_from_current_calculator`: value was lifted from the current UI or
@@ -114,6 +121,8 @@ should not be staged unless the owner explicitly approves a specific artifact.
    `sources.json`.
 4. Extract values and equations into `parameter_values.json` and
    `equations.json` with page/table/section notes in `review_notes`.
-5. Mark each record `needs_review` until the owner or delegated reviewer checks
+5. Add or update `evidence_items` with exact source locators, extracted text,
+   extractor, and QA state.
+6. Mark each record `needs_review` until the owner or delegated reviewer checks
    it against the source.
-6. Promote only reviewed records to `approved`.
+7. Promote only reviewed records to `approved`.

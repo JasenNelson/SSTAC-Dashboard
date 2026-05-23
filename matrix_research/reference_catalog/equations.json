@@ -5,13 +5,41 @@
     "display_name": "Eco-Direct EqP sediment benchmark",
     "equation_latex": "log K_{oc} = 0.00028 + 0.983 log K_{ow}; ESB_{oc} = FCV K_{oc} 10^{-3}; SedS = ESB_{oc} f_{oc}",
     "plain_language": "Estimate organic-carbon partitioning from log Kow, convert a water chronic value to an organic-carbon-normalized sediment benchmark, then scale by sediment organic carbon.",
-    "input_keys": ["logKow", "fcv_ug_per_L", "foc", "Cs_mg_per_kg"],
-    "output_keys": ["sedS_mg_per_kg_dry", "logKoc", "Koc_L_per_kg_OC", "ESBoc_mg_per_kg_OC"],
+    "input_keys": [
+      "logKow",
+      "fcv_ug_per_L",
+      "foc",
+      "Cs_mg_per_kg"
+    ],
+    "output_keys": [
+      "sedS_mg_per_kg_dry",
+      "logKoc",
+      "Koc_L_per_kg_OC",
+      "ESBoc_mg_per_kg_OC"
+    ],
     "unit_notes": "FCV is entered in ug/L and converted by 1e-3 inside the equation.",
-    "source_ids": ["src-current-calculator-design-v1"],
+    "source_ids": [
+      "src-current-calculator-design-v1"
+    ],
     "applicability": "Single-substance non-ionic organic pathway. Not valid for methylmercury or divalent metals.",
     "qa_status": "needs_review",
-    "review_notes": "Equation matches current derivation implementation. Needs final source-level citation for Di Toro regression and EqP method."
+    "review_notes": "Equation matches current derivation implementation. Needs final source-level citation for Di Toro regression and EqP method.",
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator implementation; source equation citation pending",
+        "value_text": "log K_{oc} = 0.00028 + 0.983 log K_{ow}; ESB_{oc} = FCV K_{oc} 10^{-3}; SedS = ESB_{oc} f_{oc}",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Equation behavior matches the current implementation, but source-level citation review is still pending.",
+        "evidence_id": "ev-eq-eco-direct-eqp-di-toro-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   },
   {
     "equation_id": "eq-eco-food-bsaf",
@@ -19,13 +47,44 @@
     "display_name": "Eco-Food BSAF back-calculation",
     "equation_latex": "SedS = (TRV_{eco} BW_{eco}) / (IR_{eco} BSAF_{effective} F_{site})",
     "plain_language": "Back-calculate a sediment concentration from receptor toxicity, body weight, intake rate, bioaccumulation, and site-use fraction.",
-    "input_keys": ["trv_eco_mg_per_kg_bw_day", "BW_eco_kg", "IR_eco_kg_per_day", "bsaf_loc_freshwater", "fLipid", "foc", "Fsite"],
-    "output_keys": ["sedS_mg_per_kg_dry", "BSAF_effective", "M_eco"],
+    "input_keys": [
+      "trv_eco_mg_per_kg_bw_day",
+      "BW_eco_kg",
+      "IR_eco_kg_per_day",
+      "bsaf_loc_freshwater",
+      "fLipid",
+      "foc",
+      "Fsite"
+    ],
+    "output_keys": [
+      "sedS_mg_per_kg_dry",
+      "BSAF_effective",
+      "M_eco"
+    ],
     "unit_notes": "Default output is mg/kg dry sediment. MeHg path skips lipid normalization and uses the protein-normalized BSAF directly.",
-    "source_ids": ["src-current-calculator-design-v1", "src-erdc-bsaf-db"],
+    "source_ids": [
+      "src-current-calculator-design-v1",
+      "src-erdc-bsaf-db"
+    ],
     "applicability": "Single-substance wildlife or fish receptor screening pathway. Coastal-marine PAH bivalves apply the current x15 multiplier pending review.",
     "qa_status": "needs_review",
-    "review_notes": "Formula matches current derivation implementation. Needs receptor-specific source review before approval."
+    "review_notes": "Formula matches current derivation implementation. Needs receptor-specific source review before approval.",
+    "evidence_items": [
+      {
+        "source_id": "src-current-calculator-design-v1",
+        "locator": "Current calculator implementation; source equation citation pending",
+        "value_text": "SedS = (TRV_{eco} BW_{eco}) / (IR_{eco} BSAF_{effective} F_{site})",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Equation behavior matches the current implementation, but source-level citation review is still pending.",
+        "evidence_id": "ev-eq-eco-food-bsaf-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   },
   {
     "equation_id": "eq-background-utl-95-95",
@@ -33,12 +92,38 @@
     "display_name": "Background UTL 95/95",
     "equation_latex": "UTL_{95/95} = mean + K s",
     "plain_language": "Compute the one-sided 95 percent coverage, 95 percent confidence upper tolerance limit from a background reference set.",
-    "input_keys": ["background_samples_mg_per_kg", "K_95_95"],
-    "output_keys": ["utl_mg_per_kg", "mean", "sd"],
+    "input_keys": [
+      "background_samples_mg_per_kg",
+      "K_95_95"
+    ],
+    "output_keys": [
+      "utl_mg_per_kg",
+      "mean",
+      "sd"
+    ],
     "unit_notes": "Input and output use the same concentration unit, currently mg/kg.",
-    "source_ids": ["src-nist-sematech-ehandbook-7-2-6-3", "src-current-calculator-design-v1"],
+    "source_ids": [
+      "src-nist-sematech-ehandbook-7-2-6-3",
+      "src-current-calculator-design-v1"
+    ],
     "applicability": "Post-derivation background adjustment. Current K lookup is screening-grade until exact noncentral-t computation lands.",
     "qa_status": "needs_review",
-    "review_notes": "Current implementation interpolates a small K table and flags clamping."
+    "review_notes": "Current implementation interpolates a small K table and flags clamping.",
+    "evidence_items": [
+      {
+        "source_id": "src-nist-sematech-ehandbook-7-2-6-3",
+        "locator": "Current calculator implementation; source equation citation pending",
+        "value_text": "UTL_{95/95} = mean + K s",
+        "extraction_method": "current_calculator_scaffold",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Equation behavior matches the current implementation, but source-level citation review is still pending.",
+        "evidence_id": "ev-eq-background-utl-95-95-1",
+        "locator_type": "current_calculator"
+      }
+    ]
   }
 ]

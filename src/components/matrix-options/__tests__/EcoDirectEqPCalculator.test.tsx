@@ -306,6 +306,8 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(panel).toHaveTextContent(/Final Chronic Value/);
     expect(panel).toHaveTextContent(/0\.014 ug\/L/);
     expect(panel).toHaveTextContent(/US EPA IRIS, Benzo\[a\]pyrene/);
+    expect(panel).toHaveTextContent(/Current calculator substance library/);
+    expect(panel).toHaveTextContent(/source equation citation pending/);
   });
 
   it('labels placeholder FCV defaults as placeholder, not source-backed', () => {

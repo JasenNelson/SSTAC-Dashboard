@@ -50,6 +50,35 @@ export type ParameterValueType =
   | 'range'
   | 'formula_default';
 
+export type ExtractionMethod =
+  | 'current_calculator_scaffold'
+  | 'manual_source_extraction'
+  | 'zotero_metadata_import'
+  | 'external_inventory';
+
+export type EvidenceLocatorType =
+  | 'current_calculator'
+  | 'source_page'
+  | 'source_table'
+  | 'source_section'
+  | 'equation_citation'
+  | 'external_file';
+
+export interface EvidenceItem {
+  evidence_id: string;
+  source_id: string | null;
+  locator: string;
+  locator_type: EvidenceLocatorType;
+  value_text: string | null;
+  extraction_method: ExtractionMethod;
+  extracted_by: string;
+  extracted_at: string;
+  qa_status: CatalogQaStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  note: string | null;
+}
+
 export type CalculatorValueRole =
   | 'source-backed default'
   | 'placeholder default'
@@ -94,6 +123,7 @@ export interface EquationRecord {
   source_ids: string[];
   applicability: string;
   qa_status: CatalogQaStatus;
+  evidence_items: EvidenceItem[];
   review_notes: string;
 }
 
@@ -114,6 +144,7 @@ export interface ParameterValueRecord {
   jurisdiction: string;
   applicability: string;
   uncertainty: string | null;
+  evidence_items: EvidenceItem[];
   review_notes: string;
 }
 
@@ -135,6 +166,7 @@ export interface ResolvedProvenanceRow {
   role: CalculatorValueRole;
   catalog_record: ParameterValueRecord | null;
   sources: SourceRecord[];
+  evidence_items: EvidenceItem[];
   qa_status: CatalogQaStatus | 'not_cataloged';
   default_status: DefaultStatus | 'not_cataloged';
   note: string | null;

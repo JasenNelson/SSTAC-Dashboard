@@ -1,5 +1,6 @@
 import type {
   CalculatorUsedValue,
+  EvidenceItem,
   ProvenancePathway,
 } from '@/lib/matrix-options/provenance/types';
 import {
@@ -20,6 +21,27 @@ interface CalculatorProvenancePanelProps {
 
 function humanizeStatus(status: string): string {
   return status.replaceAll('_', ' ').replaceAll('-', ' ');
+}
+
+function humanizeDefaultStatus(status: string): string {
+  if (status === 'source_backed_default') return 'source linked default';
+  return humanizeStatus(status);
+}
+
+function evidenceSummary(evidenceItems: EvidenceItem[]): string | null {
+  const firstEvidence = evidenceItems[0];
+  if (!firstEvidence) return null;
+  const reviewText =
+    firstEvidence.qa_status === 'approved'
+      ? 'approved'
+      : humanizeStatus(firstEvidence.qa_status);
+  const additionalEvidence =
+    evidenceItems.length > 1
+      ? `; +${evidenceItems.length - 1} more evidence item${
+          evidenceItems.length === 2 ? '' : 's'
+        }`
+      : '';
+  return `${firstEvidence.locator} (${reviewText})${additionalEvidence}`;
 }
 
 export default function CalculatorProvenancePanel({
@@ -90,8 +112,13 @@ export default function CalculatorProvenancePanel({
                     <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
                       <span className="block">{humanizeStatus(row.qa_status)}</span>
                       <span className="block text-xs text-slate-500 dark:text-slate-400">
-                        {humanizeStatus(row.default_status)}
+                        {humanizeDefaultStatus(row.default_status)}
                       </span>
+                      {evidenceSummary(row.evidence_items) && (
+                        <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          Evidence: {evidenceSummary(row.evidence_items)}
+                        </span>
+                      )}
                     </td>
                     <td className="py-2 text-slate-600 dark:text-slate-300">
                       {row.sources.length > 0 ? (
@@ -170,6 +197,11 @@ export default function CalculatorProvenancePanel({
                     Status: {humanizeStatus(equation.qa_status)}.{' '}
                     {equation.applicability}
                   </p>
+                  {evidenceSummary(equation.evidence_items) && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      Evidence: {evidenceSummary(equation.evidence_items)}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

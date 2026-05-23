@@ -78,6 +78,7 @@ export function resolveProvenanceRows(
       sources: catalogRecord
         ? resolveSourceRecords(catalogRecord.source_ids)
         : [],
+      evidence_items: catalogRecord?.evidence_items ?? [],
       qa_status: catalogRecord?.qa_status ?? 'not_cataloged',
       default_status: catalogRecord?.default_status ?? 'not_cataloged',
       note: usedValue.note ?? catalogRecord?.review_notes ?? null,
