@@ -2,7 +2,12 @@ import type {
   CalculatorUsedValue,
   EvidenceItem,
   ProvenancePathway,
+  SourceRecord,
 } from '@/lib/matrix-options/provenance/types';
+import {
+  getParameterValueRecordsForSubstance,
+  getSourceRecord,
+} from '@/lib/matrix-options/provenance/catalog';
 import {
   resolveEquationRecords,
   resolveEquationsForPathway,
@@ -44,6 +49,10 @@ function evidenceSummary(evidenceItems: EvidenceItem[]): string | null {
   return `${firstEvidence.locator} (${reviewText})${additionalEvidence}`;
 }
 
+function uniqueIds(ids: string[]): string[] {
+  return Array.from(new Set(ids));
+}
+
 export default function CalculatorProvenancePanel({
   pathway,
   usedValues,
@@ -56,12 +65,31 @@ export default function CalculatorProvenancePanel({
   const equations = equationIds
     ? resolveEquationRecords(equationIds)
     : resolveEquationsForPathway(pathway);
-  const sourceCount = new Set(
-    [
-      ...rows.flatMap((row) => row.sources.map((source) => source.source_id)),
-      ...equations.flatMap((equation) => equation.source_ids),
-    ],
-  ).size;
+  const usedCatalogValueIds = new Set(
+    rows
+      .map((row) => row.catalog_record?.parameter_value_id)
+      .filter((valueId): valueId is string => Boolean(valueId)),
+  );
+  const activeSubstanceKeys = uniqueIds(
+    usedValues
+      .map((value) => value.substance_key)
+      .filter((substanceKey): substanceKey is string => Boolean(substanceKey)),
+  );
+  const activeCatalogValues = activeSubstanceKeys.flatMap((substanceKey) =>
+    getParameterValueRecordsForSubstance(substanceKey, pathway),
+  );
+  const activeCatalogSourceIds = activeCatalogValues.flatMap(
+    (value) => value.source_ids,
+  );
+  const sourceIds = uniqueIds([
+    ...rows.flatMap((row) => row.sources.map((source) => source.source_id)),
+    ...equations.flatMap((equation) => equation.source_ids),
+    ...activeCatalogSourceIds,
+  ]);
+  const sourceRecords = sourceIds
+    .map((sourceId) => getSourceRecord(sourceId))
+    .filter((source): source is SourceRecord => Boolean(source));
+  const sourceCount = sourceRecords.length;
 
   return (
     <details
@@ -72,8 +100,9 @@ export default function CalculatorProvenancePanel({
       <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900">
         <span>{title}</span>
         <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
-          {rows.length} values, {equations.length} equation
-          {equations.length === 1 ? '' : 's'}, {sourceCount} catalog source
+          {rows.length} used values, {activeCatalogValues.length} catalog value
+          {activeCatalogValues.length === 1 ? '' : 's'}, {equations.length}{' '}
+          equation{equations.length === 1 ? '' : 's'}, {sourceCount} source
           {sourceCount === 1 ? '' : 's'}
         </span>
       </summary>
@@ -111,9 +140,11 @@ export default function CalculatorProvenancePanel({
                     </td>
                     <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
                       <span className="block">{humanizeStatus(row.qa_status)}</span>
-                      <span className="block text-xs text-slate-500 dark:text-slate-400">
-                        {humanizeDefaultStatus(row.default_status)}
-                      </span>
+                      {row.default_status !== row.qa_status && (
+                        <span className="block text-xs text-slate-500 dark:text-slate-400">
+                          {humanizeDefaultStatus(row.default_status)}
+                        </span>
+                      )}
                       {evidenceSummary(row.evidence_items) && (
                         <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">
                           Evidence: {evidenceSummary(row.evidence_items)}
@@ -172,12 +203,45 @@ export default function CalculatorProvenancePanel({
           </div>
         </div>
 
+        {activeCatalogValues.length > 0 && (
+          <details
+            className="rounded-md border border-slate-200 dark:border-slate-800"
+            data-testid="provenance-catalog-values"
+          >
+            <summary className="cursor-pointer select-none px-3 py-2 text-xs font-bold uppercase text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900">
+              Catalog values for active substance ({activeCatalogValues.length})
+            </summary>
+            <div className="grid gap-2 md:grid-cols-2 border-t border-slate-200 dark:border-slate-800 p-3">
+              {activeCatalogValues.map((value) => (
+                <div
+                  key={value.parameter_value_id}
+                  className="rounded-md border border-slate-200 dark:border-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
+                >
+                  <div className="font-semibold">{value.display_name}</div>
+                  <div className="font-mono text-slate-800 dark:text-slate-100">
+                    {value.value} {value.unit !== 'unitless' ? value.unit : ''}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    {usedCatalogValueIds.has(value.parameter_value_id)
+                      ? 'Used in current calculation'
+                      : 'Available catalog value'}{' '}
+                    - {humanizeStatus(value.qa_status)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
+
         {equations.length > 0 && (
-          <div>
-            <h4 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">
-              Equation records
-            </h4>
-            <div className="space-y-2">
+          <details
+            className="rounded-md border border-slate-200 dark:border-slate-800"
+            data-testid="provenance-equation-records"
+          >
+            <summary className="cursor-pointer select-none px-3 py-2 text-xs font-bold uppercase text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900">
+              Equation records ({equations.length})
+            </summary>
+            <div className="space-y-2 border-t border-slate-200 dark:border-slate-800 p-3">
               {equations.map((equation) => (
                 <div
                   key={equation.equation_id}
@@ -205,7 +269,49 @@ export default function CalculatorProvenancePanel({
                 </div>
               ))}
             </div>
-          </div>
+          </details>
+        )}
+
+        {sourceRecords.length > 0 && (
+          <details
+            className="rounded-md border border-slate-200 dark:border-slate-800"
+            data-testid="provenance-source-records"
+          >
+            <summary className="cursor-pointer select-none px-3 py-2 text-xs font-bold uppercase text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900">
+              Catalog sources referenced here ({sourceRecords.length})
+            </summary>
+            <div className="space-y-2 border-t border-slate-200 dark:border-slate-800 p-3">
+              {sourceRecords.map((source) => (
+                <div
+                  key={source.source_id}
+                  className="text-sm text-slate-700 dark:text-slate-200"
+                >
+                  <div className="font-semibold">
+                    {source.url ? (
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sky-700 dark:text-sky-300 hover:underline"
+                      >
+                        {source.short_citation}
+                      </a>
+                    ) : (
+                      source.short_citation
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {humanizeStatus(source.authority_scope)}; currentness:{' '}
+                    {humanizeStatus(source.currentness_status)}; Zotero:{' '}
+                    {humanizeStatus(source.zotero_status)}
+                    {source.zotero_item_key
+                      ? ` (${source.zotero_item_key})`
+                      : ''}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </details>
         )}
       </div>
     </details>

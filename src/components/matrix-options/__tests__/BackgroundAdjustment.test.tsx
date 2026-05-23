@@ -197,5 +197,16 @@ describe('BackgroundAdjustment', () => {
     expect(panel).toHaveTextContent(/Provincial reference samples/);
     expect(panel).toHaveTextContent(/UTL 95\/95/);
     expect(panel).toHaveTextContent(/NIST\/SEMATECH e-Handbook/);
+    expect(panel).toHaveTextContent(/Catalog sources referenced here/);
+    expect(panel).toHaveTextContent(/Matrix Options calculator design v1/);
+    expect(panel.textContent?.match(/not cataloged/g)?.length).toBe(4);
+    expect(
+      (screen.getByTestId('provenance-equation-records') as HTMLDetailsElement)
+        .open,
+    ).toBe(false);
+    expect(
+      (screen.getByTestId('provenance-source-records') as HTMLDetailsElement)
+        .open,
+    ).toBe(false);
   });
 });

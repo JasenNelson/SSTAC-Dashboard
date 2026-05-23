@@ -308,6 +308,21 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(panel).toHaveTextContent(/US EPA IRIS, Benzo\[a\]pyrene/);
     expect(panel).toHaveTextContent(/Current calculator substance library/);
     expect(panel).toHaveTextContent(/source equation citation pending/);
+    expect(panel).toHaveTextContent(/Catalog values for active substance/);
+    expect(panel).toHaveTextContent(/Catalog sources referenced here/);
+    expect(panel).toHaveTextContent(/source linked default/);
+    expect(
+      (screen.getByTestId('provenance-catalog-values') as HTMLDetailsElement)
+        .open,
+    ).toBe(false);
+    expect(
+      (screen.getByTestId('provenance-equation-records') as HTMLDetailsElement)
+        .open,
+    ).toBe(false);
+    expect(
+      (screen.getByTestId('provenance-source-records') as HTMLDetailsElement)
+        .open,
+    ).toBe(false);
   });
 
   it('labels placeholder FCV defaults as placeholder, not source-backed', () => {
