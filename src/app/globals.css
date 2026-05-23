@@ -6,6 +6,9 @@
 /* Government/Public Service palette — design-tokens.ts is the source of truth */
 
 :root {
+  /* System stacks keep local/offline builds independent from Google Fonts. */
+  --font-app-sans: Arial, Helvetica, sans-serif;
+  --font-app-mono: "Courier New", Courier, monospace;
   --background: #F8FAFC;
   --foreground: #0F172A;
   --card: #ffffff;
@@ -51,8 +54,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-app-sans);
+  --font-mono: var(--font-app-mono);
 }
 
 /* Light mode (default) */
