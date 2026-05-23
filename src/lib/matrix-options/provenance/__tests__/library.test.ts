@@ -18,8 +18,22 @@ describe('matrix options evidence library helpers', () => {
     expect(view.totalCounts.sources).toBeGreaterThan(20);
     expect(view.totalCounts.values).toBeGreaterThan(20);
     expect(view.totalCounts.equations).toBe(5);
+    expect(view.totalCounts.sourceLeads).toBe(3);
     expect(view.values.length).toBe(view.totalCounts.values);
     expect(view.equations.length).toBe(view.totalCounts.equations);
+    expect(view.valueGroups).toHaveLength(view.totalCounts.values);
+    expect(view.audit.values.approvedSourceBacked).toBe(0);
+    expect(view.audit.values.pendingSourceLocator).toBe(9);
+    expect(view.audit.values.currentCalculatorScaffold).toBe(65);
+    expect(view.audit.values.currentDefaults).toBe(57);
+    expect(view.audit.values.notDefaults).toBe(17);
+    expect(view.audit.equations.pendingReview).toBe(5);
+    expect(view.audit.equations.pendingSourceLocator).toBe(2);
+    expect(view.audit.equations.currentCalculatorScaffold).toBe(3);
+    expect(view.audit.sourceLeads.equationLeads).toBe(10);
+    expect(view.audit.sourceLeads.parameterValueLeads).toBe(5);
+    expect(view.audit.sourceLeads.canonicalSourceLeads).toBe(22);
+    expect(view.audit.sourceLeads.documentLeads).toBe(23);
   });
 
   it('filters values and equations by human-health pathway', () => {
@@ -110,6 +124,9 @@ describe('matrix options evidence library helpers', () => {
     expect(view.values.map((row) => row.record.parameter_value_id)).toEqual([
       'pv-pcb-hh-food-bsaf',
     ]);
+    expect(request.candidateGroupIds).toEqual([
+      'human-health-food__total_pcbs_aroclor_1254__bsaf_loc_freshwater__general',
+    ]);
     expect(view.equations.map((row) => row.record.equation_id)).toEqual([
       'eq-human-health-food-web',
     ]);
@@ -156,8 +173,12 @@ describe('matrix options evidence library helpers', () => {
     expect(hhRecords.length).toBeGreaterThan(0);
     for (const record of hhRecords) {
       expect(record.qa_status, record.parameter_value_id).toBe('needs_review');
-      expect(record.default_status, record.parameter_value_id).toBe(
-        'placeholder_default',
+      expect(
+        ['current_default', 'not_default'],
+        record.parameter_value_id,
+      ).toContain(record.default_status);
+      expect(record.evidence_support_status, record.parameter_value_id).toBe(
+        'current_calculator_scaffold',
       );
       expect(record.source_ids, record.parameter_value_id).toEqual([
         'src-current-calculator-design-v1',
@@ -203,6 +224,12 @@ describe('matrix options evidence library helpers', () => {
           expect(record, `${substance.key} ${pathway} ${inputKey}`).toBeDefined();
           expect(record?.qa_status).toBe('needs_review');
           expect(record?.source_ids).toEqual(['src-current-calculator-design-v1']);
+          expect(record?.candidate_group_id).toBe(
+            `${pathway}__${substance.key}__${inputKey}__general`,
+          );
+          expect(record?.evidence_support_status).toBe(
+            'current_calculator_scaffold',
+          );
           expect(record?.evidence_items[0]?.extraction_method).toBe(
             'current_calculator_scaffold',
           );

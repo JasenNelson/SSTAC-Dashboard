@@ -2,17 +2,21 @@ import { SUBSTANCE_LIBRARY } from '../substanceLibrary';
 import {
   EQUATION_RECORDS,
   PARAMETER_VALUE_RECORDS,
+  SOURCE_LEAD_SETS,
   SOURCE_RECORDS,
   getEquationRecord,
   getSourceRecord,
 } from './catalog';
 import type {
   EquationRecord,
+  EvidenceSupportStatus,
   EvidenceLibraryFilterRequest,
   EvidenceLibraryFilters,
   ParameterValueRecord,
   ProvenancePathway,
   SourceCurrentnessStatus,
+  SourceRelationship,
+  SourceRelationshipRole,
   SourceRecord,
 } from './types';
 
@@ -21,6 +25,7 @@ export interface EvidenceLibraryValueRow {
   substanceLabel: string;
   sources: SourceRecord[];
   equations: EquationRecord[];
+  sourceRelationships: SourceRelationship[];
   receptorGroups: string[];
   populationGroups: string[];
   speciesGroups: string[];
@@ -30,6 +35,7 @@ export interface EvidenceLibraryValueRow {
 export interface EvidenceLibraryEquationRow {
   record: EquationRecord;
   sources: SourceRecord[];
+  sourceRelationships: SourceRelationship[];
   receptorGroups: string[];
   populationGroups: string[];
   speciesGroups: string[];
@@ -53,6 +59,7 @@ export interface EvidenceLibraryFacetOptions {
   substances: EvidenceLibraryFacetOption[];
   qaStatuses: EvidenceLibraryFacetOption[];
   defaultStatuses: EvidenceLibraryFacetOption[];
+  evidenceSupportStatuses: EvidenceLibraryFacetOption[];
   extractionStatuses: EvidenceLibraryFacetOption[];
   jurisdictions: EvidenceLibraryFacetOption[];
   authorityScopes: EvidenceLibraryFacetOption[];
@@ -63,15 +70,84 @@ export interface EvidenceLibraryFacetOptions {
   speciesGroups: EvidenceLibraryFacetOption[];
 }
 
+export interface EvidenceLibrarySourceLeadSummary {
+  leadSetId: string;
+  label: string;
+  status: string;
+  rule: string | null;
+  primarySourceId: string | null;
+  counts: {
+    equationLeads: number;
+    parameterValueLeads: number;
+    canonicalSourceLeads: number;
+    documentLeads: number;
+    hubPages: number;
+  };
+  nextActions: string[];
+}
+
+export interface EvidenceLibraryValueGroup {
+  groupId: string;
+  pathway: ProvenancePathway;
+  substanceKey: string;
+  substanceLabel: string;
+  inputKey: string;
+  jurisdiction: string;
+  records: EvidenceLibraryValueRow[];
+  currentDefault: EvidenceLibraryValueRow | null;
+  evidenceSupportStatuses: EvidenceSupportStatus[];
+  qaStatuses: string[];
+  sourceRelationships: SourceRelationship[];
+  relatedSourceLeads: EvidenceLibrarySourceLeadSummary[];
+}
+
+export interface EvidenceLibraryAudit {
+  values: {
+    total: number;
+    approvedSourceBacked: number;
+    pendingSourceLocator: number;
+    currentCalculatorScaffold: number;
+    referenceMiningLead: number;
+    currentDefaults: number;
+    availableOptions: number;
+    notDefaults: number;
+  };
+  equations: {
+    total: number;
+    pendingReview: number;
+    approvedSourceBacked: number;
+    pendingSourceLocator: number;
+    currentCalculatorScaffold: number;
+  };
+  sources: {
+    total: number;
+    zoteroLinked: number;
+    zoteroPending: number;
+    referenceMining: number;
+    implementationScaffold: number;
+  };
+  sourceLeads: {
+    leadSets: number;
+    equationLeads: number;
+    parameterValueLeads: number;
+    canonicalSourceLeads: number;
+    documentLeads: number;
+  };
+}
+
 export interface EvidenceLibraryView {
   values: EvidenceLibraryValueRow[];
+  valueGroups: EvidenceLibraryValueGroup[];
   equations: EvidenceLibraryEquationRow[];
   sources: EvidenceLibrarySourceRow[];
+  sourceLeads: EvidenceLibrarySourceLeadSummary[];
   facets: EvidenceLibraryFacetOptions;
+  audit: EvidenceLibraryAudit;
   totalCounts: {
     values: number;
     equations: number;
     sources: number;
+    sourceLeads: number;
   };
 }
 
@@ -81,6 +157,7 @@ const EMPTY_FILTERS: EvidenceLibraryFilters = {
   substanceKeys: [],
   qaStatuses: [],
   defaultStatuses: [],
+  evidenceSupportStatuses: [],
   extractionStatuses: [],
   jurisdictions: [],
   authorityScopes: [],
@@ -91,6 +168,7 @@ const EMPTY_FILTERS: EvidenceLibraryFilters = {
   speciesGroups: [],
   sourceIds: [],
   parameterValueIds: [],
+  candidateGroupIds: [],
   equationIds: [],
 };
 
@@ -125,6 +203,43 @@ function compact<T>(items: Array<T | undefined>): T[] {
   return items.filter((item): item is T => item !== undefined);
 }
 
+function uniqueArray<T extends string>(items: T[]): T[] {
+  return Array.from(new Set(items.filter(Boolean))).sort((a, b) =>
+    a.localeCompare(b),
+  );
+}
+
+function sourceRelationshipRole(source: SourceRecord): SourceRelationshipRole {
+  if (
+    source.file_storage === 'repo_metadata_only' ||
+    source.calculator_source_role === 'implementation_scaffold'
+  ) {
+    return 'implementation_scaffold';
+  }
+  if (source.calculator_source_role === 'reference_mining') {
+    return 'reference_mining';
+  }
+  return 'canonical_candidate';
+}
+
+function buildSourceRelationships(sourceIds: string[]): SourceRelationship[] {
+  return sourceIds.map((sourceId) => {
+    const source = getSourceRecord(sourceId);
+    return {
+      source_id: sourceId,
+      role: source ? sourceRelationshipRole(source) : 'canonical_candidate',
+      note: source?.notes ?? null,
+    };
+  });
+}
+
+function recordSourceRelationships(record: {
+  source_ids: string[];
+  source_relationships?: SourceRelationship[];
+}): SourceRelationship[] {
+  return record.source_relationships ?? buildSourceRelationships(record.source_ids);
+}
+
 function searchText(parts: Array<string | number | null | undefined>): string {
   return parts
     .filter((part): part is string | number => part !== null && part !== undefined)
@@ -145,6 +260,7 @@ function valueRow(record: ParameterValueRecord): EvidenceLibraryValueRow {
     equations: compact(
       record.equation_ids.map((equationId) => getEquationRecord(equationId)),
     ),
+    sourceRelationships: recordSourceRelationships(record),
     receptorGroups: record.receptor_groups ?? [],
     populationGroups: record.population_groups ?? [],
     speciesGroups: record.species_groups ?? [],
@@ -156,6 +272,7 @@ function equationRow(record: EquationRecord): EvidenceLibraryEquationRow {
   return {
     record,
     sources: compact(record.source_ids.map((sourceId) => getSourceRecord(sourceId))),
+    sourceRelationships: recordSourceRelationships(record),
     receptorGroups: record.receptor_groups ?? [],
     populationGroups: record.population_groups ?? [],
     speciesGroups: record.species_groups ?? [],
@@ -243,8 +360,10 @@ function valueMatchesFilters(
     record.unit,
     record.value_type,
     record.default_status,
+    record.evidence_support_status,
     record.extraction_status,
     record.qa_status,
+    record.candidate_group_id,
     record.jurisdiction,
     record.applicability,
     record.uncertainty,
@@ -265,6 +384,10 @@ function valueMatchesFilters(
       evidence.qa_status,
       evidence.note,
     ]),
+    ...row.sourceRelationships.flatMap((relationship) => [
+      relationship.role,
+      relationship.note,
+    ]),
   ]);
 
   return (
@@ -273,11 +396,18 @@ function valueMatchesFilters(
     arrayIntersectsSelected(filters.substanceKeys, [record.substance_key]) &&
     arrayIncludesSelected(filters.qaStatuses, record.qa_status) &&
     arrayIncludesSelected(filters.defaultStatuses, record.default_status) &&
+    arrayIncludesSelected(
+      filters.evidenceSupportStatuses,
+      record.evidence_support_status,
+    ) &&
     arrayIncludesSelected(filters.extractionStatuses, record.extraction_status) &&
     arrayIntersectsSelected(filters.jurisdictions, [record.jurisdiction]) &&
     matchesSourceFilter(filters.sourceIds, row.sources, hasExplicitValueFilter) &&
     arrayIntersectsSelected(filters.parameterValueIds, [
       record.parameter_value_id,
+    ]) &&
+    arrayIntersectsSelected(filters.candidateGroupIds, [
+      record.candidate_group_id,
     ]) &&
     arrayIntersectsSelected(filters.receptorGroups, row.receptorGroups) &&
     arrayIntersectsSelected(filters.populationGroups, row.populationGroups) &&
@@ -311,6 +441,7 @@ function equationMatchesFilters(
     record.unit_notes,
     record.applicability,
     record.qa_status,
+    record.evidence_support_status,
     record.review_notes,
     ...record.input_keys,
     ...record.output_keys,
@@ -341,12 +472,20 @@ function equationMatchesFilters(
       evidence.qa_status,
       evidence.note,
     ]),
+    ...row.sourceRelationships.flatMap((relationship) => [
+      relationship.role,
+      relationship.note,
+    ]),
   ]);
 
   return (
     matchesSearch(searchable, filters.search) &&
     arrayIncludesSelected(filters.pathways, record.pathway) &&
     arrayIncludesSelected(filters.qaStatuses, record.qa_status) &&
+    arrayIncludesSelected(
+      filters.evidenceSupportStatuses,
+      record.evidence_support_status,
+    ) &&
     matchesSourceFilter(filters.sourceIds, row.sources, hasExplicitEquationFilter) &&
     arrayIntersectsSelected(filters.equationIds, [record.equation_id]) &&
     arrayIntersectsSelected(
@@ -395,7 +534,14 @@ function sourceMatchesFilters(
     ...linkedValues.map((value) => value.qa_status),
     ...linkedEquations.map((equation) => equation.qa_status),
   ];
+  const linkedEvidenceSupportStatuses = [
+    ...linkedValues.map((value) => value.evidence_support_status),
+    ...linkedEquations.map((equation) => equation.evidence_support_status),
+  ];
   const linkedValueIds = linkedValues.map((value) => value.parameter_value_id);
+  const linkedCandidateGroupIds = linkedValues.map(
+    (value) => value.candidate_group_id,
+  );
   const linkedEquationIds = linkedEquations.map((equation) => equation.equation_id);
   const hasLinkedRecordIdFilter =
     filters.parameterValueIds.length > 0 || filters.equationIds.length > 0;
@@ -427,6 +573,8 @@ function sourceMatchesFilters(
       value.substance_key,
       value.pathway,
       value.input_key,
+      value.candidate_group_id,
+      value.evidence_support_status,
       value.applicability,
       value.review_notes,
       ...(value.receptor_groups ?? []),
@@ -439,6 +587,7 @@ function sourceMatchesFilters(
       equation.display_name,
       equation.pathway,
       equation.equation_latex,
+      equation.evidence_support_status,
       equation.plain_language,
       equation.applicability,
       equation.review_notes,
@@ -462,6 +611,10 @@ function sourceMatchesFilters(
     ) &&
     arrayIntersectsSelected(filters.qaStatuses, linkedQaStatuses) &&
     arrayIntersectsSelected(
+      filters.evidenceSupportStatuses,
+      linkedEvidenceSupportStatuses,
+    ) &&
+    arrayIntersectsSelected(
       filters.defaultStatuses,
       linkedValues.map((value) => value.default_status),
     ) &&
@@ -474,6 +627,7 @@ function sourceMatchesFilters(
       linkedValues.map((value) => value.jurisdiction),
     ) &&
     matchesLinkedRecordIdFilter &&
+    arrayIntersectsSelected(filters.candidateGroupIds, linkedCandidateGroupIds) &&
     arrayIntersectsSelected(
       filters.receptorGroups,
       [
@@ -519,6 +673,7 @@ export function emptyEvidenceLibraryFilters(): EvidenceLibraryFilters {
     substanceKeys: [],
     qaStatuses: [],
     defaultStatuses: [],
+    evidenceSupportStatuses: [],
     extractionStatuses: [],
     jurisdictions: [],
     authorityScopes: [],
@@ -529,6 +684,7 @@ export function emptyEvidenceLibraryFilters(): EvidenceLibraryFilters {
     speciesGroups: [],
     sourceIds: [],
     parameterValueIds: [],
+    candidateGroupIds: [],
     equationIds: [],
   };
 }
@@ -544,6 +700,7 @@ export function createEvidenceLibraryFilters(
     substanceKeys: request.substanceKeys ?? [],
     qaStatuses: request.qaStatuses ?? [],
     defaultStatuses: request.defaultStatuses ?? [],
+    evidenceSupportStatuses: request.evidenceSupportStatuses ?? [],
     extractionStatuses: request.extractionStatuses ?? [],
     jurisdictions: request.jurisdictions ?? [],
     authorityScopes: request.authorityScopes ?? [],
@@ -554,6 +711,7 @@ export function createEvidenceLibraryFilters(
     speciesGroups: request.speciesGroups ?? [],
     sourceIds: request.sourceIds ?? [],
     parameterValueIds: request.parameterValueIds ?? [],
+    candidateGroupIds: request.candidateGroupIds ?? [],
     equationIds: request.equationIds ?? [],
   };
 }
@@ -561,9 +719,265 @@ export function createEvidenceLibraryFilters(
 export function humanizeCatalogLabel(value: string): string {
   const labels: Record<string, string> = {
     pending_owner_export: 'Zotero link pending',
+    current_default: 'current default',
+    approved_source_backed: 'approved source-backed',
+    pending_source_locator: 'pending source locator',
+    current_calculator_scaffold: 'current calculator scaffold',
+    reference_mining_lead: 'reference-mining lead',
+    user_entered_or_derived: 'user-entered or derived',
+    canonical_candidate: 'canonical candidate',
+    supporting_context: 'supporting context',
+    implementation_scaffold: 'implementation scaffold',
   };
   if (labels[value]) return labels[value];
   return value.replaceAll('_', ' ').replaceAll('-', ' ');
+}
+
+function countByStatus<T extends object>(
+  records: readonly T[],
+  key: keyof T,
+  status: unknown,
+): number {
+  return records.filter((record) => record[key] === status).length;
+}
+
+function leadArray(raw: unknown, key: string): unknown[] {
+  if (!raw || typeof raw !== 'object') return [];
+  const value = (raw as Record<string, unknown>)[key];
+  return Array.isArray(value) ? value : [];
+}
+
+function sourceLeadSummary(raw: unknown): EvidenceLibrarySourceLeadSummary {
+  const record = raw as Record<string, unknown>;
+  const primary =
+    (record.primary_document as Record<string, unknown> | undefined) ??
+    (record.primary_source as Record<string, unknown> | undefined) ??
+    null;
+  const nextActions = [
+    ...leadArray(raw, 'next_actions'),
+    ...leadArray(raw, 'next_steps'),
+  ].filter((item): item is string => typeof item === 'string');
+
+  return {
+    leadSetId: String(record.lead_set_id ?? 'source-leads'),
+    label: String(
+      primary?.short_citation ??
+        primary?.title ??
+        record.lead_set_id ??
+        'Source leads',
+    ),
+    status: String(record.status ?? 'needs_review'),
+    rule:
+      typeof record.source_of_sources_rule === 'string'
+        ? record.source_of_sources_rule
+        : null,
+    primarySourceId:
+      typeof primary?.source_id === 'string' ? primary.source_id : null,
+    counts: {
+      equationLeads: leadArray(raw, 'equation_leads').length,
+      parameterValueLeads: leadArray(raw, 'parameter_value_leads').length,
+      canonicalSourceLeads: leadArray(raw, 'canonical_source_leads').length,
+      documentLeads: leadArray(raw, 'document_leads').length,
+      hubPages: leadArray(raw, 'hub_pages').length,
+    },
+    nextActions,
+  };
+}
+
+function buildSourceLeadSummaries(): EvidenceLibrarySourceLeadSummary[] {
+  return SOURCE_LEAD_SETS.map(sourceLeadSummary);
+}
+
+function sourceLeadMatchesFilters(
+  lead: EvidenceLibrarySourceLeadSummary,
+  filters: EvidenceLibraryFilters,
+): boolean {
+  const searchable = searchText([
+    lead.leadSetId,
+    lead.label,
+    lead.status,
+    lead.rule,
+    lead.primarySourceId,
+    ...lead.nextActions,
+  ]);
+
+  return (
+    matchesSearch(searchable, filters.search) &&
+    (filters.sourceIds.length === 0 ||
+      (lead.primarySourceId !== null &&
+        filters.sourceIds.includes(lead.primarySourceId))) &&
+    (filters.evidenceSupportStatuses.length === 0 ||
+      filters.evidenceSupportStatuses.includes('reference_mining_lead'))
+  );
+}
+
+function sourceLeadMatchesGroup(
+  lead: EvidenceLibrarySourceLeadSummary,
+  group: Omit<EvidenceLibraryValueGroup, 'relatedSourceLeads'>,
+): boolean {
+  const sourceIds = new Set(
+    group.sourceRelationships
+      .map((relationship) => relationship.source_id)
+      .filter((sourceId): sourceId is string => Boolean(sourceId)),
+  );
+  if (lead.primarySourceId && sourceIds.has(lead.primarySourceId)) return true;
+  if (lead.leadSetId.includes('erdc') && group.inputKey.toLowerCase().includes('bsaf')) {
+    return true;
+  }
+  if (
+    lead.leadSetId.includes('epa-ecossl') &&
+    [...sourceIds].some((sourceId) => sourceId.includes('eco-ssl'))
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function buildValueGroups(
+  rows: EvidenceLibraryValueRow[],
+  sourceLeads: EvidenceLibrarySourceLeadSummary[],
+): EvidenceLibraryValueGroup[] {
+  const groups = new Map<string, EvidenceLibraryValueRow[]>();
+  for (const row of rows) {
+    const groupRows = groups.get(row.record.candidate_group_id) ?? [];
+    groupRows.push(row);
+    groups.set(row.record.candidate_group_id, groupRows);
+  }
+
+  return Array.from(groups.entries())
+    .map(([groupId, records]) => {
+      const first = records[0];
+      const currentDefault =
+        records.find((row) => row.record.default_status === 'current_default') ??
+        null;
+      const base = {
+        groupId,
+        pathway: first.record.pathway,
+        substanceKey: first.record.substance_key,
+        substanceLabel: first.substanceLabel,
+        inputKey: first.record.input_key,
+        jurisdiction: first.record.jurisdiction,
+        records,
+        currentDefault,
+        evidenceSupportStatuses: uniqueArray(
+          records.map((row) => row.record.evidence_support_status),
+        ),
+        qaStatuses: uniqueArray(records.map((row) => row.record.qa_status)),
+        sourceRelationships: records.flatMap((row) => row.sourceRelationships),
+      };
+      return {
+        ...base,
+        relatedSourceLeads: sourceLeads.filter((lead) =>
+          sourceLeadMatchesGroup(lead, base),
+        ),
+      };
+    })
+    .sort((a, b) =>
+      `${a.pathway} ${a.substanceLabel} ${a.inputKey}`.localeCompare(
+        `${b.pathway} ${b.substanceLabel} ${b.inputKey}`,
+      ),
+    );
+}
+
+function buildAudit(
+  sourceLeads: EvidenceLibrarySourceLeadSummary[],
+): EvidenceLibraryAudit {
+  const evidenceSourceRecords = SOURCE_RECORDS.filter(isEvidenceSource);
+  return {
+    values: {
+      total: PARAMETER_VALUE_RECORDS.length,
+      approvedSourceBacked: countByStatus(
+        PARAMETER_VALUE_RECORDS,
+        'evidence_support_status',
+        'approved_source_backed',
+      ),
+      pendingSourceLocator: countByStatus(
+        PARAMETER_VALUE_RECORDS,
+        'evidence_support_status',
+        'pending_source_locator',
+      ),
+      currentCalculatorScaffold: countByStatus(
+        PARAMETER_VALUE_RECORDS,
+        'evidence_support_status',
+        'current_calculator_scaffold',
+      ),
+      referenceMiningLead: countByStatus(
+        PARAMETER_VALUE_RECORDS,
+        'evidence_support_status',
+        'reference_mining_lead',
+      ),
+      currentDefaults: countByStatus(
+        PARAMETER_VALUE_RECORDS,
+        'default_status',
+        'current_default',
+      ),
+      availableOptions: countByStatus(
+        PARAMETER_VALUE_RECORDS,
+        'default_status',
+        'available_option',
+      ),
+      notDefaults: countByStatus(
+        PARAMETER_VALUE_RECORDS,
+        'default_status',
+        'not_default',
+      ),
+    },
+    equations: {
+      total: EQUATION_RECORDS.length,
+      pendingReview: EQUATION_RECORDS.filter(
+        (record) => record.qa_status === 'needs_review',
+      ).length,
+      approvedSourceBacked: countByStatus(
+        EQUATION_RECORDS,
+        'evidence_support_status',
+        'approved_source_backed',
+      ),
+      pendingSourceLocator: countByStatus(
+        EQUATION_RECORDS,
+        'evidence_support_status',
+        'pending_source_locator',
+      ),
+      currentCalculatorScaffold: countByStatus(
+        EQUATION_RECORDS,
+        'evidence_support_status',
+        'current_calculator_scaffold',
+      ),
+    },
+    sources: {
+      total: evidenceSourceRecords.length,
+      zoteroLinked: evidenceSourceRecords.filter(
+        (record) => record.zotero_status === 'linked',
+      ).length,
+      zoteroPending: evidenceSourceRecords.filter(
+        (record) => record.zotero_status === 'pending_owner_export',
+      ).length,
+      referenceMining: evidenceSourceRecords.filter(
+        (record) => record.calculator_source_role === 'reference_mining',
+      ).length,
+      implementationScaffold: SOURCE_RECORDS.filter(
+        (record) => record.calculator_source_role === 'implementation_scaffold',
+      ).length,
+    },
+    sourceLeads: {
+      leadSets: sourceLeads.length,
+      equationLeads: sourceLeads.reduce(
+        (total, lead) => total + lead.counts.equationLeads,
+        0,
+      ),
+      parameterValueLeads: sourceLeads.reduce(
+        (total, lead) => total + lead.counts.parameterValueLeads,
+        0,
+      ),
+      canonicalSourceLeads: sourceLeads.reduce(
+        (total, lead) => total + lead.counts.canonicalSourceLeads,
+        0,
+      ),
+      documentLeads: sourceLeads.reduce(
+        (total, lead) => total + lead.counts.documentLeads,
+        0,
+      ),
+    },
+  };
 }
 
 export function buildEvidenceLibraryView(
@@ -573,11 +987,27 @@ export function buildEvidenceLibraryView(
   const equationRows = EQUATION_RECORDS.map(equationRow);
   const evidenceSourceRecords = SOURCE_RECORDS.filter(isEvidenceSource);
   const sourceRows = evidenceSourceRecords.map(sourceRow);
+  const allSourceLeads = buildSourceLeadSummaries();
+  const filteredSourceLeads = allSourceLeads.filter((lead) =>
+    sourceLeadMatchesFilters(lead, filters),
+  );
+  const filteredValueRows = valueRows.filter((row) =>
+    valueMatchesFilters(row, filters),
+  );
+  const filteredEquationRows = equationRows.filter((row) =>
+    equationMatchesFilters(row, filters),
+  );
+  const filteredSourceRows = sourceRows.filter((row) =>
+    sourceMatchesFilters(row, filters),
+  );
+  const valueGroups = buildValueGroups(filteredValueRows, allSourceLeads);
 
   return {
-    values: valueRows.filter((row) => valueMatchesFilters(row, filters)),
-    equations: equationRows.filter((row) => equationMatchesFilters(row, filters)),
-    sources: sourceRows.filter((row) => sourceMatchesFilters(row, filters)),
+    values: filteredValueRows,
+    valueGroups,
+    equations: filteredEquationRows,
+    sources: filteredSourceRows,
+    sourceLeads: filteredSourceLeads,
     facets: {
       pathways: facet([
         ...PARAMETER_VALUE_RECORDS.map((record) => record.pathway),
@@ -594,6 +1024,12 @@ export function buildEvidenceLibraryView(
       defaultStatuses: facet(
         PARAMETER_VALUE_RECORDS.map((record) => record.default_status),
       ),
+      evidenceSupportStatuses: facet([
+        ...PARAMETER_VALUE_RECORDS.map(
+          (record) => record.evidence_support_status,
+        ),
+        ...EQUATION_RECORDS.map((record) => record.evidence_support_status),
+      ]),
       extractionStatuses: facet(
         PARAMETER_VALUE_RECORDS.map((record) => record.extraction_status),
       ),
@@ -619,10 +1055,12 @@ export function buildEvidenceLibraryView(
         PARAMETER_VALUE_RECORDS.flatMap((record) => record.species_groups ?? []),
       ),
     },
+    audit: buildAudit(allSourceLeads),
     totalCounts: {
       values: PARAMETER_VALUE_RECORDS.length,
       equations: EQUATION_RECORDS.length,
       sources: evidenceSourceRecords.length,
+      sourceLeads: allSourceLeads.length,
     },
   };
 }
@@ -640,6 +1078,9 @@ export function buildCalculatorEvidenceRequest(
     parameterValueIds: rows
       .map((row) => row.catalog_record?.parameter_value_id)
       .filter((valueId): valueId is string => Boolean(valueId)),
+    candidateGroupIds: rows
+      .map((row) => row.catalog_record?.candidate_group_id)
+      .filter((groupId): groupId is string => Boolean(groupId)),
     equationIds,
     sourceIds: unique(
       [

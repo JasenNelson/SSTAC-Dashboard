@@ -7,6 +7,7 @@ import {
 import type {
   CalculatorUsedValue,
   CalculatorValueRole,
+  EvidenceSupportStatus,
   EquationRecord,
   ProvenancePathway,
   ResolvedProvenanceRow,
@@ -32,11 +33,28 @@ function resolveRole(
 ): CalculatorValueRole {
   if (
     usedValue.role === 'source-backed default' &&
-    catalogRecord?.default_status === 'placeholder_default'
+    catalogRecord?.evidence_support_status !== 'approved_source_backed'
   ) {
-    return 'placeholder default';
+    return catalogRecord?.default_status === 'current_default'
+      ? 'current calculator default'
+      : 'placeholder default';
   }
   return usedValue.role;
+}
+
+function resolveEvidenceSupportStatus(
+  usedValue: CalculatorUsedValue,
+  catalogRecord: ResolvedProvenanceRow['catalog_record'],
+): EvidenceSupportStatus {
+  if (catalogRecord) return catalogRecord.evidence_support_status;
+  if (
+    usedValue.role === 'user-entered value' ||
+    usedValue.role === 'derived value' ||
+    usedValue.role === 'screening assumption'
+  ) {
+    return 'user_entered_or_derived';
+  }
+  return 'current_calculator_scaffold';
 }
 
 export function resolveSourceRecords(sourceIds: string[]): SourceRecord[] {
@@ -79,8 +97,13 @@ export function resolveProvenanceRows(
         ? resolveSourceRecords(catalogRecord.source_ids)
         : [],
       evidence_items: catalogRecord?.evidence_items ?? [],
+      evidence_support_status: resolveEvidenceSupportStatus(
+        usedValue,
+        catalogRecord,
+      ),
       qa_status: catalogRecord?.qa_status ?? 'not_cataloged',
       default_status: catalogRecord?.default_status ?? 'not_cataloged',
+      candidate_group_id: catalogRecord?.candidate_group_id ?? null,
       note: usedValue.note ?? catalogRecord?.review_notes ?? null,
     };
   });

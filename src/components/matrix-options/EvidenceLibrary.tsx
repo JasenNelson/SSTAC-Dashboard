@@ -11,6 +11,8 @@ import {
 } from '@/lib/matrix-options/provenance/library';
 import type {
   EvidenceLibraryFacetOption,
+  EvidenceLibrarySourceLeadSummary,
+  EvidenceLibraryValueGroup,
   EvidenceLibraryValueRow,
 } from '@/lib/matrix-options/provenance/library';
 import type {
@@ -27,8 +29,10 @@ interface EvidenceLibraryProps {
 const VIEW_MODES: Array<{ id: EvidenceLibraryViewMode; label: string }> = [
   { id: 'all', label: 'All' },
   { id: 'values', label: 'Values' },
+  { id: 'by-parameter', label: 'By Parameter' },
   { id: 'equations', label: 'Equations' },
   { id: 'sources', label: 'Sources' },
+  { id: 'source-leads', label: 'Source Leads' },
   { id: 'assumptions', label: 'Assumptions' },
 ];
 
@@ -43,10 +47,12 @@ const FILTER_LABELS: Partial<Record<keyof EvidenceLibraryFilters, string>> = {
   substanceKeys: 'Substance',
   qaStatuses: 'QA',
   defaultStatuses: 'Default',
+  evidenceSupportStatuses: 'Evidence',
   extractionStatuses: 'Extraction',
   jurisdictions: 'Jurisdiction',
   sourceIds: 'Source',
   parameterValueIds: 'Value',
+  candidateGroupIds: 'Parameter',
   equationIds: 'Equation',
   zoteroStatuses: 'Zotero',
   currentnessStatuses: 'Currentness',
@@ -77,13 +83,19 @@ function formatValue(value: number | string, unit: string): string {
 }
 
 function statusTone(status: string): string {
-  if (status === 'approved' || status === 'current') {
+  if (
+    status === 'approved' ||
+    status === 'current' ||
+    status === 'approved_source_backed'
+  ) {
     return 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-200 dark:border-emerald-800';
   }
   if (
     status.includes('needs') ||
-    status === 'placeholder_default' ||
-    status === 'pending_owner_export'
+    status === 'pending_owner_export' ||
+    status === 'pending_source_locator' ||
+    status === 'current_calculator_scaffold' ||
+    status === 'reference_mining_lead'
   ) {
     return 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-200 dark:border-amber-800';
   }
@@ -143,14 +155,33 @@ function tagList(values: string[]): string {
 function sourceLabels(row: EvidenceLibraryValueRow): string {
   const evidenceSources = row.sources.filter(isCalculatorEvidenceSource);
   if (evidenceSources.length === 0) {
-    return row.sources.length > 0
-      ? 'Source review pending; current calculator scaffold only'
-      : 'No source linked';
+    return row.record.evidence_support_status === 'user_entered_or_derived'
+      ? 'User-entered or derived value'
+      : 'Current calculator scaffold only';
+  }
+  if (row.record.evidence_support_status === 'pending_source_locator') {
+    const first = evidenceSources[0].short_citation;
+    return evidenceSources.length === 1
+      ? `${first}; pending exact locator`
+      : `${first}; +${evidenceSources.length - 1}; pending exact locators`;
   }
   const first = evidenceSources[0].short_citation;
   return evidenceSources.length === 1
     ? first
     : `${first}; +${evidenceSources.length - 1}`;
+}
+
+function sourceRelationshipLabels(row: EvidenceLibraryValueRow): string {
+  if (row.sourceRelationships.length === 0) return 'No source relationships';
+  return row.sourceRelationships
+    .map((relationship) => {
+      const source = row.sources.find(
+        (candidate) => candidate.source_id === relationship.source_id,
+      );
+      const citation = source?.short_citation ?? relationship.source_id ?? 'No source';
+      return `${citation}: ${humanizeCatalogLabel(relationship.role)}`;
+    })
+    .join('; ');
 }
 
 function activeFilterLabels(filters: EvidenceLibraryFilters): string[] {
@@ -164,6 +195,214 @@ function activeFilterLabels(filters: EvidenceLibraryFilters): string[] {
     }
   }
   return labels;
+}
+
+function AuditStrip({
+  audit,
+}: {
+  audit: ReturnType<typeof buildEvidenceLibraryView>['audit'];
+}) {
+  const sourceLeadCount =
+    audit.sourceLeads.equationLeads +
+    audit.sourceLeads.parameterValueLeads +
+    audit.sourceLeads.canonicalSourceLeads +
+    audit.sourceLeads.documentLeads;
+  const items = [
+    {
+      label: 'Approved values',
+      value: audit.values.approvedSourceBacked,
+      note: `${audit.values.total} catalog values`,
+    },
+    {
+      label: 'Pending locators',
+      value: audit.values.pendingSourceLocator,
+      note: 'candidate sources attached',
+    },
+    {
+      label: 'Calculator scaffolds',
+      value: audit.values.currentCalculatorScaffold,
+      note: 'current UI values only',
+    },
+    {
+      label: 'Equations pending',
+      value: audit.equations.pendingReview,
+      note: `${audit.equations.total} equations total`,
+    },
+    {
+      label: 'Source-of-sources leads',
+      value: sourceLeadCount,
+      note: `${audit.sourceLeads.leadSets} lead sets`,
+    },
+  ];
+
+  return (
+    <div
+      className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950 sm:grid-cols-2 xl:grid-cols-5"
+      aria-label="Catalog provenance audit"
+    >
+      {items.map((item) => (
+        <div key={item.label} className="min-w-0">
+          <div className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">
+            {item.label}
+          </div>
+          <div className="mt-1 text-2xl font-bold text-slate-950 dark:text-white">
+            {item.value}
+          </div>
+          <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            {item.note}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ValueGroupCard({ group }: { group: EvidenceLibraryValueGroup }) {
+  const currentDefault = group.currentDefault;
+  const currentValue = currentDefault
+    ? formatValue(currentDefault.record.value, currentDefault.record.unit)
+    : 'No current default';
+
+  return (
+    <details className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+      <summary className="cursor-pointer px-3 py-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-slate-950 dark:text-white">
+              {group.substanceLabel}: {humanizeCatalogLabel(group.inputKey)}
+            </div>
+            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              {humanizeCatalogLabel(group.pathway)}; {group.jurisdiction};{' '}
+              {group.records.length} candidate
+              {group.records.length === 1 ? '' : 's'}
+            </div>
+          </div>
+          <div className="text-left sm:text-right">
+            <div className="font-mono text-sm text-slate-800 dark:text-slate-100">
+              {currentValue}
+            </div>
+            <div className="mt-1 flex flex-wrap gap-1 sm:justify-end">
+              {group.evidenceSupportStatuses.map((status) => (
+                <StatusBadge key={status} value={status} />
+              ))}
+              {group.qaStatuses.map((status) => (
+                <StatusBadge key={status} value={status} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </summary>
+      <div className="border-t border-slate-200 px-3 py-3 text-sm dark:border-slate-800">
+        <div className="mb-2 text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+          Candidate values are read-only until exact locators and QA are approved.
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="text-left text-xs uppercase text-slate-500 dark:text-slate-400">
+              <tr>
+                <th className="py-2 pr-4 font-semibold">Value</th>
+                <th className="py-2 pr-4 font-semibold">Default role</th>
+                <th className="py-2 pr-4 font-semibold">Evidence support</th>
+                <th className="py-2 pr-4 font-semibold">QA</th>
+                <th className="py-2 font-semibold">Sources</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              {group.records.map((row) => (
+                <tr key={row.record.parameter_value_id} className="align-top">
+                  <td className="py-2 pr-4 font-mono text-slate-800 dark:text-slate-100">
+                    {formatValue(row.record.value, row.record.unit)}
+                  </td>
+                  <td className="py-2 pr-4">
+                    <StatusBadge value={row.record.default_status} />
+                  </td>
+                  <td className="py-2 pr-4">
+                    <StatusBadge value={row.record.evidence_support_status} />
+                  </td>
+                  <td className="py-2 pr-4">
+                    <StatusBadge value={row.record.qa_status} />
+                  </td>
+                  <td className="py-2 text-slate-600 dark:text-slate-300">
+                    {sourceLabels(row)}
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {sourceRelationshipLabels(row)}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {group.relatedSourceLeads.length > 0 && (
+          <div className="mt-3">
+            <div className="mb-1 text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+              Related source-of-sources leads
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {group.relatedSourceLeads.map((lead) => (
+                <span
+                  key={lead.leadSetId}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                >
+                  {lead.label}: {humanizeCatalogLabel(lead.status)}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </details>
+  );
+}
+
+function SourceLeadCard({ lead }: { lead: EvidenceLibrarySourceLeadSummary }) {
+  const totalLeads =
+    lead.counts.equationLeads +
+    lead.counts.parameterValueLeads +
+    lead.counts.canonicalSourceLeads +
+    lead.counts.documentLeads;
+
+  return (
+    <details className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+      <summary className="cursor-pointer px-3 py-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold text-slate-950 dark:text-white">
+              {lead.label}
+            </div>
+            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Source-of-sources only; not canonical calculator evidence.
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1 sm:justify-end">
+            <StatusBadge value={lead.status} />
+            <StatusBadge value="reference_mining_lead" />
+          </div>
+        </div>
+      </summary>
+      <div className="space-y-3 border-t border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
+        {lead.rule && (
+          <p className="text-sm text-slate-700 dark:text-slate-200">
+            {lead.rule}
+          </p>
+        )}
+        <div className="grid gap-2 text-xs text-slate-600 dark:text-slate-300 sm:grid-cols-2 xl:grid-cols-5">
+          <div>{totalLeads} total leads</div>
+          <div>{lead.counts.equationLeads} equation leads</div>
+          <div>{lead.counts.parameterValueLeads} value leads</div>
+          <div>{lead.counts.canonicalSourceLeads} canonical leads</div>
+          <div>{lead.counts.documentLeads + lead.counts.hubPages} document or hub leads</div>
+        </div>
+        {lead.nextActions.length > 0 && (
+          <ul className="list-disc space-y-1 pl-5 text-xs text-slate-600 dark:text-slate-300">
+            {lead.nextActions.map((action) => (
+              <li key={action}>{action}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </details>
+  );
 }
 
 export default function EvidenceLibrary({
@@ -188,8 +427,10 @@ export default function EvidenceLibrary({
 
   const showValues =
     viewMode === 'all' || viewMode === 'values' || viewMode === 'assumptions';
+  const showValueGroups = viewMode === 'by-parameter';
   const showEquations = viewMode === 'all' || viewMode === 'equations';
   const showSources = viewMode === 'all' || viewMode === 'sources';
+  const showSourceLeads = viewMode === 'all' || viewMode === 'source-leads';
 
   return (
     <section
@@ -208,7 +449,7 @@ export default function EvidenceLibrary({
           </div>
         </div>
         <div
-          className="grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900 sm:inline-grid sm:w-auto sm:grid-cols-5"
+          className="grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900 sm:inline-grid sm:w-auto sm:grid-cols-7"
           aria-label="Evidence library view"
         >
           {VIEW_MODES.map((mode) => (
@@ -229,6 +470,8 @@ export default function EvidenceLibrary({
           ))}
         </div>
       </header>
+
+      <AuditStrip audit={library.audit} />
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/40">
         <div className="grid gap-3 lg:grid-cols-[minmax(220px,1.2fr)_repeat(4,minmax(150px,1fr))]">
@@ -270,7 +513,7 @@ export default function EvidenceLibrary({
             onChange={(value) => updateFilter('currentnessStatuses', value)}
           />
         </div>
-        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
           <FilterSelect
             label="Extraction"
             value={firstValue(filters, 'extractionStatuses')}
@@ -282,6 +525,12 @@ export default function EvidenceLibrary({
             value={firstValue(filters, 'defaultStatuses')}
             options={library.facets.defaultStatuses}
             onChange={(value) => updateFilter('defaultStatuses', value)}
+          />
+          <FilterSelect
+            label="Evidence"
+            value={firstValue(filters, 'evidenceSupportStatuses')}
+            options={library.facets.evidenceSupportStatuses}
+            onChange={(value) => updateFilter('evidenceSupportStatuses', value)}
           />
           <FilterSelect
             label="Zotero"
@@ -344,6 +593,29 @@ export default function EvidenceLibrary({
         </div>
       </div>
 
+      {showValueGroups && (
+        <section className="space-y-2" data-testid="evidence-library-value-groups">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+              Values By Parameter
+            </h3>
+            <span className="text-xs text-slate-500">
+              {library.valueGroups.length}
+            </span>
+          </div>
+          <div className="grid gap-2">
+            {library.valueGroups.map((group) => (
+              <ValueGroupCard key={group.groupId} group={group} />
+            ))}
+            {library.valueGroups.length === 0 && (
+              <div className="rounded-lg border border-slate-200 px-3 py-6 text-center text-sm text-slate-500 dark:border-slate-800">
+                No parameter groups match.
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {showValues && (
         <section className="space-y-2" data-testid="evidence-library-values">
           <div className="flex items-center justify-between">
@@ -359,7 +631,7 @@ export default function EvidenceLibrary({
                   <th className="px-3 py-2 font-semibold">Value</th>
                   <th className="px-3 py-2 font-semibold">Pathway</th>
                   <th className="px-3 py-2 font-semibold">Current value</th>
-                  <th className="px-3 py-2 font-semibold">Status</th>
+                  <th className="px-3 py-2 font-semibold">Default / evidence</th>
                   <th className="px-3 py-2 font-semibold">Applicability</th>
                   <th className="px-3 py-2 font-semibold">Sources</th>
                 </tr>
@@ -382,8 +654,9 @@ export default function EvidenceLibrary({
                       </td>
                       <td className="px-3 py-2">
                         <div className="flex flex-wrap gap-1">
-                          <StatusBadge value={row.record.qa_status} />
                           <StatusBadge value={row.record.default_status} />
+                          <StatusBadge value={row.record.evidence_support_status} />
+                          <StatusBadge value={row.record.qa_status} />
                           <StatusBadge value={row.record.extraction_status} />
                         </div>
                       </td>
@@ -404,7 +677,18 @@ export default function EvidenceLibrary({
                             <div>Species: {tagList(row.speciesGroups)}</div>
                             <div>Assumptions: {tagList(row.assumptionTags)}</div>
                             <div>Jurisdiction: {row.record.jurisdiction}</div>
+                            <div>Candidate group: {row.record.candidate_group_id}</div>
                             <div>Evidence: {row.record.evidence_items.length}</div>
+                          </div>
+                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                            Source relationships: {sourceRelationshipLabels(row)}
+                          </div>
+                          <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                            {row.record.evidence_items.map((evidence) => (
+                              <div key={evidence.evidence_id}>
+                                {evidence.locator} - {humanizeCatalogLabel(evidence.qa_status)}
+                              </div>
+                            ))}
                           </div>
                           <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
                             {row.record.review_notes}
@@ -452,6 +736,7 @@ export default function EvidenceLibrary({
                   <p className="mt-2 font-mono text-xs">{row.record.equation_latex}</p>
                   <div className="mt-2 flex flex-wrap gap-1">
                     <StatusBadge value={row.record.qa_status} />
+                    <StatusBadge value={row.record.evidence_support_status} />
                     {row.assumptionTags.map((tag) => (
                       <StatusBadge key={tag} value={tag} />
                     ))}
@@ -564,6 +849,24 @@ export default function EvidenceLibrary({
                 )}
               </tbody>
             </table>
+          </div>
+        </section>
+      )}
+
+      {showSourceLeads && (
+        <section className="space-y-2" data-testid="evidence-library-source-leads">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+              Source-Of-Sources Leads
+            </h3>
+            <span className="text-xs text-slate-500">
+              {library.sourceLeads.length}
+            </span>
+          </div>
+          <div className="grid gap-2">
+            {library.sourceLeads.map((lead) => (
+              <SourceLeadCard key={lead.leadSetId} lead={lead} />
+            ))}
           </div>
         </section>
       )}

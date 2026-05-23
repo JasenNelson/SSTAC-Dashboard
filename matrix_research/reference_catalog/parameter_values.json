@@ -8,7 +8,7 @@
     "value": 6.13,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "source_backed_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -36,7 +36,9 @@
         "evidence_id": "ev-pv-bap-logkow-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "eco-direct-eqp__benzo_a_pyrene__logKow__general",
+    "evidence_support_status": "pending_source_locator"
   },
   {
     "parameter_value_id": "pv-bap-fcv",
@@ -47,7 +49,7 @@
     "value": 0.014,
     "unit": "ug/L",
     "value_type": "single_value",
-    "default_status": "source_backed_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -75,7 +77,9 @@
         "evidence_id": "ev-pv-bap-fcv-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "eco-direct-eqp__benzo_a_pyrene__fcv_ug_per_L__general",
+    "evidence_support_status": "pending_source_locator"
   },
   {
     "parameter_value_id": "pv-bap-trv-eco",
@@ -86,7 +90,7 @@
     "value": 0.0025,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -114,7 +118,9 @@
         "evidence_id": "ev-pv-bap-trv-eco-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "eco-food-bsaf__benzo_a_pyrene__trv_eco_mg_per_kg_bw_day__general",
+    "evidence_support_status": "pending_source_locator"
   },
   {
     "parameter_value_id": "pv-bap-bsaf-freshwater",
@@ -125,7 +131,7 @@
     "value": 0.5,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -153,7 +159,9 @@
         "evidence_id": "ev-pv-bap-bsaf-freshwater-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "eco-food-bsaf__benzo_a_pyrene__bsaf_loc_freshwater__general",
+    "evidence_support_status": "pending_source_locator"
   },
   {
     "parameter_value_id": "pv-pcb-logkow",
@@ -164,7 +172,7 @@
     "value": 6.5,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "source_backed_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -192,7 +200,9 @@
         "evidence_id": "ev-pv-pcb-logkow-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "eco-direct-eqp__total_pcbs_aroclor_1254__logKow__general",
+    "evidence_support_status": "pending_source_locator"
   },
   {
     "parameter_value_id": "pv-pcb-fcv",
@@ -203,7 +213,7 @@
     "value": 0.014,
     "unit": "ug/L",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -231,7 +241,9 @@
         "evidence_id": "ev-pv-pcb-fcv-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "eco-direct-eqp__total_pcbs_aroclor_1254__fcv_ug_per_L__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-pcb-trv-eco",
@@ -242,7 +254,7 @@
     "value": 0.00012,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "source_backed_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -270,7 +282,9 @@
         "evidence_id": "ev-pv-pcb-trv-eco-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "eco-food-bsaf__total_pcbs_aroclor_1254__trv_eco_mg_per_kg_bw_day__general",
+    "evidence_support_status": "pending_source_locator"
   },
   {
     "parameter_value_id": "pv-pcb-bsaf-freshwater",
@@ -281,7 +295,7 @@
     "value": 2,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -309,7 +323,9 @@
         "evidence_id": "ev-pv-pcb-bsaf-freshwater-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "eco-food-bsaf__total_pcbs_aroclor_1254__bsaf_loc_freshwater__general",
+    "evidence_support_status": "pending_source_locator"
   },
   {
     "parameter_value_id": "pv-mehg-trv-eco",
@@ -320,7 +336,7 @@
     "value": 0.000064,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "source_backed_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -348,7 +364,9 @@
         "evidence_id": "ev-pv-mehg-trv-eco-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "eco-food-bsaf__methylmercury__trv_eco_mg_per_kg_bw_day__general",
+    "evidence_support_status": "pending_source_locator"
   },
   {
     "parameter_value_id": "pv-mehg-bsaf-protein",
@@ -359,7 +377,7 @@
     "value": 15,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "source_backed_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -387,7 +405,9 @@
         "evidence_id": "ev-pv-mehg-bsaf-protein-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "eco-food-bsaf__methylmercury__bsaf_loc_freshwater__general",
+    "evidence_support_status": "pending_source_locator"
   },
   {
     "parameter_value_id": "pv-bap-hh-direct-slope",
@@ -398,7 +418,7 @@
     "value": 1,
     "unit": "per mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -437,7 +457,9 @@
         "evidence_id": "ev-pv-bap-hh-direct-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__benzo_a_pyrene__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-bap-hh-direct-abs-dermal",
@@ -448,7 +470,7 @@
     "value": 0.13,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -487,7 +509,9 @@
         "evidence_id": "ev-pv-bap-hh-direct-abs-dermal-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__benzo_a_pyrene__abs_dermal__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-bap-hh-direct-ba-oral",
@@ -498,7 +522,7 @@
     "value": 1,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -537,7 +561,9 @@
         "evidence_id": "ev-pv-bap-hh-direct-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__benzo_a_pyrene__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-arsenic-hh-direct-rfd",
@@ -548,7 +574,7 @@
     "value": 0.0003,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -587,7 +613,9 @@
         "evidence_id": "ev-pv-arsenic-hh-direct-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-arsenic-hh-direct-slope",
@@ -598,7 +626,7 @@
     "value": 1.5,
     "unit": "per mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -637,7 +665,9 @@
         "evidence_id": "ev-pv-arsenic-hh-direct-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__arsenic_inorganic__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-arsenic-hh-direct-abs-dermal",
@@ -648,7 +678,7 @@
     "value": 0.03,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -687,7 +717,9 @@
         "evidence_id": "ev-pv-arsenic-hh-direct-abs-dermal-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__arsenic_inorganic__abs_dermal__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-arsenic-hh-direct-ba-oral",
@@ -698,7 +730,7 @@
     "value": 0.6,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -737,7 +769,9 @@
         "evidence_id": "ev-pv-arsenic-hh-direct-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__arsenic_inorganic__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-pcb-hh-food-rfd",
@@ -748,7 +782,7 @@
     "value": 0.00002,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -789,7 +823,9 @@
         "evidence_id": "ev-pv-pcb-hh-food-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__total_pcbs_aroclor_1254__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-pcb-hh-food-slope",
@@ -800,7 +836,7 @@
     "value": 2,
     "unit": "per mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -841,7 +877,9 @@
         "evidence_id": "ev-pv-pcb-hh-food-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__total_pcbs_aroclor_1254__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-pcb-hh-food-bsaf",
@@ -852,7 +890,7 @@
     "value": 2,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -893,7 +931,9 @@
         "evidence_id": "ev-pv-pcb-hh-food-bsaf-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__total_pcbs_aroclor_1254__bsaf_loc_freshwater__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-pcb-hh-food-ba-oral",
@@ -904,7 +944,7 @@
     "value": 1,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -945,7 +985,9 @@
         "evidence_id": "ev-pv-pcb-hh-food-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__total_pcbs_aroclor_1254__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-lead-hh-food-rfd",
@@ -956,7 +998,7 @@
     "value": 0.0035,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -997,7 +1039,9 @@
         "evidence_id": "ev-pv-lead-hh-food-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__lead__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-lead-hh-food-ba-oral",
@@ -1008,7 +1052,7 @@
     "value": 0.5,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1049,7 +1093,9 @@
         "evidence_id": "ev-pv-lead-hh-food-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__lead__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-bap-hh-direct-rfd",
@@ -1060,7 +1106,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1099,7 +1145,9 @@
         "evidence_id": "ev-pv-bap-hh-direct-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__benzo_a_pyrene__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-bap-hh-food-rfd",
@@ -1110,7 +1158,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1151,7 +1199,9 @@
         "evidence_id": "ev-pv-bap-hh-food-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__benzo_a_pyrene__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-bap-hh-food-slope",
@@ -1162,7 +1212,7 @@
     "value": 1,
     "unit": "per mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1203,7 +1253,9 @@
         "evidence_id": "ev-pv-bap-hh-food-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__benzo_a_pyrene__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-bap-hh-food-bsaf",
@@ -1214,7 +1266,7 @@
     "value": 0.5,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1255,7 +1307,9 @@
         "evidence_id": "ev-pv-bap-hh-food-bsaf-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__benzo_a_pyrene__bsaf_loc_freshwater__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-bap-hh-food-ba-oral",
@@ -1266,7 +1320,7 @@
     "value": 1,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1307,7 +1361,9 @@
         "evidence_id": "ev-pv-bap-hh-food-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__benzo_a_pyrene__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-pcb-hh-direct-rfd",
@@ -1318,7 +1374,7 @@
     "value": 0.00002,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1357,7 +1413,9 @@
         "evidence_id": "ev-pv-pcb-hh-direct-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__total_pcbs_aroclor_1254__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-pcb-hh-direct-slope",
@@ -1368,7 +1426,7 @@
     "value": 2,
     "unit": "per mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1407,7 +1465,9 @@
         "evidence_id": "ev-pv-pcb-hh-direct-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__total_pcbs_aroclor_1254__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-pcb-hh-direct-abs-dermal",
@@ -1418,7 +1478,7 @@
     "value": 0.14,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1457,7 +1517,9 @@
         "evidence_id": "ev-pv-pcb-hh-direct-abs-dermal-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__total_pcbs_aroclor_1254__abs_dermal__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-pcb-hh-direct-ba-oral",
@@ -1468,7 +1530,7 @@
     "value": 1,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1507,7 +1569,9 @@
         "evidence_id": "ev-pv-pcb-hh-direct-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__total_pcbs_aroclor_1254__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-mehg-hh-direct-rfd",
@@ -1518,7 +1582,7 @@
     "value": 0.0001,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1557,7 +1621,9 @@
         "evidence_id": "ev-pv-mehg-hh-direct-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__methylmercury__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-mehg-hh-direct-slope",
@@ -1568,7 +1634,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1607,7 +1673,9 @@
         "evidence_id": "ev-pv-mehg-hh-direct-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__methylmercury__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-mehg-hh-direct-abs-dermal",
@@ -1618,7 +1686,7 @@
     "value": 0.001,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1657,7 +1725,9 @@
         "evidence_id": "ev-pv-mehg-hh-direct-abs-dermal-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__methylmercury__abs_dermal__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-mehg-hh-direct-ba-oral",
@@ -1668,7 +1738,7 @@
     "value": 0.55,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1707,7 +1777,9 @@
         "evidence_id": "ev-pv-mehg-hh-direct-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__methylmercury__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-mehg-hh-food-rfd",
@@ -1718,7 +1790,7 @@
     "value": 0.0001,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1759,7 +1831,9 @@
         "evidence_id": "ev-pv-mehg-hh-food-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__methylmercury__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-mehg-hh-food-slope",
@@ -1770,7 +1844,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1811,7 +1885,9 @@
         "evidence_id": "ev-pv-mehg-hh-food-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__methylmercury__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-mehg-hh-food-bsaf",
@@ -1822,7 +1898,7 @@
     "value": 15,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1863,7 +1939,9 @@
         "evidence_id": "ev-pv-mehg-hh-food-bsaf-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__methylmercury__bsaf_loc_freshwater__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-mehg-hh-food-ba-oral",
@@ -1874,7 +1952,7 @@
     "value": 0.55,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1915,7 +1993,9 @@
         "evidence_id": "ev-pv-mehg-hh-food-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__methylmercury__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-lead-hh-direct-rfd",
@@ -1926,7 +2006,7 @@
     "value": 0.0035,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1965,7 +2045,9 @@
         "evidence_id": "ev-pv-lead-hh-direct-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__lead__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-lead-hh-direct-slope",
@@ -1976,7 +2058,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2015,7 +2097,9 @@
         "evidence_id": "ev-pv-lead-hh-direct-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__lead__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-lead-hh-direct-abs-dermal",
@@ -2026,7 +2110,7 @@
     "value": 0.001,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2065,7 +2149,9 @@
         "evidence_id": "ev-pv-lead-hh-direct-abs-dermal-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__lead__abs_dermal__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-lead-hh-direct-ba-oral",
@@ -2076,7 +2162,7 @@
     "value": 0.5,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2115,7 +2201,9 @@
         "evidence_id": "ev-pv-lead-hh-direct-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__lead__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-lead-hh-food-slope",
@@ -2126,7 +2214,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2167,7 +2255,9 @@
         "evidence_id": "ev-pv-lead-hh-food-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__lead__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-lead-hh-food-bsaf",
@@ -2178,7 +2268,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2219,7 +2309,9 @@
         "evidence_id": "ev-pv-lead-hh-food-bsaf-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__lead__bsaf_loc_freshwater__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-copper-hh-direct-rfd",
@@ -2230,7 +2322,7 @@
     "value": 0.04,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2269,7 +2361,9 @@
         "evidence_id": "ev-pv-copper-hh-direct-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__copper__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-copper-hh-direct-slope",
@@ -2280,7 +2374,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2319,7 +2413,9 @@
         "evidence_id": "ev-pv-copper-hh-direct-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__copper__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-copper-hh-direct-abs-dermal",
@@ -2330,7 +2426,7 @@
     "value": 0.001,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2369,7 +2465,9 @@
         "evidence_id": "ev-pv-copper-hh-direct-abs-dermal-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__copper__abs_dermal__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-copper-hh-direct-ba-oral",
@@ -2380,7 +2478,7 @@
     "value": 0.5,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2419,7 +2517,9 @@
         "evidence_id": "ev-pv-copper-hh-direct-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__copper__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-copper-hh-food-rfd",
@@ -2430,7 +2530,7 @@
     "value": 0.04,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2471,7 +2571,9 @@
         "evidence_id": "ev-pv-copper-hh-food-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__copper__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-copper-hh-food-slope",
@@ -2482,7 +2584,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2523,7 +2625,9 @@
         "evidence_id": "ev-pv-copper-hh-food-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__copper__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-copper-hh-food-bsaf",
@@ -2534,7 +2638,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2575,7 +2679,9 @@
         "evidence_id": "ev-pv-copper-hh-food-bsaf-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__copper__bsaf_loc_freshwater__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-copper-hh-food-ba-oral",
@@ -2586,7 +2692,7 @@
     "value": 0.5,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2627,7 +2733,9 @@
         "evidence_id": "ev-pv-copper-hh-food-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__copper__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-cadmium-hh-direct-rfd",
@@ -2638,7 +2746,7 @@
     "value": 0.001,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2677,7 +2785,9 @@
         "evidence_id": "ev-pv-cadmium-hh-direct-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__cadmium__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-cadmium-hh-direct-slope",
@@ -2688,7 +2798,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2727,7 +2837,9 @@
         "evidence_id": "ev-pv-cadmium-hh-direct-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__cadmium__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-cadmium-hh-direct-abs-dermal",
@@ -2738,7 +2850,7 @@
     "value": 0.001,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2777,7 +2889,9 @@
         "evidence_id": "ev-pv-cadmium-hh-direct-abs-dermal-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__cadmium__abs_dermal__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-cadmium-hh-direct-ba-oral",
@@ -2788,7 +2902,7 @@
     "value": 0.5,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2827,7 +2941,9 @@
         "evidence_id": "ev-pv-cadmium-hh-direct-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__cadmium__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-cadmium-hh-food-rfd",
@@ -2838,7 +2954,7 @@
     "value": 0.001,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2879,7 +2995,9 @@
         "evidence_id": "ev-pv-cadmium-hh-food-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__cadmium__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-cadmium-hh-food-slope",
@@ -2890,7 +3008,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2931,7 +3049,9 @@
         "evidence_id": "ev-pv-cadmium-hh-food-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__cadmium__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-cadmium-hh-food-bsaf",
@@ -2942,7 +3062,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2983,7 +3103,9 @@
         "evidence_id": "ev-pv-cadmium-hh-food-bsaf-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__cadmium__bsaf_loc_freshwater__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-cadmium-hh-food-ba-oral",
@@ -2994,7 +3116,7 @@
     "value": 0.5,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3035,7 +3157,9 @@
         "evidence_id": "ev-pv-cadmium-hh-food-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__cadmium__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-zinc-hh-direct-rfd",
@@ -3046,7 +3170,7 @@
     "value": 0.3,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3085,7 +3209,9 @@
         "evidence_id": "ev-pv-zinc-hh-direct-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__zinc__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-zinc-hh-direct-slope",
@@ -3096,7 +3222,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3135,7 +3261,9 @@
         "evidence_id": "ev-pv-zinc-hh-direct-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__zinc__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-zinc-hh-direct-abs-dermal",
@@ -3146,7 +3274,7 @@
     "value": 0.001,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3185,7 +3313,9 @@
         "evidence_id": "ev-pv-zinc-hh-direct-abs-dermal-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__zinc__abs_dermal__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-zinc-hh-direct-ba-oral",
@@ -3196,7 +3326,7 @@
     "value": 0.5,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3235,7 +3365,9 @@
         "evidence_id": "ev-pv-zinc-hh-direct-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-direct__zinc__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-zinc-hh-food-rfd",
@@ -3246,7 +3378,7 @@
     "value": 0.3,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3287,7 +3419,9 @@
         "evidence_id": "ev-pv-zinc-hh-food-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__zinc__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-zinc-hh-food-slope",
@@ -3298,7 +3432,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3339,7 +3473,9 @@
         "evidence_id": "ev-pv-zinc-hh-food-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__zinc__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-zinc-hh-food-bsaf",
@@ -3350,7 +3486,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3391,7 +3527,9 @@
         "evidence_id": "ev-pv-zinc-hh-food-bsaf-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__zinc__bsaf_loc_freshwater__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-zinc-hh-food-ba-oral",
@@ -3402,7 +3540,7 @@
     "value": 0.5,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3443,7 +3581,9 @@
         "evidence_id": "ev-pv-zinc-hh-food-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__zinc__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-arsenic-hh-food-rfd",
@@ -3454,7 +3594,7 @@
     "value": 0.0003,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3495,7 +3635,9 @@
         "evidence_id": "ev-pv-arsenic-hh-food-rfd-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-arsenic-hh-food-slope",
@@ -3506,7 +3648,7 @@
     "value": 1.5,
     "unit": "per mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3547,7 +3689,9 @@
         "evidence_id": "ev-pv-arsenic-hh-food-slope-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__arsenic_inorganic__sf_oral_per_mg_per_kg_bw_per_day__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-arsenic-hh-food-bsaf",
@@ -3558,7 +3702,7 @@
     "value": "not provided by current calculator",
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "not_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3599,7 +3743,9 @@
         "evidence_id": "ev-pv-arsenic-hh-food-bsaf-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__arsenic_inorganic__bsaf_loc_freshwater__general",
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "parameter_value_id": "pv-arsenic-hh-food-ba-oral",
@@ -3610,7 +3756,7 @@
     "value": 0.6,
     "unit": "unitless",
     "value_type": "single_value",
-    "default_status": "placeholder_default",
+    "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3651,6 +3797,8 @@
         "evidence_id": "ev-pv-arsenic-hh-food-ba-oral-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "candidate_group_id": "human-health-food__arsenic_inorganic__ba_oral__general",
+    "evidence_support_status": "current_calculator_scaffold"
   }
 ]

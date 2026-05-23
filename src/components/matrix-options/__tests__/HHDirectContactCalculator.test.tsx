@@ -82,10 +82,11 @@ describe('HHDirectContactCalculator', () => {
     expect(panel).toHaveTextContent(/Cancer averaging time/);
     expect(panel).toHaveTextContent(/Skin surface area/);
     expect(panel).toHaveTextContent(/Sediment adherence/);
-    expect(panel).toHaveTextContent(/placeholder default/);
+    expect(panel).toHaveTextContent(/current default/);
     expect(panel).toHaveTextContent(/needs review/);
+    expect(panel).toHaveTextContent(/0 approved/);
     expect(panel).toHaveTextContent(
-      /source review pending; current calculator scaffold only/,
+      /current calculator scaffold only/i,
     );
   });
 });

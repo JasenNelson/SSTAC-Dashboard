@@ -32,22 +32,58 @@ function humanizeStatus(status: string): string {
   return status.replaceAll('_', ' ').replaceAll('-', ' ');
 }
 
-function humanizeDefaultStatus(status: string): string {
-  if (status === 'source_backed_default') return 'source linked default';
-  return humanizeStatus(status);
+function statusTone(status: string): string {
+  if (status === 'approved' || status === 'approved_source_backed') {
+    return 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200';
+  }
+  if (
+    status.includes('needs') ||
+    status === 'pending_source_locator' ||
+    status === 'current_calculator_scaffold' ||
+    status === 'reference_mining_lead'
+  ) {
+    return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200';
+  }
+  return 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300';
 }
 
-function evidenceSummary(evidenceItems: EvidenceItem[]): string | null {
+function StatusChip({ value }: { value: string }) {
+  return (
+    <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${statusTone(value)}`}>
+      {humanizeStatus(value)}
+    </span>
+  );
+}
+
+function evidenceSupportSummary(status: string): string {
+  if (status === 'approved_source_backed') return 'Approved source-backed';
+  if (status === 'pending_source_locator') {
+    return 'Pending exact source locator; candidate source metadata only';
+  }
+  if (status === 'current_calculator_scaffold') {
+    return 'Current calculator scaffold only';
+  }
+  if (status === 'reference_mining_lead') {
+    return 'Reference-mining lead; not canonical calculator evidence';
+  }
+  return 'User-entered or derived value';
+}
+
+function evidenceSummary(
+  evidenceItems: EvidenceItem[],
+  evidenceSupportStatus: string,
+): string | null {
   const firstEvidence = evidenceItems[0];
-  if (!firstEvidence) return null;
+  if (!firstEvidence) return evidenceSupportSummary(evidenceSupportStatus);
   const reviewText =
     firstEvidence.qa_status === 'approved'
       ? 'approved'
       : humanizeStatus(firstEvidence.qa_status);
   const locator =
+    evidenceSupportStatus === 'current_calculator_scaffold' ||
     firstEvidence.extraction_method === 'current_calculator_scaffold' ||
     firstEvidence.locator_type === 'current_calculator'
-      ? 'source review pending; current calculator scaffold only'
+      ? evidenceSupportSummary(evidenceSupportStatus)
       : firstEvidence.locator;
   const additionalEvidence =
     evidenceItems.length > 1
@@ -62,16 +98,28 @@ function uniqueIds(ids: string[]): string[] {
   return Array.from(new Set(ids));
 }
 
-function statusLabels(row: ReturnType<typeof resolveProvenanceRows>[number]): string[] {
-  const labels = [humanizeStatus(row.qa_status)];
-  const defaultLabel = humanizeDefaultStatus(row.default_status);
-  if (
-    row.default_status !== 'not_cataloged' &&
-    defaultLabel !== labels[0]
-  ) {
-    labels.push(defaultLabel);
-  }
-  return labels;
+function countStatuses(statuses: string[], status: string): number {
+  return statuses.filter((candidate) => candidate === status).length;
+}
+
+function calculatorAuditText(
+  rows: ReturnType<typeof resolveProvenanceRows>,
+  equations: ReturnType<typeof resolveEquationRecords>,
+): string {
+  const statuses = [
+    ...rows.map((row) => row.evidence_support_status),
+    ...equations.map((equation) => equation.evidence_support_status),
+  ];
+  const approved = countStatuses(statuses, 'approved_source_backed');
+  const pending = countStatuses(statuses, 'pending_source_locator');
+  const scaffolds = countStatuses(statuses, 'current_calculator_scaffold');
+  const userDerived = countStatuses(statuses, 'user_entered_or_derived');
+
+  return `${approved} approved, ${pending} pending source locator${
+    pending === 1 ? '' : 's'
+  }, ${scaffolds} current calculator scaffold${
+    scaffolds === 1 ? '' : 's'
+  }, ${userDerived} user input${userDerived === 1 ? '' : 's'}`;
 }
 
 export default function CalculatorProvenancePanel({
@@ -95,6 +143,7 @@ export default function CalculatorProvenancePanel({
     isCalculatorEvidenceSource,
   );
   const sourceCount = sourceRecords.length;
+  const auditText = calculatorAuditText(rows, equations);
   const openEvidenceLibrary = () => {
     if (!onOpenEvidenceLibrary) return;
     onOpenEvidenceLibrary(
@@ -123,9 +172,14 @@ export default function CalculatorProvenancePanel({
 
       <div className="border-t border-slate-200 dark:border-slate-800 px-4 py-4 space-y-4">
         <div className="flex items-center justify-between gap-3">
-          <h4 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">
-            Values used in this calculation
-          </h4>
+          <div>
+            <h4 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+              Values used in this calculation
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {auditText}
+            </p>
+          </div>
           {onOpenEvidenceLibrary && (
             <button
               type="button"
@@ -144,7 +198,7 @@ export default function CalculatorProvenancePanel({
                   <th className="py-2 pr-4 font-semibold">Value</th>
                   <th className="py-2 pr-4 font-semibold">Current input</th>
                   <th className="py-2 pr-4 font-semibold">Role</th>
-                  <th className="py-2 pr-4 font-semibold">Status</th>
+                  <th className="py-2 pr-4 font-semibold">Default / evidence</th>
                   <th className="py-2 font-semibold">Source</th>
                 </tr>
               </thead>
@@ -164,17 +218,20 @@ export default function CalculatorProvenancePanel({
                       {row.role}
                     </td>
                     <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
-                      {statusLabels(row).map((label) => (
-                        <span
-                          key={label}
-                          className="block text-xs text-slate-500 dark:text-slate-400"
-                        >
-                          {label}
-                        </span>
-                      ))}
-                      {evidenceSummary(row.evidence_items) && (
+                      <div className="flex flex-wrap gap-1">
+                        {row.default_status !== 'not_cataloged' && (
+                          <StatusChip value={row.default_status} />
+                        )}
+                        <StatusChip value={row.evidence_support_status} />
+                        <StatusChip value={row.qa_status} />
+                      </div>
+                      {evidenceSummary(row.evidence_items, row.evidence_support_status) && (
                         <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          Evidence: {evidenceSummary(row.evidence_items)}
+                          Evidence:{' '}
+                          {evidenceSummary(
+                            row.evidence_items,
+                            row.evidence_support_status,
+                          )}
                         </span>
                       )}
                     </td>
@@ -210,6 +267,11 @@ export default function CalculatorProvenancePanel({
                               {source.conflict_rule && (
                                 <span className="block text-xs text-amber-700 dark:text-amber-300">
                                   {source.conflict_rule}
+                                </span>
+                              )}
+                              {row.evidence_support_status === 'pending_source_locator' && (
+                                <span className="block text-xs text-slate-500 dark:text-slate-400">
+                                  Pending exact locator; not approved source-backed.
                                 </span>
                               )}
                             </li>

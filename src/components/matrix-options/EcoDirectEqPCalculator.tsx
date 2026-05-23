@@ -148,7 +148,7 @@ export default function EcoDirectEqPCalculator({
         input_key: 'logKow',
         label: 'log K_ow',
         value: substance?.logKow ?? null,
-        role: 'source-backed default',
+        role: 'current calculator default',
         pathway: 'eco-direct-eqp',
         substance_key: substanceKey,
       },
@@ -159,7 +159,7 @@ export default function EcoDirectEqPCalculator({
         unit: 'ug/L',
         role: fcvIsOverride
           ? 'user-entered value'
-          : 'source-backed default',
+          : 'current calculator default',
         pathway: 'eco-direct-eqp',
         substance_key: substanceKey,
         note: fcvIsOverride

@@ -307,15 +307,17 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(panel).toHaveTextContent(/0\.014 ug\/L/);
     expect(panel).toHaveTextContent(/US EPA IRIS, Benzo\[a\]pyrene/);
     expect(panel).toHaveTextContent(
-      /source review pending; current calculator scaffold only/,
+      /pending exact source locator/i,
     );
-    expect(panel).toHaveTextContent(/source linked default/);
+    expect(panel).toHaveTextContent(/current default/);
+    expect(panel).toHaveTextContent(/pending source locator/);
+    expect(panel).toHaveTextContent(/0 approved/);
     expect(screen.queryByTestId('provenance-catalog-values')).not.toBeInTheDocument();
     expect(screen.queryByTestId('provenance-equation-records')).not.toBeInTheDocument();
     expect(screen.queryByTestId('provenance-source-records')).not.toBeInTheDocument();
   });
 
-  it('labels placeholder FCV defaults as placeholder, not source-backed', () => {
+  it('labels scaffold FCV defaults as current calculator defaults, not approved source-backed', () => {
     render(
       <EcoDirectEqPCalculator
         substanceKey="total_pcbs_aroclor_1254"
@@ -324,7 +326,9 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     );
     const panel = screen.getByTestId('calculator-provenance-panel');
     expect(panel).toHaveTextContent(/Final Chronic Value/);
-    expect(panel).toHaveTextContent(/placeholder default/);
+    expect(panel).toHaveTextContent(/current default/);
+    expect(panel).toHaveTextContent(/current calculator scaffold/);
+    expect(panel).toHaveTextContent(/0 approved/);
   });
 
   // Codex review on Commit 4 (P3): the optional-props bridge keeps

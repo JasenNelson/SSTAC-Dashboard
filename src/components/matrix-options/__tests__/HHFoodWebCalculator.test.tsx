@@ -77,10 +77,11 @@ describe('HHFoodWebCalculator', () => {
     expect(panel).toHaveTextContent(/Local BSAF/);
     expect(panel).toHaveTextContent(/Target risk/);
     expect(panel).toHaveTextContent(/Hazard quotient/);
-    expect(panel).toHaveTextContent(/placeholder default/);
+    expect(panel).toHaveTextContent(/current default/);
     expect(panel).toHaveTextContent(/needs review/);
+    expect(panel).toHaveTextContent(/0 approved/);
     expect(panel).toHaveTextContent(
-      /source review pending; current calculator scaffold only/,
+      /current calculator scaffold only/i,
     );
   });
 });

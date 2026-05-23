@@ -36,7 +36,7 @@ describe('EvidenceLibrary', () => {
       /Human Health Direct Contact sediment screen/,
     );
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Source review pending; current calculator scaffold only/,
+      /Current calculator scaffold only/,
     );
     expect(screen.getByTestId('evidence-library-sources')).not.toHaveTextContent(
       /calculator scaffold/i,
@@ -49,6 +49,11 @@ describe('EvidenceLibrary', () => {
     );
     expect(screen.getAllByText(/Arsenic oral RfD/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/current calculator scaffold/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Approved values/)).toBeInTheDocument();
+    expect(screen.getByText(/Pending locators/)).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Source-of-sources only; not canonical calculator evidence/i,
+    );
   });
 
   it('filters to the human-health-food pathway', () => {
@@ -80,7 +85,7 @@ describe('EvidenceLibrary', () => {
     });
     expect(screen.getAllByText(/Jurisdiction: general/).length).toBeGreaterThan(0);
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Source review pending; current calculator scaffold only/,
+      /Current calculator scaffold only/,
     );
 
     fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
@@ -119,7 +124,29 @@ describe('EvidenceLibrary', () => {
       /Aroclor 1254 FCV/,
     );
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /placeholder default/,
+      /current default/,
+    );
+  });
+
+  it('shows grouped parameter candidates and source leads as read-only context', () => {
+    renderControlled();
+
+    fireEvent.click(screen.getByRole('button', { name: /^By Parameter$/ }));
+
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /Candidate values are read-only/,
+    );
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /pending source locator/i,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Source Leads$/ }));
+
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /ACFN WQCIU report/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /underlying cited source as canonical/i,
     );
   });
 });

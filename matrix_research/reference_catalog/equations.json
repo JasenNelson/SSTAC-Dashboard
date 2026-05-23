@@ -39,7 +39,8 @@
         "evidence_id": "ev-eq-eco-direct-eqp-di-toro-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "equation_id": "eq-eco-food-bsaf",
@@ -84,7 +85,8 @@
         "evidence_id": "ev-eq-eco-food-bsaf-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "evidence_support_status": "pending_source_locator"
   },
   {
     "equation_id": "eq-background-utl-95-95",
@@ -124,7 +126,8 @@
         "evidence_id": "ev-eq-background-utl-95-95-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "evidence_support_status": "pending_source_locator"
   },
   {
     "equation_id": "eq-human-health-direct-contact",
@@ -187,7 +190,8 @@
         "evidence_id": "ev-eq-human-health-direct-contact-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "evidence_support_status": "current_calculator_scaffold"
   },
   {
     "equation_id": "eq-human-health-food-web",
@@ -250,6 +254,7 @@
         "evidence_id": "ev-eq-human-health-food-web-1",
         "locator_type": "current_calculator"
       }
-    ]
+    ],
+    "evidence_support_status": "current_calculator_scaffold"
   }
 ]

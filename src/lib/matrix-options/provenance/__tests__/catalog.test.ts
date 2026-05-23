@@ -219,14 +219,32 @@ describe('matrix options provenance catalog', () => {
     }
   });
 
-  it('keeps placeholder defaults in an unapproved review state', () => {
-    const placeholders = PARAMETER_VALUE_RECORDS.filter(
-      (record) => record.default_status === 'placeholder_default',
+  it('separates calculator default role from evidence support status', () => {
+    const defaultStatuses = new Set(
+      PARAMETER_VALUE_RECORDS.map((record) => record.default_status),
     );
-    expect(placeholders.length).toBeGreaterThan(0);
-    for (const placeholder of placeholders) {
-      expect(placeholder.qa_status).toBe('needs_review');
-    }
+    const supportStatuses = new Set(
+      PARAMETER_VALUE_RECORDS.map((record) => record.evidence_support_status),
+    );
+
+    expect([...defaultStatuses].sort()).toEqual([
+      'current_default',
+      'not_default',
+    ]);
+    expect([...supportStatuses].sort()).toEqual([
+      'current_calculator_scaffold',
+      'pending_source_locator',
+    ]);
+    expect([...defaultStatuses]).not.toContain('source_backed_default');
+    expect([...defaultStatuses]).not.toContain('placeholder_default');
+    expect([...supportStatuses]).not.toContain('approved_source_backed');
+    expect(
+      PARAMETER_VALUE_RECORDS.filter(
+        (record) =>
+          record.default_status === 'current_default' &&
+          record.evidence_support_status === 'pending_source_locator',
+      ).length,
+    ).toBeGreaterThan(0);
     expect(
       PARAMETER_VALUE_RECORDS.find(
         (record) => record.parameter_value_id === 'pv-bap-trv-eco',
@@ -237,6 +255,19 @@ describe('matrix options provenance catalog', () => {
         (record) => record.parameter_value_id === 'pv-pcb-fcv',
       )?.qa_status,
     ).toBe('needs_review');
+  });
+
+  it('assigns candidate groups to every parameter value', () => {
+    for (const record of PARAMETER_VALUE_RECORDS) {
+      expect(record.candidate_group_id, record.parameter_value_id).toBe(
+        [
+          record.pathway,
+          record.substance_key,
+          record.input_key,
+          record.jurisdiction,
+        ].join('__'),
+      );
+    }
   });
 
   it('records currentness metadata for current Health Canada sources', () => {
@@ -405,7 +436,7 @@ describe('matrix options provenance catalog', () => {
     }
   });
 
-  it('does not mark ERDC BSAF scaffold values as source-backed defaults', () => {
+  it('keeps ERDC BSAF values pending until exact row locators are reviewed', () => {
     const erdcBsafValues = PARAMETER_VALUE_RECORDS.filter((record) =>
       record.source_ids.includes('src-erdc-bsaf-db'),
     );
@@ -413,7 +444,10 @@ describe('matrix options provenance catalog', () => {
     expect(erdcBsafValues.length).toBeGreaterThan(0);
     for (const record of erdcBsafValues) {
       expect(record.default_status, record.parameter_value_id).toBe(
-        'placeholder_default',
+        'current_default',
+      );
+      expect(record.evidence_support_status, record.parameter_value_id).toBe(
+        'pending_source_locator',
       );
       expect(record.qa_status, record.parameter_value_id).toBe('needs_review');
       expect(record.extraction_status, record.parameter_value_id).toBe(
@@ -488,9 +522,14 @@ describe('matrix options provenance catalog', () => {
     expect(rows[0].catalog_record?.parameter_value_id).toBe('pv-bap-fcv');
     expect(rows[0].sources.length).toBeGreaterThan(0);
     expect(rows[0].evidence_items[0]?.locator).toMatch(/source page\/table pending/i);
+    expect(rows[0].default_status).toBe('current_default');
+    expect(rows[0].evidence_support_status).toBe('pending_source_locator');
+    expect(rows[0].role).toBe('current calculator default');
     expect(rows[1].catalog_record).toBeNull();
     expect(rows[1].qa_status).toBe('not_cataloged');
-    expect(rows[2].catalog_record?.default_status).toBe('placeholder_default');
-    expect(rows[2].role).toBe('placeholder default');
+    expect(rows[1].evidence_support_status).toBe('user_entered_or_derived');
+    expect(rows[2].catalog_record?.default_status).toBe('current_default');
+    expect(rows[2].evidence_support_status).toBe('current_calculator_scaffold');
+    expect(rows[2].role).toBe('current calculator default');
   });
 });

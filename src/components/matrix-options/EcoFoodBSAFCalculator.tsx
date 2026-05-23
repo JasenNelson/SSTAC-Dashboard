@@ -225,7 +225,7 @@ export default function EcoFoodBSAFCalculator({
         unit: 'mg/kg-bw/day',
         role: trvIsOverride
           ? 'user-entered value'
-          : 'source-backed default',
+          : 'current calculator default',
         pathway: 'eco-food-bsaf',
         substance_key: substanceKey,
         note: trvIsOverride
@@ -238,7 +238,7 @@ export default function EcoFoodBSAFCalculator({
         value: bsafInput === '' ? null : bsafInput,
         role: bsafIsOverride
           ? 'user-entered value'
-          : 'source-backed default',
+          : 'current calculator default',
         pathway: 'eco-food-bsaf',
         substance_key: substanceKey,
         note: bsafIsOverride

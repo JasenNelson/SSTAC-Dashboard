@@ -326,7 +326,9 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     expect(panel).toHaveTextContent(/Ecological TRV/);
     expect(panel).toHaveTextContent(/0\.0025 mg\/kg-bw\/day/);
     expect(panel).toHaveTextContent(/US EPA Eco-SSL, PAHs/);
-    expect(panel).toHaveTextContent(/placeholder default/);
+    expect(panel).toHaveTextContent(/current default/);
+    expect(panel).toHaveTextContent(/pending source locator/);
+    expect(panel).toHaveTextContent(/0 approved/);
   });
 
   it('renders successfully with NO props (defaults bridge to commit 6 wire-up)', () => {

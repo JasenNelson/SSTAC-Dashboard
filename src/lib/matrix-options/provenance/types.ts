@@ -44,10 +44,16 @@ export type ExtractionStatus =
   | 'pending_extraction';
 
 export type DefaultStatus =
-  | 'source_backed_default'
-  | 'placeholder_default'
+  | 'current_default'
   | 'available_option'
   | 'not_default';
+
+export type EvidenceSupportStatus =
+  | 'approved_source_backed'
+  | 'pending_source_locator'
+  | 'current_calculator_scaffold'
+  | 'reference_mining_lead'
+  | 'user_entered_or_derived';
 
 export type ParameterValueType =
   | 'single_value'
@@ -68,6 +74,18 @@ export type EvidenceLocatorType =
   | 'equation_citation'
   | 'external_file';
 
+export type SourceRelationshipRole =
+  | 'canonical_candidate'
+  | 'supporting_context'
+  | 'reference_mining'
+  | 'implementation_scaffold';
+
+export interface SourceRelationship {
+  source_id: string | null;
+  role: SourceRelationshipRole;
+  note: string | null;
+}
+
 export interface EvidenceItem {
   evidence_id: string;
   source_id: string | null;
@@ -85,6 +103,7 @@ export interface EvidenceItem {
 
 export type CalculatorValueRole =
   | 'source-backed default'
+  | 'current calculator default'
   | 'placeholder default'
   | 'user-entered value'
   | 'derived value'
@@ -130,6 +149,8 @@ export interface EquationRecord {
   qa_status: CatalogQaStatus;
   evidence_items: EvidenceItem[];
   review_notes: string;
+  evidence_support_status: EvidenceSupportStatus;
+  source_relationships?: SourceRelationship[];
   receptor_groups?: string[];
   population_groups?: string[];
   species_groups?: string[];
@@ -145,7 +166,9 @@ export interface ParameterValueRecord {
   value: number | string;
   unit: string;
   value_type: ParameterValueType;
+  candidate_group_id: string;
   default_status: DefaultStatus;
+  evidence_support_status: EvidenceSupportStatus;
   extraction_status: ExtractionStatus;
   qa_status: CatalogQaStatus;
   source_ids: string[];
@@ -155,6 +178,7 @@ export interface ParameterValueRecord {
   uncertainty: string | null;
   evidence_items: EvidenceItem[];
   review_notes: string;
+  source_relationships?: SourceRelationship[];
   receptor_groups?: string[];
   population_groups?: string[];
   species_groups?: string[];
@@ -180,14 +204,18 @@ export interface ResolvedProvenanceRow {
   catalog_record: ParameterValueRecord | null;
   sources: SourceRecord[];
   evidence_items: EvidenceItem[];
+  evidence_support_status: EvidenceSupportStatus;
   qa_status: CatalogQaStatus | 'not_cataloged';
   default_status: DefaultStatus | 'not_cataloged';
+  candidate_group_id: string | null;
   note: string | null;
 }
 
 export type EvidenceLibraryViewMode =
   | 'all'
+  | 'by-parameter'
   | 'sources'
+  | 'source-leads'
   | 'values'
   | 'equations'
   | 'assumptions';
@@ -198,6 +226,7 @@ export interface EvidenceLibraryFilters {
   substanceKeys: string[];
   qaStatuses: CatalogQaStatus[];
   defaultStatuses: DefaultStatus[];
+  evidenceSupportStatuses: EvidenceSupportStatus[];
   extractionStatuses: ExtractionStatus[];
   jurisdictions: string[];
   authorityScopes: SourceAuthorityScope[];
@@ -208,6 +237,7 @@ export interface EvidenceLibraryFilters {
   speciesGroups: string[];
   sourceIds: string[];
   parameterValueIds: string[];
+  candidateGroupIds: string[];
   equationIds: string[];
 }
 
