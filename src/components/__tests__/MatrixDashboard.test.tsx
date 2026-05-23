@@ -323,15 +323,52 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows real calculator quick-reference copy instead of fake poll content', () => {
+  it('shows active calculator value search instead of quick-reference copy', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
 
-    expect(screen.getByTestId('matrix-options-right-reference')).toHaveTextContent(
-      /Calculator Quick Reference/i,
-    );
+    const panel = screen.getByTestId('calculator-value-search-panel');
+    expect(panel).toHaveTextContent(/Value Database/i);
+    expect(panel).toHaveTextContent(/Benzo\[a\]pyrene/i);
+    expect(panel).toHaveTextContent(/Ecological Direct Contact/i);
+    expect(panel).toHaveTextContent(/pending source locator/i);
+    expect(screen.queryByText(/Calculator Quick Reference/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Active Poll/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/will dynamically appear/i)).not.toBeInTheDocument();
+  });
+
+  it('filters calculator value search and opens exact reference details', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    clickCalculatorTab();
+    fireEvent.change(screen.getByTestId('shared-substance-select'), {
+      target: { value: 'arsenic_inorganic' },
+    });
+    fireEvent.click(screen.getByTestId('category-selector-hh-food'));
+
+    const panel = screen.getByTestId('calculator-value-search-panel');
+    expect(panel).toHaveTextContent(/Arsenic \(inorganic\)/i);
+    expect(panel).toHaveTextContent(/Human Health Food Web/i);
+    fireEvent.change(
+      within(panel).getByPlaceholderText(/Search values, refs, status/i),
+      {
+        target: { value: 'Protocol 28' },
+      },
+    );
+    expect(panel).toHaveTextContent(/Arsenic oral RfD - Protocol 28 lead/i);
+    expect(panel).toHaveTextContent(/BC Protocol 28 v3\.0/i);
+
+    fireEvent.click(
+      within(panel).getByRole('button', {
+        name: /Open reference details for Arsenic oral RfD/i,
+      }),
+    );
+
+    expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
+    expect(screen.getByText(/Value: pv p28 arsenic hh food rfd/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Arsenic oral RfD - Protocol 28 lead/,
+    );
   });
 
   it('renders the References & Values tab with the evidence library', () => {

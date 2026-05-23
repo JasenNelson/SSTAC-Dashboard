@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
-import { PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, FileText } from 'lucide-react';
+import { Database, FileText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import MatrixMapLoader from '@/app/(dashboard)/matrix-map/MatrixMapLoader';
 import PartialVisibilityBanner from '@/app/(dashboard)/matrix-map/PartialVisibilityBanner';
 import { EMPTY_MATRIX_MAP_DATA, type MatrixMapData } from '@/app/(dashboard)/matrix-map/types';
@@ -16,6 +16,7 @@ import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
 import HHDirectContactCalculator from './matrix-options/HHDirectContactCalculator';
 import HHFoodWebCalculator from './matrix-options/HHFoodWebCalculator';
 import EvidenceLibrary from './matrix-options/EvidenceLibrary';
+import CalculatorValueSearchPanel from './matrix-options/CalculatorValueSearchPanel';
 import CategorySelector from './matrix-options/CategorySelector';
 import SharedGlobalInputs, {
   DEFAULT_SUBSTANCE_KEY,
@@ -26,6 +27,7 @@ import {
 import type {
   EvidenceLibraryFilterRequest,
   EvidenceLibraryFilters,
+  ProvenancePathway,
 } from '@/lib/matrix-options/provenance/types';
 import {
   isMatrixCategory,
@@ -34,6 +36,7 @@ import {
 import {
   ALL_JURISDICTIONS,
   DEFAULT_JURISDICTION,
+  JURISDICTION_OPTIONS,
   isJurisdiction,
   type Jurisdiction,
 } from './matrix-options/guide/content/jurisdictions';
@@ -110,6 +113,18 @@ const MATRIX_MAP_RIGHT_PANEL_MIN_WIDTH = 360;
 const MATRIX_MAP_RIGHT_PANEL_DEFAULT_WIDTH = 480;
 const MATRIX_MAP_RIGHT_PANEL_MAX_WIDTH = 720;
 const MATRIX_MAP_MIN_MAP_WIDTH = 360;
+const CALCULATOR_PROVENANCE_PATHWAYS: Record<MatrixCategory, ProvenancePathway> = {
+  'eco-direct': 'eco-direct-eqp',
+  'eco-food': 'eco-food-bsaf',
+  'hh-direct': 'human-health-direct',
+  'hh-food': 'human-health-food',
+};
+const CALCULATOR_CATEGORY_LABELS: Record<MatrixCategory, string> = {
+  'eco-direct': 'Ecological Direct Contact',
+  'eco-food': 'Ecological Food Web',
+  'hh-direct': 'Human Health Direct Contact',
+  'hh-food': 'Human Health Food Web',
+};
 
 function clampMatrixMapRightPanelWidth(width: number, showLeftPanel: boolean) {
   if (typeof window === 'undefined') {
@@ -365,6 +380,19 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
     return () => window.removeEventListener('resize', onResize);
   }, [showLeftPanel]);
 
+  const selectedSubstance = findSubstance(substanceKey);
+  const selectedJurisdiction = JURISDICTION_OPTIONS.find(
+    (option) => option.id === jurisdiction,
+  );
+  const calculatorPathway = CALCULATOR_PROVENANCE_PATHWAYS[activeCategory];
+  const calculatorCategoryLabel = CALCULATOR_CATEGORY_LABELS[activeCategory];
+  const rightPanelTitle =
+    activeTopTab === 'Calculator' ? 'Value Search' : 'Quick Reference';
+  const rightPanelOpenWidth =
+    activeTopTab === 'Calculator' ? 'w-96' : 'w-80';
+  const rightPanelInnerWidth =
+    activeTopTab === 'Calculator' ? 'w-[384px]' : 'w-[320px]';
+
   const renderSidebar = () => {
     switch (activeTopTab) {
       case 'Jurisdictional Frameworks':
@@ -458,26 +486,14 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   const renderToolReference = () => {
     if (activeTopTab === 'Calculator') {
       return (
-        <div className="space-y-4" data-testid="matrix-options-right-reference">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300">
-              Calculator Quick Reference
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-              Use this tray as a final check while comparing pathway results.
-            </p>
-          </div>
-          <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            <li>Confirm the shared substance and jurisdiction.</li>
-            <li>Choose the pathway that matches the receptor and exposure route.</li>
-            <li>Read the large result card before expanding technical details.</li>
-            <li>Apply Background Adjustment only after the pathway value is calculated.</li>
-          </ol>
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
-            Screening values support options analysis. They are not final
-            sediment standards.
-          </div>
-        </div>
+        <CalculatorValueSearchPanel
+          pathway={calculatorPathway}
+          pathwayLabel={calculatorCategoryLabel}
+          substanceKey={substanceKey}
+          substanceLabel={selectedSubstance?.displayName ?? substanceKey}
+          jurisdictionLabel={selectedJurisdiction?.label ?? jurisdiction}
+          onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+        />
       );
     }
 
@@ -779,15 +795,17 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               {renderContent()}
             </div>
 
-            {/* Right Drawer (Quick Reference) */}
-            <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl', showRightPanel ? 'w-80' : 'w-0')}>
-              <div className="w-[320px] h-full flex flex-col">
+            {/* Right Drawer */}
+            <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl', showRightPanel ? rightPanelOpenWidth : 'w-0')}>
+              <div className={cn(rightPanelInnerWidth, 'h-full flex flex-col')}>
                 <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
                   <h3 className="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                    <svg className="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                    <span>Quick Reference</span>
+                    {activeTopTab === 'Calculator' ? (
+                      <Database className="w-5 h-5 text-sky-500" />
+                    ) : (
+                      <FileText className="w-5 h-5 text-sky-500" />
+                    )}
+                    <span>{rightPanelTitle}</span>
                   </h3>
                 </div>
                 <div className="p-5 overflow-y-auto flex-1">
