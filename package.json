@@ -10,6 +10,8 @@
     "pty-server": "node scripts/agentic-os-pty-server.mjs",
     "dev:all": "concurrently -k -n next,pty -c blue,magenta \"npm run dev\" \"npm run pty-server\"",
     "build": "next build",
+    "build:monitored": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify/monitored-build.ps1",
+    "build:monitored:clean": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify/monitored-build.ps1 -CleanNext",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",

@@ -394,7 +394,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     fireEvent.change(screen.getByLabelText(/Fraction Organic Carbon/i), {
       target: { value: '5' },
     });
-    expect(screen.getByText(/5\.00 %/)).toBeInTheDocument();
+    expect(screen.getAllByText(/5\.00 %/).length).toBeGreaterThan(0);
     // Switch to Eco-Food (unmounts EcoDirect).
     fireEvent.click(screen.getByTestId('category-selector-eco-food'));
     expect(
@@ -403,7 +403,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     // Switch back to Eco-Direct: foc resets to default 2% because the
     // component unmounted and lost local state.
     fireEvent.click(screen.getByTestId('category-selector-eco-direct'));
-    expect(screen.getByText(/2\.00 %/)).toBeInTheDocument();
+    expect(screen.getAllByText(/2\.00 %/).length).toBeGreaterThan(0);
   });
 
   it('renders Matrix Map right drawer at the default resizable width', () => {

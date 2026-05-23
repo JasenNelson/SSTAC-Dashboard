@@ -26,6 +26,8 @@ import { ecoDirectEqP } from '@/lib/matrix-options/derivations';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type { EcoDirectEqPResult } from '@/lib/matrix-options/types';
 import { parseDecimalInput } from '@/lib/matrix-options/parseDecimal';
+import type { CalculatorUsedValue } from '@/lib/matrix-options/provenance/types';
+import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -135,6 +137,49 @@ export default function EcoDirectEqPCalculator({
   }, [substance, focPercent, fcvInput, csInput]);
 
   const isResult = result !== null && !('error' in result);
+  const provenanceValues: CalculatorUsedValue[] = useMemo(
+    () => [
+      {
+        input_key: 'logKow',
+        label: 'log K_ow',
+        value: substance?.logKow ?? null,
+        role: 'source-backed default',
+        pathway: 'eco-direct-eqp',
+        substance_key: substanceKey,
+      },
+      {
+        input_key: 'fcv_ug_per_L',
+        label: 'Final Chronic Value',
+        value: fcvInput === '' ? null : fcvInput,
+        unit: 'ug/L',
+        role: fcvIsOverride
+          ? 'user-entered value'
+          : 'source-backed default',
+        pathway: 'eco-direct-eqp',
+        substance_key: substanceKey,
+        note: fcvIsOverride
+          ? 'User-edited FCV. Catalog source row remains visible for comparison.'
+          : undefined,
+      },
+      {
+        input_key: 'foc',
+        label: 'Fraction organic carbon',
+        value: focPercent.toFixed(2),
+        unit: '%',
+        role: 'user-entered value',
+        note: 'Site-specific input. The current UI default is editable.',
+      },
+      {
+        input_key: 'Cs_mg_per_kg',
+        label: 'Measured sediment concentration',
+        value: csInput === '' ? null : csInput,
+        unit: 'mg/kg',
+        role: 'user-entered value',
+        note: 'Optional site measurement used for comparison only.',
+      },
+    ],
+    [csInput, fcvInput, fcvIsOverride, focPercent, substance?.logKow, substanceKey],
+  );
 
   return (
     <section
@@ -392,6 +437,11 @@ export default function EcoDirectEqPCalculator({
           )}
         </div>
       </details>
+
+      <CalculatorProvenancePanel
+        pathway="eco-direct-eqp"
+        usedValues={provenanceValues}
+      />
     </section>
   );
 }

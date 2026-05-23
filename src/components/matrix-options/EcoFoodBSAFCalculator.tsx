@@ -32,6 +32,8 @@ import type {
   Ecosystem,
 } from '@/lib/matrix-options/types';
 import { parseDecimalInput } from '@/lib/matrix-options/parseDecimal';
+import type { CalculatorUsedValue } from '@/lib/matrix-options/provenance/types';
+import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -209,6 +211,87 @@ export default function EcoFoodBSAFCalculator({
 
   const isResult = result !== null && !('error' in result);
   const ecoResult = isResult ? (result as EcoFoodBSAFResult) : null;
+  const provenanceValues: CalculatorUsedValue[] = useMemo(
+    () => [
+      {
+        input_key: 'trv_eco_mg_per_kg_bw_day',
+        label: 'Ecological TRV',
+        value: trvInput === '' ? null : trvInput,
+        unit: 'mg/kg-bw/day',
+        role: trvIsOverride
+          ? 'user-entered value'
+          : 'source-backed default',
+        pathway: 'eco-food-bsaf',
+        substance_key: substanceKey,
+        note: trvIsOverride
+          ? 'User-edited TRV. Catalog source row remains visible for comparison.'
+          : undefined,
+      },
+      {
+        input_key: 'bsaf_loc_freshwater',
+        label: 'Local BSAF',
+        value: bsafInput === '' ? null : bsafInput,
+        role: bsafIsOverride
+          ? 'user-entered value'
+          : 'source-backed default',
+        pathway: 'eco-food-bsaf',
+        substance_key: substanceKey,
+        note: bsafIsOverride
+          ? 'User-edited BSAF. Catalog source row remains visible for comparison.'
+          : undefined,
+      },
+      {
+        input_key: 'BW_eco_kg',
+        label: 'Body weight',
+        value: bwInput === '' ? null : bwInput,
+        unit: 'kg',
+        role: 'screening assumption',
+        note: 'Receptor input. Current default represents a mink piscivore screen.',
+      },
+      {
+        input_key: 'IR_eco_kg_per_day',
+        label: 'Ingestion rate',
+        value: irInput === '' ? null : irInput,
+        unit: 'kg-wet/day',
+        role: 'screening assumption',
+        note: 'Receptor input. Current default represents a mink daily diet screen.',
+      },
+      {
+        input_key: 'fLipid',
+        label: 'Tissue lipid fraction',
+        value: fLipidPercent.toFixed(2),
+        unit: '%',
+        role: 'user-entered value',
+      },
+      {
+        input_key: 'foc',
+        label: 'Sediment organic carbon',
+        value: focPercent.toFixed(2),
+        unit: '%',
+        role: 'user-entered value',
+      },
+      {
+        input_key: 'Fsite',
+        label: 'Site-use fraction',
+        value: fsiteInput === '' ? null : fsiteInput,
+        role: 'screening assumption',
+        note: `Current ecosystem: ${ecosystem}.`,
+      },
+    ],
+    [
+      bsafInput,
+      bsafIsOverride,
+      bwInput,
+      ecosystem,
+      fLipidPercent,
+      focPercent,
+      fsiteInput,
+      irInput,
+      substanceKey,
+      trvInput,
+      trvIsOverride,
+    ],
+  );
 
   return (
     <section
@@ -614,6 +697,11 @@ export default function EcoFoodBSAFCalculator({
           )}
         </div>
       </details>
+
+      <CalculatorProvenancePanel
+        pathway="eco-food-bsaf"
+        usedValues={provenanceValues}
+      />
     </section>
   );
 }

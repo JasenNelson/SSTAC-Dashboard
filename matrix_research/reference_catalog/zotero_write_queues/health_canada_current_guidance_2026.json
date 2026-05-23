@@ -1,0 +1,117 @@
+{
+  "queue_id": "health-canada-current-guidance-2026",
+  "description": "Current official Health Canada federal contaminated-sites guidance pages to add to Zotero as metadata-only webpage records.",
+  "library_type": "user",
+  "library_id": "17150559",
+  "target_collection_keys": ["M4BSJ3KN", "HN6H2W6Z"],
+  "target_collection_names": ["Sediment Project", "Regulatory_Frameworks"],
+  "batch_id": "health-canada-current-guidance-2026-v1",
+  "default_tags": [
+    "matrix-options",
+    "health-canada",
+    "federal-risk-assessment",
+    "current-guidance",
+    "needs-bc-hierarchy-check",
+    "zotero-api-added"
+  ],
+  "items": [
+    {
+      "source_id": "src-health-canada-contaminated-sites-index-current",
+      "item": {
+        "itemType": "webpage",
+        "title": "Contaminated sites: Reports and publications",
+        "websiteTitle": "Canada.ca",
+        "date": "2026-02-05",
+        "url": "https://www.canada.ca/en/health-canada/services/environmental-workplace-health/reports-publications/contaminated-sites.html",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "Health Canada contaminated-sites reports and publications landing page. Use as the current-source index for federal contaminated-site human health risk assessment guidance.",
+        "extra": "Matrix Options provenance candidate.\nAuthority scope: federal guidance index.\nCurrentness status: official Canada.ca page checked 2026-05-23; page details show 2026-02-05.\nBC hierarchy: BC legal requirements, protocols, and ministry guidance supersede federal guidance where conflicts exist.\nSource ID: src-health-canada-contaminated-sites-index-current"
+      }
+    },
+    {
+      "source_id": "src-health-canada-fcsra-overview-v2-2026",
+      "item": {
+        "itemType": "webpage",
+        "title": "Federal contaminated site risk assessment in Canada: Overview of Health Canada guidance documents related to human health risk assessment of federal contaminated sites, Version 2.0",
+        "websiteTitle": "Canada.ca",
+        "date": "2026",
+        "url": "https://www.canada.ca/en/health-canada/services/environmental-workplace-health/reports-publications/contaminated-sites/federal-contaminated-site-risk-assessment-overview.html",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "Overview of current Health Canada guidance documents related to human health risk assessment of federal contaminated sites.",
+        "extra": "Matrix Options provenance candidate.\nAuthority scope: federal guidance overview.\nCurrentness status: official Canada.ca page checked 2026-05-23; document year 2026; page details show 2026-03-17.\nBC hierarchy: BC legal requirements, protocols, and ministry guidance supersede federal guidance where conflicts exist.\nSource ID: src-health-canada-fcsra-overview-v2-2026"
+      }
+    },
+    {
+      "source_id": "src-health-canada-pqra-v4-2024",
+      "item": {
+        "itemType": "webpage",
+        "title": "Federal contaminated site risk assessment in Canada: Guidance on human health preliminary quantitative risk assessment (PQRA), version 4.0",
+        "websiteTitle": "Canada.ca",
+        "date": "2024",
+        "url": "https://www.canada.ca/en/health-canada/services/environmental-workplace-health/reports-publications/contaminated-sites/federal-contaminated-site-risk-assessment-canada-part-guidance-human-health-preliminary-quantitative-risk-assessment-pqra.html",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "Health Canada guidance for preliminary quantitative human health risk assessment at federal contaminated sites.",
+        "extra": "Matrix Options provenance candidate.\nAuthority scope: federal human health PQRA guidance.\nCurrentness status: official Canada.ca page checked 2026-05-23; document year 2024; page details show 2026-03-12.\nBC hierarchy: BC legal requirements, protocols, and ministry guidance supersede federal guidance where conflicts exist.\nSource ID: src-health-canada-pqra-v4-2024"
+      }
+    },
+    {
+      "source_id": "src-health-canada-trv-v4-2025",
+      "item": {
+        "itemType": "webpage",
+        "title": "Federal contaminated site risk assessment in Canada: Toxicological reference values (TRVs), version 4.0",
+        "websiteTitle": "Canada.ca",
+        "date": "2025",
+        "url": "https://www.canada.ca/en/health-canada/services/environmental-workplace-health/reports-publications/contaminated-sites/federal-contaminated-site-risk-assessment-canada-part-health-canada-toxicological-reference-values-trvs-chemical-specific-factors.html",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "Health Canada toxicological reference values and chemical-specific factors for federal contaminated-site human health risk assessment.",
+        "extra": "Matrix Options provenance candidate.\nAuthority scope: federal human health TRV guidance.\nCurrentness status: official Canada.ca page checked 2026-05-23; document year 2025; page details show 2025-10-15.\nBC hierarchy: BC legal requirements, protocols, and ministry guidance supersede federal guidance where conflicts exist.\nSource ID: src-health-canada-trv-v4-2025"
+      }
+    },
+    {
+      "source_id": "src-health-canada-dqra-chem-2010-current-page",
+      "item": {
+        "itemType": "webpage",
+        "title": "Federal Contaminated Site Risk Assessment in Canada, Part V: Guidance on Human Health Detailed Quantitative Risk Assessment for Chemicals (DQRACHEM)",
+        "websiteTitle": "Canada.ca",
+        "date": "2010",
+        "url": "https://www.canada.ca/en/health-canada/services/environmental-workplace-health/reports-publications/contaminated-sites/federal-contaminated-site-risk-assessment-canada-part-guidance-human-health-detailed-quantitative-risk-assessment-chemicals-dqrachem-health-canada.html",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "Health Canada detailed quantitative risk assessment guidance for chemicals at federal contaminated sites.",
+        "extra": "Matrix Options provenance candidate.\nAuthority scope: federal human health DQRA chemical guidance.\nCurrentness status: listed on current Canada.ca contaminated-sites guidance index checked 2026-05-23; document year 2010; page details show 2020-12-17.\nBC hierarchy: BC legal requirements, protocols, and ministry guidance supersede federal guidance where conflicts exist.\nSource ID: src-health-canada-dqra-chem-2010-current-page"
+      }
+    },
+    {
+      "source_id": "src-health-canada-contaminated-sediment-direct-contact-2017",
+      "item": {
+        "itemType": "webpage",
+        "title": "Federal Contaminated Site Risk Assessment in Canada, Supplemental Guidance on Human Health Risk Assessment of Contaminated Sediments: Direct Contact Pathway",
+        "websiteTitle": "Canada.ca",
+        "date": "2017",
+        "url": "https://www.canada.ca/en/health-canada/services/environmental-workplace-health/reports-publications/contaminated-sites/supplemental-guidance-human-health-risk-assessment-contaminated-sediments-direct-contact-pathway.html",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "Health Canada supplemental guidance for evaluating human exposure to chemicals in sediments through the direct contact pathway.",
+        "extra": "Matrix Options provenance candidate.\nAuthority scope: federal human health contaminated-sediment direct-contact guidance.\nCurrentness status: listed on current Canada.ca contaminated-sites guidance index checked 2026-05-23; document year 2017; page details show 2018-08-15.\nBC hierarchy: BC legal requirements, protocols, and ministry guidance supersede federal guidance where conflicts exist.\nSource ID: src-health-canada-contaminated-sediment-direct-contact-2017"
+      }
+    },
+    {
+      "source_id": "src-health-canada-country-foods-2011-current-page",
+      "item": {
+        "itemType": "webpage",
+        "title": "Federal Contaminated Site Risk Assessment in Canada: Supplemental Guidance on Human Health Risk Assessment for Country Foods (HHRA Foods)",
+        "websiteTitle": "Canada.ca",
+        "date": "2010",
+        "url": "https://www.canada.ca/en/health-canada/services/environmental-workplace-health/reports-publications/contaminated-sites/federal-contaminated-site-risk-assessment-canada-supplemental-guidance-human-health-risk-assessment-country-foods-hhra-foods-health-canada-2011.html",
+        "accessDate": "2026-05-23T00:00:00Z",
+        "language": "en",
+        "abstractNote": "Health Canada supplemental guidance for sampling design, analysis, and human health risk estimates for country foods at federal contaminated sites.",
+        "extra": "Matrix Options provenance candidate.\nAuthority scope: federal human health country-foods guidance.\nCurrentness status: listed on current Canada.ca contaminated-sites guidance index checked 2026-05-23; page title references 2011; document field shows 2010; page details show 2020-12-17.\nBC hierarchy: BC legal requirements, protocols, and ministry guidance supersede federal guidance where conflicts exist.\nSource ID: src-health-canada-country-foods-2011-current-page"
+      }
+    }
+  ]
+}

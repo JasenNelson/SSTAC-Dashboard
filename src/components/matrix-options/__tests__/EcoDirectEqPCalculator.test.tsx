@@ -50,7 +50,7 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
       /Fraction Organic Carbon/i,
     ) as HTMLInputElement;
     fireEvent.change(focSlider, { target: { value: '5' } });
-    expect(screen.getByText(/5\.00 %/)).toBeInTheDocument();
+    expect(screen.getAllByText(/5\.00 %/).length).toBeGreaterThan(0);
   });
 
   it('surfaces warning AND suppresses verdict when foc drops below 0.2 percent', () => {
@@ -297,6 +297,27 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     ) as HTMLDetailsElement;
     expect(details.tagName).toBe('DETAILS');
     expect(details.open).toBe(false);
+  });
+
+  it('renders the calculator provenance panel with current EqP values', () => {
+    render(<EcoDirectEqPCalculator {...DEFAULT_PROPS} />);
+    const panel = screen.getByTestId('calculator-provenance-panel');
+    expect(panel).toHaveTextContent(/References and provenance/);
+    expect(panel).toHaveTextContent(/Final Chronic Value/);
+    expect(panel).toHaveTextContent(/0\.014 ug\/L/);
+    expect(panel).toHaveTextContent(/US EPA IRIS, Benzo\[a\]pyrene/);
+  });
+
+  it('labels placeholder FCV defaults as placeholder, not source-backed', () => {
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-csr"
+      />,
+    );
+    const panel = screen.getByTestId('calculator-provenance-panel');
+    expect(panel).toHaveTextContent(/Final Chronic Value/);
+    expect(panel).toHaveTextContent(/placeholder default/);
   });
 
   // Codex review on Commit 4 (P3): the optional-props bridge keeps

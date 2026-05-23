@@ -189,4 +189,13 @@ describe('BackgroundAdjustment', () => {
       screen.getByTestId('bg-adjust-cs-comparison'),
     ).toBeInTheDocument();
   });
+
+  it('renders the calculator provenance panel with the UTL equation source', () => {
+    render(<BackgroundAdjustment />);
+    const panel = screen.getByTestId('calculator-provenance-panel');
+    expect(panel).toHaveTextContent(/References and provenance/);
+    expect(panel).toHaveTextContent(/Provincial reference samples/);
+    expect(panel).toHaveTextContent(/UTL 95\/95/);
+    expect(panel).toHaveTextContent(/NIST\/SEMATECH e-Handbook/);
+  });
 });

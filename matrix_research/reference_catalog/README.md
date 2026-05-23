@@ -1,0 +1,119 @@
+# Matrix Options Reference Catalog
+
+This folder is the Phase 1 repo-local provenance layer for Matrix Options
+calculator values and equations.
+
+The catalog stores structured metadata and reviewed extracted values. It does
+not store source PDFs, Word files, datasets, or other reference files. Source
+files stay in Zotero, Google Drive, OneDrive, or another approved external
+library. Supabase may later hold queryable metadata, but source files must not
+be stored in Supabase.
+
+## Files
+
+- `sources.json` records citation metadata, DOI/URL fields, Zotero identifiers,
+  currentness metadata, authority scope, and external storage hints.
+- `equations.json` records calculator equation provenance and applicability.
+- `parameter_values.json` records extracted or starter parameter values used by
+  the calculators.
+
+## Status Rules
+
+- `extracted_from_current_calculator`: value was lifted from the current UI or
+  substance library and still needs source confirmation.
+- `extracted_from_source`: value has been extracted from a source record.
+- `pending_extraction`: source or equation exists but the value has not been
+  extracted yet.
+- `needs_review`: value is present but requires human review before it can be
+  treated as defended.
+- `needs_owner_review`: value is a placeholder or high-impact default that
+  requires owner review before promotion.
+- `approved`: owner or delegated reviewer has approved the record.
+- `superseded`: record is retained for history but should not be used as a
+  default.
+
+Current calculator values were lifted into this scaffold as starter records.
+Many are intentionally marked `needs_review` until the first source batch is
+checked against Zotero or the local reference folders.
+
+## Authority and Currentness
+
+Zotero is a source inventory, not proof that a record is current or controlling.
+Before a calculator value can become an approved default, the source record must
+show:
+
+- `authority_scope`: BC legal, BC guidance, federal guidance, international
+  guidance, supporting science, or repo design.
+- `currentness_status`: current, needs currentness check, superseded, or
+  unknown.
+- `checked_at`: date the source was checked against its official source page.
+- `page_last_modified` or version where the source provides one.
+- `conflict_rule` when a source is not BC-controlling.
+
+For Health Canada and other federal sources, the default conflict rule is:
+BC legal requirements, protocols, and ministry guidance supersede federal
+guidance where conflicts exist.
+
+## Zotero Boundary
+
+Zotero item keys, collection keys, DOIs, URLs, and citation fields are safe to
+store here. Zotero file attachments, PDFs, snapshots, and full-text reference
+files stay in Zotero or external file storage.
+
+Use a dedicated read-only Zotero API key via local environment variables for
+inventory or metadata export. Do not commit API keys.
+
+## Local Helper Scripts
+
+Zotero metadata smoke:
+
+```powershell
+$env:ZOTERO_LIBRARY_TYPE = "user"
+$env:ZOTERO_LIBRARY_ID = "<numeric Zotero user id>"
+$env:ZOTERO_API_KEY = "<read-only Zotero API key>"
+node scripts/matrix-options/zotero-api-smoke.mjs --limit 25 --out .tmp_zotero_items.json
+```
+
+Optional collection-scoped export:
+
+```powershell
+$env:ZOTERO_COLLECTION_KEY = "<collection key>"
+node scripts/matrix-options/zotero-api-smoke.mjs --collection $env:ZOTERO_COLLECTION_KEY --out .tmp_zotero_collection.json
+```
+
+Zotero write queue dry-run:
+
+```powershell
+node scripts/matrix-options/zotero-write-queue.mjs --queue matrix_research/reference_catalog/zotero_write_queues/health_canada_current_guidance_2026.json --dedupe-export .tmp_zotero_items_all_with_children.json --out .tmp_zotero_health_canada_write_plan.json
+```
+
+Zotero write queue execution, only after reviewing the dry-run plan:
+
+```powershell
+node scripts/matrix-options/zotero-write-queue.mjs --queue matrix_research/reference_catalog/zotero_write_queues/health_canada_current_guidance_2026.json --dedupe-export .tmp_zotero_items_all_with_children.json --execute --out .tmp_zotero_health_canada_write_result.json
+```
+
+The write helper creates Zotero item metadata only. It does not download,
+upload, or attach source files.
+
+External reference-folder inventory:
+
+```powershell
+node scripts/matrix-options/reference-file-inventory.mjs --root "<Google Drive reference folder>" --root "<OneDrive reference folder>" --out .tmp_reference_inventory.json
+```
+
+`.tmp_*` outputs are ignored by git. They are useful for local triage but
+should not be staged unless the owner explicitly approves a specific artifact.
+
+## First Batch Workflow
+
+1. Pick a small source batch, ideally 5 to 10 sources tied to active calculator
+   defaults.
+2. Export Zotero metadata for that batch or inventory the external folder path.
+3. Fill missing `zotero_item_key`, DOI, URL, and collection path fields in
+   `sources.json`.
+4. Extract values and equations into `parameter_values.json` and
+   `equations.json` with page/table/section notes in `review_notes`.
+5. Mark each record `needs_review` until the owner or delegated reviewer checks
+   it against the source.
+6. Promote only reviewed records to `approved`.
