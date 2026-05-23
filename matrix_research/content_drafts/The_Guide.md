@@ -75,8 +75,8 @@ Before relying on a result or submitting feedback:
 
 Every active calculator now has a bottom-of-panel **References and provenance** disclosure. It shows the values used in the current calculation, whether each value is a source-backed default, user-entered value, derived value, or screening assumption, and the source/equation records currently linked to that value.
 
-The provenance catalog is repo-managed under `matrix_research/reference_catalog/` and is intentionally metadata-only. It stores source IDs, citation fields, Zotero item-key placeholders, equation records, current calculator parameter records, extraction status, QA status, and review notes. It does not store PDFs, datasets, Word files, Zotero attachments, or other source reference files.
+The provenance catalog is repo-managed under `matrix_research/reference_catalog/` and is intentionally metadata-only. It stores source IDs, citation fields, pending Zotero item keys, equation records, current calculator parameter records, extraction status, QA status, and review notes. It does not store PDFs, datasets, Word files, Zotero attachments, or other source reference files.
 
 Zotero remains the reference manager and file vault. Google Drive and OneDrive reference folders can be inventoried as external source locations, but source files are not copied into the app repo or Supabase. Future Supabase work may mirror structured metadata for querying, but source files stay outside Supabase unless the owner explicitly changes that policy.
 
-Starter calculator values lifted from the current substance library are not automatically "approved." Values that were already marked as placeholders, such as the B[a]P ecological TRV and the PCB FCV screening placeholder, are marked `needs_owner_review` in the catalog until the first source batch is extracted and reviewed.
+Starter calculator values lifted from the current substance library are not automatically "approved." Values that were already flagged as interim screening defaults, such as the B[a]P ecological TRV and the PCB FCV screening value, are marked `needs_owner_review` in the catalog until the first source batch is extracted and reviewed.
