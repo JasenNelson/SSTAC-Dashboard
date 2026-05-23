@@ -378,6 +378,39 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     );
   });
 
+  it('opens read-only alternatives from a calculator receipt row', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    clickCalculatorTab();
+    fireEvent.change(screen.getByTestId('shared-substance-select'), {
+      target: { value: 'arsenic_inorganic' },
+    });
+    fireEvent.click(screen.getByTestId('category-selector-hh-food'));
+
+    const calculator = screen.getByTestId('hh-food-web-calculator');
+    const calculatorPanel = within(calculator).getByTestId(
+      'calculator-provenance-panel',
+    );
+    fireEvent.click(
+      within(calculatorPanel).getByText(/References and provenance/),
+    );
+    fireEvent.click(
+      within(calculatorPanel).getByRole('button', {
+        name: /^View alternatives for Oral RfD$/,
+      }),
+    );
+
+    expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
+    expect(
+      screen.getByText(/Input: rfd oral mg per kg bw day/i),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /Arsenic \(inorganic\): rfd oral mg per kg bw day/,
+    );
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /Protocol 28/,
+    );
+  });
+
   it('shows jurisdictional quick-reference copy on Jurisdictional Frameworks', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     fireEvent.click(

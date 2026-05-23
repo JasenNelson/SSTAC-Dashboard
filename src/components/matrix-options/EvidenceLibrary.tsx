@@ -44,6 +44,7 @@ type FilterArrayKey = {
 const FILTER_LABELS: Partial<Record<keyof EvidenceLibraryFilters, string>> = {
   pathways: 'Pathway',
   substanceKeys: 'Substance',
+  inputKeys: 'Input',
   qaStatuses: 'QA',
   defaultStatuses: 'Default',
   evidenceSupportStatuses: 'Evidence',
@@ -495,6 +496,7 @@ export default function EvidenceLibrary({
           : [
               { key: 'pathways', label: 'Pathway', options: library.facets.pathways },
               { key: 'substanceKeys', label: 'Substance', options: library.facets.substances },
+              { key: 'inputKeys', label: 'Input', options: library.facets.inputKeys },
               { key: 'evidenceSupportStatuses', label: 'Evidence', options: library.facets.evidenceSupportStatuses },
               { key: 'defaultStatuses', label: 'Default', options: library.facets.defaultStatuses },
               { key: 'qaStatuses', label: 'QA', options: library.facets.qaStatuses },

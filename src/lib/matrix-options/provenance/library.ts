@@ -60,6 +60,7 @@ export interface EvidenceLibraryFacetOption {
 export interface EvidenceLibraryFacetOptions {
   pathways: EvidenceLibraryFacetOption[];
   substances: EvidenceLibraryFacetOption[];
+  inputKeys: EvidenceLibraryFacetOption[];
   qaStatuses: EvidenceLibraryFacetOption[];
   defaultStatuses: EvidenceLibraryFacetOption[];
   evidenceSupportStatuses: EvidenceLibraryFacetOption[];
@@ -164,6 +165,7 @@ const EMPTY_FILTERS: EvidenceLibraryFilters = {
   search: '',
   pathways: [],
   substanceKeys: [],
+  inputKeys: [],
   qaStatuses: [],
   defaultStatuses: [],
   evidenceSupportStatuses: [],
@@ -440,6 +442,7 @@ function valueMatchesFilters(
     matchesSearch(searchable, filters.search) &&
     arrayIncludesSelected(filters.pathways, record.pathway) &&
     arrayIntersectsSelected(filters.substanceKeys, [record.substance_key]) &&
+    arrayIntersectsSelected(filters.inputKeys, [record.input_key]) &&
     arrayIncludesSelected(filters.qaStatuses, record.qa_status) &&
     arrayIncludesSelected(filters.defaultStatuses, record.default_status) &&
     arrayIncludesSelected(
@@ -732,6 +735,10 @@ function sourceMatchesFilters(
       filters.substanceKeys,
       linkedValues.map((value) => value.substance_key),
     ) &&
+    arrayIntersectsSelected(
+      filters.inputKeys,
+      linkedValues.map((value) => value.input_key),
+    ) &&
     arrayIntersectsSelected(filters.qaStatuses, linkedQaStatuses) &&
     arrayIntersectsSelected(
       filters.evidenceSupportStatuses,
@@ -794,6 +801,7 @@ export function emptyEvidenceLibraryFilters(): EvidenceLibraryFilters {
     ...EMPTY_FILTERS,
     pathways: [],
     substanceKeys: [],
+    inputKeys: [],
     qaStatuses: [],
     defaultStatuses: [],
     evidenceSupportStatuses: [],
@@ -825,6 +833,7 @@ export function createEvidenceLibraryFilters(
     search: request.search ?? '',
     pathways: request.pathways ?? [],
     substanceKeys: request.substanceKeys ?? [],
+    inputKeys: request.inputKeys ?? [],
     qaStatuses: request.qaStatuses ?? [],
     defaultStatuses: request.defaultStatuses ?? [],
     evidenceSupportStatuses: request.evidenceSupportStatuses ?? [],
@@ -1175,6 +1184,7 @@ export function buildEvidenceLibraryView(
         PARAMETER_VALUE_RECORDS.map((record) => record.substance_key),
         (value) => substanceLabels.get(value) ?? value,
       ),
+      inputKeys: facet(PARAMETER_VALUE_RECORDS.map((record) => record.input_key)),
       qaStatuses: facet([
         ...PARAMETER_VALUE_RECORDS.map((record) => record.qa_status),
         ...EQUATION_RECORDS.map((record) => record.qa_status),

@@ -136,6 +136,25 @@ describe('matrix options evidence library helpers', () => {
     expect(view.sources).toHaveLength(0);
   });
 
+  it('filters alternatives by pathway, substance, and input key across jurisdictions', () => {
+    const view = buildEvidenceLibraryView(
+      createEvidenceLibraryFilters({
+        pathways: ['human-health-food'],
+        substanceKeys: ['arsenic_inorganic'],
+        inputKeys: ['rfd_oral_mg_per_kg_bw_day'],
+      }),
+    );
+
+    expect(view.values.map((row) => row.record.parameter_value_id).sort()).toEqual([
+      'pv-arsenic-hh-food-rfd',
+      'pv-p28-arsenic-hh-food-rfd',
+    ]);
+    expect(view.valueGroups.map((group) => group.groupId).sort()).toEqual([
+      'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__BC',
+      'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__general',
+    ]);
+  });
+
   it('keeps mixed calculator value and equation sources visible in drill-ins', () => {
     const rows = ['pv-bap-logkow', 'pv-bap-fcv'].map((parameterValueId) => ({
       catalog_record:

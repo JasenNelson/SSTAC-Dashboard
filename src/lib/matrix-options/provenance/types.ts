@@ -249,6 +249,7 @@ export interface EvidenceLibraryFilters {
   search: string;
   pathways: ProvenancePathway[];
   substanceKeys: string[];
+  inputKeys: string[];
   qaStatuses: CatalogQaStatus[];
   defaultStatuses: DefaultStatus[];
   evidenceSupportStatuses: EvidenceSupportStatus[];

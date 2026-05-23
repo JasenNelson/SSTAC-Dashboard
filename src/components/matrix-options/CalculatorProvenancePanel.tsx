@@ -154,6 +154,14 @@ export default function CalculatorProvenancePanel({
       ),
     );
   };
+  const openValueAlternatives = (row: (typeof rows)[number]) => {
+    if (!onOpenEvidenceLibrary || !row.catalog_record) return;
+    onOpenEvidenceLibrary({
+      pathways: [pathway],
+      substanceKeys: [row.catalog_record.substance_key],
+      inputKeys: [row.input_key],
+    });
+  };
 
   return (
     <details
@@ -210,6 +218,16 @@ export default function CalculatorProvenancePanel({
                   >
                     <td className="py-2 pr-4 font-medium text-slate-800 dark:text-slate-100">
                       {row.label}
+                      {onOpenEvidenceLibrary && row.catalog_record && (
+                        <button
+                          type="button"
+                          onClick={() => openValueAlternatives(row)}
+                          aria-label={`View alternatives for ${row.label}`}
+                          className="mt-1 block min-h-7 rounded-md border border-slate-300 bg-white px-2 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:text-sky-300"
+                        >
+                          View alternatives
+                        </button>
+                      )}
                     </td>
                     <td className="py-2 pr-4 font-mono text-slate-700 dark:text-slate-200 whitespace-nowrap">
                       {row.current_value}
