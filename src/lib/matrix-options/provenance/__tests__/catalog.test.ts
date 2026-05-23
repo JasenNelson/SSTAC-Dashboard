@@ -325,6 +325,28 @@ describe('matrix options provenance catalog', () => {
     }
   });
 
+  it('does not cite IRIS as an Eco-Direct benzo[a]pyrene source', () => {
+    const ecoDirectBapRecords = PARAMETER_VALUE_RECORDS.filter(
+      (record) =>
+        record.pathway === 'eco-direct-eqp' &&
+        record.substance_key === 'benzo_a_pyrene',
+    );
+    const iris = getSourceRecord('src-us-epa-iris-rfd-table-live');
+
+    expect(iris?.url).toBe('https://iris.epa.gov/AdvancedSearch/rfd_toxicity_values');
+    expect(iris?.notes).toMatch(/human-health toxicity-value/i);
+    expect(iris?.notes).toMatch(/do not cite IRIS as an ecological EqP/i);
+    expect(iris?.source_authority_tier).toBe(
+      'tier_1_government_or_regulatory',
+    );
+    expect(ecoDirectBapRecords.length).toBeGreaterThan(0);
+    for (const record of ecoDirectBapRecords) {
+      expect(record.source_ids, record.parameter_value_id).not.toContain(
+        'src-us-epa-iris-rfd-table-live',
+      );
+    }
+  });
+
   it('treats WQCIU as a source-of-sources lead, not a canonical value shortcut', () => {
     const wqciu = getSourceRecord('src-acfn-wqciu');
 

@@ -12,7 +12,7 @@
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
-      "src-us-epa-iris-bap-2017"
+      "src-us-epa-esb-tier2-nonionic-organics-2008"
     ],
     "equation_ids": [
       "eq-eco-direct-eqp-di-toro"
@@ -20,10 +20,10 @@
     "jurisdiction": "general",
     "applicability": "Non-ionic organic EqP pathway.",
     "uncertainty": null,
-    "review_notes": "Starter value from current substance library. Confirm exact source table or physicochemical property database.",
+    "review_notes": "Starter value from current substance library. Confirm exact ecological EqP source table or physicochemical property database. Do not cite IRIS for this Eco-Direct input; IRIS is human-health TRV context.",
     "evidence_items": [
       {
-        "source_id": "src-us-epa-iris-bap-2017",
+        "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
         "locator": "Current calculator substance library; source page/table pending",
         "value_text": "6.13",
         "extraction_method": "current_calculator_scaffold",
@@ -53,7 +53,7 @@
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
-      "src-us-epa-iris-bap-2017"
+      "src-us-epa-esb-tier2-nonionic-organics-2008"
     ],
     "equation_ids": [
       "eq-eco-direct-eqp-di-toro"
@@ -64,7 +64,7 @@
     "review_notes": "Current source-library comment calls this a US EPA Tier II SCV anchor. Needs exact source and table.",
     "evidence_items": [
       {
-        "source_id": "src-us-epa-iris-bap-2017",
+        "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
         "locator": "Current calculator substance library; source page/table pending",
         "value_text": "0.014 ug/L",
         "extraction_method": "current_calculator_scaffold",

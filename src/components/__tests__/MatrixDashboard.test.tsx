@@ -332,6 +332,8 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(panel).toHaveTextContent(/Benzo\[a\]pyrene/i);
     expect(panel).toHaveTextContent(/Ecological Direct Contact/i);
     expect(panel).toHaveTextContent(/pending source locator/i);
+    expect(panel).toHaveTextContent(/US EPA ESB Tier 2 values/i);
+    expect(panel).not.toHaveTextContent(/US EPA IRIS/i);
     expect(screen.queryByText(/Calculator Quick Reference/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Active Poll/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/will dynamically appear/i)).not.toBeInTheDocument();

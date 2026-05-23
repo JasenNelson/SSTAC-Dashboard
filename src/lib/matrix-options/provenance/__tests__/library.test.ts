@@ -183,7 +183,7 @@ describe('matrix options evidence library helpers', () => {
       'eq-eco-direct-eqp-di-toro',
     ]);
     expect(view.sources.map((row) => row.record.source_id).sort()).toEqual([
-      'src-us-epa-iris-bap-2017',
+      'src-us-epa-esb-tier2-nonionic-organics-2008',
     ]);
   });
 
