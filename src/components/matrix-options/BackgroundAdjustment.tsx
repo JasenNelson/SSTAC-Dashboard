@@ -17,6 +17,8 @@ import {
   DECIMAL_NUMBER_RE,
   parseDecimalInput,
 } from '@/lib/matrix-options/parseDecimal';
+import type { CalculatorUsedValue } from '@/lib/matrix-options/provenance/types';
+import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 
 interface ParseResult {
   samples: number[];
@@ -103,6 +105,40 @@ export default function BackgroundAdjustment() {
     scope === 'provincial'
       ? 'BC province-wide reference set (fallback when regional reference data is unavailable).'
       : 'Site-specific regional reference set (preferred over Provincial where geochemical equivalence is met -- Phase 2 Paper App D.4).';
+  const provenanceValues: CalculatorUsedValue[] = useMemo(
+    () => [
+      {
+        input_key: 'background_samples_mg_per_kg',
+        label: `${scopeLabel} reference samples`,
+        value: `${parsed.samples.length} accepted samples`,
+        role: 'user-entered value',
+        note: 'Reference-set data entered or seeded in the UI. Source data set provenance is tracked outside this v1 panel.',
+      },
+      {
+        input_key: 'K_95_95',
+        label: 'K factor',
+        value: utlResult ? utlResult.K.toFixed(4) : null,
+        role: 'derived value',
+        note: 'Screening lookup or interpolation from the current K table.',
+      },
+      {
+        input_key: 'utl_mg_per_kg',
+        label: 'UTL 95/95',
+        value: utlResult ? utlResult.utl.toFixed(4) : null,
+        unit: 'mg/kg',
+        role: 'derived value',
+      },
+      {
+        input_key: 'Cs_mg_per_kg',
+        label: 'Measured site concentration',
+        value: csInput === '' ? null : csInput,
+        unit: 'mg/kg',
+        role: 'user-entered value',
+        note: 'Optional diagnostic comparison input.',
+      },
+    ],
+    [csInput, parsed.samples.length, scopeLabel, utlResult],
+  );
 
   return (
     <section className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
@@ -323,6 +359,11 @@ export default function BackgroundAdjustment() {
           Provide at least 2 numeric samples to compute the UTL.
         </p>
       )}
+
+      <CalculatorProvenancePanel
+        pathway="background-adjustment"
+        usedValues={provenanceValues}
+      />
     </section>
   );
 }

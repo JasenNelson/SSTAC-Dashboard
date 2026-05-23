@@ -319,6 +319,16 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     expect(details.open).toBe(false);
   });
 
+  it('renders the calculator provenance panel with current BSAF values', () => {
+    render(<EcoFoodBSAFCalculator {...DEFAULT_PROPS} />);
+    const panel = screen.getByTestId('calculator-provenance-panel');
+    expect(panel).toHaveTextContent(/References and provenance/);
+    expect(panel).toHaveTextContent(/Ecological TRV/);
+    expect(panel).toHaveTextContent(/0\.0025 mg\/kg-bw\/day/);
+    expect(panel).toHaveTextContent(/US EPA Eco-SSL, PAHs/);
+    expect(panel).toHaveTextContent(/placeholder default/);
+  });
+
   it('renders successfully with NO props (defaults bridge to commit 6 wire-up)', () => {
     render(<EcoFoodBSAFCalculator />);
     expect(
