@@ -3,6 +3,8 @@ import type {
 } from '@/lib/matrix-options/provenance/types';
 
 export type SsdMedium = 'freshwater' | 'marine';
+export type SsdEnvironmentFilter = 'all' | SsdMedium;
+export type SsdMediaFilter = 'water' | 'sediment';
 export type SsdMediumCode = 'FW' | 'MW';
 
 export type SpeciesAggregationMethod =
@@ -22,6 +24,7 @@ export type SsdDistribution =
 
 export type SsdExcludedReason =
   | 'chemical_mismatch'
+  | 'media_mismatch'
   | 'medium_mismatch'
   | 'endpoint_mismatch'
   | 'missing_species'
@@ -41,7 +44,8 @@ export interface RawEcotoxRecord {
 
 export interface SsdWorkbenchSettings {
   chemicalNames: string[];
-  medium: SsdMedium;
+  mediaFilter: SsdMediaFilter;
+  environmentFilter: SsdEnvironmentFilter;
   endpointFilters: string[];
   aggregationMethod: SpeciesAggregationMethod;
   pValue: number;
@@ -49,7 +53,7 @@ export interface SsdWorkbenchSettings {
   selectedDistribution?: SsdDistribution;
   bootstrapIterations: number;
   randomSeed: number;
-  sourceMode: 'fixture' | 'ecotox_mirror';
+  sourceMode: 'fixture' | 'upload' | 'ecotox_mirror';
   ecotoxMirrorRecordCount?: number;
   extractedAt: string;
 }
@@ -60,7 +64,7 @@ export interface SsdCleanedRecord {
   concentration: number;
   speciesGroup: string;
   broadGroup: SsdBroadTaxonomicGroup;
-  mediaType: SsdMediumCode;
+  mediaType: string;
   endpoint: string;
   referenceNumber: string | null;
   testId: string | null;
@@ -140,6 +144,7 @@ export interface EcotoxChemicalSearchResult {
 export interface EcotoxFetchRequest {
   chemicalNames: string[];
   medium?: SsdMedium;
+  mediaFilter?: SsdMediaFilter;
   endpointFilters?: string[];
   maxRows?: number;
 }

@@ -5,7 +5,8 @@ import type { SsdWorkbenchSettings } from '../types';
 
 const BASE_SETTINGS: SsdWorkbenchSettings = {
   chemicalNames: ['Copper'],
-  medium: 'freshwater',
+  mediaFilter: 'water',
+  environmentFilter: 'freshwater',
   endpointFilters: [],
   aggregationMethod: 'geometric_mean',
   pValue: 0.05,

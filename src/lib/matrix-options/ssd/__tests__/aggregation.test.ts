@@ -6,7 +6,8 @@ import { SSD_FIXTURE_ROWS } from '../fixtures';
 describe('SSD species aggregation', () => {
   it('aggregates multiple endpoint values per species by geometric mean', () => {
     const { cleanedRecords } = prepareSsdRecords(SSD_FIXTURE_ROWS, {
-      medium: 'freshwater',
+      mediaFilter: 'water',
+      environmentFilter: 'freshwater',
       endpointFilters: [],
     });
 
@@ -23,7 +24,8 @@ describe('SSD species aggregation', () => {
 
   it('aggregates multiple endpoint values per species by most-sensitive value', () => {
     const { cleanedRecords } = prepareSsdRecords(SSD_FIXTURE_ROWS, {
-      medium: 'freshwater',
+      mediaFilter: 'water',
+      environmentFilter: 'freshwater',
       endpointFilters: [],
     });
 

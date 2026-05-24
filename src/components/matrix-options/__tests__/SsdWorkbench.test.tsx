@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 vi.mock('recharts', () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
@@ -32,6 +32,15 @@ describe('SsdWorkbench', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/Derived candidate only/i)).toBeInTheDocument();
     expect(screen.getByText(/582,125 rows/i)).toBeInTheDocument();
+    expect(screen.getByText(/Upload CSV or JSON/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Water$/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: /^Sediment$/ })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
     expect(screen.getByTestId('ssd-composed-chart')).toBeInTheDocument();
     expect(screen.getByText(/Plot options/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Log scale$/ })).toHaveAttribute(
@@ -88,5 +97,36 @@ describe('SsdWorkbench', () => {
     expect(screen.getAllByText(/^4$/).length).toBeGreaterThan(0);
     const exclusions = screen.getByRole('table');
     expect(within(exclusions).getAllByText(/endpoint mismatch/i).length).toBeGreaterThan(0);
+  });
+
+  it('loads uploaded CSV data into the workbench source mode', async () => {
+    render(<SsdWorkbench />);
+
+    const csv = [
+      'chemical,species,value,media,endpoint,group',
+      'Zinc,Species 1,0.10,FW,Mortality,Fish',
+      'Zinc,Species 2,0.11,FW,Mortality,Fish',
+      'Zinc,Species 3,0.12,FW,Mortality,Fish',
+      'Zinc,Species 4,0.13,FW,Mortality,Fish',
+      'Zinc,Species 5,0.14,FW,Mortality,Fish',
+    ].join('\n');
+    const file = new File([csv], 'ssd-upload.csv', { type: 'text/csv' });
+    Object.defineProperty(file, 'text', {
+      value: () => Promise.resolve(csv),
+    });
+
+    fireEvent.change(screen.getByLabelText(/Upload CSV or JSON/i), {
+      target: { files: [file] },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(/5 uploaded records loaded/i)).toBeInTheDocument(),
+    );
+    expect(screen.getByRole('button', { name: /^Upload$/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByDisplayValue('Zinc')).toBeInTheDocument();
+    expect(screen.getAllByText(/^5$/).length).toBeGreaterThan(0);
   });
 });

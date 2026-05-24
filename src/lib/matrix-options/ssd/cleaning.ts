@@ -2,6 +2,8 @@ import {
   type RawEcotoxRecord,
   type SsdCleanedRecord,
   type SsdExcludedRecord,
+  type SsdEnvironmentFilter,
+  type SsdMediaFilter,
   type SsdMedium,
   type SsdMediumCode,
 } from './types';
@@ -55,11 +57,49 @@ function toStringOrNull(value: string | number | null | undefined): string | nul
   return String(value);
 }
 
+function classifyExposureMedia(
+  rawMediaType: string | null | undefined,
+): SsdMediaFilter | null {
+  const normalized = rawMediaType?.trim().toLowerCase() ?? '';
+  if (!normalized) return null;
+
+  if (
+    normalized === 'sed' ||
+    normalized === 'sd' ||
+    normalized.includes('sediment') ||
+    normalized.includes('solid')
+  ) {
+    return 'sediment';
+  }
+  if (
+    normalized === 'fw' ||
+    normalized === 'mw' ||
+    normalized === 'freshwater' ||
+    normalized === 'marine' ||
+    normalized.includes('water')
+  ) {
+    return 'water';
+  }
+
+  return null;
+}
+
+function classifyEnvironmentCode(
+  rawMediaType: string | null | undefined,
+): SsdMediumCode | null {
+  const normalized = rawMediaType?.trim().toLowerCase() ?? '';
+  if (!normalized) return null;
+  if (normalized === 'fw' || normalized === 'freshwater') return 'FW';
+  if (normalized === 'mw' || normalized === 'marine') return 'MW';
+  return null;
+}
+
 export function prepareSsdRecords(
   rows: RawEcotoxRecord[],
   options: {
     chemicalNames?: string[];
-    medium: SsdMedium;
+    mediaFilter: SsdMediaFilter;
+    environmentFilter: SsdEnvironmentFilter;
     endpointFilters?: string[];
   },
 ): {
@@ -68,7 +108,10 @@ export function prepareSsdRecords(
 } {
   const cleanedRecords: SsdCleanedRecord[] = [];
   const excludedRecords: SsdExcludedRecord[] = [];
-  const expectedMedium = mediumToCode(options.medium);
+  const expectedMedium =
+    options.environmentFilter === 'all'
+      ? null
+      : mediumToCode(options.environmentFilter);
   const endpointFilters = options.endpointFilters ?? [];
   const selectedChemicals = new Set(
     (options.chemicalNames ?? [])
@@ -90,11 +133,27 @@ export function prepareSsdRecords(
       continue;
     }
 
-    const mediaType = row.media_type?.trim() as SsdMediumCode | undefined;
-    if (mediaType !== expectedMedium) {
+    const rawMediaType = row.media_type?.trim();
+    const exposureMedia = classifyExposureMedia(rawMediaType);
+    if (!exposureMedia || exposureMedia !== options.mediaFilter) {
+      excludedRecords.push({
+        reason: 'media_mismatch',
+        detail: `Expected ${options.mediaFilter}; got ${
+          row.media_type ?? 'blank'
+        }.`,
+        raw: row,
+      });
+      continue;
+    }
+
+    const mediaType = rawMediaType || exposureMedia;
+    const environmentCode = classifyEnvironmentCode(rawMediaType);
+    if (expectedMedium && environmentCode !== expectedMedium) {
       excludedRecords.push({
         reason: 'medium_mismatch',
-        detail: `Expected ${expectedMedium}; got ${row.media_type ?? 'blank'}.`,
+        detail: `Expected ${expectedMedium ?? 'FW or MW'}; got ${
+          row.media_type ?? 'blank'
+        }.`,
         raw: row,
       });
       continue;

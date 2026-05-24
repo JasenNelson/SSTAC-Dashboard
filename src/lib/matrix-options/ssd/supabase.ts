@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type {
   EcotoxFetchRequest,
   RawEcotoxRecord,
+  SsdMediaFilter,
   SsdMedium,
 } from './types';
 import { mediumToCode } from './cleaning';
@@ -83,6 +84,10 @@ export function coerceMedium(value: unknown): SsdMedium | undefined {
   return value === 'freshwater' || value === 'marine' ? value : undefined;
 }
 
+export function coerceMediaFilter(value: unknown): SsdMediaFilter | undefined {
+  return value === 'water' || value === 'sediment' ? value : undefined;
+}
+
 export function coerceMaxRows(value: unknown): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return ECOTOX_MAX_FETCH_ROWS;
@@ -97,6 +102,7 @@ export function buildEcotoxFetchRequest(value: unknown): EcotoxFetchRequest {
   return {
     chemicalNames: normalizeChemicalNames(body.chemicalNames),
     medium: coerceMedium(body.medium),
+    mediaFilter: coerceMediaFilter(body.mediaFilter),
     endpointFilters: normalizeEndpointFilters(body.endpointFilters),
     maxRows: coerceMaxRows(body.maxRows),
   };

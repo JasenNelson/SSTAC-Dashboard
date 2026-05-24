@@ -32,6 +32,14 @@ describe('SSD endpoint cleaning', () => {
       },
       {
         chemical_name: 'Copper',
+        species_scientific_name: 'Sediment species',
+        conc1_mean: 0.18,
+        species_group: 'Invertebrate',
+        media_type: 'sediment',
+        endpoint: 'Mortality',
+      },
+      {
+        chemical_name: 'Copper',
         species_scientific_name: 'Marine species',
         conc1_mean: 0.2,
         species_group: 'Fish',
@@ -66,7 +74,8 @@ describe('SSD endpoint cleaning', () => {
 
     const { cleanedRecords, excludedRecords } = prepareSsdRecords(rows, {
       chemicalNames: ['Copper'],
-      medium: 'freshwater',
+      mediaFilter: 'water',
+      environmentFilter: 'freshwater',
       endpointFilters: ['Mortality'],
     });
 
@@ -74,10 +83,35 @@ describe('SSD endpoint cleaning', () => {
     expect(cleanedRecords[0].broadGroup).toBe('Invertebrate');
     expect(excludedRecords.map((record) => record.reason)).toEqual([
       'chemical_mismatch',
+      'media_mismatch',
       'medium_mismatch',
       'missing_species',
       'invalid_endpoint_value',
       'endpoint_mismatch',
     ]);
+  });
+
+  it('classifies mixed freshwater sediment media as sediment', () => {
+    const { cleanedRecords } = prepareSsdRecords(
+      [
+        {
+          chemical_name: 'Copper',
+          species_scientific_name: 'Hyalella azteca',
+          conc1_mean: 12,
+          species_group: 'Invertebrate',
+          media_type: 'freshwater sediment',
+          endpoint: 'Growth',
+        },
+      ],
+      {
+        chemicalNames: ['Copper'],
+        mediaFilter: 'sediment',
+        environmentFilter: 'all',
+        endpointFilters: [],
+      },
+    );
+
+    expect(cleanedRecords).toHaveLength(1);
+    expect(cleanedRecords[0].mediaType).toBe('freshwater sediment');
   });
 });

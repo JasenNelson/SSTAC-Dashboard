@@ -115,12 +115,14 @@ describe('SSD ECOTOX Supabase query shaping', () => {
       buildEcotoxFetchRequest({
         chemicalNames: ['Copper', 'Copper', 'Zinc'],
         medium: 'freshwater',
+        mediaFilter: 'water',
         endpointFilters: ['Mortality', 'Mortality'],
         maxRows: 999999,
       }),
     ).toEqual({
       chemicalNames: ['Copper', 'Zinc'],
       medium: 'freshwater',
+      mediaFilter: 'water',
       endpointFilters: ['Mortality'],
       maxRows: ECOTOX_MAX_FETCH_ROWS,
     });

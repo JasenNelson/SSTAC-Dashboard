@@ -61,7 +61,8 @@ export function buildSsdAnalysis(
 ): SsdAnalysisResult {
   const { cleanedRecords, excludedRecords } = prepareSsdRecords(rawRows, {
     chemicalNames: settings.chemicalNames,
-    medium: settings.medium,
+    mediaFilter: settings.mediaFilter,
+    environmentFilter: settings.environmentFilter,
     endpointFilters: settings.endpointFilters,
   });
   const speciesAggregates = aggregateSpeciesValues(
@@ -87,6 +88,11 @@ export function buildSsdAnalysis(
       'Distribution fitting and bootstrap confidence intervals are not enabled in this first slice.',
     );
   }
+  if (settings.mediaFilter === 'sediment') {
+    warnings.push(
+      'Sediment SSD inputs are accepted for review, but units and ECOTOX sediment schema mapping still need QA before use.',
+    );
+  }
 
   const empiricalPoints = buildEmpiricalPoints(speciesAggregates);
   const hasMinimumSpecies =
@@ -95,11 +101,12 @@ export function buildSsdAnalysis(
     ? calculateEmpiricalHcp(speciesAggregates, settings.pValue)
     : Number.NaN;
   const percentileLabel = `HC${Math.round(settings.pValue * 100)}`;
+  const unit = settings.mediaFilter === 'sediment' ? 'reported unit' : 'mg/L';
 
   return {
     hcp,
     pValue: settings.pValue,
-    unit: 'mg/L',
+    unit,
     speciesCount: speciesAggregates.length,
     cleanedRecordCount: cleanedRecords.length,
     excludedRecordCount: excludedRecords.length,
@@ -125,7 +132,7 @@ export function buildSsdAnalysis(
       label: `${percentileLabel} SSD-derived candidate`,
       inputKey: `ssd_${percentileLabel.toLowerCase()}_candidate`,
       value: hcp,
-      unit: 'mg/L',
+      unit,
       evidenceSupportStatus: 'user_entered_or_derived',
       qaStatus: 'needs_review',
       canDriveCalculations: false,

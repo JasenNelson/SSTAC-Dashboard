@@ -7,6 +7,7 @@ import {
   Database,
   FlaskConical,
   Search,
+  Upload,
 } from 'lucide-react';
 import {
   CartesianGrid,
@@ -21,10 +22,13 @@ import {
 import { cn } from '@/utils/cn';
 import { SSD_FIXTURE_ROWS } from '@/lib/matrix-options/ssd/fixtures';
 import { buildSsdAnalysis } from '@/lib/matrix-options/ssd/hcp';
+import { parseSsdUpload } from '@/lib/matrix-options/ssd/upload';
 import type {
+  RawEcotoxRecord,
   SsdAnalysisMode,
   SsdAnalysisResult,
-  SsdMedium,
+  SsdEnvironmentFilter,
+  SsdMediaFilter,
   SpeciesAggregationMethod,
 } from '@/lib/matrix-options/ssd/types';
 import type { EvidenceLibraryFilterRequest } from '@/lib/matrix-options/provenance/types';
@@ -37,6 +41,19 @@ interface SsdWorkbenchProps {
 const ENDPOINT_OPTIONS = ['Mortality', 'Growth', 'Reproduction', 'Development'];
 const OWNER_REPORTED_ECOTOX_ROWS = 582125;
 type PlotScale = 'log' | 'linear';
+type DataSourceMode = 'fixture' | 'upload' | 'ecotox_mirror';
+type LiveStatus = 'idle' | 'searching' | 'loading_records' | 'ready' | 'not_configured' | 'error';
+
+const MEDIA_FILTER_LABELS: Record<SsdMediaFilter, string> = {
+  water: 'Water',
+  sediment: 'Sediment',
+};
+
+const ENVIRONMENT_FILTER_LABELS: Record<SsdEnvironmentFilter, string> = {
+  all: 'All environments',
+  freshwater: 'Freshwater',
+  marine: 'Marine',
+};
 
 function formatNumber(value: number, digits = 3): string {
   if (!Number.isFinite(value)) return 'n/a';
@@ -47,6 +64,23 @@ function formatNumber(value: number, digits = 3): string {
 
 function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function liveStatusLabel(status: LiveStatus): string {
+  switch (status) {
+    case 'searching':
+      return 'Searching ECOTOX mirror...';
+    case 'loading_records':
+      return 'Loading selected ECOTOX records...';
+    case 'ready':
+      return 'Live ECOTOX mirror records loaded.';
+    case 'not_configured':
+      return 'ECOTOX mirror is not configured in this environment.';
+    case 'error':
+      return 'ECOTOX mirror request failed.';
+    default:
+      return 'Use fixture mode or search the ECOTOX mirror.';
+  }
 }
 
 function buildConcentrationTicks(
@@ -102,7 +136,10 @@ export default function SsdWorkbench({
   className,
 }: SsdWorkbenchProps) {
   const [chemicalSearch, setChemicalSearch] = useState('Copper');
-  const [medium, setMedium] = useState<SsdMedium>('freshwater');
+  const [mediaFilter, setMediaFilter] =
+    useState<SsdMediaFilter>('water');
+  const [environmentFilter, setEnvironmentFilter] =
+    useState<SsdEnvironmentFilter>('freshwater');
   const [endpointFilters, setEndpointFilters] = useState<string[]>([]);
   const [aggregationMethod, setAggregationMethod] =
     useState<SpeciesAggregationMethod>('geometric_mean');
@@ -112,23 +149,50 @@ export default function SsdWorkbench({
   const [plotScale, setPlotScale] = useState<PlotScale>('log');
   const [showEmpiricalCurve, setShowEmpiricalCurve] = useState(true);
   const [showSpeciesPoints, setShowSpeciesPoints] = useState(true);
+  const [dataSourceMode, setDataSourceMode] =
+    useState<DataSourceMode>('fixture');
+  const [uploadedRows, setUploadedRows] = useState<RawEcotoxRecord[]>([]);
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
+  const [chemicalSuggestions, setChemicalSuggestions] = useState<string[]>([]);
+  const [liveRows, setLiveRows] = useState<RawEcotoxRecord[]>([]);
+  const [liveStatus, setLiveStatus] = useState<LiveStatus>('idle');
+  const [liveMessage, setLiveMessage] = useState<string | null>(null);
+  const [liveRowsTruncated, setLiveRowsTruncated] = useState(false);
+
+  const selectedRows =
+    dataSourceMode === 'fixture'
+      ? SSD_FIXTURE_ROWS
+      : dataSourceMode === 'upload'
+        ? uploadedRows
+        : liveRows;
 
   const result: SsdAnalysisResult = useMemo(
     () =>
-      buildSsdAnalysis(SSD_FIXTURE_ROWS, {
+      buildSsdAnalysis(selectedRows, {
         chemicalNames: [chemicalSearch.trim() || 'Copper'],
-        medium,
+        mediaFilter,
+        environmentFilter,
         endpointFilters,
         aggregationMethod,
         pValue,
         analysisMode,
         bootstrapIterations: 0,
         randomSeed: 42,
-        sourceMode: 'fixture',
+        sourceMode: dataSourceMode,
         ecotoxMirrorRecordCount: OWNER_REPORTED_ECOTOX_ROWS,
         extractedAt: todayIsoDate(),
       }),
-    [aggregationMethod, analysisMode, chemicalSearch, endpointFilters, medium, pValue],
+    [
+      aggregationMethod,
+      analysisMode,
+      chemicalSearch,
+      dataSourceMode,
+      endpointFilters,
+      environmentFilter,
+      mediaFilter,
+      pValue,
+      selectedRows,
+    ],
   );
 
   const chartData = result.empiricalPoints.map((point) => ({
@@ -143,6 +207,8 @@ export default function SsdWorkbench({
 
   const activeEndpointLabel =
     endpointFilters.length === 0 ? 'All endpoints' : endpointFilters.join(', ');
+  const activeMediaLabel = MEDIA_FILTER_LABELS[mediaFilter];
+  const activeEnvironmentLabel = ENVIRONMENT_FILTER_LABELS[environmentFilter];
 
   const toggleEndpoint = (endpoint: string): void => {
     setEndpointFilters((current) =>
@@ -150,6 +216,145 @@ export default function SsdWorkbench({
         ? current.filter((value) => value !== endpoint)
         : [...current, endpoint],
     );
+  };
+
+  const selectMediaFilter = (nextMediaFilter: SsdMediaFilter): void => {
+    setMediaFilter(nextMediaFilter);
+    if (nextMediaFilter === 'sediment') {
+      setEnvironmentFilter('all');
+    }
+  };
+
+  const handleUploadFile = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ): Promise<void> => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const rows = parseSsdUpload(text, file.name);
+      const uploadedChemicals = Array.from(
+        new Set(
+          rows
+            .map((row) => row.chemical_name?.trim())
+            .filter((value): value is string => Boolean(value)),
+        ),
+      );
+      setUploadedRows(rows);
+      setDataSourceMode('upload');
+      if (uploadedChemicals.length === 1) {
+        setChemicalSearch(uploadedChemicals[0]);
+      }
+      setUploadMessage(
+        `${rows.length.toLocaleString()} uploaded records loaded.`,
+      );
+      setLiveMessage(null);
+    } catch (err) {
+      setUploadedRows([]);
+      setDataSourceMode('upload');
+      setUploadMessage(
+        err instanceof Error
+          ? err.message
+          : 'Upload could not be parsed. Use CSV or JSON.',
+      );
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const searchLiveChemicals = async (): Promise<void> => {
+    const term = chemicalSearch.trim();
+    if (term.length < 2) {
+      setChemicalSuggestions([]);
+      setLiveStatus('idle');
+      setLiveMessage('Enter at least two characters to search.');
+      return;
+    }
+
+    setDataSourceMode('ecotox_mirror');
+    setLiveStatus('searching');
+    setLiveMessage(null);
+    try {
+      const response = await fetch(
+        `/api/matrix-options/ssd/chemicals?q=${encodeURIComponent(term)}`,
+      );
+      const payload = await response.json();
+      if (response.status === 503) {
+        setChemicalSuggestions([]);
+        setLiveStatus('not_configured');
+        setLiveMessage(liveStatusLabel('not_configured'));
+        return;
+      }
+      if (!response.ok) throw new Error('chemical_search_failed');
+      const chemicals = Array.isArray(payload.chemicals)
+        ? payload.chemicals.filter((value: unknown): value is string =>
+            typeof value === 'string',
+          )
+        : [];
+      setChemicalSuggestions(chemicals);
+      setLiveStatus('idle');
+      setLiveMessage(
+        chemicals.length > 0
+          ? `${chemicals.length} chemical matches returned.`
+          : 'No chemical matches returned.',
+      );
+    } catch {
+      setChemicalSuggestions([]);
+      setLiveStatus('error');
+      setLiveMessage(liveStatusLabel('error'));
+    }
+  };
+
+  const loadLiveRows = async (): Promise<void> => {
+    const chemicalName = chemicalSearch.trim();
+    if (!chemicalName) {
+      setLiveMessage('Select or enter a chemical before loading records.');
+      return;
+    }
+
+    setDataSourceMode('ecotox_mirror');
+    setLiveStatus('loading_records');
+    setLiveMessage(null);
+    try {
+      const response = await fetch('/api/matrix-options/ssd/records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chemicalNames: [chemicalName],
+          medium:
+            environmentFilter === 'all' ? undefined : environmentFilter,
+          mediaFilter,
+          endpointFilters,
+          maxRows: 5000,
+        }),
+      });
+      const payload = await response.json();
+      if (response.status === 503) {
+        setLiveRows([]);
+        setLiveRowsTruncated(false);
+        setLiveStatus('not_configured');
+        setLiveMessage(liveStatusLabel('not_configured'));
+        return;
+      }
+      if (!response.ok) throw new Error('ecotox_record_fetch_failed');
+      const rows = Array.isArray(payload.rows)
+        ? (payload.rows as RawEcotoxRecord[])
+        : [];
+      setLiveRows(rows);
+      setLiveRowsTruncated(Boolean(payload.truncated));
+      setLiveStatus('ready');
+      setLiveMessage(
+        `${rows.length.toLocaleString()} ECOTOX mirror records loaded${
+          payload.truncated ? ' before the 5,000-row cap.' : '.'
+        }`,
+      );
+    } catch {
+      setLiveRows([]);
+      setLiveRowsTruncated(false);
+      setLiveStatus('error');
+      setLiveMessage(liveStatusLabel('error'));
+    }
   };
 
   return (
@@ -180,6 +385,53 @@ export default function SsdWorkbench({
       <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
         <aside className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/60">
           <div>
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Data source
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              <ToggleButton
+                active={dataSourceMode === 'fixture'}
+                onClick={() => setDataSourceMode('fixture')}
+              >
+                Fixture
+              </ToggleButton>
+              <ToggleButton
+                active={dataSourceMode === 'upload'}
+                onClick={() => setDataSourceMode('upload')}
+              >
+                Upload
+              </ToggleButton>
+              <ToggleButton
+                active={dataSourceMode === 'ecotox_mirror'}
+                onClick={() => setDataSourceMode('ecotox_mirror')}
+              >
+                ECOTOX mirror
+              </ToggleButton>
+            </div>
+            <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+              <Upload className="h-4 w-4" />
+              Upload CSV or JSON
+              <input
+                type="file"
+                accept=".csv,.json,application/json,text/csv"
+                onChange={(event) => void handleUploadFile(event)}
+                className="sr-only"
+              />
+            </label>
+            {dataSourceMode === 'upload' && (
+              <div className="mt-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
+                <p className="font-semibold text-slate-700 dark:text-slate-100">
+                  Uploaded file mode
+                </p>
+                <p className="mt-1">
+                  {uploadMessage ??
+                    'Upload a CSV or JSON file with chemical, species, value, media, and endpoint columns.'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div>
             <label
               htmlFor="ssd-chemical-search"
               className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
@@ -196,29 +448,107 @@ export default function SsdWorkbench({
               />
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              Fixture mode uses Copper records. Live search will query the
-              ECOTOX mirror with capped server-side pagination.
+              Fixture mode uses Copper records. Upload mode accepts local
+              ECOTOX-style extracts. ECOTOX mirror mode queries capped
+              server-side API routes when configured.
             </p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => void searchLiveChemicals()}
+                disabled={liveStatus === 'searching'}
+                className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+              >
+                Search mirror
+              </button>
+              <button
+                type="button"
+                onClick={() => void loadLiveRows()}
+                disabled={liveStatus === 'loading_records'}
+                className="rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Load records
+              </button>
+            </div>
+            {chemicalSuggestions.length > 0 && (
+              <div className="mt-3 max-h-36 overflow-auto rounded-md border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-950">
+                {chemicalSuggestions.slice(0, 8).map((chemical) => (
+                  <button
+                    key={chemical}
+                    type="button"
+                    onClick={() => setChemicalSearch(chemical)}
+                    className="block w-full rounded px-2 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    {chemical}
+                  </button>
+                ))}
+              </div>
+            )}
+            {dataSourceMode === 'ecotox_mirror' && (
+              <div className="mt-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
+                <p className="font-semibold text-slate-700 dark:text-slate-100">
+                  {liveStatusLabel(liveStatus)}
+                </p>
+                {liveMessage && <p className="mt-1">{liveMessage}</p>}
+                {liveRowsTruncated && (
+                  <p className="mt-1 text-amber-700 dark:text-amber-300">
+                    Results were capped at 5,000 rows for browser safety.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
             <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Medium
+              Media filter
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
               <ToggleButton
-                active={medium === 'freshwater'}
-                onClick={() => setMedium('freshwater')}
+                active={mediaFilter === 'water'}
+                onClick={() => selectMediaFilter('water')}
+              >
+                Water
+              </ToggleButton>
+              <ToggleButton
+                active={mediaFilter === 'sediment'}
+                onClick={() => selectMediaFilter('sediment')}
+              >
+                Sediment
+              </ToggleButton>
+            </div>
+          </div>
+
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Aquatic environment
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              <ToggleButton
+                active={environmentFilter === 'all'}
+                onClick={() => setEnvironmentFilter('all')}
+              >
+                All
+              </ToggleButton>
+              <ToggleButton
+                active={environmentFilter === 'freshwater'}
+                onClick={() => setEnvironmentFilter('freshwater')}
               >
                 Freshwater
               </ToggleButton>
               <ToggleButton
-                active={medium === 'marine'}
-                onClick={() => setMedium('marine')}
+                active={environmentFilter === 'marine'}
+                onClick={() => setEnvironmentFilter('marine')}
               >
                 Marine
               </ToggleButton>
             </div>
+            {mediaFilter === 'sediment' && (
+              <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                Sediment records use All by default until ECOTOX sediment
+                freshwater/marine mapping is verified.
+              </p>
+            )}
           </div>
 
           <div>
@@ -353,7 +683,9 @@ export default function SsdWorkbench({
                   Empirical SSD preview
                 </h3>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                  {activeEndpointLabel}; {result.settings.aggregationMethod.replace('_', ' ')}.
+                  {activeMediaLabel}; {activeEnvironmentLabel};{' '}
+                  {activeEndpointLabel};{' '}
+                  {result.settings.aggregationMethod.replace('_', ' ')}.
                 </p>
               </div>
               <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-100">
@@ -373,7 +705,8 @@ export default function SsdWorkbench({
                   <div className="mb-2 flex flex-col gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
                     <span>Species affected (%)</span>
                     <span>
-                      Concentration (mg/L, {plotScale === 'log' ? 'log scale' : 'linear scale'})
+                      Concentration ({result.unit},{' '}
+                      {plotScale === 'log' ? 'log scale' : 'linear scale'})
                     </span>
                   </div>
                   <div className="h-[19rem]">
@@ -404,7 +737,7 @@ export default function SsdWorkbench({
                               typeof value === 'number' ? value : Number(value);
                             return [
                               name === 'value'
-                                ? `${formatNumber(numericValue)} mg/L`
+                                ? `${formatNumber(numericValue)} ${result.unit}`
                                 : `${formatNumber(numericValue)}%`,
                               name === 'value' ? 'Concentration' : 'Affected',
                             ];
@@ -455,8 +788,9 @@ export default function SsdWorkbench({
               ) : (
                 <div className="flex h-[19rem] items-center justify-center rounded-md border border-dashed border-slate-300 bg-slate-50 px-6 text-center dark:border-slate-700 dark:bg-slate-900">
                   <p className="max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                    Insufficient data for HCp preview. Adjust the medium or endpoint
-                    filters until at least five species are available.
+                    Insufficient data for HCp preview. Adjust the media,
+                    environment, or endpoint filters until at least five species
+                    are available.
                   </p>
                 </div>
               )}
