@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 import {
   AlertTriangle,
+  ChevronDown,
   CheckCircle2,
   Database,
   Download,
@@ -25,7 +26,12 @@ import {
   buildSsdReceiptJson,
   buildSsdSpeciesCsv,
 } from '@/lib/matrix-options/ssd/export';
-import { SSD_FIXTURE_ROWS } from '@/lib/matrix-options/ssd/fixtures';
+import {
+  DEFAULT_SSD_FIXTURE_DATASET_ID,
+  getSsdFixtureDataset,
+  SSD_FIXTURE_DATASETS,
+  type SsdFixtureDatasetId,
+} from '@/lib/matrix-options/ssd/fixtures';
 import { buildSsdAnalysis } from '@/lib/matrix-options/ssd/hcp';
 import { parseSsdUpload } from '@/lib/matrix-options/ssd/upload';
 import type {
@@ -60,6 +66,10 @@ const ENVIRONMENT_FILTER_LABELS: Record<SsdEnvironmentFilter, string> = {
   freshwater: 'Freshwater',
   marine: 'Marine',
 };
+
+const DEFAULT_FIXTURE_DATASET = getSsdFixtureDataset(
+  DEFAULT_SSD_FIXTURE_DATASET_ID,
+);
 
 function formatNumber(value: number, digits = 3): string {
   if (!Number.isFinite(value)) return 'n/a';
@@ -166,7 +176,11 @@ export default function SsdWorkbench({
   onOpenEvidenceLibrary,
   className,
 }: SsdWorkbenchProps) {
-  const [chemicalSearch, setChemicalSearch] = useState('Copper');
+  const [fixtureDatasetId, setFixtureDatasetId] =
+    useState<SsdFixtureDatasetId>(DEFAULT_SSD_FIXTURE_DATASET_ID);
+  const [chemicalSearch, setChemicalSearch] = useState(
+    DEFAULT_FIXTURE_DATASET.chemicalName,
+  );
   const [mediaFilter, setMediaFilter] =
     useState<SsdMediaFilter>('water');
   const [environmentFilter, setEnvironmentFilter] =
@@ -193,17 +207,20 @@ export default function SsdWorkbench({
   const [liveMessage, setLiveMessage] = useState<string | null>(null);
   const [liveRowsTruncated, setLiveRowsTruncated] = useState(false);
 
+  const selectedFixtureDataset = getSsdFixtureDataset(fixtureDatasetId);
   const selectedRows =
     dataSourceMode === 'fixture'
-      ? SSD_FIXTURE_ROWS
+      ? selectedFixtureDataset.rows
       : dataSourceMode === 'upload'
         ? uploadedRows
         : liveRows;
+  const selectedChemicalName =
+    chemicalSearch.trim() || selectedFixtureDataset.chemicalName;
 
   const result: SsdAnalysisResult = useMemo(
     () =>
       buildSsdAnalysis(selectedRows, {
-        chemicalNames: [chemicalSearch.trim() || 'Copper'],
+        chemicalNames: [selectedChemicalName],
         mediaFilter,
         environmentFilter,
         endpointFilters,
@@ -220,13 +237,13 @@ export default function SsdWorkbench({
     [
       aggregationMethod,
       analysisMode,
-      chemicalSearch,
       dataSourceMode,
       endpointFilters,
       environmentFilter,
       mediaFilter,
       pValue,
       selectedDistribution,
+      selectedChemicalName,
       selectedRows,
     ],
   );
@@ -242,13 +259,19 @@ export default function SsdWorkbench({
   const concentrationTicks = buildConcentrationTicks(chartData);
   const canPlotFittedCurve =
     showFittedCurve && result.fittedCurvePoints.length >= 2;
+  const fittedCurveLabel =
+    result.fittedCurvePoints[0]?.distribution === 'Model Average'
+      ? 'Model average'
+      : result.fittedCurvePoints[0]?.distribution
+        ? `${result.fittedCurvePoints[0].distribution} fit`
+        : 'Fitted curve';
 
   const activeEndpointLabel =
     endpointFilters.length === 0 ? 'All endpoints' : endpointFilters.join(', ');
   const activeMediaLabel = MEDIA_FILTER_LABELS[mediaFilter];
   const activeEnvironmentLabel = ENVIRONMENT_FILTER_LABELS[environmentFilter];
   const exportFileStem = slugifyFilePart(
-    `${chemicalSearch || 'ssd'}-${activeMediaLabel}-${activeEnvironmentLabel}`,
+    `${selectedChemicalName}-${activeMediaLabel}-${activeEnvironmentLabel}`,
   );
 
   const toggleEndpoint = (endpoint: string): void => {
@@ -257,6 +280,18 @@ export default function SsdWorkbench({
         ? current.filter((value) => value !== endpoint)
         : [...current, endpoint],
     );
+  };
+
+  const selectFixtureDataset = (nextFixtureId: SsdFixtureDatasetId): void => {
+    const nextFixture = getSsdFixtureDataset(nextFixtureId);
+    setFixtureDatasetId(nextFixture.id);
+    setDataSourceMode('fixture');
+    setChemicalSearch(nextFixture.chemicalName);
+    setMediaFilter('water');
+    setEnvironmentFilter('freshwater');
+    setEndpointFilters([]);
+    setLiveMessage(null);
+    setUploadMessage(null);
   };
 
   const selectMediaFilter = (nextMediaFilter: SsdMediaFilter): void => {
@@ -416,7 +451,7 @@ export default function SsdWorkbench({
 
   return (
     <section
-      className={cn('space-y-6', className)}
+      className={cn('min-w-0 space-y-6', className)}
       data-testid="ssd-workbench"
     >
       <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800 lg:flex-row lg:items-start lg:justify-between">
@@ -430,8 +465,9 @@ export default function SsdWorkbench({
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">
             Build a reviewable HCp candidate from selected ECOTOX-style records.
-            This first slice runs a deterministic fixture preview while the live
-            read-only ECOTOX mirror connection is gated behind schema verification.
+            This slice exposes fixture, upload, and read-only ECOTOX mirror
+            inputs with an ssdtools-aligned TypeScript fitting path pending
+            official R snapshot validation.
           </p>
         </div>
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
@@ -439,8 +475,8 @@ export default function SsdWorkbench({
         </div>
       </header>
 
-      <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <aside className="space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+        <aside className="min-w-0 space-y-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/60">
           <div>
             <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Data source
@@ -448,7 +484,7 @@ export default function SsdWorkbench({
             <div className="mt-2 grid grid-cols-3 gap-2">
               <ToggleButton
                 active={dataSourceMode === 'fixture'}
-                onClick={() => setDataSourceMode('fixture')}
+                onClick={() => selectFixtureDataset(fixtureDatasetId)}
               >
                 Fixture
               </ToggleButton>
@@ -465,6 +501,44 @@ export default function SsdWorkbench({
                 ECOTOX mirror
               </ToggleButton>
             </div>
+            {dataSourceMode === 'fixture' && (
+              <div className="mt-3 rounded-md border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
+                <label className="block font-semibold text-slate-700 dark:text-slate-100">
+                  Fixture dataset
+                  <select
+                    value={fixtureDatasetId}
+                    onChange={(event) =>
+                      selectFixtureDataset(
+                        event.target.value as SsdFixtureDatasetId,
+                      )
+                    }
+                    className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  >
+                    {SSD_FIXTURE_DATASETS.map((dataset) => (
+                      <option key={dataset.id} value={dataset.id}>
+                        {dataset.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span
+                    className={cn(
+                      'rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider',
+                      selectedFixtureDataset.role === 'validation'
+                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100'
+                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-200',
+                    )}
+                  >
+                    {selectedFixtureDataset.role === 'validation'
+                      ? 'Validation dataset'
+                      : 'Preview dataset'}
+                  </span>
+                  <span>{selectedFixtureDataset.rows.length} source rows</span>
+                </div>
+                <p className="mt-2">{selectedFixtureDataset.sourceLabel}</p>
+              </div>
+            )}
             <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
               <Upload className="h-4 w-4" />
               Upload CSV or JSON
@@ -482,7 +556,7 @@ export default function SsdWorkbench({
                 </p>
                 <p className="mt-1">
                   {uploadMessage ??
-                    'Upload a CSV or JSON file with chemical, species, value, media, and endpoint columns.'}
+                    'Upload a CSV or JSON file with chemical, species, value, unit, media, and endpoint columns.'}
                 </p>
               </div>
             )}
@@ -505,8 +579,8 @@ export default function SsdWorkbench({
               />
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              Fixture mode uses Copper records. Upload mode accepts local
-              ECOTOX-style extracts. ECOTOX mirror mode queries capped
+              Fixture mode can load preview or validation datasets. Upload mode
+              accepts local ECOTOX-style extracts. ECOTOX mirror mode queries capped
               server-side API routes when configured.
             </p>
             <div className="mt-3 grid grid-cols-2 gap-2">
@@ -666,7 +740,7 @@ export default function SsdWorkbench({
             >
               <option value="empirical_preview">Empirical preview</option>
               <option value="single_distribution">Single distribution</option>
-              <option value="model_averaging">AICc model averaging (gated)</option>
+              <option value="model_averaging">AICc model averaging</option>
             </select>
           </label>
 
@@ -679,16 +753,12 @@ export default function SsdWorkbench({
               }
               className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             >
+              <option value="Gamma">Gamma</option>
+              <option value="Log-Gumbel">Log-Gumbel</option>
+              <option value="Log-Logistic">Log-Logistic</option>
               <option value="Log-Normal">Log-Normal</option>
-              <option value="Log-Logistic" disabled>
-                Log-Logistic (gated)
-              </option>
-              <option value="Weibull" disabled>
-                Weibull (gated)
-              </option>
-              <option value="Gamma" disabled>
-                Gamma (gated)
-              </option>
+              <option value="Log-Normal Mixture">Log-Normal Mixture</option>
+              <option value="Weibull">Weibull</option>
             </select>
           </label>
 
@@ -742,7 +812,7 @@ export default function SsdWorkbench({
           </div>
         </aside>
 
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           <div className="grid gap-3 md:grid-cols-4">
             {[
               ['HCp', hasHcpPreview ? `${formatNumber(result.hcp)} ${result.unit}` : 'Needs data'],
@@ -764,13 +834,135 @@ export default function SsdWorkbench({
             ))}
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
-            <h3 className="text-base font-bold text-slate-950 dark:text-white">
-              Model diagnostics
-            </h3>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Compare the empirical HCp preview with the first fitted
-              distribution before advancing to model averaging.
+          <details
+            className="group rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950"
+            data-testid="ssd-validation-panel"
+          >
+            <summary className="flex cursor-pointer list-none flex-col gap-2 text-sm font-bold text-slate-950 dark:text-white sm:flex-row sm:items-center sm:justify-between">
+              <span className="flex items-center gap-2">
+                <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" />
+                Validation and verification
+              </span>
+              <span className="ml-6 text-xs font-semibold text-slate-500 dark:text-slate-400 sm:ml-0">
+                {dataSourceMode === 'fixture'
+                  ? selectedFixtureDataset.label
+                  : dataSourceMode === 'upload'
+                    ? 'Uploaded data'
+                    : 'ECOTOX mirror data'}
+              </span>
+            </summary>
+            <div className="mt-4 grid gap-4 text-sm text-slate-600 dark:text-slate-300 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Current source
+                </div>
+                <dl className="mt-3 space-y-2">
+                  <div className="flex justify-between gap-4">
+                    <dt>Dataset</dt>
+                    <dd className="font-semibold text-slate-900 dark:text-white">
+                      {dataSourceMode === 'fixture'
+                        ? selectedFixtureDataset.packageDataset ??
+                          selectedFixtureDataset.label
+                        : dataSourceMode === 'upload'
+                          ? 'Local upload'
+                          : 'Read-only ECOTOX mirror'}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>Rows loaded</dt>
+                    <dd className="font-semibold text-slate-900 dark:text-white">
+                      {selectedRows.length.toLocaleString()}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>Rows used</dt>
+                    <dd className="font-semibold text-slate-900 dark:text-white">
+                      {result.cleanedRecordCount.toLocaleString()}
+                    </dd>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <dt>Unit</dt>
+                    <dd className="font-semibold text-slate-900 dark:text-white">
+                      {result.unit}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+              <div className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Verification status
+                </div>
+                <p className="mt-3 leading-relaxed">
+                  {dataSourceMode === 'fixture'
+                    ? selectedFixtureDataset.validationNote
+                    : 'Use fixture validation datasets to compare the TypeScript output against official ssdtools and ssddata reference behavior.'}
+                </p>
+                {dataSourceMode === 'fixture' && (
+                  <dl className="mt-3 space-y-2">
+                    <div className="flex justify-between gap-4">
+                      <dt>Source</dt>
+                      <dd className="font-semibold text-slate-900 dark:text-white">
+                        {selectedFixtureDataset.sourceLabel}
+                      </dd>
+                    </div>
+                    {selectedFixtureDataset.sourceUrl.startsWith('https://') && (
+                      <div className="flex justify-between gap-4">
+                        <dt>ssddata page</dt>
+                        <dd>
+                          <a
+                            href={selectedFixtureDataset.sourceUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-semibold text-sky-700 hover:text-sky-800 dark:text-sky-300"
+                          >
+                            Open reference
+                          </a>
+                        </dd>
+                      </div>
+                    )}
+                    {selectedFixtureDataset.sourceDetailUrl.startsWith(
+                      'https://',
+                    ) && (
+                      <div className="flex justify-between gap-4">
+                        <dt>CCME page</dt>
+                        <dd>
+                          <a
+                            href={selectedFixtureDataset.sourceDetailUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-semibold text-sky-700 hover:text-sky-800 dark:text-sky-300"
+                          >
+                            Open source
+                          </a>
+                        </dd>
+                      </div>
+                    )}
+                    <div className="flex justify-between gap-4">
+                      <dt>Accessed</dt>
+                      <dd className="font-semibold text-slate-900 dark:text-white">
+                        {selectedFixtureDataset.sourceAccessedAt}
+                      </dd>
+                    </div>
+                  </dl>
+                )}
+              </div>
+            </div>
+          </details>
+
+          <details className="group rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+            <summary className="flex cursor-pointer list-none flex-col gap-2 text-sm font-bold text-slate-950 dark:text-white sm:flex-row sm:items-center sm:justify-between">
+              <span className="flex items-center gap-2">
+                <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" />
+                Model diagnostics
+              </span>
+              <span className="ml-6 text-xs font-semibold text-slate-500 dark:text-slate-400 sm:ml-0">
+                {result.diagnostics.length} rows; {analysisMode.replace('_', ' ')}
+              </span>
+            </summary>
+            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+              Compare empirical HCp, single-distribution fits, and the
+              ssdtools-style AICc model average before treating the result as a
+              candidate.
             </p>
             <div className="mt-4 max-h-64 overflow-auto rounded-md border border-slate-200 dark:border-slate-800">
               <table
@@ -781,6 +973,8 @@ export default function SsdWorkbench({
                   <tr>
                     <th className="px-3 py-2 font-semibold">Model</th>
                     <th className="px-3 py-2 font-semibold">HCp</th>
+                    <th className="px-3 py-2 font-semibold">Weight</th>
+                    <th className="px-3 py-2 font-semibold">Delta</th>
                     <th className="px-3 py-2 font-semibold">AICc</th>
                     <th className="px-3 py-2 font-semibold">Parameters</th>
                     <th className="px-3 py-2 font-semibold">Status</th>
@@ -795,6 +989,15 @@ export default function SsdWorkbench({
                         </td>
                         <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
                           {formatNumber(diagnostic.hcp)} {result.unit}
+                        </td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
+                          {formatNumber(diagnostic.weight, 3)}
+                        </td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
+                          {diagnostic.deltaAicc === null ||
+                          diagnostic.deltaAicc === undefined
+                            ? 'n/a'
+                            : formatNumber(diagnostic.deltaAicc, 3)}
                         </td>
                         <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
                           {diagnostic.aicc === null
@@ -822,7 +1025,7 @@ export default function SsdWorkbench({
                   ) : (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={7}
                         className="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400"
                       >
                         No model diagnostics are available for the current
@@ -833,7 +1036,7 @@ export default function SsdWorkbench({
                 </tbody>
               </table>
             </div>
-          </div>
+          </details>
 
           <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -858,7 +1061,7 @@ export default function SsdWorkbench({
                 required before the candidate value is calculated.
               </div>
             )}
-            <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+            <div className="mt-4 min-w-0 rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
               {canPlotPreview ? (
                 <>
                   <div className="mb-2 flex flex-col gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
@@ -868,7 +1071,7 @@ export default function SsdWorkbench({
                       {plotScale === 'log' ? 'log scale' : 'linear scale'})
                     </span>
                   </div>
-                  <div className="h-[19rem]">
+                  <div className="h-[19rem] min-w-0 overflow-hidden">
                     <ResponsiveContainer width="100%" height="100%">
                       <ComposedChart data={chartData} margin={{ left: 8, right: 18, top: 10, bottom: 12 }}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -924,7 +1127,7 @@ export default function SsdWorkbench({
                             data={result.fittedCurvePoints}
                             type="monotone"
                             dataKey="percentAffected"
-                            name="Log-Normal fit"
+                            name={fittedCurveLabel}
                             stroke="#7c3aed"
                             strokeWidth={2}
                             dot={false}
@@ -954,7 +1157,7 @@ export default function SsdWorkbench({
                     {canPlotFittedCurve && (
                       <span className="inline-flex items-center gap-2">
                         <span className="h-0.5 w-5 border-t-2 border-dashed border-violet-700" />
-                        Log-Normal fit
+                        {fittedCurveLabel}
                       </span>
                     )}
                     {showSpeciesPoints && (

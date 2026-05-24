@@ -33,6 +33,11 @@ describe('SsdWorkbench', () => {
     expect(screen.getByText(/Derived candidate only/i)).toBeInTheDocument();
     expect(screen.getByText(/582,125 rows/i)).toBeInTheDocument();
     expect(screen.getByText(/Upload CSV or JSON/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole('combobox', { name: /Fixture dataset/i }),
+    ).toHaveValue('copper_preview');
+    expect(screen.getByText(/Preview dataset/i)).toBeInTheDocument();
+    expect(screen.getByTestId('ssd-validation-panel')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Water$/ })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -59,11 +64,15 @@ describe('SsdWorkbench', () => {
     expect(screen.getByLabelText(/Fitted curve/i)).toBeChecked();
     expect(screen.getByLabelText(/Species points/i)).toBeChecked();
     expect(screen.getByTestId('ssd-model-diagnostics-table')).toBeInTheDocument();
-    expect(screen.getAllByText(/Log-Normal fit/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/ssdtools\/R lnorm/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Log-Normal \(lnorm\)/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Log-Gumbel \(lgumbel\)/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Log-Normal Mixture \(lnorm_lnorm\)/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/BCANZ ssdtools candidate distribution/i).length).toBeGreaterThan(0);
     expect(screen.getByRole('combobox', { name: /Distribution/i })).toHaveValue(
       'Log-Normal',
     );
+    expect(screen.getByText(/^Weight$/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Delta$/i)).toBeInTheDocument();
 
     const receipt = screen
       .getByRole('heading', { name: /Derived candidate receipt/i })
@@ -72,6 +81,38 @@ describe('SsdWorkbench', () => {
     expect(screen.getByText(/HC5 SSD-derived candidate/i)).toBeInTheDocument();
     expect(screen.getByText(/user entered or derived/i)).toBeInTheDocument();
     expect(screen.getByText(/needs review/i)).toBeInTheDocument();
+  });
+
+  it('switches fixture mode to the CCME validation datasets', () => {
+    render(<SsdWorkbench />);
+
+    fireEvent.change(
+      screen.getByRole('combobox', { name: /Fixture dataset/i }),
+      {
+        target: { value: 'ccme_boron_validation' },
+      },
+    );
+
+    expect(screen.getByDisplayValue('Boron')).toBeInTheDocument();
+    expect(screen.getAllByText(/Validation dataset/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/ssddata CCME boron benchmark dataset/i).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^28$/).length).toBeGreaterThan(0);
+
+    fireEvent.change(
+      screen.getByRole('combobox', { name: /Fixture dataset/i }),
+      {
+        target: { value: 'ccme_endosulfan_validation' },
+      },
+    );
+
+    expect(screen.getByDisplayValue('Endosulfan')).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/ssddata CCME endosulfan benchmark dataset/i).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^12$/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/ng\/L/i).length).toBeGreaterThan(0);
   });
 
   it('shows an insufficient-data state instead of calculating an HCp value', () => {

@@ -1,10 +1,17 @@
 import { aggregateSpeciesValues } from './aggregation';
 import { prepareSsdRecords } from './cleaning';
-import { fitLogNormalDistribution } from './model';
+import {
+  buildModelAveragedFit,
+  DEFAULT_SSDTOOLS_HCP_DELTA_CUTOFF,
+  fitSsdDistributions,
+  MIN_SPECIES_FOR_SSDTOOLS_FIT,
+  SSDTOOLS_DISTRIBUTION_CODES,
+} from './model';
 import {
   type EmpiricalSsdPoint,
   type RawEcotoxRecord,
   type SsdAnalysisResult,
+  type SsdCleanedRecord,
   type SsdWorkbenchSettings,
   type SpeciesAggregate,
 } from './types';
@@ -56,6 +63,38 @@ export function buildEmpiricalPoints(
   }));
 }
 
+function normalizeReportedUnit(value: string | null | undefined): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
+function inferAnalysisUnit(
+  cleanedRecords: SsdCleanedRecord[],
+  settings: SsdWorkbenchSettings,
+): { unit: string; warning: string | null } {
+  const units = Array.from(
+    new Set(
+      cleanedRecords
+        .map((record) => normalizeReportedUnit(record.raw.unit))
+        .filter((unit): unit is string => unit !== null),
+    ),
+  );
+
+  if (units.length === 1) return { unit: units[0], warning: null };
+  if (units.length > 1) {
+    return {
+      unit: 'mixed reported units',
+      warning:
+        'Multiple concentration units are present in the selected SSD records; convert units before interpreting the HCp candidate.',
+    };
+  }
+
+  return {
+    unit: settings.mediaFilter === 'sediment' ? 'reported unit' : 'mg/L',
+    warning: null,
+  };
+}
+
 export function buildSsdAnalysis(
   rawRows: RawEcotoxRecord[],
   settings: SsdWorkbenchSettings,
@@ -71,6 +110,9 @@ export function buildSsdAnalysis(
     settings.aggregationMethod,
   );
   const warnings: string[] = [];
+  const inferredUnit = inferAnalysisUnit(cleanedRecords, settings);
+
+  if (inferredUnit.warning) warnings.push(inferredUnit.warning);
 
   if (speciesAggregates.length < MIN_SPECIES_FOR_PREVIEW) {
     warnings.push(
@@ -85,12 +127,17 @@ export function buildSsdAnalysis(
     );
   }
   if (settings.analysisMode !== 'empirical_preview') {
-    if (
-      settings.analysisMode === 'model_averaging' ||
-      settings.selectedDistribution !== 'Log-Normal'
-    ) {
+    warnings.push(
+      'SSD model fitting is a TypeScript parity candidate aligned to BC Gov ssdtools distribution names and model-averaged CDF inversion. Validate against official R ssdtools snapshots before regulatory use.',
+    );
+    if (speciesAggregates.length < MIN_SPECIES_FOR_SSDTOOLS_FIT) {
       warnings.push(
-        'Only Log-Normal single-distribution fitting is enabled in this slice. AICc model averaging and additional distributions remain gated.',
+        `BC Gov ssdtools distribution fitting requires at least ${MIN_SPECIES_FOR_SSDTOOLS_FIT} species; empirical HCp preview is shown until more species are available.`,
+      );
+    }
+    if (settings.bootstrapIterations <= 0) {
+      warnings.push(
+        'Point estimates are shown without bootstrap confidence intervals; ssdtools bootstrap CI parity is still pending.',
       );
     }
   }
@@ -106,16 +153,67 @@ export function buildSsdAnalysis(
   const empiricalHcp = hasMinimumSpecies
     ? calculateEmpiricalHcp(speciesAggregates, settings.pValue)
     : Number.NaN;
-  const logNormalFit = hasMinimumSpecies
-    ? fitLogNormalDistribution(speciesAggregates, settings.pValue)
-    : null;
-  const shouldUseLogNormalHcp =
+  const distributionFits = hasMinimumSpecies
+    ? fitSsdDistributions(speciesAggregates, settings.pValue)
+    : [];
+  const selectedDistribution = settings.selectedDistribution ?? 'Log-Normal';
+  const selectedFit =
+    distributionFits.find(
+      (fit) => fit.distribution === selectedDistribution,
+    ) ?? null;
+  const modelAveragedFit =
+    hasMinimumSpecies && settings.analysisMode === 'model_averaging'
+      ? buildModelAveragedFit(speciesAggregates, settings.pValue)
+      : null;
+
+  if (
     settings.analysisMode === 'single_distribution' &&
-    (settings.selectedDistribution ?? 'Log-Normal') === 'Log-Normal' &&
-    logNormalFit !== null;
-  const hcp = shouldUseLogNormalHcp ? logNormalFit.hcp : empiricalHcp;
+    hasMinimumSpecies &&
+    selectedFit === null
+  ) {
+    warnings.push(
+      `${selectedDistribution} did not produce a valid fit for the current species set.`,
+    );
+  }
+  if (
+    settings.analysisMode === 'model_averaging' &&
+    modelAveragedFit !== null &&
+    modelAveragedFit.activeFits.length < distributionFits.length
+  ) {
+    warnings.push(
+      `Model averaging excludes distributions with information-criterion delta above ${DEFAULT_SSDTOOLS_HCP_DELTA_CUTOFF}.`,
+    );
+  }
+  if (
+    settings.analysisMode === 'model_averaging' &&
+    speciesAggregates.length < 26
+  ) {
+    warnings.push(
+      'Mixture models are included for ssdtools parity, but the ssdtools model-averaging article notes two-component mixture models are better supported around 26+ species.',
+    );
+  }
+
+  const shouldUseModelAverage =
+    settings.analysisMode === 'model_averaging' && modelAveragedFit !== null;
+  const shouldUseSingleDistribution =
+    settings.analysisMode === 'single_distribution' && selectedFit !== null;
+  const hcp = shouldUseModelAverage
+    ? modelAveragedFit.hcp
+    : shouldUseSingleDistribution
+      ? selectedFit.hcp
+      : empiricalHcp;
+  const displayedFit = shouldUseModelAverage
+    ? modelAveragedFit
+    : selectedFit ?? distributionFits.find((fit) => fit.distribution === 'Log-Normal');
   const percentileLabel = `HC${Math.round(settings.pValue * 100)}`;
-  const unit = settings.mediaFilter === 'sediment' ? 'reported unit' : 'mg/L';
+  const unit = inferredUnit.unit;
+  const activeDistributionNames =
+    modelAveragedFit?.activeFits
+      .map(
+        (fit) =>
+          `${fit.distribution} (${SSDTOOLS_DISTRIBUTION_CODES[fit.distribution]})`,
+      )
+      .join(', ') ?? 'n/a';
 
   return {
     hcp,
@@ -127,7 +225,7 @@ export function buildSsdAnalysis(
     settings,
     speciesAggregates,
     empiricalPoints,
-    fittedCurvePoints: logNormalFit?.curvePoints ?? [],
+    fittedCurvePoints: displayedFit?.curvePoints ?? [],
     diagnostics: [
       ...(hasMinimumSpecies
         ? [
@@ -144,22 +242,37 @@ export function buildSsdAnalysis(
             },
           ]
         : []),
-      ...(logNormalFit
+      ...(modelAveragedFit
         ? [
             {
-              name: 'Log-Normal fit',
-              distribution: logNormalFit.distribution,
-              mode: 'single_distribution' as const,
-              hcp: logNormalFit.hcp,
+              name: 'ssdtools model average',
+              mode: 'model_averaging' as const,
+              hcp: modelAveragedFit.hcp,
               weight: 1,
-              aic: logNormalFit.aic,
-              aicc: logNormalFit.aicc,
-              parameters: logNormalFit.parameters,
-              note:
-                'Fitted in natural-log concentration space using ssdtools/R lnorm parameter names. Additional distributions, model averaging, and bootstrap confidence intervals remain gated.',
+              aic: null,
+              aicc: null,
+              deltaAicc: null,
+              parameters: [],
+              note: `Weighted CDF inversion over active fits: ${activeDistributionNames}.`,
             },
           ]
         : []),
+      ...distributionFits.map((fit) => ({
+        name: `${fit.distribution} (${SSDTOOLS_DISTRIBUTION_CODES[fit.distribution]})`,
+        distribution: fit.distribution,
+        mode: 'single_distribution' as const,
+        hcp: fit.hcp,
+        weight: fit.weight,
+        aic: fit.aic,
+        aicc: fit.aicc,
+        deltaAicc: fit.deltaAicc,
+        parameters: fit.parameters,
+        note:
+          fit.deltaAicc !== null &&
+          fit.deltaAicc > DEFAULT_SSDTOOLS_HCP_DELTA_CUTOFF
+            ? `Fitted but excluded from model-averaged HCp by the ssdtools delta ${DEFAULT_SSDTOOLS_HCP_DELTA_CUTOFF} cutoff.`
+            : 'BCANZ ssdtools candidate distribution fitted in the TypeScript parity path.',
+      })),
     ],
     excludedRecords,
     warnings,

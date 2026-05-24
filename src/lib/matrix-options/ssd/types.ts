@@ -17,10 +17,14 @@ export type SsdAnalysisMode =
   | 'single_distribution';
 
 export type SsdDistribution =
-  | 'Log-Normal'
+  | 'Gamma'
+  | 'Log-Gumbel'
   | 'Log-Logistic'
-  | 'Weibull'
-  | 'Gamma';
+  | 'Log-Normal'
+  | 'Log-Normal Mixture'
+  | 'Weibull';
+
+export type SsdCurveDistribution = SsdDistribution | 'Model Average';
 
 export type SsdExcludedReason =
   | 'chemical_mismatch'
@@ -35,6 +39,7 @@ export interface RawEcotoxRecord {
   chemical_name: string | null;
   species_scientific_name: string | null;
   conc1_mean: string | number | null;
+  unit?: string | null;
   species_group?: string | null;
   media_type?: string | null;
   endpoint?: string | null;
@@ -102,7 +107,7 @@ export interface EmpiricalSsdPoint {
 }
 
 export interface SsdFittedCurvePoint {
-  distribution: SsdDistribution;
+  distribution: SsdCurveDistribution;
   value: number;
   percentAffected: number;
 }
@@ -120,6 +125,7 @@ export interface SsdModelDiagnostic {
   weight: number;
   aic: number | null;
   aicc: number | null;
+  deltaAicc?: number | null;
   parameters: SsdModelParameter[];
   note: string;
 }

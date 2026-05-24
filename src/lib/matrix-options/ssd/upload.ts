@@ -23,6 +23,7 @@ const HEADER_ALIASES: Record<UploadField, string[]> = {
     'endpoint_value',
     'toxicity_value',
   ],
+  unit: ['unit', 'units', 'concentration_unit', 'value_unit'],
   species_group: ['species_group', 'taxonomic_group', 'group'],
   media_type: ['media_type', 'media', 'medium', 'matrix', 'exposure_media'],
   endpoint: ['endpoint', 'effect', 'effect_endpoint'],
@@ -70,6 +71,9 @@ function assignRecordValue(
     case 'conc1_mean':
       record.conc1_mean = value;
       break;
+    case 'unit':
+      record.unit = value === null ? null : String(value);
+      break;
     case 'species_group':
       record.species_group = value === null ? null : String(value);
       break;
@@ -95,6 +99,7 @@ function emptyRecord(): RawEcotoxRecord {
     chemical_name: null,
     species_scientific_name: null,
     conc1_mean: null,
+    unit: null,
     species_group: null,
     media_type: null,
     endpoint: null,

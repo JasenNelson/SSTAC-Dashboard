@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { SSD_FIXTURE_ROWS } from '../fixtures';
+import { getSsdFixtureDataset, SSD_FIXTURE_ROWS } from '../fixtures';
 import { buildSsdAnalysis, calculateEmpiricalHcp } from '../hcp';
-import type { SsdWorkbenchSettings } from '../types';
+import type { RawEcotoxRecord, SsdWorkbenchSettings } from '../types';
 
 const BASE_SETTINGS: SsdWorkbenchSettings = {
   chemicalNames: ['Copper'],
@@ -19,6 +19,19 @@ const BASE_SETTINGS: SsdWorkbenchSettings = {
   extractedAt: '2026-05-24',
 };
 
+const FIVE_SPECIES_ROWS: RawEcotoxRecord[] = Array.from(
+  { length: 5 },
+  (_, index) => ({
+    chemical_name: 'Zinc',
+    species_scientific_name: `Species ${index + 1}`,
+    conc1_mean: 0.1 + index * 0.01,
+    unit: 'mg/L',
+    species_group: 'Fish',
+    media_type: 'FW',
+    endpoint: 'Mortality',
+  }),
+);
+
 describe('SSD HCp preview', () => {
   it('builds a deterministic fixture-backed derived candidate receipt', () => {
     const result = buildSsdAnalysis(SSD_FIXTURE_ROWS, BASE_SETTINGS);
@@ -27,7 +40,17 @@ describe('SSD HCp preview', () => {
     expect(result.speciesCount).toBe(10);
     expect(result.cleanedRecordCount).toBe(11);
     expect(result.excludedRecordCount).toBe(4);
-    expect(result.diagnostics).toHaveLength(2);
+    expect(result.diagnostics.length).toBeGreaterThanOrEqual(7);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.name)).toEqual(
+      expect.arrayContaining([
+        'Gamma (gamma)',
+        'Log-Gumbel (lgumbel)',
+        'Log-Logistic (llogis)',
+        'Log-Normal (lnorm)',
+        'Log-Normal Mixture (lnorm_lnorm)',
+        'Weibull (weibull)',
+      ]),
+    );
     expect(result.fittedCurvePoints.length).toBeGreaterThan(20);
     expect(result.derivedCandidate).toMatchObject({
       label: 'HC5 SSD-derived candidate',
@@ -75,13 +98,78 @@ describe('SSD HCp preview', () => {
       selectedDistribution: 'Log-Normal',
     });
     const logNormalDiagnostic = result.diagnostics.find(
-      (diagnostic) => diagnostic.name === 'Log-Normal fit',
+      (diagnostic) => diagnostic.name === 'Log-Normal (lnorm)',
     );
 
     expect(logNormalDiagnostic).toBeDefined();
     expect(result.hcp).toBe(logNormalDiagnostic?.hcp);
     expect(result.hcp).toBeGreaterThan(0);
     expect(result.warnings.join(' ')).not.toMatch(/only log-normal/i);
+  });
+
+  it('can use ssdtools-style model averaging as the candidate HCp', () => {
+    const result = buildSsdAnalysis(SSD_FIXTURE_ROWS, {
+      ...BASE_SETTINGS,
+      analysisMode: 'model_averaging',
+    });
+    const modelAverageDiagnostic = result.diagnostics.find(
+      (diagnostic) => diagnostic.name === 'ssdtools model average',
+    );
+
+    expect(modelAverageDiagnostic).toBeDefined();
+    expect(result.hcp).toBe(modelAverageDiagnostic?.hcp);
+    expect(result.fittedCurvePoints[0]?.distribution).toBe('Model Average');
+    expect(result.warnings.join(' ')).toMatch(/TypeScript parity candidate/i);
+    expect(result.warnings.join(' ')).toMatch(/bootstrap confidence intervals/i);
+  });
+
+  it('falls back to empirical HCp below the ssdtools fitting row minimum', () => {
+    const result = buildSsdAnalysis(FIVE_SPECIES_ROWS, {
+      ...BASE_SETTINGS,
+      chemicalNames: ['Zinc'],
+      analysisMode: 'model_averaging',
+    });
+
+    expect(result.speciesCount).toBe(5);
+    expect(result.hcp).toBeGreaterThan(0);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.name)).not.toContain(
+      'ssdtools model average',
+    );
+    expect(result.warnings.join(' ')).toMatch(
+      /ssdtools distribution fitting requires at least 6 species/i,
+    );
+  });
+
+  it('builds CCME boron validation results with the ssddata row count', () => {
+    const boron = getSsdFixtureDataset('ccme_boron_validation');
+    const result = buildSsdAnalysis(boron.rows, {
+      ...BASE_SETTINGS,
+      chemicalNames: ['Boron'],
+      analysisMode: 'model_averaging',
+    });
+
+    expect(result.speciesCount).toBe(28);
+    expect(result.cleanedRecordCount).toBe(28);
+    expect(result.unit).toBe('mg/L');
+    expect(result.hcp).toBeGreaterThan(0);
+    expect(result.diagnostics.map((diagnostic) => diagnostic.name)).toEqual(
+      expect.arrayContaining(['ssdtools model average', 'Gamma (gamma)']),
+    );
+  });
+
+  it('builds CCME endosulfan validation results with reported ng/L units', () => {
+    const endosulfan = getSsdFixtureDataset('ccme_endosulfan_validation');
+    const result = buildSsdAnalysis(endosulfan.rows, {
+      ...BASE_SETTINGS,
+      chemicalNames: ['Endosulfan'],
+      analysisMode: 'single_distribution',
+      selectedDistribution: 'Log-Logistic',
+    });
+
+    expect(result.speciesCount).toBe(12);
+    expect(result.cleanedRecordCount).toBe(12);
+    expect(result.unit).toBe('ng/L');
+    expect(result.hcp).toBeGreaterThan(0);
   });
 
   it('keeps the numeric helper strict for parity tests', () => {
