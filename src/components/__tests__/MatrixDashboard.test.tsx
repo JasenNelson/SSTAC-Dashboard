@@ -129,6 +129,9 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(
       screen.getByTestId('eco-direct-eqp-calculator'),
     ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('regulatory-frame-notice-eco-direct-eqp'),
+    ).toHaveTextContent(/BC Protocol 1 v5 DRA/);
     // Eco-Food NOT rendered when activeCategory = 'eco-direct'.
     expect(
       screen.queryByTestId('eco-food-bsaf-calculator'),
@@ -221,9 +224,11 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
     fireEvent.change(screen.getByTestId('shared-jurisdiction-select'), {
-      target: { value: 'federal-ccme' },
+      target: { value: 'ccme-sediment-quality' },
     });
-    expect(window.localStorage.getItem(LS_JURISDICTION)).toBe('federal-ccme');
+    expect(window.localStorage.getItem(LS_JURISDICTION)).toBe(
+      'ccme-sediment-quality',
+    );
   });
 
   it('persists activeCategory + substanceKey on change', () => {
@@ -243,7 +248,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
   it('hydrates valid localStorage values on mount (activeCategory + substanceKey + jurisdiction)', () => {
     window.localStorage.setItem(LS_CATEGORY, 'eco-food');
     window.localStorage.setItem(LS_SUBSTANCE, 'total_pcbs_aroclor_1254');
-    window.localStorage.setItem(LS_JURISDICTION, 'federal-ccme');
+    window.localStorage.setItem(LS_JURISDICTION, 'ccme-sediment-quality');
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
     expect(
@@ -256,7 +261,20 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(
       (screen.getByTestId('shared-jurisdiction-select') as HTMLSelectElement)
         .value,
-    ).toBe('federal-ccme');
+    ).toBe('ccme-sediment-quality');
+  });
+
+  it('hydrates legacy jurisdiction ids by migrating them to regulatory frames', () => {
+    window.localStorage.setItem(LS_JURISDICTION, 'federal-ccme');
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    clickCalculatorTab();
+    expect(
+      (screen.getByTestId('shared-jurisdiction-select') as HTMLSelectElement)
+        .value,
+    ).toBe('ccme-sediment-quality');
+    expect(window.localStorage.getItem(LS_JURISDICTION)).toBe(
+      'ccme-sediment-quality',
+    );
   });
 
   it('hydrates hh-direct from localStorage and renders the HH Direct calculator', () => {
@@ -293,8 +311,10 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(
       (screen.getByTestId('shared-jurisdiction-select') as HTMLSelectElement)
         .value,
-    ).toBe('bc-csr');
-    expect(window.localStorage.getItem(LS_JURISDICTION)).toBe('bc-csr');
+    ).toBe('bc-protocol1-v5-dra');
+    expect(window.localStorage.getItem(LS_JURISDICTION)).toBe(
+      'bc-protocol1-v5-dra',
+    );
   });
 
   it('falls back to default audience-tier when an unknown tier is persisted', () => {

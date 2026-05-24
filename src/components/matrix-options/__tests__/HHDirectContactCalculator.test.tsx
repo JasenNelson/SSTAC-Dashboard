@@ -15,7 +15,7 @@ describe('HHDirectContactCalculator', () => {
     render(
       <HHDirectContactCalculator
         substanceKey="arsenic_inorganic"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
 
@@ -29,13 +29,16 @@ describe('HHDirectContactCalculator', () => {
     expect(screen.getByTestId('hh-direct-preliminary-standard')).not.toHaveTextContent(
       /--\s*mg\/kg/,
     );
+    expect(
+      screen.getByTestId('regulatory-frame-notice-human-health-direct'),
+    ).toHaveTextContent(/BC Protocol 1 v5 DRA/);
   });
 
   it('updates the result when exposure frequency changes', () => {
     render(
       <HHDirectContactCalculator
         substanceKey="arsenic_inorganic"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
     const before = screen.getByTestId('hh-direct-preliminary-standard').textContent;
@@ -51,7 +54,7 @@ describe('HHDirectContactCalculator', () => {
     render(
       <HHDirectContactCalculator
         substanceKey="arsenic_inorganic"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
     fireEvent.change(screen.getByTestId('hh-direct-rfd-input'), {
@@ -69,7 +72,7 @@ describe('HHDirectContactCalculator', () => {
     render(
       <HHDirectContactCalculator
         substanceKey="arsenic_inorganic"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
 

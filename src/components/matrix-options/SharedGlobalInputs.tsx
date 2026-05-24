@@ -11,10 +11,9 @@
 // not here -- this control is the global "what substance am I working on"
 // state, regardless of whether the active pathway can derive it.
 //
-// Jurisdiction selector: 3 starter rows (BC CSR default, Federal CCME,
-// Site-specific). Future slices will wire jurisdiction-aware derivation
-// onto these identifiers; for now the value is a passthrough UI primitive
-// the parent stores in lifted state.
+// Jurisdiction selector: regulatory-frame rows that control value lookup,
+// source hierarchy, and pathway applicability messaging. Calculator math
+// still uses the current input defaults until frame-specific values pass QA.
 //
 // Plain ASCII only.
 
@@ -26,6 +25,7 @@ import {
 } from '@/lib/matrix-options/substanceLibrary';
 import {
   JURISDICTION_OPTIONS,
+  coerceJurisdiction,
   isJurisdiction,
   type Jurisdiction,
 } from './guide/content/jurisdictions';
@@ -75,7 +75,7 @@ export default function SharedGlobalInputs({
   const handleJurisdictionChange = (
     e: React.ChangeEvent<HTMLSelectElement>,
   ): void => {
-    const next = e.target.value;
+    const next = coerceJurisdiction(e.target.value);
     if (isJurisdiction(next)) {
       onJurisdictionChange(next);
     }

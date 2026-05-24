@@ -1,28 +1,28 @@
-// Jurisdiction / regulatory-frame options for the matrix-options calculator
-// shared global inputs. v1 carries a small starter set; later versions can
-// wire jurisdiction-aware derivation logic (e.g., FCV / TRV selection by
-// frame, applicability filters) onto these identifiers.
-//
-// Plan v3 section 4.3: default jurisdiction = 'bc-csr'.
+// Regulatory-frame options for the matrix-options calculator shared
+// global inputs. This file preserves the historical Jurisdiction export
+// name for component compatibility while the underlying model has moved
+// to framework-level records in src/lib/matrix-options/regulatoryFrames.ts.
 //
 // Plain ASCII only.
 
-export type Jurisdiction = 'bc-csr' | 'federal-ccme' | 'site-specific';
+import {
+  DEFAULT_REGULATORY_FRAME_ID,
+  REGULATORY_FRAME_IDS,
+  REGULATORY_FRAMES,
+  coerceRegulatoryFrameId,
+  isRegulatoryFrameId,
+  type RegulatoryFrameId,
+} from '@/lib/matrix-options/regulatoryFrames';
 
-// Tuple with literal types preserved -- same pattern as
-// ALL_MATRIX_CATEGORIES_TUPLE, motivated by the same cursor-agent review
-// finding. The exhaustiveness guards below depend on the literal tuple,
-// not the widened ReadonlyArray export.
-const ALL_JURISDICTIONS_TUPLE = [
-  'bc-csr',
-  'federal-ccme',
-  'site-specific',
-] as const satisfies readonly Jurisdiction[];
+export type Jurisdiction = RegulatoryFrameId;
+
+const ALL_JURISDICTIONS_TUPLE = REGULATORY_FRAME_IDS;
 
 export const ALL_JURISDICTIONS: ReadonlyArray<Jurisdiction> =
   ALL_JURISDICTIONS_TUPLE;
 
-export const DEFAULT_JURISDICTION: Jurisdiction = 'bc-csr';
+export const DEFAULT_JURISDICTION: Jurisdiction =
+  DEFAULT_REGULATORY_FRAME_ID;
 
 export interface JurisdictionOption {
   id: Jurisdiction;
@@ -30,51 +30,23 @@ export interface JurisdictionOption {
   description: string;
 }
 
-// Same tuple-with-literals pattern as ALL_JURISDICTIONS_TUPLE so the
-// per-id exhaustiveness guard below catches a missing JurisdictionOption
-// row (not just a missing string in the union). codex review on Commit 2
-// (2026-05-19) caught that the prior `ReadonlyArray<JurisdictionOption>`
-// export widened the inferred id type back to Jurisdiction, making the
-// OptionsCoverAllJurisdictions check a tautology.
-const JURISDICTION_OPTIONS_TUPLE = [
-  {
-    id: 'bc-csr',
-    label: 'BC CSR (Contaminated Sites Regulation)',
-    description:
-      'BC Contaminated Sites Regulation; default matrix standards and ' +
-      'screening levels.',
-  },
-  {
-    id: 'federal-ccme',
-    label: 'Federal CCME',
-    description:
-      'Canadian Council of Ministers of the Environment sediment quality ' +
-      'guidelines (ISQG / PEL).',
-  },
-  {
-    id: 'site-specific',
-    label: 'Site-specific (HITL judgment)',
-    description:
-      'Site-specific derivation with HITL professional judgment overriding ' +
-      'jurisdictional defaults; document rationale on the audit trail.',
-  },
-] as const satisfies readonly JurisdictionOption[];
+const JURISDICTION_OPTIONS_TUPLE = REGULATORY_FRAMES.map((frame) => ({
+  id: frame.id,
+  label: frame.label,
+  description: frame.description,
+})) as readonly JurisdictionOption[];
 
 export const JURISDICTION_OPTIONS: ReadonlyArray<JurisdictionOption> =
   JURISDICTION_OPTIONS_TUPLE;
 
 export function isJurisdiction(value: unknown): value is Jurisdiction {
-  return (
-    typeof value === 'string' &&
-    (ALL_JURISDICTIONS as readonly string[]).includes(value)
-  );
+  return isRegulatoryFrameId(value);
 }
 
-// Compile-time exhaustiveness guards (cursor-agent review 2026-05-19 P2
-// pattern fix): if a future Jurisdiction is added to the union and either
-// the tuple or JURISDICTION_OPTIONS list is not updated to match, the
-// Exclude<> resolves to the missing member(s) (not `never`), and the
-// `true` assignment fails to compile.
+export function coerceJurisdiction(value: unknown): Jurisdiction | null {
+  return coerceRegulatoryFrameId(value);
+}
+
 type AllJurisdictionsExhaustive =
   Exclude<Jurisdiction, (typeof ALL_JURISDICTIONS_TUPLE)[number]> extends never
     ? true

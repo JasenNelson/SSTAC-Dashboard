@@ -17,10 +17,11 @@ vi.mock('@/components/MathRenderer', () => ({
 
 import EcoFoodBSAFCalculator from '../EcoFoodBSAFCalculator';
 import { SUBSTANCE_LIBRARY } from '@/lib/matrix-options/substanceLibrary';
+import { REGULATORY_FRAME_IDS } from '@/lib/matrix-options/regulatoryFrames';
 
 const DEFAULT_PROPS = {
   substanceKey: 'benzo_a_pyrene',
-  jurisdiction: 'bc-csr' as const,
+  jurisdiction: 'bc-protocol1-v5-dra' as const,
 };
 
 describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
@@ -141,7 +142,7 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     rerender(
       <EcoFoodBSAFCalculator
         substanceKey="total_pcbs_aroclor_1254"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
     // Total PCBs library TRV = 0.00012.
@@ -184,7 +185,7 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     rerender(
       <EcoFoodBSAFCalculator
         substanceKey="total_pcbs_aroclor_1254"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
     expect(
@@ -239,7 +240,7 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     rerender(
       <EcoFoodBSAFCalculator
         substanceKey="total_pcbs_aroclor_1254"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
     expect(
@@ -250,9 +251,8 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     ).toBe('2');
   });
 
-  it('accepts jurisdiction prop without crashing (passthrough smoke)', () => {
-    const jurisdictions = ['bc-csr', 'federal-ccme', 'site-specific'] as const;
-    for (const j of jurisdictions) {
+  it('uses the selected regulatory frame without crashing', () => {
+    for (const j of REGULATORY_FRAME_IDS) {
       const { unmount } = render(
         <EcoFoodBSAFCalculator
           substanceKey="benzo_a_pyrene"
@@ -261,6 +261,9 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
       );
       expect(
         screen.getByTestId('eco-food-bsaf-calculator'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId('regulatory-frame-notice-eco-food-bsaf'),
       ).toBeInTheDocument();
       unmount();
     }

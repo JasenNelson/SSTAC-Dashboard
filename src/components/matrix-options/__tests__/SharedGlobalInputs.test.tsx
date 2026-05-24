@@ -13,6 +13,7 @@ import {
   ALL_JURISDICTIONS,
   DEFAULT_JURISDICTION,
   JURISDICTION_OPTIONS,
+  coerceJurisdiction,
   isJurisdiction,
 } from '../guide/content/jurisdictions';
 
@@ -50,7 +51,7 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
     expect(select.options[0].value).toBe(SUBSTANCE_LIBRARY[0].key);
   });
 
-  it('populates the jurisdiction dropdown with all 3 starter options', () => {
+  it('populates the jurisdiction dropdown with all regulatory frame options', () => {
     render(
       <SharedGlobalInputs
         substanceKey={DEFAULT_SUBSTANCE_KEY}
@@ -63,9 +64,8 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
       'shared-jurisdiction-select',
     ) as HTMLSelectElement;
     expect(select.options).toHaveLength(ALL_JURISDICTIONS.length);
-    // Plan v3 section 4.3: default jurisdiction = 'bc-csr'.
-    expect(DEFAULT_JURISDICTION).toBe('bc-csr');
-    expect(select.value).toBe('bc-csr');
+    expect(DEFAULT_JURISDICTION).toBe('bc-protocol1-v5-dra');
+    expect(select.value).toBe('bc-protocol1-v5-dra');
   });
 
   it('emits onSubstanceKeyChange with the new key when the substance dropdown changes', () => {
@@ -98,8 +98,10 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
       />,
     );
     const select = screen.getByTestId('shared-jurisdiction-select');
-    fireEvent.change(select, { target: { value: 'federal-ccme' } });
-    expect(onJurisdictionChange).toHaveBeenCalledWith('federal-ccme');
+    fireEvent.change(select, { target: { value: 'ccme-sediment-quality' } });
+    expect(onJurisdictionChange).toHaveBeenCalledWith(
+      'ccme-sediment-quality',
+    );
   });
 
   it('renders the active substance description (class + log K_ow) below the dropdown', () => {
@@ -120,26 +122,34 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
     render(
       <SharedGlobalInputs
         substanceKey={DEFAULT_SUBSTANCE_KEY}
-        jurisdiction="federal-ccme"
+        jurisdiction="ccme-sediment-quality"
         onSubstanceKeyChange={() => {}}
         onJurisdictionChange={() => {}}
       />,
     );
     const desc = screen.getByTestId('shared-jurisdiction-description');
     const expected = JURISDICTION_OPTIONS.find(
-      (j) => j.id === 'federal-ccme',
+      (j) => j.id === 'ccme-sediment-quality',
     )?.description;
     expect(desc.textContent).toBe(expected ?? '');
   });
 
-  it('isJurisdiction rejects unknown strings and accepts the known set', () => {
-    expect(isJurisdiction('bc-csr')).toBe(true);
-    expect(isJurisdiction('federal-ccme')).toBe(true);
+  it('isJurisdiction rejects unknown and legacy strings and accepts the known set', () => {
+    expect(isJurisdiction('bc-protocol1-v5-dra')).toBe(true);
+    expect(isJurisdiction('ccme-sediment-quality')).toBe(true);
     expect(isJurisdiction('site-specific')).toBe(true);
+    expect(isJurisdiction('bc-csr')).toBe(false);
+    expect(isJurisdiction('federal-ccme')).toBe(false);
     expect(isJurisdiction('made-up')).toBe(false);
     expect(isJurisdiction(null)).toBe(false);
     expect(isJurisdiction(undefined)).toBe(false);
     expect(isJurisdiction(42)).toBe(false);
+  });
+
+  it('coerceJurisdiction maps legacy localStorage ids to frame ids', () => {
+    expect(coerceJurisdiction('bc-csr')).toBe('bc-protocol1-v5-dra');
+    expect(coerceJurisdiction('federal-ccme')).toBe('ccme-sediment-quality');
+    expect(coerceJurisdiction('made-up')).toBeNull();
   });
 
   // Cursor-agent review on Commit 2 (2026-05-19, P2): the change handlers

@@ -30,6 +30,9 @@ describe('BackgroundAdjustment', () => {
     // UTL hero card shows the Provincial label by default.
     const hero = screen.getByTestId('bg-adjust-utl-hero');
     expect(hero).toHaveTextContent(/Provincial UTL 95\/95/);
+    expect(
+      screen.getByTestId('regulatory-frame-notice-background-adjustment'),
+    ).toHaveTextContent(/BC Protocol 1 v5 DRA/);
   });
 
   it('flips the scope radio to Regional and updates the active textarea + UTL label', () => {

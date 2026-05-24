@@ -37,6 +37,7 @@ import {
   ALL_JURISDICTIONS,
   DEFAULT_JURISDICTION,
   JURISDICTION_OPTIONS,
+  coerceJurisdiction,
   isJurisdiction,
   type Jurisdiction,
 } from './matrix-options/guide/content/jurisdictions';
@@ -185,12 +186,13 @@ function restoreSubstanceKey(): string {
 function restoreJurisdiction(): Jurisdiction {
   if (typeof window === 'undefined') return DEFAULT_JURISDICTION;
   const raw = window.localStorage.getItem(LS_KEY_JURISDICTION);
+  const coerced = coerceJurisdiction(raw);
   if (
-    raw &&
-    isJurisdiction(raw) &&
-    (ALL_JURISDICTIONS as readonly string[]).includes(raw)
+    coerced &&
+    isJurisdiction(coerced) &&
+    (ALL_JURISDICTIONS as readonly string[]).includes(coerced)
   ) {
-    return raw;
+    return coerced;
   }
   if (raw !== null) window.localStorage.removeItem(LS_KEY_JURISDICTION);
   return DEFAULT_JURISDICTION;
@@ -492,6 +494,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           substanceKey={substanceKey}
           substanceLabel={selectedSubstance?.displayName ?? substanceKey}
           jurisdictionLabel={selectedJurisdiction?.label ?? jurisdiction}
+          regulatoryFrameId={jurisdiction}
           onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
         />
       );
@@ -617,6 +620,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
             </div>
             <BackgroundAdjustment
+              jurisdiction={jurisdiction}
               onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
             />
           </div>

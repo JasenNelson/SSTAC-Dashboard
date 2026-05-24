@@ -18,8 +18,9 @@
 // prominent "Preliminary Toxicity-Based Standard" hero -> a Technical
 // details <details> disclosure (collapsed by default).
 //
-// jurisdiction is currently a passthrough prop. Future slices will wire
-// jurisdiction-aware TRV / BSAF selection logic onto it.
+// jurisdiction now carries the selected regulatory frame. It controls
+// source hierarchy and value lookup eligibility; calculator defaults stay
+// unchanged until frame-specific source values pass QA.
 //
 // Plain ASCII only.
 
@@ -37,6 +38,7 @@ import type {
   EvidenceLibraryFilterRequest,
 } from '@/lib/matrix-options/provenance/types';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
+import RegulatoryFrameNotice from './RegulatoryFrameNotice';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -63,7 +65,7 @@ export interface EcoFoodBSAFCalculatorProps {
 
 export default function EcoFoodBSAFCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
-  jurisdiction: _jurisdiction = DEFAULT_JURISDICTION,
+  jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
 }: EcoFoodBSAFCalculatorProps) {
@@ -324,6 +326,11 @@ export default function EcoFoodBSAFCalculator({
           </p>
         )}
       </header>
+
+      <RegulatoryFrameNotice
+        frameId={jurisdiction}
+        pathway="eco-food-bsaf"
+      />
 
       {/*
         Layout per plan v3 section 1 vertical flow: inputs -> error
@@ -706,6 +713,7 @@ export default function EcoFoodBSAFCalculator({
       <CalculatorProvenancePanel
         pathway="eco-food-bsaf"
         usedValues={provenanceValues}
+        regulatoryFrameId={jurisdiction}
         onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
     </section>

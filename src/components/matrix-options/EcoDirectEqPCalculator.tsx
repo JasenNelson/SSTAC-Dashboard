@@ -15,8 +15,9 @@
 // badge is visible whenever fcvIsOverride is true so the HITL can see
 // they are no longer tracking the library default.
 //
-// jurisdiction is currently a passthrough prop. Future slices will wire
-// jurisdiction-aware FCV selection logic onto it.
+// jurisdiction now carries the selected regulatory frame. It controls
+// source hierarchy and value lookup eligibility; calculator defaults stay
+// unchanged until frame-specific source values pass QA.
 //
 // Plain ASCII only.
 
@@ -31,6 +32,7 @@ import type {
   EvidenceLibraryFilterRequest,
 } from '@/lib/matrix-options/provenance/types';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
+import RegulatoryFrameNotice from './RegulatoryFrameNotice';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -53,7 +55,7 @@ export interface EcoDirectEqPCalculatorProps {
 
 export default function EcoDirectEqPCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
-  jurisdiction: _jurisdiction = DEFAULT_JURISDICTION,
+  jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
 }: EcoDirectEqPCalculatorProps) {
@@ -213,6 +215,11 @@ export default function EcoDirectEqPCalculator({
           </p>
         )}
       </header>
+
+      <RegulatoryFrameNotice
+        frameId={jurisdiction}
+        pathway="eco-direct-eqp"
+      />
 
       {/*
         Layout reorders per plan v3 section 1 (top-to-bottom flow):
@@ -446,6 +453,7 @@ export default function EcoDirectEqPCalculator({
       <CalculatorProvenancePanel
         pathway="eco-direct-eqp"
         usedValues={provenanceValues}
+        regulatoryFrameId={jurisdiction}
         onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
     </section>

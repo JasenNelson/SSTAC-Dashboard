@@ -22,6 +22,7 @@ import {
   type Jurisdiction,
 } from './guide/content/jurisdictions';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
+import RegulatoryFrameNotice from './RegulatoryFrameNotice';
 
 const ECOSYSTEM_OPTIONS: ReadonlyArray<{ value: Ecosystem; label: string }> = [
   { value: 'freshwater', label: 'Freshwater' },
@@ -55,7 +56,7 @@ function optionalPositiveInput(value: string, label: string): number | null | { 
 
 export default function HHFoodWebCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
-  jurisdiction: _jurisdiction = DEFAULT_JURISDICTION,
+  jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
 }: HHFoodWebCalculatorProps) {
@@ -290,6 +291,11 @@ export default function HHFoodWebCalculator({
         )}
       </header>
 
+      <RegulatoryFrameNotice
+        frameId={jurisdiction}
+        pathway="human-health-food"
+      />
+
       <div
         className="space-y-4 mb-6"
         data-testid="hh-food-inputs-section"
@@ -482,6 +488,7 @@ export default function HHFoodWebCalculator({
       <CalculatorProvenancePanel
         pathway="human-health-food"
         usedValues={provenanceValues}
+        regulatoryFrameId={jurisdiction}
         onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
     </section>

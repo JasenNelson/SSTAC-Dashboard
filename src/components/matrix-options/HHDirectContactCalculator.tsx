@@ -19,6 +19,7 @@ import {
   type Jurisdiction,
 } from './guide/content/jurisdictions';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
+import RegulatoryFrameNotice from './RegulatoryFrameNotice';
 
 export interface HHDirectContactCalculatorProps {
   substanceKey?: string;
@@ -46,7 +47,7 @@ function optionalPositiveInput(value: string, label: string): number | null | { 
 
 export default function HHDirectContactCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
-  jurisdiction: _jurisdiction = DEFAULT_JURISDICTION,
+  jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
 }: HHDirectContactCalculatorProps) {
@@ -293,6 +294,11 @@ export default function HHDirectContactCalculator({
         )}
       </header>
 
+      <RegulatoryFrameNotice
+        frameId={jurisdiction}
+        pathway="human-health-direct"
+      />
+
       <div
         className="space-y-4 mb-6"
         data-testid="hh-direct-inputs-section"
@@ -443,6 +449,7 @@ export default function HHDirectContactCalculator({
       <CalculatorProvenancePanel
         pathway="human-health-direct"
         usedValues={provenanceValues}
+        regulatoryFrameId={jurisdiction}
         onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
     </section>

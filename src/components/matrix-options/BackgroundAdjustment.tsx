@@ -22,6 +22,11 @@ import type {
   EvidenceLibraryFilterRequest,
 } from '@/lib/matrix-options/provenance/types';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
+import RegulatoryFrameNotice from './RegulatoryFrameNotice';
+import {
+  DEFAULT_JURISDICTION,
+  type Jurisdiction,
+} from './guide/content/jurisdictions';
 
 interface ParseResult {
   samples: number[];
@@ -57,10 +62,12 @@ const PROVINCIAL_DEFAULT_SAMPLES =
 const REGIONAL_DEFAULT_SAMPLES = '5.7, 5.9, 5.5, 5.8, 6.0, 5.6, 5.9, 5.7';
 
 interface BackgroundAdjustmentProps {
+  jurisdiction?: Jurisdiction;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
 }
 
 export default function BackgroundAdjustment({
+  jurisdiction = DEFAULT_JURISDICTION,
   onOpenEvidenceLibrary,
 }: BackgroundAdjustmentProps) {
   // Persist BOTH reference sample sets so flipping the Scope radio does not
@@ -164,6 +171,11 @@ export default function BackgroundAdjustment({
           App D.4).
         </p>
       </header>
+
+      <RegulatoryFrameNotice
+        frameId={jurisdiction}
+        pathway="background-adjustment"
+      />
 
       <div className="mb-4">
         <MathRenderer
@@ -372,6 +384,7 @@ export default function BackgroundAdjustment({
       <CalculatorProvenancePanel
         pathway="background-adjustment"
         usedValues={provenanceValues}
+        regulatoryFrameId={jurisdiction}
         onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
     </section>

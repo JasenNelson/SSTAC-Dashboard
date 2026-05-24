@@ -26,6 +26,10 @@ import type {
   EvidenceSupportStatus,
   ProvenancePathway,
 } from '@/lib/matrix-options/provenance/types';
+import {
+  regulatoryFrameEvidenceFilter,
+  type RegulatoryFrameId,
+} from '@/lib/matrix-options/regulatoryFrames';
 
 interface CalculatorValueSearchPanelProps {
   pathway: ProvenancePathway;
@@ -33,6 +37,7 @@ interface CalculatorValueSearchPanelProps {
   substanceKey: string;
   substanceLabel: string;
   jurisdictionLabel: string;
+  regulatoryFrameId: RegulatoryFrameId;
   onOpenEvidenceLibrary: (request: EvidenceLibraryFilterRequest) => void;
   className?: string;
 }
@@ -359,19 +364,25 @@ export default function CalculatorValueSearchPanel({
   substanceKey,
   substanceLabel,
   jurisdictionLabel,
+  regulatoryFrameId,
   onOpenEvidenceLibrary,
   className,
 }: CalculatorValueSearchPanelProps) {
   const [query, setQuery] = useState('');
+  const regulatoryFrameFilters = useMemo(
+    () => regulatoryFrameEvidenceFilter(regulatoryFrameId),
+    [regulatoryFrameId],
+  );
   const library = useMemo(
     () =>
       buildEvidenceLibraryView(
         createEvidenceLibraryFilters({
           pathways: [pathway],
           substanceKeys: [substanceKey],
+          ...regulatoryFrameFilters,
         }),
       ),
-    [pathway, substanceKey],
+    [pathway, substanceKey, regulatoryFrameFilters],
   );
 
   const queryText = query.trim().toLowerCase();
@@ -420,6 +431,7 @@ export default function CalculatorValueSearchPanel({
     onOpenEvidenceLibrary({
       pathways: [pathway],
       substanceKeys: [substanceKey],
+      ...regulatoryFrameFilters,
       ...(queryText ? { search: queryText } : {}),
     });
   };
@@ -430,6 +442,7 @@ export default function CalculatorValueSearchPanel({
       substanceKeys: [row.record.substance_key],
       inputKeys: [row.record.input_key],
       parameterValueIds: [row.record.parameter_value_id],
+      ...regulatoryFrameFilters,
     });
   };
 

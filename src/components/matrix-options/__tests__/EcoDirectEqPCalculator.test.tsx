@@ -17,10 +17,11 @@ vi.mock('@/components/MathRenderer', () => ({
 
 import EcoDirectEqPCalculator from '../EcoDirectEqPCalculator';
 import { SUBSTANCE_LIBRARY } from '@/lib/matrix-options/substanceLibrary';
+import { REGULATORY_FRAME_IDS } from '@/lib/matrix-options/regulatoryFrames';
 
 const DEFAULT_PROPS = {
   substanceKey: 'benzo_a_pyrene',
-  jurisdiction: 'bc-csr' as const,
+  jurisdiction: 'bc-protocol1-v5-dra' as const,
 };
 
 describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
@@ -85,7 +86,10 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     // and both happen to use 0.014. Test the path with a substance whose
     // FCV is null (MeHg) to prove the re-seed clears the prior value.
     rerender(
-      <EcoDirectEqPCalculator substanceKey="methylmercury" jurisdiction="bc-csr" />,
+      <EcoDirectEqPCalculator
+        substanceKey="methylmercury"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
     );
     const fcvAfter = screen.getByTestId('eqp-fcv-input') as HTMLInputElement;
     // MeHg has fcv_ug_per_L = null in the library, so re-seed empties the
@@ -124,7 +128,7 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     rerender(
       <EcoDirectEqPCalculator
         substanceKey="total_pcbs_aroclor_1254"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
     // FCV stays at the user's value; override badge persists.
@@ -155,15 +159,16 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(screen.queryByTestId('eqp-fcv-reset')).not.toBeInTheDocument();
   });
 
-  it('accepts jurisdiction prop without crashing (passthrough until jurisdiction-specific derivation lands)', () => {
-    // Smoke test -- every Jurisdiction value renders successfully.
-    const jurisdictions = ['bc-csr', 'federal-ccme', 'site-specific'] as const;
-    for (const j of jurisdictions) {
+  it('uses the selected regulatory frame without crashing', () => {
+    for (const j of REGULATORY_FRAME_IDS) {
       const { unmount } = render(
         <EcoDirectEqPCalculator substanceKey="benzo_a_pyrene" jurisdiction={j} />,
       );
       expect(
         screen.getByTestId('eco-direct-eqp-calculator'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByTestId('regulatory-frame-notice-eco-direct-eqp'),
       ).toBeInTheDocument();
       unmount();
     }
@@ -190,7 +195,7 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     rerender(
       <EcoDirectEqPCalculator
         substanceKey="total_pcbs_aroclor_1254"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
     expect(
@@ -321,7 +326,7 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     render(
       <EcoDirectEqPCalculator
         substanceKey="total_pcbs_aroclor_1254"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
     const panel = screen.getByTestId('calculator-provenance-panel');

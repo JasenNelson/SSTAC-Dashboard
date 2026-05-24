@@ -15,11 +15,16 @@ import {
   humanizeCatalogLabel,
   isCalculatorEvidenceSource,
 } from '@/lib/matrix-options/provenance/library';
+import {
+  regulatoryFrameEvidenceFilter,
+  type RegulatoryFrameId,
+} from '@/lib/matrix-options/regulatoryFrames';
 
 interface CalculatorProvenancePanelProps {
   pathway: ProvenancePathway;
   usedValues: CalculatorUsedValue[];
   equationIds?: string[];
+  regulatoryFrameId?: RegulatoryFrameId;
   title?: string;
   defaultOpen?: boolean;
   className?: string;
@@ -126,6 +131,7 @@ export default function CalculatorProvenancePanel({
   pathway,
   usedValues,
   equationIds,
+  regulatoryFrameId,
   title = 'References and provenance',
   defaultOpen = false,
   className,
@@ -144,15 +150,19 @@ export default function CalculatorProvenancePanel({
   );
   const sourceCount = sourceRecords.length;
   const auditText = calculatorAuditText(rows, equations);
+  const regulatoryFrameFilters = regulatoryFrameId
+    ? regulatoryFrameEvidenceFilter(regulatoryFrameId)
+    : {};
   const openEvidenceLibrary = () => {
     if (!onOpenEvidenceLibrary) return;
-    onOpenEvidenceLibrary(
-      buildCalculatorEvidenceRequest(
+    onOpenEvidenceLibrary({
+      ...buildCalculatorEvidenceRequest(
         pathway,
         rows,
         equations.map((equation) => equation.equation_id),
       ),
-    );
+      ...regulatoryFrameFilters,
+    });
   };
   const openValueAlternatives = (row: (typeof rows)[number]) => {
     if (!onOpenEvidenceLibrary || !row.catalog_record) return;
@@ -160,6 +170,7 @@ export default function CalculatorProvenancePanel({
       pathways: [pathway],
       substanceKeys: [row.catalog_record.substance_key],
       inputKeys: [row.input_key],
+      ...regulatoryFrameFilters,
     });
   };
 

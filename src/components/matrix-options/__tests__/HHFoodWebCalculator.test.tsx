@@ -15,7 +15,7 @@ describe('HHFoodWebCalculator', () => {
     render(
       <HHFoodWebCalculator
         substanceKey="total_pcbs_aroclor_1254"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
 
@@ -35,7 +35,7 @@ describe('HHFoodWebCalculator', () => {
     render(
       <HHFoodWebCalculator
         substanceKey="total_pcbs_aroclor_1254"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
     const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
@@ -48,7 +48,7 @@ describe('HHFoodWebCalculator', () => {
     render(
       <HHFoodWebCalculator
         substanceKey="lead"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
     expect(screen.getByTestId('hh-food-error')).toHaveTextContent(
@@ -61,13 +61,16 @@ describe('HHFoodWebCalculator', () => {
     expect(screen.getByTestId('hh-food-preliminary-standard')).not.toHaveTextContent(
       /--\s*mg\/kg/,
     );
+    expect(
+      screen.getByTestId('regulatory-frame-notice-human-health-food'),
+    ).toHaveTextContent(/BC Protocol 1 v5 DRA/);
   });
 
   it('renders conservative provenance scaffolds for HH food-web inputs', () => {
     render(
       <HHFoodWebCalculator
         substanceKey="total_pcbs_aroclor_1254"
-        jurisdiction="bc-csr"
+        jurisdiction="bc-protocol1-v5-dra"
       />,
     );
 
