@@ -236,6 +236,22 @@ function ReviewDispositionNote({
   );
 }
 
+function DerivedPreviewEmptyState() {
+  return (
+    <div
+      className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-200"
+      data-testid="derived-preview-empty-state"
+    >
+      <div className="font-semibold">Derived preview only</div>
+      <p className="mt-1 text-xs leading-relaxed">
+        SSD-derived candidates are generated in the SSD Workbench receipt and
+        remain read-only until official ssdtools parity, source review, QA, and
+        owner approval are complete. They are not stored as catalog defaults.
+      </p>
+    </div>
+  );
+}
+
 function FilterSelect({
   label,
   value,
@@ -578,6 +594,9 @@ export default function EvidenceLibrary({
   );
   const visibleValues =
     viewMode === 'assumptions' ? assumptionValues : library.values;
+  const isDerivedPreviewFilter = filters.evidenceSupportStatuses.includes(
+    'user_entered_or_derived',
+  );
 
   const updateFilter = (key: FilterArrayKey, value: string) => {
     onFiltersChange(setSingleFilter(filters, key, value));
@@ -792,8 +811,12 @@ export default function EvidenceLibrary({
               <ValueGroupCard key={group.groupId} group={group} />
             ))}
             {library.valueGroups.length === 0 && (
-              <div className="rounded-lg border border-slate-200 px-3 py-6 text-center text-sm text-slate-500 dark:border-slate-800">
-                No parameter groups match.
+              <div className="rounded-lg border border-slate-200 px-3 py-6 text-sm text-slate-500 dark:border-slate-800">
+                {isDerivedPreviewFilter ? (
+                  <DerivedPreviewEmptyState />
+                ) : (
+                  <div className="text-center">No parameter groups match.</div>
+                )}
               </div>
             )}
           </div>
@@ -911,8 +934,12 @@ export default function EvidenceLibrary({
                 })}
                 {visibleValues.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-3 py-6 text-center text-sm text-slate-500">
-                      No parameter values match.
+                    <td colSpan={7} className="px-3 py-6 text-sm text-slate-500">
+                      {isDerivedPreviewFilter ? (
+                        <DerivedPreviewEmptyState />
+                      ) : (
+                        <div className="text-center">No parameter values match.</div>
+                      )}
                     </td>
                   </tr>
                 )}

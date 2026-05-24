@@ -147,6 +147,9 @@ describe('EvidenceLibrary', () => {
 
     expect(screen.getByText(/search: SSD/)).toBeInTheDocument();
     expect(screen.getByText(/Evidence: user-entered or derived/)).toBeInTheDocument();
+    expect(screen.getByTestId('derived-preview-empty-state')).toHaveTextContent(
+      /SSD-derived candidates are generated in the SSD Workbench receipt/i,
+    );
   });
 
   it('filters to the human-health-food pathway', () => {
