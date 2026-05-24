@@ -156,7 +156,7 @@ export function buildSsdAnalysis(
               aicc: logNormalFit.aicc,
               parameters: logNormalFit.parameters,
               note:
-                'Fitted in natural-log concentration space. Additional distributions, model averaging, and bootstrap confidence intervals remain gated.',
+                'Fitted in natural-log concentration space using ssdtools/R lnorm parameter names. Additional distributions, model averaging, and bootstrap confidence intervals remain gated.',
             },
           ]
         : []),

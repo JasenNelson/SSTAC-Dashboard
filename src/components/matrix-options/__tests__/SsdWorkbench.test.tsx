@@ -60,6 +60,7 @@ describe('SsdWorkbench', () => {
     expect(screen.getByLabelText(/Species points/i)).toBeChecked();
     expect(screen.getByTestId('ssd-model-diagnostics-table')).toBeInTheDocument();
     expect(screen.getAllByText(/Log-Normal fit/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/ssdtools\/R lnorm/i)).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: /Distribution/i })).toHaveValue(
       'Log-Normal',
     );

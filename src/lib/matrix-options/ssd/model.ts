@@ -163,8 +163,8 @@ export function fitLogNormalDistribution(
     aicc,
     logLikelihood,
     parameters: [
-      { name: 'log_mu', value: mu },
-      { name: 'log_sigma', value: sigma },
+      { name: 'meanlog', value: mu },
+      { name: 'sdlog', value: sigma },
     ],
     curvePoints: buildLogNormalCurve(values, mu, sigma),
   };
