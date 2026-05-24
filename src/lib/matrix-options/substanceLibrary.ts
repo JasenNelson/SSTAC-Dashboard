@@ -172,6 +172,176 @@ export const SUBSTANCE_LIBRARY = [
       'transition metal in the Cd-Cu-Pb-Ni-Zn family). Use bulk-sediment ' +
       'path with bioaccessibility correction.',
   },
+  {
+    key: 'barium',
+    displayName: 'Barium',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS RfD table; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    notes:
+      'Human-health TRV candidates are available in References & Values. ' +
+      'Calculator defaults remain unset until owner-approved selection rules land.',
+  },
+  {
+    key: 'benzene',
+    displayName: 'Benzene',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    notes:
+      'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
+      'candidates are available in References & Values.',
+  },
+  {
+    key: 'beryllium',
+    displayName: 'Beryllium',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    notes:
+      'Human-health oral and inhalation TRV candidates are available in ' +
+      'References & Values; ecological defaults are pending.',
+  },
+  {
+    key: 'chromium_trivalent',
+    displayName: 'Chromium, trivalent',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS RfD table; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    notes:
+      'Human-health TRV candidates are available in References & Values. ' +
+      'Speciation matters; do not merge with hexavalent chromium.',
+  },
+  {
+    key: 'chromium_hexavalent',
+    displayName: 'Chromium, hexavalent',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    notes:
+      'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
+      'candidates are available in References & Values. Speciation matters.',
+  },
+  {
+    key: 'naphthalene',
+    displayName: 'Naphthalene',
+    contaminantClass: 'organic-PAH',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.148,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    notes:
+      'Human-health RfD and RfC candidates are available in References & Values. ' +
+      'EqP/BSAF defaults are pending source-backed ecological values.',
+  },
+  {
+    key: 'tetrachloroethylene',
+    displayName: 'Tetrachloroethylene',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    notes:
+      'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
+      'candidates are available in References & Values.',
+  },
+  {
+    key: 'trichloroethylene',
+    displayName: 'Trichloroethylene',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    notes:
+      'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
+      'candidates are available in References & Values.',
+  },
+  {
+    key: 'vinyl_chloride',
+    displayName: 'Vinyl chloride',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 1.0,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    notes:
+      'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
+      'candidates are available in References & Values.',
+  },
+  {
+    key: 'chlorobenzene',
+    displayName: 'Chlorobenzene',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS RfD table; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    notes:
+      'Human-health oral RfD candidate is available in References & Values. ' +
+      'Additional calculator defaults are pending owner-approved selection rules.',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];

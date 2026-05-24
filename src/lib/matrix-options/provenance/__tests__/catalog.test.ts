@@ -361,12 +361,34 @@ describe('matrix options provenance catalog', () => {
     );
     const sourceIds = new Set(tier1Trvs.flatMap((record) => record.source_ids));
 
-    expect(tier1Trvs).toHaveLength(41);
+    expect(tier1Trvs).toHaveLength(84);
     expect(sourceIds).toEqual(
       new Set([
         'src-health-canada-trv-v4-2025',
         'src-us-epa-iris-rfd-table-live',
         'src-us-epa-iris-chemical-details-live',
+      ]),
+    );
+    expect(new Set(tier1Trvs.map((record) => record.substance_key))).toEqual(
+      new Set([
+        'arsenic_inorganic',
+        'barium',
+        'benzene',
+        'benzo_a_pyrene',
+        'beryllium',
+        'cadmium',
+        'chlorobenzene',
+        'chromium_hexavalent',
+        'chromium_trivalent',
+        'copper',
+        'lead',
+        'methylmercury',
+        'naphthalene',
+        'tetrachloroethylene',
+        'total_pcbs_aroclor_1254',
+        'trichloroethylene',
+        'vinyl_chloride',
+        'zinc',
       ]),
     );
 

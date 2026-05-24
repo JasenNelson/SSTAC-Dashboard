@@ -1,7 +1,15 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { ExternalLink, Search, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  CircleDot,
+  Database,
+  ExternalLink,
+  Search,
+  X,
+} from 'lucide-react';
 import { cn } from '@/utils/cn';
 import {
   buildEvidenceLibraryView,
@@ -43,6 +51,142 @@ const EVIDENCE_STATUS_ORDER: Record<EvidenceSupportStatus, number> = {
   user_entered_or_derived: 4,
 };
 
+type SearchSuggestion = {
+  label: string;
+  query: string;
+  pathways: ProvenancePathway[];
+  matchTerms?: string[];
+};
+
+const SEARCH_SUGGESTIONS: SearchSuggestion[] = [
+  {
+    label: 'RfD',
+    query: 'RfD',
+    pathways: ['human-health-direct', 'human-health-food'],
+  },
+  {
+    label: 'Slope factor',
+    query: 'slope factor',
+    pathways: ['human-health-direct', 'human-health-food'],
+  },
+  {
+    label: 'RfC',
+    query: 'RfC',
+    pathways: ['human-health-direct'],
+  },
+  {
+    label: 'Unit risk',
+    query: 'unit risk',
+    pathways: ['human-health-direct'],
+  },
+  {
+    label: 'TDI',
+    query: 'TDI',
+    pathways: ['human-health-direct', 'human-health-food'],
+  },
+  {
+    label: 'Dermal absorption',
+    query: 'dermal absorption',
+    pathways: ['human-health-direct'],
+    matchTerms: ['abs_dermal', 'dermal absorption', 'dermal RAF'],
+  },
+  {
+    label: 'Bioavailability',
+    query: 'bioavailability',
+    pathways: ['human-health-direct', 'human-health-food'],
+    matchTerms: ['ba_oral', 'bioavailability', 'oral bioavailability'],
+  },
+  {
+    label: 'IRIS',
+    query: 'IRIS',
+    pathways: ['human-health-direct', 'human-health-food'],
+  },
+  {
+    label: 'Health Canada',
+    query: 'Health Canada',
+    pathways: ['human-health-direct', 'human-health-food'],
+  },
+  {
+    label: 'Protocol 28',
+    query: 'Protocol 28',
+    pathways: ['human-health-direct', 'human-health-food', 'eco-food-bsaf'],
+  },
+  {
+    label: 'FCV',
+    query: 'FCV',
+    pathways: ['eco-direct-eqp'],
+  },
+  {
+    label: 'Log Kow',
+    query: 'log Kow',
+    pathways: ['eco-direct-eqp'],
+  },
+  {
+    label: 'EqP',
+    query: 'EqP',
+    pathways: ['eco-direct-eqp'],
+  },
+  {
+    label: 'ESB',
+    query: 'ESB',
+    pathways: ['eco-direct-eqp'],
+  },
+  {
+    label: 'AVS/SEM',
+    query: 'AVS',
+    pathways: ['eco-direct-eqp'],
+    matchTerms: ['AVS', 'SEM'],
+  },
+  {
+    label: 'TRV',
+    query: 'TRV',
+    pathways: ['eco-food-bsaf'],
+  },
+  {
+    label: 'BSAF',
+    query: 'BSAF',
+    pathways: ['eco-food-bsaf', 'human-health-food'],
+  },
+  {
+    label: 'Eco-SSL',
+    query: 'Eco-SSL',
+    pathways: ['eco-food-bsaf'],
+  },
+  {
+    label: 'Wildlife',
+    query: 'wildlife',
+    pathways: ['eco-food-bsaf'],
+  },
+  {
+    label: 'Avian',
+    query: 'avian',
+    pathways: ['eco-food-bsaf'],
+  },
+  {
+    label: 'Mammalian',
+    query: 'mammalian',
+    pathways: ['eco-food-bsaf'],
+  },
+  {
+    label: 'FCSAP',
+    query: 'FCSAP',
+    pathways: ['eco-food-bsaf'],
+  },
+];
+
+const SEARCH_ALIASES_BY_INPUT_KEY: Record<string, string[]> = {
+  abs_dermal: ['dermal absorption', 'dermal RAF'],
+  ba_oral: ['oral bioavailability', 'relative bioavailability'],
+  bsaf_loc_freshwater: ['BSAF', 'bioaccumulation'],
+  fcv_ug_per_L: ['FCV', 'final chronic value'],
+  logKow: ['log Kow', 'octanol water partition coefficient'],
+  rfc_inhalation_mg_per_m3: ['RfC', 'reference concentration', 'inhalation TRV'],
+  rfd_oral_mg_per_kg_bw_day: ['RfD', 'reference dose', 'oral TRV'],
+  sf_oral_per_mg_per_kg_bw_per_day: ['slope factor', 'oral slope factor'],
+  trv_eco_mg_per_kg_bw_day: ['TRV', 'wildlife TRV'],
+  unit_risk_inhalation_per_ug_m3: ['unit risk', 'inhalation unit risk'],
+};
+
 function formatValue(value: number | string, unit: string): string {
   const suffix = unit && unit !== 'unitless' ? ` ${unit}` : '';
   return `${value}${suffix}`;
@@ -70,17 +214,54 @@ function statusTone(status: string): string {
   return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
 }
 
-function StatusChip({ value }: { value: string }) {
+function StatusChip({ value, compact = false }: { value: string; compact?: boolean }) {
   return (
     <span
       className={cn(
-        'inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold capitalize',
+        'inline-flex rounded-full border font-semibold capitalize',
+        compact ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-[11px]',
         statusTone(value),
       )}
     >
       {humanizeCatalogLabel(value)}
     </span>
   );
+}
+
+function evidenceSummary(row: EvidenceLibraryValueRow): {
+  label: string;
+  icon: React.ReactNode;
+  className: string;
+} {
+  if (row.record.evidence_support_status === 'approved_source_backed') {
+    return {
+      label: 'Source-backed',
+      icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+      className: 'text-emerald-700 dark:text-emerald-300',
+    };
+  }
+  if (
+    row.record.evidence_support_status === 'pending_source_locator' ||
+    row.record.evidence_support_status === 'reference_mining_lead'
+  ) {
+    return {
+      label: 'Needs locator',
+      icon: <AlertTriangle className="h-3.5 w-3.5" />,
+      className: 'text-amber-700 dark:text-amber-300',
+    };
+  }
+  if (row.record.evidence_support_status === 'current_calculator_scaffold') {
+    return {
+      label: 'Calculator scaffold',
+      icon: <CircleDot className="h-3.5 w-3.5" />,
+      className: 'text-slate-600 dark:text-slate-300',
+    };
+  }
+  return {
+    label: humanizeCatalogLabel(row.record.evidence_support_status),
+    icon: <CircleDot className="h-3.5 w-3.5" />,
+    className: 'text-slate-600 dark:text-slate-300',
+  };
 }
 
 function sourceReferenceLabel(row: EvidenceLibraryValueRow): string {
@@ -117,7 +298,10 @@ function extractionDateLabel(row: EvidenceLibraryValueRow): string | null {
 function searchableText(row: EvidenceLibraryValueRow): string {
   return [
     row.record.display_name,
+    row.record.pathway,
     row.record.input_key,
+    humanizeCatalogLabel(row.record.input_key),
+    ...(SEARCH_ALIASES_BY_INPUT_KEY[row.record.input_key] ?? []),
     row.record.value,
     row.record.unit,
     row.record.default_status,
@@ -136,17 +320,34 @@ function searchableText(row: EvidenceLibraryValueRow): string {
     .toLowerCase();
 }
 
+function rowMatchesSearch(row: EvidenceLibraryValueRow, queryText: string): boolean {
+  return searchableText(row).includes(queryText);
+}
+
+function suggestionMatchesRows(
+  suggestion: SearchSuggestion,
+  rows: EvidenceLibraryValueRow[],
+): boolean {
+  const terms = [suggestion.query, ...(suggestion.matchTerms ?? [])]
+    .map((term) => term.trim().toLowerCase())
+    .filter(Boolean);
+
+  return rows.some((row) =>
+    terms.some((term) => rowMatchesSearch(row, term)),
+  );
+}
+
 function sortValueRows(rows: EvidenceLibraryValueRow[]): EvidenceLibraryValueRow[] {
   return [...rows].sort((a, b) => {
-    const defaultDelta =
-      DEFAULT_STATUS_ORDER[a.record.default_status] -
-      DEFAULT_STATUS_ORDER[b.record.default_status];
-    if (defaultDelta !== 0) return defaultDelta;
-
     const evidenceDelta =
       EVIDENCE_STATUS_ORDER[a.record.evidence_support_status] -
       EVIDENCE_STATUS_ORDER[b.record.evidence_support_status];
     if (evidenceDelta !== 0) return evidenceDelta;
+
+    const defaultDelta =
+      DEFAULT_STATUS_ORDER[a.record.default_status] -
+      DEFAULT_STATUS_ORDER[b.record.default_status];
+    if (defaultDelta !== 0) return defaultDelta;
 
     return a.record.display_name.localeCompare(b.record.display_name);
   });
@@ -178,13 +379,19 @@ export default function CalculatorValueSearchPanel({
   const filteredRows = useMemo(
     () =>
       queryText
-        ? rows.filter((row) => searchableText(row).includes(queryText))
+        ? rows.filter((row) => rowMatchesSearch(row, queryText))
         : rows,
     [queryText, rows],
   );
-  const currentDefaults = rows.filter(
-    (row) => row.record.default_status === 'current_default',
-  ).length;
+  const searchSuggestions = useMemo(
+    () =>
+      SEARCH_SUGGESTIONS.filter(
+        (suggestion) =>
+          suggestion.pathways.includes(pathway) &&
+          suggestionMatchesRows(suggestion, rows),
+      ).slice(0, 9),
+    [pathway, rows],
+  );
   const pendingLocators = rows.filter(
     (row) => row.record.evidence_support_status === 'pending_source_locator',
   ).length;
@@ -195,6 +402,19 @@ export default function CalculatorValueSearchPanel({
   const approved = rows.filter(
     (row) => row.record.evidence_support_status === 'approved_source_backed',
   ).length;
+  const alternatives = rows.filter(
+    (row) => row.record.default_status === 'available_option',
+  ).length;
+  const qaNeeds = pendingLocators + scaffolds;
+  const qualitySummary = [
+    `${approved} source-backed`,
+    `${qaNeeds} need QA`,
+    alternatives > 0 ? `${alternatives} alternatives` : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  const visibleRows = queryText ? filteredRows : filteredRows.slice(0, 3);
+  const hiddenRowCount = filteredRows.length - visibleRows.length;
 
   const openCurrentView = () => {
     onOpenEvidenceLibrary({
@@ -219,45 +439,40 @@ export default function CalculatorValueSearchPanel({
       data-testid="calculator-value-search-panel"
     >
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300">
-          Value Database
+        <div className="flex items-start gap-2">
+          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+            <Database className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Value lookup
+            </p>
+            <h4 className="truncate text-sm font-bold text-slate-950 dark:text-white">
+              {substanceLabel}
+            </h4>
+            <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+              {pathwayLabel}; {jurisdictionLabel}
+            </p>
+          </div>
+        </div>
+        <div
+          className="mt-3 flex items-center justify-between gap-3 border-y border-slate-200 py-2 text-xs dark:border-slate-800"
+          data-testid="calculator-value-search-audit"
+        >
+          <span className="font-semibold text-slate-700 dark:text-slate-200">
+            {rows.length} values
+          </span>
+          <span className="truncate text-slate-500 dark:text-slate-400">
+            {qualitySummary}
+          </span>
+        </div>
+        <p
+          className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+          data-testid="calculator-value-search-guidance"
+        >
+          Choose the substance of interest in the main calculator. Then narrow
+          these values by type or source.
         </p>
-        <h4 className="mt-1 text-sm font-bold text-slate-950 dark:text-white">
-          {substanceLabel}
-        </h4>
-        <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-          {pathwayLabel}; {jurisdictionLabel}
-        </p>
-      </div>
-
-      <div
-        className="grid grid-cols-2 gap-2 text-xs"
-        data-testid="calculator-value-search-audit"
-      >
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-800 dark:bg-slate-950">
-          <div className="font-bold text-slate-950 dark:text-white">
-            {rows.length}
-          </div>
-          <div className="text-slate-500 dark:text-slate-400">values</div>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-800 dark:bg-slate-950">
-          <div className="font-bold text-slate-950 dark:text-white">
-            {currentDefaults}
-          </div>
-          <div className="text-slate-500 dark:text-slate-400">defaults</div>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-800 dark:bg-slate-950">
-          <div className="font-bold text-slate-950 dark:text-white">
-            {approved}
-          </div>
-          <div className="text-slate-500 dark:text-slate-400">approved</div>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-800 dark:bg-slate-950">
-          <div className="font-bold text-slate-950 dark:text-white">
-            {pendingLocators + scaffolds}
-          </div>
-          <div className="text-slate-500 dark:text-slate-400">pending/scaffold</div>
-        </div>
       </div>
 
       <label className="block">
@@ -267,7 +482,7 @@ export default function CalculatorValueSearchPanel({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search values, refs, status"
+            placeholder="Search parameter or source"
             className="min-h-10 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-9 text-sm text-slate-900 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
           />
           {query && (
@@ -283,13 +498,40 @@ export default function CalculatorValueSearchPanel({
         </div>
       </label>
 
+      {searchSuggestions.length > 0 && (
+        <div
+          className="flex flex-wrap gap-1.5"
+          data-testid="value-search-suggestions"
+        >
+          {searchSuggestions.map((suggestion) => {
+            const isActive = queryText === suggestion.query.toLowerCase();
+            return (
+              <button
+                key={suggestion.label}
+                type="button"
+                onClick={() => setQuery(suggestion.query)}
+                aria-pressed={isActive}
+                className={cn(
+                  'min-h-8 rounded-full border px-2.5 text-xs font-semibold transition',
+                  isActive
+                    ? 'border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-950'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:text-sky-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 dark:hover:border-sky-700 dark:hover:text-sky-300',
+                )}
+              >
+                {suggestion.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <button
         type="button"
         onClick={openCurrentView}
-        className="flex min-h-9 w-full items-center justify-center gap-2 rounded-lg border border-sky-200 bg-sky-50 px-3 text-sm font-semibold text-sky-800 hover:border-sky-300 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-200 dark:hover:bg-sky-900/30"
+        className="flex min-h-9 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:border-sky-300 hover:text-sky-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300"
       >
         <ExternalLink className="h-4 w-4" />
-        Open matching values
+        Full reference details
       </button>
 
       {filteredRows.length === 0 ? (
@@ -298,30 +540,36 @@ export default function CalculatorValueSearchPanel({
         </div>
       ) : (
         <div className="space-y-2">
-          {filteredRows.map((row) => (
+          {visibleRows.map((row) => {
+            const support = evidenceSummary(row);
+            const extractedAt = extractionDateLabel(row);
+            return (
             <article
               key={row.record.parameter_value_id}
-              className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+              className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h4 className="text-sm font-semibold leading-snug text-slate-950 dark:text-white">
-                    {row.record.display_name}
-                  </h4>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                    {humanizeCatalogLabel(row.record.input_key)}
-                  </p>
-                </div>
-                <div className="shrink-0 text-right font-mono text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <div className="min-w-0">
+                <h4 className="text-sm font-semibold leading-snug text-slate-950 dark:text-white">
+                  {row.record.display_name}
+                </h4>
+                <div className="mt-1 break-words font-mono text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {formatValue(row.record.value, row.record.unit)}
                 </div>
+                <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                  <span>{humanizeCatalogLabel(row.record.input_key)}</span>
+                  <span className={cn('inline-flex items-center gap-1 font-semibold', support.className)}>
+                    {support.icon}
+                    {support.label}
+                  </span>
+                </p>
               </div>
 
-              <div className="mt-2 flex flex-wrap gap-1">
-                <StatusChip value={row.record.default_status} />
-                <StatusChip value={row.record.evidence_support_status} />
-                <StatusChip value={row.record.qa_status} />
-                <StatusChip value={row.record.jurisdiction} />
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <StatusChip value={row.record.default_status} compact />
+                {row.record.evidence_support_status === 'approved_source_backed' &&
+                row.record.source_authority_tier ? (
+                  <StatusChip value={row.record.source_authority_tier} compact />
+                ) : null}
               </div>
 
               <button
@@ -331,15 +579,25 @@ export default function CalculatorValueSearchPanel({
                 className="mt-2 flex w-full items-start gap-1.5 rounded-md px-0 text-left text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300"
               >
                 <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                <span>Ref: {sourceReferenceLabel(row)}</span>
+                <span>{sourceReferenceLabel(row)}</span>
               </button>
-              {extractionDateLabel(row) && (
+              {extractedAt && (
                 <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                  Extracted {extractionDateLabel(row)}
+                  Extracted {extractedAt}
                 </div>
               )}
             </article>
-          ))}
+            );
+          })}
+          {hiddenRowCount > 0 && (
+            <button
+              type="button"
+              onClick={openCurrentView}
+              className="w-full rounded-lg border border-dashed border-slate-300 px-3 py-2 text-center text-xs font-semibold text-slate-600 hover:border-sky-300 hover:text-sky-700 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-700 dark:hover:text-sky-300"
+            >
+              {hiddenRowCount} more in reference details
+            </button>
+          )}
         </div>
       )}
     </div>

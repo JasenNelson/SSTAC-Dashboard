@@ -328,15 +328,59 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     clickCalculatorTab();
 
     const panel = screen.getByTestId('calculator-value-search-panel');
-    expect(panel).toHaveTextContent(/Value Database/i);
+    expect(panel).toHaveTextContent(/Value lookup/i);
     expect(panel).toHaveTextContent(/Benzo\[a\]pyrene/i);
     expect(panel).toHaveTextContent(/Ecological Direct Contact/i);
-    expect(panel).toHaveTextContent(/pending source locator/i);
+    expect(panel).toHaveTextContent(/Choose the substance of interest/i);
+    expect(
+      within(panel).getByRole('button', { name: /^FCV$/ }),
+    ).toBeInTheDocument();
+    expect(panel).toHaveTextContent(/Needs locator/i);
     expect(panel).toHaveTextContent(/US EPA ESB Tier 2 values/i);
     expect(panel).not.toHaveTextContent(/US EPA IRIS/i);
     expect(screen.queryByText(/Calculator Quick Reference/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Active Poll/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/will dynamically appear/i)).not.toBeInTheDocument();
+  });
+
+  it('shows expanded human-health substances and suggested value filters', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    clickCalculatorTab();
+
+    const substanceSelect = screen.getByTestId('shared-substance-select');
+    expect(
+      within(substanceSelect).getByRole('option', { name: /^Benzene$/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(substanceSelect).getByRole('option', {
+        name: /^Trichloroethylene$/,
+      }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+    fireEvent.change(substanceSelect, {
+      target: { value: 'benzene' },
+    });
+
+    const panel = screen.getByTestId('calculator-value-search-panel');
+    expect(panel).toHaveTextContent(/Benzene/i);
+    expect(panel).toHaveTextContent(/Human Health Direct Contact/i);
+    expect(panel).toHaveTextContent(/Choose the substance of interest/i);
+
+    const suggestions = within(panel).getByTestId('value-search-suggestions');
+    for (const label of ['RfD', 'Slope factor', 'RfC', 'Unit risk']) {
+      expect(
+        within(suggestions).getByRole('button', { name: label }),
+      ).toBeInTheDocument();
+    }
+
+    fireEvent.click(within(suggestions).getByRole('button', { name: 'RfC' }));
+
+    expect(
+      within(panel).getByPlaceholderText(/Search parameter or source/i),
+    ).toHaveValue('RfC');
+    expect(panel).toHaveTextContent(/Benzene inhalation RfC - IRIS/i);
+    expect(panel).not.toHaveTextContent(/Benzene oral RfD - IRIS/i);
   });
 
   it('filters calculator value search and opens exact reference details', () => {
@@ -351,7 +395,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(panel).toHaveTextContent(/Arsenic \(inorganic\)/i);
     expect(panel).toHaveTextContent(/Human Health Food Web/i);
     fireEvent.change(
-      within(panel).getByPlaceholderText(/Search values, refs, status/i),
+      within(panel).getByPlaceholderText(/Search parameter or source/i),
       {
         target: { value: 'Protocol 28' },
       },

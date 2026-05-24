@@ -2707,5 +2707,2800 @@
       "TRV"
     ],
     "candidate_group_id": "human-health-food__zinc__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-barium-hh-direct-rfd",
+    "substance_key": "barium",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Barium oral RfD - IRIS",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Barium; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Barium, RfD, checked 2026-05-23",
+        "value_text": "2 x 10 -1 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-barium-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__barium__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-barium-hh-food-rfd",
+    "substance_key": "barium",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Barium oral RfD - IRIS",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Barium; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Barium, RfD, checked 2026-05-23",
+        "value_text": "2 x 10 -1 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-barium-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__barium__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-benzene-hh-direct-rfd",
+    "substance_key": "benzene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Benzene oral RfD - IRIS",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Benzene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Benzene, RfD, checked 2026-05-23",
+        "value_text": "4 x 10 -3 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-benzene-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__benzene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-benzene-hh-food-rfd",
+    "substance_key": "benzene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Benzene oral RfD - IRIS",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Benzene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Benzene, RfD, checked 2026-05-23",
+        "value_text": "4 x 10 -3 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-benzene-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__benzene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-benzene-hh-direct-sf",
+    "substance_key": "benzene",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Benzene oral slope factor range - IRIS",
+    "value": "0.015 to 0.055",
+    "unit": "per mg/kg-bw/day",
+    "value_type": "range",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Oral Slope Factor for Benzene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": "IRIS table reports multiple toxicity values; retain as range until owner-approved default-selection rules choose a specific value.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Benzene, Oral Slope Factor, checked 2026-05-23",
+        "value_text": "1.5 x 10 -2 to 5.5 x 10 -2 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-benzene-hh-direct-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__benzene__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-benzene-hh-food-sf",
+    "substance_key": "benzene",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Benzene oral slope factor range - IRIS",
+    "value": "0.015 to 0.055",
+    "unit": "per mg/kg-bw/day",
+    "value_type": "range",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Oral Slope Factor for Benzene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": "IRIS table reports multiple toxicity values; retain as range until owner-approved default-selection rules choose a specific value.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Benzene, Oral Slope Factor, checked 2026-05-23",
+        "value_text": "1.5 x 10 -2 to 5.5 x 10 -2 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-benzene-hh-food-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__benzene__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-benzene-hh-direct-rfc",
+    "substance_key": "benzene",
+    "pathway": "human-health-direct",
+    "input_key": "rfc_inhalation_mg_per_m3",
+    "display_name": "Benzene inhalation RfC - IRIS",
+    "value": 0.03,
+    "unit": "mg/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table RfC for Benzene; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Benzene, RfC, checked 2026-05-23",
+        "value_text": "3 x 10 -2 mg/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-benzene-hh-direct-rfc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__benzene__rfc_inhalation_mg_per_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-benzene-hh-direct-iur",
+    "substance_key": "benzene",
+    "pathway": "human-health-direct",
+    "input_key": "unit_risk_inhalation_per_ug_m3",
+    "display_name": "Benzene inhalation unit risk range - IRIS",
+    "value": "2.2e-6 to 7.8e-6",
+    "unit": "per ug/m3",
+    "value_type": "range",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Inhalation Unit Risk for Benzene; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": "IRIS table reports multiple toxicity values; retain as range until owner-approved default-selection rules choose a specific value.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Benzene, Inhalation Unit Risk, checked 2026-05-23",
+        "value_text": "2.2 x 10 -6 to 7.8 x 10 -6 per ug/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-benzene-hh-direct-iur-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__benzene__unit_risk_inhalation_per_ug_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-beryllium-hh-direct-rfd",
+    "substance_key": "beryllium",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Beryllium oral RfD - IRIS",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Beryllium; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Beryllium, RfD, checked 2026-05-23",
+        "value_text": "2 x 10 -3 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-beryllium-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__beryllium__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-beryllium-hh-food-rfd",
+    "substance_key": "beryllium",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Beryllium oral RfD - IRIS",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Beryllium; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Beryllium, RfD, checked 2026-05-23",
+        "value_text": "2 x 10 -3 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-beryllium-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__beryllium__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-beryllium-hh-direct-rfc",
+    "substance_key": "beryllium",
+    "pathway": "human-health-direct",
+    "input_key": "rfc_inhalation_mg_per_m3",
+    "display_name": "Beryllium inhalation RfC - IRIS",
+    "value": 0.00002,
+    "unit": "mg/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table RfC for Beryllium; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Beryllium, RfC, checked 2026-05-23",
+        "value_text": "2 x 10 -5 mg/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-beryllium-hh-direct-rfc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__beryllium__rfc_inhalation_mg_per_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-beryllium-hh-direct-iur",
+    "substance_key": "beryllium",
+    "pathway": "human-health-direct",
+    "input_key": "unit_risk_inhalation_per_ug_m3",
+    "display_name": "Beryllium inhalation unit risk - IRIS",
+    "value": 0.0024,
+    "unit": "per ug/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Inhalation Unit Risk for Beryllium; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Beryllium, Inhalation Unit Risk, checked 2026-05-23",
+        "value_text": "2.4 x 10 -3 per ug/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-beryllium-hh-direct-iur-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__beryllium__unit_risk_inhalation_per_ug_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-chromium-trivalent-hh-direct-rfd",
+    "substance_key": "chromium_trivalent",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Chromium(III) oral RfD - IRIS",
+    "value": 1.5,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Chromium, trivalent; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Chromium, trivalent, RfD, checked 2026-05-23",
+        "value_text": "1.5 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-chromium-trivalent-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__chromium_trivalent__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-chromium-trivalent-hh-food-rfd",
+    "substance_key": "chromium_trivalent",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Chromium(III) oral RfD - IRIS",
+    "value": 1.5,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Chromium, trivalent; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Chromium, trivalent, RfD, checked 2026-05-23",
+        "value_text": "1.5 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-chromium-trivalent-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__chromium_trivalent__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-chromium-hexavalent-hh-direct-rfd",
+    "substance_key": "chromium_hexavalent",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Chromium(VI) oral RfD range - IRIS",
+    "value": "0.0007 to 0.07",
+    "unit": "mg/kg-bw/day",
+    "value_type": "range",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Chromium, hexavalent; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": "IRIS table reports multiple toxicity values; retain as range until owner-approved default-selection rules choose a specific value.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Chromium, hexavalent, RfD, checked 2026-05-23",
+        "value_text": "7 x 10 -4 to 7 x 10 -2 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-chromium-hexavalent-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__chromium_hexavalent__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-chromium-hexavalent-hh-food-rfd",
+    "substance_key": "chromium_hexavalent",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Chromium(VI) oral RfD range - IRIS",
+    "value": "0.0007 to 0.07",
+    "unit": "mg/kg-bw/day",
+    "value_type": "range",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Chromium, hexavalent; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": "IRIS table reports multiple toxicity values; retain as range until owner-approved default-selection rules choose a specific value.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Chromium, hexavalent, RfD, checked 2026-05-23",
+        "value_text": "7 x 10 -4 to 7 x 10 -2 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-chromium-hexavalent-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__chromium_hexavalent__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-chromium-hexavalent-hh-direct-sf",
+    "substance_key": "chromium_hexavalent",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Chromium(VI) oral slope factor - IRIS",
+    "value": 0.27,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Oral Slope Factor for Chromium, hexavalent; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Chromium, hexavalent, Oral Slope Factor, checked 2026-05-23",
+        "value_text": "2.7 x 10 -1 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-chromium-hexavalent-hh-direct-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__chromium_hexavalent__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-chromium-hexavalent-hh-food-sf",
+    "substance_key": "chromium_hexavalent",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Chromium(VI) oral slope factor - IRIS",
+    "value": 0.27,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Oral Slope Factor for Chromium, hexavalent; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Chromium, hexavalent, Oral Slope Factor, checked 2026-05-23",
+        "value_text": "2.7 x 10 -1 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-chromium-hexavalent-hh-food-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__chromium_hexavalent__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-chromium-hexavalent-hh-direct-rfc",
+    "substance_key": "chromium_hexavalent",
+    "pathway": "human-health-direct",
+    "input_key": "rfc_inhalation_mg_per_m3",
+    "display_name": "Chromium(VI) inhalation RfC - IRIS",
+    "value": 0.00003,
+    "unit": "mg/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table RfC for Chromium, hexavalent; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Chromium, hexavalent, RfC, checked 2026-05-23",
+        "value_text": "3 x 10 -5 mg/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-chromium-hexavalent-hh-direct-rfc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__chromium_hexavalent__rfc_inhalation_mg_per_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-chromium-hexavalent-hh-direct-iur",
+    "substance_key": "chromium_hexavalent",
+    "pathway": "human-health-direct",
+    "input_key": "unit_risk_inhalation_per_ug_m3",
+    "display_name": "Chromium(VI) inhalation unit risk - IRIS",
+    "value": 0.018,
+    "unit": "per ug/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Inhalation Unit Risk for Chromium, hexavalent; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Chromium, hexavalent, Inhalation Unit Risk, checked 2026-05-23",
+        "value_text": "1.8 x 10 -2 per ug/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-chromium-hexavalent-hh-direct-iur-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__chromium_hexavalent__unit_risk_inhalation_per_ug_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-naphthalene-hh-direct-rfd",
+    "substance_key": "naphthalene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Naphthalene oral RfD - IRIS",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Naphthalene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Naphthalene, RfD, checked 2026-05-23",
+        "value_text": "2 x 10 -2 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-naphthalene-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__naphthalene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-naphthalene-hh-food-rfd",
+    "substance_key": "naphthalene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Naphthalene oral RfD - IRIS",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Naphthalene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Naphthalene, RfD, checked 2026-05-23",
+        "value_text": "2 x 10 -2 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-naphthalene-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__naphthalene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-naphthalene-hh-direct-rfc",
+    "substance_key": "naphthalene",
+    "pathway": "human-health-direct",
+    "input_key": "rfc_inhalation_mg_per_m3",
+    "display_name": "Naphthalene inhalation RfC - IRIS",
+    "value": 0.003,
+    "unit": "mg/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table RfC for Naphthalene; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Naphthalene, RfC, checked 2026-05-23",
+        "value_text": "3 x 10 -3 mg/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-naphthalene-hh-direct-rfc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__naphthalene__rfc_inhalation_mg_per_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-tetrachloroethylene-hh-direct-rfd",
+    "substance_key": "tetrachloroethylene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Tetrachloroethylene oral RfD - IRIS",
+    "value": 0.006,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Tetrachloroethylene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Tetrachloroethylene, RfD, checked 2026-05-23",
+        "value_text": "6 x 10 -3 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-tetrachloroethylene-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__tetrachloroethylene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-tetrachloroethylene-hh-food-rfd",
+    "substance_key": "tetrachloroethylene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Tetrachloroethylene oral RfD - IRIS",
+    "value": 0.006,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Tetrachloroethylene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Tetrachloroethylene, RfD, checked 2026-05-23",
+        "value_text": "6 x 10 -3 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-tetrachloroethylene-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__tetrachloroethylene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-tetrachloroethylene-hh-direct-sf",
+    "substance_key": "tetrachloroethylene",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Tetrachloroethylene oral slope factor - IRIS",
+    "value": 0.0021,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Oral Slope Factor for Tetrachloroethylene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Tetrachloroethylene, Oral Slope Factor, checked 2026-05-23",
+        "value_text": "2.1 x 10 -3 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-tetrachloroethylene-hh-direct-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__tetrachloroethylene__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-tetrachloroethylene-hh-food-sf",
+    "substance_key": "tetrachloroethylene",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Tetrachloroethylene oral slope factor - IRIS",
+    "value": 0.0021,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Oral Slope Factor for Tetrachloroethylene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Tetrachloroethylene, Oral Slope Factor, checked 2026-05-23",
+        "value_text": "2.1 x 10 -3 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-tetrachloroethylene-hh-food-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__tetrachloroethylene__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-tetrachloroethylene-hh-direct-rfc",
+    "substance_key": "tetrachloroethylene",
+    "pathway": "human-health-direct",
+    "input_key": "rfc_inhalation_mg_per_m3",
+    "display_name": "Tetrachloroethylene inhalation RfC - IRIS",
+    "value": 0.04,
+    "unit": "mg/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table RfC for Tetrachloroethylene; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Tetrachloroethylene, RfC, checked 2026-05-23",
+        "value_text": "4 x 10 -2 mg/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-tetrachloroethylene-hh-direct-rfc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__tetrachloroethylene__rfc_inhalation_mg_per_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-tetrachloroethylene-hh-direct-iur",
+    "substance_key": "tetrachloroethylene",
+    "pathway": "human-health-direct",
+    "input_key": "unit_risk_inhalation_per_ug_m3",
+    "display_name": "Tetrachloroethylene inhalation unit risk - IRIS",
+    "value": 2.6e-7,
+    "unit": "per ug/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Inhalation Unit Risk for Tetrachloroethylene; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Tetrachloroethylene, Inhalation Unit Risk, checked 2026-05-23",
+        "value_text": "2.6 x 10 -7 per ug/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-tetrachloroethylene-hh-direct-iur-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__tetrachloroethylene__unit_risk_inhalation_per_ug_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-trichloroethylene-hh-direct-rfd",
+    "substance_key": "trichloroethylene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Trichloroethylene oral RfD - IRIS",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Trichloroethylene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Trichloroethylene, RfD, checked 2026-05-23",
+        "value_text": "5 x 10 -4 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-trichloroethylene-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__trichloroethylene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-trichloroethylene-hh-food-rfd",
+    "substance_key": "trichloroethylene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Trichloroethylene oral RfD - IRIS",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Trichloroethylene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Trichloroethylene, RfD, checked 2026-05-23",
+        "value_text": "5 x 10 -4 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-trichloroethylene-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__trichloroethylene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-trichloroethylene-hh-direct-sf",
+    "substance_key": "trichloroethylene",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Trichloroethylene oral slope factor - IRIS",
+    "value": 0.052,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Oral Slope Factor for Trichloroethylene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Trichloroethylene, Oral Slope Factor, checked 2026-05-23",
+        "value_text": "5.2 x 10 -2 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-trichloroethylene-hh-direct-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__trichloroethylene__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-trichloroethylene-hh-food-sf",
+    "substance_key": "trichloroethylene",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Trichloroethylene oral slope factor - IRIS",
+    "value": 0.052,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Oral Slope Factor for Trichloroethylene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Trichloroethylene, Oral Slope Factor, checked 2026-05-23",
+        "value_text": "5.2 x 10 -2 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-trichloroethylene-hh-food-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__trichloroethylene__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-trichloroethylene-hh-direct-rfc",
+    "substance_key": "trichloroethylene",
+    "pathway": "human-health-direct",
+    "input_key": "rfc_inhalation_mg_per_m3",
+    "display_name": "Trichloroethylene inhalation RfC - IRIS",
+    "value": 0.002,
+    "unit": "mg/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table RfC for Trichloroethylene; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Trichloroethylene, RfC, checked 2026-05-23",
+        "value_text": "2 x 10 -3 mg/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-trichloroethylene-hh-direct-rfc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__trichloroethylene__rfc_inhalation_mg_per_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-trichloroethylene-hh-direct-iur",
+    "substance_key": "trichloroethylene",
+    "pathway": "human-health-direct",
+    "input_key": "unit_risk_inhalation_per_ug_m3",
+    "display_name": "Trichloroethylene inhalation unit risk - IRIS",
+    "value": 0.0000048,
+    "unit": "per ug/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Inhalation Unit Risk for Trichloroethylene; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Trichloroethylene, Inhalation Unit Risk, checked 2026-05-23",
+        "value_text": "4.8 x 10 -6 per ug/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-trichloroethylene-hh-direct-iur-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__trichloroethylene__unit_risk_inhalation_per_ug_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-vinyl-chloride-hh-direct-rfd",
+    "substance_key": "vinyl_chloride",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Vinyl chloride oral RfD - IRIS",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Vinyl chloride; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Vinyl chloride, RfD, checked 2026-05-23",
+        "value_text": "3 x 10 -3 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-vinyl-chloride-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__vinyl_chloride__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-vinyl-chloride-hh-food-rfd",
+    "substance_key": "vinyl_chloride",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Vinyl chloride oral RfD - IRIS",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Vinyl chloride; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Vinyl chloride, RfD, checked 2026-05-23",
+        "value_text": "3 x 10 -3 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-vinyl-chloride-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__vinyl_chloride__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-vinyl-chloride-hh-direct-sf",
+    "substance_key": "vinyl_chloride",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Vinyl chloride oral slope factor range - IRIS",
+    "value": "0.72 to 1.5",
+    "unit": "per mg/kg-bw/day",
+    "value_type": "range",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Oral Slope Factor for Vinyl chloride; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": "IRIS table reports multiple toxicity values; retain as range until owner-approved default-selection rules choose a specific value.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Vinyl chloride, Oral Slope Factor, checked 2026-05-23",
+        "value_text": "7.2 x 10 -1 to 1.5 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-vinyl-chloride-hh-direct-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__vinyl_chloride__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-vinyl-chloride-hh-food-sf",
+    "substance_key": "vinyl_chloride",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Vinyl chloride oral slope factor range - IRIS",
+    "value": "0.72 to 1.5",
+    "unit": "per mg/kg-bw/day",
+    "value_type": "range",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Oral Slope Factor for Vinyl chloride; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": "IRIS table reports multiple toxicity values; retain as range until owner-approved default-selection rules choose a specific value.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Vinyl chloride, Oral Slope Factor, checked 2026-05-23",
+        "value_text": "7.2 x 10 -1 to 1.5 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-vinyl-chloride-hh-food-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__vinyl_chloride__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-vinyl-chloride-hh-direct-rfc",
+    "substance_key": "vinyl_chloride",
+    "pathway": "human-health-direct",
+    "input_key": "rfc_inhalation_mg_per_m3",
+    "display_name": "Vinyl chloride inhalation RfC - IRIS",
+    "value": 0.1,
+    "unit": "mg/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table RfC for Vinyl chloride; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Vinyl chloride, RfC, checked 2026-05-23",
+        "value_text": "1 x 10 -1 mg/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-vinyl-chloride-hh-direct-rfc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__vinyl_chloride__rfc_inhalation_mg_per_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-vinyl-chloride-hh-direct-iur",
+    "substance_key": "vinyl_chloride",
+    "pathway": "human-health-direct",
+    "input_key": "unit_risk_inhalation_per_ug_m3",
+    "display_name": "Vinyl chloride inhalation unit risk range - IRIS",
+    "value": "4.4e-6 to 8.8e-6",
+    "unit": "per ug/m3",
+    "value_type": "range",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS chemical details table Inhalation Unit Risk for Vinyl chloride; read-only inhalation TRV candidate for Matrix Options human-health review.",
+    "uncertainty": "IRIS table reports multiple toxicity values; retain as range until owner-approved default-selection rules choose a specific value.",
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS chemical details table, Vinyl chloride, Inhalation Unit Risk, checked 2026-05-23",
+        "value_text": "4.4 x 10 -6 to 8.8 x 10 -6 per ug/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-vinyl-chloride-hh-direct-iur-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "inhalation",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__vinyl_chloride__unit_risk_inhalation_per_ug_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-chlorobenzene-hh-direct-rfd",
+    "substance_key": "chlorobenzene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Chlorobenzene oral RfD - IRIS",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Chlorobenzene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Chlorobenzene, RfD, checked 2026-05-23",
+        "value_text": "2 x 10 -2 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-chlorobenzene-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__chlorobenzene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-chlorobenzene-hh-food-rfd",
+    "substance_key": "chlorobenzene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Chlorobenzene oral RfD - IRIS",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RfD table RfD for Chlorobenzene; read-only oral TRV candidate for Matrix Options human-health review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS RfD table, Chlorobenzene, RfD, checked 2026-05-23",
+        "value_text": "2 x 10 -2 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS live table source; extracted on 2026-05-23. Cite the IRIS website, not a local Excel export.",
+        "evidence_id": "ev-pv-iris-chlorobenzene-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "oral",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__chlorobenzene__rfd_oral_mg_per_kg_bw_day__US_federal"
   }
 ]

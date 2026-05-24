@@ -21,12 +21,12 @@ describe('matrix options evidence library helpers', () => {
     expect(view.totalCounts.sourceLeads).toBe(4);
     expect(view.values.length).toBe(view.totalCounts.values);
     expect(view.equations.length).toBe(view.totalCounts.equations);
-    expect(view.valueGroups).toHaveLength(114);
-    expect(view.audit.values.approvedSourceBacked).toBe(41);
+    expect(view.valueGroups).toHaveLength(157);
+    expect(view.audit.values.approvedSourceBacked).toBe(84);
     expect(view.audit.values.pendingSourceLocator).toBe(15);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
-    expect(view.audit.values.availableOptions).toBe(47);
+    expect(view.audit.values.availableOptions).toBe(90);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
@@ -250,7 +250,7 @@ describe('matrix options evidence library helpers', () => {
     }
   });
 
-  it('catalogs every current HH calculator input as a review scaffold', () => {
+  it('catalogs every current HH calculator default input as a review scaffold', () => {
     const inputKeysByPathway = {
       'human-health-direct': [
         'rfd_oral_mg_per_kg_bw_day',
@@ -266,7 +266,30 @@ describe('matrix options evidence library helpers', () => {
       ],
     } as const;
 
-    for (const substance of SUBSTANCE_LIBRARY) {
+    const scaffoldSubstanceKeys = new Set(
+      PARAMETER_VALUE_RECORDS.filter(
+        (record) =>
+          record.pathway.startsWith('human-health') &&
+          record.source_ids.includes('src-current-calculator-design-v1'),
+      ).map((record) => record.substance_key),
+    );
+    const scaffoldSubstances = SUBSTANCE_LIBRARY.filter((substance) =>
+      scaffoldSubstanceKeys.has(substance.key),
+    );
+
+    expect(scaffoldSubstances.map((substance) => substance.key).sort()).toEqual([
+      'arsenic_inorganic',
+      'benzo_a_pyrene',
+      'cadmium',
+      'copper',
+      'lead',
+      'methylmercury',
+      'total_pcbs_aroclor_1254',
+      'zinc',
+    ]);
+    expect(scaffoldSubstanceKeys.has('benzene')).toBe(false);
+
+    for (const substance of scaffoldSubstances) {
       for (const [pathway, inputKeys] of Object.entries(inputKeysByPathway)) {
         for (const inputKey of inputKeys) {
           const record = getParameterValueRecord(
