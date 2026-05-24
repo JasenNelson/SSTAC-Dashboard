@@ -123,6 +123,34 @@ describe('SSD HCp preview', () => {
     expect(result.warnings.join(' ')).toMatch(/bootstrap confidence intervals/i);
   });
 
+  it('calculates deterministic bootstrap confidence intervals when requested', () => {
+    const result = buildSsdAnalysis(SSD_FIXTURE_ROWS, {
+      ...BASE_SETTINGS,
+      analysisMode: 'single_distribution',
+      selectedDistribution: 'Log-Normal',
+      bootstrapIterations: 25,
+    });
+    const repeated = buildSsdAnalysis(SSD_FIXTURE_ROWS, {
+      ...BASE_SETTINGS,
+      analysisMode: 'single_distribution',
+      selectedDistribution: 'Log-Normal',
+      bootstrapIterations: 25,
+    });
+
+    expect(result.bootstrapInterval).not.toBeNull();
+    expect(result.bootstrapInterval?.iterations).toBe(25);
+    expect(result.bootstrapInterval?.successfulIterations).toBeGreaterThan(10);
+    expect(result.bootstrapInterval?.lower).toBeGreaterThan(0);
+    expect(result.bootstrapInterval?.upper).toBeGreaterThan(
+      result.bootstrapInterval?.lower ?? 0,
+    );
+    expect(result.bootstrapInterval).toEqual(repeated.bootstrapInterval);
+    expect(result.derivedCandidate.confidenceInterval).toEqual(
+      result.bootstrapInterval,
+    );
+    expect(result.warnings.join(' ')).toMatch(/deterministic TypeScript/i);
+  });
+
   it('falls back to empirical HCp below the ssdtools fitting row minimum', () => {
     const result = buildSsdAnalysis(FIVE_SPECIES_ROWS, {
       ...BASE_SETTINGS,

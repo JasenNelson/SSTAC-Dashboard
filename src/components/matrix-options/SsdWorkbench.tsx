@@ -238,6 +238,7 @@ export default function SsdWorkbench({
   const [aggregationMethod, setAggregationMethod] =
     useState<SpeciesAggregationMethod>('geometric_mean');
   const [pValue, setPValue] = useState(0.05);
+  const [bootstrapIterations, setBootstrapIterations] = useState(0);
   const [analysisMode, setAnalysisMode] =
     useState<SsdAnalysisMode>('empirical_preview');
   const [selectedDistribution, setSelectedDistribution] =
@@ -277,7 +278,7 @@ export default function SsdWorkbench({
         pValue,
         analysisMode,
         selectedDistribution,
-        bootstrapIterations: 0,
+        bootstrapIterations,
         randomSeed: 42,
         sourceMode: dataSourceMode,
         ecotoxMirrorRecordCount: OWNER_REPORTED_ECOTOX_ROWS,
@@ -286,6 +287,7 @@ export default function SsdWorkbench({
     [
       aggregationMethod,
       analysisMode,
+      bootstrapIterations,
       dataSourceMode,
       endpointFilters,
       environmentFilter,
@@ -776,6 +778,20 @@ export default function SsdWorkbench({
             <span className="mt-1 block text-sm font-bold text-slate-900 dark:text-white">
               HC{Math.round(pValue * 100)}
             </span>
+          </label>
+
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Bootstrap CI
+            <select
+              value={bootstrapIterations}
+              onChange={(event) => setBootstrapIterations(Number(event.target.value))}
+              className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            >
+              <option value={0}>Off</option>
+              <option value={25}>25 iterations</option>
+              <option value={100}>100 iterations</option>
+              <option value={250}>250 iterations</option>
+            </select>
           </label>
 
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -1433,6 +1449,20 @@ export default function SsdWorkbench({
                     {result.settings.extractedAt}
                   </dd>
                 </div>
+                {result.bootstrapInterval && (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-slate-500 dark:text-slate-400">
+                      Bootstrap CI
+                    </dt>
+                    <dd className="text-right font-semibold text-slate-900 dark:text-white">
+                      {Math.round(
+                        result.bootstrapInterval.confidenceLevel * 100,
+                      )}
+                      %: {formatNumber(result.bootstrapInterval.lower)} -{' '}
+                      {formatNumber(result.bootstrapInterval.upper)} {result.unit}
+                    </dd>
+                  </div>
+                )}
               </dl>
               <p className="mt-4 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                 {result.derivedCandidate.provenanceNote}

@@ -133,6 +133,17 @@ describe('SsdWorkbench', () => {
     expect(screen.getAllByText(/^2$/).length).toBeGreaterThan(0);
   });
 
+  it('can show optional bootstrap confidence interval output', () => {
+    render(<SsdWorkbench />);
+
+    fireEvent.change(screen.getByRole('combobox', { name: /Bootstrap CI/i }), {
+      target: { value: '25' },
+    });
+
+    expect(screen.getAllByText(/Bootstrap CI/i).length).toBeGreaterThan(1);
+    expect(screen.getByText(/deterministic TypeScript percentile/i)).toBeInTheDocument();
+  });
+
   it('opens References & Values with a derived SSD filter request', () => {
     const handleOpenEvidenceLibrary = vi.fn();
     render(<SsdWorkbench onOpenEvidenceLibrary={handleOpenEvidenceLibrary} />);

@@ -11,6 +11,7 @@ import {
   type EmpiricalSsdPoint,
   type RawEcotoxRecord,
   type SsdAnalysisResult,
+  type SsdBootstrapInterval,
   type SsdCleanedRecord,
   type SsdWorkbenchSettings,
   type SpeciesAggregate,
@@ -18,6 +19,7 @@ import {
 
 const MIN_SPECIES_FOR_PREVIEW = 5;
 const RECOMMENDED_SPECIES_COUNT = 8;
+const BOOTSTRAP_CONFIDENCE_LEVEL = 0.95;
 
 function assertPValue(pValue: number): void {
   if (!Number.isFinite(pValue) || pValue < 0.01 || pValue > 0.5) {
@@ -95,6 +97,106 @@ function inferAnalysisUnit(
   };
 }
 
+function seededRandom(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state += 0x6d2b79f5;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function quantile(sortedValues: number[], probability: number): number {
+  if (sortedValues.length === 0) return Number.NaN;
+  if (sortedValues.length === 1) return sortedValues[0];
+  const position = (sortedValues.length - 1) * probability;
+  const lowerIndex = Math.floor(position);
+  const upperIndex = Math.ceil(position);
+  if (lowerIndex === upperIndex) return sortedValues[lowerIndex];
+  const fraction = position - lowerIndex;
+  return (
+    sortedValues[lowerIndex] +
+    (sortedValues[upperIndex] - sortedValues[lowerIndex]) * fraction
+  );
+}
+
+function resampleSpeciesAggregates(
+  speciesAggregates: SpeciesAggregate[],
+  random: () => number,
+): SpeciesAggregate[] {
+  return speciesAggregates.map((_, index) => {
+    const source =
+      speciesAggregates[
+        Math.min(
+          speciesAggregates.length - 1,
+          Math.floor(random() * speciesAggregates.length),
+        )
+      ];
+    return {
+      ...source,
+      speciesScientificName: `${source.speciesScientificName} bootstrap ${index + 1}`,
+    };
+  });
+}
+
+function calculateModeHcp(
+  speciesAggregates: SpeciesAggregate[],
+  settings: SsdWorkbenchSettings,
+): number {
+  if (speciesAggregates.length < MIN_SPECIES_FOR_PREVIEW) return Number.NaN;
+  if (settings.analysisMode === 'model_averaging') {
+    return buildModelAveragedFit(speciesAggregates, settings.pValue)?.hcp ?? Number.NaN;
+  }
+  if (settings.analysisMode === 'single_distribution') {
+    const selectedDistribution = settings.selectedDistribution ?? 'Log-Normal';
+    return (
+      fitSsdDistributions(speciesAggregates, settings.pValue).find(
+        (fit) => fit.distribution === selectedDistribution,
+      )?.hcp ?? Number.NaN
+    );
+  }
+  return calculateEmpiricalHcp(speciesAggregates, settings.pValue);
+}
+
+function buildBootstrapInterval(
+  speciesAggregates: SpeciesAggregate[],
+  settings: SsdWorkbenchSettings,
+): SsdBootstrapInterval | null {
+  const iterations = Math.floor(settings.bootstrapIterations);
+  if (iterations <= 0 || speciesAggregates.length < MIN_SPECIES_FOR_PREVIEW) {
+    return null;
+  }
+  if (
+    settings.analysisMode !== 'empirical_preview' &&
+    speciesAggregates.length < MIN_SPECIES_FOR_SSDTOOLS_FIT
+  ) {
+    return null;
+  }
+
+  const random = seededRandom(settings.randomSeed);
+  const hcps: number[] = [];
+  for (let index = 0; index < iterations; index += 1) {
+    const sample = resampleSpeciesAggregates(speciesAggregates, random);
+    const hcp = calculateModeHcp(sample, settings);
+    if (Number.isFinite(hcp)) hcps.push(hcp);
+  }
+
+  if (hcps.length < Math.max(10, Math.ceil(iterations * 0.5))) return null;
+  hcps.sort((a, b) => a - b);
+  const alpha = 1 - BOOTSTRAP_CONFIDENCE_LEVEL;
+  return {
+    lower: quantile(hcps, alpha / 2),
+    upper: quantile(hcps, 1 - alpha / 2),
+    confidenceLevel: BOOTSTRAP_CONFIDENCE_LEVEL,
+    iterations,
+    successfulIterations: hcps.length,
+    failedIterations: iterations - hcps.length,
+    method: 'percentile_resampling',
+  };
+}
+
 export function buildSsdAnalysis(
   rawRows: RawEcotoxRecord[],
   settings: SsdWorkbenchSettings,
@@ -135,11 +237,15 @@ export function buildSsdAnalysis(
         `BC Gov ssdtools distribution fitting requires at least ${MIN_SPECIES_FOR_SSDTOOLS_FIT} species; empirical HCp preview is shown until more species are available.`,
       );
     }
-    if (settings.bootstrapIterations <= 0) {
-      warnings.push(
-        'Point estimates are shown without bootstrap confidence intervals; ssdtools bootstrap CI parity is still pending.',
-      );
-    }
+  }
+  if (settings.bootstrapIterations > 0) {
+    warnings.push(
+      'Bootstrap confidence intervals use deterministic TypeScript percentile resampling; compare against official R ssdtools bootstrap output before regulatory use.',
+    );
+  } else if (settings.analysisMode !== 'empirical_preview') {
+    warnings.push(
+      'Point estimates are shown without bootstrap confidence intervals; ssdtools bootstrap CI parity is still pending.',
+    );
   }
   if (settings.mediaFilter === 'sediment') {
     warnings.push(
@@ -207,6 +313,12 @@ export function buildSsdAnalysis(
     : selectedFit ?? distributionFits.find((fit) => fit.distribution === 'Log-Normal');
   const percentileLabel = `HC${Math.round(settings.pValue * 100)}`;
   const unit = inferredUnit.unit;
+  const bootstrapInterval = buildBootstrapInterval(speciesAggregates, settings);
+  if (settings.bootstrapIterations > 0 && bootstrapInterval === null) {
+    warnings.push(
+      'Bootstrap confidence interval could not be calculated for the current filters and model settings.',
+    );
+  }
   const activeDistributionNames =
     modelAveragedFit?.activeFits
       .map(
@@ -274,6 +386,7 @@ export function buildSsdAnalysis(
             : 'BCANZ ssdtools candidate distribution fitted in the TypeScript parity path.',
       })),
     ],
+    bootstrapInterval,
     excludedRecords,
     warnings,
     derivedCandidate: {
@@ -281,6 +394,7 @@ export function buildSsdAnalysis(
       inputKey: `ssd_${percentileLabel.toLowerCase()}_candidate`,
       value: hcp,
       unit,
+      confidenceInterval: bootstrapInterval ?? undefined,
       evidenceSupportStatus: 'user_entered_or_derived',
       qaStatus: 'needs_review',
       canDriveCalculations: false,

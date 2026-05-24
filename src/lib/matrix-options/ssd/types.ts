@@ -135,10 +135,21 @@ export interface SsdDerivedCandidate {
   inputKey: string;
   value: number;
   unit: string;
+  confidenceInterval?: SsdBootstrapInterval;
   evidenceSupportStatus: EvidenceSupportStatus;
   qaStatus: 'needs_review';
   canDriveCalculations: false;
   provenanceNote: string;
+}
+
+export interface SsdBootstrapInterval {
+  lower: number;
+  upper: number;
+  confidenceLevel: number;
+  iterations: number;
+  successfulIterations: number;
+  failedIterations: number;
+  method: 'percentile_resampling';
 }
 
 export interface SsdAnalysisResult {
@@ -153,6 +164,7 @@ export interface SsdAnalysisResult {
   empiricalPoints: EmpiricalSsdPoint[];
   fittedCurvePoints: SsdFittedCurvePoint[];
   diagnostics: SsdModelDiagnostic[];
+  bootstrapInterval: SsdBootstrapInterval | null;
   excludedRecords: SsdExcludedRecord[];
   warnings: string[];
   derivedCandidate: SsdDerivedCandidate;
