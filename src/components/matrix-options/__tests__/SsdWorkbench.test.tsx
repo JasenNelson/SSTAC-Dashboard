@@ -99,6 +99,12 @@ describe('SsdWorkbench', () => {
       screen.getAllByText(/ssddata CCME boron benchmark dataset/i).length,
     ).toBeGreaterThan(0);
     expect(screen.getAllByText(/^28$/).length).toBeGreaterThan(0);
+    fireEvent.change(screen.getByRole('combobox', { name: /Analysis mode/i }), {
+      target: { value: 'model_averaging' },
+    });
+    expect(screen.getByText(/Reference checks/i)).toBeInTheDocument();
+    expect(screen.getByText(/BCANZ model-average HC5/i)).toBeInTheDocument();
+    expect(screen.getByText(/Within tolerance/i)).toBeInTheDocument();
 
     fireEvent.change(
       screen.getByRole('combobox', { name: /Fixture dataset/i }),

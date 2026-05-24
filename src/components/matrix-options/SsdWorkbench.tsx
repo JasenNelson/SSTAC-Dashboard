@@ -31,6 +31,7 @@ import {
   getSsdFixtureDataset,
   SSD_FIXTURE_DATASETS,
   type SsdFixtureDatasetId,
+  type SsdFixtureValidationReference,
 } from '@/lib/matrix-options/ssd/fixtures';
 import { buildSsdAnalysis } from '@/lib/matrix-options/ssd/hcp';
 import { parseSsdUpload } from '@/lib/matrix-options/ssd/upload';
@@ -76,6 +77,54 @@ function formatNumber(value: number, digits = 3): string {
   return value.toLocaleString(undefined, {
     maximumSignificantDigits: digits,
   });
+}
+
+function modeLabel(mode: SsdAnalysisMode): string {
+  switch (mode) {
+    case 'model_averaging':
+      return 'AICc model averaging';
+    case 'single_distribution':
+      return 'single distribution';
+    default:
+      return 'empirical preview';
+  }
+}
+
+function referenceStatus(
+  reference: SsdFixtureValidationReference,
+  result: SsdAnalysisResult,
+): {
+  comparable: boolean;
+  withinTolerance: boolean;
+  delta: number | null;
+  label: string;
+} {
+  const modeMatches = result.settings.analysisMode === reference.analysisMode;
+  const percentileMatches = Math.abs(result.pValue - reference.pValue) < 1e-9;
+  const unitMatches = result.unit === reference.unit;
+  const comparable =
+    modeMatches && percentileMatches && unitMatches && Number.isFinite(result.hcp);
+  const delta = comparable ? result.hcp - reference.expectedHcp : null;
+  const withinTolerance =
+    delta !== null && Math.abs(delta) <= reference.tolerance;
+
+  if (!comparable) {
+    return {
+      comparable,
+      withinTolerance: false,
+      delta,
+      label: `Select ${modeLabel(reference.analysisMode)} HC${Math.round(
+        reference.pValue * 100,
+      )}`,
+    };
+  }
+
+  return {
+    comparable,
+    withinTolerance,
+    delta,
+    label: withinTolerance ? 'Within tolerance' : 'Outside tolerance',
+  };
 }
 
 function todayIsoDate(): string {
@@ -946,6 +995,95 @@ export default function SsdWorkbench({
                   </dl>
                 )}
               </div>
+              {dataSourceMode === 'fixture' &&
+                selectedFixtureDataset.validationReferences?.length ? (
+                  <div className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40 lg:col-span-2">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Reference checks
+                    </div>
+                    <div className="mt-3 space-y-3">
+                      {selectedFixtureDataset.validationReferences.map((reference) => {
+                        const status = referenceStatus(reference, result);
+                        return (
+                          <div
+                            key={reference.label}
+                            className="rounded-md border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
+                          >
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                              <div>
+                                <div className="font-semibold text-slate-900 dark:text-white">
+                                  {reference.label}
+                                </div>
+                                <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                  Expected {formatNumber(reference.expectedHcp, 6)}{' '}
+                                  {reference.unit} from {reference.sourceLabel}.
+                                </p>
+                              </div>
+                              <span
+                                className={cn(
+                                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold',
+                                  status.comparable && status.withinTolerance
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100'
+                                    : status.comparable
+                                      ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-100'
+                                      : 'bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100',
+                                )}
+                              >
+                                {status.comparable && status.withinTolerance ? (
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                ) : (
+                                  <AlertTriangle className="h-3.5 w-3.5" />
+                                )}
+                                {status.label}
+                              </span>
+                            </div>
+                            <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
+                              <div>
+                                <dt className="text-slate-500 dark:text-slate-400">
+                                  Current
+                                </dt>
+                                <dd className="font-semibold text-slate-900 dark:text-white">
+                                  {status.comparable
+                                    ? `${formatNumber(result.hcp, 6)} ${result.unit}`
+                                    : 'Not comparable'}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt className="text-slate-500 dark:text-slate-400">
+                                  Delta
+                                </dt>
+                                <dd className="font-semibold text-slate-900 dark:text-white">
+                                  {status.delta === null
+                                    ? 'n/a'
+                                    : `${formatNumber(Math.abs(status.delta), 4)} ${reference.unit}`}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt className="text-slate-500 dark:text-slate-400">
+                                  Tolerance
+                                </dt>
+                                <dd className="font-semibold text-slate-900 dark:text-white">
+                                  {formatNumber(reference.tolerance, 4)}{' '}
+                                  {reference.unit}
+                                </dd>
+                              </div>
+                            </dl>
+                            {reference.sourceUrl.startsWith('https://') && (
+                              <a
+                                href={reference.sourceUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-3 inline-flex text-xs font-semibold text-sky-700 hover:text-sky-800 dark:text-sky-300"
+                              >
+                                Open snapshot source
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
             </div>
           </details>
 

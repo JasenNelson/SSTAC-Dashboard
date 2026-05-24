@@ -1,4 +1,4 @@
-import type { RawEcotoxRecord } from './types';
+import type { RawEcotoxRecord, SsdAnalysisMode } from './types';
 
 export type SsdFixtureDatasetRole = 'preview' | 'validation';
 
@@ -6,6 +6,17 @@ export type SsdFixtureDatasetId =
   | 'copper_preview'
   | 'ccme_boron_validation'
   | 'ccme_endosulfan_validation';
+
+export interface SsdFixtureValidationReference {
+  label: string;
+  analysisMode: SsdAnalysisMode;
+  pValue: number;
+  expectedHcp: number;
+  unit: string;
+  tolerance: number;
+  sourceLabel: string;
+  sourceUrl: string;
+}
 
 interface ReferenceRow {
   species: string;
@@ -24,6 +35,7 @@ export interface SsdFixtureDataset {
   sourceDetailUrl: string;
   sourceAccessedAt: string;
   validationNote: string;
+  validationReferences?: SsdFixtureValidationReference[];
   rows: RawEcotoxRecord[];
 }
 
@@ -302,6 +314,19 @@ export const SSD_FIXTURE_DATASETS: SsdFixtureDataset[] = [
     sourceAccessedAt: '2026-05-24',
     validationNote:
       'Official ssdtools examples and tests use ssddata::ccme_boron for BCANZ distribution and model-averaging checks. Use this fixture as the primary R parity target.',
+    validationReferences: [
+      {
+        label: 'BCANZ model-average HC5',
+        analysisMode: 'model_averaging',
+        pValue: 0.05,
+        expectedHcp: 1.25678,
+        unit: 'mg/L',
+        tolerance: 0.0002,
+        sourceLabel: 'bcgov/ssdtools testthat snapshot for ssddata::ccme_boron',
+        sourceUrl:
+          'https://github.com/bcgov/ssdtools/blob/main/tests/testthat/_snaps/bcanz/hc_chloride.csv',
+      },
+    ],
     rows: CCME_BORON_ROWS,
   },
   {
