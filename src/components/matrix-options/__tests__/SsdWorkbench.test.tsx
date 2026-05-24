@@ -42,6 +42,10 @@ describe('SsdWorkbench', () => {
       'false',
     );
     expect(screen.getByTestId('ssd-composed-chart')).toBeInTheDocument();
+    expect(screen.getByTestId('ssd-species-aggregate-table')).toBeInTheDocument();
+    expect(screen.getByText(/Daphnia magna/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Species CSV/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Receipt JSON/i })).toBeInTheDocument();
     expect(screen.getByText(/Plot options/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Log scale$/ })).toHaveAttribute(
       'aria-pressed',
@@ -95,7 +99,7 @@ describe('SsdWorkbench', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Growth$/ }));
 
     expect(screen.getAllByText(/^4$/).length).toBeGreaterThan(0);
-    const exclusions = screen.getByRole('table');
+    const exclusions = screen.getByTestId('ssd-exclusions-table');
     expect(within(exclusions).getAllByText(/endpoint mismatch/i).length).toBeGreaterThan(0);
   });
 

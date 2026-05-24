@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Database,
+  Download,
   FlaskConical,
   Search,
   Upload,
@@ -20,6 +21,10 @@ import {
   YAxis,
 } from 'recharts';
 import { cn } from '@/utils/cn';
+import {
+  buildSsdReceiptJson,
+  buildSsdSpeciesCsv,
+} from '@/lib/matrix-options/ssd/export';
 import { SSD_FIXTURE_ROWS } from '@/lib/matrix-options/ssd/fixtures';
 import { buildSsdAnalysis } from '@/lib/matrix-options/ssd/hcp';
 import { parseSsdUpload } from '@/lib/matrix-options/ssd/upload';
@@ -81,6 +86,31 @@ function liveStatusLabel(status: LiveStatus): string {
     default:
       return 'Use fixture mode or search the ECOTOX mirror.';
   }
+}
+
+function slugifyFilePart(value: string): string {
+  const slug = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  return slug || 'ssd';
+}
+
+function downloadTextFile(
+  fileName: string,
+  content: string,
+  type: string,
+): void {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function buildConcentrationTicks(
@@ -209,6 +239,9 @@ export default function SsdWorkbench({
     endpointFilters.length === 0 ? 'All endpoints' : endpointFilters.join(', ');
   const activeMediaLabel = MEDIA_FILTER_LABELS[mediaFilter];
   const activeEnvironmentLabel = ENVIRONMENT_FILTER_LABELS[environmentFilter];
+  const exportFileStem = slugifyFilePart(
+    `${chemicalSearch || 'ssd'}-${activeMediaLabel}-${activeEnvironmentLabel}`,
+  );
 
   const toggleEndpoint = (endpoint: string): void => {
     setEndpointFilters((current) =>
@@ -355,6 +388,22 @@ export default function SsdWorkbench({
       setLiveStatus('error');
       setLiveMessage(liveStatusLabel('error'));
     }
+  };
+
+  const downloadSpeciesCsv = (): void => {
+    downloadTextFile(
+      `${exportFileStem}-species-aggregates.csv`,
+      buildSsdSpeciesCsv(result),
+      'text/csv;charset=utf-8',
+    );
+  };
+
+  const downloadReceiptJson = (): void => {
+    downloadTextFile(
+      `${exportFileStem}-receipt.json`,
+      buildSsdReceiptJson(result),
+      'application/json;charset=utf-8',
+    );
   };
 
   return (
@@ -797,6 +846,88 @@ export default function SsdWorkbench({
             </div>
           </div>
 
+          <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h3 className="text-base font-bold text-slate-950 dark:text-white">
+                  Species aggregates
+                </h3>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Review the species-level values used by the empirical HCp
+                  preview before treating the output as a candidate.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={downloadSpeciesCsv}
+                  className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:text-slate-200"
+                >
+                  <Download className="h-4 w-4" />
+                  Species CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={downloadReceiptJson}
+                  className="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:text-slate-200"
+                >
+                  <Download className="h-4 w-4" />
+                  Receipt JSON
+                </button>
+              </div>
+            </div>
+            <div className="mt-4 max-h-72 overflow-auto rounded-md border border-slate-200 dark:border-slate-800">
+              <table
+                className="min-w-full text-left text-xs"
+                data-testid="ssd-species-aggregate-table"
+              >
+                <thead className="bg-slate-50 text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+                  <tr>
+                    <th className="px-3 py-2 font-semibold">Species</th>
+                    <th className="px-3 py-2 font-semibold">Group</th>
+                    <th className="px-3 py-2 font-semibold">SSD value</th>
+                    <th className="px-3 py-2 font-semibold">Records</th>
+                    <th className="px-3 py-2 font-semibold">Range</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {result.speciesAggregates.length > 0 ? (
+                    result.speciesAggregates.map((aggregate) => (
+                      <tr key={aggregate.speciesScientificName}>
+                        <td className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200">
+                          {aggregate.speciesScientificName}
+                        </td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
+                          {aggregate.broadGroup}
+                        </td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
+                          {formatNumber(aggregate.value)} {result.unit}
+                        </td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
+                          {aggregate.sourceRecordCount}
+                        </td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
+                          {formatNumber(aggregate.minValue)} -{' '}
+                          {formatNumber(aggregate.maxValue)}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400"
+                      >
+                        No species aggregates are available for the current
+                        filters.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div className="grid gap-5 xl:grid-cols-2">
             <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
               <div className="flex items-center gap-2">
@@ -864,7 +995,10 @@ export default function SsdWorkbench({
                 )}
               </ul>
               <div className="mt-4 max-h-44 overflow-auto rounded-md border border-slate-200 dark:border-slate-800">
-                <table className="min-w-full text-left text-xs">
+                <table
+                  className="min-w-full text-left text-xs"
+                  data-testid="ssd-exclusions-table"
+                >
                   <thead className="bg-slate-50 text-slate-500 dark:bg-slate-900 dark:text-slate-400">
                     <tr>
                       <th className="px-3 py-2 font-semibold">Reason</th>
