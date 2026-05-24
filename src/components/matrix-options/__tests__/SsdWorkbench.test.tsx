@@ -33,6 +33,17 @@ describe('SsdWorkbench', () => {
     expect(screen.getByText(/Derived candidate only/i)).toBeInTheDocument();
     expect(screen.getByText(/582,125 rows/i)).toBeInTheDocument();
     expect(screen.getByTestId('ssd-composed-chart')).toBeInTheDocument();
+    expect(screen.getByText(/Plot options/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Log scale$/ })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: /^Linear$/ })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    expect(screen.getByLabelText(/Empirical curve/i)).toBeChecked();
+    expect(screen.getByLabelText(/Species points/i)).toBeChecked();
 
     const receipt = screen
       .getByRole('heading', { name: /Derived candidate receipt/i })

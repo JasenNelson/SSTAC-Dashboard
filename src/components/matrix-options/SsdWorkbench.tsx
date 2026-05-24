@@ -11,7 +11,6 @@ import {
 import {
   CartesianGrid,
   ComposedChart,
-  Legend,
   Line,
   ResponsiveContainer,
   Scatter,
@@ -37,6 +36,7 @@ interface SsdWorkbenchProps {
 
 const ENDPOINT_OPTIONS = ['Mortality', 'Growth', 'Reproduction', 'Development'];
 const OWNER_REPORTED_ECOTOX_ROWS = 582125;
+type PlotScale = 'log' | 'linear';
 
 function formatNumber(value: number, digits = 3): string {
   if (!Number.isFinite(value)) return 'n/a';
@@ -47,6 +47,28 @@ function formatNumber(value: number, digits = 3): string {
 
 function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function buildConcentrationTicks(
+  chartData: Array<{ value: number }>,
+): number[] {
+  const sortedValues = Array.from(
+    new Set(
+      chartData
+        .map((point) => point.value)
+        .filter((value) => Number.isFinite(value) && value > 0),
+    ),
+  ).sort((a, b) => a - b);
+
+  if (sortedValues.length <= 5) return sortedValues;
+  const indices = [
+    0,
+    Math.floor((sortedValues.length - 1) * 0.25),
+    Math.floor((sortedValues.length - 1) * 0.5),
+    Math.floor((sortedValues.length - 1) * 0.75),
+    sortedValues.length - 1,
+  ];
+  return Array.from(new Set(indices.map((index) => sortedValues[index])));
 }
 
 function ToggleButton({
@@ -87,6 +109,9 @@ export default function SsdWorkbench({
   const [pValue, setPValue] = useState(0.05);
   const [analysisMode, setAnalysisMode] =
     useState<SsdAnalysisMode>('empirical_preview');
+  const [plotScale, setPlotScale] = useState<PlotScale>('log');
+  const [showEmpiricalCurve, setShowEmpiricalCurve] = useState(true);
+  const [showSpeciesPoints, setShowSpeciesPoints] = useState(true);
 
   const result: SsdAnalysisResult = useMemo(
     () =>
@@ -114,6 +139,7 @@ export default function SsdWorkbench({
   }));
   const canPlotPreview = chartData.length >= 2;
   const hasHcpPreview = Number.isFinite(result.hcp);
+  const concentrationTicks = buildConcentrationTicks(chartData);
 
   const activeEndpointLabel =
     endpointFilters.length === 0 ? 'All endpoints' : endpointFilters.join(', ');
@@ -256,6 +282,46 @@ export default function SsdWorkbench({
               <option value="single_distribution">Single distribution (gated)</option>
             </select>
           </label>
+
+          <div>
+            <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Plot options
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <ToggleButton
+                active={plotScale === 'log'}
+                onClick={() => setPlotScale('log')}
+              >
+                Log scale
+              </ToggleButton>
+              <ToggleButton
+                active={plotScale === 'linear'}
+                onClick={() => setPlotScale('linear')}
+              >
+                Linear
+              </ToggleButton>
+            </div>
+            <div className="mt-3 space-y-2 rounded-md border border-slate-200 bg-white p-3 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showEmpiricalCurve}
+                  onChange={(event) => setShowEmpiricalCurve(event.target.checked)}
+                  className="h-4 w-4 accent-sky-600"
+                />
+                Empirical curve
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showSpeciesPoints}
+                  onChange={(event) => setShowSpeciesPoints(event.target.checked)}
+                  className="h-4 w-4 accent-amber-500"
+                />
+                Species points
+              </label>
+            </div>
+          </div>
         </aside>
 
         <div className="space-y-5">
@@ -301,63 +367,93 @@ export default function SsdWorkbench({
                 required before the candidate value is calculated.
               </div>
             )}
-            <div className="mt-4 h-80">
+            <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
               {canPlotPreview ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={chartData} margin={{ left: 8, right: 24, top: 16, bottom: 24 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="value"
-                      type="number"
-                      scale="log"
-                      domain={['dataMin', 'dataMax']}
-                      tickFormatter={(value: number) => formatNumber(value, 2)}
-                      label={{ value: 'Concentration (mg/L)', position: 'insideBottom', offset: -12 }}
-                    />
-                    <YAxis
-                      dataKey="percentAffected"
-                      type="number"
-                      domain={[0, 100]}
-                      tickFormatter={(value: number) => `${value}%`}
-                      label={{ value: 'Species affected (%)', angle: -90, position: 'insideLeft' }}
-                    />
-                    <Tooltip
-                      formatter={(value: unknown, name: string) => {
-                        const numericValue =
-                          typeof value === 'number' ? value : Number(value);
-                        return [
-                          name === 'value'
-                            ? `${formatNumber(numericValue)} mg/L`
-                            : `${formatNumber(numericValue)}%`,
-                          name === 'value' ? 'Concentration' : 'Affected',
-                        ];
-                      }}
-                      labelFormatter={(_, payload) =>
-                        payload?.[0]?.payload?.species ?? 'Species'
-                      }
-                    />
-                    <Legend />
-                    <Line
-                      data={chartData}
-                      type="monotone"
-                      dataKey="percentAffected"
-                      name="Empirical curve"
-                      stroke="#0369a1"
-                      strokeWidth={2}
-                      dot={false}
-                      isAnimationActive={false}
-                    />
-                    <Scatter
-                      data={chartData}
-                      dataKey="percentAffected"
-                      name="Species value"
-                      fill="#f59e0b"
-                      isAnimationActive={false}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
+                <>
+                  <div className="mb-2 flex flex-col gap-1 text-xs font-semibold text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+                    <span>Species affected (%)</span>
+                    <span>
+                      Concentration (mg/L, {plotScale === 'log' ? 'log scale' : 'linear scale'})
+                    </span>
+                  </div>
+                  <div className="h-[19rem]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={chartData} margin={{ left: 8, right: 18, top: 10, bottom: 12 }}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="value"
+                          type="number"
+                          scale={plotScale}
+                          domain={plotScale === 'log' ? ['dataMin', 'dataMax'] : [0, 'dataMax']}
+                          ticks={concentrationTicks}
+                          tickFormatter={(value: number) => formatNumber(value, 2)}
+                          tickMargin={10}
+                          minTickGap={16}
+                        />
+                        <YAxis
+                          dataKey="percentAffected"
+                          type="number"
+                          domain={[0, 100]}
+                          width={56}
+                          tickMargin={8}
+                          tickFormatter={(value: number) => `${value}%`}
+                        />
+                        <Tooltip
+                          formatter={(value: unknown, name: string) => {
+                            const numericValue =
+                              typeof value === 'number' ? value : Number(value);
+                            return [
+                              name === 'value'
+                                ? `${formatNumber(numericValue)} mg/L`
+                                : `${formatNumber(numericValue)}%`,
+                              name === 'value' ? 'Concentration' : 'Affected',
+                            ];
+                          }}
+                          labelFormatter={(_, payload) =>
+                            payload?.[0]?.payload?.species ?? 'Species'
+                          }
+                        />
+                        {showEmpiricalCurve && (
+                          <Line
+                            data={chartData}
+                            type="monotone"
+                            dataKey="percentAffected"
+                            name="Empirical curve"
+                            stroke="#0369a1"
+                            strokeWidth={2}
+                            dot={false}
+                            isAnimationActive={false}
+                          />
+                        )}
+                        {showSpeciesPoints && (
+                          <Scatter
+                            data={chartData}
+                            dataKey="percentAffected"
+                            name="Species value"
+                            fill="#f59e0b"
+                            isAnimationActive={false}
+                          />
+                        )}
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    {showEmpiricalCurve && (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-0.5 w-5 bg-sky-700" />
+                        Empirical curve
+                      </span>
+                    )}
+                    {showSpeciesPoints && (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                        Species value
+                      </span>
+                    )}
+                  </div>
+                </>
               ) : (
-                <div className="flex h-full items-center justify-center rounded-md border border-dashed border-slate-300 bg-slate-50 px-6 text-center dark:border-slate-700 dark:bg-slate-900">
+                <div className="flex h-[19rem] items-center justify-center rounded-md border border-dashed border-slate-300 bg-slate-50 px-6 text-center dark:border-slate-700 dark:bg-slate-900">
                   <p className="max-w-md text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                     Insufficient data for HCp preview. Adjust the medium or endpoint
                     filters until at least five species are available.
