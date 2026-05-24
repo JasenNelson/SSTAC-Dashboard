@@ -1,5 +1,6 @@
 import { aggregateSpeciesValues } from './aggregation';
 import { prepareSsdRecords } from './cleaning';
+import { fitLogNormalDistribution } from './model';
 import {
   type EmpiricalSsdPoint,
   type RawEcotoxRecord,
@@ -84,9 +85,14 @@ export function buildSsdAnalysis(
     );
   }
   if (settings.analysisMode !== 'empirical_preview') {
-    warnings.push(
-      'Distribution fitting and bootstrap confidence intervals are not enabled in this first slice.',
-    );
+    if (
+      settings.analysisMode === 'model_averaging' ||
+      settings.selectedDistribution !== 'Log-Normal'
+    ) {
+      warnings.push(
+        'Only Log-Normal single-distribution fitting is enabled in this slice. AICc model averaging and additional distributions remain gated.',
+      );
+    }
   }
   if (settings.mediaFilter === 'sediment') {
     warnings.push(
@@ -97,9 +103,17 @@ export function buildSsdAnalysis(
   const empiricalPoints = buildEmpiricalPoints(speciesAggregates);
   const hasMinimumSpecies =
     speciesAggregates.length >= MIN_SPECIES_FOR_PREVIEW;
-  const hcp = hasMinimumSpecies
+  const empiricalHcp = hasMinimumSpecies
     ? calculateEmpiricalHcp(speciesAggregates, settings.pValue)
     : Number.NaN;
+  const logNormalFit = hasMinimumSpecies
+    ? fitLogNormalDistribution(speciesAggregates, settings.pValue)
+    : null;
+  const shouldUseLogNormalHcp =
+    settings.analysisMode === 'single_distribution' &&
+    (settings.selectedDistribution ?? 'Log-Normal') === 'Log-Normal' &&
+    logNormalFit !== null;
+  const hcp = shouldUseLogNormalHcp ? logNormalFit.hcp : empiricalHcp;
   const percentileLabel = `HC${Math.round(settings.pValue * 100)}`;
   const unit = settings.mediaFilter === 'sediment' ? 'reported unit' : 'mg/L';
 
@@ -113,19 +127,40 @@ export function buildSsdAnalysis(
     settings,
     speciesAggregates,
     empiricalPoints,
-    diagnostics: hasMinimumSpecies
-      ? [
-          {
-            name: 'Empirical log-linear preview',
-            mode: 'empirical_preview',
-            hcp,
-            weight: 1,
-            aicc: null,
-            note:
-              'First-slice deterministic preview. Full Log-Normal, Log-Logistic, Weibull, Gamma, AICc, and bootstrap parity remain gated.',
-          },
-        ]
-      : [],
+    fittedCurvePoints: logNormalFit?.curvePoints ?? [],
+    diagnostics: [
+      ...(hasMinimumSpecies
+        ? [
+            {
+              name: 'Empirical log-linear preview',
+              mode: 'empirical_preview' as const,
+              hcp: empiricalHcp,
+              weight: 1,
+              aic: null,
+              aicc: null,
+              parameters: [],
+              note:
+                'Deterministic preview using log-linear interpolation between species aggregate values.',
+            },
+          ]
+        : []),
+      ...(logNormalFit
+        ? [
+            {
+              name: 'Log-Normal fit',
+              distribution: logNormalFit.distribution,
+              mode: 'single_distribution' as const,
+              hcp: logNormalFit.hcp,
+              weight: 1,
+              aic: logNormalFit.aic,
+              aicc: logNormalFit.aicc,
+              parameters: logNormalFit.parameters,
+              note:
+                'Fitted in natural-log concentration space. Additional distributions, model averaging, and bootstrap confidence intervals remain gated.',
+            },
+          ]
+        : []),
+    ],
     excludedRecords,
     warnings,
     derivedCandidate: {

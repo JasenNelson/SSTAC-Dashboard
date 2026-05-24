@@ -45,6 +45,7 @@ export function buildSsdReceiptJson(result: SsdAnalysisResult): string {
       settings: result.settings,
       derivedCandidate: result.derivedCandidate,
       diagnostics: result.diagnostics,
+      fittedCurvePoints: result.fittedCurvePoints,
       warnings: result.warnings,
       speciesAggregates: result.speciesAggregates,
       excludedRecords: result.excludedRecords.map((record) => ({

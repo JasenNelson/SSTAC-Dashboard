@@ -32,6 +32,7 @@ import type {
   RawEcotoxRecord,
   SsdAnalysisMode,
   SsdAnalysisResult,
+  SsdDistribution,
   SsdEnvironmentFilter,
   SsdMediaFilter,
   SpeciesAggregationMethod,
@@ -176,8 +177,11 @@ export default function SsdWorkbench({
   const [pValue, setPValue] = useState(0.05);
   const [analysisMode, setAnalysisMode] =
     useState<SsdAnalysisMode>('empirical_preview');
+  const [selectedDistribution, setSelectedDistribution] =
+    useState<SsdDistribution>('Log-Normal');
   const [plotScale, setPlotScale] = useState<PlotScale>('log');
   const [showEmpiricalCurve, setShowEmpiricalCurve] = useState(true);
+  const [showFittedCurve, setShowFittedCurve] = useState(true);
   const [showSpeciesPoints, setShowSpeciesPoints] = useState(true);
   const [dataSourceMode, setDataSourceMode] =
     useState<DataSourceMode>('fixture');
@@ -206,6 +210,7 @@ export default function SsdWorkbench({
         aggregationMethod,
         pValue,
         analysisMode,
+        selectedDistribution,
         bootstrapIterations: 0,
         randomSeed: 42,
         sourceMode: dataSourceMode,
@@ -221,6 +226,7 @@ export default function SsdWorkbench({
       environmentFilter,
       mediaFilter,
       pValue,
+      selectedDistribution,
       selectedRows,
     ],
   );
@@ -234,6 +240,8 @@ export default function SsdWorkbench({
   const canPlotPreview = chartData.length >= 2;
   const hasHcpPreview = Number.isFinite(result.hcp);
   const concentrationTicks = buildConcentrationTicks(chartData);
+  const canPlotFittedCurve =
+    showFittedCurve && result.fittedCurvePoints.length >= 2;
 
   const activeEndpointLabel =
     endpointFilters.length === 0 ? 'All endpoints' : endpointFilters.join(', ');
@@ -657,8 +665,30 @@ export default function SsdWorkbench({
               className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             >
               <option value="empirical_preview">Empirical preview</option>
+              <option value="single_distribution">Single distribution</option>
               <option value="model_averaging">AICc model averaging (gated)</option>
-              <option value="single_distribution">Single distribution (gated)</option>
+            </select>
+          </label>
+
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Distribution
+            <select
+              value={selectedDistribution}
+              onChange={(event) =>
+                setSelectedDistribution(event.target.value as SsdDistribution)
+              }
+              className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            >
+              <option value="Log-Normal">Log-Normal</option>
+              <option value="Log-Logistic" disabled>
+                Log-Logistic (gated)
+              </option>
+              <option value="Weibull" disabled>
+                Weibull (gated)
+              </option>
+              <option value="Gamma" disabled>
+                Gamma (gated)
+              </option>
             </select>
           </label>
 
@@ -693,6 +723,15 @@ export default function SsdWorkbench({
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
+                  checked={showFittedCurve}
+                  onChange={(event) => setShowFittedCurve(event.target.checked)}
+                  className="h-4 w-4 accent-violet-600"
+                />
+                Fitted curve
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
                   checked={showSpeciesPoints}
                   onChange={(event) => setShowSpeciesPoints(event.target.checked)}
                   className="h-4 w-4 accent-amber-500"
@@ -723,6 +762,77 @@ export default function SsdWorkbench({
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+            <h3 className="text-base font-bold text-slate-950 dark:text-white">
+              Model diagnostics
+            </h3>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Compare the empirical HCp preview with the first fitted
+              distribution before advancing to model averaging.
+            </p>
+            <div className="mt-4 max-h-64 overflow-auto rounded-md border border-slate-200 dark:border-slate-800">
+              <table
+                className="min-w-full text-left text-xs"
+                data-testid="ssd-model-diagnostics-table"
+              >
+                <thead className="bg-slate-50 text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+                  <tr>
+                    <th className="px-3 py-2 font-semibold">Model</th>
+                    <th className="px-3 py-2 font-semibold">HCp</th>
+                    <th className="px-3 py-2 font-semibold">AICc</th>
+                    <th className="px-3 py-2 font-semibold">Parameters</th>
+                    <th className="px-3 py-2 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {result.diagnostics.length > 0 ? (
+                    result.diagnostics.map((diagnostic) => (
+                      <tr key={`${diagnostic.name}-${diagnostic.mode}`}>
+                        <td className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200">
+                          {diagnostic.name}
+                        </td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
+                          {formatNumber(diagnostic.hcp)} {result.unit}
+                        </td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
+                          {diagnostic.aicc === null
+                            ? 'n/a'
+                            : formatNumber(diagnostic.aicc)}
+                        </td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
+                          {diagnostic.parameters.length === 0
+                            ? 'n/a'
+                            : diagnostic.parameters
+                                .map(
+                                  (parameter) =>
+                                    `${parameter.name}=${formatNumber(
+                                      parameter.value,
+                                      4,
+                                    )}`,
+                                )
+                                .join('; ')}
+                        </td>
+                        <td className="px-3 py-2 text-slate-500 dark:text-slate-400">
+                          {diagnostic.note}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-3 py-6 text-center text-sm text-slate-500 dark:text-slate-400"
+                      >
+                        No model diagnostics are available for the current
+                        filters.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
@@ -792,7 +902,9 @@ export default function SsdWorkbench({
                             ];
                           }}
                           labelFormatter={(_, payload) =>
-                            payload?.[0]?.payload?.species ?? 'Species'
+                            payload?.[0]?.payload?.species ??
+                            payload?.[0]?.payload?.distribution ??
+                            'Species'
                           }
                         />
                         {showEmpiricalCurve && (
@@ -804,6 +916,19 @@ export default function SsdWorkbench({
                             stroke="#0369a1"
                             strokeWidth={2}
                             dot={false}
+                            isAnimationActive={false}
+                          />
+                        )}
+                        {canPlotFittedCurve && (
+                          <Line
+                            data={result.fittedCurvePoints}
+                            type="monotone"
+                            dataKey="percentAffected"
+                            name="Log-Normal fit"
+                            stroke="#7c3aed"
+                            strokeWidth={2}
+                            dot={false}
+                            strokeDasharray="5 4"
                             isAnimationActive={false}
                           />
                         )}
@@ -824,6 +949,12 @@ export default function SsdWorkbench({
                       <span className="inline-flex items-center gap-2">
                         <span className="h-0.5 w-5 bg-sky-700" />
                         Empirical curve
+                      </span>
+                    )}
+                    {canPlotFittedCurve && (
+                      <span className="inline-flex items-center gap-2">
+                        <span className="h-0.5 w-5 border-t-2 border-dashed border-violet-700" />
+                        Log-Normal fit
                       </span>
                     )}
                     {showSpeciesPoints && (

@@ -12,6 +12,7 @@ const SETTINGS: SsdWorkbenchSettings = {
   aggregationMethod: 'geometric_mean',
   pValue: 0.05,
   analysisMode: 'empirical_preview',
+  selectedDistribution: 'Log-Normal',
   bootstrapIterations: 0,
   randomSeed: 42,
   sourceMode: 'fixture',
@@ -36,10 +37,12 @@ describe('SSD export builders', () => {
     const parsed = JSON.parse(buildSsdReceiptJson(result)) as {
       hcp: number;
       derivedCandidate: { canDriveCalculations: boolean };
+      fittedCurvePoints: unknown[];
       excludedRecords: Array<{ reason: string; raw?: unknown }>;
     };
 
     expect(parsed.hcp).toBeGreaterThan(0);
+    expect(parsed.fittedCurvePoints.length).toBeGreaterThan(0);
     expect(parsed.derivedCandidate.canDriveCalculations).toBe(false);
     expect(parsed.excludedRecords[0]).not.toHaveProperty('raw');
   });

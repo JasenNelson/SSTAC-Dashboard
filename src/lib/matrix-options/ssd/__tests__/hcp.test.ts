@@ -11,6 +11,7 @@ const BASE_SETTINGS: SsdWorkbenchSettings = {
   aggregationMethod: 'geometric_mean',
   pValue: 0.05,
   analysisMode: 'empirical_preview',
+  selectedDistribution: 'Log-Normal',
   bootstrapIterations: 0,
   randomSeed: 42,
   sourceMode: 'fixture',
@@ -26,7 +27,8 @@ describe('SSD HCp preview', () => {
     expect(result.speciesCount).toBe(10);
     expect(result.cleanedRecordCount).toBe(11);
     expect(result.excludedRecordCount).toBe(4);
-    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics).toHaveLength(2);
+    expect(result.fittedCurvePoints.length).toBeGreaterThan(20);
     expect(result.derivedCandidate).toMatchObject({
       label: 'HC5 SSD-derived candidate',
       evidenceSupportStatus: 'user_entered_or_derived',
@@ -44,6 +46,7 @@ describe('SSD HCp preview', () => {
 
     expect(result.speciesCount).toBe(1);
     expect(result.hcp).toBeNaN();
+    expect(result.fittedCurvePoints).toEqual([]);
     expect(result.diagnostics).toEqual([]);
     expect(result.warnings.join(' ')).toMatch(/at least 5 are required/i);
     expect(result.derivedCandidate.canDriveCalculations).toBe(false);
@@ -63,6 +66,22 @@ describe('SSD HCp preview', () => {
       ),
     ).toBe(true);
     expect(result.warnings.join(' ')).toMatch(/Only 0 species remain/i);
+  });
+
+  it('can use the fitted Log-Normal HCp in single-distribution mode', () => {
+    const result = buildSsdAnalysis(SSD_FIXTURE_ROWS, {
+      ...BASE_SETTINGS,
+      analysisMode: 'single_distribution',
+      selectedDistribution: 'Log-Normal',
+    });
+    const logNormalDiagnostic = result.diagnostics.find(
+      (diagnostic) => diagnostic.name === 'Log-Normal fit',
+    );
+
+    expect(logNormalDiagnostic).toBeDefined();
+    expect(result.hcp).toBe(logNormalDiagnostic?.hcp);
+    expect(result.hcp).toBeGreaterThan(0);
+    expect(result.warnings.join(' ')).not.toMatch(/only log-normal/i);
   });
 
   it('keeps the numeric helper strict for parity tests', () => {

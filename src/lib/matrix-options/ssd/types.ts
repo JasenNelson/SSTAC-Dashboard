@@ -101,12 +101,26 @@ export interface EmpiricalSsdPoint {
   percentAffected: number;
 }
 
+export interface SsdFittedCurvePoint {
+  distribution: SsdDistribution;
+  value: number;
+  percentAffected: number;
+}
+
+export interface SsdModelParameter {
+  name: string;
+  value: number;
+}
+
 export interface SsdModelDiagnostic {
   name: string;
+  distribution?: SsdDistribution;
   mode: SsdAnalysisMode;
   hcp: number;
   weight: number;
+  aic: number | null;
   aicc: number | null;
+  parameters: SsdModelParameter[];
   note: string;
 }
 
@@ -131,6 +145,7 @@ export interface SsdAnalysisResult {
   settings: SsdWorkbenchSettings;
   speciesAggregates: SpeciesAggregate[];
   empiricalPoints: EmpiricalSsdPoint[];
+  fittedCurvePoints: SsdFittedCurvePoint[];
   diagnostics: SsdModelDiagnostic[];
   excludedRecords: SsdExcludedRecord[];
   warnings: string[];

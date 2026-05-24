@@ -56,7 +56,13 @@ describe('SsdWorkbench', () => {
       'false',
     );
     expect(screen.getByLabelText(/Empirical curve/i)).toBeChecked();
+    expect(screen.getByLabelText(/Fitted curve/i)).toBeChecked();
     expect(screen.getByLabelText(/Species points/i)).toBeChecked();
+    expect(screen.getByTestId('ssd-model-diagnostics-table')).toBeInTheDocument();
+    expect(screen.getAllByText(/Log-Normal fit/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole('combobox', { name: /Distribution/i })).toHaveValue(
+      'Log-Normal',
+    );
 
     const receipt = screen
       .getByRole('heading', { name: /Derived candidate receipt/i })
