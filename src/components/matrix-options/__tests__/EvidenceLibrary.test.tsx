@@ -40,10 +40,22 @@ describe('EvidenceLibrary', () => {
     );
     expect(screen.getByText(/Approved values/)).toBeInTheDocument();
     expect(screen.getByText(/Pending locators/)).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-quick-filters')).toHaveTextContent(
+      /Protocol 28/,
+    );
+    expect(screen.getByTestId('evidence-library-quick-filters')).toHaveTextContent(
+      /Derived preview only/,
+    );
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /Needs original-source verification/,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Benzo\[a\]pyrene log Kow/,
+    );
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Review status/,
     );
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Current calculator scaffold only/,
@@ -79,6 +91,62 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
       /Source-of-sources or policy-compilation context only/i,
     );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Needs original-source verification/,
+    );
+  });
+
+  it('applies source-review quick filters without promoting values', () => {
+    renderControlled();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Health Canada: Approved alternatives/i,
+      }),
+    );
+
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Health Canada/,
+    );
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Approved alternative/,
+    );
+    expect(screen.getByText(/Evidence: approved source-backed/)).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Protocol 28: Policy compilation/i,
+      }),
+    );
+
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /Protocol 28/,
+    );
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /Needs original-source verification/,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Eco-SSL: Screening\/source leads/i,
+      }),
+    );
+
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Eco-SSL/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Needs original-source verification/,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /SSD-derived: Derived preview/i,
+      }),
+    );
+
+    expect(screen.getByText(/search: SSD/)).toBeInTheDocument();
+    expect(screen.getByText(/Evidence: user-entered or derived/)).toBeInTheDocument();
   });
 
   it('filters to the human-health-food pathway', () => {

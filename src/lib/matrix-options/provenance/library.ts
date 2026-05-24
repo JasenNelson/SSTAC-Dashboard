@@ -161,6 +161,13 @@ export interface EvidenceLibraryView {
   };
 }
 
+export interface EvidenceReviewDisposition {
+  label: string;
+  detail: string;
+  blocksCalculatorDefault: boolean;
+  tone: 'approved' | 'blocked' | 'derived' | 'scaffold';
+}
+
 const EMPTY_FILTERS: EvidenceLibraryFilters = {
   search: '',
   pathways: [],
@@ -887,6 +894,120 @@ export function humanizeCatalogLabel(value: string): string {
   };
   if (labels[value]) return labels[value];
   return value.replaceAll('_', ' ').replaceAll('-', ' ');
+}
+
+function hasReviewBlockingSourceRole(
+  record: ParameterValueRecord,
+  sources: SourceRecord[],
+): boolean {
+  const sourceRoles = [
+    ...sources.map((source) => source.calculator_source_role),
+    ...(record.source_relationships?.map((relationship) => relationship.role) ??
+      []),
+  ];
+  return sourceRoles.some(
+    (role) => role === 'policy_compilation' || role === 'reference_mining',
+  );
+}
+
+function hasReviewBlockingCanonicalStatus(record: ParameterValueRecord): boolean {
+  return (
+    record.canonical_source_status === 'needs_direct_source_check' ||
+    record.canonical_source_status === 'needs_exact_source_locator'
+  );
+}
+
+export function getParameterValueReviewDisposition(
+  record: ParameterValueRecord,
+  sources: SourceRecord[] = [],
+): EvidenceReviewDisposition {
+  if (record.evidence_support_status === 'user_entered_or_derived') {
+    return {
+      label: 'Derived preview only',
+      detail:
+        'User-entered or model-derived values are read-only until separate method parity, source review, QA, and owner approval are complete.',
+      blocksCalculatorDefault: true,
+      tone: 'derived',
+    };
+  }
+
+  if (record.evidence_support_status === 'approved_source_backed') {
+    if (record.default_status === 'available_option') {
+      return {
+        label: 'Approved alternative',
+        detail:
+          'Direct source evidence is approved, but this value is an alternative and does not replace the current calculator default.',
+        blocksCalculatorDefault: true,
+        tone: 'approved',
+      };
+    }
+    return {
+      label: 'Approved source-backed value',
+      detail:
+        'Direct source evidence is approved. Phase 1 displays this status only and does not change calculator defaults.',
+      blocksCalculatorDefault: record.default_status !== 'current_default',
+      tone: 'approved',
+    };
+  }
+
+  if (
+    record.evidence_support_status === 'pending_source_locator' ||
+    record.evidence_support_status === 'reference_mining_lead' ||
+    hasReviewBlockingSourceRole(record, sources) ||
+    hasReviewBlockingCanonicalStatus(record)
+  ) {
+    return {
+      label: 'Needs original-source verification',
+      detail:
+        'Read-only candidate until the original source, exact locator, currentness, applicability, QA, and owner or delegated approval are complete.',
+      blocksCalculatorDefault: true,
+      tone: 'blocked',
+    };
+  }
+
+  if (record.evidence_support_status === 'current_calculator_scaffold') {
+    return {
+      label: 'Current calculator scaffold',
+      detail:
+        'This records the current UI value for audit only; it is not source-approved evidence.',
+      blocksCalculatorDefault: true,
+      tone: 'scaffold',
+    };
+  }
+
+  return {
+    label: 'Review required',
+    detail:
+      'This value remains read-only until source evidence, QA, and approval are explicit.',
+    blocksCalculatorDefault: true,
+    tone: 'blocked',
+  };
+}
+
+export function getSourceLeadReviewDisposition(
+  lead: EvidenceLibrarySourceLeadSummary,
+): EvidenceReviewDisposition {
+  if (
+    lead.status.includes('needs') ||
+    lead.primarySourceRole === 'policy_compilation' ||
+    lead.primarySourceRole === 'reference_mining'
+  ) {
+    return {
+      label: 'Needs original-source verification',
+      detail:
+        'Source-of-sources lead only; promote the underlying original source after exact locator, currentness, applicability, QA, and approval.',
+      blocksCalculatorDefault: true,
+      tone: 'blocked',
+    };
+  }
+
+  return {
+    label: 'Review required',
+    detail:
+      'Lead records are not calculator evidence until promoted through the source review workflow.',
+    blocksCalculatorDefault: true,
+    tone: 'blocked',
+  };
 }
 
 function countByStatus<T extends object>(

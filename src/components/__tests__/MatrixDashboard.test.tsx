@@ -358,7 +358,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(
       within(panel).getByRole('button', { name: /^FCV$/ }),
     ).toBeInTheDocument();
-    expect(panel).toHaveTextContent(/Needs locator/i);
+    expect(panel).toHaveTextContent(/Needs original-source verification/i);
     expect(panel).toHaveTextContent(/US EPA ESB Tier 2 values/i);
     expect(panel).not.toHaveTextContent(/US EPA IRIS/i);
     expect(screen.queryByText(/Calculator Quick Reference/i)).not.toBeInTheDocument();

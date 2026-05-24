@@ -139,6 +139,7 @@ cython_debug/
 *.docx
 
 # Local Codex build-monitor artifacts and quarantined Next build outputs
+/.tmp/
 /.tmp/build-monitor/
 /.tmp/next-quarantine-*/
 
