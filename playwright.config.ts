@@ -32,7 +32,10 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run dev -- --hostname ${playwrightHost} --port ${playwrightPort}`,
+    // Use webpack dev server for hermetic worktree e2e runs. The app's
+    // default `npm run dev` uses Turbopack, which rejects the worktree
+    // node_modules junction because it points to the main checkout.
+    command: `npx next dev --hostname ${playwrightHost} --port ${playwrightPort}`,
     url: playwrightBaseURL,
     // Codex 2026-05-16 round-11 P2 fix: reuseExistingServer:true
     // (the previous non-CI default) made Playwright SKIP the webServer
