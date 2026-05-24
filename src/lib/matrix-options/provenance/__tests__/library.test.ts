@@ -9,7 +9,10 @@ import {
   buildCalculatorEvidenceRequest,
   buildEvidenceLibraryView,
   createEvidenceLibraryFilters,
+  getParameterValueReviewDisposition,
+  getSourceLeadReviewDisposition,
 } from '../library';
+import type { SourceRecord } from '../types';
 
 describe('matrix options evidence library helpers', () => {
   it('builds the default view from repo-local catalog records', () => {
@@ -183,6 +186,67 @@ describe('matrix options evidence library helpers', () => {
         (row) => row.record.evidence_support_status === 'approved_source_backed',
       ),
     ).toBe(true);
+  });
+
+  it('labels Phase 1 review dispositions without promoting defaults', () => {
+    const healthCanada = PARAMETER_VALUE_RECORDS.find(
+      (record) => record.parameter_value_id === 'pv-hc-bap-hh-food-rfd-tdi',
+    );
+    const protocol28 = PARAMETER_VALUE_RECORDS.find(
+      (record) => record.parameter_value_id === 'pv-p28-arsenic-hh-food-rfd',
+    );
+    const erdcBsaf = PARAMETER_VALUE_RECORDS.find(
+      (record) => record.parameter_value_id === 'pv-bap-bsaf-freshwater',
+    );
+
+    expect(healthCanada).toBeDefined();
+    expect(protocol28).toBeDefined();
+    expect(erdcBsaf).toBeDefined();
+
+    const sourceRecordsFor = (sourceIds: string[]) =>
+      sourceIds
+        .map((sourceId) => getSourceRecord(sourceId))
+        .filter((source): source is SourceRecord => Boolean(source));
+
+    expect(
+      getParameterValueReviewDisposition(
+        healthCanada!,
+        sourceRecordsFor(healthCanada!.source_ids),
+      ),
+    ).toMatchObject({
+      label: 'Approved alternative',
+      blocksCalculatorDefault: true,
+    });
+    expect(
+      getParameterValueReviewDisposition(
+        protocol28!,
+        sourceRecordsFor(protocol28!.source_ids),
+      ),
+    ).toMatchObject({
+      label: 'Needs original-source verification',
+      blocksCalculatorDefault: true,
+    });
+    expect(
+      getParameterValueReviewDisposition(
+        erdcBsaf!,
+        sourceRecordsFor(erdcBsaf!.source_ids),
+      ),
+    ).toMatchObject({
+      label: 'Needs original-source verification',
+      blocksCalculatorDefault: true,
+    });
+
+    const sourceLeads = buildEvidenceLibraryView(
+      createEvidenceLibraryFilters({
+        search: 'WQCIU',
+      }),
+    ).sourceLeads;
+
+    expect(sourceLeads.length).toBeGreaterThan(0);
+    expect(getSourceLeadReviewDisposition(sourceLeads[0])).toMatchObject({
+      label: 'Needs original-source verification',
+      blocksCalculatorDefault: true,
+    });
   });
 
   it('keeps mixed calculator value and equation sources visible in drill-ins', () => {

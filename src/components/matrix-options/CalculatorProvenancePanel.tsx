@@ -12,6 +12,7 @@ import {
 } from '@/lib/matrix-options/provenance/resolver';
 import {
   buildCalculatorEvidenceRequest,
+  getParameterValueReviewDisposition,
   humanizeCatalogLabel,
   isCalculatorEvidenceSource,
 } from '@/lib/matrix-options/provenance/library';
@@ -58,6 +59,19 @@ function StatusChip({ value }: { value: string }) {
       {humanizeStatus(value)}
     </span>
   );
+}
+
+function reviewToneClass(tone: 'approved' | 'blocked' | 'derived' | 'scaffold'): string {
+  if (tone === 'approved') {
+    return 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200';
+  }
+  if (tone === 'derived') {
+    return 'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-200';
+  }
+  if (tone === 'scaffold') {
+    return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
+  }
+  return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200';
 }
 
 function evidenceSupportSummary(status: string): string {
@@ -222,107 +236,128 @@ export default function CalculatorProvenancePanel({
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row) => (
-                  <tr
-                    key={`${row.input_key}-${row.label}`}
-                    className="border-b border-slate-200/70 dark:border-slate-800/70 align-top"
-                  >
-                    <td className="py-2 pr-4 font-medium text-slate-800 dark:text-slate-100">
-                      {row.label}
-                      {onOpenEvidenceLibrary && row.catalog_record && (
-                        <button
-                          type="button"
-                          onClick={() => openValueAlternatives(row)}
-                          aria-label={`View alternatives for ${row.label}`}
-                          className="mt-1 block min-h-7 rounded-md border border-slate-300 bg-white px-2 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:text-sky-300"
-                        >
-                          View alternatives
-                        </button>
-                      )}
-                    </td>
-                    <td className="py-2 pr-4 font-mono text-slate-700 dark:text-slate-200 whitespace-nowrap">
-                      {row.current_value}
-                    </td>
-                    <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
-                      {row.role}
-                    </td>
-                    <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
-                      <div className="flex flex-wrap gap-1">
-                        {row.default_status !== 'not_cataloged' && (
-                          <StatusChip value={row.default_status} />
-                        )}
-                        <StatusChip value={row.evidence_support_status} />
-                        <StatusChip value={row.qa_status} />
-                      </div>
-                      {evidenceSummary(row.evidence_items, row.evidence_support_status) && (
-                        <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          Evidence:{' '}
-                          {evidenceSummary(
-                            row.evidence_items,
-                            row.evidence_support_status,
+                {rows.map((row) => {
+                  const review = row.catalog_record
+                    ? getParameterValueReviewDisposition(
+                        row.catalog_record,
+                        row.sources,
+                      )
+                    : {
+                        label: 'Derived preview only',
+                        detail:
+                          'User-entered or derived values are not catalog defaults.',
+                        tone: 'derived' as const,
+                      };
+                  return (
+                    <tr
+                      key={`${row.input_key}-${row.label}`}
+                      className="border-b border-slate-200/70 dark:border-slate-800/70 align-top"
+                    >
+                        <td className="py-2 pr-4 font-medium text-slate-800 dark:text-slate-100">
+                          {row.label}
+                          {onOpenEvidenceLibrary && row.catalog_record && (
+                            <button
+                              type="button"
+                              onClick={() => openValueAlternatives(row)}
+                              aria-label={`View alternatives for ${row.label}`}
+                              className="mt-1 block min-h-7 rounded-md border border-slate-300 bg-white px-2 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:text-sky-300"
+                            >
+                              View alternatives
+                            </button>
                           )}
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2 text-slate-600 dark:text-slate-300">
-                      {row.sources.filter(isCalculatorEvidenceSource).length > 0 ? (
-                        <ul className="space-y-1">
-                          {row.sources
-                            .filter(isCalculatorEvidenceSource)
-                            .slice(0, 2)
-                            .map((source) => (
-                            <li key={source.source_id}>
-                              {source.url ? (
-                                <a
-                                  href={source.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-sky-700 dark:text-sky-300 hover:underline"
-                                >
-                                  {source.short_citation}
-                                </a>
-                              ) : (
-                                source.short_citation
+                        </td>
+                        <td className="py-2 pr-4 font-mono text-slate-700 dark:text-slate-200 whitespace-nowrap">
+                          {row.current_value}
+                        </td>
+                        <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
+                          {row.role}
+                        </td>
+                        <td className="py-2 pr-4 text-slate-600 dark:text-slate-300">
+                          <div className="flex flex-wrap gap-1">
+                            {row.default_status !== 'not_cataloged' && (
+                              <StatusChip value={row.default_status} />
+                            )}
+                            <StatusChip value={row.evidence_support_status} />
+                            <StatusChip value={row.qa_status} />
+                          </div>
+                          <div
+                            className={`mt-1 rounded-md border px-2 py-1 text-xs ${reviewToneClass(
+                              review.tone,
+                            )}`}
+                          >
+                            <span className="font-semibold">{review.label}</span>
+                            <span className="block">{review.detail}</span>
+                          </div>
+                          {evidenceSummary(row.evidence_items, row.evidence_support_status) && (
+                            <span className="block text-xs text-slate-500 dark:text-slate-400 mt-1">
+                              Evidence:{' '}
+                              {evidenceSummary(
+                                row.evidence_items,
+                                row.evidence_support_status,
                               )}
-                              <span className="ml-1 text-xs text-slate-500 dark:text-slate-400">
-                                ({humanizeStatus(source.zotero_status)})
-                              </span>
-                              <span className="block text-xs text-slate-500 dark:text-slate-400">
-                                Currentness:{' '}
-                                {humanizeStatus(source.currentness_status)};
-                                authority:{' '}
-                                {humanizeStatus(source.authority_scope)}
-                              </span>
-                              {source.conflict_rule && (
-                                <span className="block text-xs text-amber-700 dark:text-amber-300">
-                                  {source.conflict_rule}
-                                </span>
-                              )}
-                              {row.evidence_support_status === 'pending_source_locator' && (
-                                <span className="block text-xs text-slate-500 dark:text-slate-400">
-                                  Pending exact locator; not approved source-backed.
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                          {row.sources.filter(isCalculatorEvidenceSource).length > 2 && (
-                            <li className="text-xs text-slate-500 dark:text-slate-400">
-                              +{row.sources.filter(isCalculatorEvidenceSource).length - 2} more catalog sources
-                            </li>
+                            </span>
                           )}
-                        </ul>
-                      ) : row.sources.length > 0 ? (
-                        <span className="text-slate-500 dark:text-slate-400">
-                          Source review pending; current calculator scaffold only
-                        </span>
-                      ) : (
-                        <span className="text-slate-500 dark:text-slate-400">
-                          User input or derived value
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                        </td>
+                        <td className="py-2 text-slate-600 dark:text-slate-300">
+                          {row.sources.filter(isCalculatorEvidenceSource).length > 0 ? (
+                            <ul className="space-y-1">
+                              {row.sources
+                                .filter(isCalculatorEvidenceSource)
+                                .slice(0, 2)
+                                .map((source) => (
+                                <li key={source.source_id}>
+                                  {source.url ? (
+                                    <a
+                                      href={source.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-sky-700 dark:text-sky-300 hover:underline"
+                                    >
+                                      {source.short_citation}
+                                    </a>
+                                  ) : (
+                                    source.short_citation
+                                  )}
+                                  <span className="ml-1 text-xs text-slate-500 dark:text-slate-400">
+                                    ({humanizeStatus(source.zotero_status)})
+                                  </span>
+                                  <span className="block text-xs text-slate-500 dark:text-slate-400">
+                                    Currentness:{' '}
+                                    {humanizeStatus(source.currentness_status)};
+                                    authority:{' '}
+                                    {humanizeStatus(source.authority_scope)}
+                                  </span>
+                                  {source.conflict_rule && (
+                                    <span className="block text-xs text-amber-700 dark:text-amber-300">
+                                      {source.conflict_rule}
+                                    </span>
+                                  )}
+                                  {row.evidence_support_status === 'pending_source_locator' && (
+                                    <span className="block text-xs text-slate-500 dark:text-slate-400">
+                                      Pending exact locator; not approved source-backed.
+                                    </span>
+                                  )}
+                                </li>
+                              ))}
+                              {row.sources.filter(isCalculatorEvidenceSource).length > 2 && (
+                                <li className="text-xs text-slate-500 dark:text-slate-400">
+                                  +{row.sources.filter(isCalculatorEvidenceSource).length - 2} more catalog sources
+                                </li>
+                              )}
+                            </ul>
+                          ) : row.sources.length > 0 ? (
+                            <span className="text-slate-500 dark:text-slate-400">
+                              Source review pending; current calculator scaffold only
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 dark:text-slate-400">
+                              User input or derived value
+                            </span>
+                          )}
+                        </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

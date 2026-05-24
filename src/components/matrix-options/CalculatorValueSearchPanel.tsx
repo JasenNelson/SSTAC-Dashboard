@@ -14,6 +14,7 @@ import { cn } from '@/utils/cn';
 import {
   buildEvidenceLibraryView,
   createEvidenceLibraryFilters,
+  getParameterValueReviewDisposition,
   humanizeCatalogLabel,
   isCalculatorEvidenceSource,
 } from '@/lib/matrix-options/provenance/library';
@@ -235,37 +236,41 @@ function StatusChip({ value, compact = false }: { value: string; compact?: boole
 
 function evidenceSummary(row: EvidenceLibraryValueRow): {
   label: string;
+  detail: string;
   icon: React.ReactNode;
   className: string;
 } {
-  if (row.record.evidence_support_status === 'approved_source_backed') {
+  const review = getParameterValueReviewDisposition(row.record, row.sources);
+
+  if (review.tone === 'approved') {
     return {
-      label: 'Source-backed',
+      label: review.label,
+      detail: review.detail,
       icon: <CheckCircle2 className="h-3.5 w-3.5" />,
       className: 'text-emerald-700 dark:text-emerald-300',
     };
   }
-  if (
-    row.record.evidence_support_status === 'pending_source_locator' ||
-    row.record.evidence_support_status === 'reference_mining_lead'
-  ) {
+  if (review.tone === 'blocked') {
     return {
-      label: 'Needs locator',
+      label: review.label,
+      detail: review.detail,
       icon: <AlertTriangle className="h-3.5 w-3.5" />,
       className: 'text-amber-700 dark:text-amber-300',
     };
   }
-  if (row.record.evidence_support_status === 'current_calculator_scaffold') {
+  if (review.tone === 'scaffold') {
     return {
-      label: 'Calculator scaffold',
+      label: review.label,
+      detail: review.detail,
       icon: <CircleDot className="h-3.5 w-3.5" />,
       className: 'text-slate-600 dark:text-slate-300',
     };
   }
   return {
-    label: humanizeCatalogLabel(row.record.evidence_support_status),
+    label: review.label,
+    detail: review.detail,
     icon: <CircleDot className="h-3.5 w-3.5" />,
-    className: 'text-slate-600 dark:text-slate-300',
+    className: 'text-sky-700 dark:text-sky-300',
   };
 }
 
@@ -574,6 +579,9 @@ export default function CalculatorValueSearchPanel({
                     {support.icon}
                     {support.label}
                   </span>
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                  {support.detail}
                 </p>
               </div>
 

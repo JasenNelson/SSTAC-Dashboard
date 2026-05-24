@@ -16,6 +16,7 @@ import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
 import HHDirectContactCalculator from './matrix-options/HHDirectContactCalculator';
 import HHFoodWebCalculator from './matrix-options/HHFoodWebCalculator';
 import EvidenceLibrary from './matrix-options/EvidenceLibrary';
+import SsdWorkbench from './matrix-options/SsdWorkbench';
 import CalculatorValueSearchPanel from './matrix-options/CalculatorValueSearchPanel';
 import CategorySelector from './matrix-options/CategorySelector';
 import SharedGlobalInputs, {
@@ -225,7 +226,7 @@ interface MatrixDashboardProps {
   fetchErrorMessage?: string | null;
 }
 
-const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'Interactive Map', 'TWG Review', 'Calculator', 'References & Values'];
+const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'Interactive Map', 'TWG Review', 'Calculator', 'SSD Workbench', 'References & Values'];
 const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
 
 export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent, finalDraftContent, initialMapData = EMPTY_MATRIX_MAP_DATA, fetchErrorMessage = null }: MatrixDashboardProps) {
@@ -303,6 +304,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   const isToolMode = activeTopTab === 'Calculator' || activeTopTab === 'Jurisdictional Frameworks';
   const isReviewMode = activeTopTab === 'TWG Review';
   const isEvidenceLibraryMode = activeTopTab === 'References & Values';
+  const isSsdWorkbenchMode = activeTopTab === 'SSD Workbench';
   // 2026-05-20 embed refactor: the Interactive Map tab renders the live
   // matrix-map full-bleed (mirrors BN-RRM MapView tab pattern). Distinct
   // from isToolMode because the matrix-map has its own internal floating
@@ -473,6 +475,8 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         return <p className="text-sm text-slate-500 dark:text-slate-400">Use the review tools to record Technical Working Group feedback.</p>;
       case 'References & Values':
         return <p className="text-sm text-slate-500 dark:text-slate-400">Review source metadata, calculator values, equations, and QA states.</p>;
+      case 'SSD Workbench':
+        return <p className="text-sm text-slate-500 dark:text-slate-400">Derive review-only SSD HCp candidates from ECOTOX-style toxicity records.</p>;
       default:
         return null;
     }
@@ -562,6 +566,12 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               filters={evidenceLibraryFilters}
               onFiltersChange={setEvidenceLibraryFilters}
             />
+          </div>
+        );
+      case 'SSD Workbench':
+        return (
+          <div className="w-full">
+            <SsdWorkbench onOpenEvidenceLibrary={handleOpenEvidenceLibrary} />
           </div>
         );
       case 'Calculator':
@@ -833,7 +843,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           <div className="flex-1 flex overflow-hidden print:hidden">
             {renderContent()}
           </div>
-        ) : isEvidenceLibraryMode ? (
+        ) : isEvidenceLibraryMode || isSsdWorkbenchMode ? (
           <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-950">
             <div className="mx-auto w-full max-w-7xl px-4 py-10 lg:px-8">
               {renderContent()}

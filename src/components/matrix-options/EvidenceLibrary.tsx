@@ -6,6 +6,8 @@ import { cn } from '@/utils/cn';
 import {
   buildEvidenceLibraryView,
   createEvidenceLibraryFilters,
+  getParameterValueReviewDisposition,
+  getSourceLeadReviewDisposition,
   humanizeCatalogLabel,
   isCalculatorEvidenceSource,
 } from '@/lib/matrix-options/provenance/library';
@@ -16,6 +18,7 @@ import type {
   EvidenceLibraryValueRow,
 } from '@/lib/matrix-options/provenance/library';
 import type {
+  EvidenceLibraryFilterRequest,
   EvidenceLibraryFilters,
   EvidenceLibraryViewMode,
 } from '@/lib/matrix-options/provenance/types';
@@ -65,6 +68,79 @@ const FILTER_LABELS: Partial<Record<keyof EvidenceLibraryFilters, string>> = {
   populationGroups: 'Population',
   speciesGroups: 'Species',
 };
+
+const QUICK_REVIEW_FILTERS: Array<{
+  label: string;
+  description: string;
+  viewMode: EvidenceLibraryViewMode;
+  request: EvidenceLibraryFilterRequest;
+}> = [
+  {
+    label: 'Protocol 28',
+    description: 'Policy compilation; original source check required.',
+    viewMode: 'by-parameter',
+    request: {
+      search: 'Protocol 28',
+      bcProtocolAlignments: ['protocol_28_v3_0_policy_compilation'],
+    },
+  },
+  {
+    label: 'Health Canada',
+    description: 'Approved alternatives, not automatic defaults.',
+    viewMode: 'values',
+    request: {
+      sourceIds: ['src-health-canada-trv-v4-2025'],
+      evidenceSupportStatuses: ['approved_source_backed'],
+    },
+  },
+  {
+    label: 'IRIS',
+    description: 'Approved alternatives, not automatic defaults.',
+    viewMode: 'values',
+    request: {
+      sourceIds: [
+        'src-us-epa-iris-rfd-table-live',
+        'src-us-epa-iris-chemical-details-live',
+      ],
+      evidenceSupportStatuses: ['approved_source_backed'],
+    },
+  },
+  {
+    label: 'Eco-SSL',
+    description: 'Screening/source leads; exact locators required.',
+    viewMode: 'source-leads',
+    request: {
+      search: 'Eco-SSL',
+    },
+  },
+  {
+    label: 'ERDC BSAF',
+    description: 'Database candidates; row locator review required.',
+    viewMode: 'by-parameter',
+    request: {
+      search: 'BSAF',
+      sourceIds: ['src-erdc-bsaf-db'],
+    },
+  },
+  {
+    label: 'WQCIU',
+    description: 'Source-of-sources leads only.',
+    viewMode: 'source-leads',
+    request: {
+      search: 'WQCIU',
+      sourceIds: ['src-acfn-wqciu'],
+    },
+  },
+  {
+    label: 'SSD-derived',
+    description: 'Derived preview only until ssdtools parity and QA.',
+    viewMode: 'values',
+    request: {
+      search: 'SSD',
+      evidenceSupportStatuses: ['user_entered_or_derived'],
+    },
+  },
+];
 
 function setSingleFilter(
   filters: EvidenceLibraryFilters,
@@ -119,6 +195,60 @@ function StatusBadge({ value }: { value: string }) {
     >
       {humanizeCatalogLabel(value)}
     </span>
+  );
+}
+
+function reviewToneClass(tone: 'approved' | 'blocked' | 'derived' | 'scaffold'): string {
+  if (tone === 'approved') {
+    return 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200';
+  }
+  if (tone === 'derived') {
+    return 'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-200';
+  }
+  if (tone === 'scaffold') {
+    return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
+  }
+  return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200';
+}
+
+function ReviewDispositionNote({
+  label,
+  detail,
+  tone,
+  compact = false,
+}: {
+  label: string;
+  detail: string;
+  tone: 'approved' | 'blocked' | 'derived' | 'scaffold';
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        'rounded-md border',
+        compact ? 'px-2 py-1 text-[11px]' : 'px-2.5 py-2 text-xs',
+        reviewToneClass(tone),
+      )}
+    >
+      <div className="font-semibold">{label}</div>
+      {!compact && <div className="mt-0.5 leading-relaxed">{detail}</div>}
+    </div>
+  );
+}
+
+function DerivedPreviewEmptyState() {
+  return (
+    <div
+      className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-200"
+      data-testid="derived-preview-empty-state"
+    >
+      <div className="font-semibold">Derived preview only</div>
+      <p className="mt-1 text-xs leading-relaxed">
+        SSD-derived candidates are generated in the SSD Workbench receipt and
+        remain read-only until official ssdtools parity, source review, QA, and
+        owner approval are complete. They are not stored as catalog defaults.
+      </p>
+    </div>
   );
 }
 
@@ -329,37 +459,47 @@ function ValueGroupCard({ group }: { group: EvidenceLibraryValueGroup }) {
                 <th className="py-2 pr-4 font-semibold">Value</th>
                 <th className="py-2 pr-4 font-semibold">Default role</th>
                 <th className="py-2 pr-4 font-semibold">Evidence support</th>
+                <th className="py-2 pr-4 font-semibold">Review status</th>
                 <th className="py-2 pr-4 font-semibold">Extracted</th>
                 <th className="py-2 pr-4 font-semibold">QA</th>
                 <th className="py-2 font-semibold">Sources</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-              {group.records.map((row) => (
-                <tr key={row.record.parameter_value_id} className="align-top">
-                  <td className="py-2 pr-4 font-mono text-slate-800 dark:text-slate-100">
-                    {formatValue(row.record.value, row.record.unit)}
-                  </td>
-                  <td className="py-2 pr-4">
-                    <StatusBadge value={row.record.default_status} />
-                  </td>
-                  <td className="py-2 pr-4">
-                    <StatusBadge value={row.record.evidence_support_status} />
-                  </td>
-                  <td className="py-2 pr-4 text-xs text-slate-500 dark:text-slate-400">
-                    {extractionDateLabel(row)}
-                  </td>
-                  <td className="py-2 pr-4">
-                    <StatusBadge value={row.record.qa_status} />
-                  </td>
-                  <td className="py-2 text-slate-600 dark:text-slate-300">
-                    {sourceLabels(row)}
-                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {sourceRelationshipLabels(row)}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {group.records.map((row) => {
+                const review = getParameterValueReviewDisposition(
+                  row.record,
+                  row.sources,
+                );
+                return (
+                  <tr key={row.record.parameter_value_id} className="align-top">
+                    <td className="py-2 pr-4 font-mono text-slate-800 dark:text-slate-100">
+                      {formatValue(row.record.value, row.record.unit)}
+                    </td>
+                    <td className="py-2 pr-4">
+                      <StatusBadge value={row.record.default_status} />
+                    </td>
+                    <td className="py-2 pr-4">
+                      <StatusBadge value={row.record.evidence_support_status} />
+                    </td>
+                    <td className="py-2 pr-4">
+                      <ReviewDispositionNote {...review} compact />
+                    </td>
+                    <td className="py-2 pr-4 text-xs text-slate-500 dark:text-slate-400">
+                      {extractionDateLabel(row)}
+                    </td>
+                    <td className="py-2 pr-4">
+                      <StatusBadge value={row.record.qa_status} />
+                    </td>
+                    <td className="py-2 text-slate-600 dark:text-slate-300">
+                      {sourceLabels(row)}
+                      <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {sourceRelationshipLabels(row)}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -391,6 +531,7 @@ function SourceLeadCard({ lead }: { lead: EvidenceLibrarySourceLeadSummary }) {
     lead.counts.parameterValueLeads +
     lead.counts.canonicalSourceLeads +
     lead.counts.documentLeads;
+  const review = getSourceLeadReviewDisposition(lead);
 
   return (
     <details className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
@@ -402,6 +543,9 @@ function SourceLeadCard({ lead }: { lead: EvidenceLibrarySourceLeadSummary }) {
             </div>
             <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Source-of-sources or policy-compilation context only; not canonical calculator evidence.
+            </div>
+            <div className="mt-2 max-w-xl">
+              <ReviewDispositionNote {...review} />
             </div>
           </div>
           <div className="flex flex-wrap gap-1 sm:justify-end">
@@ -450,9 +594,16 @@ export default function EvidenceLibrary({
   );
   const visibleValues =
     viewMode === 'assumptions' ? assumptionValues : library.values;
+  const isDerivedPreviewFilter = filters.evidenceSupportStatuses.includes(
+    'user_entered_or_derived',
+  );
 
   const updateFilter = (key: FilterArrayKey, value: string) => {
     onFiltersChange(setSingleFilter(filters, key, value));
+  };
+  const applyQuickFilter = (filter: (typeof QUICK_REVIEW_FILTERS)[number]) => {
+    setViewMode(filter.viewMode);
+    onFiltersChange(createEvidenceLibraryFilters(filter.request));
   };
 
   const showValues = viewMode === 'values' || viewMode === 'assumptions';
@@ -565,6 +716,39 @@ export default function EvidenceLibrary({
 
       <AuditStrip audit={library.audit} />
 
+      <section
+        className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
+        data-testid="evidence-library-quick-filters"
+        aria-label="Candidate review quick filters"
+      >
+        <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+              Candidate Review Shortcuts
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              These filters inspect alternatives and source leads only; they do not promote calculator defaults.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {QUICK_REVIEW_FILTERS.map((filter) => (
+            <button
+              key={filter.label}
+              type="button"
+              aria-label={`${filter.label}: ${filter.description}`}
+              onClick={() => applyQuickFilter(filter)}
+              className="min-h-10 rounded-md border border-slate-200 bg-slate-50 px-3 text-left text-xs text-slate-700 hover:border-sky-300 hover:bg-white hover:text-sky-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300"
+            >
+              <span className="block font-semibold">{filter.label}</span>
+              <span className="block text-[11px] text-slate-500 dark:text-slate-400">
+                {filter.description}
+              </span>
+            </button>
+          ))}
+        </div>
+      </section>
+
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/40">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
@@ -627,8 +811,12 @@ export default function EvidenceLibrary({
               <ValueGroupCard key={group.groupId} group={group} />
             ))}
             {library.valueGroups.length === 0 && (
-              <div className="rounded-lg border border-slate-200 px-3 py-6 text-center text-sm text-slate-500 dark:border-slate-800">
-                No parameter groups match.
+              <div className="rounded-lg border border-slate-200 px-3 py-6 text-sm text-slate-500 dark:border-slate-800">
+                {isDerivedPreviewFilter ? (
+                  <DerivedPreviewEmptyState />
+                ) : (
+                  <div className="text-center">No parameter groups match.</div>
+                )}
               </div>
             )}
           </div>
@@ -651,93 +839,107 @@ export default function EvidenceLibrary({
                   <th className="px-3 py-2 font-semibold">Pathway</th>
                   <th className="px-3 py-2 font-semibold">Current value</th>
                   <th className="px-3 py-2 font-semibold">Default / evidence</th>
+                  <th className="px-3 py-2 font-semibold">Review status</th>
                   <th className="px-3 py-2 font-semibold">Applicability</th>
                   <th className="px-3 py-2 font-semibold">Sources</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                {visibleValues.map((row) => (
-                  <React.Fragment key={row.record.parameter_value_id}>
-                    <tr className="align-top text-slate-700 dark:text-slate-200">
-                      <td className="px-3 py-2">
-                        <div className="font-semibold text-slate-900 dark:text-white">
-                          {row.record.display_name}
-                        </div>
-                        <div className="text-xs text-slate-500">
-                          {row.substanceLabel}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2">{humanizeCatalogLabel(row.record.pathway)}</td>
-                      <td className="px-3 py-2 font-mono whitespace-nowrap">
-                        {formatValue(row.record.value, row.record.unit)}
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex flex-wrap gap-1">
-                          <StatusBadge value={row.record.default_status} />
-                          <StatusBadge value={row.record.evidence_support_status} />
-                          <StatusBadge value={row.record.qa_status} />
-                          <StatusBadge value={row.record.extraction_status} />
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 max-w-xs">{row.record.applicability}</td>
-                      <td className="px-3 py-2 max-w-xs">{sourceLabels(row)}</td>
-                    </tr>
-                    <tr>
-                      <td colSpan={6} className="bg-white px-3 py-2 dark:bg-slate-950">
-                        <details>
-                          <summary className="cursor-pointer text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300">
-                            Details
-                          </summary>
-                          <div className="mt-2 grid gap-2 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-2 xl:grid-cols-4">
-                            <div>Units: {row.record.unit}</div>
-                            <div>Uncertainty: {row.record.uncertainty ?? 'Not recorded'}</div>
-                            <div>Receptors: {tagList(row.receptorGroups)}</div>
-                            <div>Populations: {tagList(row.populationGroups)}</div>
-                            <div>Species: {tagList(row.speciesGroups)}</div>
-                            <div>Assumptions: {tagList(row.assumptionTags)}</div>
-                            <div>Jurisdiction: {row.record.jurisdiction}</div>
-                            <div>Candidate group: {row.record.candidate_group_id}</div>
-                            <div>Evidence: {row.record.evidence_items.length}</div>
-                            <div>
-                              Canonical source:{' '}
-                              {row.record.canonical_source_status
-                                ? humanizeCatalogLabel(row.record.canonical_source_status)
-                                : 'Not recorded'}
-                            </div>
-                            <div>
-                              Policy alignment:{' '}
-                              {row.record.bc_protocol_alignment
-                                ? humanizeCatalogLabel(row.record.bc_protocol_alignment)
-                                : 'Not recorded'}
-                            </div>
-                            <div>
-                              Source crystallization:{' '}
-                              {row.record.source_crystallization_date ?? 'Not recorded'}
-                            </div>
+                {visibleValues.map((row) => {
+                  const review = getParameterValueReviewDisposition(
+                    row.record,
+                    row.sources,
+                  );
+                  return (
+                    <React.Fragment key={row.record.parameter_value_id}>
+                      <tr className="align-top text-slate-700 dark:text-slate-200">
+                        <td className="px-3 py-2">
+                          <div className="font-semibold text-slate-900 dark:text-white">
+                            {row.record.display_name}
                           </div>
-                          <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-                            Source relationships: {sourceRelationshipLabels(row)}
+                          <div className="text-xs text-slate-500">
+                            {row.substanceLabel}
                           </div>
-                          <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                            {row.record.evidence_items.map((evidence) => (
-                              <div key={evidence.evidence_id}>
-                                Extracted {evidence.extracted_at}: {evidence.locator} -{' '}
-                                {humanizeCatalogLabel(evidence.qa_status)}
+                        </td>
+                        <td className="px-3 py-2">{humanizeCatalogLabel(row.record.pathway)}</td>
+                        <td className="px-3 py-2 font-mono whitespace-nowrap">
+                          {formatValue(row.record.value, row.record.unit)}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex flex-wrap gap-1">
+                            <StatusBadge value={row.record.default_status} />
+                            <StatusBadge value={row.record.evidence_support_status} />
+                            <StatusBadge value={row.record.qa_status} />
+                            <StatusBadge value={row.record.extraction_status} />
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 max-w-xs">
+                          <ReviewDispositionNote {...review} />
+                        </td>
+                        <td className="px-3 py-2 max-w-xs">{row.record.applicability}</td>
+                        <td className="px-3 py-2 max-w-xs">{sourceLabels(row)}</td>
+                      </tr>
+                      <tr>
+                        <td colSpan={7} className="bg-white px-3 py-2 dark:bg-slate-950">
+                          <details>
+                            <summary className="cursor-pointer text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300">
+                              Details
+                            </summary>
+                            <div className="mt-2 grid gap-2 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-2 xl:grid-cols-4">
+                              <div>Units: {row.record.unit}</div>
+                              <div>Uncertainty: {row.record.uncertainty ?? 'Not recorded'}</div>
+                              <div>Receptors: {tagList(row.receptorGroups)}</div>
+                              <div>Populations: {tagList(row.populationGroups)}</div>
+                              <div>Species: {tagList(row.speciesGroups)}</div>
+                              <div>Assumptions: {tagList(row.assumptionTags)}</div>
+                              <div>Jurisdiction: {row.record.jurisdiction}</div>
+                              <div>Candidate group: {row.record.candidate_group_id}</div>
+                              <div>Evidence: {row.record.evidence_items.length}</div>
+                              <div>
+                                Canonical source:{' '}
+                                {row.record.canonical_source_status
+                                  ? humanizeCatalogLabel(row.record.canonical_source_status)
+                                  : 'Not recorded'}
                               </div>
-                            ))}
-                          </div>
-                          <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-                            {row.record.review_notes}
-                          </p>
-                        </details>
-                      </td>
-                    </tr>
-                  </React.Fragment>
-                ))}
+                              <div>
+                                Policy alignment:{' '}
+                                {row.record.bc_protocol_alignment
+                                  ? humanizeCatalogLabel(row.record.bc_protocol_alignment)
+                                  : 'Not recorded'}
+                              </div>
+                              <div>
+                                Source crystallization:{' '}
+                                {row.record.source_crystallization_date ?? 'Not recorded'}
+                              </div>
+                            </div>
+                            <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                              Source relationships: {sourceRelationshipLabels(row)}
+                            </div>
+                            <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                              {row.record.evidence_items.map((evidence) => (
+                                <div key={evidence.evidence_id}>
+                                  Extracted {evidence.extracted_at}: {evidence.locator} -{' '}
+                                  {humanizeCatalogLabel(evidence.qa_status)}
+                                </div>
+                              ))}
+                            </div>
+                            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
+                              {row.record.review_notes}
+                            </p>
+                          </details>
+                        </td>
+                      </tr>
+                    </React.Fragment>
+                  );
+                })}
                 {visibleValues.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-3 py-6 text-center text-sm text-slate-500">
-                      No parameter values match.
+                    <td colSpan={7} className="px-3 py-6 text-sm text-slate-500">
+                      {isDerivedPreviewFilter ? (
+                        <DerivedPreviewEmptyState />
+                      ) : (
+                        <div className="text-center">No parameter values match.</div>
+                      )}
                     </td>
                   </tr>
                 )}

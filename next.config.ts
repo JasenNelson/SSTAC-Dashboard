@@ -8,6 +8,11 @@ const nextConfig = {
   // Reduce preload warnings by optimizing resource hints
   experimental: {
     optimizePackageImports: ['lucide-react', 'recharts'],
+    // Next 15.5.9 intermittently crashes while prerendering "/" when
+    // server code mangling is enabled in this worktree. The equivalent
+    // `next build --no-mangling` path is green; make the monitored build
+    // deterministic without changing application runtime behavior.
+    serverMinification: false,
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   webpack: (config: any) => {

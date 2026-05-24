@@ -39,6 +39,9 @@ vi.mock('../ConceptualMatrix', () => ({
 vi.mock('../TWGReviewPortal', () => ({
   default: () => <div data-testid="twg-review-portal-mock" />,
 }));
+vi.mock('../matrix-options/SsdWorkbench', () => ({
+  default: () => <div data-testid="ssd-workbench-mock" />,
+}));
 // MatrixMapLoader statically imports leaflet + markercluster CSS;
 // Vite's CSS pipeline cannot load the project's .mjs PostCSS config in
 // the vitest worker. Mock the loader + its CSS dependencies for the
@@ -355,7 +358,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(
       within(panel).getByRole('button', { name: /^FCV$/ }),
     ).toBeInTheDocument();
-    expect(panel).toHaveTextContent(/Needs locator/i);
+    expect(panel).toHaveTextContent(/Needs original-source verification/i);
     expect(panel).toHaveTextContent(/US EPA ESB Tier 2 values/i);
     expect(panel).not.toHaveTextContent(/US EPA IRIS/i);
     expect(screen.queryByText(/Calculator Quick Reference/i)).not.toBeInTheDocument();
@@ -598,6 +601,15 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     expect(wrapper).toHaveStyle({ width: '480px' });
     expect(screen.getByRole('separator', { name: /Resize measurement workbench/i })).toBeInTheDocument();
+  });
+
+  it('renders the SSD Workbench as a Matrix Options top-level tab', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /^SSD Workbench$/ }));
+
+    expect(screen.getByTestId('ssd-workbench-mock')).toBeInTheDocument();
+    expect(screen.queryByTestId('left-sidebar-wrapper')).not.toBeInTheDocument();
   });
 
   it('focuses and collapses the Matrix Map workbench without remounting the drawer surface', async () => {
