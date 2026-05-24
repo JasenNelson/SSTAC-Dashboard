@@ -1,6 +1,7 @@
 import sourcesRaw from '../../../../matrix_research/reference_catalog/sources.json';
 import equationsRaw from '../../../../matrix_research/reference_catalog/equations.json';
 import parameterValuesRaw from '../../../../matrix_research/reference_catalog/parameter_values.json';
+import humanHealthTrvValuesRaw from '../../../../matrix_research/reference_catalog/human_health_trv_values.json';
 import wqciuSourceLeadsRaw from '../../../../matrix_research/reference_catalog/source_leads/wqciu_reference_leads_2026_05_23.json';
 import epaEcoSslSourceLeadsRaw from '../../../../matrix_research/reference_catalog/source_leads/epa_ecossl_reference_leads_2026_05_23.json';
 import erdcBsafSourceLeadsRaw from '../../../../matrix_research/reference_catalog/source_leads/erdc_bsaf_reference_leads_2026_05_23.json';
@@ -14,8 +15,10 @@ import type {
 
 export const SOURCE_RECORDS = sourcesRaw as SourceRecord[];
 export const EQUATION_RECORDS = equationsRaw as EquationRecord[];
-export const PARAMETER_VALUE_RECORDS =
-  parameterValuesRaw as ParameterValueRecord[];
+export const PARAMETER_VALUE_RECORDS = [
+  ...(parameterValuesRaw as ParameterValueRecord[]),
+  ...(humanHealthTrvValuesRaw as ParameterValueRecord[]),
+];
 export const SOURCE_LEAD_SETS = [
   wqciuSourceLeadsRaw,
   epaEcoSslSourceLeadsRaw,

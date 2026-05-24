@@ -21,12 +21,12 @@ describe('matrix options evidence library helpers', () => {
     expect(view.totalCounts.sourceLeads).toBe(4);
     expect(view.values.length).toBe(view.totalCounts.values);
     expect(view.equations.length).toBe(view.totalCounts.equations);
-    expect(view.valueGroups).toHaveLength(view.totalCounts.values);
-    expect(view.audit.values.approvedSourceBacked).toBe(0);
+    expect(view.valueGroups).toHaveLength(114);
+    expect(view.audit.values.approvedSourceBacked).toBe(41);
     expect(view.audit.values.pendingSourceLocator).toBe(15);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
-    expect(view.audit.values.availableOptions).toBe(6);
+    expect(view.audit.values.availableOptions).toBe(47);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
@@ -51,6 +51,9 @@ describe('matrix options evidence library helpers', () => {
       'eq-human-health-direct-contact',
     );
     expect(view.sources.map((row) => row.record.source_id)).toEqual([
+      'src-us-epa-iris-rfd-table-live',
+      'src-us-epa-iris-chemical-details-live',
+      'src-health-canada-trv-v4-2025',
       'src-bc-protocol-28-v3-0-2024',
     ]);
   });
@@ -147,12 +150,39 @@ describe('matrix options evidence library helpers', () => {
 
     expect(view.values.map((row) => row.record.parameter_value_id).sort()).toEqual([
       'pv-arsenic-hh-food-rfd',
+      'pv-iris-arsenic-hh-food-rfd',
       'pv-p28-arsenic-hh-food-rfd',
     ]);
     expect(view.valueGroups.map((group) => group.groupId).sort()).toEqual([
       'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__BC',
+      'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__US_federal',
       'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__general',
     ]);
+  });
+
+  it('finds Health Canada and IRIS TRVs by extraction date', () => {
+    const view = buildEvidenceLibraryView(
+      createEvidenceLibraryFilters({
+        search: '2026-05-23',
+        pathways: ['human-health-food'],
+        substanceKeys: ['benzo_a_pyrene'],
+        evidenceSupportStatuses: ['approved_source_backed'],
+      }),
+    );
+
+    expect(view.values.map((row) => row.record.parameter_value_id).sort()).toEqual([
+      'pv-hc-bap-hh-food-rfd-tdi',
+      'pv-hc-bap-hh-food-sf',
+      'pv-iris-bap-hh-food-rfd-immune',
+      'pv-iris-bap-hh-food-rfd-neuro',
+      'pv-iris-bap-hh-food-rfd-repro',
+      'pv-iris-bap-hh-food-sf',
+    ]);
+    expect(
+      view.values.every(
+        (row) => row.record.evidence_support_status === 'approved_source_backed',
+      ),
+    ).toBe(true);
   });
 
   it('keeps mixed calculator value and equation sources visible in drill-ins', () => {

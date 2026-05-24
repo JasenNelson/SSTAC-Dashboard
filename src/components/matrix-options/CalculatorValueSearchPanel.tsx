@@ -106,6 +106,14 @@ function sourceReferenceLabel(row: EvidenceLibraryValueRow): string {
   return humanizeCatalogLabel(row.record.evidence_support_status);
 }
 
+function extractionDateLabel(row: EvidenceLibraryValueRow): string | null {
+  const dates = Array.from(
+    new Set(row.record.evidence_items.map((evidence) => evidence.extracted_at)),
+  ).filter(Boolean);
+  if (dates.length === 0) return null;
+  return dates.join(', ');
+}
+
 function searchableText(row: EvidenceLibraryValueRow): string {
   return [
     row.record.display_name,
@@ -120,6 +128,7 @@ function searchableText(row: EvidenceLibraryValueRow): string {
     row.record.review_notes,
     row.record.bc_protocol_alignment,
     row.record.canonical_source_status,
+    ...row.record.evidence_items.map((evidence) => evidence.extracted_at),
     ...row.sources.map((source) => source.short_citation),
   ]
     .filter((part): part is string | number => part !== null && part !== undefined)
@@ -324,6 +333,11 @@ export default function CalculatorValueSearchPanel({
                 <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 <span>Ref: {sourceReferenceLabel(row)}</span>
               </button>
+              {extractionDateLabel(row) && (
+                <div className="mt-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                  Extracted {extractionDateLabel(row)}
+                </div>
+              )}
             </article>
           ))}
         </div>

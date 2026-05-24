@@ -106,7 +106,7 @@ describe('EvidenceLibrary', () => {
       target: { value: 'fish or shellfish' },
     });
     fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
-    expect(screen.getByText(/Aroclor 1254 oral RfD/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Aroclor 1254 oral RfD/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Benzo\[a\]pyrene log Kow/)).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/^Jurisdiction$/), {
@@ -126,6 +126,34 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByText(/Authority: federal guidance/)).toBeInTheDocument();
     expect(screen.getByTestId('evidence-library-sources')).toHaveTextContent(
       /Health Canada|FCSAP|CCME/,
+    );
+  });
+
+  it('shows extraction dates for source-backed Health Canada and IRIS TRVs', () => {
+    renderControlled(
+      createEvidenceLibraryFilters({
+        pathways: ['human-health-food'],
+        substanceKeys: ['benzo_a_pyrene'],
+        evidenceSupportStatuses: ['approved_source_backed'],
+      }),
+    );
+
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /Extracted/,
+    );
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /2026-05-23/,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Health Canada/,
+    );
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /US EPA IRIS/,
+    );
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Extracted 2026-05-23/,
     );
   });
 

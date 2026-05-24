@@ -156,6 +156,14 @@ function tagList(values: string[]): string {
   return values.length > 0 ? values.join(', ') : 'Not specified';
 }
 
+function extractionDateLabel(row: EvidenceLibraryValueRow): string {
+  const dates = Array.from(
+    new Set(row.record.evidence_items.map((evidence) => evidence.extracted_at)),
+  ).filter(Boolean);
+  if (dates.length === 0) return 'Not recorded';
+  return dates.join(', ');
+}
+
 function sourceLabels(row: EvidenceLibraryValueRow): string {
   const evidenceSources = row.sources.filter(isCalculatorEvidenceSource);
   const policyCompilationSources = row.sources.filter(
@@ -321,6 +329,7 @@ function ValueGroupCard({ group }: { group: EvidenceLibraryValueGroup }) {
                 <th className="py-2 pr-4 font-semibold">Value</th>
                 <th className="py-2 pr-4 font-semibold">Default role</th>
                 <th className="py-2 pr-4 font-semibold">Evidence support</th>
+                <th className="py-2 pr-4 font-semibold">Extracted</th>
                 <th className="py-2 pr-4 font-semibold">QA</th>
                 <th className="py-2 font-semibold">Sources</th>
               </tr>
@@ -336,6 +345,9 @@ function ValueGroupCard({ group }: { group: EvidenceLibraryValueGroup }) {
                   </td>
                   <td className="py-2 pr-4">
                     <StatusBadge value={row.record.evidence_support_status} />
+                  </td>
+                  <td className="py-2 pr-4 text-xs text-slate-500 dark:text-slate-400">
+                    {extractionDateLabel(row)}
                   </td>
                   <td className="py-2 pr-4">
                     <StatusBadge value={row.record.qa_status} />
@@ -709,7 +721,8 @@ export default function EvidenceLibrary({
                           <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-300">
                             {row.record.evidence_items.map((evidence) => (
                               <div key={evidence.evidence_id}>
-                                {evidence.locator} - {humanizeCatalogLabel(evidence.qa_status)}
+                                Extracted {evidence.extracted_at}: {evidence.locator} -{' '}
+                                {humanizeCatalogLabel(evidence.qa_status)}
                               </div>
                             ))}
                           </div>

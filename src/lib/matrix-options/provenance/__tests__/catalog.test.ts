@@ -259,12 +259,17 @@ describe('matrix options provenance catalog', () => {
       'not_default',
     ]);
     expect([...supportStatuses].sort()).toEqual([
+      'approved_source_backed',
       'current_calculator_scaffold',
       'pending_source_locator',
     ]);
     expect([...defaultStatuses]).not.toContain('source_backed_default');
     expect([...defaultStatuses]).not.toContain('placeholder_default');
-    expect([...supportStatuses]).not.toContain('approved_source_backed');
+    expect(
+      PARAMETER_VALUE_RECORDS.filter(
+        (record) => record.evidence_support_status === 'approved_source_backed',
+      ).length,
+    ).toBeGreaterThan(0);
     expect(
       PARAMETER_VALUE_RECORDS.filter(
         (record) =>
@@ -334,7 +339,7 @@ describe('matrix options provenance catalog', () => {
     const iris = getSourceRecord('src-us-epa-iris-rfd-table-live');
 
     expect(iris?.url).toBe('https://iris.epa.gov/AdvancedSearch/rfd_toxicity_values');
-    expect(iris?.notes).toMatch(/human-health toxicity-value/i);
+    expect(iris?.notes).toMatch(/human-health.*toxicity-value/i);
     expect(iris?.notes).toMatch(/do not cite IRIS as an ecological EqP/i);
     expect(iris?.source_authority_tier).toBe(
       'tier_1_government_or_regulatory',
@@ -344,6 +349,50 @@ describe('matrix options provenance catalog', () => {
       expect(record.source_ids, record.parameter_value_id).not.toContain(
         'src-us-epa-iris-rfd-table-live',
       );
+    }
+  });
+
+  it('catalogs Health Canada and US EPA IRIS human-health TRVs with extraction dates', () => {
+    const tier1Trvs = PARAMETER_VALUE_RECORDS.filter(
+      (record) =>
+        record.pathway.startsWith('human-health') &&
+        record.evidence_support_status === 'approved_source_backed' &&
+        record.assumption_tags?.includes('TRV'),
+    );
+    const sourceIds = new Set(tier1Trvs.flatMap((record) => record.source_ids));
+
+    expect(tier1Trvs).toHaveLength(41);
+    expect(sourceIds).toEqual(
+      new Set([
+        'src-health-canada-trv-v4-2025',
+        'src-us-epa-iris-rfd-table-live',
+        'src-us-epa-iris-chemical-details-live',
+      ]),
+    );
+
+    for (const record of tier1Trvs) {
+      expect(record.default_status, record.parameter_value_id).toBe(
+        'available_option',
+      );
+      expect(record.qa_status, record.parameter_value_id).toBe('approved');
+      expect(record.source_authority_tier, record.parameter_value_id).toBe(
+        'tier_1_government_or_regulatory',
+      );
+      expect(record.canonical_source_status, record.parameter_value_id).toBe(
+        'direct_source_verified',
+      );
+      expect(record.bc_protocol_alignment, record.parameter_value_id).toBe(
+        'protocol_1_v5_0_tier_1_government_source',
+      );
+      for (const evidence of record.evidence_items) {
+        expect(evidence.extracted_at, evidence.evidence_id).toBe('2026-05-23');
+        expect(evidence.locator, evidence.evidence_id).toMatch(
+          /checked 2026-05-23/i,
+        );
+        expect(evidence.note ?? '', evidence.evidence_id).not.toMatch(
+          /C:\\|Downloads|Chemicals_Details\.xlsx/i,
+        );
+      }
     }
   });
 

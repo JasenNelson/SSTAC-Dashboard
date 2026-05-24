@@ -1,0 +1,2711 @@
+[
+  {
+    "parameter_value_id": "pv-hc-bap-hh-direct-rfd-tdi",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Benzo[a]pyrene oral TDI - Health Canada",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada oral TDI for benzo[a]pyrene; non-cancer oral TRV candidate for human-health calculator review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Benzo[a]pyrene (BaP), Oral TDI, PDF page 19, web page checked 2026-05-23",
+        "value_text": "3.0E-04 mg/kgBW-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Cite the Canada.ca Health Canada TRVs page/PDF, not a local copy.",
+        "evidence_id": "ev-pv-hc-bap-hh-direct-rfd-tdi-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__benzo_a_pyrene__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-bap-hh-food-rfd-tdi",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Benzo[a]pyrene oral TDI - Health Canada",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada oral TDI for benzo[a]pyrene; non-cancer oral TRV candidate for human-health calculator review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Benzo[a]pyrene (BaP), Oral TDI, PDF page 19, web page checked 2026-05-23",
+        "value_text": "3.0E-04 mg/kgBW-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Cite the Canada.ca Health Canada TRVs page/PDF, not a local copy.",
+        "evidence_id": "ev-pv-hc-bap-hh-food-rfd-tdi-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__benzo_a_pyrene__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-bap-hh-direct-sf",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Benzo[a]pyrene oral slope factor - Health Canada",
+    "value": 1.289,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada oral slope factor for benzo[a]pyrene; cancer oral TRV candidate. ADAF note applies for early-life exposures.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Benzo[a]pyrene (BaP), Oral SF, PDF page 19, web page checked 2026-05-23",
+        "value_text": "1.289E+00 (mg/kgBW-day)-1",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Includes Health Canada ADAF note for early-life exposure assessment.",
+        "evidence_id": "ev-pv-hc-bap-hh-direct-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__benzo_a_pyrene__sf_oral_per_mg_per_kg_bw_per_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-bap-hh-food-sf",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Benzo[a]pyrene oral slope factor - Health Canada",
+    "value": 1.289,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada oral slope factor for benzo[a]pyrene; cancer oral TRV candidate. ADAF note applies for early-life exposures.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Benzo[a]pyrene (BaP), Oral SF, PDF page 19, web page checked 2026-05-23",
+        "value_text": "1.289E+00 (mg/kgBW-day)-1",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Includes Health Canada ADAF note for early-life exposure assessment.",
+        "evidence_id": "ev-pv-hc-bap-hh-food-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__benzo_a_pyrene__sf_oral_per_mg_per_kg_bw_per_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-arsenic-hh-direct-sf",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Arsenic oral slope factor - Health Canada",
+    "value": 1.8,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada oral slope factor for inorganic arsenic; cancer oral TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Arsenic (inorganic), Oral SF, PDF page 17, web page checked 2026-05-23",
+        "value_text": "1.8E+00 (mg/kgBW-day)-1",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Health Canada notes the oral SF is under review and may change.",
+        "evidence_id": "ev-pv-hc-arsenic-hh-direct-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__arsenic_inorganic__sf_oral_per_mg_per_kg_bw_per_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-arsenic-hh-food-sf",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Arsenic oral slope factor - Health Canada",
+    "value": 1.8,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada oral slope factor for inorganic arsenic; cancer oral TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Arsenic (inorganic), Oral SF, PDF page 17, web page checked 2026-05-23",
+        "value_text": "1.8E+00 (mg/kgBW-day)-1",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Health Canada notes the oral SF is under review and may change.",
+        "evidence_id": "ev-pv-hc-arsenic-hh-food-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__arsenic_inorganic__sf_oral_per_mg_per_kg_bw_per_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-pcb-hh-direct-rfd-nondioxin",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Non-dioxin-like PCBs oral TDI - Health Canada",
+    "value": 0.00001,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada provisional oral TDI for non-dioxin-like PCBs; based on an Aroclor 1254 mixture and congener-specific applicability review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Polychlorinated biphenyls (PCBs) non-dioxin-like, Oral TDI, PDF page 40, web page checked 2026-05-23",
+        "value_text": "1.0E-05 mg/kgBW-day (based on an Aroclor 1254 mixture)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Use requires PCB congener/mixture applicability review.",
+        "evidence_id": "ev-pv-hc-pcb-hh-direct-rfd-nondioxin-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__total_pcbs_aroclor_1254__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-pcb-hh-food-rfd-nondioxin",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Non-dioxin-like PCBs oral TDI - Health Canada",
+    "value": 0.00001,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada provisional oral TDI for non-dioxin-like PCBs; based on an Aroclor 1254 mixture and congener-specific applicability review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Polychlorinated biphenyls (PCBs) non-dioxin-like, Oral TDI, PDF page 40, web page checked 2026-05-23",
+        "value_text": "1.0E-05 mg/kgBW-day (based on an Aroclor 1254 mixture)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Use requires PCB congener/mixture applicability review.",
+        "evidence_id": "ev-pv-hc-pcb-hh-food-rfd-nondioxin-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__total_pcbs_aroclor_1254__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-mehg-hh-direct-rfd-sensitive",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Methylmercury oral TDI - Health Canada sensitive group",
+    "value": 0.0002,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada oral TDI for methylmercury for women of child-bearing age, infants, and children; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Methylmercury, Oral TDI for sensitive groups, PDF page 33, web page checked 2026-05-23",
+        "value_text": "2.0E-04 mg/kgBW-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Sensitive-group applicability should be retained in calculator guidance.",
+        "evidence_id": "ev-pv-hc-mehg-hh-direct-rfd-sensitive-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child",
+      "sensitive receptor"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__methylmercury__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-mehg-hh-food-rfd-sensitive",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Methylmercury oral TDI - Health Canada sensitive group",
+    "value": 0.0002,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada oral TDI for methylmercury for women of child-bearing age, infants, and children; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Methylmercury, Oral TDI for sensitive groups, PDF page 33, web page checked 2026-05-23",
+        "value_text": "2.0E-04 mg/kgBW-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Sensitive-group applicability should be retained in calculator guidance.",
+        "evidence_id": "ev-pv-hc-mehg-hh-food-rfd-sensitive-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child",
+      "sensitive receptor"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__methylmercury__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-mehg-hh-food-rfd-adult",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Methylmercury oral TDI - Health Canada adult",
+    "value": 0.00047,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada adult oral TDI for methylmercury; food-web TRV candidate for non-sensitive adult receptor scenarios.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Methylmercury, adult Oral TDI, PDF page 33, web page checked 2026-05-23",
+        "value_text": "4.7E-04 mg/kgBW-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Use only where the adult/non-sensitive receptor assumption is explicit.",
+        "evidence_id": "ev-pv-hc-mehg-hh-food-rfd-adult-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__methylmercury__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-lead-hh-direct-risk-dose",
+    "substance_key": "lead",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Lead oral risk-specific dose - Health Canada",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada provisional risk-specific dose for lead; not a conventional RfD, so calculator semantics require owner review before default use.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Lead, Risk-specific dose, PDF page 32, web page checked 2026-05-23",
+        "value_text": "5.0E-04 mg/kgBW-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Health Canada states it has not derived a TRV for lead and recommends a provisional risk-specific dose.",
+        "evidence_id": "ev-pv-hc-lead-hh-direct-risk-dose-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__lead__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-lead-hh-food-risk-dose",
+    "substance_key": "lead",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Lead oral risk-specific dose - Health Canada",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada provisional risk-specific dose for lead; not a conventional RfD, so calculator semantics require owner review before default use.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Lead, Risk-specific dose, PDF page 32, web page checked 2026-05-23",
+        "value_text": "5.0E-04 mg/kgBW-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Health Canada states it has not derived a TRV for lead and recommends a provisional risk-specific dose.",
+        "evidence_id": "ev-pv-hc-lead-hh-food-risk-dose-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__lead__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-cadmium-hh-direct-rfd-tdi",
+    "substance_key": "cadmium",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Cadmium oral TDI - Health Canada",
+    "value": 0.0008,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada provisional oral TDI for cadmium; non-cancer oral TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Cadmium, Oral TDI, PDF page 22, web page checked 2026-05-23",
+        "value_text": "8.0E-04 mg/kgBW-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23.",
+        "evidence_id": "ev-pv-hc-cadmium-hh-direct-rfd-tdi-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__cadmium__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-cadmium-hh-food-rfd-tdi",
+    "substance_key": "cadmium",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Cadmium oral TDI - Health Canada",
+    "value": 0.0008,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada provisional oral TDI for cadmium; non-cancer oral TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Cadmium, Oral TDI, PDF page 22, web page checked 2026-05-23",
+        "value_text": "8.0E-04 mg/kgBW-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23.",
+        "evidence_id": "ev-pv-hc-cadmium-hh-food-rfd-tdi-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__cadmium__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-copper-hh-direct-rfd-tdi",
+    "substance_key": "copper",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Copper oral TDI - Health Canada",
+    "value": 0.426,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada oral TDI for copper; non-cancer oral TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Copper, Oral TDI, PDF page 27, web page checked 2026-05-23",
+        "value_text": "4.26E-01 mg/kgBW-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23.",
+        "evidence_id": "ev-pv-hc-copper-hh-direct-rfd-tdi-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__copper__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-copper-hh-food-rfd-tdi",
+    "substance_key": "copper",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Copper oral TDI - Health Canada",
+    "value": 0.426,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada oral TDI for copper; non-cancer oral TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Copper, Oral TDI, PDF page 27, web page checked 2026-05-23",
+        "value_text": "4.26E-01 mg/kgBW-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23.",
+        "evidence_id": "ev-pv-hc-copper-hh-food-rfd-tdi-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__copper__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-zinc-hh-direct-ul-child",
+    "substance_key": "zinc",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Zinc oral UL - Health Canada child",
+    "value": 0.51,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada oral UL for zinc for the 5 to <12 years age band; direct-contact child TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Zinc, UL age-band values, PDF page 51, web page checked 2026-05-23",
+        "value_text": "5.1E-01 mg/kgBW-day for 5 to <12 yrs",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Zinc values are age-banded ULs, not a single generic RfD.",
+        "evidence_id": "ev-pv-hc-zinc-hh-direct-ul-child-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__zinc__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-zinc-hh-food-ul-adult",
+    "substance_key": "zinc",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Zinc oral UL - Health Canada adult",
+    "value": 0.57,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-trv-v4-2025"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "Health Canada adult oral UL for zinc; food-web adult TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "locator": "Health Canada TRVs v4.0, Table 1, Zinc, UL age-band values, PDF page 51, web page checked 2026-05-23",
+        "value_text": "5.7E-01 mg/kgBW-day for >=20 years",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official Health Canada source; extracted on 2026-05-23. Zinc values are age-banded ULs, not a single generic RfD.",
+        "evidence_id": "ev-pv-hc-zinc-hh-food-ul-adult-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada TRVs v4.0, 2025 Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2025-10-15",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-trv-v4-2025",
+        "role": "canonical_candidate",
+        "note": "Health Canada TRVs v4.0, 2025 is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__zinc__rfd_oral_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-bap-hh-direct-rfd-neuro",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Benzo[a]pyrene oral RfD - IRIS neurodevelopmental",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for benzo[a]pyrene based on neurobehavioral/developmental effects; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Benzo[a]pyrene (BaP), CASRN 50-32-8, neurobehavioral changes row, export/table checked 2026-05-23",
+        "value_text": "3 x 10 -4 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-bap-hh-direct-rfd-neuro-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__benzo_a_pyrene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-bap-hh-food-rfd-neuro",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Benzo[a]pyrene oral RfD - IRIS neurodevelopmental",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for benzo[a]pyrene based on neurobehavioral/developmental effects; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Benzo[a]pyrene (BaP), CASRN 50-32-8, neurobehavioral changes row, export/table checked 2026-05-23",
+        "value_text": "3 x 10 -4 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-bap-hh-food-rfd-neuro-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__benzo_a_pyrene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-bap-hh-direct-rfd-repro",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Benzo[a]pyrene oral RfD - IRIS reproductive",
+    "value": 0.0004,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for benzo[a]pyrene based on reproductive effects; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Benzo[a]pyrene (BaP), CASRN 50-32-8, decreased ovarian follicles/ovary weight row, export/table checked 2026-05-23",
+        "value_text": "4 x 10 -4 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-bap-hh-direct-rfd-repro-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__benzo_a_pyrene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-bap-hh-food-rfd-repro",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Benzo[a]pyrene oral RfD - IRIS reproductive",
+    "value": 0.0004,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for benzo[a]pyrene based on reproductive effects; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Benzo[a]pyrene (BaP), CASRN 50-32-8, decreased ovarian follicles/ovary weight row, export/table checked 2026-05-23",
+        "value_text": "4 x 10 -4 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-bap-hh-food-rfd-repro-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__benzo_a_pyrene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-bap-hh-direct-rfd-immune",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Benzo[a]pyrene oral RfD - IRIS immune",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for benzo[a]pyrene based on immune effects; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Benzo[a]pyrene (BaP), CASRN 50-32-8, decreased thymus weight and serum IgM row, export/table checked 2026-05-23",
+        "value_text": "2 x 10 -3 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-bap-hh-direct-rfd-immune-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__benzo_a_pyrene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-bap-hh-food-rfd-immune",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Benzo[a]pyrene oral RfD - IRIS immune",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for benzo[a]pyrene based on immune effects; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Benzo[a]pyrene (BaP), CASRN 50-32-8, decreased thymus weight and serum IgM row, export/table checked 2026-05-23",
+        "value_text": "2 x 10 -3 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-bap-hh-food-rfd-immune-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__benzo_a_pyrene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-bap-hh-direct-sf",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Benzo[a]pyrene oral slope factor - IRIS",
+    "value": 2,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral slope factor for benzo[a]pyrene; cancer oral TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "IRIS Advanced Search Chemical Details, Benzo[a]pyrene (BaP), CASRN 50-32-8, Oral Slope Factor row, export/table checked 2026-05-23",
+        "value_text": "2 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-bap-hh-direct-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS chemical details, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS chemical details, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__benzo_a_pyrene__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-bap-hh-food-sf",
+    "substance_key": "benzo_a_pyrene",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Benzo[a]pyrene oral slope factor - IRIS",
+    "value": 2,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral slope factor for benzo[a]pyrene; cancer oral TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "IRIS Advanced Search Chemical Details, Benzo[a]pyrene (BaP), CASRN 50-32-8, Oral Slope Factor row, export/table checked 2026-05-23",
+        "value_text": "2 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-bap-hh-food-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS chemical details, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS chemical details, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__benzo_a_pyrene__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-arsenic-hh-direct-rfd",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Arsenic oral RfD - IRIS",
+    "value": 0.00006,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for inorganic arsenic; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Arsenic, Inorganic, CASRN 7440-38-2, RfD row, export/table checked 2026-05-23",
+        "value_text": "6 x 10 -5 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-arsenic-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-arsenic-hh-food-rfd",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Arsenic oral RfD - IRIS",
+    "value": 0.00006,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for inorganic arsenic; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Arsenic, Inorganic, CASRN 7440-38-2, RfD row, export/table checked 2026-05-23",
+        "value_text": "6 x 10 -5 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-arsenic-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-arsenic-hh-direct-sf",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-direct",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Arsenic oral slope factor - IRIS",
+    "value": 32,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral slope factor for inorganic arsenic from the Chemical Details table; cross-check against chemical assessment before default use.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "IRIS Advanced Search Chemical Details, Arsenic, Inorganic, CASRN 7440-38-2, Oral Slope Factor row, export/table checked 2026-05-23",
+        "value_text": "3.2 x 10 1 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website. Flag for owner review because this differs from current calculator and Health Canada values.",
+        "evidence_id": "ev-pv-iris-arsenic-hh-direct-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS chemical details, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS chemical details, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__arsenic_inorganic__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-arsenic-hh-food-sf",
+    "substance_key": "arsenic_inorganic",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Arsenic oral slope factor - IRIS",
+    "value": 32,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral slope factor for inorganic arsenic from the Chemical Details table; cross-check against chemical assessment before default use.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "IRIS Advanced Search Chemical Details, Arsenic, Inorganic, CASRN 7440-38-2, Oral Slope Factor row, export/table checked 2026-05-23",
+        "value_text": "3.2 x 10 1 per mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website. Flag for owner review because this differs from current calculator and Health Canada values.",
+        "evidence_id": "ev-pv-iris-arsenic-hh-food-sf-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS chemical details, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS chemical details, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__arsenic_inorganic__sf_oral_per_mg_per_kg_bw_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-pcb-hh-direct-rfd-aroclor1254",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Aroclor 1254 oral RfD - IRIS",
+    "value": 0.00002,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for Aroclor 1254; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Aroclor 1254, CASRN 11097-69-1, RfD row, export/table checked 2026-05-23",
+        "value_text": "2 x 10 -5 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-pcb-hh-direct-rfd-aroclor1254-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__total_pcbs_aroclor_1254__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-pcb-hh-food-rfd-aroclor1254",
+    "substance_key": "total_pcbs_aroclor_1254",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Aroclor 1254 oral RfD - IRIS",
+    "value": 0.00002,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for Aroclor 1254; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Aroclor 1254, CASRN 11097-69-1, RfD row, export/table checked 2026-05-23",
+        "value_text": "2 x 10 -5 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-pcb-hh-food-rfd-aroclor1254-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__total_pcbs_aroclor_1254__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-mehg-hh-direct-rfd",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Methylmercury oral RfD - IRIS",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for methylmercury; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Methylmercury (MeHg), CASRN 22967-92-6, RfD rows, export/table checked 2026-05-23",
+        "value_text": "1 x 10 -4 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-mehg-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__methylmercury__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-mehg-hh-food-rfd",
+    "substance_key": "methylmercury",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Methylmercury oral RfD - IRIS",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for methylmercury; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Methylmercury (MeHg), CASRN 22967-92-6, RfD rows, export/table checked 2026-05-23",
+        "value_text": "1 x 10 -4 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-mehg-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__methylmercury__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-cadmium-hh-direct-rfd-food",
+    "substance_key": "cadmium",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Cadmium oral RfD - IRIS dietary",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for cadmium dietary exposures; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search Chemical Details, Cadmium, CASRN 7440-43-9, oral RfD dietary row, export/table checked 2026-05-23",
+        "value_text": "1 x 10 -3 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-cadmium-hh-direct-rfd-food-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__cadmium__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-cadmium-hh-food-rfd-food",
+    "substance_key": "cadmium",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Cadmium oral RfD - IRIS dietary",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for cadmium dietary exposures; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search Chemical Details, Cadmium, CASRN 7440-43-9, oral RfD dietary row, export/table checked 2026-05-23",
+        "value_text": "1 x 10 -3 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-cadmium-hh-food-rfd-food-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__cadmium__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-cadmium-hh-direct-rfd-water",
+    "substance_key": "cadmium",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Cadmium oral RfD - IRIS water",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for cadmium water exposures; route/media-specific alternative requiring scenario review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search Chemical Details, Cadmium, CASRN 7440-43-9, oral RfD water row, export/table checked 2026-05-23",
+        "value_text": "5 x 10 -4 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-cadmium-hh-direct-rfd-water-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__cadmium__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-cadmium-hh-food-rfd-water",
+    "substance_key": "cadmium",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Cadmium oral RfD - IRIS water",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for cadmium water exposures; route/media-specific alternative requiring scenario review.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search Chemical Details, Cadmium, CASRN 7440-43-9, oral RfD water row, export/table checked 2026-05-23",
+        "value_text": "5 x 10 -4 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-cadmium-hh-food-rfd-water-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__cadmium__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-zinc-hh-direct-rfd",
+    "substance_key": "zinc",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Zinc oral RfD - IRIS",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for zinc and compounds; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Zinc and Compounds, CASRN 7440-66-6, RfD row, export/table checked 2026-05-23",
+        "value_text": "3 x 10 -1 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-zinc-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__zinc__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-zinc-hh-food-rfd",
+    "substance_key": "zinc",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Zinc oral RfD - IRIS",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS oral RfD for zinc and compounds; human-health TRV candidate.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "IRIS Advanced Search RfD Toxicity Values, Zinc and Compounds, CASRN 7440-66-6, RfD row, export/table checked 2026-05-23",
+        "value_text": "3 x 10 -1 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "codex",
+        "extracted_at": "2026-05-23",
+        "qa_status": "approved",
+        "reviewed_by": "codex",
+        "reviewed_at": "2026-05-23",
+        "note": "Official US EPA IRIS table; extracted on 2026-05-23. Owner-provided export was used only as a workbench; reference target remains the live IRIS website.",
+        "evidence_id": "ev-pv-iris-zinc-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RfD table, live Tier 1 human-health TRV candidate extracted on 2026-05-23. Use as read-only source-backed library value until the calculator default-selection policy is owner-approved.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-23",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS RfD table, live is the canonical source for this extracted TRV row; extraction date 2026-05-23."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__zinc__rfd_oral_mg_per_kg_bw_day__US_federal"
+  }
+]

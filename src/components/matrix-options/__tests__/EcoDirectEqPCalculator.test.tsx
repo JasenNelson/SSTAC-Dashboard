@@ -305,7 +305,7 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(panel).toHaveTextContent(/References and provenance/);
     expect(panel).toHaveTextContent(/Final Chronic Value/);
     expect(panel).toHaveTextContent(/0\.014 ug\/L/);
-    expect(panel).toHaveTextContent(/US EPA IRIS, Benzo\[a\]pyrene/);
+    expect(panel).toHaveTextContent(/US EPA ESB Tier 2 values for nonionic organics/);
     expect(panel).toHaveTextContent(
       /pending exact source locator/i,
     );

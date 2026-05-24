@@ -429,6 +429,7 @@ function valueMatchesFilters(
     ...record.evidence_items.flatMap((evidence) => [
       evidence.locator,
       evidence.value_text,
+      evidence.extracted_at,
       evidence.qa_status,
       evidence.note,
     ]),
@@ -877,8 +878,12 @@ export function humanizeCatalogLabel(value: string): string {
     needs_exact_source_locator: 'needs exact source locator',
     protocol_1_v5_0_effective_2027_01_15:
       'Protocol 1 v5.0 effective 2027-01-15',
+    protocol_1_v5_0_tier_1_government_source:
+      'Protocol 1 v5.0 Tier 1 government source',
     protocol_28_v3_0_policy_compilation:
       'Protocol 28 v3.0 policy compilation',
+    Canada_federal: 'Canada federal',
+    US_federal: 'US federal',
   };
   if (labels[value]) return labels[value];
   return value.replaceAll('_', ' ').replaceAll('-', ' ');

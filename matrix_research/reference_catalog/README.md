@@ -21,6 +21,9 @@ or QA details.
 - `equations.json` records calculator equation provenance and applicability.
 - `parameter_values.json` records extracted or starter parameter values used by
   the calculators.
+- `human_health_trv_values.json` records Health Canada and US EPA IRIS
+  human-health TRV library values. These are read-only calculator alternatives
+  until owner-approved default-selection rules are implemented.
 - `source_leads/` records unpromoted source-of-sources extraction work. These
   files can identify candidate canonical references and Zotero matches, but do
   not by themselves approve a source for calculator use.
@@ -60,6 +63,12 @@ source-mining workbenches for values and cited-source leads. They should be
 shown to users as BC-aligned compilations, not as the final scientific source.
 Values copied from a policy compilation remain pending until the original
 government, regulatory, or scientific source has been checked directly.
+
+Health Canada and US EPA IRIS table exports can be used as extraction
+workbenches, but source records and evidence locators must point users to the
+official Health Canada or US EPA IRIS website. Each TRV evidence item must
+include the extraction date, because live TRV tables can change after a value
+is reviewed.
 
 ## Authority and Currentness
 
