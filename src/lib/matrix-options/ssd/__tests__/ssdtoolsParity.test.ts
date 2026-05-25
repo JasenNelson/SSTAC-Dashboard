@@ -39,6 +39,7 @@ const SSDTOOLS_LNORM_REFERENCE = {
 };
 
 const SSDTOOLS_CCME_BORON_MODEL_AVERAGE_HC5 = 1.25678;
+const SSDDATA_CCME_ENDOSULFAN_SSDTOOLS_AVERAGED_HC5 = 0.00767325714903464;
 
 const SSDTOOLS_CCME_BORON_HC5_REFERENCE = {
   Gamma: {
@@ -170,5 +171,20 @@ describe('SSD ssdtools parity', () => {
         expect(parameterValue(fit, name)).toBeCloseTo(value, 3);
       }
     }
+  });
+
+  it('tracks ssddata::ssd_fits for ssddata::ccme_endosulfan averaged HC5', () => {
+    const endosulfan = getSsdFixtureDataset('ccme_endosulfan_validation');
+    const result = buildSsdAnalysis(endosulfan.rows, {
+      ...SETTINGS,
+      chemicalNames: ['Endosulfan'],
+      analysisMode: 'model_averaging',
+    });
+
+    expect(result.speciesCount).toBe(12);
+    expect(result.unit).toBe('ng/L');
+    expect(
+      Math.abs(result.hcp - SSDDATA_CCME_ENDOSULFAN_SSDTOOLS_AVERAGED_HC5),
+    ).toBeLessThanOrEqual(0.00005);
   });
 });
