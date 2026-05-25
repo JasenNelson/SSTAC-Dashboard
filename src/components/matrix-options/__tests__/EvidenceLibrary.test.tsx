@@ -92,6 +92,31 @@ describe('EvidenceLibrary', () => {
     );
   });
 
+  it('shows named result counts for each References database view', () => {
+    renderControlled();
+
+    expect(
+      screen.getByText(/Showing \d+ of \d+ parameter groups/),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    expect(screen.getByText(/Showing \d+ of \d+ values/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Assumptions$/ }));
+    expect(
+      screen.getByText(/Showing \d+ of \d+ assumption\/default rows/),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
+    expect(screen.getByText(/Showing \d+ of \d+ equations/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    expect(screen.getByText(/Showing \d+ of \d+ sources/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Source Leads$/ }));
+    expect(screen.getByText(/Showing \d+ of \d+ lead sets/)).toBeInTheDocument();
+  });
+
   it('renders source and source-lead views without promoting scaffolds', () => {
     renderControlled();
 
@@ -176,11 +201,16 @@ describe('EvidenceLibrary', () => {
       }),
     );
 
-    expect(screen.getByText(/search: SSD/)).toBeInTheDocument();
-    expect(screen.getByText(/Evidence: user-entered or derived/)).toBeInTheDocument();
+    expect(screen.getAllByText(/search: SSD/).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Evidence: user-entered or derived/).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByTestId('derived-preview-empty-state')).toHaveTextContent(
       /SSD-derived candidates are generated in the SSD Workbench receipt/i,
     );
+    expect(
+      screen.getByRole('button', { name: /^Clear filters$/ }),
+    ).toBeInTheDocument();
   });
 
   it('uses audit strip counts as read-only database shortcuts', () => {
@@ -253,6 +283,64 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByText(/Authority: federal guidance/)).toBeInTheDocument();
     expect(screen.getByTestId('evidence-library-sources')).toHaveTextContent(
       /Health Canada|FCSAP|CCME/,
+    );
+  });
+
+  it('shows filter-aware empty states and clears card and table views', () => {
+    renderControlled();
+
+    fireEvent.change(screen.getByLabelText(/^Search$/), {
+      target: { value: 'zzzz-no-match' },
+    });
+
+    expect(screen.getByTestId('evidence-library-empty-state')).toHaveTextContent(
+      /No parameter groups match/i,
+    );
+    expect(screen.getByTestId('evidence-library-empty-state')).toHaveTextContent(
+      /search: zzzz-no-match/i,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Clear filters$/ }));
+    expect(screen.queryByText(/search: zzzz-no-match/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /Candidate values are read-only/i,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    fireEvent.change(screen.getByLabelText(/^Search$/), {
+      target: { value: 'zzzz-no-value' },
+    });
+
+    expect(screen.getByTestId('evidence-library-empty-state')).toHaveTextContent(
+      /No parameter values match/i,
+    );
+    expect(screen.getByTestId('evidence-library-empty-state')).toHaveTextContent(
+      /search: zzzz-no-value/i,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Clear filters$/ }));
+    expect(screen.queryByText(/search: zzzz-no-value/i)).not.toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Benzo\[a\]pyrene log Kow/,
+    );
+  });
+
+  it('shows a filter-aware empty state for source leads', () => {
+    renderControlled();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Source Leads$/ }));
+    fireEvent.change(screen.getByLabelText(/^Search$/), {
+      target: { value: 'zzzz-no-leads' },
+    });
+
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Showing 0 of \d+ lead sets/,
+    );
+    expect(screen.getByTestId('evidence-library-empty-state')).toHaveTextContent(
+      /No source leads match/i,
+    );
+    expect(screen.getByTestId('evidence-library-empty-state')).toHaveTextContent(
+      /search: zzzz-no-leads/i,
     );
   });
 

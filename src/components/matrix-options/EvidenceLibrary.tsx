@@ -256,6 +256,74 @@ function DerivedPreviewEmptyState() {
   );
 }
 
+function ResultCountBadge({
+  visible,
+  total,
+  label,
+}: {
+  visible: number;
+  total: number;
+  label: string;
+}) {
+  return (
+    <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+      Showing {visible} of {total} {label}
+    </span>
+  );
+}
+
+function EmptyDatabaseState({
+  title,
+  activeLabels,
+  onClear,
+  children,
+}: {
+  title: string;
+  activeLabels: string[];
+  onClear: () => void;
+  children?: React.ReactNode;
+}) {
+  const hasActiveFilters = activeLabels.length > 0;
+
+  return (
+    <div
+      className="rounded-md border border-slate-200 bg-white px-3 py-4 text-center text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
+      data-testid="evidence-library-empty-state"
+    >
+      {children}
+      <div className={cn('font-semibold', children ? 'mt-3' : undefined)}>
+        {title}
+      </div>
+      {hasActiveFilters ? (
+        <>
+          <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+            {activeLabels.map((label) => (
+              <span
+                key={label}
+                className="rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={onClear}
+            className="mt-3 inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          >
+            <X className="h-3.5 w-3.5" />
+            Clear filters
+          </button>
+        </>
+      ) : (
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          No catalog records are available for this view.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function FilterSelect({
   label,
   value,
@@ -288,6 +356,14 @@ function FilterSelect({
 
 function tagList(values: string[]): string {
   return values.length > 0 ? values.join(', ') : 'Not specified';
+}
+
+function assumptionRows(rows: EvidenceLibraryValueRow[]): EvidenceLibraryValueRow[] {
+  return rows.filter(
+    (row) =>
+      row.record.default_status !== 'not_default' ||
+      row.assumptionTags.length > 0,
+  );
 }
 
 function extractionDateLabel(row: EvidenceLibraryValueRow): string {
@@ -1057,15 +1133,17 @@ export default function EvidenceLibrary({
   const [selectedValueId, setSelectedValueId] = useState<string | null>(null);
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const library = useMemo(() => buildEvidenceLibraryView(filters), [filters]);
+  const baselineLibrary = useMemo(() => buildEvidenceLibraryView(), []);
   const protocol28Summary = useMemo(() => buildProtocol28ReviewSummary(), []);
   const activeLabels = activeFilterLabels(filters);
-  const assumptionValues = library.values.filter(
-    (row) =>
-      row.record.default_status !== 'not_default' ||
-      row.assumptionTags.length > 0,
-  );
+  const assumptionValues = assumptionRows(library.values);
+  const baselineAssumptionValues = assumptionRows(baselineLibrary.values);
   const visibleValues =
     viewMode === 'assumptions' ? assumptionValues : library.values;
+  const totalVisibleValues =
+    viewMode === 'assumptions'
+      ? baselineAssumptionValues.length
+      : baselineLibrary.values.length;
   const isDerivedPreviewFilter = filters.evidenceSupportStatuses.includes(
     'user_entered_or_derived',
   );
@@ -1343,22 +1421,24 @@ export default function EvidenceLibrary({
             <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
               Values By Parameter
             </h3>
-            <span className="text-xs text-slate-500">
-              {library.valueGroups.length}
-            </span>
+            <ResultCountBadge
+              visible={library.valueGroups.length}
+              total={baselineLibrary.valueGroups.length}
+              label="parameter groups"
+            />
           </div>
           <div className="grid gap-2">
             {library.valueGroups.map((group) => (
               <ValueGroupCard key={group.groupId} group={group} />
             ))}
             {library.valueGroups.length === 0 && (
-              <div className="rounded-lg border border-slate-200 px-3 py-6 text-sm text-slate-500 dark:border-slate-800">
-                {isDerivedPreviewFilter ? (
-                  <DerivedPreviewEmptyState />
-                ) : (
-                  <div className="text-center">No parameter groups match.</div>
-                )}
-              </div>
+              <EmptyDatabaseState
+                title="No parameter groups match."
+                activeLabels={activeLabels}
+                onClear={clearFilters}
+              >
+                {isDerivedPreviewFilter ? <DerivedPreviewEmptyState /> : null}
+              </EmptyDatabaseState>
             )}
           </div>
         </section>
@@ -1370,7 +1450,11 @@ export default function EvidenceLibrary({
             <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
               Parameter Values
             </h3>
-            <span className="text-xs text-slate-500">{visibleValues.length}</span>
+            <ResultCountBadge
+              visible={visibleValues.length}
+              total={totalVisibleValues}
+              label={viewMode === 'assumptions' ? 'assumption/default rows' : 'values'}
+            />
           </div>
           <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
             <table className="min-w-full text-sm">
@@ -1492,11 +1576,17 @@ export default function EvidenceLibrary({
                 {visibleValues.length === 0 && (
                   <tr>
                     <td colSpan={8} className="px-3 py-6 text-sm text-slate-500">
-                      {isDerivedPreviewFilter ? (
-                        <DerivedPreviewEmptyState />
-                      ) : (
-                        <div className="text-center">No parameter values match.</div>
-                      )}
+                      <EmptyDatabaseState
+                        title={
+                          viewMode === 'assumptions'
+                            ? 'No assumption/default rows match.'
+                            : 'No parameter values match.'
+                        }
+                        activeLabels={activeLabels}
+                        onClear={clearFilters}
+                      >
+                        {isDerivedPreviewFilter ? <DerivedPreviewEmptyState /> : null}
+                      </EmptyDatabaseState>
                     </td>
                   </tr>
                 )}
@@ -1512,7 +1602,11 @@ export default function EvidenceLibrary({
             <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
               Equations
             </h3>
-            <span className="text-xs text-slate-500">{library.equations.length}</span>
+            <ResultCountBadge
+              visible={library.equations.length}
+              total={baselineLibrary.equations.length}
+              label="equations"
+            />
           </div>
           <div className="grid gap-2">
             {library.equations.map((row) => (
@@ -1552,9 +1646,11 @@ export default function EvidenceLibrary({
               </details>
             ))}
             {library.equations.length === 0 && (
-              <div className="rounded-lg border border-slate-200 px-3 py-6 text-center text-sm text-slate-500 dark:border-slate-800">
-                No equations match.
-              </div>
+              <EmptyDatabaseState
+                title="No equations match."
+                activeLabels={activeLabels}
+                onClear={clearFilters}
+              />
             )}
           </div>
         </section>
@@ -1566,7 +1662,11 @@ export default function EvidenceLibrary({
             <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
               Sources
             </h3>
-            <span className="text-xs text-slate-500">{library.sources.length}</span>
+            <ResultCountBadge
+              visible={library.sources.length}
+              total={baselineLibrary.sources.length}
+              label="sources"
+            />
           </div>
           <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
             <table className="min-w-full text-sm">
@@ -1680,8 +1780,12 @@ export default function EvidenceLibrary({
                 ))}
                 {library.sources.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-3 py-6 text-center text-sm text-slate-500">
-                      No sources match.
+                    <td colSpan={7} className="px-3 py-6 text-sm text-slate-500">
+                      <EmptyDatabaseState
+                        title="No sources match."
+                        activeLabels={activeLabels}
+                        onClear={clearFilters}
+                      />
                     </td>
                   </tr>
                 )}
@@ -1697,14 +1801,23 @@ export default function EvidenceLibrary({
             <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
               Source-Of-Sources Leads
             </h3>
-            <span className="text-xs text-slate-500">
-              {library.sourceLeads.length}
-            </span>
+            <ResultCountBadge
+              visible={library.sourceLeads.length}
+              total={baselineLibrary.sourceLeads.length}
+              label="lead sets"
+            />
           </div>
           <div className="grid gap-2">
             {library.sourceLeads.map((lead) => (
               <SourceLeadCard key={lead.leadSetId} lead={lead} />
             ))}
+            {library.sourceLeads.length === 0 && (
+              <EmptyDatabaseState
+                title="No source leads match."
+                activeLabels={activeLabels}
+                onClear={clearFilters}
+              />
+            )}
           </div>
         </section>
       )}
