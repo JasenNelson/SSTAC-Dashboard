@@ -17,6 +17,7 @@ import type {
   EvidenceLibraryFacetOption,
   EvidenceLibraryProtocol28ReviewSummary,
   EvidenceLibrarySourceLeadSummary,
+  EvidenceLibrarySourceRow,
   EvidenceLibraryValueGroup,
   EvidenceLibraryValueRow,
 } from '@/lib/matrix-options/provenance/library';
@@ -649,6 +650,181 @@ function ValueDetailPanel({
   );
 }
 
+function sourceDefaultUseText(row: EvidenceLibrarySourceRow): string {
+  if (!isCalculatorEvidenceSource(row.record)) {
+    return 'Blocked from calculator defaults. This source is reference-mining, policy-compilation, metadata-only, or implementation context until a directly verified canonical source record supports an approved value.';
+  }
+
+  if (row.record.canonical_source_status !== 'direct_source_verified') {
+    return 'Not enough for calculator defaults. The source can support review, but default promotion still needs exact locator verification, currentness checks, applicability review, QA approval, and owner or delegated approval.';
+  }
+
+  return 'Source is directly verified. It can support a future approved value, but the source alone does not change calculator defaults without value-level QA and owner or delegated approval.';
+}
+
+function SourceDetailPanel({
+  row,
+  onClose,
+}: {
+  row: EvidenceLibrarySourceRow;
+  onClose: () => void;
+}) {
+  return (
+    <section
+      className="rounded-lg border border-sky-200 bg-white p-4 shadow-sm dark:border-sky-800 dark:bg-slate-950"
+      data-testid="evidence-library-source-detail"
+      aria-label="Selected source detail"
+    >
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+            Selected source
+          </p>
+          <h3 className="mt-1 text-lg font-bold text-slate-950 dark:text-white">
+            {row.record.short_citation}
+          </h3>
+          <p className="mt-1 max-w-4xl text-sm text-slate-600 dark:text-slate-300">
+            {row.record.title}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex min-h-9 items-center gap-1 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+        >
+          <X className="h-3.5 w-3.5" />
+          Close
+        </button>
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-1">
+            <StatusBadge value={row.record.calculator_source_role ?? 'canonical_candidate'} />
+            {row.record.source_authority_tier && (
+              <StatusBadge value={row.record.source_authority_tier} />
+            )}
+            {row.record.canonical_source_status && (
+              <StatusBadge value={row.record.canonical_source_status} />
+            )}
+            <StatusBadge value={row.record.authority_scope} />
+            <StatusBadge value={row.record.currentness_status} />
+            <StatusBadge value={row.record.zotero_status} />
+          </div>
+
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+            {sourceDefaultUseText(row)}
+          </div>
+
+          <div className="grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-3">
+            <div>
+              <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
+                Publisher
+              </div>
+              <div className="mt-1 text-slate-700 dark:text-slate-200">
+                {row.record.publisher ?? 'Not recorded'}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
+                Version / year
+              </div>
+              <div className="mt-1 text-slate-700 dark:text-slate-200">
+                {row.record.version ?? row.record.year ?? 'Not recorded'}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
+                Checked
+              </div>
+              <div className="mt-1 text-slate-700 dark:text-slate-200">
+                {row.record.checked_at ?? 'Not recorded'}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
+                Page modified
+              </div>
+              <div className="mt-1 text-slate-700 dark:text-slate-200">
+                {row.record.page_last_modified ?? 'Not recorded'}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
+                DOI
+              </div>
+              <div className="mt-1 break-all text-slate-700 dark:text-slate-200">
+                {row.record.doi ?? 'Not recorded'}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
+                Policy alignment
+              </div>
+              <div className="mt-1 text-slate-700 dark:text-slate-200">
+                {row.record.bc_protocol_alignment
+                  ? humanizeCatalogLabel(row.record.bc_protocol_alignment)
+                  : 'Not recorded'}
+              </div>
+            </div>
+          </div>
+
+          {row.record.notes && (
+            <p className="text-sm text-slate-700 dark:text-slate-200">
+              {row.record.notes}
+            </p>
+          )}
+          {row.record.conflict_rule && (
+            <p className="text-sm text-slate-700 dark:text-slate-200">
+              Conflict rule: {row.record.conflict_rule}
+            </p>
+          )}
+        </div>
+
+        <aside className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
+            Locator and catalog links
+          </div>
+          <div className="mt-2 space-y-2 text-slate-700 dark:text-slate-200">
+            <div>
+              <span className="font-semibold">File storage: </span>
+              {humanizeCatalogLabel(row.record.file_storage)}
+            </div>
+            <div>
+              <span className="font-semibold">External hint: </span>
+              {row.record.external_file_hint ?? 'Not recorded'}
+            </div>
+            <div>
+              <span className="font-semibold">Zotero key: </span>
+              {row.record.zotero_item_key ?? 'Not linked'}
+            </div>
+            <div>
+              <span className="font-semibold">Zotero collection: </span>
+              {row.record.zotero_collection_path ?? 'Not recorded'}
+            </div>
+            <div>
+              <span className="font-semibold">Attachments: </span>
+              {row.record.zotero_attachment_keys.length > 0
+                ? row.record.zotero_attachment_keys.join(', ')
+                : 'None recorded'}
+            </div>
+            <div>
+              <span className="font-semibold">Catalog links: </span>
+              {row.linkedValueCount} values; {row.linkedEquationCount} equations
+            </div>
+            <div>
+              <span className="font-semibold">Supersedes: </span>
+              {row.record.supersedes_source_ids.length > 0
+                ? row.record.supersedes_source_ids.join(', ')
+                : 'None recorded'}
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
 function ValueGroupCard({ group }: { group: EvidenceLibraryValueGroup }) {
   const currentDefault = group.currentDefault;
   const currentValue = currentDefault
@@ -822,6 +998,7 @@ export default function EvidenceLibrary({
 }: EvidenceLibraryProps) {
   const [viewMode, setViewMode] = useState<EvidenceLibraryViewMode>('by-parameter');
   const [selectedValueId, setSelectedValueId] = useState<string | null>(null);
+  const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const library = useMemo(() => buildEvidenceLibraryView(filters), [filters]);
   const protocol28Summary = useMemo(() => buildProtocol28ReviewSummary(), []);
   const activeLabels = activeFilterLabels(filters);
@@ -843,6 +1020,14 @@ export default function EvidenceLibrary({
           ) ?? null
         : null,
     [library.values, selectedValueId],
+  );
+  const selectedSource = useMemo(
+    () =>
+      selectedSourceId
+        ? library.sources.find((row) => row.record.source_id === selectedSourceId) ??
+          null
+        : null,
+    [library.sources, selectedSourceId],
   );
 
   const updateFilter = (key: FilterArrayKey, value: string) => {
@@ -1064,6 +1249,13 @@ export default function EvidenceLibrary({
         />
       )}
 
+      {selectedSource && (
+        <SourceDetailPanel
+          row={selectedSource}
+          onClose={() => setSelectedSourceId(null)}
+        />
+      )}
+
       {showValueGroups && (
         <section className="space-y-2" data-testid="evidence-library-value-groups">
           <div className="flex items-center justify-between">
@@ -1152,9 +1344,10 @@ export default function EvidenceLibrary({
                             type="button"
                             aria-label={`Inspect ${row.record.display_name}`}
                             data-testid="evidence-library-inspect-value"
-                            onClick={() =>
-                              setSelectedValueId(row.record.parameter_value_id)
-                            }
+                            onClick={() => {
+                              setSelectedSourceId(null);
+                              setSelectedValueId(row.record.parameter_value_id);
+                            }}
                             className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                           >
                             <Search className="h-3.5 w-3.5" />
@@ -1304,6 +1497,7 @@ export default function EvidenceLibrary({
                   <th className="px-3 py-2 font-semibold">Currentness</th>
                   <th className="px-3 py-2 font-semibold">Zotero</th>
                   <th className="px-3 py-2 font-semibold">Total catalog links</th>
+                  <th className="px-3 py-2 font-semibold">Inspect</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -1386,11 +1580,26 @@ export default function EvidenceLibrary({
                       {row.linkedValueCount} total values;{' '}
                       {row.linkedEquationCount} total equations
                     </td>
+                    <td className="px-3 py-2">
+                      <button
+                        type="button"
+                        aria-label={`Inspect ${row.record.short_citation}`}
+                        data-testid="evidence-library-inspect-source"
+                        onClick={() => {
+                          setSelectedValueId(null);
+                          setSelectedSourceId(row.record.source_id);
+                        }}
+                        className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                      >
+                        <Search className="h-3.5 w-3.5" />
+                        Inspect
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {library.sources.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-3 py-6 text-center text-sm text-slate-500">
+                    <td colSpan={7} className="px-3 py-6 text-center text-sm text-slate-500">
                       No sources match.
                     </td>
                   </tr>

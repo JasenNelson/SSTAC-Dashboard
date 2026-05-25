@@ -269,6 +269,41 @@ describe('EvidenceLibrary', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('opens a selected source detail panel from the sources database view', () => {
+    renderControlled();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-source')[0]);
+
+    const panel = screen.getByTestId('evidence-library-source-detail');
+    expect(panel).toHaveTextContent(/Selected source/);
+    expect(panel).toHaveTextContent(/Locator and catalog links/);
+    expect(panel).toHaveTextContent(/calculator defaults/i);
+    expect(panel).toHaveTextContent(/File storage/);
+
+    fireEvent.click(screen.getByRole('button', { name: /^Close$/ }));
+    expect(
+      screen.queryByTestId('evidence-library-source-detail'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps Protocol 28 source detail blocked from calculator defaults', () => {
+    renderControlled();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Inspect BC Protocol 28 v3\.0, 2024/,
+      }),
+    );
+
+    const panel = screen.getByTestId('evidence-library-source-detail');
+    expect(panel).toHaveTextContent(/BC Protocol 28 v3\.0, 2024/);
+    expect(panel).toHaveTextContent(/policy compilation/i);
+    expect(panel).toHaveTextContent(/Blocked from calculator defaults/);
+    expect(panel).toHaveTextContent(/Do not treat Protocol 28/i);
+  });
+
   it('searches and clears active filters', () => {
     renderControlled();
 
