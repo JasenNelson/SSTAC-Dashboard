@@ -145,6 +145,12 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
       /Needs original-source verification/,
     );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Read-only triage checklist/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /QA approval/,
+    );
   });
 
   it('applies source-review quick filters without promoting values', () => {
@@ -181,6 +187,44 @@ describe('EvidenceLibrary', () => {
       screen.getByRole('button', { name: /^Review Protocol 28 queue$/ }),
     );
     expect(screen.getByText(/Policy alignment: Protocol 28/i)).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /^Review Protocol 28 source leads$/,
+      }),
+    );
+
+    expect(screen.getAllByText(/search: Protocol 28/i).length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Source role: policy compilation/i).length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Showing 1 of \d+ lead sets/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /BC Protocol 28 v3\.0/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Read-only triage checklist/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Original source verification/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Exact locator capture/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Currentness check/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Applicability review/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Owner or delegated approval/,
+    );
+    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
+      /Lead triage only; not calculator evidence or calculator default\s+support/i,
+    );
 
     fireEvent.click(
       screen.getByRole('button', {

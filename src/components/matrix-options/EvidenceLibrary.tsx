@@ -73,6 +73,8 @@ const FILTER_LABELS: Partial<Record<keyof EvidenceLibraryFilters, string>> = {
   speciesGroups: 'Species',
 };
 
+const PROTOCOL28_SOURCE_ID = 'src-bc-protocol-28-v3-0-2024';
+
 const QUICK_REVIEW_FILTERS: Array<{
   label: string;
   description: string;
@@ -143,6 +145,33 @@ const QUICK_REVIEW_FILTERS: Array<{
       search: 'SSD',
       evidenceSupportStatuses: ['user_entered_or_derived'],
     },
+  },
+];
+
+const SOURCE_LEAD_TRIAGE_REQUIREMENTS = [
+  {
+    label: 'Original source verification',
+    detail: 'Check the direct cited source before any calculator use.',
+  },
+  {
+    label: 'Exact locator capture',
+    detail: 'Capture page, table, section, or row locators.',
+  },
+  {
+    label: 'Currentness check',
+    detail: 'Confirm the cited source is still current.',
+  },
+  {
+    label: 'Applicability review',
+    detail: 'Confirm pathway, receptor, medium, unit, and endpoint fit.',
+  },
+  {
+    label: 'QA approval',
+    detail: 'Complete technical QA before status changes.',
+  },
+  {
+    label: 'Owner or delegated approval',
+    detail: 'Approval is required before calculator default use.',
   },
 ];
 
@@ -608,9 +637,11 @@ function AuditStrip({
 function Protocol28ReviewPanel({
   summary,
   onReview,
+  onReviewSourceLeads,
 }: {
   summary: EvidenceLibraryProtocol28ReviewSummary;
   onReview: () => void;
+  onReviewSourceLeads: () => void;
 }) {
   const items = [
     {
@@ -651,13 +682,23 @@ function Protocol28ReviewPanel({
             complete.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onReview}
-          className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-md border border-amber-300 bg-white px-3 text-xs font-semibold text-amber-900 shadow-sm hover:border-amber-500 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
-        >
-          Review Protocol 28 queue
-        </button>
+        <div className="flex flex-wrap gap-2 lg:justify-end">
+          <button
+            type="button"
+            onClick={onReview}
+            className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-md border border-amber-300 bg-white px-3 text-xs font-semibold text-amber-900 shadow-sm hover:border-amber-500 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+          >
+            Review Protocol 28 queue
+          </button>
+          <button
+            type="button"
+            onClick={onReviewSourceLeads}
+            className="inline-flex min-h-9 shrink-0 items-center gap-1 rounded-md border border-amber-300 bg-white px-3 text-xs font-semibold text-amber-900 shadow-sm hover:border-amber-500 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100"
+          >
+            <Search className="h-3.5 w-3.5" />
+            Review Protocol 28 source leads
+          </button>
+        </div>
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((item) => (
@@ -678,6 +719,59 @@ function Protocol28ReviewPanel({
         </div>
       )}
     </section>
+  );
+}
+
+function SourceLeadTriageChecklist({
+  lead,
+}: {
+  lead: EvidenceLibrarySourceLeadSummary;
+}) {
+  const locatorLeadCount = lead.counts.documentLeads + lead.counts.hubPages;
+  const locatorSummary =
+    locatorLeadCount > 0
+      ? `${locatorLeadCount} document or hub lead${locatorLeadCount === 1 ? '' : 's'} to inspect`
+      : 'No document or hub locators summarized';
+  const roleSummary = lead.primarySourceRole
+    ? `Primary role: ${humanizeCatalogLabel(lead.primarySourceRole)}`
+    : 'Primary role not cataloged';
+
+  return (
+    <div className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="text-xs font-bold uppercase text-slate-600 dark:text-slate-300">
+            Read-only triage checklist
+          </div>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Lead triage only; not calculator evidence or calculator default
+            support.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-1 sm:justify-end">
+          <StatusBadge value="not_default" />
+          <StatusBadge value={lead.status} />
+        </div>
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {SOURCE_LEAD_TRIAGE_REQUIREMENTS.map((item) => (
+          <div
+            key={item.label}
+            className="rounded-md border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-950"
+          >
+            <div className="text-xs font-semibold text-slate-800 dark:text-slate-100">
+              {item.label}
+            </div>
+            <div className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+              {item.detail}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 text-xs text-slate-600 dark:text-slate-300">
+        {roleSummary}; {locatorSummary}.
+      </div>
+    </div>
   );
 }
 
@@ -1130,7 +1224,8 @@ function SourceLeadCard({ lead }: { lead: EvidenceLibrarySourceLeadSummary }) {
     lead.counts.equationLeads +
     lead.counts.parameterValueLeads +
     lead.counts.canonicalSourceLeads +
-    lead.counts.documentLeads;
+    lead.counts.documentLeads +
+    lead.counts.hubPages;
   const review = getSourceLeadReviewDisposition(lead);
 
   return (
@@ -1167,6 +1262,7 @@ function SourceLeadCard({ lead }: { lead: EvidenceLibrarySourceLeadSummary }) {
           <div>{lead.counts.canonicalSourceLeads} canonical leads</div>
           <div>{lead.counts.documentLeads + lead.counts.hubPages} document or hub leads</div>
         </div>
+        <SourceLeadTriageChecklist lead={lead} />
         {lead.nextActions.length > 0 && (
           <ul className="list-disc space-y-1 pl-5 text-xs text-slate-600 dark:text-slate-300">
             {lead.nextActions.map((action) => (
@@ -1272,6 +1368,17 @@ export default function EvidenceLibrary({
       createEvidenceLibraryFilters({
         search: 'Protocol 28',
         bcProtocolAlignments: [PROTOCOL28_POLICY_ALIGNMENT],
+      }),
+    );
+  };
+  const openProtocol28SourceLeads = () => {
+    setViewMode('source-leads');
+    closeDetailPanels();
+    onFiltersChange(
+      createEvidenceLibraryFilters({
+        search: 'Protocol 28',
+        sourceIds: [PROTOCOL28_SOURCE_ID],
+        sourceRoles: ['policy_compilation'],
       }),
     );
   };
@@ -1389,6 +1496,7 @@ export default function EvidenceLibrary({
       <Protocol28ReviewPanel
         summary={protocol28Summary}
         onReview={openProtocol28Review}
+        onReviewSourceLeads={openProtocol28SourceLeads}
       />
 
       <section
