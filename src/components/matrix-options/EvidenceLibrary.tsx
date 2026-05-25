@@ -1090,10 +1090,23 @@ export default function EvidenceLibrary({
   const updateFilter = (key: FilterArrayKey, value: string) => {
     onFiltersChange(setSingleFilter(filters, key, value));
   };
-  const applyQuickFilter = (filter: (typeof QUICK_REVIEW_FILTERS)[number]) => {
-    setViewMode(filter.viewMode);
+  const closeDetailPanels = () => {
     setSelectedValueId(null);
     setSelectedSourceId(null);
+  };
+  const changeViewMode = (nextViewMode: EvidenceLibraryViewMode) => {
+    if (nextViewMode !== viewMode) {
+      closeDetailPanels();
+    }
+    setViewMode(nextViewMode);
+  };
+  const clearFilters = () => {
+    closeDetailPanels();
+    onFiltersChange(createEvidenceLibraryFilters());
+  };
+  const applyQuickFilter = (filter: (typeof QUICK_REVIEW_FILTERS)[number]) => {
+    setViewMode(filter.viewMode);
+    closeDetailPanels();
     onFiltersChange(createEvidenceLibraryFilters(filter.request));
   };
   const applyAuditFilter = (
@@ -1101,14 +1114,12 @@ export default function EvidenceLibrary({
     request: EvidenceLibraryFilterRequest,
   ) => {
     setViewMode(nextViewMode);
-    setSelectedValueId(null);
-    setSelectedSourceId(null);
+    closeDetailPanels();
     onFiltersChange(createEvidenceLibraryFilters(request));
   };
   const openProtocol28Review = () => {
     setViewMode('by-parameter');
-    setSelectedValueId(null);
-    setSelectedSourceId(null);
+    closeDetailPanels();
     onFiltersChange(
       createEvidenceLibraryFilters({
         search: 'Protocol 28',
@@ -1210,7 +1221,7 @@ export default function EvidenceLibrary({
             <button
               key={mode.id}
               type="button"
-              onClick={() => setViewMode(mode.id)}
+              onClick={() => changeViewMode(mode.id)}
               aria-pressed={viewMode === mode.id}
               className={cn(
                 'min-h-9 whitespace-nowrap px-3 text-xs font-semibold transition-colors',
@@ -1302,7 +1313,7 @@ export default function EvidenceLibrary({
           {activeLabels.length > 0 && (
             <button
               type="button"
-              onClick={() => onFiltersChange(createEvidenceLibraryFilters())}
+              onClick={clearFilters}
               className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             >
               <X className="h-3.5 w-3.5" />
