@@ -492,6 +492,163 @@ function Protocol28ReviewPanel({
   );
 }
 
+function ValueDetailPanel({
+  row,
+  onClose,
+}: {
+  row: EvidenceLibraryValueRow;
+  onClose: () => void;
+}) {
+  const review = getParameterValueReviewDisposition(row.record, row.sources);
+  const canonicalSources = row.sources.filter(isCalculatorEvidenceSource);
+
+  return (
+    <section
+      className="rounded-lg border border-sky-200 bg-white p-4 shadow-sm dark:border-sky-800 dark:bg-slate-950"
+      data-testid="evidence-library-value-detail"
+      aria-label="Selected value detail"
+    >
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+            Selected value
+          </p>
+          <h3 className="mt-1 text-lg font-bold text-slate-950 dark:text-white">
+            {row.record.display_name}
+          </h3>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            {row.substanceLabel}; {humanizeCatalogLabel(row.record.pathway)}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex min-h-9 items-center gap-1 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+        >
+          <X className="h-3.5 w-3.5" />
+          Close
+        </button>
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
+        <div className="space-y-3">
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
+              <div className="text-[11px] font-semibold uppercase text-slate-500">
+                Value
+              </div>
+              <div className="mt-1 font-mono text-sm font-semibold text-slate-900 dark:text-white">
+                {formatValue(row.record.value, row.record.unit)}
+              </div>
+            </div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
+              <div className="text-[11px] font-semibold uppercase text-slate-500">
+                Jurisdiction
+              </div>
+              <div className="mt-1 text-sm text-slate-800 dark:text-slate-100">
+                {row.record.jurisdiction}
+              </div>
+            </div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
+              <div className="text-[11px] font-semibold uppercase text-slate-500">
+                Evidence items
+              </div>
+              <div className="mt-1 text-sm text-slate-800 dark:text-slate-100">
+                {row.record.evidence_items.length}
+              </div>
+            </div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
+              <div className="text-[11px] font-semibold uppercase text-slate-500">
+                Candidate group
+              </div>
+              <div className="mt-1 break-all text-xs text-slate-800 dark:text-slate-100">
+                {row.record.candidate_group_id}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-1">
+            <StatusBadge value={row.record.default_status} />
+            <StatusBadge value={row.record.evidence_support_status} />
+            <StatusBadge value={row.record.qa_status} />
+            <StatusBadge value={row.record.extraction_status} />
+            {row.record.canonical_source_status && (
+              <StatusBadge value={row.record.canonical_source_status} />
+            )}
+          </div>
+
+          <ReviewDispositionNote {...review} />
+
+          <div className="grid gap-3 text-sm lg:grid-cols-2">
+            <div>
+              <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
+                Applicability
+              </div>
+              <p className="mt-1 text-slate-700 dark:text-slate-200">
+                {row.record.applicability}
+              </p>
+            </div>
+            <div>
+              <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
+                Review notes
+              </div>
+              <p className="mt-1 text-slate-700 dark:text-slate-200">
+                {row.record.review_notes}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <aside className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
+            Provenance chain
+          </div>
+          <div className="mt-2 space-y-2 text-slate-700 dark:text-slate-200">
+            <div>
+              <span className="font-semibold">Canonical sources: </span>
+              {canonicalSources.length > 0
+                ? canonicalSources.map((source) => source.short_citation).join('; ')
+                : sourceLabels(row)}
+            </div>
+            <div>
+              <span className="font-semibold">Source relationships: </span>
+              {sourceRelationshipLabels(row)}
+            </div>
+            <div>
+              <span className="font-semibold">Policy alignment: </span>
+              {row.record.bc_protocol_alignment
+                ? humanizeCatalogLabel(row.record.bc_protocol_alignment)
+                : 'Not recorded'}
+            </div>
+          </div>
+          <div className="mt-3 space-y-2">
+            {row.record.evidence_items.map((evidence) => (
+              <div
+                key={evidence.evidence_id}
+                className="rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
+              >
+                <div className="font-semibold text-slate-800 dark:text-slate-100">
+                  {evidence.locator}
+                </div>
+                <div className="mt-1">
+                  {humanizeCatalogLabel(evidence.locator_type)};{' '}
+                  {humanizeCatalogLabel(evidence.qa_status)}
+                </div>
+                <div className="mt-1">Extracted {evidence.extracted_at}</div>
+              </div>
+            ))}
+            {row.record.evidence_items.length === 0 && (
+              <div className="rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-950">
+                No evidence items recorded.
+              </div>
+            )}
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
 function ValueGroupCard({ group }: { group: EvidenceLibraryValueGroup }) {
   const currentDefault = group.currentDefault;
   const currentValue = currentDefault
@@ -664,6 +821,7 @@ export default function EvidenceLibrary({
   className,
 }: EvidenceLibraryProps) {
   const [viewMode, setViewMode] = useState<EvidenceLibraryViewMode>('by-parameter');
+  const [selectedValueId, setSelectedValueId] = useState<string | null>(null);
   const library = useMemo(() => buildEvidenceLibraryView(filters), [filters]);
   const protocol28Summary = useMemo(() => buildProtocol28ReviewSummary(), []);
   const activeLabels = activeFilterLabels(filters);
@@ -676,6 +834,15 @@ export default function EvidenceLibrary({
     viewMode === 'assumptions' ? assumptionValues : library.values;
   const isDerivedPreviewFilter = filters.evidenceSupportStatuses.includes(
     'user_entered_or_derived',
+  );
+  const selectedValue = useMemo(
+    () =>
+      selectedValueId
+        ? library.values.find(
+            (row) => row.record.parameter_value_id === selectedValueId,
+          ) ?? null
+        : null,
+    [library.values, selectedValueId],
   );
 
   const updateFilter = (key: FilterArrayKey, value: string) => {
@@ -890,6 +1057,13 @@ export default function EvidenceLibrary({
         </div>
       </div>
 
+      {selectedValue && (
+        <ValueDetailPanel
+          row={selectedValue}
+          onClose={() => setSelectedValueId(null)}
+        />
+      )}
+
       {showValueGroups && (
         <section className="space-y-2" data-testid="evidence-library-value-groups">
           <div className="flex items-center justify-between">
@@ -936,6 +1110,7 @@ export default function EvidenceLibrary({
                   <th className="px-3 py-2 font-semibold">Review status</th>
                   <th className="px-3 py-2 font-semibold">Applicability</th>
                   <th className="px-3 py-2 font-semibold">Sources</th>
+                  <th className="px-3 py-2 font-semibold">Inspect</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -972,9 +1147,23 @@ export default function EvidenceLibrary({
                         </td>
                         <td className="px-3 py-2 max-w-xs">{row.record.applicability}</td>
                         <td className="px-3 py-2 max-w-xs">{sourceLabels(row)}</td>
+                        <td className="px-3 py-2">
+                          <button
+                            type="button"
+                            aria-label={`Inspect ${row.record.display_name}`}
+                            data-testid="evidence-library-inspect-value"
+                            onClick={() =>
+                              setSelectedValueId(row.record.parameter_value_id)
+                            }
+                            className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                          >
+                            <Search className="h-3.5 w-3.5" />
+                            Inspect
+                          </button>
+                        </td>
                       </tr>
                       <tr>
-                        <td colSpan={7} className="bg-white px-3 py-2 dark:bg-slate-950">
+                        <td colSpan={8} className="bg-white px-3 py-2 dark:bg-slate-950">
                           <details>
                             <summary className="cursor-pointer text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300">
                               Details
@@ -1028,7 +1217,7 @@ export default function EvidenceLibrary({
                 })}
                 {visibleValues.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-3 py-6 text-sm text-slate-500">
+                    <td colSpan={8} className="px-3 py-6 text-sm text-slate-500">
                       {isDerivedPreviewFilter ? (
                         <DerivedPreviewEmptyState />
                       ) : (

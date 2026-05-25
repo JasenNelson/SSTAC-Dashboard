@@ -25,7 +25,7 @@ function renderControlled(initialFilters = createEvidenceLibraryFilters()) {
 }
 
 describe('EvidenceLibrary', () => {
-  it('renders sources, values, equations, and conservative HH scaffolds', () => {
+  it('renders the References & Values overview and conservative scaffolds', () => {
     renderControlled();
 
     expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
@@ -55,6 +55,10 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
       /Needs original-source verification/,
     );
+  });
+
+  it('renders value and equation database views', () => {
+    renderControlled();
 
     fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
@@ -74,6 +78,10 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-equations')).toHaveTextContent(
       /Human Health Direct Contact sediment screen/,
     );
+  });
+
+  it('renders source and source-lead views without promoting scaffolds', () => {
+    renderControlled();
 
     fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
     expect(screen.getByTestId('evidence-library-sources')).not.toHaveTextContent(
@@ -237,6 +245,28 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Extracted 2026-05-23/,
     );
+  });
+
+  it('opens a selected value detail panel from the values database view', () => {
+    renderControlled();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
+
+    expect(screen.getByTestId('evidence-library-value-detail')).toHaveTextContent(
+      /Selected value/,
+    );
+    expect(screen.getByTestId('evidence-library-value-detail')).toHaveTextContent(
+      /Provenance chain/,
+    );
+    expect(screen.getByTestId('evidence-library-value-detail')).toHaveTextContent(
+      /Applicability/,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Close$/ }));
+    expect(
+      screen.queryByTestId('evidence-library-value-detail'),
+    ).not.toBeInTheDocument();
   });
 
   it('searches and clears active filters', () => {
