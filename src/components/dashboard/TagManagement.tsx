@@ -1,9 +1,8 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useToast } from '@/components/Toast';
-import { createClient } from '../supabase-client';
-
+import { useState, useEffect } from "react";
+import { useToast } from "@/components/Toast";
+import { createClient } from "../supabase-client";
 
 type Tag = {
   id: number;
@@ -38,28 +37,28 @@ export default function TagManagement() {
     const fetchTags = async () => {
       try {
         const { data, error } = await supabase
-          .from('tags')
-          .select('*')
-          .order('name');
-        
+          .from("tags")
+          .select("*")
+          .order("name");
+
         if (error) {
-          console.error('Error fetching tags:', error);
+          console.error("Error fetching tags:", error);
           showToast({
-            type: 'error',
-            title: 'Error',
-            message: 'Failed to load tags',
-            duration: 5000
+            type: "error",
+            title: "Error",
+            message: "Failed to load tags",
+            duration: 5000,
           });
         } else {
           setTags(data || []);
         }
       } catch (error) {
-        console.error('Error fetching tags:', error);
+        console.error("Error fetching tags:", error);
         showToast({
-          type: 'error',
-          title: 'Error',
-          message: 'Failed to load tags',
-          duration: 5000
+          type: "error",
+          title: "Error",
+          message: "Failed to load tags",
+          duration: 5000,
         });
       } finally {
         setIsLoading(false);
@@ -72,135 +71,147 @@ export default function TagManagement() {
   const handleCreateTag = async (formData: FormData) => {
     try {
       // Call the server action via form submission
-      const response = await fetch('/api/tags', {
-        method: 'POST',
+      const response = await fetch("/api/tags", {
+        method: "POST",
         body: formData,
       });
-      
+
       const result = await response.json();
-      
+
       if (result?.success) {
         showToast({
-          type: 'success',
-          title: 'Tag Created!',
+          type: "success",
+          title: "Tag Created!",
           message: result.success,
-          duration: 3000
+          duration: 3000,
         });
         setShowCreateForm(false);
         // Refresh the page to get updated tags
         window.location.reload();
       } else if (result?.error) {
         showToast({
-          type: 'error',
-          title: 'Error',
+          type: "error",
+          title: "Error",
           message: result.error,
-          duration: 5000
+          duration: 5000,
         });
       }
-      
+
       return result;
     } catch (error) {
-      console.error('Error creating tag:', error);
+      console.error("Error creating tag:", error);
       showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'An unexpected error occurred while creating the tag.',
-        duration: 5000
+        type: "error",
+        title: "Error",
+        message: "An unexpected error occurred while creating the tag.",
+        duration: 5000,
       });
-      return { error: 'An unexpected error occurred' };
+      return { error: "An unexpected error occurred" };
     }
   };
 
   const handleUpdateTag = async (formData: FormData) => {
     try {
       // Call the server action via form submission
-      const response = await fetch('/api/tags', {
-        method: 'PUT',
+      const response = await fetch("/api/tags", {
+        method: "PUT",
         body: formData,
       });
-      
+
       const result = await response.json();
-      
+
       if (result?.success) {
         showToast({
-          type: 'success',
-          title: 'Tag Updated!',
+          type: "success",
+          title: "Tag Updated!",
           message: result.success,
-          duration: 3000
+          duration: 3000,
         });
         setEditingTag(null);
         // Refresh the page to get updated tags
         window.location.reload();
       } else if (result?.error) {
         showToast({
-          type: 'error',
-          title: 'Error',
+          type: "error",
+          title: "Error",
           message: result.error,
-          duration: 5000
+          duration: 5000,
         });
       }
-      
+
       return result;
     } catch (error) {
-      console.error('Error updating tag:', error);
+      console.error("Error updating tag:", error);
       showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'An unexpected error occurred while updating the tag.',
-        duration: 5000
+        type: "error",
+        title: "Error",
+        message: "An unexpected error occurred while updating the tag.",
+        duration: 5000,
       });
-      return { error: 'An unexpected error occurred' };
+      return { error: "An unexpected error occurred" };
     }
   };
 
   const handleDeleteTag = async (tagId: number) => {
-    if (!confirm('Are you sure you want to delete this tag? This action cannot be undone.')) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this tag? This action cannot be undone.",
+      )
+    ) {
       return;
     }
 
     try {
       const formData = new FormData();
-      formData.append('id', tagId.toString());
+      formData.append("id", tagId.toString());
 
       // Call the server action via form submission
-      const response = await fetch('/api/tags', {
-        method: 'DELETE',
+      const response = await fetch("/api/tags", {
+        method: "DELETE",
         body: formData,
       });
-      
+
       const result = await response.json();
-      
+
       if (result?.success) {
         showToast({
-          type: 'success',
-          title: 'Tag Deleted!',
+          type: "success",
+          title: "Tag Deleted!",
           message: result.success,
-          duration: 3000
+          duration: 3000,
         });
         // Refresh the page to get updated tags
         window.location.reload();
       } else if (result?.error) {
         showToast({
-          type: 'error',
-          title: 'Error',
+          type: "error",
+          title: "Error",
           message: result.error,
-          duration: 5000
+          duration: 5000,
         });
       }
     } catch (error) {
-      console.error('Error deleting tag:', error);
+      console.error("Error deleting tag:", error);
       showToast({
-        type: 'error',
-        title: 'Error',
-        message: 'An unexpected error occurred while deleting the tag.',
-        duration: 5000
+        type: "error",
+        title: "Error",
+        message: "An unexpected error occurred while deleting the tag.",
+        duration: 5000,
       });
     }
   };
 
   const presetColors = [
-    '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444',
-    '#06B6D4', '#84CC16', '#F97316', '#6B7280', '#EC4899'
+    "#3B82F6",
+    "#10B981",
+    "#F59E0B",
+    "#8B5CF6",
+    "#EF4444",
+    "#06B6D4",
+    "#84CC16",
+    "#F97316",
+    "#6B7280",
+    "#EC4899",
   ];
 
   return (
@@ -212,21 +223,29 @@ export default function TagManagement() {
           onClick={() => setShowCreateForm(!showCreateForm)}
           className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition-colors"
         >
-          {showCreateForm ? 'Cancel' : 'Create New Tag'}
+          {showCreateForm ? "Cancel" : "Create New Tag"}
         </button>
       </div>
 
       {/* Create Tag Form */}
       {showCreateForm && (
         <div className="bg-white p-6 rounded-lg shadow-md border">
-          <h3 className="text-lg font-medium text-slate-900 mb-4">Create New Tag</h3>
-          <form onSubmit={async (e) => {
-          e.preventDefault();
-          const formData = new FormData(e.currentTarget);
-          await handleCreateTag(formData);
-        }} className="space-y-4">
+          <h3 className="text-lg font-medium text-slate-900 mb-4">
+            Create New Tag
+          </h3>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              await handleCreateTag(formData);
+            }}
+            className="space-y-4"
+          >
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-slate-600">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-slate-600"
+              >
                 Tag Name
               </label>
               <input
@@ -240,7 +259,10 @@ export default function TagManagement() {
             </div>
 
             <div>
-              <label htmlFor="color" className="block text-sm font-medium text-slate-600">
+              <label
+                htmlFor="color"
+                className="block text-sm font-medium text-slate-600"
+              >
                 Color
               </label>
               <div className="mt-1 flex items-center space-x-3">
@@ -257,10 +279,13 @@ export default function TagManagement() {
                       key={color}
                       type="button"
                       onClick={() => {
-                        const colorInput = document.getElementById('color') as HTMLInputElement;
+                        const colorInput = document.getElementById(
+                          "color",
+                        ) as HTMLInputElement;
                         if (colorInput) colorInput.value = color;
                       }}
-                      className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors"
+                      className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500 focus-visible:outline-none transition-colors"
+                      aria-label={`Select color ${color}`}
                       style={{ backgroundColor: color }}
                       title={color}
                     />
@@ -300,9 +325,9 @@ export default function TagManagement() {
                     >
                       {tag.name}
                     </span>
-                                         <span className="text-sm text-slate-500">
-                       {new Date(tag.created_at).toISOString().split('T')[0]}
-                     </span>
+                    <span className="text-sm text-slate-500">
+                      {new Date(tag.created_at).toISOString().split("T")[0]}
+                    </span>
                   </div>
                   <div className="flex space-x-2">
                     <button
@@ -336,16 +361,24 @@ export default function TagManagement() {
         <div className="fixed inset-0 bg-slate-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
-              <h3 className="text-lg font-medium text-slate-900 mb-4">Edit Tag</h3>
-              <form onSubmit={async (e) => {
-          e.preventDefault();
-          const formData = new FormData(e.currentTarget);
-          await handleUpdateTag(formData);
-        }} className="space-y-4">
+              <h3 className="text-lg font-medium text-slate-900 mb-4">
+                Edit Tag
+              </h3>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  await handleUpdateTag(formData);
+                }}
+                className="space-y-4"
+              >
                 <input type="hidden" name="id" value={editingTag.id} />
-                
+
                 <div>
-                  <label htmlFor="edit-name" className="block text-sm font-medium text-slate-600">
+                  <label
+                    htmlFor="edit-name"
+                    className="block text-sm font-medium text-slate-600"
+                  >
                     Tag Name
                   </label>
                   <input
@@ -359,7 +392,10 @@ export default function TagManagement() {
                 </div>
 
                 <div>
-                  <label htmlFor="edit-color" className="block text-sm font-medium text-slate-600">
+                  <label
+                    htmlFor="edit-color"
+                    className="block text-sm font-medium text-slate-600"
+                  >
                     Color
                   </label>
                   <div className="mt-1 flex items-center space-x-3">
@@ -376,10 +412,13 @@ export default function TagManagement() {
                           key={color}
                           type="button"
                           onClick={() => {
-                            const colorInput = document.getElementById('edit-color') as HTMLInputElement;
+                            const colorInput = document.getElementById(
+                              "edit-color",
+                            ) as HTMLInputElement;
                             if (colorInput) colorInput.value = color;
                           }}
-                          className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 transition-colors"
+                          className="w-6 h-6 rounded border-2 border-slate-300 hover:border-slate-400 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-sky-500 focus-visible:outline-none transition-colors"
+                          aria-label={`Select color ${color}`}
                           style={{ backgroundColor: color }}
                           title={color}
                         />
