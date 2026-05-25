@@ -56,7 +56,35 @@ const ENDPOINT_OPTIONS = ['Mortality', 'Growth', 'Reproduction', 'Development'];
 const OWNER_REPORTED_ECOTOX_ROWS = 582125;
 type PlotScale = 'log' | 'linear';
 type DataSourceMode = 'fixture' | 'upload' | 'ecotox_mirror';
-type LiveStatus = 'idle' | 'searching' | 'loading_records' | 'ready' | 'not_configured' | 'error';
+type LiveStatus =
+  | 'idle'
+  | 'checking_health'
+  | 'searching'
+  | 'loading_records'
+  | 'ready'
+  | 'not_configured'
+  | 'error';
+type MirrorHealthStatus =
+  | 'unchecked'
+  | 'checking'
+  | 'ready'
+  | 'not_configured'
+  | 'invalid_config'
+  | 'unavailable';
+
+interface MirrorHealthState {
+  status: MirrorHealthStatus;
+  table: string | null;
+  rowCount: number | null;
+  rowCountAvailable: boolean;
+  missing: string[];
+  invalid: string[];
+  limits: {
+    search: number | null;
+    pageSize: number | null;
+    maxFetchRows: number | null;
+  };
+}
 
 interface SsdRunState {
   rows: RawEcotoxRecord[];
@@ -88,6 +116,19 @@ const ENVIRONMENT_FILTER_LABELS: Record<SsdEnvironmentFilter, string> = {
 const DEFAULT_FIXTURE_DATASET = getSsdFixtureDataset(
   DEFAULT_SSD_FIXTURE_DATASET_ID,
 );
+const UNCHECKED_MIRROR_HEALTH: MirrorHealthState = {
+  status: 'unchecked',
+  table: null,
+  rowCount: null,
+  rowCountAvailable: false,
+  missing: [],
+  invalid: [],
+  limits: {
+    search: null,
+    pageSize: null,
+    maxFetchRows: null,
+  },
+};
 
 function formatNumber(value: number, digits = 3): string {
   if (!Number.isFinite(value)) return 'n/a';
@@ -180,8 +221,74 @@ function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object'
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : [];
+}
+
+function numericField(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function parseMirrorHealthPayload(
+  response: { ok: boolean; status: number },
+  payload: unknown,
+): MirrorHealthState {
+  const body = asRecord(payload);
+  const limits = asRecord(body.limits);
+  const error = typeof body.error === 'string' ? body.error : null;
+  const base = {
+    ...UNCHECKED_MIRROR_HEALTH,
+    table: typeof body.table === 'string' ? body.table : null,
+    rowCount: numericField(body.rowCount),
+    rowCountAvailable: body.rowCountAvailable === true,
+    missing: stringArray(body.missing),
+    invalid: stringArray(body.invalid),
+    limits: {
+      search: numericField(limits.search),
+      pageSize: numericField(limits.pageSize),
+      maxFetchRows: numericField(limits.maxFetchRows),
+    },
+  };
+
+  if (response.ok && body.configured === true && body.readable === true) {
+    return {
+      ...base,
+      status: 'ready',
+    };
+  }
+
+  if (response.status === 503 && error === 'ecotox_supabase_not_configured') {
+    return {
+      ...base,
+      status: 'not_configured',
+    };
+  }
+
+  if (response.status === 503 && error === 'ecotox_supabase_invalid_config') {
+    return {
+      ...base,
+      status: 'invalid_config',
+    };
+  }
+
+  return {
+    ...base,
+    status: 'unavailable',
+  };
+}
+
 function liveStatusLabel(status: LiveStatus): string {
   switch (status) {
+    case 'checking_health':
+      return 'Checking ECOTOX mirror health...';
     case 'searching':
       return 'Searching ECOTOX mirror...';
     case 'loading_records':
@@ -194,6 +301,55 @@ function liveStatusLabel(status: LiveStatus): string {
       return 'ECOTOX mirror request failed.';
     default:
       return 'Use validation mode or search the ECOTOX mirror.';
+  }
+}
+
+function mirrorHealthTitle(health: MirrorHealthState): string {
+  switch (health.status) {
+    case 'checking':
+      return 'Checking mirror status';
+    case 'ready':
+      return 'Read-only mirror connected';
+    case 'not_configured':
+      return 'Mirror not configured';
+    case 'invalid_config':
+      return 'Mirror configuration invalid';
+    case 'unavailable':
+      return 'Mirror health unavailable';
+    default:
+      return 'Mirror status not checked';
+  }
+}
+
+function mirrorHealthMessage(health: MirrorHealthState): string {
+  switch (health.status) {
+    case 'checking':
+      return 'Checking the server-side ECOTOX mirror health endpoint.';
+    case 'ready': {
+      const rowCount =
+        health.rowCountAvailable && health.rowCount !== null
+          ? `${health.rowCount.toLocaleString()} rows`
+          : 'row count unavailable';
+      return `Read-only anon-key mirror is available with ${rowCount}. Searches and record loads stay bounded by server-side limits.`;
+    }
+    case 'not_configured': {
+      const missing =
+        health.missing.length > 0
+          ? ` Missing server env: ${health.missing.join(', ')}.`
+          : '';
+      return `Set ECOTOX_SUPABASE_URL and ECOTOX_SUPABASE_ANON_KEY server-side to enable live mirror reads.${missing} No service-role key is used or required.`;
+    }
+    case 'invalid_config': {
+      const invalid =
+        health.invalid.length > 0
+          ? ` Check: ${health.invalid.join(', ')}.`
+          : '';
+      return `The server-side ECOTOX anon configuration is present but invalid.${invalid} No credential values are shown in this UI.`;
+    }
+    case 'unavailable':
+      return 'The mirror health endpoint could not be verified. Use validation or upload mode until this check is healthy.';
+    default:
+      return 'Check mirror status before searching live ECOTOX records.';
   }
 }
 
@@ -334,6 +490,9 @@ export default function SsdWorkbench({
   const [liveStatus, setLiveStatus] = useState<LiveStatus>('idle');
   const [liveMessage, setLiveMessage] = useState<string | null>(null);
   const [liveRowsTruncated, setLiveRowsTruncated] = useState(false);
+  const [mirrorHealth, setMirrorHealth] = useState<MirrorHealthState>(
+    UNCHECKED_MIRROR_HEALTH,
+  );
   const [runState, setRunState] = useState<SsdRunState>(() => ({
     rows: DEFAULT_FIXTURE_DATASET.rows,
     fixtureDatasetId: DEFAULT_FIXTURE_DATASET.id,
@@ -466,6 +625,59 @@ export default function SsdWorkbench({
     }
   };
 
+  const checkMirrorHealth = async (
+    force = false,
+  ): Promise<MirrorHealthState> => {
+    if (!force && mirrorHealth.status !== 'unchecked') return mirrorHealth;
+
+    setMirrorHealth({
+      ...UNCHECKED_MIRROR_HEALTH,
+      status: 'checking',
+    });
+    setLiveStatus('checking_health');
+    setLiveMessage(null);
+    try {
+      const response = await fetch('/api/matrix-options/ssd/records');
+      const payload = await response.json();
+      const nextHealth = parseMirrorHealthPayload(response, payload);
+      setMirrorHealth(nextHealth);
+      setLiveStatus(nextHealth.status === 'ready' ? 'idle' : 'not_configured');
+      if (nextHealth.status !== 'ready') {
+        setLiveRows([]);
+        setLiveRowsTruncated(false);
+      }
+      return nextHealth;
+    } catch {
+      const nextHealth = {
+        ...UNCHECKED_MIRROR_HEALTH,
+        status: 'unavailable' as const,
+      };
+      setMirrorHealth(nextHealth);
+      setLiveStatus('error');
+      setLiveRows([]);
+      setLiveRowsTruncated(false);
+      return nextHealth;
+    }
+  };
+
+  const selectEcotoxMirrorMode = (): void => {
+    setDataSourceMode('ecotox_mirror');
+    void checkMirrorHealth();
+  };
+
+  const ensureMirrorReady = async (): Promise<boolean> => {
+    const health = await checkMirrorHealth();
+    if (health.status === 'ready') return true;
+    setChemicalSuggestions([]);
+    setLiveStatus(
+      health.status === 'not_configured' || health.status === 'invalid_config'
+        ? 'not_configured'
+        : 'error',
+    );
+    setLiveMessage(mirrorHealthMessage(health));
+    return false;
+  };
+
   const handleUploadFile = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ): Promise<void> => {
@@ -514,6 +726,7 @@ export default function SsdWorkbench({
     }
 
     setDataSourceMode('ecotox_mirror');
+    if (!(await ensureMirrorReady())) return;
     setLiveStatus('searching');
     setLiveMessage(null);
     try {
@@ -555,6 +768,7 @@ export default function SsdWorkbench({
     }
 
     setDataSourceMode('ecotox_mirror');
+    if (!(await ensureMirrorReady())) return;
     setLiveStatus('loading_records');
     setLiveMessage(null);
     try {
@@ -621,6 +835,12 @@ export default function SsdWorkbench({
       extractedAt: todayIsoDate(),
     });
   };
+  const mirrorQueryDisabled =
+    mirrorHealth.status === 'unchecked' ||
+    mirrorHealth.status === 'checking' ||
+    mirrorHealth.status === 'not_configured' ||
+    mirrorHealth.status === 'invalid_config' ||
+    mirrorHealth.status === 'unavailable';
 
   return (
     <section
@@ -669,7 +889,7 @@ export default function SsdWorkbench({
               </ToggleButton>
               <ToggleButton
                 active={dataSourceMode === 'ecotox_mirror'}
-                onClick={() => setDataSourceMode('ecotox_mirror')}
+                onClick={selectEcotoxMirrorMode}
               >
                 ECOTOX mirror
               </ToggleButton>
@@ -760,7 +980,7 @@ export default function SsdWorkbench({
               <button
                 type="button"
                 onClick={() => void searchLiveChemicals()}
-                disabled={liveStatus === 'searching'}
+                disabled={liveStatus === 'searching' || mirrorQueryDisabled}
                 className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
               >
                 Search mirror
@@ -768,7 +988,7 @@ export default function SsdWorkbench({
               <button
                 type="button"
                 onClick={() => void loadLiveRows()}
-                disabled={liveStatus === 'loading_records'}
+                disabled={liveStatus === 'loading_records' || mirrorQueryDisabled}
                 className="rounded-md bg-sky-600 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 Load records
@@ -789,10 +1009,58 @@ export default function SsdWorkbench({
               </div>
             )}
             {dataSourceMode === 'ecotox_mirror' && (
-              <div className="mt-3 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
-                <p className="font-semibold text-slate-700 dark:text-slate-100">
-                  {liveStatusLabel(liveStatus)}
-                </p>
+              <div
+                className="mt-3 rounded-md border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+                data-testid="ssd-ecotox-health-panel"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-slate-700 dark:text-slate-100">
+                      {mirrorHealthTitle(mirrorHealth)}
+                    </p>
+                    <p className="mt-1">{mirrorHealthMessage(mirrorHealth)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void checkMirrorHealth(true)}
+                    disabled={mirrorHealth.status === 'checking'}
+                    className="shrink-0 rounded-md border border-slate-300 px-2 py-1 text-[11px] font-bold text-slate-700 hover:border-sky-400 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200"
+                  >
+                    Check status
+                  </button>
+                </div>
+                {mirrorHealth.status === 'ready' && (
+                  <dl className="mt-3 grid gap-2 rounded-md bg-slate-50 p-2 dark:bg-slate-900">
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-slate-500 dark:text-slate-400">
+                        Mirror rows
+                      </dt>
+                      <dd className="font-semibold text-slate-800 dark:text-slate-100">
+                        {mirrorHealth.rowCountAvailable &&
+                        mirrorHealth.rowCount !== null
+                          ? mirrorHealth.rowCount.toLocaleString()
+                          : 'Unavailable'}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-slate-500 dark:text-slate-400">
+                        Search limit
+                      </dt>
+                      <dd className="font-semibold text-slate-800 dark:text-slate-100">
+                        {mirrorHealth.limits.search ?? 'Unavailable'}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <dt className="text-slate-500 dark:text-slate-400">
+                        Record load cap
+                      </dt>
+                      <dd className="font-semibold text-slate-800 dark:text-slate-100">
+                        {mirrorHealth.limits.maxFetchRows?.toLocaleString() ??
+                          'Unavailable'}
+                      </dd>
+                    </div>
+                  </dl>
+                )}
                 {liveMessage && <p className="mt-1">{liveMessage}</p>}
                 {liveRowsTruncated && (
                   <p className="mt-1 text-amber-700 dark:text-amber-300">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 vi.mock('recharts', () => ({
@@ -20,7 +20,22 @@ vi.mock('recharts', () => ({
 
 import SsdWorkbench from '../SsdWorkbench';
 
+function mockFetchJson(payload: unknown, status = 200) {
+  const fetchMock = vi.fn(async () => ({
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => payload,
+  }));
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
 describe('SsdWorkbench', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
   it('renders the validation-backed SSD workbench and derived candidate receipt', () => {
     render(<SsdWorkbench />);
 
@@ -83,6 +98,79 @@ describe('SsdWorkbench', () => {
     expect(screen.getByText(/HC5 SSD-derived candidate/i)).toBeInTheDocument();
     expect(screen.getByText(/user entered or derived/i)).toBeInTheDocument();
     expect(screen.getByText(/needs review/i)).toBeInTheDocument();
+  });
+
+  it('shows a safe not-configured ECOTOX mirror receipt', async () => {
+    const fetchMock = mockFetchJson(
+      {
+        error: 'ecotox_supabase_not_configured',
+        configured: false,
+        missing: ['ECOTOX_SUPABASE_URL', 'ECOTOX_SUPABASE_ANON_KEY'],
+        invalid: [],
+        table: 'toxicology_data',
+        rowCount: null,
+        rowCountAvailable: false,
+        readable: false,
+      },
+      503,
+    );
+
+    render(<SsdWorkbench />);
+    expect(screen.getByRole('button', { name: /Search mirror/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Load records/i })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/Mirror not configured/i)).toBeInTheDocument(),
+    );
+    const healthPanel = screen.getByTestId('ssd-ecotox-health-panel');
+    expect(
+      within(healthPanel).getByText(/ECOTOX_SUPABASE_URL/i),
+    ).toBeInTheDocument();
+    expect(
+      within(healthPanel).getByText(/No service-role key is used or required/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Search mirror/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /Load records/i })).toBeDisabled();
+    expect(fetchMock).toHaveBeenCalledWith('/api/matrix-options/ssd/records');
+  });
+
+  it('shows configured ECOTOX mirror health without exposing credentials', async () => {
+    const fetchMock = mockFetchJson({
+      configured: true,
+      status: 'ok',
+      table: 'toxicology_data',
+      requiredColumns: ['chemical_name'],
+      rowCount: 582125,
+      rowCountAvailable: true,
+      readable: true,
+      limits: {
+        search: 50,
+        pageSize: 1000,
+        maxFetchRows: 5000,
+      },
+    });
+
+    render(<SsdWorkbench />);
+    fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Read-only mirror connected/i),
+      ).toBeInTheDocument(),
+    );
+    const healthPanel = screen.getByTestId('ssd-ecotox-health-panel');
+    expect(within(healthPanel).getAllByText(/582,125/i).length).toBeGreaterThan(0);
+    expect(within(healthPanel).getByText(/Search limit/i)).toBeInTheDocument();
+    expect(within(healthPanel).getByText(/^50$/)).toBeInTheDocument();
+    expect(within(healthPanel).getByText(/Record load cap/i)).toBeInTheDocument();
+    expect(within(healthPanel).getByText(/^5,000$/)).toBeInTheDocument();
+    expect(
+      within(healthPanel).queryByText(/private-anon-key/i),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Search mirror/i })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: /Load records/i })).not.toBeDisabled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('switches validation mode to the CCME validation datasets', () => {
