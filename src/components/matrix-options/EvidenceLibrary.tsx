@@ -367,6 +367,10 @@ function AuditStrip({
     audit.sourceLeads.parameterValueLeads +
     audit.sourceLeads.canonicalSourceLeads +
     audit.sourceLeads.documentLeads;
+  const blockedSourceCount =
+    audit.sources.referenceMining +
+    audit.sources.policyCompilations +
+    audit.sources.implementationScaffold;
   const items = [
     {
       label: 'Approved values',
@@ -384,20 +388,40 @@ function AuditStrip({
       note: 'current UI values only',
     },
     {
+      label: 'Current defaults',
+      value: audit.values.currentDefaults,
+      note:
+        `${audit.values.availableOptions} options; ` +
+        `${audit.values.notDefaults} non-default`,
+    },
+    {
       label: 'Equations pending',
       value: audit.equations.pendingReview,
-      note: `${audit.equations.total} equations total`,
+      note:
+        `${audit.equations.pendingSourceLocator} locator gaps; ` +
+        `${audit.equations.currentCalculatorScaffold} scaffolds`,
     },
     {
       label: 'Source-of-sources leads',
       value: sourceLeadCount,
       note: `${audit.sourceLeads.leadSets} lead sets`,
     },
+    {
+      label: 'Zotero linked',
+      value: audit.sources.zoteroLinked,
+      note: `${audit.sources.zoteroPending} pending links`,
+    },
+    {
+      label: 'Blocked sources',
+      value: blockedSourceCount,
+      note: 'reference/policy/scaffold only',
+    },
   ];
 
   return (
     <div
-      className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950 sm:grid-cols-2 xl:grid-cols-5"
+      className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8"
+      data-testid="evidence-library-audit-strip"
       aria-label="Catalog provenance audit"
     >
       {items.map((item) => (

@@ -40,6 +40,18 @@ describe('EvidenceLibrary', () => {
     );
     expect(screen.getByText(/Approved values/)).toBeInTheDocument();
     expect(screen.getByText(/Pending locators/)).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-audit-strip')).toHaveTextContent(
+      /Current defaults/,
+    );
+    expect(screen.getByTestId('evidence-library-audit-strip')).toHaveTextContent(
+      /Zotero linked/,
+    );
+    expect(screen.getByTestId('evidence-library-audit-strip')).toHaveTextContent(
+      /Blocked sources/,
+    );
+    expect(screen.getByTestId('evidence-library-audit-strip')).not.toHaveTextContent(
+      /pending owner export/i,
+    );
     expect(screen.getByTestId('evidence-library-quick-filters')).toHaveTextContent(
       /Protocol 28/,
     );
