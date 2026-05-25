@@ -94,6 +94,20 @@ const BC_PROTOCOL28_TRV_SOURCE_LEADS = bcProtocol28TrvSourceLeadsRaw as {
     parameter_value_ids?: string[];
     promotion_status: string;
     canonical_source_status: string;
+    direct_source_review?: {
+      result: string;
+      packet: string;
+      reviewed_at: string;
+      compared_sources: string[];
+      value_ids: string[];
+      required_catalog_posture: {
+        default_status: string;
+        evidence_support_status: string;
+        qa_status: string;
+        canonical_source_status: string;
+      };
+      note: string;
+    };
   }>;
   document_leads: Array<{
     lead_id: string;
@@ -685,6 +699,50 @@ describe('matrix options provenance catalog', () => {
           valueId,
         ).toBe(true);
       }
+    }
+  });
+
+  it('records the arsenic direct-source discrepancy without promoting values', () => {
+    const arsenicLead = BC_PROTOCOL28_TRV_SOURCE_LEADS.parameter_value_leads.find(
+      (lead) => lead.lead_id === 'p28-appendix-8a-arsenic-rfd-sfo',
+    );
+
+    expect(arsenicLead?.direct_source_review?.result).toBe(
+      'DISCREPANCY_RECORDED_NO_PROMOTION',
+    );
+    expect(arsenicLead?.direct_source_review?.packet).toBe(
+      'matrix_research/reference_catalog/protocol28_arsenic_direct_source_verification_packet_2026_05_25.md',
+    );
+    expect(arsenicLead?.direct_source_review?.compared_sources).toEqual([
+      'src-us-epa-iris-rfd-table-live',
+      'src-us-epa-iris-chemical-details-live',
+      'src-health-canada-trv-v4-2025',
+    ]);
+    expect(arsenicLead?.direct_source_review?.value_ids).toEqual([
+      'pv-p28-arsenic-hh-food-rfd',
+      'pv-p28-arsenic-hh-food-slope',
+    ]);
+    expect(
+      arsenicLead?.direct_source_review?.required_catalog_posture,
+    ).toEqual({
+      default_status: 'available_option',
+      evidence_support_status: 'pending_source_locator',
+      qa_status: 'needs_review',
+      canonical_source_status: 'needs_direct_source_check',
+    });
+
+    for (const valueId of arsenicLead?.direct_source_review?.value_ids ?? []) {
+      const record = PARAMETER_VALUE_RECORDS.find(
+        (candidate) => candidate.parameter_value_id === valueId,
+      );
+      expect(record?.default_status, valueId).toBe('available_option');
+      expect(record?.evidence_support_status, valueId).toBe(
+        'pending_source_locator',
+      );
+      expect(record?.qa_status, valueId).toBe('needs_review');
+      expect(record?.canonical_source_status, valueId).toBe(
+        'needs_direct_source_check',
+      );
     }
   });
 

@@ -27,6 +27,9 @@ or QA details.
 - `source_leads/` records unpromoted source-of-sources extraction work. These
   files can identify candidate canonical references and Zotero matches, but do
   not by themselves approve a source for calculator use.
+- `protocol28_direct_source_verification_workflow.md` records the repeatable
+  process for checking Protocol 28 Appendix rows against current direct sources
+  and making the follow-up metadata/tests part of each verification slice.
 
 Parameter and equation records include `evidence_items`. Each evidence item
 stores a stable evidence ID, source ID, locator type, source locator, extracted

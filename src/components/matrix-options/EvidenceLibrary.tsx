@@ -84,7 +84,7 @@ const QUICK_REVIEW_FILTERS: Array<{
   {
     label: 'Protocol 28',
     description: 'Policy compilation; original source check required.',
-    viewMode: 'by-parameter',
+    viewMode: 'values',
     request: {
       search: 'Protocol 28',
       bcProtocolAlignments: [PROTOCOL28_POLICY_ALIGNMENT],
@@ -1362,7 +1362,7 @@ export default function EvidenceLibrary({
     onFiltersChange(createEvidenceLibraryFilters(request));
   };
   const openProtocol28Review = () => {
-    setViewMode('by-parameter');
+    setViewMode('values');
     closeDetailPanels();
     onFiltersChange(
       createEvidenceLibraryFilters({

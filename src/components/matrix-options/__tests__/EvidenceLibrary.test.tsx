@@ -176,15 +176,18 @@ describe('EvidenceLibrary', () => {
       }),
     );
 
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Protocol 28/,
     );
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Needs original-source verification/,
     );
 
     fireEvent.click(
       screen.getByRole('button', { name: /^Review Protocol 28 queue$/ }),
+    );
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Protocol 28/,
     );
     expect(screen.getByText(/Policy alignment: Protocol 28/i)).toBeInTheDocument();
 
@@ -273,7 +276,7 @@ describe('EvidenceLibrary', () => {
       name: /SSD-derived: Derived preview/i,
     });
 
-    expect(within(protocol28Button).getByText('6 parameter groups')).toBeInTheDocument();
+    expect(within(protocol28Button).getByText('6 values')).toBeInTheDocument();
     expect(within(healthCanadaButton).getByText('19 values')).toBeInTheDocument();
     expect(within(ecoSslButton).getByText('1 lead set')).toBeInTheDocument();
     expect(within(ssdButton).getByText('0 values')).toBeInTheDocument();
