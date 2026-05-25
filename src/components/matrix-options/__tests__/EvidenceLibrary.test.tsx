@@ -341,6 +341,38 @@ describe('EvidenceLibrary', () => {
     expect(panel).toHaveTextContent(/Do not treat Protocol 28/i);
   });
 
+  it('closes selected detail panels when switching views or clearing filters', () => {
+    renderControlled();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-source')[0]);
+    expect(screen.getByTestId('evidence-library-source-detail')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    expect(screen.getByTestId('evidence-library-source-detail')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    expect(
+      screen.queryByTestId('evidence-library-source-detail'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Health Canada: Approved alternatives/i,
+      }),
+    );
+    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
+    expect(screen.getByTestId('evidence-library-value-detail')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
+    expect(
+      screen.queryByTestId('evidence-library-value-detail'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/Evidence: approved source-backed/i),
+    ).not.toBeInTheDocument();
+  });
+
   it('searches and clears active filters', () => {
     renderControlled();
 
