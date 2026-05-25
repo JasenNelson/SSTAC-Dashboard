@@ -183,6 +183,31 @@ describe('EvidenceLibrary', () => {
     );
   });
 
+  it('uses audit strip counts as read-only database shortcuts', () => {
+    renderControlled();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Show Pending locators/ }),
+    );
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /pending source locator/i,
+    );
+    expect(
+      screen.getByText(/Evidence: pending source locator/i),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Show Blocked sources/ }));
+    expect(screen.getByTestId('evidence-library-sources')).toHaveTextContent(
+      /policy compilation/i,
+    );
+    expect(
+      screen.getByText(/Source role: policy compilation/i),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('references-values-tab')).not.toHaveTextContent(
+      /calculation-driving/i,
+    );
+  });
+
   it('filters to the human-health-food pathway', () => {
     const { handleChange } = renderControlled();
 

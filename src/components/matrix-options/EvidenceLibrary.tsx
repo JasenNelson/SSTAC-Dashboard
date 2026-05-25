@@ -359,8 +359,13 @@ function activeFilterLabels(filters: EvidenceLibraryFilters): string[] {
 
 function AuditStrip({
   audit,
+  onSelect,
 }: {
   audit: ReturnType<typeof buildEvidenceLibraryView>['audit'];
+  onSelect: (
+    viewMode: EvidenceLibraryViewMode,
+    request: EvidenceLibraryFilterRequest,
+  ) => void;
 }) {
   const sourceLeadCount =
     audit.sourceLeads.equationLeads +
@@ -368,24 +373,34 @@ function AuditStrip({
     audit.sourceLeads.canonicalSourceLeads +
     audit.sourceLeads.documentLeads;
   const blockedSourceCount =
-    audit.sources.referenceMining +
-    audit.sources.policyCompilations +
-    audit.sources.implementationScaffold;
-  const items = [
+    audit.sources.referenceMining + audit.sources.policyCompilations;
+  const items: Array<{
+    label: string;
+    value: number;
+    note: string;
+    viewMode: EvidenceLibraryViewMode;
+    request: EvidenceLibraryFilterRequest;
+  }> = [
     {
       label: 'Approved values',
       value: audit.values.approvedSourceBacked,
       note: `${audit.values.total} catalog values`,
+      viewMode: 'values' as const,
+      request: { evidenceSupportStatuses: ['approved_source_backed'] },
     },
     {
       label: 'Pending locators',
       value: audit.values.pendingSourceLocator,
       note: 'candidate sources attached',
+      viewMode: 'values' as const,
+      request: { evidenceSupportStatuses: ['pending_source_locator'] },
     },
     {
       label: 'Calculator scaffolds',
       value: audit.values.currentCalculatorScaffold,
       note: 'current UI values only',
+      viewMode: 'values' as const,
+      request: { evidenceSupportStatuses: ['current_calculator_scaffold'] },
     },
     {
       label: 'Current defaults',
@@ -393,6 +408,8 @@ function AuditStrip({
       note:
         `${audit.values.availableOptions} options; ` +
         `${audit.values.notDefaults} non-default`,
+      viewMode: 'values' as const,
+      request: { defaultStatuses: ['current_default'] },
     },
     {
       label: 'Equations pending',
@@ -400,21 +417,31 @@ function AuditStrip({
       note:
         `${audit.equations.pendingSourceLocator} locator gaps; ` +
         `${audit.equations.currentCalculatorScaffold} scaffolds`,
+      viewMode: 'equations' as const,
+      request: { qaStatuses: ['needs_review'] },
     },
     {
       label: 'Source-of-sources leads',
       value: sourceLeadCount,
       note: `${audit.sourceLeads.leadSets} lead sets`,
+      viewMode: 'source-leads' as const,
+      request: {},
     },
     {
       label: 'Zotero linked',
       value: audit.sources.zoteroLinked,
       note: `${audit.sources.zoteroPending} pending links`,
+      viewMode: 'sources' as const,
+      request: { zoteroStatuses: ['linked'] },
     },
     {
       label: 'Blocked sources',
       value: blockedSourceCount,
-      note: 'reference/policy/scaffold only',
+      note: 'reference/policy only',
+      viewMode: 'sources' as const,
+      request: {
+        sourceRoles: ['reference_mining', 'policy_compilation'],
+      },
     },
   ];
 
@@ -425,7 +452,13 @@ function AuditStrip({
       aria-label="Catalog provenance audit"
     >
       {items.map((item) => (
-        <div key={item.label} className="min-w-0">
+        <button
+          key={item.label}
+          type="button"
+          aria-label={`Show ${item.label}`}
+          onClick={() => onSelect(item.viewMode, item.request)}
+          className="min-w-0 rounded-md p-2 text-left transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:hover:bg-slate-900"
+        >
           <div className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">
             {item.label}
           </div>
@@ -435,7 +468,7 @@ function AuditStrip({
           <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
             {item.note}
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );
@@ -1059,10 +1092,23 @@ export default function EvidenceLibrary({
   };
   const applyQuickFilter = (filter: (typeof QUICK_REVIEW_FILTERS)[number]) => {
     setViewMode(filter.viewMode);
+    setSelectedValueId(null);
+    setSelectedSourceId(null);
     onFiltersChange(createEvidenceLibraryFilters(filter.request));
+  };
+  const applyAuditFilter = (
+    nextViewMode: EvidenceLibraryViewMode,
+    request: EvidenceLibraryFilterRequest,
+  ) => {
+    setViewMode(nextViewMode);
+    setSelectedValueId(null);
+    setSelectedSourceId(null);
+    onFiltersChange(createEvidenceLibraryFilters(request));
   };
   const openProtocol28Review = () => {
     setViewMode('by-parameter');
+    setSelectedValueId(null);
+    setSelectedSourceId(null);
     onFiltersChange(
       createEvidenceLibraryFilters({
         search: 'Protocol 28',
@@ -1179,7 +1225,7 @@ export default function EvidenceLibrary({
         </div>
       </header>
 
-      <AuditStrip audit={library.audit} />
+      <AuditStrip audit={library.audit} onSelect={applyAuditFilter} />
 
       <Protocol28ReviewPanel
         summary={protocol28Summary}
