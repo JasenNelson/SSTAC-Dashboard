@@ -601,6 +601,12 @@ describe('matrix options provenance catalog', () => {
       'protocol_28_v3_0_policy_compilation',
     );
     expect(protocol28?.source_crystallization_date).toBe('2015-11-30');
+    expect(protocol28?.zotero_status).toBe('linked');
+    expect(protocol28?.zotero_item_key).toBe('LPZUVAC2');
+    expect(protocol28?.zotero_attachment_keys).toContain('HYNUIDR5');
+    expect(protocol28?.external_file_hint).toMatch(
+      /do not copy the PDF into the repo/i,
+    );
     expect(protocol28?.notes).toMatch(/source-mining/i);
     expect(protocol28?.conflict_rule).toMatch(/Do not treat Protocol 28/i);
   });
