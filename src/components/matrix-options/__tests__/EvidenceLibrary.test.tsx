@@ -46,6 +46,12 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-quick-filters')).toHaveTextContent(
       /Derived preview only/,
     );
+    expect(screen.getByTestId('protocol28-review-panel')).toHaveTextContent(
+      /Policy compilation leads stay blocked from defaults/,
+    );
+    expect(screen.getByTestId('protocol28-review-panel')).toHaveTextContent(
+      /Calculation defaults\s*0/,
+    );
     expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
       /Needs original-source verification/,
     );
@@ -125,6 +131,11 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
       /Needs original-source verification/,
     );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /^Review Protocol 28 queue$/ }),
+    );
+    expect(screen.getByText(/Policy alignment: Protocol 28/i)).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole('button', {

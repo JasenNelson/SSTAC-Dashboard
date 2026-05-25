@@ -73,7 +73,15 @@ export function normalizeEndpointFilters(values: unknown): string[] {
     new Set(
       values
         .filter((value): value is string => typeof value === 'string')
-        .map((value) => value.trim())
+        .map((value) =>
+          value
+            .trim()
+            .replace(/_/g, ' ')
+            .replace(/[^a-zA-Z0-9+\-/ ]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 60),
+        )
         .filter(Boolean)
         .slice(0, 12),
     ),
@@ -106,6 +114,24 @@ export function buildEcotoxFetchRequest(value: unknown): EcotoxFetchRequest {
     endpointFilters: normalizeEndpointFilters(body.endpointFilters),
     maxRows: coerceMaxRows(body.maxRows),
   };
+}
+
+function mediaTypeFilterExpression(
+  mediaFilter: SsdMediaFilter | undefined,
+): string | null {
+  if (mediaFilter === 'water') {
+    return 'media_type.eq.FW,media_type.eq.MW,media_type.ilike.%water%';
+  }
+  if (mediaFilter === 'sediment') {
+    return 'media_type.eq.SD,media_type.ilike.%sed%,media_type.ilike.%solid%';
+  }
+  return null;
+}
+
+function endpointFilterExpression(endpointFilters: string[]): string | null {
+  const filters = normalizeEndpointFilters(endpointFilters);
+  if (filters.length === 0) return null;
+  return filters.map((filter) => `endpoint.ilike.%${filter}%`).join(',');
 }
 
 export async function searchEcotoxChemicals(
@@ -165,8 +191,20 @@ export async function fetchEcotoxRows(
       .in('chemical_name', chemicalNames)
       .range(start, end);
 
-    if (request.medium) {
+    const mediaExpression = mediaTypeFilterExpression(request.mediaFilter);
+    if (request.mediaFilter === 'water' && request.medium) {
       query = query.eq('media_type', mediumToCode(request.medium));
+    } else if (mediaExpression) {
+      query = query.or(mediaExpression);
+    } else if (request.medium) {
+      query = query.eq('media_type', mediumToCode(request.medium));
+    }
+
+    const endpointExpression = endpointFilterExpression(
+      request.endpointFilters ?? [],
+    );
+    if (endpointExpression) {
+      query = query.or(endpointExpression);
     }
 
     const response = await query;

@@ -8,6 +8,7 @@ import {
 import {
   buildCalculatorEvidenceRequest,
   buildEvidenceLibraryView,
+  buildProtocol28ReviewSummary,
   createEvidenceLibraryFilters,
   getParameterValueReviewDisposition,
   getSourceLeadReviewDisposition,
@@ -247,6 +248,22 @@ describe('matrix options evidence library helpers', () => {
       label: 'Needs original-source verification',
       blocksCalculatorDefault: true,
     });
+  });
+
+  it('summarizes Protocol 28 as a blocked review queue', () => {
+    const summary = buildProtocol28ReviewSummary();
+
+    expect(summary).toMatchObject({
+      candidateValueCount: 6,
+      blockedCandidateCount: 6,
+      currentDefaultCount: 0,
+      sourceLeadSetCount: 1,
+      canDriveCalculatorDefaults: false,
+    });
+    expect(summary.nextActions.length).toBeGreaterThan(0);
+    expect(summary.nextActions.join(' ')).toMatch(
+      /original government or regulatory source/i,
+    );
   });
 
   it('keeps mixed calculator value and equation sources visible in drill-ins', () => {

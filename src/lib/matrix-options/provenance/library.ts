@@ -95,6 +95,15 @@ export interface EvidenceLibrarySourceLeadSummary {
   nextActions: string[];
 }
 
+export interface EvidenceLibraryProtocol28ReviewSummary {
+  candidateValueCount: number;
+  blockedCandidateCount: number;
+  currentDefaultCount: number;
+  sourceLeadSetCount: number;
+  nextActions: string[];
+  canDriveCalculatorDefaults: false;
+}
+
 export interface EvidenceLibraryValueGroup {
   groupId: string;
   pathway: ProvenancePathway;
@@ -167,6 +176,10 @@ export interface EvidenceReviewDisposition {
   blocksCalculatorDefault: boolean;
   tone: 'approved' | 'blocked' | 'derived' | 'scaffold';
 }
+
+export const PROTOCOL28_POLICY_ALIGNMENT =
+  'protocol_28_v3_0_policy_compilation';
+const PROTOCOL28_SOURCE_ID = 'src-bc-protocol-28-v3-0-2024';
 
 const EMPTY_FILTERS: EvidenceLibraryFilters = {
   search: '',
@@ -1072,6 +1085,51 @@ function sourceLeadSummary(raw: unknown): EvidenceLibrarySourceLeadSummary {
 
 function buildSourceLeadSummaries(): EvidenceLibrarySourceLeadSummary[] {
   return SOURCE_LEAD_SETS.map(sourceLeadSummary);
+}
+
+function isProtocol28ValueRecord(record: ParameterValueRecord): boolean {
+  return (
+    record.bc_protocol_alignment === PROTOCOL28_POLICY_ALIGNMENT ||
+    record.source_ids.includes(PROTOCOL28_SOURCE_ID) ||
+    record.compilation_source_ids?.includes(PROTOCOL28_SOURCE_ID) === true
+  );
+}
+
+function isProtocol28SourceLead(lead: EvidenceLibrarySourceLeadSummary): boolean {
+  return (
+    lead.primarySourceId === PROTOCOL28_SOURCE_ID ||
+    lead.leadSetId.toLowerCase().includes('protocol28') ||
+    lead.label.toLowerCase().includes('protocol 28')
+  );
+}
+
+export function buildProtocol28ReviewSummary(): EvidenceLibraryProtocol28ReviewSummary {
+  const protocol28Records = PARAMETER_VALUE_RECORDS.filter(
+    isProtocol28ValueRecord,
+  );
+  const protocol28Leads = buildSourceLeadSummaries().filter(
+    isProtocol28SourceLead,
+  );
+  const blockedCandidateCount = protocol28Records.filter((record) =>
+    getParameterValueReviewDisposition(
+      record,
+      compact(record.source_ids.map((sourceId) => getSourceRecord(sourceId))),
+    ).blocksCalculatorDefault,
+  ).length;
+  const nextActions = unique(
+    protocol28Leads.flatMap((lead) => lead.nextActions),
+  ).slice(0, 4);
+
+  return {
+    candidateValueCount: protocol28Records.length,
+    blockedCandidateCount,
+    currentDefaultCount: protocol28Records.filter(
+      (record) => record.default_status === 'current_default',
+    ).length,
+    sourceLeadSetCount: protocol28Leads.length,
+    nextActions,
+    canDriveCalculatorDefaults: false,
+  };
 }
 
 function sourceLeadMatchesFilters(
