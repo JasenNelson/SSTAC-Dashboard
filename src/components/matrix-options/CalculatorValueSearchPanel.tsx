@@ -28,6 +28,7 @@ import type {
   ProvenancePathway,
 } from '@/lib/matrix-options/provenance/types';
 import {
+  getRegulatoryFrame,
   regulatoryFrameEvidenceFilter,
   type RegulatoryFrameId,
 } from '@/lib/matrix-options/regulatoryFrames';
@@ -378,6 +379,10 @@ export default function CalculatorValueSearchPanel({
     () => regulatoryFrameEvidenceFilter(regulatoryFrameId),
     [regulatoryFrameId],
   );
+  const regulatoryFrame = useMemo(
+    () => getRegulatoryFrame(regulatoryFrameId),
+    [regulatoryFrameId],
+  );
   const library = useMemo(
     () =>
       buildEvidenceLibraryView(
@@ -489,7 +494,13 @@ export default function CalculatorValueSearchPanel({
           data-testid="calculator-value-search-guidance"
         >
           Choose the substance of interest in the main calculator. Then narrow
-          these values by type or source.
+          these values by type or source. The selected frame filters lookup to{' '}
+          {regulatoryFrame.eligibleCatalogJurisdictions
+            .map(humanizeCatalogLabel)
+            .join(', ')}{' '}
+          records;
+          calculator defaults do not change until a source-backed default is
+          approved.
         </p>
       </div>
 

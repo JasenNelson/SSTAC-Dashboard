@@ -232,6 +232,15 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(window.localStorage.getItem(LS_JURISDICTION)).toBe(
       'ccme-sediment-quality',
     );
+    expect(
+      screen.getByTestId('regulatory-frame-notice-eco-direct-eqp'),
+    ).toHaveTextContent(/CCME SQG/);
+    expect(
+      screen.getByTestId('regulatory-frame-effect-eco-direct-eqp'),
+    ).toHaveTextContent(/does not change calculator input defaults/i);
+    expect(screen.getByTestId('calculator-value-search-guidance')).toHaveTextContent(
+      /filters lookup to Canada federal, general records/i,
+    );
   });
 
   it('persists activeCategory + substanceKey on change', () => {

@@ -21,6 +21,7 @@ interface QueryCall {
   in?: { column: string; values: string[] };
   range?: { start: number; end: number };
   eq?: { column: string; value: string };
+  or?: string[];
 }
 
 function createSearchClient() {
@@ -88,6 +89,10 @@ function createFetchClient(pages: RawEcotoxRecord[][]) {
             call.eq = { column, value };
             return this;
           },
+          or(expression: string) {
+            call.or = [...(call.or ?? []), expression];
+            return this;
+          },
           then(
             resolve: (value: { data: RawEcotoxRecord[]; error: null }) => unknown,
             reject?: (reason: unknown) => unknown,
@@ -116,14 +121,14 @@ describe('SSD ECOTOX Supabase query shaping', () => {
         chemicalNames: ['Copper', 'Copper', 'Zinc'],
         medium: 'freshwater',
         mediaFilter: 'water',
-        endpointFilters: ['Mortality', 'Mortality'],
+        endpointFilters: ['Mortality', 'Mortality', 'Growth_Response%'],
         maxRows: 999999,
       }),
     ).toEqual({
       chemicalNames: ['Copper', 'Zinc'],
       medium: 'freshwater',
       mediaFilter: 'water',
-      endpointFilters: ['Mortality'],
+      endpointFilters: ['Mortality', 'Growth Response'],
       maxRows: ECOTOX_MAX_FETCH_ROWS,
     });
   });
@@ -190,5 +195,38 @@ describe('SSD ECOTOX Supabase query shaping', () => {
       start: ECOTOX_PAGE_SIZE,
       end: ECOTOX_PAGE_SIZE + 4,
     });
+  });
+
+  it('applies media and endpoint filters server-side for mirror fetches', async () => {
+    const { client, calls } = createFetchClient([
+      [
+        {
+          chemical_name: 'Copper',
+          species_scientific_name: 'Sediment species',
+          conc1_mean: 0.01,
+          species_group: 'Invertebrate',
+          media_type: 'sediment',
+          endpoint: 'Mortality',
+        },
+      ],
+    ]);
+
+    await fetchEcotoxRows(client as never, {
+      chemicalNames: ['Copper'],
+      mediaFilter: 'sediment',
+      endpointFilters: ['Mortality', 'Growth_Response%'],
+      maxRows: 25,
+    });
+
+    expect(calls[0]).toMatchObject({
+      table: ECOTOX_TABLE_NAME,
+      select: ECOTOX_REQUIRED_COLUMNS.join(','),
+      in: { column: 'chemical_name', values: ['Copper'] },
+      range: { start: 0, end: 24 },
+    });
+    expect(calls[0].or).toEqual([
+      'media_type.eq.SD,media_type.ilike.%sed%,media_type.ilike.%solid%',
+      'endpoint.ilike.%Mortality%,endpoint.ilike.%Growth Response%',
+    ]);
   });
 });

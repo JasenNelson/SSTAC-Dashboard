@@ -71,6 +71,14 @@ export default function RegulatoryFrameNotice({
         {' '}
         {frame.safeUseNote}
       </p>
+      <p
+        className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+        data-testid={`regulatory-frame-effect-${pathway}`}
+      >
+        Current effect: frame selection changes value lookup filters, source
+        hierarchy, and pathway warnings. It does not change calculator input
+        defaults until a source-backed value is approved as the default.
+      </p>
     </section>
   );
 }
