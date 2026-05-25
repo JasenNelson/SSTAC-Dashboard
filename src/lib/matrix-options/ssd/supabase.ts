@@ -22,15 +22,115 @@ export const ECOTOX_REQUIRED_COLUMNS = [
 export const ECOTOX_SEARCH_LIMIT = 50;
 export const ECOTOX_PAGE_SIZE = 1000;
 export const ECOTOX_MAX_FETCH_ROWS = 5000;
+export const ECOTOX_SUPABASE_URL_ENV = 'ECOTOX_SUPABASE_URL';
+export const ECOTOX_SUPABASE_ANON_KEY_ENV = 'ECOTOX_SUPABASE_ANON_KEY';
+
+type EcotoxEnv = Record<string, string | undefined>;
+type EcotoxConfigError =
+  | 'ecotox_supabase_not_configured'
+  | 'ecotox_supabase_invalid_config';
 
 export interface EcotoxClientConfig {
   url: string;
   anonKey: string;
 }
 
-export function getEcotoxClientConfig(): EcotoxClientConfig | null {
-  const url = process.env.ECOTOX_SUPABASE_URL;
-  const anonKey = process.env.ECOTOX_SUPABASE_ANON_KEY;
+export interface EcotoxConfigStatus {
+  configured: boolean;
+  error: EcotoxConfigError | null;
+  missing: string[];
+  invalid: string[];
+}
+
+export interface EcotoxConfigErrorPayload {
+  error: EcotoxConfigError;
+  configured: false;
+  missing: string[];
+  invalid: string[];
+}
+
+export interface EcotoxMirrorHealth {
+  configured: true;
+  status: 'ok';
+  table: string;
+  requiredColumns: string[];
+  rowCount: number | null;
+  rowCountAvailable: boolean;
+  readable: true;
+  limits: {
+    search: number;
+    pageSize: number;
+    maxFetchRows: number;
+  };
+}
+
+function normalizeSupabaseUrl(value: string): string | null {
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== 'https:') {
+      const isLocalHttp =
+        url.protocol === 'http:' &&
+        ['localhost', '127.0.0.1', '::1', '[::1]'].includes(url.hostname);
+      if (!isLocalHttp) return null;
+    }
+    return url.toString().replace(/\/$/, '');
+  } catch {
+    return null;
+  }
+}
+
+export function getEcotoxConfigStatus(
+  env: EcotoxEnv = process.env,
+): EcotoxConfigStatus {
+  const rawUrl = env[ECOTOX_SUPABASE_URL_ENV]?.trim() ?? '';
+  const anonKey = env[ECOTOX_SUPABASE_ANON_KEY_ENV]?.trim() ?? '';
+  const missing = [
+    rawUrl ? null : ECOTOX_SUPABASE_URL_ENV,
+    anonKey ? null : ECOTOX_SUPABASE_ANON_KEY_ENV,
+  ].filter((value): value is string => value !== null);
+
+  if (missing.length > 0) {
+    return {
+      configured: false,
+      error: 'ecotox_supabase_not_configured',
+      missing,
+      invalid: [],
+    };
+  }
+
+  const invalid = normalizeSupabaseUrl(rawUrl)
+    ? []
+    : [ECOTOX_SUPABASE_URL_ENV];
+  if (invalid.length > 0) {
+    return {
+      configured: false,
+      error: 'ecotox_supabase_invalid_config',
+      missing: [],
+      invalid,
+    };
+  }
+
+  return { configured: true, error: null, missing: [], invalid: [] };
+}
+
+export function getEcotoxConfigErrorPayload(
+  status: EcotoxConfigStatus,
+): EcotoxConfigErrorPayload {
+  return {
+    error: status.error ?? 'ecotox_supabase_invalid_config',
+    configured: false,
+    missing: status.missing,
+    invalid: status.invalid,
+  };
+}
+
+export function getEcotoxClientConfig(
+  env: EcotoxEnv = process.env,
+): EcotoxClientConfig | null {
+  const status = getEcotoxConfigStatus(env);
+  if (!status.configured) return null;
+  const url = normalizeSupabaseUrl(env[ECOTOX_SUPABASE_URL_ENV] ?? '');
+  const anonKey = env[ECOTOX_SUPABASE_ANON_KEY_ENV]?.trim();
   if (!url || !anonKey) return null;
   return { url, anonKey };
 }
@@ -114,6 +214,38 @@ export function buildEcotoxFetchRequest(value: unknown): EcotoxFetchRequest {
     endpointFilters: normalizeEndpointFilters(body.endpointFilters),
     maxRows: coerceMaxRows(body.maxRows),
   };
+}
+
+export function buildEcotoxMirrorHealth(
+  rowCount: number | null,
+): EcotoxMirrorHealth {
+  return {
+    configured: true,
+    status: 'ok',
+    table: ECOTOX_TABLE_NAME,
+    requiredColumns: [...ECOTOX_REQUIRED_COLUMNS],
+    rowCount,
+    rowCountAvailable: typeof rowCount === 'number',
+    readable: true,
+    limits: {
+      search: ECOTOX_SEARCH_LIMIT,
+      pageSize: ECOTOX_PAGE_SIZE,
+      maxFetchRows: ECOTOX_MAX_FETCH_ROWS,
+    },
+  };
+}
+
+export async function checkEcotoxMirrorHealth(
+  client: SupabaseClient,
+): Promise<EcotoxMirrorHealth> {
+  const response = await client
+    .from(ECOTOX_TABLE_NAME)
+    .select(ECOTOX_REQUIRED_COLUMNS.join(','), {
+      count: 'exact',
+      head: true,
+    });
+  if (response.error) throw response.error;
+  return buildEcotoxMirrorHealth(response.count ?? null);
 }
 
 function mediaTypeFilterExpression(

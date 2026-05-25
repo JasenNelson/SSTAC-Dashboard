@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import {
   createEcotoxClient,
+  getEcotoxConfigErrorPayload,
+  getEcotoxConfigStatus,
   getEcotoxClientConfig,
   normalizeSearchTerm,
   searchEcotoxChemicals,
@@ -17,10 +19,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ chemicals: [] });
   }
 
+  const configStatus = getEcotoxConfigStatus();
   const config = getEcotoxClientConfig();
-  if (!config) {
+  if (!configStatus.configured || !config) {
     return NextResponse.json(
-      { error: 'ecotox_supabase_not_configured', chemicals: [] },
+      { ...getEcotoxConfigErrorPayload(configStatus), chemicals: [] },
       { status: 503 },
     );
   }

@@ -6,7 +6,11 @@ import {
   ECOTOX_SEARCH_LIMIT,
   ECOTOX_TABLE_NAME,
   buildEcotoxFetchRequest,
+  checkEcotoxMirrorHealth,
   fetchEcotoxRows,
+  getEcotoxClientConfig,
+  getEcotoxConfigErrorPayload,
+  getEcotoxConfigStatus,
   normalizeChemicalNames,
   normalizeSearchTerm,
   searchEcotoxChemicals,
@@ -16,6 +20,7 @@ import type { RawEcotoxRecord } from '../types';
 interface QueryCall {
   table: string;
   select?: string;
+  selectOptions?: { count?: string; head?: boolean };
   ilike?: { column: string; pattern: string };
   limit?: number;
   in?: { column: string; values: string[] };
@@ -55,6 +60,29 @@ function createSearchClient() {
           limit(limit: number) {
             call.limit = limit;
             return Promise.resolve(responses.shift());
+          },
+        };
+      },
+    },
+  };
+}
+
+function createHealthClient(count: number | null, error: unknown = null) {
+  const calls: QueryCall[] = [];
+  return {
+    calls,
+    client: {
+      from(table: string) {
+        const call: QueryCall = { table };
+        calls.push(call);
+        return {
+          select(
+            columns: string,
+            options?: { count?: string; head?: boolean },
+          ) {
+            call.select = columns;
+            call.selectOptions = options;
+            return Promise.resolve({ data: null, count, error });
           },
         };
       },
@@ -110,6 +138,105 @@ function createFetchClient(pages: RawEcotoxRecord[][]) {
 }
 
 describe('SSD ECOTOX Supabase query shaping', () => {
+  it('reports safe config status without exposing env values', () => {
+    const missingStatus = getEcotoxConfigStatus({});
+    expect(missingStatus).toEqual({
+      configured: false,
+      error: 'ecotox_supabase_not_configured',
+      missing: ['ECOTOX_SUPABASE_URL', 'ECOTOX_SUPABASE_ANON_KEY'],
+      invalid: [],
+    });
+    expect(getEcotoxConfigErrorPayload(missingStatus)).toEqual({
+      error: 'ecotox_supabase_not_configured',
+      configured: false,
+      missing: ['ECOTOX_SUPABASE_URL', 'ECOTOX_SUPABASE_ANON_KEY'],
+      invalid: [],
+    });
+
+    const invalidStatus = getEcotoxConfigStatus({
+      ECOTOX_SUPABASE_URL: 'not-a-url',
+      ECOTOX_SUPABASE_ANON_KEY: 'private-anon-key',
+    });
+    const payload = getEcotoxConfigErrorPayload(invalidStatus);
+    expect(payload).toEqual({
+      error: 'ecotox_supabase_invalid_config',
+      configured: false,
+      missing: [],
+      invalid: ['ECOTOX_SUPABASE_URL'],
+    });
+    expect(JSON.stringify(payload)).not.toContain('private-anon-key');
+
+    expect(
+      getEcotoxConfigStatus({
+        ECOTOX_SUPABASE_URL: 'http://project.supabase.co',
+        ECOTOX_SUPABASE_ANON_KEY: 'anon-key',
+      }),
+    ).toEqual({
+      configured: false,
+      error: 'ecotox_supabase_invalid_config',
+      missing: [],
+      invalid: ['ECOTOX_SUPABASE_URL'],
+    });
+
+    expect(
+      getEcotoxClientConfig({
+        ECOTOX_SUPABASE_URL: 'https://project.supabase.co/',
+        ECOTOX_SUPABASE_ANON_KEY: 'anon-key',
+      }),
+    ).toEqual({
+      url: 'https://project.supabase.co',
+      anonKey: 'anon-key',
+    });
+
+    expect(
+      getEcotoxClientConfig({
+        ECOTOX_SUPABASE_URL: 'http://localhost:54321',
+        ECOTOX_SUPABASE_ANON_KEY: 'anon-key',
+      }),
+    ).toEqual({
+      url: 'http://localhost:54321',
+      anonKey: 'anon-key',
+    });
+  });
+
+  it('checks mirror health with a head count query only', async () => {
+    const { client, calls } = createHealthClient(582125);
+
+    const health = await checkEcotoxMirrorHealth(client as never);
+
+    expect(health).toEqual({
+      configured: true,
+      status: 'ok',
+      table: ECOTOX_TABLE_NAME,
+      requiredColumns: [...ECOTOX_REQUIRED_COLUMNS],
+      rowCount: 582125,
+      rowCountAvailable: true,
+      readable: true,
+      limits: {
+        search: ECOTOX_SEARCH_LIMIT,
+        pageSize: ECOTOX_PAGE_SIZE,
+        maxFetchRows: ECOTOX_MAX_FETCH_ROWS,
+      },
+    });
+    expect(calls).toEqual([
+      {
+        table: ECOTOX_TABLE_NAME,
+        select: ECOTOX_REQUIRED_COLUMNS.join(','),
+        selectOptions: { count: 'exact', head: true },
+      },
+    ]);
+  });
+
+  it('surfaces mirror health read errors to the API layer', async () => {
+    const { client } = createHealthClient(null, {
+      message: 'permission denied',
+    });
+
+    await expect(checkEcotoxMirrorHealth(client as never)).rejects.toEqual({
+      message: 'permission denied',
+    });
+  });
+
   it('normalizes user-controlled search and fetch request inputs', () => {
     expect(normalizeSearchTerm('  Copper_%  ')).toBe('Copper');
     expect(normalizeChemicalNames(['Copper', ' Copper ', '', 123, 'Zinc'])).toEqual([
@@ -195,6 +322,31 @@ describe('SSD ECOTOX Supabase query shaping', () => {
       start: ECOTOX_PAGE_SIZE,
       end: ECOTOX_PAGE_SIZE + 4,
     });
+  });
+
+  it('enforces max rows and reports truncation when a capped page is full', async () => {
+    const { client, calls } = createFetchClient([
+      [
+        {
+          chemical_name: 'Copper',
+          species_scientific_name: 'Species 1',
+          conc1_mean: 0.01,
+          species_group: 'Fish',
+          media_type: 'FW',
+          endpoint: 'Mortality',
+        },
+      ],
+    ]);
+
+    const result = await fetchEcotoxRows(client as never, {
+      chemicalNames: ['Copper'],
+      maxRows: 1,
+    });
+
+    expect(result.rows).toHaveLength(1);
+    expect(result.truncated).toBe(true);
+    expect(calls).toHaveLength(1);
+    expect(calls[0].range).toEqual({ start: 0, end: 0 });
   });
 
   it('applies media and endpoint filters server-side for mirror fetches', async () => {
