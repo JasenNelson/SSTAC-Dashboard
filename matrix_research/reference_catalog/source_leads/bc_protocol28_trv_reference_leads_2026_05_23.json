@@ -57,7 +57,27 @@
         "human-health-food"
       ],
       "promotion_status": "needs_review",
-      "canonical_source_status": "needs_direct_source_check"
+      "canonical_source_status": "needs_direct_source_check",
+      "direct_source_review": {
+        "result": "DISCREPANCY_RECORDED_NO_PROMOTION",
+        "packet": "matrix_research/reference_catalog/protocol28_bap_direct_source_verification_packet_2026_05_25.md",
+        "reviewed_at": "2026-05-25",
+        "compared_sources": [
+          "src-us-epa-iris-chemical-details-live",
+          "src-health-canada-trv-v4-2025"
+        ],
+        "value_ids": [
+          "pv-p28-bap-hh-direct-slope",
+          "pv-p28-bap-hh-food-slope"
+        ],
+        "required_catalog_posture": {
+          "default_status": "available_option",
+          "evidence_support_status": "pending_source_locator",
+          "qa_status": "needs_review",
+          "canonical_source_status": "needs_direct_source_check"
+        },
+        "note": "Current IRIS and Health Canada surfaces do not verify the Protocol 28 Appendix 8A benzo(a)pyrene SFO value; keep Protocol 28 BaP leads blocked from defaults pending explicit source-selection, ADAF, pathway, and approval decisions."
+      }
     },
     {
       "lead_id": "p28-appendix-8a-arsenic-rfd-sfo",

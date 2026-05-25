@@ -702,6 +702,81 @@ describe('matrix options provenance catalog', () => {
     }
   });
 
+  it('records the BaP direct-source discrepancy without promoting either pathway value', () => {
+    const bapLead = BC_PROTOCOL28_TRV_SOURCE_LEADS.parameter_value_leads.find(
+      (lead) => lead.lead_id === 'p28-appendix-8a-bap-sfo',
+    );
+
+    expect(bapLead?.direct_source_review?.result).toBe(
+      'DISCREPANCY_RECORDED_NO_PROMOTION',
+    );
+    expect(bapLead?.direct_source_review?.packet).toBe(
+      'matrix_research/reference_catalog/protocol28_bap_direct_source_verification_packet_2026_05_25.md',
+    );
+    expect(bapLead?.direct_source_review?.compared_sources).toEqual([
+      'src-us-epa-iris-chemical-details-live',
+      'src-health-canada-trv-v4-2025',
+    ]);
+    expect(bapLead?.direct_source_review?.value_ids).toEqual([
+      'pv-p28-bap-hh-direct-slope',
+      'pv-p28-bap-hh-food-slope',
+    ]);
+    expect(bapLead?.direct_source_review?.required_catalog_posture).toEqual({
+      default_status: 'available_option',
+      evidence_support_status: 'pending_source_locator',
+      qa_status: 'needs_review',
+      canonical_source_status: 'needs_direct_source_check',
+    });
+
+    for (const valueId of bapLead?.direct_source_review?.value_ids ?? []) {
+      const record = PARAMETER_VALUE_RECORDS.find(
+        (candidate) => candidate.parameter_value_id === valueId,
+      );
+      expect(record?.default_status, valueId).toBe('available_option');
+      expect(record?.evidence_support_status, valueId).toBe(
+        'pending_source_locator',
+      );
+      expect(record?.qa_status, valueId).toBe('needs_review');
+      expect(record?.canonical_source_status, valueId).toBe(
+        'needs_direct_source_check',
+      );
+      expect(record?.canonical_source_ids, valueId).toEqual([]);
+      expect(record?.source_relationships, valueId).toEqual([
+        {
+          source_id: 'src-bc-protocol-28-v3-0-2024',
+          role: 'policy_compilation',
+          note: expect.stringMatching(/original source pending direct check/i),
+        },
+      ]);
+    }
+
+    const protocol28Bap = PARAMETER_VALUE_RECORDS.find(
+      (candidate) =>
+        candidate.parameter_value_id === 'pv-p28-bap-hh-direct-slope',
+    );
+    const irisBap = PARAMETER_VALUE_RECORDS.find(
+      (candidate) =>
+        candidate.parameter_value_id === 'pv-iris-bap-hh-direct-sf',
+    );
+    const healthCanadaBap = PARAMETER_VALUE_RECORDS.find(
+      (candidate) =>
+        candidate.parameter_value_id === 'pv-hc-bap-hh-direct-sf',
+    );
+
+    expect(protocol28Bap?.value).not.toBe(irisBap?.value);
+    expect(protocol28Bap?.value).not.toBe(healthCanadaBap?.value);
+    expect(irisBap?.evidence_support_status).toBe('approved_source_backed');
+    expect(irisBap?.qa_status).toBe('approved');
+    expect(irisBap?.canonical_source_status).toBe('direct_source_verified');
+    expect(healthCanadaBap?.evidence_support_status).toBe(
+      'approved_source_backed',
+    );
+    expect(healthCanadaBap?.qa_status).toBe('approved');
+    expect(healthCanadaBap?.canonical_source_status).toBe(
+      'direct_source_verified',
+    );
+  });
+
   it('records the arsenic direct-source discrepancy without promoting values', () => {
     const arsenicLead = BC_PROTOCOL28_TRV_SOURCE_LEADS.parameter_value_leads.find(
       (lead) => lead.lead_id === 'p28-appendix-8a-arsenic-rfd-sfo',
