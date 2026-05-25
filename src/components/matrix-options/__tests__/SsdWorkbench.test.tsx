@@ -21,7 +21,7 @@ vi.mock('recharts', () => ({
 import SsdWorkbench from '../SsdWorkbench';
 
 describe('SsdWorkbench', () => {
-  it('renders the fixture-backed SSD workbench and derived candidate receipt', () => {
+  it('renders the validation-backed SSD workbench and derived candidate receipt', () => {
     render(<SsdWorkbench />);
 
     expect(screen.getByTestId('ssd-workbench')).toBeInTheDocument();
@@ -31,12 +31,14 @@ describe('SsdWorkbench', () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Derived candidate only/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Run SSD/i })).toBeInTheDocument();
+    expect(screen.getByText(/Results match the current staged settings/i)).toBeInTheDocument();
     expect(screen.getByText(/582,125 rows/i)).toBeInTheDocument();
     expect(screen.getByText(/Upload CSV or JSON/i)).toBeInTheDocument();
     expect(
-      screen.getByRole('combobox', { name: /Fixture dataset/i }),
+      screen.getByRole('combobox', { name: /Validation dataset/i }),
     ).toHaveValue('copper_preview');
-    expect(screen.getByText(/Preview dataset/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Preview dataset/i).length).toBeGreaterThan(0);
     expect(screen.getByTestId('ssd-validation-panel')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Water$/ })).toHaveAttribute(
       'aria-pressed',
@@ -83,11 +85,11 @@ describe('SsdWorkbench', () => {
     expect(screen.getByText(/needs review/i)).toBeInTheDocument();
   });
 
-  it('switches fixture mode to the CCME validation datasets', () => {
+  it('switches validation mode to the CCME validation datasets', () => {
     render(<SsdWorkbench />);
 
     fireEvent.change(
-      screen.getByRole('combobox', { name: /Fixture dataset/i }),
+      screen.getByRole('combobox', { name: /Validation dataset/i }),
       {
         target: { value: 'ccme_boron_validation' },
       },
@@ -96,28 +98,36 @@ describe('SsdWorkbench', () => {
     expect(screen.getByDisplayValue('Boron')).toBeInTheDocument();
     expect(screen.getAllByText(/Validation dataset/i).length).toBeGreaterThan(0);
     expect(
-      screen.getAllByText(/ssddata CCME boron benchmark dataset/i).length,
+      screen.getAllByText(/CCME boron validation dataset/i).length,
     ).toBeGreaterThan(0);
-    expect(screen.getAllByText(/^28$/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/28 source rows/i)).toBeInTheDocument();
     fireEvent.change(screen.getByRole('combobox', { name: /Analysis mode/i }), {
       target: { value: 'model_averaging' },
     });
+    expect(screen.getByText(/Settings are staged/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Run SSD/i }));
     expect(screen.getByText(/Reference checks/i)).toBeInTheDocument();
     expect(screen.getByText(/BCANZ model-average HC5/i)).toBeInTheDocument();
     expect(screen.getByText(/Within tolerance/i)).toBeInTheDocument();
 
     fireEvent.change(
-      screen.getByRole('combobox', { name: /Fixture dataset/i }),
+      screen.getByRole('combobox', { name: /Validation dataset/i }),
       {
         target: { value: 'ccme_endosulfan_validation' },
       },
     );
 
     expect(screen.getByDisplayValue('Endosulfan')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Run SSD/i }));
     expect(
-      screen.getAllByText(/ssddata CCME endosulfan benchmark dataset/i).length,
+      screen.getAllByText(/CCME endosulfan validation dataset/i).length,
     ).toBeGreaterThan(0);
-    expect(screen.getAllByText(/^12$/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Published model-average HC5/i)).toBeInTheDocument();
+    expect(screen.getByText(/Within tolerance/i)).toBeInTheDocument();
+    expect(screen.getByText(/0.00767326 ng\/L/i)).toBeInTheDocument();
+    expect(screen.queryByText(/ssddata::/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ssd_fits/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/12 source rows/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/ng\/L/i).length).toBeGreaterThan(0);
   });
 
@@ -125,6 +135,7 @@ describe('SsdWorkbench', () => {
     render(<SsdWorkbench />);
 
     fireEvent.click(screen.getByRole('button', { name: /^Marine$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Run SSD/i }));
 
     expect(screen.getByText(/^Needs data$/)).toBeInTheDocument();
     expect(
@@ -139,6 +150,12 @@ describe('SsdWorkbench', () => {
     fireEvent.change(screen.getByRole('combobox', { name: /Bootstrap CI/i }), {
       target: { value: '25' },
     });
+
+    expect(screen.getByText(/Settings are staged/i)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/deterministic TypeScript percentile/i),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Run SSD/i }));
 
     expect(screen.getAllByText(/Bootstrap CI/i).length).toBeGreaterThan(1);
     expect(screen.getByText(/deterministic TypeScript percentile/i)).toBeInTheDocument();
@@ -162,6 +179,7 @@ describe('SsdWorkbench', () => {
     render(<SsdWorkbench />);
 
     fireEvent.click(screen.getByRole('button', { name: /^Growth$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Run SSD/i }));
 
     expect(screen.getAllByText(/^4$/).length).toBeGreaterThan(0);
     const exclusions = screen.getByTestId('ssd-exclusions-table');
@@ -196,6 +214,7 @@ describe('SsdWorkbench', () => {
       'true',
     );
     expect(screen.getByDisplayValue('Zinc')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Run SSD/i }));
     expect(screen.getAllByText(/^5$/).length).toBeGreaterThan(0);
   });
 });

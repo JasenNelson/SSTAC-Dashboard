@@ -18,6 +18,14 @@ export interface SsdFixtureValidationReference {
   sourceUrl: string;
 }
 
+export interface SsdFixtureDatasetReference {
+  label: string;
+  expectedRows: number;
+  expectedUnit: string;
+  sourceLabel: string;
+  sourceUrl: string;
+}
+
 interface ReferenceRow {
   species: string;
   concentration: number;
@@ -36,6 +44,7 @@ export interface SsdFixtureDataset {
   sourceAccessedAt: string;
   validationNote: string;
   validationReferences?: SsdFixtureValidationReference[];
+  datasetReferences?: SsdFixtureDatasetReference[];
   rows: RawEcotoxRecord[];
 }
 
@@ -291,15 +300,15 @@ const CCME_ENDOSULFAN_ROWS = buildCcmeValidationRows({
 export const SSD_FIXTURE_DATASETS: SsdFixtureDataset[] = [
   {
     id: 'copper_preview',
-    label: 'Copper preview fixture',
+    label: 'Copper preview dataset',
     chemicalName: 'Copper',
     role: 'preview',
-    sourceLabel: 'SSTAC preview fixture',
-    sourceUrl: 'repo-local fixture',
-    sourceDetailUrl: 'repo-local fixture',
+    sourceLabel: 'SSTAC preview dataset',
+    sourceUrl: 'repo-local validation dataset',
+    sourceDetailUrl: 'repo-local validation dataset',
     sourceAccessedAt: '2026-05-24',
     validationNote:
-      'Synthetic ECOTOX-style preview rows for UI and filter smoke testing. Use the CCME validation fixtures for ssdtools parity review.',
+      'Synthetic ECOTOX-style preview rows for UI and filter smoke testing. Use the CCME validation datasets for ssdtools parity review.',
     rows: COPPER_PREVIEW_ROWS,
   },
   {
@@ -308,12 +317,12 @@ export const SSD_FIXTURE_DATASETS: SsdFixtureDataset[] = [
     chemicalName: 'Boron',
     role: 'validation',
     packageDataset: 'ssddata::ccme_boron',
-    sourceLabel: 'ssddata CCME boron benchmark dataset',
+    sourceLabel: 'CCME boron validation dataset',
     sourceUrl: 'https://open-aims.github.io/ssddata/reference/ccme_boron.html',
     sourceDetailUrl: 'https://ccme.ca/en/chemical/16',
     sourceAccessedAt: '2026-05-24',
     validationNote:
-      'Official ssdtools examples and tests use ssddata::ccme_boron for BCANZ distribution and model-averaging checks. Use this fixture as the primary R parity target.',
+      'Official ssdtools examples and tests use this CCME boron dataset for distribution and model-averaging checks. Use it as the primary R parity target.',
     validationReferences: [
       {
         label: 'BCANZ model-average HC5',
@@ -322,7 +331,7 @@ export const SSD_FIXTURE_DATASETS: SsdFixtureDataset[] = [
         expectedHcp: 1.25678,
         unit: 'mg/L',
         tolerance: 0.0002,
-        sourceLabel: 'bcgov/ssdtools testthat snapshot for ssddata::ccme_boron',
+        sourceLabel: 'Published ssdtools BCANZ validation snapshot',
         sourceUrl:
           'https://github.com/bcgov/ssdtools/blob/main/tests/testthat/_snaps/bcanz/hc_chloride.csv',
       },
@@ -335,12 +344,25 @@ export const SSD_FIXTURE_DATASETS: SsdFixtureDataset[] = [
     chemicalName: 'Endosulfan',
     role: 'validation',
     packageDataset: 'ssddata::ccme_endosulfan',
-    sourceLabel: 'ssddata CCME endosulfan benchmark dataset',
+    sourceLabel: 'CCME endosulfan validation dataset',
     sourceUrl: 'https://open-aims.github.io/ssddata/reference/ccme_endosulfan.html',
     sourceDetailUrl: 'https://ccme.ca/en/chemical/93',
     sourceAccessedAt: '2026-05-24',
     validationNote:
-      'Included in ssddata as a CCME benchmark dataset. It is useful for validation UX and regression coverage even though the local ssdtools test suite primarily snapshots boron.',
+      'Official validation materials include an independent model-average reference value for this CCME endosulfan dataset. Use it for endosulfan parity checks.',
+    validationReferences: [
+      {
+        label: 'Published model-average HC5',
+        analysisMode: 'model_averaging',
+        pValue: 0.05,
+        expectedHcp: 0.00767325714903464,
+        unit: 'ng/L',
+        tolerance: 0.00005,
+        sourceLabel: 'Published ssdtools fitted-results reference',
+        sourceUrl:
+          'https://beckyfisher.r-universe.dev/ssddata/data/ssd_fits/csv',
+      },
+    ],
     rows: CCME_ENDOSULFAN_ROWS,
   },
 ];

@@ -30,6 +30,7 @@ import {
   DEFAULT_SSD_FIXTURE_DATASET_ID,
   getSsdFixtureDataset,
   SSD_FIXTURE_DATASETS,
+  type SsdFixtureDatasetReference,
   type SsdFixtureDatasetId,
   type SsdFixtureValidationReference,
 } from '@/lib/matrix-options/ssd/fixtures';
@@ -56,6 +57,22 @@ const OWNER_REPORTED_ECOTOX_ROWS = 582125;
 type PlotScale = 'log' | 'linear';
 type DataSourceMode = 'fixture' | 'upload' | 'ecotox_mirror';
 type LiveStatus = 'idle' | 'searching' | 'loading_records' | 'ready' | 'not_configured' | 'error';
+
+interface SsdRunState {
+  rows: RawEcotoxRecord[];
+  fixtureDatasetId: SsdFixtureDatasetId;
+  chemicalName: string;
+  mediaFilter: SsdMediaFilter;
+  environmentFilter: SsdEnvironmentFilter;
+  endpointFilters: string[];
+  aggregationMethod: SpeciesAggregationMethod;
+  pValue: number;
+  analysisMode: SsdAnalysisMode;
+  selectedDistribution: SsdDistribution;
+  bootstrapIterations: number;
+  dataSourceMode: DataSourceMode;
+  extractedAt: string;
+}
 
 const MEDIA_FILTER_LABELS: Record<SsdMediaFilter, string> = {
   water: 'Water',
@@ -90,6 +107,10 @@ function modeLabel(mode: SsdAnalysisMode): string {
   }
 }
 
+function hcpLabel(pValue: number): string {
+  return `HC${Math.round(pValue * 100)}`;
+}
+
 function referenceStatus(
   reference: SsdFixtureValidationReference,
   result: SsdAnalysisResult,
@@ -113,8 +134,8 @@ function referenceStatus(
       comparable,
       withinTolerance: false,
       delta,
-      label: `Select ${modeLabel(reference.analysisMode)} HC${Math.round(
-        reference.pValue * 100,
+      label: `Select ${modeLabel(reference.analysisMode)} ${hcpLabel(
+        reference.pValue,
       )}`,
     };
   }
@@ -124,6 +145,34 @@ function referenceStatus(
     withinTolerance,
     delta,
     label: withinTolerance ? 'Within tolerance' : 'Outside tolerance',
+  };
+}
+
+function datasetReferenceStatus(
+  reference: SsdFixtureDatasetReference,
+  rows: RawEcotoxRecord[],
+): {
+  rowsMatch: boolean;
+  unitMatches: boolean;
+  label: string;
+  currentUnit: string;
+} {
+  const units = Array.from(
+    new Set(
+      rows
+        .map((row) => row.unit?.trim())
+        .filter((unit): unit is string => Boolean(unit)),
+    ),
+  );
+  const currentUnit = units.length === 1 ? units[0] : 'mixed units';
+  const rowsMatch = rows.length === reference.expectedRows;
+  const unitMatches = currentUnit === reference.expectedUnit;
+
+  return {
+    rowsMatch,
+    unitMatches,
+    label: rowsMatch && unitMatches ? 'Dataset matches' : 'Dataset mismatch',
+    currentUnit,
   };
 }
 
@@ -144,8 +193,37 @@ function liveStatusLabel(status: LiveStatus): string {
     case 'error':
       return 'ECOTOX mirror request failed.';
     default:
-      return 'Use fixture mode or search the ECOTOX mirror.';
+      return 'Use validation mode or search the ECOTOX mirror.';
   }
+}
+
+function endpointLabel(endpointFilters: string[]): string {
+  return endpointFilters.length === 0
+    ? 'All endpoints'
+    : endpointFilters.join(', ');
+}
+
+function runStateMatchesDraft(
+  runState: SsdRunState,
+  draftState: SsdRunState,
+): boolean {
+  return (
+    runState.rows === draftState.rows &&
+    runState.fixtureDatasetId === draftState.fixtureDatasetId &&
+    runState.chemicalName === draftState.chemicalName &&
+    runState.mediaFilter === draftState.mediaFilter &&
+    runState.environmentFilter === draftState.environmentFilter &&
+    runState.aggregationMethod === draftState.aggregationMethod &&
+    runState.pValue === draftState.pValue &&
+    runState.analysisMode === draftState.analysisMode &&
+    runState.selectedDistribution === draftState.selectedDistribution &&
+    runState.bootstrapIterations === draftState.bootstrapIterations &&
+    runState.dataSourceMode === draftState.dataSourceMode &&
+    runState.endpointFilters.length === draftState.endpointFilters.length &&
+    runState.endpointFilters.every(
+      (value, index) => value === draftState.endpointFilters[index],
+    )
+  );
 }
 
 function slugifyFilePart(value: string): string {
@@ -256,8 +334,24 @@ export default function SsdWorkbench({
   const [liveStatus, setLiveStatus] = useState<LiveStatus>('idle');
   const [liveMessage, setLiveMessage] = useState<string | null>(null);
   const [liveRowsTruncated, setLiveRowsTruncated] = useState(false);
+  const [runState, setRunState] = useState<SsdRunState>(() => ({
+    rows: DEFAULT_FIXTURE_DATASET.rows,
+    fixtureDatasetId: DEFAULT_FIXTURE_DATASET.id,
+    chemicalName: DEFAULT_FIXTURE_DATASET.chemicalName,
+    mediaFilter: 'water',
+    environmentFilter: 'freshwater',
+    endpointFilters: [],
+    aggregationMethod: 'geometric_mean',
+    pValue: 0.05,
+    analysisMode: 'empirical_preview',
+    selectedDistribution: 'Log-Normal',
+    bootstrapIterations: 0,
+    dataSourceMode: 'fixture',
+    extractedAt: todayIsoDate(),
+  }));
 
   const selectedFixtureDataset = getSsdFixtureDataset(fixtureDatasetId);
+  const runFixtureDataset = getSsdFixtureDataset(runState.fixtureDatasetId);
   const selectedRows =
     dataSourceMode === 'fixture'
       ? selectedFixtureDataset.rows
@@ -266,24 +360,22 @@ export default function SsdWorkbench({
         : liveRows;
   const selectedChemicalName =
     chemicalSearch.trim() || selectedFixtureDataset.chemicalName;
-
-  const result: SsdAnalysisResult = useMemo(
-    () =>
-      buildSsdAnalysis(selectedRows, {
-        chemicalNames: [selectedChemicalName],
-        mediaFilter,
-        environmentFilter,
-        endpointFilters,
-        aggregationMethod,
-        pValue,
-        analysisMode,
-        selectedDistribution,
-        bootstrapIterations,
-        randomSeed: 42,
-        sourceMode: dataSourceMode,
-        ecotoxMirrorRecordCount: OWNER_REPORTED_ECOTOX_ROWS,
-        extractedAt: todayIsoDate(),
-      }),
+  const draftRunState: SsdRunState = useMemo(
+    () => ({
+      rows: selectedRows,
+      fixtureDatasetId,
+      chemicalName: selectedChemicalName,
+      mediaFilter,
+      environmentFilter,
+      endpointFilters,
+      aggregationMethod,
+      pValue,
+      analysisMode,
+      selectedDistribution,
+      bootstrapIterations,
+      dataSourceMode,
+      extractedAt: todayIsoDate(),
+    }),
     [
       aggregationMethod,
       analysisMode,
@@ -291,12 +383,34 @@ export default function SsdWorkbench({
       dataSourceMode,
       endpointFilters,
       environmentFilter,
+      fixtureDatasetId,
       mediaFilter,
       pValue,
       selectedDistribution,
       selectedChemicalName,
       selectedRows,
     ],
+  );
+  const hasPendingRunChanges = !runStateMatchesDraft(runState, draftRunState);
+
+  const result: SsdAnalysisResult = useMemo(
+    () =>
+      buildSsdAnalysis(runState.rows, {
+        chemicalNames: [runState.chemicalName],
+        mediaFilter: runState.mediaFilter,
+        environmentFilter: runState.environmentFilter,
+        endpointFilters: runState.endpointFilters,
+        aggregationMethod: runState.aggregationMethod,
+        pValue: runState.pValue,
+        analysisMode: runState.analysisMode,
+        selectedDistribution: runState.selectedDistribution,
+        bootstrapIterations: runState.bootstrapIterations,
+        randomSeed: 42,
+        sourceMode: runState.dataSourceMode,
+        ecotoxMirrorRecordCount: OWNER_REPORTED_ECOTOX_ROWS,
+        extractedAt: runState.extractedAt,
+      }),
+    [runState],
   );
 
   const chartData = result.empiricalPoints.map((point) => ({
@@ -317,12 +431,12 @@ export default function SsdWorkbench({
         ? `${result.fittedCurvePoints[0].distribution} fit`
         : 'Fitted curve';
 
-  const activeEndpointLabel =
-    endpointFilters.length === 0 ? 'All endpoints' : endpointFilters.join(', ');
-  const activeMediaLabel = MEDIA_FILTER_LABELS[mediaFilter];
-  const activeEnvironmentLabel = ENVIRONMENT_FILTER_LABELS[environmentFilter];
+  const activeEndpointLabel = endpointLabel(result.settings.endpointFilters);
+  const activeMediaLabel = MEDIA_FILTER_LABELS[result.settings.mediaFilter];
+  const activeEnvironmentLabel =
+    ENVIRONMENT_FILTER_LABELS[result.settings.environmentFilter];
   const exportFileStem = slugifyFilePart(
-    `${selectedChemicalName}-${activeMediaLabel}-${activeEnvironmentLabel}`,
+    `${result.settings.chemicalNames[0] ?? 'ssd'}-${activeMediaLabel}-${activeEnvironmentLabel}`,
   );
 
   const toggleEndpoint = (endpoint: string): void => {
@@ -500,6 +614,14 @@ export default function SsdWorkbench({
     );
   };
 
+  const runSsdAnalysis = (): void => {
+    setRunState({
+      ...draftRunState,
+      endpointFilters: [...draftRunState.endpointFilters],
+      extractedAt: todayIsoDate(),
+    });
+  };
+
   return (
     <section
       className={cn('min-w-0 space-y-6', className)}
@@ -516,7 +638,7 @@ export default function SsdWorkbench({
           </h2>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">
             Build a reviewable HCp candidate from selected ECOTOX-style records.
-            This slice exposes fixture, upload, and read-only ECOTOX mirror
+            This slice exposes validation datasets, upload, and read-only ECOTOX mirror
             inputs with an ssdtools-aligned TypeScript fitting path pending
             official R snapshot validation.
           </p>
@@ -537,7 +659,7 @@ export default function SsdWorkbench({
                 active={dataSourceMode === 'fixture'}
                 onClick={() => selectFixtureDataset(fixtureDatasetId)}
               >
-                Fixture
+                Validation
               </ToggleButton>
               <ToggleButton
                 active={dataSourceMode === 'upload'}
@@ -555,7 +677,7 @@ export default function SsdWorkbench({
             {dataSourceMode === 'fixture' && (
               <div className="mt-3 rounded-md border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300">
                 <label className="block font-semibold text-slate-700 dark:text-slate-100">
-                  Fixture dataset
+                  Validation dataset
                   <select
                     value={fixtureDatasetId}
                     onChange={(event) =>
@@ -630,7 +752,7 @@ export default function SsdWorkbench({
               />
             </div>
             <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-              Fixture mode can load preview or validation datasets. Upload mode
+              Validation mode can load preview and validation datasets. Upload mode
               accepts local ECOTOX-style extracts. ECOTOX mirror mode queries capped
               server-side API routes when configured.
             </p>
@@ -827,6 +949,53 @@ export default function SsdWorkbench({
             </select>
           </label>
 
+          <div
+            className={cn(
+              'rounded-lg border p-3',
+              hasPendingRunChanges
+                ? 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20'
+                : 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-900/20',
+            )}
+            data-testid="ssd-run-panel"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                  Run control
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                  {hasPendingRunChanges
+                    ? 'Settings are staged. Results below still show the last run.'
+                    : 'Results match the current staged settings.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={runSsdAnalysis}
+                className="shrink-0 rounded-md bg-sky-700 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-sky-800 dark:bg-sky-500 dark:hover:bg-sky-400"
+              >
+                Run SSD
+              </button>
+            </div>
+            <dl className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300">
+              <div>
+                <dt className="font-semibold">Last run</dt>
+                <dd>
+                  HC{Math.round(result.settings.pValue * 100)};{' '}
+                  {modeLabel(result.settings.analysisMode)}
+                </dd>
+              </div>
+              <div>
+                <dt className="font-semibold">Bootstrap</dt>
+                <dd>
+                  {result.settings.bootstrapIterations > 0
+                    ? `${result.settings.bootstrapIterations} iterations`
+                    : 'Off'}
+                </dd>
+              </div>
+            </dl>
+          </div>
+
           <div>
             <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Plot options
@@ -878,6 +1047,16 @@ export default function SsdWorkbench({
         </aside>
 
         <div className="min-w-0 space-y-5">
+          {hasPendingRunChanges && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+              <div className="font-bold">Pending SSD settings</div>
+              <p className="mt-1 leading-relaxed">
+                Results below are from the last run. Use Run SSD after changing
+                filters, model mode, HCp percentile, distribution, or bootstrap
+                settings.
+              </p>
+            </div>
+          )}
           <div className="grid gap-3 md:grid-cols-4">
             {[
               ['HCp', hasHcpPreview ? `${formatNumber(result.hcp)} ${result.unit}` : 'Needs data'],
@@ -909,9 +1088,9 @@ export default function SsdWorkbench({
                 Validation and verification
               </span>
               <span className="ml-6 text-xs font-semibold text-slate-500 dark:text-slate-400 sm:ml-0">
-                {dataSourceMode === 'fixture'
-                  ? selectedFixtureDataset.label
-                  : dataSourceMode === 'upload'
+                {result.settings.sourceMode === 'fixture'
+                  ? runFixtureDataset.label
+                  : result.settings.sourceMode === 'upload'
                     ? 'Uploaded data'
                     : 'ECOTOX mirror data'}
               </span>
@@ -925,10 +1104,9 @@ export default function SsdWorkbench({
                   <div className="flex justify-between gap-4">
                     <dt>Dataset</dt>
                     <dd className="font-semibold text-slate-900 dark:text-white">
-                      {dataSourceMode === 'fixture'
-                        ? selectedFixtureDataset.packageDataset ??
-                          selectedFixtureDataset.label
-                        : dataSourceMode === 'upload'
+                      {result.settings.sourceMode === 'fixture'
+                        ? runFixtureDataset.label
+                        : result.settings.sourceMode === 'upload'
                           ? 'Local upload'
                           : 'Read-only ECOTOX mirror'}
                     </dd>
@@ -936,7 +1114,7 @@ export default function SsdWorkbench({
                   <div className="flex justify-between gap-4">
                     <dt>Rows loaded</dt>
                     <dd className="font-semibold text-slate-900 dark:text-white">
-                      {selectedRows.length.toLocaleString()}
+                      {runState.rows.length.toLocaleString()}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4">
@@ -958,24 +1136,24 @@ export default function SsdWorkbench({
                   Verification status
                 </div>
                 <p className="mt-3 leading-relaxed">
-                  {dataSourceMode === 'fixture'
-                    ? selectedFixtureDataset.validationNote
-                    : 'Use fixture validation datasets to compare the TypeScript output against official ssdtools and ssddata reference behavior.'}
+                  {result.settings.sourceMode === 'fixture'
+                    ? runFixtureDataset.validationNote
+                    : 'Use validation datasets to compare the TypeScript output against official ssdtools and ssddata reference behavior.'}
                 </p>
-                {dataSourceMode === 'fixture' && (
+                {result.settings.sourceMode === 'fixture' && (
                   <dl className="mt-3 space-y-2">
                     <div className="flex justify-between gap-4">
                       <dt>Source</dt>
                       <dd className="font-semibold text-slate-900 dark:text-white">
-                        {selectedFixtureDataset.sourceLabel}
+                        {runFixtureDataset.sourceLabel}
                       </dd>
                     </div>
-                    {selectedFixtureDataset.sourceUrl.startsWith('https://') && (
+                    {runFixtureDataset.sourceUrl.startsWith('https://') && (
                       <div className="flex justify-between gap-4">
-                        <dt>ssddata page</dt>
+                        <dt>Reference page</dt>
                         <dd>
                           <a
-                            href={selectedFixtureDataset.sourceUrl}
+                            href={runFixtureDataset.sourceUrl}
                             target="_blank"
                             rel="noreferrer"
                             className="font-semibold text-sky-700 hover:text-sky-800 dark:text-sky-300"
@@ -985,14 +1163,14 @@ export default function SsdWorkbench({
                         </dd>
                       </div>
                     )}
-                    {selectedFixtureDataset.sourceDetailUrl.startsWith(
+                    {runFixtureDataset.sourceDetailUrl.startsWith(
                       'https://',
                     ) && (
                       <div className="flex justify-between gap-4">
                         <dt>CCME page</dt>
                         <dd>
                           <a
-                            href={selectedFixtureDataset.sourceDetailUrl}
+                            href={runFixtureDataset.sourceDetailUrl}
                             target="_blank"
                             rel="noreferrer"
                             className="font-semibold text-sky-700 hover:text-sky-800 dark:text-sky-300"
@@ -1005,20 +1183,21 @@ export default function SsdWorkbench({
                     <div className="flex justify-between gap-4">
                       <dt>Accessed</dt>
                       <dd className="font-semibold text-slate-900 dark:text-white">
-                        {selectedFixtureDataset.sourceAccessedAt}
+                        {runFixtureDataset.sourceAccessedAt}
                       </dd>
                     </div>
                   </dl>
                 )}
               </div>
-              {dataSourceMode === 'fixture' &&
-                selectedFixtureDataset.validationReferences?.length ? (
+              {result.settings.sourceMode === 'fixture' &&
+              (runFixtureDataset.validationReferences?.length ||
+                runFixtureDataset.datasetReferences?.length) ? (
                   <div className="rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40 lg:col-span-2">
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       Reference checks
                     </div>
                     <div className="mt-3 space-y-3">
-                      {selectedFixtureDataset.validationReferences.map((reference) => {
+                      {runFixtureDataset.validationReferences?.map((reference) => {
                         const status = referenceStatus(reference, result);
                         return (
                           <div
@@ -1031,8 +1210,13 @@ export default function SsdWorkbench({
                                   {reference.label}
                                 </div>
                                 <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                                  Expected {formatNumber(reference.expectedHcp, 6)}{' '}
-                                  {reference.unit} from {reference.sourceLabel}.
+                                  Reference {hcpLabel(reference.pValue)}:{' '}
+                                  <span className="font-semibold text-slate-700 dark:text-slate-200">
+                                    {formatNumber(reference.expectedHcp, 6)}{' '}
+                                    {reference.unit}
+                                  </span>
+                                  . Compared with the current run using the
+                                  same validation dataset and model mode.
                                 </p>
                               </div>
                               <span
@@ -1091,13 +1275,103 @@ export default function SsdWorkbench({
                                 rel="noreferrer"
                                 className="mt-3 inline-flex text-xs font-semibold text-sky-700 hover:text-sky-800 dark:text-sky-300"
                               >
-                                Open snapshot source
+                                Open reference source
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {runFixtureDataset.datasetReferences?.map((reference) => {
+                        const status = datasetReferenceStatus(
+                          reference,
+                          runState.rows,
+                        );
+                        return (
+                          <div
+                            key={reference.label}
+                            className="rounded-md border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
+                          >
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                              <div>
+                                <div className="font-semibold text-slate-900 dark:text-white">
+                                  {reference.label}
+                                </div>
+                                <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                  Expected {reference.expectedRows} source rows
+                                  with {reference.expectedUnit} units from{' '}
+                                  {reference.sourceLabel}.
+                                </p>
+                              </div>
+                              <span
+                                className={cn(
+                                  'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold',
+                                  status.rowsMatch && status.unitMatches
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-100'
+                                    : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-100',
+                                )}
+                              >
+                                {status.rowsMatch && status.unitMatches ? (
+                                  <CheckCircle2 className="h-3.5 w-3.5" />
+                                ) : (
+                                  <AlertTriangle className="h-3.5 w-3.5" />
+                                )}
+                                {status.label}
+                              </span>
+                            </div>
+                            <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
+                              <div>
+                                <dt className="text-slate-500 dark:text-slate-400">
+                                  Current
+                                </dt>
+                                <dd className="font-semibold text-slate-900 dark:text-white">
+                                  {runState.rows.length} source rows
+                                </dd>
+                              </div>
+                              <div>
+                                <dt className="text-slate-500 dark:text-slate-400">
+                                  Units
+                                </dt>
+                                <dd className="font-semibold text-slate-900 dark:text-white">
+                                  {status.currentUnit}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt className="text-slate-500 dark:text-slate-400">
+                                  HCp snapshot
+                                </dt>
+                                <dd className="font-semibold text-slate-900 dark:text-white">
+                                  Not yet added
+                                </dd>
+                              </div>
+                            </dl>
+                            {reference.sourceUrl.startsWith('https://') && (
+                              <a
+                                href={reference.sourceUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-3 inline-flex text-xs font-semibold text-sky-700 hover:text-sky-800 dark:text-sky-300"
+                              >
+                                Open dataset source
                               </a>
                             )}
                           </div>
                         );
                       })}
                     </div>
+                  </div>
+                ) : result.settings.sourceMode === 'fixture' &&
+                  runFixtureDataset.role === 'validation' ? (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100 lg:col-span-2">
+                    <div className="text-xs font-bold uppercase tracking-wider">
+                      Reference checks pending
+                    </div>
+                    <p className="mt-2 leading-relaxed">
+                      This validation dataset is loaded for transparency, but
+                      no official ssdtools HCp snapshot has been added to the
+                      local reference-check table yet. Use it for validation
+                      regression coverage until an R-generated snapshot is
+                      reviewed.
+                    </p>
                   </div>
                 ) : null}
             </div>
@@ -1110,7 +1384,8 @@ export default function SsdWorkbench({
                 Model diagnostics
               </span>
               <span className="ml-6 text-xs font-semibold text-slate-500 dark:text-slate-400 sm:ml-0">
-                {result.diagnostics.length} rows; {analysisMode.replace('_', ' ')}
+                {result.diagnostics.length} rows;{' '}
+                {result.settings.analysisMode.replace('_', ' ')}
               </span>
             </summary>
             <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
@@ -1493,7 +1768,7 @@ export default function SsdWorkbench({
                   <li key={warning}>{warning}</li>
                 ))}
                 {result.warnings.length === 0 && (
-                  <li>No warnings for the current fixture filters.</li>
+                  <li>No warnings for the current validation filters.</li>
                 )}
               </ul>
               <div className="mt-4 max-h-44 overflow-auto rounded-md border border-slate-200 dark:border-slate-800">
