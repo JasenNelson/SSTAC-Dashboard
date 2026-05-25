@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth'
+import crypto from 'crypto'
 
 /**
  * Task 2.3: File Upload Validation
@@ -85,7 +86,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique filename
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+    // Generate unique filename securely to prevent predictable resource location
+    const randomHex = crypto.randomBytes(8).toString('hex')
+    const fileName = `${Date.now()}-${randomHex}.${fileExt}`
     const filePath = `review-files/${user.id}/${fileName}`
 
     // Upload file to Supabase Storage
