@@ -136,7 +136,26 @@
         "human-health-food"
       ],
       "promotion_status": "needs_review",
-      "canonical_source_status": "needs_direct_source_check"
+      "canonical_source_status": "needs_direct_source_check",
+      "direct_source_review": {
+        "result": "DIRECT_SOURCE_MATCH_NO_PROMOTION",
+        "packet": "matrix_research/reference_catalog/protocol28_zinc_direct_source_verification_packet_2026_05_25.md",
+        "reviewed_at": "2026-05-25",
+        "compared_sources": [
+          "src-us-epa-iris-rfd-table-live",
+          "src-health-canada-trv-v4-2025"
+        ],
+        "value_ids": [
+          "pv-p28-zinc-hh-food-rfd"
+        ],
+        "required_catalog_posture": {
+          "default_status": "available_option",
+          "evidence_support_status": "pending_source_locator",
+          "qa_status": "needs_review",
+          "canonical_source_status": "needs_direct_source_check"
+        },
+        "note": "Current IRIS matches the Protocol 28 Appendix 8A zinc RfD after notation normalization, but this is not default or QA approval; Health Canada v4.0 uses age-banded essential-trace-element values, so keep the Protocol 28 zinc lead blocked pending source-selection and receptor/default decisions."
+      }
     }
   ],
   "document_leads": [

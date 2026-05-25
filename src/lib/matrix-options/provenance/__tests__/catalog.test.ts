@@ -746,6 +746,65 @@ describe('matrix options provenance catalog', () => {
     }
   });
 
+  it('records the zinc direct-source match without promoting the Protocol 28 value', () => {
+    const zincLead = BC_PROTOCOL28_TRV_SOURCE_LEADS.parameter_value_leads.find(
+      (lead) => lead.lead_id === 'p28-appendix-8a-zinc-rfd',
+    );
+
+    expect(zincLead?.direct_source_review?.result).toBe(
+      'DIRECT_SOURCE_MATCH_NO_PROMOTION',
+    );
+    expect(zincLead?.direct_source_review?.packet).toBe(
+      'matrix_research/reference_catalog/protocol28_zinc_direct_source_verification_packet_2026_05_25.md',
+    );
+    expect(zincLead?.direct_source_review?.compared_sources).toEqual([
+      'src-us-epa-iris-rfd-table-live',
+      'src-health-canada-trv-v4-2025',
+    ]);
+    expect(zincLead?.direct_source_review?.value_ids).toEqual([
+      'pv-p28-zinc-hh-food-rfd',
+    ]);
+    expect(zincLead?.direct_source_review?.required_catalog_posture).toEqual({
+      default_status: 'available_option',
+      evidence_support_status: 'pending_source_locator',
+      qa_status: 'needs_review',
+      canonical_source_status: 'needs_direct_source_check',
+    });
+
+    const protocol28Zinc = PARAMETER_VALUE_RECORDS.find(
+      (candidate) =>
+        candidate.parameter_value_id === 'pv-p28-zinc-hh-food-rfd',
+    );
+    const irisZinc = PARAMETER_VALUE_RECORDS.find(
+      (candidate) =>
+        candidate.parameter_value_id === 'pv-iris-zinc-hh-food-rfd',
+    );
+
+    expect(protocol28Zinc?.value).toBe(irisZinc?.value);
+    expect(protocol28Zinc?.source_ids).toEqual([
+      'src-bc-protocol-28-v3-0-2024',
+    ]);
+    expect(protocol28Zinc?.canonical_source_ids).toEqual([]);
+    expect(protocol28Zinc?.source_relationships).toEqual([
+      {
+        source_id: 'src-bc-protocol-28-v3-0-2024',
+        role: 'policy_compilation',
+        note: expect.stringMatching(/original source pending direct check/i),
+      },
+    ]);
+    expect(protocol28Zinc?.default_status).toBe('available_option');
+    expect(protocol28Zinc?.evidence_support_status).toBe(
+      'pending_source_locator',
+    );
+    expect(protocol28Zinc?.qa_status).toBe('needs_review');
+    expect(protocol28Zinc?.canonical_source_status).toBe(
+      'needs_direct_source_check',
+    );
+    expect(irisZinc?.evidence_support_status).toBe('approved_source_backed');
+    expect(irisZinc?.qa_status).toBe('approved');
+    expect(irisZinc?.canonical_source_status).toBe('direct_source_verified');
+  });
+
   it('resolves current Benzo[a]pyrene Eco-Direct defaults', () => {
     expect(
       getParameterValueRecord(
