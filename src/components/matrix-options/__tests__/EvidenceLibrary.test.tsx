@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import EvidenceLibrary from '../EvidenceLibrary';
 import {
   createEvidenceLibraryFilters,
@@ -211,6 +211,48 @@ describe('EvidenceLibrary', () => {
     expect(
       screen.getByRole('button', { name: /^Clear filters$/ }),
     ).toBeInTheDocument();
+  });
+
+  it('shows saved review view counts and active filter state', () => {
+    renderControlled();
+
+    const protocol28Button = screen.getByRole('button', {
+      name: /Protocol 28: Policy compilation/i,
+    });
+    const healthCanadaButton = screen.getByRole('button', {
+      name: /Health Canada: Approved alternatives/i,
+    });
+    const ecoSslButton = screen.getByRole('button', {
+      name: /Eco-SSL: Screening\/source leads/i,
+    });
+    const ssdButton = screen.getByRole('button', {
+      name: /SSD-derived: Derived preview/i,
+    });
+
+    expect(within(protocol28Button).getByText('6 parameter groups')).toBeInTheDocument();
+    expect(within(healthCanadaButton).getByText('19 values')).toBeInTheDocument();
+    expect(within(ecoSslButton).getByText('1 lead set')).toBeInTheDocument();
+    expect(within(ssdButton).getByText('0 values')).toBeInTheDocument();
+    expect(healthCanadaButton).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(healthCanadaButton);
+
+    expect(
+      screen.getByRole('button', {
+        name: /Health Canada: Approved alternatives/i,
+      }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Health Canada/,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
+
+    expect(
+      screen.getByRole('button', {
+        name: /Health Canada: Approved alternatives/i,
+      }),
+    ).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('uses audit strip counts as read-only database shortcuts', () => {

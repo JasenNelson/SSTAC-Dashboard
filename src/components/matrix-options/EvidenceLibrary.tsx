@@ -272,6 +272,61 @@ function ResultCountBadge({
   );
 }
 
+function resultCountForView(
+  library: ReturnType<typeof buildEvidenceLibraryView>,
+  viewMode: EvidenceLibraryViewMode,
+): { count: number; label: string } {
+  if (viewMode === 'by-parameter') {
+    return { count: library.valueGroups.length, label: 'parameter groups' };
+  }
+  if (viewMode === 'values') {
+    return { count: library.values.length, label: 'values' };
+  }
+  if (viewMode === 'assumptions') {
+    return {
+      count: assumptionRows(library.values).length,
+      label: 'assumption/default rows',
+    };
+  }
+  if (viewMode === 'equations') {
+    return { count: library.equations.length, label: 'equations' };
+  }
+  if (viewMode === 'sources') {
+    return { count: library.sources.length, label: 'sources' };
+  }
+  return { count: library.sourceLeads.length, label: 'lead sets' };
+}
+
+function formatResultCount({ count, label }: { count: number; label: string }) {
+  const singularLabels: Record<string, string> = {
+    'parameter groups': 'parameter group',
+    values: 'value',
+    'assumption/default rows': 'assumption/default row',
+    equations: 'equation',
+    sources: 'source',
+    'lead sets': 'lead set',
+  };
+  return `${count} ${count === 1 ? singularLabels[label] ?? label : label}`;
+}
+
+function filtersEqual(
+  left: EvidenceLibraryFilters,
+  right: EvidenceLibraryFilters,
+): boolean {
+  const keys = Object.keys(left) as Array<keyof EvidenceLibraryFilters>;
+  return keys.every((key) => {
+    const leftValue = left[key];
+    const rightValue = right[key];
+    if (typeof leftValue === 'string' || typeof rightValue === 'string') {
+      return leftValue === rightValue;
+    }
+    return (
+      leftValue.length === rightValue.length &&
+      leftValue.every((value, index) => value === rightValue[index])
+    );
+  });
+}
+
 function EmptyDatabaseState({
   title,
   activeLabels,
@@ -1134,6 +1189,21 @@ export default function EvidenceLibrary({
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const library = useMemo(() => buildEvidenceLibraryView(filters), [filters]);
   const baselineLibrary = useMemo(() => buildEvidenceLibraryView(), []);
+  const savedReviewViews = useMemo(
+    () =>
+      QUICK_REVIEW_FILTERS.map((filter) => {
+        const savedFilters = createEvidenceLibraryFilters(filter.request);
+        const savedLibrary = buildEvidenceLibraryView(savedFilters);
+        return {
+          ...filter,
+          filters: savedFilters,
+          resultCountText: formatResultCount(
+            resultCountForView(savedLibrary, filter.viewMode),
+          ),
+        };
+      }),
+    [],
+  );
   const protocol28Summary = useMemo(() => buildProtocol28ReviewSummary(), []);
   const activeLabels = activeFilterLabels(filters);
   const assumptionValues = assumptionRows(library.values);
@@ -1337,20 +1407,40 @@ export default function EvidenceLibrary({
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {QUICK_REVIEW_FILTERS.map((filter) => (
-            <button
-              key={filter.label}
-              type="button"
-              aria-label={`${filter.label}: ${filter.description}`}
-              onClick={() => applyQuickFilter(filter)}
-              className="min-h-10 rounded-md border border-slate-200 bg-slate-50 px-3 text-left text-xs text-slate-700 hover:border-sky-300 hover:bg-white hover:text-sky-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300"
-            >
-              <span className="block font-semibold">{filter.label}</span>
-              <span className="block text-[11px] text-slate-500 dark:text-slate-400">
-                {filter.description}
-              </span>
-            </button>
-          ))}
+          {savedReviewViews.map((filter) => {
+            const isActive =
+              viewMode === filter.viewMode && filtersEqual(filters, filter.filters);
+            return (
+              <button
+                key={filter.label}
+                type="button"
+                aria-label={`${filter.label}: ${filter.description}`}
+                aria-pressed={isActive}
+                onClick={() => applyQuickFilter(filter)}
+                className={cn(
+                  'min-h-10 rounded-md border px-3 text-left text-xs transition-colors',
+                  isActive
+                    ? 'border-sky-400 bg-sky-50 text-sky-800 shadow-sm dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
+                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 hover:bg-white hover:text-sky-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300',
+                )}
+              >
+                <span className="flex items-start justify-between gap-2">
+                  <span className="font-semibold">{filter.label}</span>
+                  {isActive && (
+                    <span className="rounded-full bg-sky-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white dark:bg-sky-500">
+                      Active
+                    </span>
+                  )}
+                </span>
+                <span className="block text-[11px] text-slate-500 dark:text-slate-400">
+                  {filter.description}
+                </span>
+                <span className="mt-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                  {filter.resultCountText}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </section>
 
