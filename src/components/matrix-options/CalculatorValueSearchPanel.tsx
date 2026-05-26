@@ -34,11 +34,10 @@ import {
 } from '@/lib/matrix-options/regulatoryFrames';
 import {
   buildDefaultSelectionPolicyDecision,
-  type DefaultSelectionCandidate,
-  type DefaultSelectionCandidateDisposition,
   type DefaultSelectionDecisionStatus,
   type DefaultSelectionPolicyDecision,
 } from '@/lib/matrix-options/defaultSelectionPolicy';
+import DefaultPolicyDispositionNote from './DefaultPolicyDispositionNote';
 
 interface CalculatorValueSearchPanelProps {
   pathway: ProvenancePathway;
@@ -240,78 +239,6 @@ function StatusChip({ value, compact = false }: { value: string; compact?: boole
       {humanizeCatalogLabel(value)}
     </span>
   );
-}
-
-function policyTone(disposition: DefaultSelectionCandidateDisposition): string {
-  if (disposition === 'eligible_pending_approval') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200';
-  }
-  if (disposition === 'active_current_default') {
-    return 'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-200';
-  }
-  if (disposition === 'blocked_not_default') {
-    return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
-  }
-  return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200';
-}
-
-function policyLabel(
-  candidate: DefaultSelectionCandidate,
-  decision: DefaultSelectionPolicyDecision,
-): string {
-  if (candidate.disposition === 'active_current_default') {
-    return 'Current default retained';
-  }
-  if (
-    decision.recommendedCandidate?.record.parameter_value_id ===
-    candidate.record.parameter_value_id
-  ) {
-    return 'Recommended candidate: approval required';
-  }
-  if (candidate.disposition === 'eligible_pending_approval') {
-    return 'Eligible alternative: approval required';
-  }
-  if (candidate.disposition === 'blocked_policy_compilation') {
-    return 'Blocked: policy compilation';
-  }
-  if (candidate.disposition === 'blocked_reference_mining') {
-    return 'Blocked: reference mining';
-  }
-  if (candidate.disposition === 'blocked_needs_direct_source') {
-    return 'Blocked: direct source check';
-  }
-  if (candidate.disposition === 'blocked_needs_qa') {
-    return 'Blocked: QA/currentness';
-  }
-  if (candidate.disposition === 'blocked_current_scaffold') {
-    return 'Blocked: calculator scaffold';
-  }
-  if (candidate.disposition === 'blocked_frame_jurisdiction') {
-    return 'Blocked: outside selected frame';
-  }
-  if (candidate.disposition === 'blocked_range_or_formula') {
-    return 'Blocked: range or formula';
-  }
-  if (candidate.disposition === 'blocked_pathway_unsupported') {
-    return 'Blocked: unsupported pathway';
-  }
-  return 'Not a default candidate';
-}
-
-function policyDetail(
-  candidate: DefaultSelectionCandidate,
-  decision: DefaultSelectionPolicyDecision,
-): string {
-  if (
-    decision.recommendedCandidate?.record.parameter_value_id ===
-    candidate.record.parameter_value_id
-  ) {
-    return 'Read-only recommendation only; no default or QA status changes are made.';
-  }
-  if (candidate.disposition === 'active_current_default') {
-    return 'The calculator keeps this current default until an approved change is applied.';
-  }
-  return candidate.rationale;
 }
 
 function defaultPolicySummary(
@@ -749,20 +676,12 @@ export default function CalculatorValueSearchPanel({
                   {support.detail}
                 </p>
                 {policyDecision && policyCandidate ? (
-                  <div
-                    className={cn(
-                      'mt-2 rounded-md border px-2.5 py-2 text-xs leading-relaxed',
-                      policyTone(policyCandidate.disposition),
-                    )}
-                    data-testid={`default-policy-${row.record.parameter_value_id}`}
-                  >
-                    <div className="font-semibold">
-                      {policyLabel(policyCandidate, policyDecision)}
-                    </div>
-                    <div className="mt-0.5">
-                      {policyDetail(policyCandidate, policyDecision)}
-                    </div>
-                  </div>
+                  <DefaultPolicyDispositionNote
+                    candidate={policyCandidate}
+                    decision={policyDecision}
+                    className="mt-2"
+                    testId={`default-policy-${row.record.parameter_value_id}`}
+                  />
                 ) : null}
               </div>
 

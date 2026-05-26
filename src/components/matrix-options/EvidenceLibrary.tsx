@@ -25,11 +25,21 @@ import type {
   EvidenceLibraryFilterRequest,
   EvidenceLibraryFilters,
   EvidenceLibraryViewMode,
+  ProvenancePathway,
 } from '@/lib/matrix-options/provenance/types';
+import {
+  buildDefaultSelectionPolicyDecision,
+  type DefaultSelectionPolicyDecision,
+} from '@/lib/matrix-options/defaultSelectionPolicy';
+import type { RegulatoryFrameId } from '@/lib/matrix-options/regulatoryFrames';
+import DefaultPolicyDispositionNote, {
+  DefaultPolicyDecisionSummaryNote,
+} from './DefaultPolicyDispositionNote';
 
 interface EvidenceLibraryProps {
   filters: EvidenceLibraryFilters;
   onFiltersChange: (filters: EvidenceLibraryFilters) => void;
+  regulatoryFrameId?: RegulatoryFrameId;
   className?: string;
 }
 
@@ -504,6 +514,29 @@ function sourceRelationshipLabels(row: EvidenceLibraryValueRow): string {
     .join('; ');
 }
 
+function defaultPolicyDecisionKey(
+  pathway: ProvenancePathway,
+  substanceKey: string,
+  inputKey: string,
+): string {
+  return `${pathway}::${substanceKey}::${inputKey}`;
+}
+
+function defaultPolicyDecisionForRow(
+  decisions: Map<string, DefaultSelectionPolicyDecision>,
+  row: EvidenceLibraryValueRow,
+): DefaultSelectionPolicyDecision | null {
+  return (
+    decisions.get(
+      defaultPolicyDecisionKey(
+        row.record.pathway,
+        row.record.substance_key,
+        row.record.input_key,
+      ),
+    ) ?? null
+  );
+}
+
 function activeFilterLabels(filters: EvidenceLibraryFilters): string[] {
   const labels: string[] = [];
   if (filters.search.trim()) labels.push(`search: ${filters.search.trim()}`);
@@ -777,13 +810,19 @@ function SourceLeadTriageChecklist({
 
 function ValueDetailPanel({
   row,
+  policyDecision,
   onClose,
 }: {
   row: EvidenceLibraryValueRow;
+  policyDecision: DefaultSelectionPolicyDecision | null;
   onClose: () => void;
 }) {
   const review = getParameterValueReviewDisposition(row.record, row.sources);
   const canonicalSources = row.sources.filter(isCalculatorEvidenceSource);
+  const policyCandidate = policyDecision?.candidates.find(
+    (candidate) =>
+      candidate.record.parameter_value_id === row.record.parameter_value_id,
+  );
 
   return (
     <section
@@ -861,6 +900,14 @@ function ValueDetailPanel({
           </div>
 
           <ReviewDispositionNote {...review} />
+
+          {policyDecision && policyCandidate ? (
+            <DefaultPolicyDispositionNote
+              candidate={policyCandidate}
+              decision={policyDecision}
+              testId={`evidence-default-policy-detail-${row.record.parameter_value_id}`}
+            />
+          ) : null}
 
           <div className="grid gap-3 text-sm lg:grid-cols-2">
             <div>
@@ -1107,7 +1154,13 @@ function SourceDetailPanel({
   );
 }
 
-function ValueGroupCard({ group }: { group: EvidenceLibraryValueGroup }) {
+function ValueGroupCard({
+  group,
+  policyDecision,
+}: {
+  group: EvidenceLibraryValueGroup;
+  policyDecision: DefaultSelectionPolicyDecision | null;
+}) {
   const currentDefault = group.currentDefault;
   const currentValue = currentDefault
     ? formatValue(currentDefault.record.value, currentDefault.record.unit)
@@ -1146,6 +1199,13 @@ function ValueGroupCard({ group }: { group: EvidenceLibraryValueGroup }) {
         <div className="mb-2 text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
           Candidate values are read-only until exact locators and QA are approved.
         </div>
+        {policyDecision ? (
+          <DefaultPolicyDecisionSummaryNote
+            decision={policyDecision}
+            className="mb-2"
+            testId={`evidence-default-policy-group-${group.groupId}`}
+          />
+        ) : null}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="text-left text-xs uppercase text-slate-500 dark:text-slate-400">
@@ -1165,6 +1225,11 @@ function ValueGroupCard({ group }: { group: EvidenceLibraryValueGroup }) {
                   row.record,
                   row.sources,
                 );
+                const policyCandidate = policyDecision?.candidates.find(
+                  (candidate) =>
+                    candidate.record.parameter_value_id ===
+                    row.record.parameter_value_id,
+                );
                 return (
                   <tr key={row.record.parameter_value_id} className="align-top">
                     <td className="py-2 pr-4 font-mono text-slate-800 dark:text-slate-100">
@@ -1177,7 +1242,17 @@ function ValueGroupCard({ group }: { group: EvidenceLibraryValueGroup }) {
                       <StatusBadge value={row.record.evidence_support_status} />
                     </td>
                     <td className="py-2 pr-4">
-                      <ReviewDispositionNote {...review} compact />
+                      <div className="space-y-1.5">
+                        <ReviewDispositionNote {...review} compact />
+                        {policyDecision && policyCandidate ? (
+                          <DefaultPolicyDispositionNote
+                            candidate={policyCandidate}
+                            decision={policyDecision}
+                            compact
+                            testId={`evidence-default-policy-group-row-${row.record.parameter_value_id}`}
+                          />
+                        ) : null}
+                      </div>
                     </td>
                     <td className="py-2 pr-4 text-xs text-slate-500 dark:text-slate-400">
                       {extractionDateLabel(row)}
@@ -1278,6 +1353,7 @@ function SourceLeadCard({ lead }: { lead: EvidenceLibrarySourceLeadSummary }) {
 export default function EvidenceLibrary({
   filters,
   onFiltersChange,
+  regulatoryFrameId = 'bc-protocol1-v5-dra',
   className,
 }: EvidenceLibraryProps) {
   const [viewMode, setViewMode] = useState<EvidenceLibraryViewMode>('by-parameter');
@@ -1285,6 +1361,30 @@ export default function EvidenceLibrary({
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const library = useMemo(() => buildEvidenceLibraryView(filters), [filters]);
   const baselineLibrary = useMemo(() => buildEvidenceLibraryView(), []);
+  const defaultPolicyDecisions = useMemo(() => {
+    const decisions = new Map<string, DefaultSelectionPolicyDecision>();
+
+    for (const row of library.values) {
+      const key = defaultPolicyDecisionKey(
+        row.record.pathway,
+        row.record.substance_key,
+        row.record.input_key,
+      );
+      if (!decisions.has(key)) {
+        decisions.set(
+          key,
+          buildDefaultSelectionPolicyDecision({
+            frameId: regulatoryFrameId,
+            pathway: row.record.pathway,
+            substanceKey: row.record.substance_key,
+            inputKey: row.record.input_key,
+          }),
+        );
+      }
+    }
+
+    return decisions;
+  }, [library.values, regulatoryFrameId]);
   const savedReviewViews = useMemo(
     () =>
       QUICK_REVIEW_FILTERS.map((filter) => {
@@ -1602,6 +1702,10 @@ export default function EvidenceLibrary({
       {selectedValue && (
         <ValueDetailPanel
           row={selectedValue}
+          policyDecision={defaultPolicyDecisionForRow(
+            defaultPolicyDecisions,
+            selectedValue,
+          )}
           onClose={() => setSelectedValueId(null)}
         />
       )}
@@ -1627,7 +1731,19 @@ export default function EvidenceLibrary({
           </div>
           <div className="grid gap-2">
             {library.valueGroups.map((group) => (
-              <ValueGroupCard key={group.groupId} group={group} />
+              <ValueGroupCard
+                key={group.groupId}
+                group={group}
+                policyDecision={
+                  defaultPolicyDecisions.get(
+                    defaultPolicyDecisionKey(
+                      group.pathway,
+                      group.substanceKey,
+                      group.inputKey,
+                    ),
+                  ) ?? null
+                }
+              />
             ))}
             {library.valueGroups.length === 0 && (
               <EmptyDatabaseState
@@ -1674,6 +1790,15 @@ export default function EvidenceLibrary({
                     row.record,
                     row.sources,
                   );
+                  const policyDecision = defaultPolicyDecisionForRow(
+                    defaultPolicyDecisions,
+                    row,
+                  );
+                  const policyCandidate = policyDecision?.candidates.find(
+                    (candidate) =>
+                      candidate.record.parameter_value_id ===
+                      row.record.parameter_value_id,
+                  );
                   return (
                     <React.Fragment key={row.record.parameter_value_id}>
                       <tr className="align-top text-slate-700 dark:text-slate-200">
@@ -1698,7 +1823,16 @@ export default function EvidenceLibrary({
                           </div>
                         </td>
                         <td className="px-3 py-2 max-w-xs">
-                          <ReviewDispositionNote {...review} />
+                          <div className="space-y-2">
+                            <ReviewDispositionNote {...review} />
+                            {policyDecision && policyCandidate ? (
+                              <DefaultPolicyDispositionNote
+                                candidate={policyCandidate}
+                                decision={policyDecision}
+                                testId={`evidence-default-policy-value-${row.record.parameter_value_id}`}
+                              />
+                            ) : null}
+                          </div>
                         </td>
                         <td className="px-3 py-2 max-w-xs">{row.record.applicability}</td>
                         <td className="px-3 py-2 max-w-xs">{sourceLabels(row)}</td>

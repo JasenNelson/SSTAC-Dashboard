@@ -6,8 +6,12 @@ import {
   createEvidenceLibraryFilters,
 } from '@/lib/matrix-options/provenance/library';
 import type { EvidenceLibraryFilters } from '@/lib/matrix-options/provenance/types';
+import type { RegulatoryFrameId } from '@/lib/matrix-options/regulatoryFrames';
 
-function renderControlled(initialFilters = createEvidenceLibraryFilters()) {
+function renderControlled(
+  initialFilters = createEvidenceLibraryFilters(),
+  regulatoryFrameId: RegulatoryFrameId = 'bc-protocol1-v5-dra',
+) {
   let currentFilters: EvidenceLibraryFilters = initialFilters;
   const handleChange = vi.fn((nextFilters: EvidenceLibraryFilters) => {
     currentFilters = nextFilters;
@@ -15,11 +19,16 @@ function renderControlled(initialFilters = createEvidenceLibraryFilters()) {
       <EvidenceLibrary
         filters={currentFilters}
         onFiltersChange={handleChange}
+        regulatoryFrameId={regulatoryFrameId}
       />,
     );
   });
   const { rerender } = render(
-    <EvidenceLibrary filters={currentFilters} onFiltersChange={handleChange} />,
+    <EvidenceLibrary
+      filters={currentFilters}
+      onFiltersChange={handleChange}
+      regulatoryFrameId={regulatoryFrameId}
+    />,
   );
   return { handleChange };
 }
@@ -90,6 +99,68 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-equations')).toHaveTextContent(
       /Human Health Direct Contact sediment screen/,
     );
+  });
+
+  it('projects read-only default-selection policy decisions in grouped and value rows', () => {
+    renderControlled(
+      createEvidenceLibraryFilters({
+        pathways: ['human-health-food'],
+        substanceKeys: ['benzo_a_pyrene'],
+        inputKeys: ['sf_oral_per_mg_per_kg_bw_per_day'],
+      }),
+    );
+
+    const groupedView = screen.getByTestId('evidence-library-value-groups');
+    expect(groupedView).toHaveTextContent(
+      /Default policy: candidate pending approval/,
+    );
+    expect(
+      screen.getByTestId(
+        'evidence-default-policy-group-row-pv-hc-bap-hh-food-sf',
+      ),
+    ).toHaveTextContent(/Recommended candidate: approval required/);
+    expect(
+      screen.getByTestId(
+        'evidence-default-policy-group-row-pv-p28-bap-hh-food-slope',
+      ),
+    ).toHaveTextContent(/Blocked: policy compilation/);
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+
+    expect(
+      screen.getByTestId('evidence-default-policy-value-pv-hc-bap-hh-food-sf'),
+    ).toHaveTextContent(/Read-only recommendation only/);
+    expect(
+      screen.getByTestId(
+        'evidence-default-policy-value-pv-p28-bap-hh-food-slope',
+      ),
+    ).toHaveTextContent(/source-mining aids, not calculation-driving sources/);
+    expect(screen.getByTestId('references-values-tab')).not.toHaveTextContent(
+      /promoted default/i,
+    );
+  });
+
+  it('uses the selected regulatory frame when projecting default policy', () => {
+    renderControlled(
+      createEvidenceLibraryFilters({
+        pathways: ['human-health-food'],
+        substanceKeys: ['zinc'],
+        inputKeys: ['rfd_oral_mg_per_kg_bw_day'],
+      }),
+      'us-epa-usace-sediment',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+
+    expect(
+      screen.getByTestId('evidence-default-policy-value-pv-iris-zinc-hh-food-rfd'),
+    ).toHaveTextContent(/Recommended candidate: approval required/);
+    expect(
+      screen.getByTestId('evidence-default-policy-value-pv-hc-zinc-hh-food-ul-adult'),
+    ).toHaveTextContent(/Blocked: outside selected frame/);
+    expect(
+      screen.getByTestId('evidence-default-policy-value-pv-p28-zinc-hh-food-rfd'),
+    ).toHaveTextContent(/Blocked: policy compilation/);
   });
 
   it('shows named result counts for each References database view', () => {

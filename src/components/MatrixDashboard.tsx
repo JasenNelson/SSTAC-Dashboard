@@ -565,6 +565,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
             <EvidenceLibrary
               filters={evidenceLibraryFilters}
               onFiltersChange={setEvidenceLibraryFilters}
+              regulatoryFrameId={jurisdiction}
             />
           </div>
         );
