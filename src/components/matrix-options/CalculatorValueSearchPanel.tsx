@@ -32,6 +32,13 @@ import {
   regulatoryFrameEvidenceFilter,
   type RegulatoryFrameId,
 } from '@/lib/matrix-options/regulatoryFrames';
+import {
+  buildDefaultSelectionPolicyDecision,
+  type DefaultSelectionCandidate,
+  type DefaultSelectionCandidateDisposition,
+  type DefaultSelectionDecisionStatus,
+  type DefaultSelectionPolicyDecision,
+} from '@/lib/matrix-options/defaultSelectionPolicy';
 
 interface CalculatorValueSearchPanelProps {
   pathway: ProvenancePathway;
@@ -235,6 +242,110 @@ function StatusChip({ value, compact = false }: { value: string; compact?: boole
   );
 }
 
+function policyTone(disposition: DefaultSelectionCandidateDisposition): string {
+  if (disposition === 'eligible_pending_approval') {
+    return 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200';
+  }
+  if (disposition === 'active_current_default') {
+    return 'border-sky-200 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-200';
+  }
+  if (disposition === 'blocked_not_default') {
+    return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200';
+  }
+  return 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200';
+}
+
+function policyLabel(
+  candidate: DefaultSelectionCandidate,
+  decision: DefaultSelectionPolicyDecision,
+): string {
+  if (candidate.disposition === 'active_current_default') {
+    return 'Current default retained';
+  }
+  if (
+    decision.recommendedCandidate?.record.parameter_value_id ===
+    candidate.record.parameter_value_id
+  ) {
+    return 'Recommended candidate: approval required';
+  }
+  if (candidate.disposition === 'eligible_pending_approval') {
+    return 'Eligible alternative: approval required';
+  }
+  if (candidate.disposition === 'blocked_policy_compilation') {
+    return 'Blocked: policy compilation';
+  }
+  if (candidate.disposition === 'blocked_reference_mining') {
+    return 'Blocked: reference mining';
+  }
+  if (candidate.disposition === 'blocked_needs_direct_source') {
+    return 'Blocked: direct source check';
+  }
+  if (candidate.disposition === 'blocked_needs_qa') {
+    return 'Blocked: QA/currentness';
+  }
+  if (candidate.disposition === 'blocked_current_scaffold') {
+    return 'Blocked: calculator scaffold';
+  }
+  if (candidate.disposition === 'blocked_frame_jurisdiction') {
+    return 'Blocked: outside selected frame';
+  }
+  if (candidate.disposition === 'blocked_range_or_formula') {
+    return 'Blocked: range or formula';
+  }
+  if (candidate.disposition === 'blocked_pathway_unsupported') {
+    return 'Blocked: unsupported pathway';
+  }
+  return 'Not a default candidate';
+}
+
+function policyDetail(
+  candidate: DefaultSelectionCandidate,
+  decision: DefaultSelectionPolicyDecision,
+): string {
+  if (
+    decision.recommendedCandidate?.record.parameter_value_id ===
+    candidate.record.parameter_value_id
+  ) {
+    return 'Read-only recommendation only; no default or QA status changes are made.';
+  }
+  if (candidate.disposition === 'active_current_default') {
+    return 'The calculator keeps this current default until an approved change is applied.';
+  }
+  return candidate.rationale;
+}
+
+function defaultPolicySummary(
+  decisions: DefaultSelectionPolicyDecision[],
+): string {
+  const counts: Record<DefaultSelectionDecisionStatus, number> = {
+    candidate_pending_approval: 0,
+    manual_decision_required: 0,
+    keep_current_default_no_eligible_candidate: 0,
+    pathway_unsupported: 0,
+  };
+
+  for (const decision of decisions) {
+    counts[decision.status] += 1;
+  }
+
+  const parts = [
+    counts.candidate_pending_approval > 0
+      ? `${counts.candidate_pending_approval} pending approval`
+      : null,
+    counts.manual_decision_required > 0
+      ? `${counts.manual_decision_required} manual decision`
+      : null,
+    counts.keep_current_default_no_eligible_candidate > 0
+      ? `${counts.keep_current_default_no_eligible_candidate} keep current`
+      : null,
+    counts.pathway_unsupported > 0
+      ? `${counts.pathway_unsupported} unsupported`
+      : null,
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join(', ') : 'No default policy decisions';
+}
+
 function evidenceSummary(row: EvidenceLibraryValueRow): {
   label: string;
   detail: string;
@@ -397,6 +508,30 @@ export default function CalculatorValueSearchPanel({
 
   const queryText = query.trim().toLowerCase();
   const rows = useMemo(() => sortValueRows(library.values), [library.values]);
+  const defaultPolicyDecisions = useMemo(() => {
+    const decisions = new Map<string, DefaultSelectionPolicyDecision>();
+
+    for (const row of rows) {
+      const inputKey = row.record.input_key;
+      if (!decisions.has(inputKey)) {
+        decisions.set(
+          inputKey,
+          buildDefaultSelectionPolicyDecision({
+            frameId: regulatoryFrameId,
+            pathway,
+            substanceKey,
+            inputKey,
+          }),
+        );
+      }
+    }
+
+    return decisions;
+  }, [pathway, regulatoryFrameId, rows, substanceKey]);
+  const defaultPolicyAudit = useMemo(
+    () => defaultPolicySummary(Array.from(defaultPolicyDecisions.values())),
+    [defaultPolicyDecisions],
+  );
   const filteredRows = useMemo(
     () =>
       queryText
@@ -489,6 +624,17 @@ export default function CalculatorValueSearchPanel({
             {qualitySummary}
           </span>
         </div>
+        <div
+          className="flex items-center justify-between gap-3 border-b border-slate-200 py-2 text-xs dark:border-slate-800"
+          data-testid="calculator-default-policy-audit"
+        >
+          <span className="font-semibold text-slate-700 dark:text-slate-200">
+            Default policy
+          </span>
+          <span className="truncate text-slate-500 dark:text-slate-400">
+            {defaultPolicyAudit}
+          </span>
+        </div>
         <p
           className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400"
           data-testid="calculator-value-search-guidance"
@@ -572,6 +718,14 @@ export default function CalculatorValueSearchPanel({
           {visibleRows.map((row) => {
             const support = evidenceSummary(row);
             const extractedAt = extractionDateLabel(row);
+            const policyDecision = defaultPolicyDecisions.get(
+              row.record.input_key,
+            );
+            const policyCandidate = policyDecision?.candidates.find(
+              (candidate) =>
+                candidate.record.parameter_value_id ===
+                row.record.parameter_value_id,
+            );
             return (
             <article
               key={row.record.parameter_value_id}
@@ -594,6 +748,22 @@ export default function CalculatorValueSearchPanel({
                 <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                   {support.detail}
                 </p>
+                {policyDecision && policyCandidate ? (
+                  <div
+                    className={cn(
+                      'mt-2 rounded-md border px-2.5 py-2 text-xs leading-relaxed',
+                      policyTone(policyCandidate.disposition),
+                    )}
+                    data-testid={`default-policy-${row.record.parameter_value_id}`}
+                  >
+                    <div className="font-semibold">
+                      {policyLabel(policyCandidate, policyDecision)}
+                    </div>
+                    <div className="mt-0.5">
+                      {policyDetail(policyCandidate, policyDecision)}
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <div className="mt-2 flex flex-wrap gap-1.5">
