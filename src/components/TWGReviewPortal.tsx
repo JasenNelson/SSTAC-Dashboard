@@ -230,12 +230,14 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         <div className="p-6 overflow-y-auto flex-1">
           <ul className="space-y-3">
             {headings.map((h) => (
-              <li
-                key={h.storageKey}
-                onClick={() => scrollToHeading(h.idx)}
-                className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer transition-colors"
-              >
-                {h.displayLabel}
+              <li key={h.storageKey}>
+                <button
+                  type="button"
+                  onClick={() => scrollToHeading(h.idx)}
+                  className="w-full text-left text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:rounded"
+                >
+                  {h.displayLabel}
+                </button>
               </li>
             ))}
           </ul>
