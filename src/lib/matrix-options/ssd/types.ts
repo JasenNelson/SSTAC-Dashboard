@@ -44,6 +44,12 @@ export interface RawEcotoxRecord {
   media_type?: string | null;
   endpoint?: string | null;
   reference_number?: string | number | null;
+  reference_db?: string | number | null;
+  original_source?: string | number | null;
+  source?: string | number | null;
+  source_url?: string | number | null;
+  doi?: string | number | null;
+  title?: string | number | null;
   test_id?: string | number | null;
 }
 

@@ -2,7 +2,7 @@ import type { RawEcotoxRecord } from './types';
 
 type UploadField = keyof RawEcotoxRecord;
 
-const HEADER_ALIASES: Record<UploadField, string[]> = {
+const HEADER_ALIASES: Partial<Record<UploadField, string[]>> = {
   chemical_name: [
     'chemical_name',
     'chemical',

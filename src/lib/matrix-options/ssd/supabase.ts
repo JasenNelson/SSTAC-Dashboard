@@ -8,15 +8,35 @@ import type {
 import { mediumToCode } from './cleaning';
 
 export const ECOTOX_TABLE_NAME = 'toxicology_data';
-export const ECOTOX_REQUIRED_COLUMNS = [
+export const ECOTOX_OPERATIONAL_COLUMNS = [
   'chemical_name',
   'species_scientific_name',
   'conc1_mean',
   'species_group',
   'media_type',
   'endpoint',
-  'reference_number',
   'test_id',
+] as const;
+export const ECOTOX_REFERENCE_NUMBER_COLUMN = 'reference_number';
+export const ECOTOX_REFERENCE_FALLBACK_COLUMNS = [
+  'reference_db',
+  'original_source',
+  'source',
+  'source_url',
+  'doi',
+  'title',
+] as const;
+export const ECOTOX_PREFERRED_SELECT_COLUMNS = [
+  ...ECOTOX_OPERATIONAL_COLUMNS,
+  'reference_number',
+] as const;
+export const ECOTOX_FALLBACK_SELECT_COLUMNS = [
+  ...ECOTOX_OPERATIONAL_COLUMNS,
+  ...ECOTOX_REFERENCE_FALLBACK_COLUMNS,
+] as const;
+export const ECOTOX_REQUIRED_COLUMNS = [
+  ...ECOTOX_OPERATIONAL_COLUMNS,
+  'reference_number_or_reference_metadata',
 ] as const;
 
 export const ECOTOX_SEARCH_LIMIT = 50;
@@ -238,14 +258,32 @@ export function buildEcotoxMirrorHealth(
 export async function checkEcotoxMirrorHealth(
   client: SupabaseClient,
 ): Promise<EcotoxMirrorHealth> {
-  const response = await client
+  const preferredResponse = await client
     .from(ECOTOX_TABLE_NAME)
-    .select(ECOTOX_REQUIRED_COLUMNS.join(','), {
+    .select(ECOTOX_PREFERRED_SELECT_COLUMNS.join(','), {
       count: 'exact',
       head: true,
     });
-  if (response.error) throw response.error;
-  return buildEcotoxMirrorHealth(response.count ?? null);
+  if (!preferredResponse.error) {
+    return buildEcotoxMirrorHealth(preferredResponse.count ?? null);
+  }
+  if (
+    !shouldTryReferenceFallback(
+      preferredResponse.error,
+      preferredResponse.status,
+    )
+  ) {
+    throw preferredResponse.error;
+  }
+
+  const fallbackResponse = await client
+    .from(ECOTOX_TABLE_NAME)
+    .select(ECOTOX_FALLBACK_SELECT_COLUMNS.join(','), {
+      count: 'exact',
+      head: true,
+    });
+  if (fallbackResponse.error) throw fallbackResponse.error;
+  return buildEcotoxMirrorHealth(fallbackResponse.count ?? null);
 }
 
 function mediaTypeFilterExpression(
@@ -311,37 +349,54 @@ export async function fetchEcotoxRows(
   const rows: RawEcotoxRecord[] = [];
   let page = 0;
   let truncated = false;
+  let useReferenceFallbackColumns = false;
 
   while (rows.length < maxRows) {
     const start = page * ECOTOX_PAGE_SIZE;
     const remaining = maxRows - rows.length;
     const pageSize = Math.min(ECOTOX_PAGE_SIZE, remaining);
     const end = start + pageSize - 1;
-    let query = client
-      .from(ECOTOX_TABLE_NAME)
-      .select(ECOTOX_REQUIRED_COLUMNS.join(','))
-      .in('chemical_name', chemicalNames)
-      .range(start, end);
-
-    const mediaExpression = mediaTypeFilterExpression(request.mediaFilter);
-    if (request.mediaFilter === 'water' && request.medium) {
-      query = query.eq('media_type', mediumToCode(request.medium));
-    } else if (mediaExpression) {
-      query = query.or(mediaExpression);
-    } else if (request.medium) {
-      query = query.eq('media_type', mediumToCode(request.medium));
-    }
-
-    const endpointExpression = endpointFilterExpression(
-      request.endpointFilters ?? [],
+    const response = await executeEcotoxPageQuery(
+      client,
+      request,
+      chemicalNames,
+      start,
+      end,
+      useReferenceFallbackColumns
+        ? ECOTOX_FALLBACK_SELECT_COLUMNS
+        : ECOTOX_PREFERRED_SELECT_COLUMNS,
     );
-    if (endpointExpression) {
-      query = query.or(endpointExpression);
+
+    if (
+      response.error &&
+      !useReferenceFallbackColumns &&
+      shouldTryReferenceFallback(response.error, response.status)
+    ) {
+      useReferenceFallbackColumns = true;
+      const fallbackResponse = await executeEcotoxPageQuery(
+        client,
+        request,
+        chemicalNames,
+        start,
+        end,
+        ECOTOX_FALLBACK_SELECT_COLUMNS,
+      );
+      if (fallbackResponse.error) throw fallbackResponse.error;
+      const pageRows = deriveReferenceNumbers(
+        (fallbackResponse.data ?? []) as unknown as RawEcotoxRecord[],
+      );
+      rows.push(...pageRows);
+
+      if (pageRows.length < pageSize) break;
+      if (rows.length >= maxRows) truncated = true;
+      page += 1;
+      continue;
     }
 
-    const response = await query;
     if (response.error) throw response.error;
-    const pageRows = (response.data ?? []) as unknown as RawEcotoxRecord[];
+    const pageRows = deriveReferenceNumbers(
+      (response.data ?? []) as unknown as RawEcotoxRecord[],
+    );
     rows.push(...pageRows);
 
     if (pageRows.length < pageSize) break;
@@ -350,4 +405,85 @@ export async function fetchEcotoxRows(
   }
 
   return { rows, truncated };
+}
+
+function shouldTryReferenceFallback(
+  error: unknown,
+  status?: number,
+): boolean {
+  if (status === 400 && isBlankSupabaseHeadError(error)) {
+    return true;
+  }
+  return isMissingReferenceNumberError(error);
+}
+
+function isBlankSupabaseHeadError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { message?: unknown };
+  return candidate.message === '';
+}
+
+function isMissingReferenceNumberError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { code?: unknown; message?: unknown };
+  const code = typeof candidate.code === 'string' ? candidate.code : '';
+  const message =
+    typeof candidate.message === 'string' ? candidate.message.toLowerCase() : '';
+  return (
+    (code === '42703' || message.includes('does not exist')) &&
+    message.includes(ECOTOX_REFERENCE_NUMBER_COLUMN)
+  );
+}
+
+function firstReferenceValue(row: RawEcotoxRecord): string | number | null {
+  return (
+    row.reference_number ??
+    row.reference_db ??
+    row.original_source ??
+    row.doi ??
+    row.source ??
+    row.source_url ??
+    row.title ??
+    null
+  );
+}
+
+function deriveReferenceNumbers(rows: RawEcotoxRecord[]): RawEcotoxRecord[] {
+  return rows.map((row) => ({
+    ...row,
+    reference_number: firstReferenceValue(row),
+  }));
+}
+
+function executeEcotoxPageQuery(
+  client: SupabaseClient,
+  request: EcotoxFetchRequest,
+  chemicalNames: string[],
+  start: number,
+  end: number,
+  columns: readonly string[],
+) {
+  let query = client
+    .from(ECOTOX_TABLE_NAME)
+    .select(columns.join(','))
+    .in('chemical_name', chemicalNames)
+    .range(start, end);
+
+  const mediaExpression = mediaTypeFilterExpression(request.mediaFilter);
+  if (request.mediaFilter === 'water' && request.medium) {
+    query = query.eq('media_type', mediumToCode(request.medium));
+  } else if (mediaExpression) {
+    query = query.or(mediaExpression);
+  } else if (request.medium) {
+    query = query.eq('media_type', mediumToCode(request.medium));
+  }
+
+  const endpointExpression = endpointFilterExpression(
+    request.endpointFilters ?? [],
+  );
+  if (endpointExpression) {
+    query = query.or(endpointExpression);
+  }
+
+  return query;
 }

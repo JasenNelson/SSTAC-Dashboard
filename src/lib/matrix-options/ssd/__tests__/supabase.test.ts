@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ECOTOX_FALLBACK_SELECT_COLUMNS,
   ECOTOX_MAX_FETCH_ROWS,
   ECOTOX_PAGE_SIZE,
+  ECOTOX_PREFERRED_SELECT_COLUMNS,
   ECOTOX_REQUIRED_COLUMNS,
   ECOTOX_SEARCH_LIMIT,
   ECOTOX_TABLE_NAME,
@@ -90,6 +92,45 @@ function createHealthClient(count: number | null, error: unknown = null) {
   };
 }
 
+function createHealthFallbackClient() {
+  const calls: QueryCall[] = [];
+  const responses = [
+    {
+      data: null,
+      count: null,
+      error: {
+        code: '42703',
+        message: 'column toxicology_data.reference_number does not exist',
+      },
+    },
+    {
+      data: null,
+      count: 582125,
+      error: null,
+    },
+  ];
+
+  return {
+    calls,
+    client: {
+      from(table: string) {
+        const call: QueryCall = { table };
+        calls.push(call);
+        return {
+          select(
+            columns: string,
+            options?: { count?: string; head?: boolean },
+          ) {
+            call.select = columns;
+            call.selectOptions = options;
+            return Promise.resolve(responses.shift());
+          },
+        };
+      },
+    },
+  };
+}
+
 function createFetchClient(pages: RawEcotoxRecord[][]) {
   const calls: QueryCall[] = [];
   const responses = [...pages];
@@ -129,6 +170,81 @@ function createFetchClient(pages: RawEcotoxRecord[][]) {
               data: responses.shift() ?? [],
               error: null,
             }).then(resolve, reject);
+          },
+        };
+        return query;
+      },
+    },
+  };
+}
+
+function createReferenceFallbackFetchClient() {
+  const calls: QueryCall[] = [];
+  const responses: Array<{
+    data: RawEcotoxRecord[] | null;
+    error: unknown;
+  }> = [
+    {
+      data: null,
+      error: {
+        code: '42703',
+        message: 'column toxicology_data.reference_number does not exist',
+      },
+    },
+    {
+      data: [
+        {
+          chemical_name: 'Copper',
+          species_scientific_name: 'Species 1',
+          conc1_mean: 0.01,
+          species_group: 'Fish',
+          media_type: 'FW',
+          endpoint: 'Mortality',
+          reference_db: 'ECOTOX-123',
+          test_id: 'T-1',
+        },
+      ],
+      error: null,
+    },
+  ];
+
+  return {
+    calls,
+    client: {
+      from(table: string) {
+        const call: QueryCall = { table };
+        calls.push(call);
+        const query = {
+          select(columns: string) {
+            call.select = columns;
+            return this;
+          },
+          in(column: string, values: string[]) {
+            call.in = { column, values };
+            return this;
+          },
+          range(start: number, end: number) {
+            call.range = { start, end };
+            return this;
+          },
+          eq(column: string, value: string) {
+            call.eq = { column, value };
+            return this;
+          },
+          or(expression: string) {
+            call.or = [...(call.or ?? []), expression];
+            return this;
+          },
+          then(
+            resolve: (value: {
+              data: RawEcotoxRecord[] | null;
+              error: unknown;
+            }) => unknown,
+            reject?: (reason: unknown) => unknown,
+          ) {
+            return Promise.resolve(
+              responses.shift() ?? { data: [], error: null },
+            ).then(resolve, reject);
           },
         };
         return query;
@@ -221,7 +337,28 @@ describe('SSD ECOTOX Supabase query shaping', () => {
     expect(calls).toEqual([
       {
         table: ECOTOX_TABLE_NAME,
-        select: ECOTOX_REQUIRED_COLUMNS.join(','),
+        select: ECOTOX_PREFERRED_SELECT_COLUMNS.join(','),
+        selectOptions: { count: 'exact', head: true },
+      },
+    ]);
+  });
+
+  it('checks mirror health using reference metadata fallback when reference_number is absent', async () => {
+    const { client, calls } = createHealthFallbackClient();
+
+    const health = await checkEcotoxMirrorHealth(client as never);
+
+    expect(health.readable).toBe(true);
+    expect(health.rowCount).toBe(582125);
+    expect(calls).toEqual([
+      {
+        table: ECOTOX_TABLE_NAME,
+        select: ECOTOX_PREFERRED_SELECT_COLUMNS.join(','),
+        selectOptions: { count: 'exact', head: true },
+      },
+      {
+        table: ECOTOX_TABLE_NAME,
+        select: ECOTOX_FALLBACK_SELECT_COLUMNS.join(','),
         selectOptions: { count: 'exact', head: true },
       },
     ]);
@@ -313,7 +450,7 @@ describe('SSD ECOTOX Supabase query shaping', () => {
     expect(result.rows).toHaveLength(ECOTOX_PAGE_SIZE + 1);
     expect(calls[0]).toMatchObject({
       table: ECOTOX_TABLE_NAME,
-      select: ECOTOX_REQUIRED_COLUMNS.join(','),
+      select: ECOTOX_PREFERRED_SELECT_COLUMNS.join(','),
       in: { column: 'chemical_name', values: ['Copper'] },
       range: { start: 0, end: ECOTOX_PAGE_SIZE - 1 },
       eq: { column: 'media_type', value: 'FW' },
@@ -372,13 +509,34 @@ describe('SSD ECOTOX Supabase query shaping', () => {
 
     expect(calls[0]).toMatchObject({
       table: ECOTOX_TABLE_NAME,
-      select: ECOTOX_REQUIRED_COLUMNS.join(','),
+      select: ECOTOX_PREFERRED_SELECT_COLUMNS.join(','),
       in: { column: 'chemical_name', values: ['Copper'] },
       range: { start: 0, end: 24 },
     });
     expect(calls[0].or).toEqual([
       'media_type.eq.SD,media_type.ilike.%sed%,media_type.ilike.%solid%',
       'endpoint.ilike.%Mortality%,endpoint.ilike.%Growth Response%',
+    ]);
+  });
+
+  it('derives reference_number from fallback metadata when the mirror omits the legacy column', async () => {
+    const { client, calls } = createReferenceFallbackFetchClient();
+
+    const result = await fetchEcotoxRows(client as never, {
+      chemicalNames: ['Copper'],
+      maxRows: 25,
+    });
+
+    expect(result.rows).toEqual([
+      expect.objectContaining({
+        chemical_name: 'Copper',
+        reference_db: 'ECOTOX-123',
+        reference_number: 'ECOTOX-123',
+      }),
+    ]);
+    expect(calls.map((call) => call.select)).toEqual([
+      ECOTOX_PREFERRED_SELECT_COLUMNS.join(','),
+      ECOTOX_FALLBACK_SELECT_COLUMNS.join(','),
     ]);
   });
 });
