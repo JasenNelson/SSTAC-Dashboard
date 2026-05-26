@@ -1,0 +1,155 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  DEFAULT_SELECTION_READ_ONLY_INVARIANTS,
+  buildDefaultSelectionPolicyDecision,
+  type DefaultSelectionPolicyDecision,
+} from '../defaultSelectionPolicy';
+import { PARAMETER_VALUE_RECORDS } from '../provenance/catalog';
+
+function candidate(
+  decision: DefaultSelectionPolicyDecision,
+  parameterValueId: string,
+) {
+  const match = decision.candidates.find(
+    (item) => item.record.parameter_value_id === parameterValueId,
+  );
+  expect(match, parameterValueId).toBeDefined();
+  return match!;
+}
+
+function statusSnapshot(parameterValueIds: string[]) {
+  return parameterValueIds.map((parameterValueId) => {
+    const record = PARAMETER_VALUE_RECORDS.find(
+      (item) => item.parameter_value_id === parameterValueId,
+    );
+    expect(record, parameterValueId).toBeDefined();
+    return {
+      parameter_value_id: parameterValueId,
+      default_status: record!.default_status,
+      evidence_support_status: record!.evidence_support_status,
+      qa_status: record!.qa_status,
+      canonical_source_status: record!.canonical_source_status ?? null,
+    };
+  });
+}
+
+describe('matrix options default selection policy', () => {
+  it('prefers Health Canada direct-source candidates in the BC frame without promoting them', () => {
+    const decision = buildDefaultSelectionPolicyDecision({
+      frameId: 'bc-protocol1-v5-dra',
+      pathway: 'human-health-food',
+      substanceKey: 'benzo_a_pyrene',
+      inputKey: 'sf_oral_per_mg_per_kg_bw_per_day',
+    });
+
+    expect(decision.status).toBe('candidate_pending_approval');
+    expect(decision.readOnlyInvariants).toEqual(
+      DEFAULT_SELECTION_READ_ONLY_INVARIANTS,
+    );
+    expect(decision.activeCurrentDefault?.record.parameter_value_id).toBe(
+      'pv-bap-hh-food-slope',
+    );
+    expect(decision.recommendedCandidate?.record.parameter_value_id).toBe(
+      'pv-hc-bap-hh-food-sf',
+    );
+    expect(decision.recommendedCandidate?.record.default_status).toBe(
+      'available_option',
+    );
+    expect(decision.rationale).toMatch(/remains read-only/i);
+
+    const healthCanada = candidate(decision, 'pv-hc-bap-hh-food-sf');
+    const iris = candidate(decision, 'pv-iris-bap-hh-food-sf');
+    const protocol28 = candidate(decision, 'pv-p28-bap-hh-food-slope');
+
+    expect(healthCanada.disposition).toBe('eligible_pending_approval');
+    expect(iris.disposition).toBe('eligible_pending_approval');
+    expect(healthCanada.hierarchyRank).toBeLessThan(iris.hierarchyRank!);
+    expect(protocol28.disposition).toBe('blocked_policy_compilation');
+    expect(protocol28.canBecomeDefaultWithApproval).toBe(false);
+  });
+
+  it('uses the verified IRIS zinc value rather than the matching Protocol 28 lead in the US frame', () => {
+    const decision = buildDefaultSelectionPolicyDecision({
+      frameId: 'us-epa-usace-sediment',
+      pathway: 'human-health-food',
+      substanceKey: 'zinc',
+      inputKey: 'rfd_oral_mg_per_kg_bw_day',
+    });
+
+    expect(decision.status).toBe('candidate_pending_approval');
+    expect(decision.activeCurrentDefault?.record.parameter_value_id).toBe(
+      'pv-zinc-hh-food-rfd',
+    );
+    expect(decision.recommendedCandidate?.record.parameter_value_id).toBe(
+      'pv-iris-zinc-hh-food-rfd',
+    );
+    expect(decision.recommendedCandidate?.record.value).toBe(0.3);
+    expect(decision.recommendedCandidate?.record.default_status).toBe(
+      'available_option',
+    );
+
+    const protocol28 = candidate(decision, 'pv-p28-zinc-hh-food-rfd');
+    const healthCanada = candidate(decision, 'pv-hc-zinc-hh-food-ul-adult');
+
+    expect(protocol28.record.value).toBe(0.3);
+    expect(protocol28.disposition).toBe('blocked_policy_compilation');
+    expect(protocol28.canBecomeDefaultWithApproval).toBe(false);
+    expect(healthCanada.disposition).toBe('blocked_frame_jurisdiction');
+  });
+
+  it('requires a manual decision when a frame has multiple top-ranked direct-source values', () => {
+    const decision = buildDefaultSelectionPolicyDecision({
+      frameId: 'us-epa-usace-sediment',
+      pathway: 'human-health-food',
+      substanceKey: 'benzo_a_pyrene',
+      inputKey: 'rfd_oral_mg_per_kg_bw_day',
+    });
+
+    expect(decision.status).toBe('manual_decision_required');
+    expect(decision.recommendedCandidate).toBeNull();
+    expect(decision.rationale).toMatch(/Multiple top-ranked/i);
+    expect(
+      decision.eligibleCandidates
+        .map((item) => item.record.parameter_value_id)
+        .sort(),
+    ).toEqual([
+      'pv-iris-bap-hh-food-rfd-immune',
+      'pv-iris-bap-hh-food-rfd-neuro',
+      'pv-iris-bap-hh-food-rfd-repro',
+    ]);
+    expect(candidate(decision, 'pv-hc-bap-hh-food-rfd-tdi').disposition).toBe(
+      'blocked_frame_jurisdiction',
+    );
+    expect(candidate(decision, 'pv-bap-hh-food-rfd').disposition).toBe(
+      'blocked_not_default',
+    );
+  });
+
+  it('does not mutate catalog default, evidence, QA, or canonical-source status', () => {
+    const watchedIds = [
+      'pv-pcb-hh-food-rfd',
+      'pv-p28-pcb-hh-food-rfd',
+      'pv-hc-pcb-hh-food-rfd-nondioxin',
+      'pv-iris-pcb-hh-food-rfd-aroclor1254',
+    ];
+    const before = statusSnapshot(watchedIds);
+
+    const decision = buildDefaultSelectionPolicyDecision({
+      frameId: 'bc-protocol1-v5-dra',
+      pathway: 'human-health-food',
+      substanceKey: 'total_pcbs_aroclor_1254',
+      inputKey: 'rfd_oral_mg_per_kg_bw_day',
+    });
+
+    expect(decision.readOnlyInvariants).toEqual({
+      mutatesCatalog: false,
+      promotesDefault: false,
+      promotesQa: false,
+    });
+    expect(decision.recommendedCandidate?.record.parameter_value_id).toBe(
+      'pv-hc-pcb-hh-food-rfd-nondioxin',
+    );
+    expect(statusSnapshot(watchedIds)).toEqual(before);
+  });
+});
