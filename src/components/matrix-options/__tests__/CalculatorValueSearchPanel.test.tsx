@@ -71,5 +71,15 @@ describe('CalculatorValueSearchPanel default policy projection', () => {
     expect(screen.getByTestId('calculator-value-search-panel')).not.toHaveTextContent(
       /promoted/i,
     );
+
+    expect(
+      screen.getByRole('button', { name: /Re-review candidate defaults/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('calculator-candidate-review-receipt'),
+    ).toHaveTextContent(/opened for review/);
+    expect(
+      screen.getByTestId('calculator-candidate-review-receipt'),
+    ).toHaveTextContent(/No defaults changed/);
   });
 });

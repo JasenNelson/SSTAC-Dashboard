@@ -523,7 +523,11 @@ export default function CalculatorValueSearchPanel({
     });
   };
 
+  const [candidateReviewedAt, setCandidateReviewedAt] = useState<string | null>(
+    null,
+  );
   const openDefaultPolicyCandidates = () => {
+    setCandidateReviewedAt(new Date().toLocaleTimeString());
     onOpenEvidenceLibrary({
       pathways: [pathway],
       substanceKeys: [substanceKey],
@@ -588,14 +592,28 @@ export default function CalculatorValueSearchPanel({
             </span>
           </div>
           {defaultPolicyCandidateInputKeys.length > 0 && (
-            <button
-              type="button"
-              onClick={openDefaultPolicyCandidates}
-              className="flex min-h-8 w-full items-center justify-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-2 text-xs font-semibold text-sky-800 hover:border-sky-300 hover:bg-white dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200 dark:hover:border-sky-600"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              Review candidate defaults
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={openDefaultPolicyCandidates}
+                className="flex min-h-8 w-full items-center justify-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-2 text-xs font-semibold text-sky-800 hover:border-sky-300 hover:bg-white dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200 dark:hover:border-sky-600"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                {candidateReviewedAt
+                  ? 'Re-review candidate defaults'
+                  : 'Review candidate defaults'}
+              </button>
+              {candidateReviewedAt && (
+                <p
+                  className="mt-1 text-[10px] text-slate-500 dark:text-slate-400"
+                  data-testid="calculator-candidate-review-receipt"
+                >
+                  <CheckCircle2 className="mr-1 inline-block h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  {defaultPolicyCandidateInputKeys.length} candidate{defaultPolicyCandidateInputKeys.length === 1 ? '' : 's'} opened
+                  for review at {candidateReviewedAt}. No defaults changed.
+                </p>
+              )}
+            </>
           )}
         </div>
         <p
