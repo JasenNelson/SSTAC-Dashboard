@@ -48,4 +48,26 @@ test.describe('Matrix Options default-policy review shortcuts', () => {
     await expect(page.locator('body')).not.toContainText('Promote default');
     await expect(page.locator('body')).not.toContainText('Approve default');
   });
+
+  test('filters References by candidate defaults without promotion language', async ({
+    page,
+  }) => {
+    await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(3000);
+
+    await clickUntilVisible(page, 'References & Values', 'references-values-tab');
+
+    const candidateDefaultsButton = page.getByRole('button', {
+      name: /Candidate defaults/i,
+    });
+    await expect(candidateDefaultsButton).toBeVisible();
+    await candidateDefaultsButton.click();
+
+    await expect(candidateDefaultsButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('evidence-library-values')).toBeVisible();
+    await expect(page.locator('body')).toContainText('Evidence: approved source-backed');
+    await expect(page.locator('body')).toContainText('Default: available option');
+    await expect(page.locator('body')).not.toContainText('Promote default');
+    await expect(page.locator('body')).not.toContainText('Approve default');
+  });
 });
