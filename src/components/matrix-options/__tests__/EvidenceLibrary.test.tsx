@@ -439,6 +439,37 @@ describe('EvidenceLibrary', () => {
     ).toHaveAttribute('aria-pressed', 'false');
   });
 
+  it('shows candidate defaults saved review view as read-only filter with no promotion', () => {
+    renderControlled();
+
+    const candidateDefaultsButton = screen.getByRole('button', {
+      name: /Candidate defaults: Eligible candidates/i,
+    });
+
+    expect(candidateDefaultsButton).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(candidateDefaultsButton);
+
+    expect(
+      screen.getByRole('button', {
+        name: /Candidate defaults: Eligible candidates/i,
+      }),
+    ).toHaveAttribute('aria-pressed', 'true');
+
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Approved alternative/,
+    );
+    expect(screen.getByText(/Evidence: approved source-backed/i)).toBeInTheDocument();
+    expect(screen.getByText(/Default: available option/i)).toBeInTheDocument();
+
+    expect(
+      screen.getByText(/do not promote calculator defaults/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^Promote$|^Set as default$|^Make default$/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it('uses audit strip counts as read-only database shortcuts', () => {
     renderControlled();
 

@@ -120,6 +120,15 @@ const QUICK_REVIEW_FILTERS: Array<{
   request: EvidenceLibraryFilterRequest;
 }> = [
   {
+    label: 'Candidate defaults',
+    description: 'Eligible candidates pending default review and approval.',
+    viewMode: 'values',
+    request: {
+      evidenceSupportStatuses: ['approved_source_backed'],
+      defaultStatuses: ['available_option'],
+    },
+  },
+  {
     label: 'Protocol 28',
     description: 'Policy compilation; original source check required.',
     viewMode: 'values',
