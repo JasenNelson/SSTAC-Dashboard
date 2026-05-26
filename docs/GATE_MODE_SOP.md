@@ -98,13 +98,14 @@ gh run list --branch <branch> --limit 5
 
 ## 3. Gate Mode: Compact Variant
 
-For micro-commits (pure type fixes, metadata-only changes, documentation-only changes):
+The compact variant applies to COMMIT PROTOCOL ONLY for micro-commits (pure type fixes, metadata-only changes, documentation-only changes):
 
 - Run: lint + focused test + build only.
-- Skip full e2e unless the change touches UI components or test infrastructure.
 - Still requires `/codex-review` targeted loop before staging (section 6). No exceptions.
 
-The compact variant does not apply when the diff touches component logic, API routes, database queries, or test files.
+PUSH PROTOCOL IS NEVER COMPACT. The full 4-gate suite (lint + unit + build + e2e) runs before every push per L0 CLAUDE.md rule 1.3, even for one-line fixups. The compact variant does not override Push protocol.
+
+The compact variant does not apply to commit protocol when the diff touches component logic, API routes, database queries, or test files.
 
 ---
 
@@ -262,11 +263,17 @@ npm run build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10
 
 This command:
 - Quarantines the `.next/` directory before the build to avoid Access Denied failures on stale artifacts.
-- Writes logs with timestamps to `.tmp/gate-logs/`.
+- Writes detailed build logs to `.tmp/build-monitor/` (the script default). Gate Mode captures the wrapper stdout/stderr separately to `.tmp/gate-logs/`.
 - Times out at 360 seconds with process-tree cleanup so no build process escapes as an orphan.
 - Reports GREEN or RED with a log path that Gate Mode can include in the compact status report.
 
 Raw `npm run build` does not provide the quarantine step or timeout protection. Do not substitute it.
+
+---
+
+## Registration
+
+This SOP is not yet registered in docs/INDEX.md or docs/_meta/docs-manifest.json because this repo does not yet have a CLAUDE.md or canonical docs index (marked "TO AUTHOR" in L0 routing table). When the SSTAC-Dashboard CLAUDE.md is authored, this SOP should be cross-referenced there as the gate-discipline authority.
 
 ---
 
