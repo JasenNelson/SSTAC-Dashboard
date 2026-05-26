@@ -1791,7 +1791,7 @@ export default function SsdWorkbench({
                           tickFormatter={(value: number) => `${value}%`}
                         />
                         <Tooltip
-                          formatter={(value: unknown, name: string) => {
+                          formatter={(value: unknown, name?: string | number) => {
                             const numericValue =
                               typeof value === 'number' ? value : Number(value);
                             return [
