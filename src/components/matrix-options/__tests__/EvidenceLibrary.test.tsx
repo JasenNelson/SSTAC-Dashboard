@@ -140,6 +140,30 @@ describe('EvidenceLibrary', () => {
     );
   });
 
+  it('summarizes runtime default-policy decisions without promotion', () => {
+    renderControlled(
+      createEvidenceLibraryFilters({
+        pathways: ['human-health-food'],
+        substanceKeys: ['benzo_a_pyrene'],
+        inputKeys: ['sf_oral_per_mg_per_kg_bw_per_day'],
+      }),
+    );
+
+    const audit = screen.getByTestId('evidence-library-default-policy-audit');
+    expect(audit).toHaveTextContent(/Default Policy Audit/);
+    expect(audit).toHaveTextContent(/1 policy decision/);
+    expect(
+      screen.getByTestId('default-policy-audit-candidate_pending_approval'),
+    ).toHaveTextContent(/1/);
+    expect(
+      screen.getByTestId('default-policy-audit-manual_decision_required'),
+    ).toHaveTextContent(/0/);
+    expect(audit).toHaveTextContent(
+      /No catalog default, QA, or source-status changes are made here/,
+    );
+    expect(audit).not.toHaveTextContent(/promoted default/i);
+  });
+
   it('uses the selected regulatory frame when projecting default policy', () => {
     renderControlled(
       createEvidenceLibraryFilters({
