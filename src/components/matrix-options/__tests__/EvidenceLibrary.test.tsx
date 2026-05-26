@@ -164,6 +164,48 @@ describe('EvidenceLibrary', () => {
     expect(audit).not.toHaveTextContent(/promoted default/i);
   });
 
+  it('uses default-policy audit cards as runtime review shortcuts', () => {
+    renderControlled();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Show Candidate pending approval/i }),
+    );
+
+    expect(
+      screen.getByRole('button', { name: /Show Candidate pending approval/i }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByText(/Default policy: Candidate pending approval/),
+    ).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
+      /Default policy: candidate pending approval/,
+    );
+    expect(screen.getByTestId('evidence-library-value-groups')).not.toHaveTextContent(
+      /Default policy: keep current default/,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Recommended candidate: approval required/,
+    );
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Blocked: policy compilation/,
+    );
+    expect(screen.getByTestId('references-values-tab')).not.toHaveTextContent(
+      /promoted default/i,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
+
+    expect(
+      screen.getByRole('button', { name: /Show Candidate pending approval/i }),
+    ).toHaveAttribute('aria-pressed', 'false');
+    expect(
+      screen.queryByText(/Default policy: Candidate pending approval/),
+    ).not.toBeInTheDocument();
+  });
+
   it('uses the selected regulatory frame when projecting default policy', () => {
     renderControlled(
       createEvidenceLibraryFilters({

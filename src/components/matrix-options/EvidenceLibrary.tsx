@@ -587,6 +587,13 @@ function buildDefaultPolicyAuditItems(
   }));
 }
 
+function decisionMatchesDefaultPolicyStatus(
+  decision: DefaultSelectionPolicyDecision | null,
+  status: DefaultSelectionDecisionStatus | null,
+): boolean {
+  return status === null || decision?.status === status;
+}
+
 function activeFilterLabels(filters: EvidenceLibraryFilters): string[] {
   const labels: string[] = [];
   if (filters.search.trim()) labels.push(`search: ${filters.search.trim()}`);
@@ -719,8 +726,12 @@ function AuditStrip({
 
 function DefaultPolicyAuditPanel({
   decisions,
+  activeStatus,
+  onSelectStatus,
 }: {
   decisions: Map<string, DefaultSelectionPolicyDecision>;
+  activeStatus: DefaultSelectionDecisionStatus | null;
+  onSelectStatus: (status: DefaultSelectionDecisionStatus | null) => void;
 }) {
   const items = buildDefaultPolicyAuditItems(decisions);
   const total = items.reduce((sum, item) => sum + item.value, 0);
@@ -746,23 +757,42 @@ function DefaultPolicyAuditPanel({
         </span>
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-        {items.map((item) => (
-          <div
-            key={item.status}
-            className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900"
-            data-testid={`default-policy-audit-${item.status}`}
-          >
-            <div className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">
-              {item.label}
-            </div>
-            <div className="mt-1 text-2xl font-bold text-slate-950 dark:text-white">
-              {item.value}
-            </div>
-            <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-              {item.note}
-            </div>
-          </div>
-        ))}
+        {items.map((item) => {
+          const isActive = activeStatus === item.status;
+          return (
+            <button
+              key={item.status}
+              type="button"
+              aria-label={`Show ${item.label}`}
+              aria-pressed={isActive}
+              onClick={() => onSelectStatus(isActive ? null : item.status)}
+              className={cn(
+                'rounded-md border px-3 py-2 text-left transition focus:outline-none focus:ring-2 focus:ring-sky-500',
+                isActive
+                  ? 'border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
+                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 hover:bg-white hover:text-sky-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300',
+              )}
+              data-testid={`default-policy-audit-${item.status}`}
+            >
+              <span className="flex items-start justify-between gap-2">
+                <span className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">
+                  {item.label}
+                </span>
+                {isActive && (
+                  <span className="rounded-full bg-sky-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white dark:bg-sky-500">
+                    Active
+                  </span>
+                )}
+              </span>
+              <span className="mt-1 block text-2xl font-bold text-slate-950 dark:text-white">
+                {item.value}
+              </span>
+              <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
+                {item.note}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </section>
   );
@@ -1460,6 +1490,8 @@ export default function EvidenceLibrary({
   const [viewMode, setViewMode] = useState<EvidenceLibraryViewMode>('by-parameter');
   const [selectedValueId, setSelectedValueId] = useState<string | null>(null);
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
+  const [defaultPolicyStatusFilter, setDefaultPolicyStatusFilter] =
+    useState<DefaultSelectionDecisionStatus | null>(null);
   const library = useMemo(() => buildEvidenceLibraryView(filters), [filters]);
   const baselineLibrary = useMemo(() => buildEvidenceLibraryView(), []);
   const defaultPolicyDecisions = useMemo(() => {
@@ -1502,11 +1534,40 @@ export default function EvidenceLibrary({
     [],
   );
   const protocol28Summary = useMemo(() => buildProtocol28ReviewSummary(), []);
-  const activeLabels = activeFilterLabels(filters);
+  const activeLabels = [
+    ...activeFilterLabels(filters),
+    ...(defaultPolicyStatusFilter
+      ? [
+          `Default policy: ${DEFAULT_POLICY_STATUS_LABELS[defaultPolicyStatusFilter]}`,
+        ]
+      : []),
+  ];
   const assumptionValues = assumptionRows(library.values);
   const baselineAssumptionValues = assumptionRows(baselineLibrary.values);
-  const visibleValues =
+  const valuesForView =
     viewMode === 'assumptions' ? assumptionValues : library.values;
+  const visibleValues = defaultPolicyStatusFilter
+    ? valuesForView.filter((row) =>
+        decisionMatchesDefaultPolicyStatus(
+          defaultPolicyDecisionForRow(defaultPolicyDecisions, row),
+          defaultPolicyStatusFilter,
+        ),
+      )
+    : valuesForView;
+  const visibleValueGroups = defaultPolicyStatusFilter
+    ? library.valueGroups.filter((group) =>
+        decisionMatchesDefaultPolicyStatus(
+          defaultPolicyDecisions.get(
+            defaultPolicyDecisionKey(
+              group.pathway,
+              group.substanceKey,
+              group.inputKey,
+            ),
+          ) ?? null,
+          defaultPolicyStatusFilter,
+        ),
+      )
+    : library.valueGroups;
   const totalVisibleValues =
     viewMode === 'assumptions'
       ? baselineAssumptionValues.length
@@ -1547,11 +1608,13 @@ export default function EvidenceLibrary({
   };
   const clearFilters = () => {
     closeDetailPanels();
+    setDefaultPolicyStatusFilter(null);
     onFiltersChange(createEvidenceLibraryFilters());
   };
   const applyQuickFilter = (filter: (typeof QUICK_REVIEW_FILTERS)[number]) => {
     setViewMode(filter.viewMode);
     closeDetailPanels();
+    setDefaultPolicyStatusFilter(null);
     onFiltersChange(createEvidenceLibraryFilters(filter.request));
   };
   const applyAuditFilter = (
@@ -1560,11 +1623,20 @@ export default function EvidenceLibrary({
   ) => {
     setViewMode(nextViewMode);
     closeDetailPanels();
+    setDefaultPolicyStatusFilter(null);
     onFiltersChange(createEvidenceLibraryFilters(request));
+  };
+  const applyDefaultPolicyStatusFilter = (
+    status: DefaultSelectionDecisionStatus | null,
+  ) => {
+    setViewMode('by-parameter');
+    closeDetailPanels();
+    setDefaultPolicyStatusFilter(status);
   };
   const openProtocol28Review = () => {
     setViewMode('values');
     closeDetailPanels();
+    setDefaultPolicyStatusFilter(null);
     onFiltersChange(
       createEvidenceLibraryFilters({
         search: 'Protocol 28',
@@ -1575,6 +1647,7 @@ export default function EvidenceLibrary({
   const openProtocol28SourceLeads = () => {
     setViewMode('source-leads');
     closeDetailPanels();
+    setDefaultPolicyStatusFilter(null);
     onFiltersChange(
       createEvidenceLibraryFilters({
         search: 'Protocol 28',
@@ -1694,7 +1767,11 @@ export default function EvidenceLibrary({
 
       <AuditStrip audit={library.audit} onSelect={applyAuditFilter} />
 
-      <DefaultPolicyAuditPanel decisions={defaultPolicyDecisions} />
+      <DefaultPolicyAuditPanel
+        decisions={defaultPolicyDecisions}
+        activeStatus={defaultPolicyStatusFilter}
+        onSelectStatus={applyDefaultPolicyStatusFilter}
+      />
 
       <Protocol28ReviewPanel
         summary={protocol28Summary}
@@ -1827,13 +1904,13 @@ export default function EvidenceLibrary({
               Values By Parameter
             </h3>
             <ResultCountBadge
-              visible={library.valueGroups.length}
+              visible={visibleValueGroups.length}
               total={baselineLibrary.valueGroups.length}
               label="parameter groups"
             />
           </div>
           <div className="grid gap-2">
-            {library.valueGroups.map((group) => (
+            {visibleValueGroups.map((group) => (
               <ValueGroupCard
                 key={group.groupId}
                 group={group}
@@ -1848,7 +1925,7 @@ export default function EvidenceLibrary({
                 }
               />
             ))}
-            {library.valueGroups.length === 0 && (
+            {visibleValueGroups.length === 0 && (
               <EmptyDatabaseState
                 title="No parameter groups match."
                 activeLabels={activeLabels}
