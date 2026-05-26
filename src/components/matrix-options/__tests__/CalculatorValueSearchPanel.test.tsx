@@ -6,6 +6,8 @@ import CalculatorValueSearchPanel from '../CalculatorValueSearchPanel';
 
 describe('CalculatorValueSearchPanel default policy projection', () => {
   it('shows read-only default-selection policy decisions without promoting candidates', () => {
+    const onOpenEvidenceLibrary = vi.fn();
+
     render(
       <CalculatorValueSearchPanel
         pathway="human-health-food"
@@ -14,7 +16,7 @@ describe('CalculatorValueSearchPanel default policy projection', () => {
         substanceLabel="Benzo[a]pyrene"
         jurisdictionLabel="BC Protocol 1 v5 DRA"
         regulatoryFrameId="bc-protocol1-v5-dra"
-        onOpenEvidenceLibrary={vi.fn()}
+        onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />,
     );
 
@@ -23,6 +25,19 @@ describe('CalculatorValueSearchPanel default policy projection', () => {
     );
     expect(screen.getByTestId('calculator-default-policy-audit')).toHaveTextContent(
       /pending approval/,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Review candidate defaults/i }),
+    );
+    expect(onOpenEvidenceLibrary).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathways: ['human-health-food'],
+        substanceKeys: ['benzo_a_pyrene'],
+        inputKeys: expect.arrayContaining([
+          'sf_oral_per_mg_per_kg_bw_per_day',
+        ]),
+      }),
     );
 
     fireEvent.change(screen.getByPlaceholderText(/Search parameter or source/i), {

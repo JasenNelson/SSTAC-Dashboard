@@ -459,6 +459,21 @@ export default function CalculatorValueSearchPanel({
     () => defaultPolicySummary(Array.from(defaultPolicyDecisions.values())),
     [defaultPolicyDecisions],
   );
+  const defaultPolicyCandidateInputKeys = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          Array.from(defaultPolicyDecisions.values())
+            .filter(
+              (decision) =>
+                decision.status === 'candidate_pending_approval' ||
+                decision.status === 'manual_decision_required',
+            )
+            .map((decision) => decision.request.inputKey),
+        ),
+      ),
+    [defaultPolicyDecisions],
+  );
   const filteredRows = useMemo(
     () =>
       queryText
@@ -508,6 +523,15 @@ export default function CalculatorValueSearchPanel({
     });
   };
 
+  const openDefaultPolicyCandidates = () => {
+    onOpenEvidenceLibrary({
+      pathways: [pathway],
+      substanceKeys: [substanceKey],
+      inputKeys: defaultPolicyCandidateInputKeys,
+      ...regulatoryFrameFilters,
+    });
+  };
+
   const openValueDetails = (row: EvidenceLibraryValueRow) => {
     onOpenEvidenceLibrary({
       pathways: [row.record.pathway],
@@ -552,15 +576,27 @@ export default function CalculatorValueSearchPanel({
           </span>
         </div>
         <div
-          className="flex items-center justify-between gap-3 border-b border-slate-200 py-2 text-xs dark:border-slate-800"
+          className="space-y-2 border-b border-slate-200 py-2 text-xs dark:border-slate-800"
           data-testid="calculator-default-policy-audit"
         >
-          <span className="font-semibold text-slate-700 dark:text-slate-200">
-            Default policy
-          </span>
-          <span className="truncate text-slate-500 dark:text-slate-400">
-            {defaultPolicyAudit}
-          </span>
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-semibold text-slate-700 dark:text-slate-200">
+              Default policy
+            </span>
+            <span className="truncate text-slate-500 dark:text-slate-400">
+              {defaultPolicyAudit}
+            </span>
+          </div>
+          {defaultPolicyCandidateInputKeys.length > 0 && (
+            <button
+              type="button"
+              onClick={openDefaultPolicyCandidates}
+              className="flex min-h-8 w-full items-center justify-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-2 text-xs font-semibold text-sky-800 hover:border-sky-300 hover:bg-white dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200 dark:hover:border-sky-600"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Review candidate defaults
+            </button>
+          )}
         </div>
         <p
           className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400"
