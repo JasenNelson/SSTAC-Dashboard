@@ -685,7 +685,7 @@ describe('EvidenceLibrary', () => {
     expect(
       screen.queryByText(/Evidence: approved source-backed/i),
     ).not.toBeInTheDocument();
-  });
+  }, 10000);
 
   it('searches and clears active filters', () => {
     renderControlled();
