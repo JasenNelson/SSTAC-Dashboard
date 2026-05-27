@@ -415,7 +415,18 @@ async function getUsersComprehensive(currentUser: { id: string }): Promise<UserW
  * @throws Error if operation fails or user lacks admin privileges
  */
 export async function toggleAdminRole(userId: string, currentIsAdmin: boolean): Promise<void> {
-  const supabase = await createAuthenticatedClient();
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+      },
+    }
+  );
 
   // Check if user is authenticated
   const { data: { user } } = await supabase.auth.getUser();
@@ -432,7 +443,7 @@ export async function toggleAdminRole(userId: string, currentIsAdmin: boolean): 
     .single();
 
   const isAdmin = !!roleData;
-  
+
   if (!isAdmin) {
     redirect('/dashboard');
   }
@@ -440,21 +451,24 @@ export async function toggleAdminRole(userId: string, currentIsAdmin: boolean): 
   try {
     if (currentIsAdmin) {
       // Remove admin role
-      const { error } = await supabase.rpc('manage_user_role_delete', {
-        p_user_id: userId,
-        p_role: 'admin',
-      });
-      
+      const { error } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+        .eq('role', 'admin');
+
       if (error) {
         throw error;
       }
     } else {
       // Add admin role
-      const { error } = await supabase.rpc('manage_user_role_insert', {
-        p_user_id: userId,
-        p_role: 'admin',
-      });
-      
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: 'admin'
+        });
+
       if (error) {
         throw error;
       }
@@ -462,8 +476,8 @@ export async function toggleAdminRole(userId: string, currentIsAdmin: boolean): 
   } catch (error) {
     console.error('Error updating admin role:', error);
     throw new Error(
-      currentIsAdmin 
-        ? 'Failed to remove admin role' 
+      currentIsAdmin
+        ? 'Failed to remove admin role'
         : 'Failed to grant admin role'
     );
   }
@@ -478,7 +492,18 @@ export async function toggleAdminRole(userId: string, currentIsAdmin: boolean): 
  * @throws Error if operation fails or user lacks admin privileges
  */
 export async function addUserRole(userId: string, role: string): Promise<void> {
-  const supabase = await createAuthenticatedClient();
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+      },
+    }
+  );
 
   // Check if user is authenticated
   const { data: { user } } = await supabase.auth.getUser();
@@ -495,18 +520,20 @@ export async function addUserRole(userId: string, role: string): Promise<void> {
     .single();
 
   const isAdmin = !!roleData;
-  
+
   if (!isAdmin) {
     redirect('/dashboard');
   }
 
   try {
     // Add user role
-    const { error } = await supabase.rpc('manage_user_role_insert', {
-      p_user_id: userId,
-      p_role: role,
-    });
-    
+    const { error } = await supabase
+      .from('user_roles')
+      .insert({
+        user_id: userId,
+        role: role
+      });
+
     if (error) {
       throw error;
     }

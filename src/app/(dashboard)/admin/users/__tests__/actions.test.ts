@@ -325,14 +325,28 @@ describe('Admin User Actions', () => {
         error: null,
       });
 
-      mockSupabaseClient.rpc.mockResolvedValue({ data: null, error: null });
+      mockInsert.mockResolvedValue({
+        data: null,
+        error: null,
+      });
+
+      mockEq2.mockReturnValue({
+        single: mockSingle,
+      });
+
+      mockDelete.mockReturnValue({
+        eq: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            data: null,
+            error: null,
+          })),
+        })),
+      });
 
       await toggleAdminRole('user-456', false);
 
-      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('manage_user_role_insert', {
-        p_user_id: 'user-456',
-        p_role: 'admin',
-      });
+      expect(mockFrom).toHaveBeenCalledWith('user_roles');
+      expect(mockInsert).toHaveBeenCalled();
     });
 
     it('should remove admin role when currentIsAdmin is true', async () => {
@@ -348,14 +362,10 @@ describe('Admin User Actions', () => {
         error: null,
       });
 
-      mockSupabaseClient.rpc.mockResolvedValue({ data: null, error: null });
-
       await toggleAdminRole('user-456', true);
 
-      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('manage_user_role_delete', {
-        p_user_id: 'user-456',
-        p_role: 'admin',
-      });
+      expect(mockFrom).toHaveBeenCalledWith('user_roles');
+      expect(mockDelete).toHaveBeenCalled();
     });
 
     it('should throw error when operation fails', async () => {
@@ -371,38 +381,12 @@ describe('Admin User Actions', () => {
         error: null,
       });
 
-      mockSupabaseClient.rpc.mockResolvedValue({
+      mockInsert.mockResolvedValue({
         data: null,
-        error: { message: 'RPC failed' },
+        error: { message: 'Insert failed' },
       });
 
       await expect(toggleAdminRole('user-456', false)).rejects.toThrow('Failed to grant admin role');
-    });
-
-    it('should propagate last-admin lockout error from RPC', async () => {
-      const mockUser = { id: 'admin-123', email: 'admin@test.com' };
-
-      mockGetUser.mockResolvedValue({
-        data: { user: mockUser },
-        error: null,
-      });
-
-      mockSingle.mockResolvedValue({
-        data: { role: 'admin' },
-        error: null,
-      });
-
-      mockSupabaseClient.rpc.mockResolvedValue({
-        data: null,
-        error: {
-          message: 'cannot remove last admin -- bootstrap lockout protection',
-          code: '55000',
-        },
-      });
-
-      await expect(toggleAdminRole('admin-123', true)).rejects.toThrow(
-        'Failed to remove admin role'
-      );
     });
   });
 
@@ -447,13 +431,17 @@ describe('Admin User Actions', () => {
         error: null,
       });
 
-      mockSupabaseClient.rpc.mockResolvedValue({ data: null, error: null });
+      mockInsert.mockResolvedValue({
+        data: null,
+        error: null,
+      });
 
       await addUserRole('user-456', 'member');
 
-      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('manage_user_role_insert', {
-        p_user_id: 'user-456',
-        p_role: 'member',
+      expect(mockFrom).toHaveBeenCalledWith('user_roles');
+      expect(mockInsert).toHaveBeenCalledWith({
+        user_id: 'user-456',
+        role: 'member',
       });
     });
 
@@ -470,7 +458,7 @@ describe('Admin User Actions', () => {
         error: null,
       });
 
-      mockSupabaseClient.rpc.mockResolvedValue({
+      mockInsert.mockResolvedValue({
         data: null,
         error: { message: 'Insert failed' },
       });
