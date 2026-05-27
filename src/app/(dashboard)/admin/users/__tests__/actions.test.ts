@@ -46,6 +46,10 @@ vi.mock('@supabase/ssr', () => ({
   createServerClient: vi.fn(() => mockSupabaseClient),
 }));
 
+vi.mock('@/lib/supabase-auth', () => ({
+  createAuthenticatedClient: vi.fn(() => Promise.resolve(mockSupabaseClient)),
+}));
+
 describe('Admin User Actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
