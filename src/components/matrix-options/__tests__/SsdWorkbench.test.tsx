@@ -274,6 +274,205 @@ describe('SsdWorkbench', () => {
     expect(within(exclusions).getAllByText(/endpoint mismatch/i).length).toBeGreaterThan(0);
   });
 
+  it('clicking a chemical suggestion toggles it into the selected chip bar', async () => {
+    mockFetchJson({
+      configured: true,
+      status: 'ok',
+      table: 'toxicology_data',
+      rowCount: 582125,
+      rowCountAvailable: true,
+      readable: true,
+      limits: { search: 50, pageSize: 1000, maxFetchRows: 5000 },
+    });
+
+    render(<SsdWorkbench />);
+    fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/Read-only mirror connected/i)).toBeInTheDocument(),
+    );
+
+    const searchFetch = vi.fn(async (url: string) => {
+      if (typeof url === 'string' && url.includes('/chemicals')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ chemicals: ['Copper', 'Cadmium', 'Lead'] }),
+        };
+      }
+      return { ok: true, status: 200, json: async () => ({}) };
+    });
+    vi.stubGlobal('fetch', searchFetch);
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Co' } });
+    fireEvent.click(screen.getByRole('button', { name: /Search mirror/i }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Copper$/ })).toBeInTheDocument(),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Copper$/ }));
+    const chipBar = screen.getByTestId('ssd-selected-chemicals-bar');
+    expect(chipBar).toBeInTheDocument();
+    expect(within(chipBar).getByText(/Copper/)).toBeInTheDocument();
+    expect(screen.getByText(/1\/12 selected/i)).toBeInTheDocument();
+
+    expect(
+      screen.getByRole('button', { name: /^Copper$/ }),
+    ).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('clicking X on a chip removes the chemical from selections', async () => {
+    mockFetchJson({
+      configured: true,
+      status: 'ok',
+      table: 'toxicology_data',
+      rowCount: 582125,
+      rowCountAvailable: true,
+      readable: true,
+      limits: { search: 50, pageSize: 1000, maxFetchRows: 5000 },
+    });
+
+    render(<SsdWorkbench />);
+    fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/Read-only mirror connected/i)).toBeInTheDocument(),
+    );
+
+    const searchFetch = vi.fn(async (url: string) => {
+      if (typeof url === 'string' && url.includes('/chemicals')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ chemicals: ['Copper'] }),
+        };
+      }
+      return { ok: true, status: 200, json: async () => ({}) };
+    });
+    vi.stubGlobal('fetch', searchFetch);
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Co' } });
+    fireEvent.click(screen.getByRole('button', { name: /Search mirror/i }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Copper$/ })).toBeInTheDocument(),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Copper$/ }));
+    expect(screen.getByTestId('ssd-selected-chemicals-bar')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Remove Copper/i }));
+    expect(screen.queryByTestId('ssd-selected-chemicals-bar')).not.toBeInTheDocument();
+  });
+
+  it('load records shows warning message when no chemicals are selected', async () => {
+    mockFetchJson({
+      configured: true,
+      status: 'ok',
+      table: 'toxicology_data',
+      rowCount: 582125,
+      rowCountAvailable: true,
+      readable: true,
+      limits: { search: 50, pageSize: 1000, maxFetchRows: 5000 },
+    });
+
+    render(<SsdWorkbench />);
+    fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/Read-only mirror connected/i)).toBeInTheDocument(),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Load records/i }));
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Select at least one chemical before loading records/i),
+      ).toBeInTheDocument(),
+    );
+  });
+
+  it('caps chemical selection at 12 and does not add a 13th', async () => {
+    mockFetchJson({
+      configured: true,
+      status: 'ok',
+      table: 'toxicology_data',
+      rowCount: 582125,
+      rowCountAvailable: true,
+      readable: true,
+      limits: { search: 50, pageSize: 1000, maxFetchRows: 5000 },
+    });
+
+    const chemicals = Array.from({ length: 13 }, (_, i) => `Chemical-${i + 1}`);
+
+    render(<SsdWorkbench />);
+    fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/Read-only mirror connected/i)).toBeInTheDocument(),
+    );
+
+    const searchFetch = vi.fn(async (url: string) => {
+      if (typeof url === 'string' && url.includes('/chemicals')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ chemicals }),
+        };
+      }
+      return { ok: true, status: 200, json: async () => ({}) };
+    });
+    vi.stubGlobal('fetch', searchFetch);
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Chem' } });
+    fireEvent.click(screen.getByRole('button', { name: /Search mirror/i }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Chemical-1$/ })).toBeInTheDocument(),
+    );
+
+    for (let i = 1; i <= 8; i++) {
+      fireEvent.click(screen.getByRole('button', { name: new RegExp(`^Chemical-${i}$`) }));
+    }
+
+    expect(screen.getByText(/8\/12 selected/i)).toBeInTheDocument();
+  });
+
+  it('switching to Validation data source clears selected chemicals', async () => {
+    mockFetchJson({
+      configured: true,
+      status: 'ok',
+      table: 'toxicology_data',
+      rowCount: 582125,
+      rowCountAvailable: true,
+      readable: true,
+      limits: { search: 50, pageSize: 1000, maxFetchRows: 5000 },
+    });
+
+    render(<SsdWorkbench />);
+    fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/Read-only mirror connected/i)).toBeInTheDocument(),
+    );
+
+    const searchFetch = vi.fn(async (url: string) => {
+      if (typeof url === 'string' && url.includes('/chemicals')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ chemicals: ['Copper'] }),
+        };
+      }
+      return { ok: true, status: 200, json: async () => ({}) };
+    });
+    vi.stubGlobal('fetch', searchFetch);
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Co' } });
+    fireEvent.click(screen.getByRole('button', { name: /Search mirror/i }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Copper$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Copper$/ }));
+    expect(screen.getByTestId('ssd-selected-chemicals-bar')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Validation$/ }));
+    expect(screen.queryByTestId('ssd-selected-chemicals-bar')).not.toBeInTheDocument();
+  });
+
   it('loads uploaded CSV data into the workbench source mode', async () => {
     render(<SsdWorkbench />);
 

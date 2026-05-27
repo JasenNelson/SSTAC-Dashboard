@@ -10,6 +10,7 @@ import {
   FlaskConical,
   Search,
   Upload,
+  X,
 } from 'lucide-react';
 import {
   CartesianGrid,
@@ -464,6 +465,7 @@ export default function SsdWorkbench({
   const [chemicalSearch, setChemicalSearch] = useState(
     DEFAULT_FIXTURE_DATASET.chemicalName,
   );
+  const [selectedChemicals, setSelectedChemicals] = useState<string[]>([]);
   const [mediaFilter, setMediaFilter] =
     useState<SsdMediaFilter>('water');
   const [environmentFilter, setEnvironmentFilter] =
@@ -611,6 +613,7 @@ export default function SsdWorkbench({
     setFixtureDatasetId(nextFixture.id);
     setDataSourceMode('fixture');
     setChemicalSearch(nextFixture.chemicalName);
+    setSelectedChemicals([]);
     setMediaFilter('water');
     setEnvironmentFilter('freshwater');
     setEndpointFilters([]);
@@ -761,9 +764,8 @@ export default function SsdWorkbench({
   };
 
   const loadLiveRows = async (): Promise<void> => {
-    const chemicalName = chemicalSearch.trim();
-    if (!chemicalName) {
-      setLiveMessage('Select or enter a chemical before loading records.');
+    if (selectedChemicals.length === 0) {
+      setLiveMessage('Select at least one chemical before loading records.');
       return;
     }
 
@@ -776,7 +778,7 @@ export default function SsdWorkbench({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          chemicalNames: [chemicalName],
+          chemicalNames: selectedChemicals,
           medium:
             environmentFilter === 'all' ? undefined : environmentFilter,
           mediaFilter,
@@ -883,7 +885,7 @@ export default function SsdWorkbench({
               </ToggleButton>
               <ToggleButton
                 active={dataSourceMode === 'upload'}
-                onClick={() => setDataSourceMode('upload')}
+                onClick={() => { setDataSourceMode('upload'); setSelectedChemicals([]); }}
               >
                 Upload
               </ToggleButton>
@@ -976,6 +978,29 @@ export default function SsdWorkbench({
               accepts local ECOTOX-style extracts. ECOTOX mirror mode queries capped
               server-side API routes when configured.
             </p>
+            {selectedChemicals.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5" data-testid="ssd-selected-chemicals-bar">
+                {selectedChemicals.map(name => (
+                  <span
+                    key={name}
+                    className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-800 dark:bg-sky-900/40 dark:text-sky-200"
+                  >
+                    {name}
+                    <button
+                      type="button"
+                      aria-label={`Remove ${name}`}
+                      onClick={() => setSelectedChemicals(prev => prev.filter(c => c !== name))}
+                      className="ml-0.5 hover:text-sky-600"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 self-center">
+                  {selectedChemicals.length}/12 selected
+                </span>
+              </div>
+            )}
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -996,16 +1021,32 @@ export default function SsdWorkbench({
             </div>
             {chemicalSuggestions.length > 0 && (
               <div className="mt-3 max-h-36 overflow-auto rounded-md border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-950">
-                {chemicalSuggestions.slice(0, 8).map((chemical) => (
-                  <button
-                    key={chemical}
-                    type="button"
-                    onClick={() => setChemicalSearch(chemical)}
-                    className="block w-full rounded px-2 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                  >
-                    {chemical}
-                  </button>
-                ))}
+                {chemicalSuggestions.slice(0, 8).map((chemical) => {
+                  const isSelected = selectedChemicals.includes(chemical);
+                  return (
+                    <button
+                      key={chemical}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => {
+                        setSelectedChemicals(prev =>
+                          prev.includes(chemical)
+                            ? prev.filter(c => c !== chemical)
+                            : prev.length < 12 ? [...prev, chemical] : prev
+                        );
+                      }}
+                      className={cn(
+                        'flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs font-semibold',
+                        isSelected
+                          ? 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200'
+                          : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800',
+                      )}
+                    >
+                      {isSelected && <CheckCircle2 className="h-3 w-3 shrink-0 text-sky-600" />}
+                      {chemical}
+                    </button>
+                  );
+                })}
               </div>
             )}
             {dataSourceMode === 'ecotox_mirror' && (
