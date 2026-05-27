@@ -64,7 +64,7 @@ describe('promoteSourceLead', () => {
   it('generates a parameter_value_id starting with pv-promoted-', () => {
     const lead = makeLeadSummary();
     const record = promoteSourceLead(lead);
-    expect(record.parameter_value_id).toMatch(/^pv-promoted-\d+$/);
+    expect(record.parameter_value_id).toMatch(/^pv-promoted-\d+-[a-z0-9]+$/);
   });
 
   it('generates unique IDs for successive promotions', () => {
