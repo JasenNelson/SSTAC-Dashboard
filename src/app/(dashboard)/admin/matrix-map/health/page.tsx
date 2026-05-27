@@ -177,11 +177,11 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:shadow-none">
       <header className="mb-4">
-        <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h2>
         {subtitle ? (
-          <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
         ) : null}
       </header>
       {children}
@@ -191,14 +191,14 @@ function SectionCard({
 
 function InlineError({ message }: { message: string }) {
   return (
-    <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+    <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
       <span className="font-medium">Query error:</span> {message}
     </div>
   );
 }
 
 function MutedNote({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-slate-500">{children}</p>;
+  return <p className="text-sm text-slate-500 dark:text-slate-400">{children}</p>;
 }
 
 function KeyValueRow({
@@ -211,13 +211,13 @@ function KeyValueRow({
   emphasis?: boolean;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-slate-100 py-2 last:border-b-0">
-      <span className="text-sm text-slate-600">{label}</span>
+    <div className="flex items-baseline justify-between gap-4 border-b border-slate-100 py-2 last:border-b-0 dark:border-slate-800">
+      <span className="text-sm text-slate-600 dark:text-slate-300">{label}</span>
       <span
         className={
           emphasis
-            ? 'font-mono text-sm font-semibold text-slate-900'
-            : 'font-mono text-sm text-slate-800'
+            ? 'font-mono text-sm font-semibold text-slate-900 dark:text-white'
+            : 'font-mono text-sm text-slate-800 dark:text-slate-100'
         }
       >
         {value}
@@ -499,16 +499,16 @@ export default async function MatrixMapHealthPage() {
   const renderedAt = fmtTs(new Date().toISOString());
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <div className="mx-auto max-w-7xl px-6 py-8">
         <header className="mb-8">
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
             Admin / Matrix Map
           </p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">
+          <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
             Matrix Map -- Health
           </h1>
-          <p className="mt-2 max-w-3xl text-sm text-slate-600">
+          <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
             Read-only operational snapshot of the matrix_map schema
             (PR-MAP-1). Counts, classification mix, coordinate quality,
             DRA visibility, daily budget breaker, recent audit trail,
@@ -528,17 +528,17 @@ export default async function MatrixMapHealthPage() {
                 return (
                   <div
                     key={t}
-                    className="rounded-lg border border-slate-200 bg-slate-50/50 p-3"
+                    className="rounded-lg border border-slate-200 bg-slate-50/50 p-3 dark:border-slate-700 dark:bg-slate-800/50"
                   >
-                    <div className="font-mono text-xs text-slate-500">
+                    <div className="font-mono text-xs text-slate-500 dark:text-slate-400">
                       matrix_map.{t}
                     </div>
                     {res.error ? (
-                      <div className="mt-1 text-xs text-red-600">
+                      <div className="mt-1 text-xs text-red-600 dark:text-red-400">
                         error: {res.error}
                       </div>
                     ) : (
-                      <div className="mt-1 text-xl font-semibold text-slate-900">
+                      <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
                         {fmtNum(res.count)}
                       </div>
                     )}
@@ -560,7 +560,7 @@ export default async function MatrixMapHealthPage() {
             ) : (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                  <h3 className="mb-2 text-sm font-semibold text-slate-700">
+                  <h3 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
                     By classification
                   </h3>
                   {Object.entries(classAgg.byClass).map(([k, v]) => (
@@ -577,7 +577,7 @@ export default async function MatrixMapHealthPage() {
                   />
                 </div>
                 <div>
-                  <h3 className="mb-2 text-sm font-semibold text-slate-700">
+                  <h3 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
                     By classification_source
                   </h3>
                   {Object.entries(classAgg.bySource).map(([k, v]) => (
@@ -663,7 +663,7 @@ export default async function MatrixMapHealthPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
+                    <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:text-slate-400">
                       <th className="py-2 pr-4">Dimension</th>
                       <th className="py-2 pr-4 text-right">Count today</th>
                       <th className="py-2 pr-4 text-right">Daily cap</th>
@@ -677,17 +677,17 @@ export default async function MatrixMapHealthPage() {
                       let rowClass = '';
                       if (pctValue !== null) {
                         if (pctValue >= 1.0) {
-                          rowClass = 'bg-red-50';
+                          rowClass = 'bg-red-50 dark:bg-red-900/20';
                         } else if (pctValue >= row.warningPct) {
-                          rowClass = 'bg-yellow-50';
+                          rowClass = 'bg-yellow-50 dark:bg-yellow-900/20';
                         }
                       }
                       return (
                         <tr
                           key={row.dimension}
-                          className={`border-b border-slate-100 last:border-b-0 ${rowClass}`}
+                          className={`border-b border-slate-100 last:border-b-0 dark:border-slate-800 ${rowClass}`}
                         >
-                          <td className="py-2 pr-4 font-mono text-xs text-slate-700">
+                          <td className="py-2 pr-4 font-mono text-xs text-slate-700 dark:text-slate-200">
                             {row.dimension}
                           </td>
                           <td className="py-2 pr-4 text-right font-mono">
@@ -728,7 +728,7 @@ export default async function MatrixMapHealthPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
+                    <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:text-slate-400">
                       <th className="py-2 pr-4">Changed at (UTC)</th>
                       <th className="py-2 pr-4">DRA id</th>
                       <th className="py-2 pr-4">Transition</th>
@@ -740,21 +740,21 @@ export default async function MatrixMapHealthPage() {
                     {auditRes.rows.map((r) => (
                       <tr
                         key={r.id}
-                        className="border-b border-slate-100 align-top last:border-b-0"
+                        className="border-b border-slate-100 align-top last:border-b-0 dark:border-slate-800"
                       >
-                        <td className="py-2 pr-4 font-mono text-xs text-slate-600">
+                        <td className="py-2 pr-4 font-mono text-xs text-slate-600 dark:text-slate-300">
                           {fmtTs(r.changed_at)}
                         </td>
-                        <td className="py-2 pr-4 font-mono text-xs text-slate-700">
+                        <td className="py-2 pr-4 font-mono text-xs text-slate-700 dark:text-slate-200">
                           {r.dra_id.slice(0, 8)}...
                         </td>
                         <td className="py-2 pr-4 font-mono text-xs">
                           {String(r.prior_value)} {'->'} {String(r.new_value)}
                         </td>
-                        <td className="py-2 pr-4 text-xs text-slate-700">
+                        <td className="py-2 pr-4 text-xs text-slate-700 dark:text-slate-200">
                           {r.changed_by_email}
                         </td>
-                        <td className="py-2 pr-4 text-xs text-slate-700">
+                        <td className="py-2 pr-4 text-xs text-slate-700 dark:text-slate-200">
                           {r.reason}
                         </td>
                       </tr>
@@ -785,13 +785,13 @@ export default async function MatrixMapHealthPage() {
                   <MutedNote>No active grants yet.</MutedNote>
                 ) : (
                   <div>
-                    <h3 className="mb-2 text-sm font-semibold text-slate-700">
+                    <h3 className="mb-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
                       Top 5 most-granted DRAs
                     </h3>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500">
+                          <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-500 dark:border-slate-700 dark:text-slate-400">
                             <th className="py-2 pr-4">DRA id</th>
                             <th className="py-2 pr-4 text-right">
                               Active grant count
@@ -802,9 +802,9 @@ export default async function MatrixMapHealthPage() {
                           {grantsRes.topDras.map((g) => (
                             <tr
                               key={g.dra_id}
-                              className="border-b border-slate-100 last:border-b-0"
+                              className="border-b border-slate-100 last:border-b-0 dark:border-slate-800"
                             >
-                              <td className="py-2 pr-4 font-mono text-xs text-slate-700">
+                              <td className="py-2 pr-4 font-mono text-xs text-slate-700 dark:text-slate-200">
                                 {g.dra_id}
                               </td>
                               <td className="py-2 pr-4 text-right font-mono">
@@ -822,7 +822,7 @@ export default async function MatrixMapHealthPage() {
           </SectionCard>
         </div>
 
-        <footer className="mt-10 border-t border-slate-200 pt-4 text-xs text-slate-500">
+        <footer className="mt-10 border-t border-slate-200 pt-4 text-xs text-slate-500 dark:border-slate-700 dark:text-slate-400">
           <p>
             Rendered at {renderedAt}. Auto-refresh disabled in v1 -- reload
             the browser to re-query. Source: matrix_map schema (PR-MAP-1).

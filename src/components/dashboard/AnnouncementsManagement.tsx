@@ -224,8 +224,8 @@ export default function AnnouncementsManagement() {
       {/* Header with Create Button */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Announcements</h2>
-          <p className="text-slate-500 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Announcements</h2>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
             Manage dashboard announcements and important updates
           </p>
         </div>
@@ -240,8 +240,8 @@ export default function AnnouncementsManagement() {
 
       {/* Create/Edit Form */}
       {(showCreateForm || editingAnnouncement) && (
-        <div className="bg-white rounded-lg shadow-md p-6 border border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6 border border-slate-200 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             {editingAnnouncement ? 'Edit Announcement' : 'Create New Announcement'}
           </h3>
           
@@ -259,7 +259,7 @@ export default function AnnouncementsManagement() {
             )}
             
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-slate-600 mb-1">
+              <label htmlFor="title" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
                 Title *
               </label>
               <input
@@ -268,13 +268,13 @@ export default function AnnouncementsManagement() {
                 name="title"
                 required
                 defaultValue={editingAnnouncement?.title || ''}
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 placeholder="Enter announcement title"
               />
             </div>
 
             <div>
-              <label htmlFor="content" className="block text-sm font-medium text-slate-600 mb-1">
+              <label htmlFor="content" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
                 Content *
               </label>
               <textarea
@@ -283,21 +283,21 @@ export default function AnnouncementsManagement() {
                 required
                 rows={4}
                 defaultValue={editingAnnouncement?.content || ''}
-                className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 placeholder="Enter announcement content"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="priority" className="block text-sm font-medium text-slate-600 mb-1">
+                <label htmlFor="priority" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
                   Priority
                 </label>
                 <select
                   id="priority"
                   name="priority"
                   defaultValue={editingAnnouncement?.priority || 'medium'}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 >
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
@@ -306,14 +306,14 @@ export default function AnnouncementsManagement() {
               </div>
 
               <div>
-                <label htmlFor="is_active" className="block text-sm font-medium text-slate-600 mb-1">
+                <label htmlFor="is_active" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
                   Status
                 </label>
                 <select
                   id="is_active"
                   name="is_active"
                   defaultValue={editingAnnouncement?.is_active?.toString() || 'true'}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 >
                   <option value="true">Active</option>
                   <option value="false">Inactive</option>
@@ -328,7 +328,7 @@ export default function AnnouncementsManagement() {
                   setShowCreateForm(false);
                   setEditingAnnouncement(null);
                 }}
-                className="px-4 py-2 text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
+                className="px-4 py-2 text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
               >
                 Cancel
               </button>
@@ -341,27 +341,26 @@ export default function AnnouncementsManagement() {
       )}
 
       {/* Announcements List */}
-      <div className="bg-white rounded-lg shadow-md border border-slate-200">
-        <div className="px-6 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-900">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
             Current Announcements ({announcements.length})
           </h3>
         </div>
         
         {announcements.length === 0 ? (
-          <div className="px-6 py-12 text-center text-slate-500">
-            <div className="text-4xl mb-4">📢</div>
+          <div className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
             <p className="text-lg font-medium mb-2">No announcements yet</p>
             <p className="text-sm">Create your first announcement to get started</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-200">
+          <div className="divide-y divide-slate-200 dark:divide-slate-700">
             {announcements.map((announcement) => (
-              <div key={announcement.id} className="p-6 hover:bg-slate-50 transition-colors">
+              <div key={announcement.id} className="p-6 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <h4 className="text-lg font-semibold text-slate-900">
+                      <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
                         {announcement.title}
                       </h4>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(announcement.priority)}`}>
@@ -376,7 +375,7 @@ export default function AnnouncementsManagement() {
                       </span>
                     </div>
                     
-                    <div className="text-sm text-slate-500 mb-3">
+                    <div className="text-sm text-slate-500 dark:text-slate-400 mb-3">
                       <div className="flex items-center space-x-4">
                         <span className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
@@ -391,7 +390,7 @@ export default function AnnouncementsManagement() {
                       </div>
                     </div>
 
-                    <div className="text-slate-600">
+                    <div className="text-slate-600 dark:text-slate-300">
                       {expandedAnnouncement === announcement.id ? (
                         <div>
                           <p className="whitespace-pre-wrap">{announcement.content}</p>

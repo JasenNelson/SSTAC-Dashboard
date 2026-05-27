@@ -87,12 +87,12 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-medium text-slate-900 mb-4">Start New Discussion</h3>
-      
+    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
+      <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">Start New Discussion</h3>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-slate-600 mb-1">
+          <label htmlFor="title" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
             Discussion Title
           </label>
           <input
@@ -100,14 +100,14 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
             placeholder="Enter a descriptive title for your discussion"
             required
           />
         </div>
 
         <div>
-          <label htmlFor="content" className="block text-sm font-medium text-slate-600 mb-1">
+          <label htmlFor="content" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
             Discussion Content
           </label>
           <textarea
@@ -115,7 +115,7 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={6}
-            className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
             placeholder="Share your thoughts, questions, or ideas..."
             required
           />
@@ -125,7 +125,7 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-md hover:bg-slate-200 transition-colors"
+            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
             disabled={isSubmitting}
           >
             Cancel

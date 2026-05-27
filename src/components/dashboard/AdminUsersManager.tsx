@@ -229,42 +229,42 @@ export default function AdminUsersManager() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="px-6 py-4 border-b border-slate-200">
+    <div className="bg-white dark:bg-slate-900 rounded-lg shadow">
+      <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900 flex items-center">
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white flex items-center">
               <Users className="w-5 h-5 mr-2" />
               Users ({filteredUsers.length} of {users.length})
             </h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Manage user accounts and admin privileges
             </p>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-sky-700">{users.length}</div>
-            <div className="text-sm text-slate-500">Total Users</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">Total Users</div>
           </div>
         </div>
       </div>
-      
+
              {/* Help Information */}
-       <div className="px-6 py-4 border-b border-slate-200 bg-sky-50">
-         <h3 className="text-sm font-medium text-sky-900 mb-2">💡 User Management</h3>
+       <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-sky-50 dark:bg-sky-900/20">
+         <h3 className="text-sm font-medium text-sky-900 mb-2">User Management</h3>
          <div className="text-sm text-sky-800 space-y-2">
            <p><strong>User Discovery:</strong> The system automatically discovers users who interact with the platform (create documents, discussions, or likes)</p>
            <p><strong>Role Management:</strong> Admins can promote users to admin status or remove admin privileges</p>
            <p><strong>Email Display:</strong> Full emails are shown when available, otherwise a truncated user ID is displayed</p>
          </div>
        </div>
-      
+
       {/* Search and Filter Controls */}
-      <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+      <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950">
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex flex-wrap gap-4 items-center flex-1">
             {/* Search */}
             <div className="relative min-w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search by email or ID..."
@@ -273,20 +273,20 @@ export default function AdminUsersManager() {
                   setSearchTerm(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
               />
             </div>
 
             {/* Role Filter */}
             <div className="flex items-center space-x-2">
-              <Filter className="w-4 h-4 text-slate-400" />
+              <Filter className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               <select
                 value={roleFilter}
                 onChange={(e) => {
                   setRoleFilter(e.target.value as 'all' | 'admin' | 'user');
                   setCurrentPage(1);
                 }}
-                className="px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
               >
                 <option value="all">All Roles</option>
                 <option value="admin">Admin Only</option>
@@ -298,7 +298,7 @@ export default function AdminUsersManager() {
             {(searchTerm || roleFilter !== 'all') && (
               <button
                 onClick={clearFilters}
-                className="px-3 py-2 text-sm text-slate-500 hover:text-slate-800 hover:bg-slate-200 rounded-md transition-colors"
+                className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors"
               >
                 Clear Filters
               </button>
@@ -306,7 +306,7 @@ export default function AdminUsersManager() {
           </div>
 
           {/* Sort Controls */}
-          <div className="flex items-center space-x-2 text-sm text-slate-500">
+          <div className="flex items-center space-x-2 text-sm text-slate-500 dark:text-slate-400">
             <span>Sort by:</span>
             <select
               value={`${sortBy}-${sortOrder}`}
@@ -316,7 +316,7 @@ export default function AdminUsersManager() {
                 setSortOrder(order);
                 setCurrentPage(1);
               }}
-              className="px-2 py-1 border border-slate-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-sky-500"
+              className="px-2 py-1 border border-slate-300 dark:border-slate-600 rounded text-xs focus:outline-none focus:ring-1 focus:ring-sky-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
             >
               <option value="created_at-desc">Newest First</option>
               <option value="created_at-asc">Oldest First</option>
@@ -330,14 +330,14 @@ export default function AdminUsersManager() {
       </div>
       
       {/* Add New User Form */}
-      <div className="px-6 py-4 border-b border-slate-200 bg-sky-50">
-        <h3 className="text-lg font-medium text-slate-900 mb-3 flex items-center">
+      <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-sky-50 dark:bg-sky-900/20">
+        <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-3 flex items-center">
           <User className="w-5 h-5 mr-2" />
           Add New User Role
         </h3>
         <form onSubmit={handleAddUser} className="flex flex-wrap gap-4 items-end">
           <div className="flex-1 min-w-64">
-            <label htmlFor="email" className="block text-sm font-medium text-slate-600 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
               Email Address
             </label>
             <input
@@ -346,19 +346,19 @@ export default function AdminUsersManager() {
               value={newUserEmail}
               onChange={(e) => setNewUserEmail(e.target.value)}
               placeholder="user@example.com"
-              className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
               required
             />
           </div>
           <div className="min-w-32">
-            <label htmlFor="role" className="block text-sm font-medium text-slate-600 mb-1">
+            <label htmlFor="role" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
               Role
             </label>
             <select
               id="role"
               value={newUserRole}
               onChange={(e) => setNewUserRole(e.target.value as 'user' | 'admin')}
-              className="w-full px-3 py-2 border border-slate-300 rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500"
+              className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-sky-500 focus:border-sky-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
             >
               <option value="user">User</option>
               <option value="admin">Admin</option>
@@ -372,17 +372,17 @@ export default function AdminUsersManager() {
             {isAddingUser ? 'Processing...' : 'Check User Role'}
           </button>
         </form>
-        <p className="text-xs text-slate-500 mt-2">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
           Note: This form is for demonstration. In production, users must sign up first before roles can be assigned.
         </p>
       </div>
       
       {/* Users Table */}
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
+        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+          <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100" onClick={() => handleSort('email')}>
+              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => handleSort('email')}>
                 <div className="flex items-center space-x-1">
                   <span>User</span>
                   {sortBy === 'email' && (
@@ -392,7 +392,7 @@ export default function AdminUsersManager() {
                   )}
                 </div>
               </th>
-                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100" onClick={() => handleSort('role')}>
+                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => handleSort('role')}>
                  <div className="flex items-center space-x-1">
                    <span>Role</span>
                    {sortBy === 'role' && (
@@ -403,7 +403,7 @@ export default function AdminUsersManager() {
                  </div>
                </th>
 
-               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100" onClick={() => handleSort('created_at')}>
+               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => handleSort('created_at')}>
                  <div className="flex items-center space-x-1">
                    <span>Joined</span>
                    {sortBy === 'created_at' && (
@@ -413,14 +413,14 @@ export default function AdminUsersManager() {
                    )}
                  </div>
                </th>
-               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                  Actions
                </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-slate-200">
+          <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-700">
             {currentUsers.map((user) => (
-              <tr key={user.id} className="hover:bg-slate-50">
+              <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10">
@@ -435,10 +435,10 @@ export default function AdminUsersManager() {
                       </div>
                     </div>
                     <div className="ml-4">
-                      <div className="text-sm font-medium text-slate-900">
+                      <div className="text-sm font-medium text-slate-900 dark:text-white">
                         {user.email}
                       </div>
-                      <div className="text-sm text-slate-500">
+                      <div className="text-sm text-slate-500 dark:text-slate-400">
                         ID: {user.id.slice(0, 8)}...
                       </div>
                     </div>
@@ -446,9 +446,9 @@ export default function AdminUsersManager() {
                 </td>
                                  <td className="px-6 py-4 whitespace-nowrap">
                    <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${
-                     user.isAdmin 
-                       ? 'bg-green-100 text-green-800' 
-                       : 'bg-slate-100 text-slate-800'
+                     user.isAdmin
+                       ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
+                       : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
                    }`}>
                      {user.isAdmin ? (
                        <>
@@ -464,7 +464,7 @@ export default function AdminUsersManager() {
                    </span>
                  </td>
 
-                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
                    {formatDate(user.created_at)}
                  </td>
                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -499,16 +499,16 @@ export default function AdminUsersManager() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50">
+        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-slate-600">
+            <div className="text-sm text-slate-600 dark:text-slate-300">
               Showing {startIndex + 1} to {Math.min(endIndex, filteredUsers.length)} of {filteredUsers.length} results
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium text-slate-500 bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -520,7 +520,7 @@ export default function AdminUsersManager() {
                   className={`px-3 py-2 text-sm font-medium rounded-md ${
                     currentPage === page
                       ? 'bg-sky-700 text-white'
-                      : 'text-slate-500 bg-white border border-slate-300 hover:bg-slate-50'
+                      : 'text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
                   }`}
                 >
                   {page}
@@ -530,7 +530,7 @@ export default function AdminUsersManager() {
               <button
                 onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium text-slate-500 bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -541,9 +541,8 @@ export default function AdminUsersManager() {
       
       {currentUsers.length === 0 && (
         <div className="text-center py-12">
-          <div className="text-4xl mb-4">🔍</div>
-          <p className="text-lg font-medium mb-2">No users found</p>
-          <p className="text-sm text-slate-500">
+          <p className="text-lg font-medium mb-2 text-slate-900 dark:text-white">No users found</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             {searchTerm || roleFilter !== 'all' 
               ? 'Try adjusting your search or filter criteria'
               : 'No users have been added yet'
