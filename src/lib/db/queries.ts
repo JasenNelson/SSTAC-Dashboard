@@ -24,18 +24,18 @@ export async function getUserRoles(userId: string) {
 
 export async function createUserRole(userId: string, role: string) {
   const supabase = await createAuthenticatedClient();
-  return supabase
-    .from('user_roles')
-    .insert({ user_id: userId, role })
-    .single();
+  return supabase.rpc('manage_user_role_insert', {
+    p_user_id: userId,
+    p_role: role,
+  });
 }
 
-export async function deleteUserRole(userId: string) {
+export async function deleteUserRole(userId: string, role: string) {
   const supabase = await createAuthenticatedClient();
-  return supabase
-    .from('user_roles')
-    .delete()
-    .eq('user_id', userId);
+  return supabase.rpc('manage_user_role_delete', {
+    p_user_id: userId,
+    p_role: role,
+  });
 }
 
 export async function getAdminUsersComprehensive() {
