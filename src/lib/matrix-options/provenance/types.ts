@@ -276,3 +276,10 @@ export type EvidenceLibraryFilterRequest = Partial<
 > & {
   search?: string;
 };
+
+export type CalculatorReceipt = {
+  pathwayLabel: string;
+  substanceLabel: string;
+  inputKeys: string[];
+  frameLabel: string;
+};

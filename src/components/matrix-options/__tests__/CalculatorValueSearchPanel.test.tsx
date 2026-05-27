@@ -38,6 +38,14 @@ describe('CalculatorValueSearchPanel default policy projection', () => {
           'sf_oral_per_mg_per_kg_bw_per_day',
         ]),
       }),
+      expect.objectContaining({
+        pathwayLabel: 'Human Health: Food Web',
+        substanceLabel: 'Benzo[a]pyrene',
+        frameLabel: expect.any(String),
+        inputKeys: expect.arrayContaining([
+          'sf_oral_per_mg_per_kg_bw_per_day',
+        ]),
+      }),
     );
 
     fireEvent.change(screen.getByPlaceholderText(/Search parameter or source/i), {

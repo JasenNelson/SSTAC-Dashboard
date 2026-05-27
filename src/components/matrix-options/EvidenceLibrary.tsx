@@ -22,6 +22,7 @@ import type {
   EvidenceLibraryValueRow,
 } from '@/lib/matrix-options/provenance/library';
 import type {
+  CalculatorReceipt,
   EvidenceLibraryFilterRequest,
   EvidenceLibraryFilters,
   EvidenceLibraryViewMode,
@@ -41,6 +42,8 @@ interface EvidenceLibraryProps {
   filters: EvidenceLibraryFilters;
   onFiltersChange: (filters: EvidenceLibraryFilters) => void;
   regulatoryFrameId?: RegulatoryFrameId;
+  calculatorReceipt?: CalculatorReceipt | null;
+  onDismissReceipt?: () => void;
   className?: string;
 }
 
@@ -1490,10 +1493,57 @@ function SourceLeadCard({ lead }: { lead: EvidenceLibrarySourceLeadSummary }) {
   );
 }
 
+function CalculatorReceiptBanner({
+  receipt,
+  onDismiss,
+}: {
+  receipt: CalculatorReceipt;
+  onDismiss?: () => void;
+}) {
+  const inputLabel =
+    receipt.inputKeys.length === 1
+      ? `1 input key: ${humanizeCatalogLabel(receipt.inputKeys[0])}`
+      : `${receipt.inputKeys.length} input keys`;
+
+  return (
+    <div
+      className="flex items-start justify-between gap-3 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200"
+      data-testid="calculator-receipt-banner"
+    >
+      <div className="min-w-0">
+        <p className="text-xs font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+          Calculator request
+        </p>
+        <p className="mt-1 font-semibold">
+          {receipt.substanceLabel} -- {receipt.pathwayLabel}
+        </p>
+        <p className="mt-0.5 text-xs text-sky-700 dark:text-sky-300">
+          {inputLabel}; frame: {receipt.frameLabel}
+        </p>
+        <p className="mt-1 text-xs text-sky-600 dark:text-sky-400">
+          Read-only view of candidate defaults. Calculator defaults do not change from this view.
+        </p>
+      </div>
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Dismiss calculator receipt"
+          className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sky-500 hover:bg-sky-100 hover:text-sky-700 dark:hover:bg-sky-900 dark:hover:text-sky-300"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function EvidenceLibrary({
   filters,
   onFiltersChange,
   regulatoryFrameId = 'bc-protocol1-v5-dra',
+  calculatorReceipt,
+  onDismissReceipt,
   className,
 }: EvidenceLibraryProps) {
   const [viewMode, setViewMode] = useState<EvidenceLibraryViewMode>('by-parameter');
@@ -1618,6 +1668,7 @@ export default function EvidenceLibrary({
   const clearFilters = () => {
     closeDetailPanels();
     setDefaultPolicyStatusFilter(null);
+    onDismissReceipt?.();
     onFiltersChange(createEvidenceLibraryFilters());
   };
   const applyQuickFilter = (filter: (typeof QUICK_REVIEW_FILTERS)[number]) => {
@@ -1640,6 +1691,7 @@ export default function EvidenceLibrary({
   ) => {
     setViewMode('by-parameter');
     closeDetailPanels();
+    onDismissReceipt?.();
     setDefaultPolicyStatusFilter(status);
   };
   const openProtocol28Review = () => {
@@ -1773,6 +1825,13 @@ export default function EvidenceLibrary({
           ))}
         </div>
       </header>
+
+      {calculatorReceipt && (
+        <CalculatorReceiptBanner
+          receipt={calculatorReceipt}
+          onDismiss={onDismissReceipt}
+        />
+      )}
 
       <AuditStrip audit={library.audit} onSelect={applyAuditFilter} />
 

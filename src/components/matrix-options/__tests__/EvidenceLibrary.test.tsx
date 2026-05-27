@@ -777,4 +777,56 @@ describe('EvidenceLibrary', () => {
       /underlying cited source as canonical/i,
     );
   });
+
+  it('shows and dismisses a calculator receipt banner', () => {
+    const receipt = {
+      pathwayLabel: 'Human Health Food Web',
+      substanceLabel: 'Benzo[a]pyrene',
+      inputKeys: ['sf_oral_per_mg_per_kg_bw_per_day'],
+      frameLabel: 'BC Protocol 1 v5 DRA',
+    };
+    const handleDismiss = vi.fn();
+    let currentFilters = createEvidenceLibraryFilters({
+      pathways: ['human-health-food'],
+      substanceKeys: ['benzo_a_pyrene'],
+      inputKeys: ['sf_oral_per_mg_per_kg_bw_per_day'],
+    });
+    const handleChange = vi.fn((nextFilters: EvidenceLibraryFilters) => {
+      currentFilters = nextFilters;
+      rerender(
+        <EvidenceLibrary
+          filters={currentFilters}
+          onFiltersChange={handleChange}
+          regulatoryFrameId="bc-protocol1-v5-dra"
+          calculatorReceipt={receipt}
+          onDismissReceipt={handleDismiss}
+        />,
+      );
+    });
+    const { rerender } = render(
+      <EvidenceLibrary
+        filters={currentFilters}
+        onFiltersChange={handleChange}
+        regulatoryFrameId="bc-protocol1-v5-dra"
+        calculatorReceipt={receipt}
+        onDismissReceipt={handleDismiss}
+      />,
+    );
+
+    const banner = screen.getByTestId('calculator-receipt-banner');
+    expect(banner).toHaveTextContent(/Calculator request/);
+    expect(banner).toHaveTextContent(/Benzo\[a\]pyrene/);
+    expect(banner).toHaveTextContent(/Human Health Food Web/);
+    expect(banner).toHaveTextContent(/1 input key/);
+    expect(banner).toHaveTextContent(/BC Protocol 1 v5 DRA/);
+    expect(banner).toHaveTextContent(/do not change/i);
+
+    fireEvent.click(screen.getByRole('button', { name: /Dismiss calculator receipt/ }));
+    expect(handleDismiss).toHaveBeenCalled();
+  });
+
+  it('does not show a calculator receipt when none is provided', () => {
+    renderControlled();
+    expect(screen.queryByTestId('calculator-receipt-banner')).not.toBeInTheDocument();
+  });
 });

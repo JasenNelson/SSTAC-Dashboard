@@ -22,6 +22,7 @@ import type {
   EvidenceLibraryValueRow,
 } from '@/lib/matrix-options/provenance/library';
 import type {
+  CalculatorReceipt,
   DefaultStatus,
   EvidenceLibraryFilterRequest,
   EvidenceSupportStatus,
@@ -46,7 +47,7 @@ interface CalculatorValueSearchPanelProps {
   substanceLabel: string;
   jurisdictionLabel: string;
   regulatoryFrameId: RegulatoryFrameId;
-  onOpenEvidenceLibrary: (request: EvidenceLibraryFilterRequest) => void;
+  onOpenEvidenceLibrary: (request: EvidenceLibraryFilterRequest, receipt?: CalculatorReceipt) => void;
   className?: string;
 }
 
@@ -528,12 +529,20 @@ export default function CalculatorValueSearchPanel({
   );
   const openDefaultPolicyCandidates = () => {
     setCandidateReviewedAt(new Date().toLocaleTimeString());
-    onOpenEvidenceLibrary({
-      pathways: [pathway],
-      substanceKeys: [substanceKey],
-      inputKeys: defaultPolicyCandidateInputKeys,
-      ...regulatoryFrameFilters,
-    });
+    onOpenEvidenceLibrary(
+      {
+        pathways: [pathway],
+        substanceKeys: [substanceKey],
+        inputKeys: defaultPolicyCandidateInputKeys,
+        ...regulatoryFrameFilters,
+      },
+      {
+        pathwayLabel,
+        substanceLabel,
+        inputKeys: defaultPolicyCandidateInputKeys,
+        frameLabel: regulatoryFrame.shortLabel,
+      },
+    );
   };
 
   const openValueDetails = (row: EvidenceLibraryValueRow) => {

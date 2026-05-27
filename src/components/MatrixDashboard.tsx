@@ -26,6 +26,7 @@ import {
   createEvidenceLibraryFilters,
 } from '@/lib/matrix-options/provenance/library';
 import type {
+  CalculatorReceipt,
   EvidenceLibraryFilterRequest,
   EvidenceLibraryFilters,
   ProvenancePathway,
@@ -265,6 +266,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   );
   const [evidenceLibraryFilters, setEvidenceLibraryFilters] =
     useState<EvidenceLibraryFilters>(() => createEvidenceLibraryFilters());
+  const [calculatorReceipt, setCalculatorReceipt] = useState<CalculatorReceipt | null>(null);
 
   // Hydrate from localStorage on mount (client-only). Each restore* helper
   // validates the stored value against the current allowlist and clears
@@ -322,12 +324,23 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
     router.refresh();
   }, [router]);
   const handleOpenEvidenceLibrary = useCallback(
-    (request: EvidenceLibraryFilterRequest) => {
+    (request: EvidenceLibraryFilterRequest, receipt?: CalculatorReceipt) => {
       setEvidenceLibraryFilters(createEvidenceLibraryFilters(request));
+      setCalculatorReceipt(receipt ?? null);
       setActiveTopTab('References & Values');
     },
     [],
   );
+  const handleEvidenceLibraryFiltersChange = useCallback(
+    (nextFilters: EvidenceLibraryFilters) => {
+      setEvidenceLibraryFilters(nextFilters);
+      setCalculatorReceipt(null);
+    },
+    [],
+  );
+  const handleDismissReceipt = useCallback(() => {
+    setCalculatorReceipt(null);
+  }, []);
   const toggleRightPanel = useCallback(() => {
     setShowRightPanel((current) => {
       if (current) setMatrixMapWorkbenchFocused(false);
@@ -564,8 +577,10 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           <div className="w-full">
             <EvidenceLibrary
               filters={evidenceLibraryFilters}
-              onFiltersChange={setEvidenceLibraryFilters}
+              onFiltersChange={handleEvidenceLibraryFiltersChange}
               regulatoryFrameId={jurisdiction}
+              calculatorReceipt={calculatorReceipt}
+              onDismissReceipt={handleDismissReceipt}
             />
           </div>
         );
