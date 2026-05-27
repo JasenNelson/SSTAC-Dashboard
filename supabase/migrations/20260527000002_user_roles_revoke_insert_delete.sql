@@ -8,3 +8,4 @@
 
 REVOKE INSERT ON public.user_roles FROM authenticated;
 REVOKE DELETE ON public.user_roles FROM authenticated;
+REVOKE UPDATE ON public.user_roles FROM authenticated;
