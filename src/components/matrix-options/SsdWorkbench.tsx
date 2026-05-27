@@ -1867,7 +1867,7 @@ export default function SsdWorkbench({
                           scale={plotScale}
                           domain={plotScale === 'log' ? ['dataMin', 'dataMax'] : [0, 'dataMax']}
                           ticks={concentrationTicks}
-                          tickFormatter={(value: number) => formatNumber(value, 2)}
+                          tickFormatter={(value: string | number) => formatNumber(Number(value), 2)}
                           tickMargin={10}
                           minTickGap={16}
                         />
@@ -1877,7 +1877,7 @@ export default function SsdWorkbench({
                           domain={[0, 100]}
                           width={56}
                           tickMargin={8}
-                          tickFormatter={(value: number) => `${value}%`}
+                          tickFormatter={(value: string | number) => `${Number(value)}%`}
                         />
                         <Tooltip
                           formatter={(value: unknown, name?: string | number) => {
@@ -1890,9 +1890,9 @@ export default function SsdWorkbench({
                               name === 'value' ? 'Concentration' : 'Affected',
                             ];
                           }}
-                          labelFormatter={(_, payload) =>
-                            payload?.[0]?.payload?.species ??
-                            payload?.[0]?.payload?.distribution ??
+                          labelFormatter={(_label: string, payload: ReadonlyArray<{ payload?: Record<string, unknown> }>) =>
+                            (payload?.[0]?.payload?.species as string) ??
+                            (payload?.[0]?.payload?.distribution as string) ??
                             'Species'
                           }
                         />

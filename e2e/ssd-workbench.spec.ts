@@ -69,13 +69,18 @@ test.describe('SSD Workbench', () => {
     await datasetCombobox.selectOption('ccme_boron_validation');
 
     await expect(page.locator('body')).toContainText('28 source rows');
-    await expect(page.getByDisplayValue('Boron')).toBeVisible();
+    await expect(
+      page.getByRole('textbox', { name: /Chemical search/i }),
+    ).toHaveValue('Boron');
 
     await page.getByRole('button', { name: 'Run SSD', exact: true }).click();
+    await expect(page.locator('body')).toContainText(
+      'Results match the current staged settings',
+    );
 
     const validationPanel = page.getByTestId('ssd-validation-panel');
     await expect(validationPanel).toBeVisible();
-    await validationPanel.getByText('Validation and verification').click();
+    await validationPanel.locator('summary').click();
     await expect(validationPanel).toHaveAttribute('open', '');
 
     const referenceChecks = validationPanel.getByText('Reference checks');
