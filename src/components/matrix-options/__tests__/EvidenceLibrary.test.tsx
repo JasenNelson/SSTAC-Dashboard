@@ -204,7 +204,7 @@ describe('EvidenceLibrary', () => {
     expect(
       screen.queryByText(/Default policy: Candidate pending approval/),
     ).not.toBeInTheDocument();
-  }, 10000);
+  });
 
   it('uses the selected regulatory frame when projecting default policy', () => {
     renderControlled(
@@ -252,7 +252,7 @@ describe('EvidenceLibrary', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /^Source Leads$/ }));
     expect(screen.getByText(/Showing \d+ of \d+ lead sets/)).toBeInTheDocument();
-  }, 10000);
+  });
 
   it('renders source and source-lead views without promoting scaffolds', () => {
     renderControlled();
@@ -716,7 +716,7 @@ describe('EvidenceLibrary', () => {
     expect(
       screen.queryByText(/Evidence: approved source-backed/i),
     ).not.toBeInTheDocument();
-  }, 10000);
+  });
 
   it('searches and clears active filters', () => {
     renderControlled();
