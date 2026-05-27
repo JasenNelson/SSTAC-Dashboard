@@ -481,7 +481,7 @@ export default function SsdWorkbench({
   const [pValue, setPValue] = useState(0.05);
   const [bootstrapIterations, setBootstrapIterations] = useState(0);
   const [analysisMode, setAnalysisMode] =
-    useState<SsdAnalysisMode>('empirical_preview');
+    useState<SsdAnalysisMode>('model_averaging');
   const [selectedDistribution, setSelectedDistribution] =
     useState<SsdDistribution>('Log-Normal');
   const [plotScale, setPlotScale] = useState<PlotScale>('log');
@@ -510,7 +510,7 @@ export default function SsdWorkbench({
     endpointFilters: [],
     aggregationMethod: 'geometric_mean',
     pValue: 0.05,
-    analysisMode: 'empirical_preview',
+    analysisMode: 'model_averaging',
     selectedDistribution: 'Log-Normal',
     bootstrapIterations: 0,
     dataSourceMode: 'fixture',
