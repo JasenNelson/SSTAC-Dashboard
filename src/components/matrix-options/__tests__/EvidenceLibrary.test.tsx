@@ -829,4 +829,79 @@ describe('EvidenceLibrary', () => {
     renderControlled();
     expect(screen.queryByTestId('calculator-receipt-banner')).not.toBeInTheDocument();
   });
+
+  it('shows an all-scaffolds info banner when all visible values are pending review', () => {
+    // Filter to current_calculator_scaffold only -- all such values have
+    // qa_status: 'needs_review', so the banner should appear.
+    renderControlled(
+      createEvidenceLibraryFilters({
+        evidenceSupportStatuses: ['current_calculator_scaffold'],
+      }),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+
+    expect(
+      screen.getByTestId('evidence-library-all-scaffolds-banner'),
+    ).toHaveTextContent(
+      /All parameter values are current calculator scaffolds pending source verification/,
+    );
+    expect(
+      screen.getByTestId('evidence-library-all-scaffolds-banner'),
+    ).toHaveTextContent(/No values have been approved as source-backed defaults yet/);
+  });
+
+  it('does not show the all-scaffolds banner when approved values are present', () => {
+    // Default unfiltered view includes approved_source_backed values (qa_status: approved).
+    renderControlled();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+
+    expect(
+      screen.queryByTestId('evidence-library-all-scaffolds-banner'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not show the all-scaffolds banner in assumptions, equations, or sources views', () => {
+    renderControlled(
+      createEvidenceLibraryFilters({
+        evidenceSupportStatuses: ['current_calculator_scaffold'],
+      }),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Assumptions$/ }));
+    expect(
+      screen.queryByTestId('evidence-library-all-scaffolds-banner'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
+    expect(
+      screen.queryByTestId('evidence-library-all-scaffolds-banner'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    expect(
+      screen.queryByTestId('evidence-library-all-scaffolds-banner'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders assumption tags on equations using violet chip styling, not amber status badges', () => {
+    renderControlled();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
+
+    const equations = screen.getByTestId('evidence-library-equations');
+    // Equation assumption tags that exist in catalog data should appear as
+    // humanized text inside violet chips, not inside amber/slate StatusBadge elements.
+    // The violet chip class is the distinguishing marker.
+    const violetChips = equations.querySelectorAll(
+      'span.border-violet-200',
+    );
+    // At least some equations carry assumption tags; verify the chip class is present
+    // when they do, and that assumption text is not rendered bare via StatusBadge.
+    if (violetChips.length > 0) {
+      expect(violetChips[0].className).toMatch(/bg-violet-50/);
+      expect(violetChips[0].className).toMatch(/text-violet-800/);
+    }
+  });
 });

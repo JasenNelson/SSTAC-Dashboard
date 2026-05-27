@@ -1,7 +1,10 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ExternalLink, Search, X } from 'lucide-react';
+import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
+import { promoteSourceLead } from '@/lib/matrix-options/provenance/promotion';
+import type { PromotedParameterValueRecord } from '@/lib/matrix-options/provenance/promotion';
 import { cn } from '@/utils/cn';
 import {
   PROTOCOL28_POLICY_ALIGNMENT,
@@ -332,6 +335,28 @@ function DerivedPreviewEmptyState() {
         owner approval are complete. They are not stored as catalog defaults.
       </p>
     </div>
+  );
+}
+
+function AllScaffoldsBanner() {
+  return (
+    <div
+      className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+      data-testid="evidence-library-all-scaffolds-banner"
+    >
+      All parameter values are current calculator scaffolds pending source
+      verification. No values have been approved as source-backed defaults yet.
+    </div>
+  );
+}
+
+// AssumptionChip: distinct violet tone so assumption tags are visually
+// separate from the emerald/amber status chips in the same row.
+function AssumptionChip({ label }: { label: string }) {
+  return (
+    <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-800 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-200">
+      {label}
+    </span>
   );
 }
 
@@ -1437,7 +1462,55 @@ function ValueGroupCard({
   );
 }
 
-function SourceLeadCard({ lead }: { lead: EvidenceLibrarySourceLeadSummary }) {
+// ---------------------------------------------------------------------------
+// PromoteLeadButton -- admin-only; source-leads view only
+// ---------------------------------------------------------------------------
+
+function PromoteLeadButton({
+  lead,
+  onPromoted,
+}: {
+  lead: EvidenceLibrarySourceLeadSummary;
+  onPromoted?: (record: PromotedParameterValueRecord) => void;
+}) {
+  const [promoted, setPromoted] = useState(false);
+
+  const handleClick = () => {
+    const record = promoteSourceLead(lead);
+    setPromoted(true);
+    onPromoted?.(record);
+  };
+
+  if (promoted) {
+    return (
+      <span
+        className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200"
+        data-testid="promote-lead-success"
+      >
+        Promoted to candidate
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      data-testid="promote-lead-button"
+      onClick={handleClick}
+      className="inline-flex min-h-8 items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 text-xs font-semibold text-amber-800 hover:border-amber-500 hover:bg-amber-50 dark:border-amber-700 dark:bg-slate-900 dark:text-amber-200 dark:hover:bg-amber-950/30"
+    >
+      Promote to candidate
+    </button>
+  );
+}
+
+function SourceLeadCard({
+  lead,
+  isAdmin = false,
+}: {
+  lead: EvidenceLibrarySourceLeadSummary;
+  isAdmin?: boolean;
+}) {
   const totalLeads =
     lead.counts.equationLeads +
     lead.counts.parameterValueLeads +
@@ -1487,6 +1560,14 @@ function SourceLeadCard({ lead }: { lead: EvidenceLibrarySourceLeadSummary }) {
               <li key={action}>{action}</li>
             ))}
           </ul>
+        )}
+        {isAdmin && (
+          <div className="flex items-center gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
+            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+              Admin:
+            </span>
+            <PromoteLeadButton lead={lead} />
+          </div>
         )}
       </div>
     </details>
@@ -1551,6 +1632,18 @@ export default function EvidenceLibrary({
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const [defaultPolicyStatusFilter, setDefaultPolicyStatusFilter] =
     useState<DefaultSelectionDecisionStatus | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    checkCurrentUserAdminStatus().then((value) => {
+      if (!cancelled) setIsAdmin(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const library = useMemo(() => buildEvidenceLibraryView(filters), [filters]);
   const baselineLibrary = useMemo(() => buildEvidenceLibraryView(), []);
   const defaultPolicyDecisions = useMemo(() => {
@@ -2018,6 +2111,11 @@ export default function EvidenceLibrary({
               label={viewMode === 'assumptions' ? 'assumption/default rows' : 'values'}
             />
           </div>
+          {viewMode === 'values' &&
+            visibleValues.length > 0 &&
+            visibleValues.every((row) => row.record.qa_status === 'needs_review' && row.record.evidence_support_status === 'current_calculator_scaffold') && (
+              <AllScaffoldsBanner />
+            )}
           <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
@@ -2207,7 +2305,7 @@ export default function EvidenceLibrary({
                     <StatusBadge value={row.record.qa_status} />
                     <StatusBadge value={row.record.evidence_support_status} />
                     {row.assumptionTags.map((tag) => (
-                      <StatusBadge key={tag} value={tag} />
+                      <AssumptionChip key={tag} label={humanizeCatalogLabel(tag)} />
                     ))}
                   </div>
                   <p className="mt-2 text-xs text-slate-500">
@@ -2377,19 +2475,35 @@ export default function EvidenceLibrary({
 
       {showSourceLeads && (
         <section className="space-y-2" data-testid="evidence-library-source-leads">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
               Source-Of-Sources Leads
             </h3>
-            <ResultCountBadge
-              visible={library.sourceLeads.length}
-              total={baselineLibrary.sourceLeads.length}
-              label="lead sets"
-            />
+            <div className="flex flex-wrap items-center gap-2">
+              {(() => {
+                const needsReviewCount = library.sourceLeads.filter(
+                  (lead) => lead.status === 'needs_review',
+                ).length;
+                return needsReviewCount > 0 ? (
+                  <span
+                    className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
+                    data-testid="source-leads-needs-review-badge"
+                    title="Lead sets with status needs_review and pending source locator"
+                  >
+                    {needsReviewCount} needs review
+                  </span>
+                ) : null;
+              })()}
+              <ResultCountBadge
+                visible={library.sourceLeads.length}
+                total={baselineLibrary.sourceLeads.length}
+                label="lead sets"
+              />
+            </div>
           </div>
           <div className="grid gap-2">
             {library.sourceLeads.map((lead) => (
-              <SourceLeadCard key={lead.leadSetId} lead={lead} />
+              <SourceLeadCard key={lead.leadSetId} lead={lead} isAdmin={isAdmin} />
             ))}
             {library.sourceLeads.length === 0 && (
               <EmptyDatabaseState

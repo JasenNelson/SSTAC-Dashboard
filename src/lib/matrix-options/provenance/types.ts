@@ -283,3 +283,12 @@ export type CalculatorReceipt = {
   inputKeys: string[];
   frameLabel: string;
 };
+
+// AuditEntry is used by the source-lead promotion workflow.
+// Records are local-state only and are not written to Supabase.
+export interface AuditEntry {
+  action: string;
+  actor: string;
+  timestamp: string;
+  note: string | null;
+}
