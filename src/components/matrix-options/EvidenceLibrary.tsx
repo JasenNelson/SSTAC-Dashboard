@@ -344,8 +344,9 @@ function AllScaffoldsBanner() {
       className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
       data-testid="evidence-library-all-scaffolds-banner"
     >
-      All parameter values are current calculator scaffolds pending source
-      verification. No values have been approved as source-backed defaults yet.
+      All visible parameter values are current calculator scaffolds pending
+      source verification. Adjust filters to check for approved source-backed
+      defaults.
     </div>
   );
 }

@@ -66,7 +66,8 @@ export function promoteSourceLead(
     parameter_value_id: parameterId,
     // substance_key and pathway cannot be reliably derived from a lead summary
     // because a single lead set can cover multiple pathways and substances.
-    // Use placeholder strings so the caller can set them explicitly.
+    // 'eco-direct-eqp' is a STRUCTURAL DEFAULT only -- the reviewer MUST assign
+    // the correct pathway before this record can route to a calculator.
     substance_key: '',
     pathway: 'eco-direct-eqp',
     input_key: '',
@@ -85,7 +86,7 @@ export function promoteSourceLead(
     applicability: lead.rule ?? '',
     uncertainty: null,
     evidence_items: [],
-    review_notes: `Promoted from source-lead set "${lead.leadSetId}" by ${actor} at ${new Date(timestamp).toISOString()}. Exact source locator, currentness, applicability, QA, and approval are required before this record can support calculator defaults.`,
+    review_notes: `Promoted from source-lead set "${lead.leadSetId}" by ${actor} at ${new Date(timestamp).toISOString()}. PATHWAY IS UNSCOPED (structural default eco-direct-eqp) -- reviewer must assign the correct pathway. Exact source locator, substance key, currentness, applicability, QA, and approval are required before this record can support calculator defaults.`,
     audit_history: [],
   };
 
