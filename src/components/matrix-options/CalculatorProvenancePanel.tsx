@@ -236,6 +236,16 @@ export default function CalculatorProvenancePanel({
                 </tr>
               </thead>
               <tbody>
+                {rows.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-3 py-4 text-center text-sm text-slate-500 dark:text-slate-400"
+                    >
+                      No values recorded for this calculation.
+                    </td>
+                  </tr>
+                )}
                 {rows.map((row) => {
                   const review = row.catalog_record
                     ? getParameterValueReviewDisposition(

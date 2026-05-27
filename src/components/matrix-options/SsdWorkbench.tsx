@@ -668,6 +668,7 @@ export default function SsdWorkbench({
       };
       setMirrorHealth(nextHealth);
       setLiveStatus('error');
+      setLiveMessage('Health check failed. Use Validation or Upload mode.');
       setLiveRows([]);
       setLiveRowsTruncated(false);
       return nextHealth;
@@ -772,7 +773,7 @@ export default function SsdWorkbench({
     } catch {
       setChemicalSuggestions([]);
       setLiveStatus('error');
-      setLiveMessage(liveStatusLabel('error'));
+      setLiveMessage('Chemical search failed. Try again or use Validation mode.');
     }
   };
 
@@ -823,7 +824,7 @@ export default function SsdWorkbench({
       setLiveRows([]);
       setLiveRowsTruncated(false);
       setLiveStatus('error');
-      setLiveMessage(liveStatusLabel('error'));
+      setLiveMessage('Record load failed. The mirror may be temporarily unavailable.');
     }
   };
 
@@ -2150,6 +2151,16 @@ export default function SsdWorkbench({
                         </td>
                       </tr>
                     ))}
+                    {result.excludedRecords.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={2}
+                          className="px-3 py-4 text-center text-sm text-slate-500 dark:text-slate-400"
+                        >
+                          No exclusions for the current filters.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
