@@ -52,6 +52,14 @@ export default defineConfig({
       // it to an empty module here so the import succeeds in tests; the
       // real protection still fires when Next traces a client bundle.
       'server-only': path.resolve(__dirname, './src/test/server-only-stub.ts'),
+      // Leaflet and leaflet.markercluster ship CSS files that are imported
+      // dynamically inside SiteMap.tsx via `await import(...)`. Vitest/Vite
+      // attempts to process them through the postcss pipeline which fails in
+      // the test environment. Alias them to the shared empty stub so the
+      // dynamic import resolves without invoking the CSS plugin.
+      'leaflet/dist/leaflet.css': path.resolve(__dirname, './src/test/server-only-stub.ts'),
+      'leaflet.markercluster/dist/MarkerCluster.css': path.resolve(__dirname, './src/test/server-only-stub.ts'),
+      'leaflet.markercluster/dist/MarkerCluster.Default.css': path.resolve(__dirname, './src/test/server-only-stub.ts'),
     },
   },
 });
