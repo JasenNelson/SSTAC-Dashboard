@@ -473,6 +473,86 @@ describe('SsdWorkbench', () => {
     expect(screen.queryByTestId('ssd-selected-chemicals-bar')).not.toBeInTheDocument();
   });
 
+  it('shows onboarding callout when ECOTOX mirror is not configured', async () => {
+    mockFetchJson(
+      {
+        error: 'ecotox_supabase_not_configured',
+        configured: false,
+        missing: ['ECOTOX_SUPABASE_URL', 'ECOTOX_SUPABASE_ANON_KEY'],
+        invalid: [],
+        table: 'toxicology_data',
+        rowCount: null,
+        rowCountAvailable: false,
+        readable: false,
+      },
+      503,
+    );
+
+    render(<SsdWorkbench />);
+    fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('ssd-ecotox-onboarding-callout')).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByText(/Validation and Upload modes are fully functional without a mirror connection/i),
+    ).toBeInTheDocument();
+  });
+
+  it('hides onboarding callout when ECOTOX mirror is configured', async () => {
+    mockFetchJson({
+      configured: true,
+      status: 'ok',
+      table: 'toxicology_data',
+      requiredColumns: ['chemical_name'],
+      rowCount: 582125,
+      rowCountAvailable: true,
+      readable: true,
+      limits: {
+        search: 50,
+        pageSize: 1000,
+        maxFetchRows: 5000,
+      },
+    });
+
+    render(<SsdWorkbench />);
+    fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
+
+    await waitFor(() =>
+      expect(screen.getByText(/Read-only mirror connected/i)).toBeInTheDocument(),
+    );
+    expect(
+      screen.queryByTestId('ssd-ecotox-onboarding-callout'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows health status dot on ECOTOX mirror button when not configured', async () => {
+    mockFetchJson(
+      {
+        error: 'ecotox_supabase_not_configured',
+        configured: false,
+        missing: ['ECOTOX_SUPABASE_URL', 'ECOTOX_SUPABASE_ANON_KEY'],
+        invalid: [],
+        table: 'toxicology_data',
+        rowCount: null,
+        rowCountAvailable: false,
+        readable: false,
+      },
+      503,
+    );
+
+    render(<SsdWorkbench />);
+    fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('ssd-ecotox-onboarding-callout')).toBeInTheDocument(),
+    );
+
+    const dot = screen.getByTestId('ssd-ecotox-status-dot');
+    expect(dot).toBeInTheDocument();
+    expect(dot).toHaveClass('bg-amber-500');
+  });
+
   it('loads uploaded CSV data into the workbench source mode', async () => {
     render(<SsdWorkbench />);
 

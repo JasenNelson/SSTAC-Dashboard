@@ -906,7 +906,29 @@ export default function SsdWorkbench({
                 active={dataSourceMode === 'ecotox_mirror'}
                 onClick={selectEcotoxMirrorMode}
               >
-                ECOTOX mirror
+                <span className="flex items-center gap-1.5">
+                  ECOTOX mirror
+                  {mirrorHealth.status === 'ready' && (
+                    <span
+                      className="inline-block h-2 w-2 rounded-full bg-emerald-500"
+                      data-testid="ssd-ecotox-status-dot"
+                    />
+                  )}
+                  {(mirrorHealth.status === 'not_configured' ||
+                    mirrorHealth.status === 'invalid_config' ||
+                    mirrorHealth.status === 'checking') && (
+                    <span
+                      className="inline-block h-2 w-2 rounded-full bg-amber-500"
+                      data-testid="ssd-ecotox-status-dot"
+                    />
+                  )}
+                  {mirrorHealth.status === 'unavailable' && (
+                    <span
+                      className="inline-block h-2 w-2 rounded-full bg-red-500"
+                      data-testid="ssd-ecotox-status-dot"
+                    />
+                  )}
+                </span>
               </ToggleButton>
             </div>
             {dataSourceMode === 'fixture' && (
@@ -1063,11 +1085,23 @@ export default function SsdWorkbench({
               </div>
             )}
             {dataSourceMode === 'ecotox_mirror' && (
-              <div
-                className="mt-3 rounded-md border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
-                data-testid="ssd-ecotox-health-panel"
-              >
-                <div className="flex items-start justify-between gap-3">
+              <>
+                {(mirrorHealth.status === 'not_configured' ||
+                  mirrorHealth.status === 'invalid_config' ||
+                  mirrorHealth.status === 'unavailable') && (
+                  <div
+                    className="mt-3 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-relaxed text-sky-900 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-100"
+                    data-testid="ssd-ecotox-onboarding-callout"
+                  >
+                    The ECOTOX mirror requires server-side configuration.
+                    Validation and Upload modes are fully functional without a mirror connection.
+                  </div>
+                )}
+                <div
+                  className="mt-3 rounded-md border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300"
+                  data-testid="ssd-ecotox-health-panel"
+                >
+                  <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold text-slate-700 dark:text-slate-100">
                       {mirrorHealthTitle(mirrorHealth)}
@@ -1121,7 +1155,8 @@ export default function SsdWorkbench({
                     Results were capped at 5,000 rows for browser safety.
                   </p>
                 )}
-              </div>
+                </div>
+              </>
             )}
           </div>
 
