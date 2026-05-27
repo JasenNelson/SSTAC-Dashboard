@@ -573,17 +573,10 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           <TWGReviewPortal finalDraftContent={finalDraftContent} showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} />
         );
       case 'References & Values':
-        return (
-          <div className="w-full">
-            <EvidenceLibrary
-              filters={evidenceLibraryFilters}
-              onFiltersChange={handleEvidenceLibraryFiltersChange}
-              regulatoryFrameId={jurisdiction}
-              calculatorReceipt={calculatorReceipt}
-              onDismissReceipt={handleDismissReceipt}
-            />
-          </div>
-        );
+        // EvidenceLibrary is now rendered directly in the isEvidenceLibraryMode
+        // layout branch (3-column shell) rather than via renderContent().
+        // This case is kept as a no-op fallback only.
+        return null;
       case 'SSD Workbench':
         return (
           <div className="w-full">
@@ -785,7 +778,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           </nav>
         </div>
         <div className="flex items-center gap-1 ml-auto pl-4 border-l border-slate-200 dark:border-slate-700">
-           {(isToolMode || isReviewMode || (isMapMode && !isMobile)) && (
+           {(isToolMode || isReviewMode || (isEvidenceLibraryMode && !isMobile) || (isMapMode && !isMobile)) && (
              <>
                <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('p-2 rounded-lg transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'} aria-label={showLeftPanel ? 'Hide left panel' : 'Show left panel'}>
                  {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
@@ -859,7 +852,19 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           <div className="flex-1 flex overflow-hidden print:hidden">
             {renderContent()}
           </div>
-        ) : isEvidenceLibraryMode || isSsdWorkbenchMode ? (
+        ) : isEvidenceLibraryMode ? (
+          <EvidenceLibrary
+            filters={evidenceLibraryFilters}
+            onFiltersChange={handleEvidenceLibraryFiltersChange}
+            regulatoryFrameId={jurisdiction}
+            calculatorReceipt={calculatorReceipt}
+            onDismissReceipt={handleDismissReceipt}
+            showLeftPanel={!isMobile && showLeftPanel}
+            showRightPanel={!isMobile && showRightPanel}
+            onRequestOpenRightPanel={isMobile ? undefined : () => setShowRightPanel(true)}
+            className="flex-1 w-full"
+          />
+        ) : isSsdWorkbenchMode ? (
           <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-950">
             <div className="mx-auto w-full max-w-7xl px-4 py-10 lg:px-8">
               {renderContent()}

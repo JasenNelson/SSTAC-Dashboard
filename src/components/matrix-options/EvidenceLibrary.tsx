@@ -57,6 +57,9 @@ interface EvidenceLibraryProps {
   calculatorReceipt?: CalculatorReceipt | null;
   onDismissReceipt?: () => void;
   className?: string;
+  showLeftPanel?: boolean;
+  showRightPanel?: boolean;
+  onRequestOpenRightPanel?: () => void;
 }
 
 const VIEW_MODES: Array<{ id: EvidenceLibraryViewMode; label: string }> = [
@@ -657,12 +660,14 @@ function activeFilterLabels(filters: EvidenceLibraryFilters): string[] {
 function AuditStrip({
   audit,
   onSelect,
+  compact = false,
 }: {
   audit: ReturnType<typeof buildEvidenceLibraryView>['audit'];
   onSelect: (
     viewMode: EvidenceLibraryViewMode,
     request: EvidenceLibraryFilterRequest,
   ) => void;
+  compact?: boolean;
 }) {
   const sourceLeadCount =
     audit.sourceLeads.equationLeads +
@@ -744,7 +749,10 @@ function AuditStrip({
 
   return (
     <div
-      className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8"
+      className={cn(
+        'grid gap-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950',
+        compact ? 'grid-cols-1' : 'sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8',
+      )}
       data-testid="evidence-library-audit-strip"
       aria-label="Catalog provenance audit"
     >
@@ -775,10 +783,12 @@ function DefaultPolicyAuditPanel({
   decisions,
   activeStatus,
   onSelectStatus,
+  compact = false,
 }: {
   decisions: Map<string, DefaultSelectionPolicyDecision>;
   activeStatus: DefaultSelectionDecisionStatus | null;
   onSelectStatus: (status: DefaultSelectionDecisionStatus | null) => void;
+  compact?: boolean;
 }) {
   const items = buildDefaultPolicyAuditItems(decisions);
   const total = items.reduce((sum, item) => sum + item.value, 0);
@@ -803,7 +813,7 @@ function DefaultPolicyAuditPanel({
           {total} policy decision{total === 1 ? '' : 's'}
         </span>
       </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <div className={cn('mt-3 grid gap-2', compact ? 'grid-cols-1' : 'sm:grid-cols-2 xl:grid-cols-4')}>
         {items.map((item) => {
           const isActive = activeStatus === item.status;
           return (
@@ -849,10 +859,12 @@ function Protocol28ReviewPanel({
   summary,
   onReview,
   onReviewSourceLeads,
+  compact = false,
 }: {
   summary: EvidenceLibraryProtocol28ReviewSummary;
   onReview: () => void;
   onReviewSourceLeads: () => void;
+  compact?: boolean;
 }) {
   const items = [
     {
@@ -878,7 +890,7 @@ function Protocol28ReviewPanel({
       data-testid="protocol28-review-panel"
       className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100"
     >
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+      <div className={cn('flex flex-col gap-3', !compact && 'lg:flex-row lg:items-start lg:justify-between')}>
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">
             Protocol 28 review queue
@@ -893,7 +905,7 @@ function Protocol28ReviewPanel({
             complete.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2 lg:justify-end">
+        <div className={cn('flex flex-wrap gap-2', !compact && 'lg:justify-end')}>
           <button
             type="button"
             onClick={onReview}
@@ -911,7 +923,7 @@ function Protocol28ReviewPanel({
           </button>
         </div>
       </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={cn('mt-3 grid gap-2', compact ? 'grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-4')}>
         {items.map((item) => (
           <div
             key={item.label}
@@ -990,10 +1002,12 @@ function ValueDetailPanel({
   row,
   policyDecision,
   onClose,
+  compact = false,
 }: {
   row: EvidenceLibraryValueRow;
   policyDecision: DefaultSelectionPolicyDecision | null;
   onClose: () => void;
+  compact?: boolean;
 }) {
   const review = getParameterValueReviewDisposition(row.record, row.sources);
   const canonicalSources = row.sources.filter(isCalculatorEvidenceSource);
@@ -1008,7 +1022,7 @@ function ValueDetailPanel({
       data-testid="evidence-library-value-detail"
       aria-label="Selected value detail"
     >
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+      <div className={cn('flex flex-col gap-3', !compact && 'lg:flex-row lg:items-start lg:justify-between')}>
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300">
             Selected value
@@ -1030,9 +1044,9 @@ function ValueDetailPanel({
         </button>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
+      <div className={cn('mt-4 grid gap-3', !compact && 'lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]')}>
         <div className="space-y-3">
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+          <div className={cn('grid gap-2', compact ? 'grid-cols-1' : 'sm:grid-cols-2 xl:grid-cols-4')}>
             <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
               <div className="text-[11px] font-semibold uppercase text-slate-500">
                 Value
@@ -1087,7 +1101,7 @@ function ValueDetailPanel({
             />
           ) : null}
 
-          <div className="grid gap-3 text-sm lg:grid-cols-2">
+          <div className={cn('grid gap-3 text-sm', !compact && 'lg:grid-cols-2')}>
             <div>
               <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
                 Applicability
@@ -1172,9 +1186,11 @@ function sourceDefaultUseText(row: EvidenceLibrarySourceRow): string {
 function SourceDetailPanel({
   row,
   onClose,
+  compact = false,
 }: {
   row: EvidenceLibrarySourceRow;
   onClose: () => void;
+  compact?: boolean;
 }) {
   return (
     <section
@@ -1182,7 +1198,7 @@ function SourceDetailPanel({
       data-testid="evidence-library-source-detail"
       aria-label="Selected source detail"
     >
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+      <div className={cn('flex flex-col gap-3', !compact && 'lg:flex-row lg:items-start lg:justify-between')}>
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300">
             Selected source
@@ -1204,7 +1220,7 @@ function SourceDetailPanel({
         </button>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]">
+      <div className={cn('mt-4 grid gap-3', !compact && 'lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]')}>
         <div className="space-y-3">
           <div className="flex flex-wrap gap-1">
             <StatusBadge value={row.record.calculator_source_role ?? 'canonical_candidate'} />
@@ -1223,7 +1239,7 @@ function SourceDetailPanel({
             {sourceDefaultUseText(row)}
           </div>
 
-          <div className="grid gap-3 text-sm md:grid-cols-2 xl:grid-cols-3">
+          <div className={cn('grid gap-3 text-sm', compact ? 'grid-cols-1' : 'md:grid-cols-2 xl:grid-cols-3')}>
             <div>
               <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
                 Publisher
@@ -1821,6 +1837,9 @@ export default function EvidenceLibrary({
   calculatorReceipt,
   onDismissReceipt,
   className,
+  showLeftPanel = true,
+  showRightPanel = true,
+  onRequestOpenRightPanel,
 }: EvidenceLibraryProps) {
   const [viewMode, setViewMode] = useState<EvidenceLibraryViewMode>('by-parameter');
   const [selectedValueId, setSelectedValueId] = useState<string | null>(null);
@@ -2078,10 +2097,96 @@ export default function EvidenceLibrary({
 
   return (
     <section
-      className={cn('space-y-5', className)}
+      className={cn('flex h-full overflow-hidden', className)}
       data-testid="references-values-tab"
     >
-      <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
+      {/* LEFT PANEL -- catalog dashboard, audit panels, saved review filters */}
+      <div
+        className={cn(
+          'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800',
+          showLeftPanel ? 'w-80' : 'w-0',
+        )}
+      >
+        <div className="w-full min-w-[270px] p-5 overflow-y-auto h-full space-y-4">
+          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            Catalog Dashboard
+          </h3>
+
+          <AuditStrip audit={library.audit} onSelect={applyAuditFilter} compact />
+
+          <DefaultPolicyAuditPanel
+            decisions={defaultPolicyDecisions}
+            activeStatus={defaultPolicyStatusFilter}
+            onSelectStatus={applyDefaultPolicyStatusFilter}
+            compact
+          />
+
+          <Protocol28ReviewPanel
+            summary={protocol28Summary}
+            onReview={openProtocol28Review}
+            onReviewSourceLeads={openProtocol28SourceLeads}
+            compact
+          />
+
+          <section
+            className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
+            data-testid="evidence-library-quick-filters"
+            aria-label="Candidate review quick filters"
+          >
+            <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                  Saved Review Views
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  These filters inspect alternatives and source leads only; they do not promote calculator defaults.
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {savedReviewViews.map((filter) => {
+                const isActive =
+                  viewMode === filter.viewMode && filtersEqual(filters, filter.filters);
+                return (
+                  <button
+                    key={filter.label}
+                    type="button"
+                    aria-label={`${filter.label}: ${filter.description}`}
+                    aria-pressed={isActive}
+                    onClick={() => applyQuickFilter(filter)}
+                    className={cn(
+                      'min-h-10 rounded-md border px-3 text-left text-xs transition-colors',
+                      isActive
+                        ? 'border-sky-400 bg-sky-50 text-sky-800 shadow-sm dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
+                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 hover:bg-white hover:text-sky-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300',
+                    )}
+                  >
+                    <span className="flex items-start justify-between gap-2">
+                      <span className="font-semibold">{filter.label}</span>
+                      {isActive && (
+                        <span className="rounded-full bg-sky-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white dark:bg-sky-500">
+                          Active
+                        </span>
+                      )}
+                    </span>
+                    <span className="block text-[11px] text-slate-500 dark:text-slate-400">
+                      {filter.description}
+                    </span>
+                    <span className="mt-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                      {filter.resultCountText}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        </div>
+      </div>
+
+      {/* MAIN CONTENT -- header, search/filters, and results */}
+      <div className="flex-1 min-w-0 overflow-y-auto bg-white dark:bg-slate-950">
+        <div className="space-y-5 p-6">
+          <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="text-xl font-bold text-slate-950 dark:text-white">
             References & Values
@@ -2121,73 +2226,6 @@ export default function EvidenceLibrary({
           onDismiss={onDismissReceipt}
         />
       )}
-
-      <AuditStrip audit={library.audit} onSelect={applyAuditFilter} />
-
-      <DefaultPolicyAuditPanel
-        decisions={defaultPolicyDecisions}
-        activeStatus={defaultPolicyStatusFilter}
-        onSelectStatus={applyDefaultPolicyStatusFilter}
-      />
-
-      <Protocol28ReviewPanel
-        summary={protocol28Summary}
-        onReview={openProtocol28Review}
-        onReviewSourceLeads={openProtocol28SourceLeads}
-      />
-
-      <section
-        className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
-        data-testid="evidence-library-quick-filters"
-        aria-label="Candidate review quick filters"
-      >
-        <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-              Saved Review Views
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              These filters inspect alternatives and source leads only; they do not promote calculator defaults.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {savedReviewViews.map((filter) => {
-            const isActive =
-              viewMode === filter.viewMode && filtersEqual(filters, filter.filters);
-            return (
-              <button
-                key={filter.label}
-                type="button"
-                aria-label={`${filter.label}: ${filter.description}`}
-                aria-pressed={isActive}
-                onClick={() => applyQuickFilter(filter)}
-                className={cn(
-                  'min-h-10 rounded-md border px-3 text-left text-xs transition-colors',
-                  isActive
-                    ? 'border-sky-400 bg-sky-50 text-sky-800 shadow-sm dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
-                    : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 hover:bg-white hover:text-sky-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300',
-                )}
-              >
-                <span className="flex items-start justify-between gap-2">
-                  <span className="font-semibold">{filter.label}</span>
-                  {isActive && (
-                    <span className="rounded-full bg-sky-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white dark:bg-sky-500">
-                      Active
-                    </span>
-                  )}
-                </span>
-                <span className="block text-[11px] text-slate-500 dark:text-slate-400">
-                  {filter.description}
-                </span>
-                <span className="mt-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                  {filter.resultCountText}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/40">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -2236,7 +2274,8 @@ export default function EvidenceLibrary({
         </div>
       </div>
 
-      {selectedValue && (
+      {/* Inline detail when right drawer is toggled off */}
+      {!showRightPanel && selectedValue && (
         <ValueDetailPanel
           row={selectedValue}
           policyDecision={defaultPolicyDecisionForRow(
@@ -2247,7 +2286,7 @@ export default function EvidenceLibrary({
         />
       )}
 
-      {selectedSource && (
+      {!showRightPanel && selectedSource && (
         <SourceDetailPanel
           row={selectedSource}
           onClose={() => setSelectedSourceId(null)}
@@ -2386,6 +2425,7 @@ export default function EvidenceLibrary({
                             onClick={() => {
                               setSelectedSourceId(null);
                               setSelectedValueId(row.record.parameter_value_id);
+                              if (!showRightPanel) onRequestOpenRightPanel?.();
                             }}
                             className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                           >
@@ -2643,6 +2683,7 @@ export default function EvidenceLibrary({
                         onClick={() => {
                           setSelectedValueId(null);
                           setSelectedSourceId(row.record.source_id);
+                          if (!showRightPanel) onRequestOpenRightPanel?.();
                         }}
                         className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                       >
@@ -2712,6 +2753,43 @@ export default function EvidenceLibrary({
           {isAdmin && <PromotedCandidatesSection />}
         </section>
       )}
+        </div>
+      </div>
+
+      {/* RIGHT PANEL -- value and source detail inspector */}
+      <div
+        className={cn(
+          'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-lg',
+          'max-md:hidden',
+          showRightPanel ? 'w-96' : 'w-0',
+        )}
+      >
+        <div className="w-full h-full overflow-y-auto overflow-x-hidden p-4">
+          {selectedValue && (
+            <ValueDetailPanel
+              row={selectedValue}
+              policyDecision={defaultPolicyDecisionForRow(
+                defaultPolicyDecisions,
+                selectedValue,
+              )}
+              onClose={() => setSelectedValueId(null)}
+              compact
+            />
+          )}
+          {selectedSource && (
+            <SourceDetailPanel
+              row={selectedSource}
+              onClose={() => setSelectedSourceId(null)}
+              compact
+            />
+          )}
+          {!selectedValue && !selectedSource && (
+            <div className="p-6 text-center text-sm text-slate-400 dark:text-slate-500">
+              Click a value or source to inspect details
+            </div>
+          )}
+        </div>
+      </div>
     </section>
   );
 }
