@@ -212,10 +212,8 @@ export function SiteMap({
   initialZoom = 11,
 }: SiteMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapInstanceRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const markersLayerRef = useRef<any>(null);
+  const mapInstanceRef = useRef<Leaflet.Map | null>(null);
+  const markersLayerRef = useRef<Leaflet.MarkerClusterGroup | null>(null);
   const tileLayerRef = useRef<Leaflet.TileLayer | null>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
@@ -255,8 +253,7 @@ export function SiteMap({
   // Backup of marker popups while Identify mode is active. Iterable Map
   // (NOT WeakMap) is required because restoration on mode exit iterates the
   // saved entries. Keys are Leaflet markers; values carry content + options.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const markerPopupBackupRef = useRef<Map<any, { content: any; options: any }>>(new Map());
+  const markerPopupBackupRef = useRef<Map<Leaflet.CircleMarker, { content: Leaflet.Content | ((source: Leaflet.Layer) => Leaflet.Content) | undefined; options: Leaflet.PopupOptions }>>(new Map());
   // Ref mirror of the Identify writer so Leaflet handlers attached once (in
   // the GeoJSON onEachFeature closure) can reach the latest implementation.
   // Set/unset by the Identify-mode useEffect below.
@@ -685,8 +682,7 @@ export function SiteMap({
   ]);
 
   // Track individual markers by location ID so selection updates don't destroy cluster/spiderfy state
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const markerMapRef = useRef<Map<string, any>>(new Map());
+  const markerMapRef = useRef<Map<string, Leaflet.CircleMarker>>(new Map());
 
   // Create/recreate markers only when the site list or assessments change
   useEffect(() => {
@@ -1152,7 +1148,9 @@ export function SiteMap({
       // Rebind marker popups from the backup
       backup.forEach((saved, marker) => {
         try {
-          marker.bindPopup(saved.content, saved.options);
+          if (saved.content !== undefined) {
+            marker.bindPopup(saved.content, saved.options);
+          }
         } catch (err) {
           console.warn('[SiteMap] identify: bindPopup restore failed', err);
         }
