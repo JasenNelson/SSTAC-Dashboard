@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { promoteSourceLead, addAuditEntry } from '../promotion';
+import { promoteSourceLead, addAuditEntry, isUnscopedPromotion } from '../promotion';
 import type { EvidenceLibrarySourceLeadSummary } from '../library';
 
 // ---------------------------------------------------------------------------
@@ -167,6 +167,41 @@ describe('promoteSourceLead', () => {
     expect(ts).toBeGreaterThanOrEqual(before);
     expect(ts).toBeLessThanOrEqual(after);
   });
+
+  // ---------------------------------------------------------------------------
+  // Optional pathway parameter
+  // ---------------------------------------------------------------------------
+
+  it('uses the provided pathway when given', () => {
+    const lead = makeLeadSummary();
+    const record = promoteSourceLead(lead, 'admin', 'human-health-direct');
+    expect(record.pathway).toBe('human-health-direct');
+  });
+
+  it('falls back to eco-direct-eqp when pathway is not provided', () => {
+    const lead = makeLeadSummary();
+    const record = promoteSourceLead(lead);
+    expect(record.pathway).toBe('eco-direct-eqp');
+  });
+
+  it('omits UNSCOPED warning when pathway is explicitly provided (non-default)', () => {
+    const lead = makeLeadSummary();
+    const record = promoteSourceLead(lead, 'admin', 'eco-food-bsaf');
+    expect(record.review_notes).not.toContain('PATHWAY IS UNSCOPED');
+    expect(record.review_notes).toContain('Pathway: eco-food-bsaf');
+  });
+
+  it('includes UNSCOPED warning when pathway is eco-direct-eqp', () => {
+    const lead = makeLeadSummary();
+    const record = promoteSourceLead(lead, 'admin', 'eco-direct-eqp');
+    expect(record.review_notes).toContain('PATHWAY IS UNSCOPED');
+  });
+
+  it('includes UNSCOPED warning when pathway is omitted', () => {
+    const lead = makeLeadSummary();
+    const record = promoteSourceLead(lead);
+    expect(record.review_notes).toContain('PATHWAY IS UNSCOPED');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -215,5 +250,36 @@ describe('addAuditEntry', () => {
     addAuditEntry(record, 'step_3', 'c');
     // 1 initial + 3 appended = 4 total
     expect(record.audit_history).toHaveLength(4);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// isUnscopedPromotion
+// ---------------------------------------------------------------------------
+
+describe('isUnscopedPromotion', () => {
+  it('returns true when pathway is eco-direct-eqp and substance_key is empty', () => {
+    const lead = makeLeadSummary();
+    const record = promoteSourceLead(lead);
+    expect(isUnscopedPromotion(record)).toBe(true);
+  });
+
+  it('returns false when pathway is explicitly set to a non-default value', () => {
+    const lead = makeLeadSummary();
+    const record = promoteSourceLead(lead, 'admin', 'human-health-direct');
+    expect(isUnscopedPromotion(record)).toBe(false);
+  });
+
+  it('returns false when substance_key is non-empty', () => {
+    const lead = makeLeadSummary();
+    const record = promoteSourceLead(lead);
+    record.substance_key = 'arsenic';
+    expect(isUnscopedPromotion(record)).toBe(false);
+  });
+
+  it('returns true when pathway is eco-direct-eqp even if explicitly set', () => {
+    const lead = makeLeadSummary();
+    const record = promoteSourceLead(lead, 'admin', 'eco-direct-eqp');
+    expect(isUnscopedPromotion(record)).toBe(true);
   });
 });

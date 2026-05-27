@@ -3,8 +3,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ExternalLink, Search, X } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
-import { promoteSourceLead } from '@/lib/matrix-options/provenance/promotion';
+import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
 import type { PromotedParameterValueRecord } from '@/lib/matrix-options/provenance/promotion';
+import { usePromotedCandidatesStore } from '@/stores/matrix-options/promotedCandidatesStore';
 import { cn } from '@/utils/cn';
 import {
   PROTOCOL28_POLICY_ALIGNMENT,
@@ -40,6 +41,14 @@ import type { RegulatoryFrameId } from '@/lib/matrix-options/regulatoryFrames';
 import DefaultPolicyDispositionNote, {
   DefaultPolicyDecisionSummaryNote,
 } from './DefaultPolicyDispositionNote';
+
+const PATHWAY_LABELS: Record<ProvenancePathway, string> = {
+  'eco-direct-eqp': 'Ecological Direct (EqP)',
+  'eco-food-bsaf': 'Ecological Food (BSAF)',
+  'background-adjustment': 'Background Adjustment',
+  'human-health-direct': 'Human Health Direct',
+  'human-health-food': 'Human Health Food',
+};
 
 interface EvidenceLibraryProps {
   filters: EvidenceLibraryFilters;
@@ -1469,20 +1478,22 @@ function ValueGroupCard({
 
 function PromoteLeadButton({
   lead,
-  onPromoted,
 }: {
   lead: EvidenceLibrarySourceLeadSummary;
-  onPromoted?: (record: PromotedParameterValueRecord) => void;
 }) {
-  const [promoted, setPromoted] = useState(false);
+  const { addCandidate, isPromoted } = usePromotedCandidatesStore();
+  const [showPopover, setShowPopover] = useState(false);
+  const [selectedPathway, setSelectedPathway] = useState<ProvenancePathway>('eco-direct-eqp');
 
-  const handleClick = () => {
-    const record = promoteSourceLead(lead);
-    setPromoted(true);
-    onPromoted?.(record);
+  const alreadyPromoted = isPromoted(lead.leadSetId);
+
+  const handleConfirm = () => {
+    const record = promoteSourceLead(lead, 'admin', selectedPathway);
+    addCandidate(record);
+    setShowPopover(false);
   };
 
-  if (promoted) {
+  if (alreadyPromoted) {
     return (
       <span
         className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200"
@@ -1494,14 +1505,61 @@ function PromoteLeadButton({
   }
 
   return (
-    <button
-      type="button"
-      data-testid="promote-lead-button"
-      onClick={handleClick}
-      className="inline-flex min-h-8 items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 text-xs font-semibold text-amber-800 hover:border-amber-500 hover:bg-amber-50 dark:border-amber-700 dark:bg-slate-900 dark:text-amber-200 dark:hover:bg-amber-950/30"
-    >
-      Promote to candidate
-    </button>
+    <div className="relative">
+      <button
+        type="button"
+        data-testid="promote-lead-button"
+        onClick={() => setShowPopover(true)}
+        className="inline-flex min-h-8 items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 text-xs font-semibold text-amber-800 hover:border-amber-500 hover:bg-amber-50 dark:border-amber-700 dark:bg-slate-900 dark:text-amber-200 dark:hover:bg-amber-950/30"
+      >
+        Promote to candidate
+      </button>
+      {showPopover && (
+        <div
+          className="absolute left-0 top-full z-20 mt-1 w-72 rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+          data-testid="promote-lead-popover"
+        >
+          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <span className="mb-1 block">Assign pathway</span>
+            <select
+              value={selectedPathway}
+              onChange={(e) => setSelectedPathway(e.target.value as ProvenancePathway)}
+              className="w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              data-testid="promote-lead-pathway-select"
+            >
+              {(Object.keys(PATHWAY_LABELS) as ProvenancePathway[]).map((pw) => (
+                <option key={pw} value={pw}>
+                  {PATHWAY_LABELS[pw]}
+                </option>
+              ))}
+            </select>
+          </label>
+          {selectedPathway === 'eco-direct-eqp' && (
+            <p className="mt-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+              Default pathway -- reviewer must assign the correct pathway before use.
+            </p>
+          )}
+          <div className="mt-2.5 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+              data-testid="promote-lead-confirm"
+            >
+              Confirm promotion
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPopover(false)}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              data-testid="promote-lead-cancel"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -1575,6 +1633,142 @@ function SourceLeadCard({
   );
 }
 
+function PromotedCandidateCard({
+  record,
+}: {
+  record: PromotedParameterValueRecord;
+}) {
+  const { updatePathway, updateSubstanceKey, removeCandidate } = usePromotedCandidatesStore();
+  const [editingPathway, setEditingPathway] = useState(false);
+  const [editingSubstance, setEditingSubstance] = useState(false);
+  const [substanceInput, setSubstanceInput] = useState(record.substance_key);
+  const unscoped = isUnscopedPromotion(record);
+
+  return (
+    <div
+      className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
+      data-testid="promoted-candidate-card"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-slate-950 dark:text-white">
+            {record.display_name}
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            {editingPathway ? (
+              <select
+                value={record.pathway}
+                onChange={(e) => {
+                  updatePathway(record.parameter_value_id, e.target.value as ProvenancePathway, 'admin');
+                  setEditingPathway(false);
+                }}
+                onBlur={() => setEditingPathway(false)}
+                autoFocus
+                className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                data-testid="promoted-pathway-edit-select"
+              >
+                {(Object.keys(PATHWAY_LABELS) as ProvenancePathway[]).map((pw) => (
+                  <option key={pw} value={pw}>
+                    {PATHWAY_LABELS[pw]}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditingPathway(true)}
+                className={cn(
+                  'inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold',
+                  unscoped
+                    ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200'
+                    : 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200',
+                )}
+                data-testid="promoted-pathway-badge"
+              >
+                {unscoped ? 'Pathway unscoped' : PATHWAY_LABELS[record.pathway]}
+              </button>
+            )}
+            {editingSubstance ? (
+              <input
+                type="text"
+                value={substanceInput}
+                onChange={(e) => setSubstanceInput(e.target.value)}
+                onBlur={() => {
+                  if (substanceInput !== record.substance_key) {
+                    updateSubstanceKey(record.parameter_value_id, substanceInput, 'admin');
+                  }
+                  setEditingSubstance(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    if (substanceInput !== record.substance_key) {
+                      updateSubstanceKey(record.parameter_value_id, substanceInput, 'admin');
+                    }
+                    setEditingSubstance(false);
+                  }
+                }}
+                autoFocus
+                placeholder="substance key"
+                className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                data-testid="promoted-substance-edit-input"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditingSubstance(true)}
+                className="inline-flex items-center rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                data-testid="promoted-substance-badge"
+              >
+                {record.substance_key || 'No substance key'}
+              </button>
+            )}
+            <span className="text-[11px] text-slate-400">
+              {record.audit_history.length} audit {record.audit_history.length === 1 ? 'entry' : 'entries'}
+            </span>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => removeCandidate(record.parameter_value_id)}
+          className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+          data-testid="promoted-remove-button"
+          title="Remove promoted candidate"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PromotedCandidatesSection() {
+  const { candidates, getCandidateCount, getUnscopedCount } = usePromotedCandidatesStore();
+  const count = getCandidateCount();
+  const unscopedCount = getUnscopedCount();
+
+  if (count === 0) return null;
+
+  return (
+    <div className="space-y-2" data-testid="promoted-candidates-section">
+      <div className="flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+          Promoted candidates ({count})
+        </h3>
+        {unscopedCount > 0 && (
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+            {unscopedCount} unscoped
+          </span>
+        )}
+      </div>
+      <div className="space-y-2">
+        {Object.values(candidates).map((record) => (
+          <PromotedCandidateCard key={record.parameter_value_id} record={record} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CalculatorReceiptBanner({
   receipt,
   onDismiss,
@@ -1640,6 +1834,7 @@ export default function EvidenceLibrary({
     checkCurrentUserAdminStatus().then((value) => {
       if (!cancelled) setIsAdmin(value);
     });
+    usePromotedCandidatesStore.persist.rehydrate();
     return () => {
       cancelled = true;
     };
@@ -2514,6 +2709,7 @@ export default function EvidenceLibrary({
               />
             )}
           </div>
+          {isAdmin && <PromotedCandidatesSection />}
         </section>
       )}
     </section>

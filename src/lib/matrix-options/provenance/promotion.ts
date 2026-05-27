@@ -13,7 +13,7 @@
  *   extraction_status       : 'pending_extraction'
  */
 
-import type { ParameterValueRecord } from './types';
+import type { ParameterValueRecord, ProvenancePathway } from './types';
 import type { EvidenceLibrarySourceLeadSummary } from './library';
 
 // ---------------------------------------------------------------------------
@@ -54,6 +54,7 @@ export interface PromotedParameterValueRecord extends ParameterValueRecord {
 export function promoteSourceLead(
   lead: EvidenceLibrarySourceLeadSummary,
   actor: string = 'admin',
+  pathway?: ProvenancePathway,
 ): PromotedParameterValueRecord {
   const timestamp = Date.now();
   const random = Math.random().toString(36).slice(2, 8);
@@ -69,7 +70,7 @@ export function promoteSourceLead(
     // 'eco-direct-eqp' is a STRUCTURAL DEFAULT only -- the reviewer MUST assign
     // the correct pathway before this record can route to a calculator.
     substance_key: '',
-    pathway: 'eco-direct-eqp',
+    pathway: pathway ?? 'eco-direct-eqp',
     input_key: '',
     display_name: lead.label,
     value: '',
@@ -86,7 +87,9 @@ export function promoteSourceLead(
     applicability: lead.rule ?? '',
     uncertainty: null,
     evidence_items: [],
-    review_notes: `Promoted from source-lead set "${lead.leadSetId}" by ${actor} at ${new Date(timestamp).toISOString()}. PATHWAY IS UNSCOPED (structural default eco-direct-eqp) -- reviewer must assign the correct pathway. Exact source locator, substance key, currentness, applicability, QA, and approval are required before this record can support calculator defaults.`,
+    review_notes: pathway && pathway !== 'eco-direct-eqp'
+      ? `Promoted from source-lead set "${lead.leadSetId}" by ${actor} at ${new Date(timestamp).toISOString()}. Pathway: ${pathway}. Exact source locator, substance key, currentness, applicability, QA, and approval are required before this record can support calculator defaults.`
+      : `Promoted from source-lead set "${lead.leadSetId}" by ${actor} at ${new Date(timestamp).toISOString()}. PATHWAY IS UNSCOPED (structural default eco-direct-eqp) -- reviewer must assign the correct pathway. Exact source locator, substance key, currentness, applicability, QA, and approval are required before this record can support calculator defaults.`,
     audit_history: [],
   };
 
@@ -117,4 +120,20 @@ export function addAuditEntry(
     note,
   });
   return record;
+}
+
+// ---------------------------------------------------------------------------
+// isUnscopedPromotion
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true when the record is in the structural default unscoped state:
+ * pathway is eco-direct-eqp (the fallback structural default) AND
+ * substance_key is empty (not yet assigned by a reviewer).
+ *
+ * Unscoped records require reviewer pathway and substance assignment before
+ * they can route to a calculator.
+ */
+export function isUnscopedPromotion(record: PromotedParameterValueRecord): boolean {
+  return record.pathway === 'eco-direct-eqp' && record.substance_key === '';
 }
