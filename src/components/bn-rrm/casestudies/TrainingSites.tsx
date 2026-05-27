@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { usePackArtifact } from '@/hooks/bn-rrm/usePackArtifact';
 import { usePackStore } from '@/stores/bn-rrm/packStore';
 import { normalizeRiskComparison, normalizeSiteReports } from '@/lib/bn-rrm/normalize-artifacts';
-import type { NormalizedRiskComparison, NormalizedSiteReports } from '@/lib/bn-rrm/normalize-artifacts';
+import type { NormalizedRiskComparison, NormalizedSiteComparison, NormalizedSiteReports, NormalizedStationComparison } from '@/lib/bn-rrm/normalize-artifacts';
 import { ExpandableSection } from '@/components/bn-rrm/shared/ExpandableSection';
 import { InfoTooltip } from '@/components/bn-rrm/shared/InfoTooltip';
 import { cn } from '@/utils/cn';
@@ -17,10 +17,8 @@ const CLASS_COLORS: Record<string, { bg: string; text: string }> = {
 
 export function TrainingSites() {
   const packManifest = usePackStore((s) => s.packManifest);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: comparisonDataRaw, loading: loadingComparison } = usePackArtifact<any>('risk_comparison');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: siteReportsRaw, loading: loadingSiteReports } = usePackArtifact<any>('site_reports');
+  const { data: comparisonDataRaw, loading: loadingComparison } = usePackArtifact<unknown>('risk_comparison');
+  const { data: siteReportsRaw, loading: loadingSiteReports } = usePackArtifact<unknown>('site_reports');
 
   // Hook: useState — must be above early returns
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
@@ -214,10 +212,8 @@ export function TrainingSites() {
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function SiteDistributionComparison({ site }: { site: any }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const matched = site.stationComparisons.filter((s: any) => s.bnrrmPredicted && s.reportEstimate.mappedBNClass);
+function SiteDistributionComparison({ site }: { site: NormalizedSiteComparison }) {
+  const matched = site.stationComparisons.filter((s: NormalizedStationComparison) => s.bnrrmPredicted && s.reportEstimate.mappedBNClass);
 
   const bnDist = { low: 0, moderate: 0, high: 0 };
   const woeDist = { low: 0, moderate: 0, high: 0 };
@@ -293,8 +289,7 @@ function SiteStationTable({ site }: { site: NormalizedRiskComparison['siteCompar
           </tr>
         </thead>
         <tbody>
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {site.stationComparisons.map((sc: any) => {
+          {site.stationComparisons.map((sc: NormalizedStationComparison) => {
             const mapped = sc.reportEstimate.mappedBNClass;
             const match = sc.bnrrmPredicted && mapped ? sc.bnrrmPredicted === mapped : null;
             return (

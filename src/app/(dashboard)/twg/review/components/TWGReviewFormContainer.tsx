@@ -22,15 +22,13 @@ interface TWGReviewFormContainerProps {
   currentSection: number
   currentSectionData: ReviewSection | undefined
   currentPhaseMeta: { label: string; date: string } | null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  formData: any
+  formData: Record<string, unknown>
   isDarkMode: boolean
   isSaving: boolean
   isSubmitting: boolean
   saveMessage: string
   sections: ReviewSection[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onUpdateFormData: (part: string, data: any) => void
+  onUpdateFormData: (part: string, data: Record<string, unknown>) => void
   onSaveProgress: () => void
   onNextSection: () => void
   onSubmit: () => void

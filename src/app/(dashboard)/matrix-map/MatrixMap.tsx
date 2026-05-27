@@ -28,6 +28,11 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import type { Map as LeafletMap, TileLayer, CircleMarker, Marker, Popup, Layer, MarkerCluster, MarkerClusterGroup } from 'leaflet';
+// leaflet.markercluster augments the 'leaflet' module; the side-effect import
+// makes the MarkerCluster / MarkerClusterGroup types available via the 'leaflet'
+// namespace without requiring a separate namespace import.
+import type {} from 'leaflet.markercluster';
 import { cn } from '@/utils/cn';
 import {
   formatIdentifyEmptyHtml,
@@ -231,8 +236,7 @@ const COORD_TIER_LABEL: Record<CoordinateQualityTier, string> = {
   low: 'Manual',
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function createImpactedMarkerIcon(L: any, color: string, dashArray: string | undefined, selected: boolean) {
+function createImpactedMarkerIcon(L: typeof import('leaflet'), color: string, dashArray: string | undefined, selected: boolean) {
   const strokeDash = dashArray ?? '';
   const strokeColor = selected ? '#2563eb' : 'white';
   const strokeWidth = selected ? '3' : '2.5';
@@ -259,21 +263,16 @@ export function MatrixMap({
   initialZoom = 5,                  // province-wide default
 }: MatrixMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const mapInstanceRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const markersLayerRef = useRef<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tileLayerRef = useRef<any>(null);
+  const mapInstanceRef = useRef<LeafletMap | null>(null);
+  const markersLayerRef = useRef<MarkerClusterGroup | null>(null);
+  const tileLayerRef = useRef<TileLayer | null>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [leaflet, setLeaflet] = useState<any>(null);
+  const [leaflet, setLeaflet] = useState<typeof import('leaflet') | null>(null);
   const [activeLayer, setActiveLayer] = useState<keyof typeof BASE_LAYERS>('streets');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [activeOverlays, setActiveOverlays] = useState<Set<string>>(new Set());
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const overlayLayersRef = useRef<Map<string, any>>(new Map());
+  const overlayLayersRef = useRef<Map<string, Layer>>(new Map());
 
   const [sampleListExpanded, setSampleListExpanded] = useState(true);
   const [interactionMode, setInteractionMode] = useState<
@@ -281,13 +280,11 @@ export function MatrixMap({
   >('pan');
   const interactionModeRef = useRef(interactionMode);
   interactionModeRef.current = interactionMode;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const areaSelectRectRef = useRef<any>(null);
+  const areaSelectRectRef = useRef<Layer | null>(null);
   // Backup of marker popups while Identify mode is active. Iterable Map
   // (NOT WeakMap) is required because restoration on mode exit iterates the
   // saved entries. Keys are Leaflet markers; values carry content + options.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const markerPopupBackupRef = useRef<Map<any, { content: any; options: any }>>(new Map());
+  const markerPopupBackupRef = useRef<Map<CircleMarker | Marker, { content: import('leaflet').Content | ((source: Layer) => import('leaflet').Content) | undefined; options: import('leaflet').PopupOptions }>>(new Map());
   // Ref mirror of the Identify writer so Leaflet handlers attached once (in
   // the GeoJSON onEachFeature closure) can reach the latest implementation.
   // Set/unset by the Identify-mode useEffect below.
@@ -297,8 +294,7 @@ export function MatrixMap({
   >(null);
   // Transient "no features" / "N features" popup owned by the Identify tool.
   // We track it so it can be removed on mode exit.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const identifyPopupRef = useRef<any>(null);
+  const identifyPopupRef = useRef<Popup | null>(null);
   // Monotonic request counter for the Identify tool. Every runIdentify call
   // captures its own id at entry; after each await we bail if the ref has
   // advanced, which means a newer click (or mode exit) superseded us. This is
@@ -463,20 +459,20 @@ export function MatrixMap({
       tileLayerRef.current = tileLayer;
 
       // Create marker cluster group
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const markers = (L as any).markerClusterGroup({
+      const markers = (L as typeof L).markerClusterGroup({
         maxClusterRadius: 50,
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: false,
         zoomToBoundsOnClick: false,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        iconCreateFunction: (cluster: any) => {
+        iconCreateFunction: (cluster: MarkerCluster) => {
           const count = cluster.getChildCount();
           const childMarkers = cluster.getAllChildMarkers?.() ?? [];
           const selectedIds = new Set(selectedSampleIdsRef.current);
           const selectedCount = childMarkers.filter(
-            (marker: { options?: { sampleId?: string } }) =>
-              marker.options?.sampleId && selectedIds.has(marker.options.sampleId),
+            (marker) => {
+              const sampleId = (marker.options as { sampleId?: string }).sampleId;
+              return sampleId && selectedIds.has(sampleId);
+            },
           ).length;
           let size = 'small';
           if (count > 10) size = 'medium';
@@ -590,8 +586,7 @@ export function MatrixMap({
       rafId = requestAnimationFrame(() => {
         rafId = null;
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (mapInstance as any).invalidateSize?.();
+          mapInstance.invalidateSize();
         } catch {
           // Best-effort; ignore if map was disposed mid-resize.
         }
@@ -661,8 +656,10 @@ export function MatrixMap({
   }, []);
 
   // Track individual markers by sample ID so selection updates don't destroy cluster/spiderfy state
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const markerMapRef = useRef<Map<string, any>>(new Map());
+  // Typed as LeafletMarker (the Leaflet base class) since markers in the
+  // map are either Marker or CircleMarker and callers check classification
+  // to determine which methods are available at each call site.
+  const markerMapRef = useRef<Map<string, Marker | CircleMarker>>(new Map());
 
   // Create/recreate markers only when samples change.
   useEffect(() => {
@@ -680,8 +677,7 @@ export function MatrixMap({
       const lat = sample.geometry.coordinates[1];
       const lng = sample.geometry.coordinates[0];
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let marker: any;
+      let marker: CircleMarker | Marker;
       if (isImpacted) {
         // Triangle via SVG divIcon (codex P1-1: pure CSS border-triangles cannot
         // carry the coord-tier dash pattern; SVG polygon with strokeDasharray
@@ -689,7 +685,9 @@ export function MatrixMap({
         // section 3.3: 3 classifications x 3 coord tiers.
         marker = L.marker([lat, lng], {
           icon: createImpactedMarkerIcon(L, color, dashArray, false),
-          sampleId: sample.id, // Custom option -- read by cluster click handler
+          // sampleId is a custom option read by the cluster click handler.
+          // Cast to satisfy MarkerOptions which does not declare custom fields.
+          ...({ sampleId: sample.id } as import('leaflet').MarkerOptions),
         });
       } else {
         // codex P1-2: unknown samples must show a GREY hollow ring, not a
@@ -705,7 +703,9 @@ export function MatrixMap({
           opacity: 1,
           fillOpacity: isUnknown ? 0 : 0.9, // hollow circle for unknown
           dashArray,
-          sampleId: sample.id, // Custom option -- read by cluster click handler
+          // sampleId is a custom option read by the cluster click handler.
+          // Cast to satisfy CircleMarkerOptions which does not declare custom fields.
+          ...({ sampleId: sample.id } as import('leaflet').CircleMarkerOptions),
         });
       }
 
@@ -757,7 +757,8 @@ export function MatrixMap({
       const isSelected =
         selectedSampleIds.includes(sampleId) || selectedSampleId === sampleId;
       if (sample.classification === 'impacted') {
-        marker.setIcon(
+        // Impacted markers are always L.Marker (triangle SVG divIcon).
+        (marker as Marker).setIcon(
           createImpactedMarkerIcon(
             leaflet,
             CLASSIFICATION_COLOR.impacted,
@@ -775,7 +776,8 @@ export function MatrixMap({
           ? CLASSIFICATION_COLOR.unknown
           : 'white';
       const borderColor = isSelected ? '#2563eb' : restingStroke;
-      marker.setStyle({
+      // Non-impacted markers are always L.CircleMarker.
+      (marker as CircleMarker).setStyle({
         radius: isSelected ? 16 : 12,
         color: borderColor,
         weight: isSelected ? 4 : 3,
@@ -809,7 +811,7 @@ export function MatrixMap({
           map.removeLayer(areaSelectRectRef.current);
         }
         areaSelectRectRef.current = leaflet.rectangle(
-          [startLatLng, e.latlng],
+          leaflet.latLngBounds(startLatLng, e.latlng),
           { color: '#3b82f6', weight: 2, fillOpacity: 0.15, dashArray: '6 3' },
         ).addTo(map);
       };
@@ -881,7 +883,7 @@ export function MatrixMap({
         map.removeLayer(areaSelectRectRef.current);
       }
       areaSelectRectRef.current = leaflet.rectangle(
-        [startLatLng, e.latlng],
+        leaflet.latLngBounds(startLatLng, e.latlng),
         { color: '#7c3aed', weight: 2, fillOpacity: 0.12, dashArray: '6 3' },
       ).addTo(map);
     };
@@ -1144,7 +1146,9 @@ export function MatrixMap({
       // Rebind marker popups from the backup
       backup.forEach((saved, marker) => {
         try {
-          marker.bindPopup(saved.content, saved.options);
+          if (saved.content !== undefined) {
+            marker.bindPopup(saved.content, saved.options);
+          }
         } catch (err) {
           console.warn('[MatrixMap] identify: bindPopup restore failed', err);
         }

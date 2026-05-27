@@ -34,10 +34,11 @@
 //     /'all') and parameter-binds them.
 
 import path from "path";
+import type BetterSqlite3 from "better-sqlite3";
 import { buildFtsQuery, escapeLikePattern } from "./fts5_query";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type BetterSqlite3Module = any;
+// The constructor type returned by require('better-sqlite3').
+type BetterSqlite3Module = typeof BetterSqlite3;
 
 let cachedDriver: BetterSqlite3Module | null = null;
 let driverLoadAttempted = false;
@@ -188,8 +189,7 @@ const TOPICS_SQL = `
 `;
 
 function runFtsQuery(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  db: any,
+  db: BetterSqlite3.Database,
   ftsExpr: string,
   tier: string | null,
   topic: string | null,
@@ -211,8 +211,7 @@ function runFtsQuery(
 }
 
 function runLikeQuery(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  db: any,
+  db: BetterSqlite3.Database,
   rawQuery: string,
   tier: string | null,
   topic: string | null,
@@ -239,8 +238,7 @@ function runLikeQuery(
   return db.prepare(sql).all(...params) as PolicySearchRow[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function fetchTopics(db: any): string[] {
+function fetchTopics(db: BetterSqlite3.Database): string[] {
   const rows = db.prepare(TOPICS_SQL).all() as { topic_category: string }[];
   return rows
     .map((r) => r.topic_category)
@@ -265,8 +263,7 @@ export function searchPolicies(
   const tier = options.tier ?? null;
   const topic = options.topic ?? null;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let db: any = null;
+  let db: BetterSqlite3.Database | null = null;
   try {
     db = new Database(dbPath, { readonly: true });
 
@@ -338,8 +335,7 @@ export function getPolicyById(
   }
   const dbPath = options.dbPathOverride ?? getDefaultDbPath();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let db: any = null;
+  let db: BetterSqlite3.Database | null = null;
   try {
     db = new Database(dbPath, { readonly: true });
     const row = db.prepare(POLICY_BY_ID_SQL).get(policyId) as
