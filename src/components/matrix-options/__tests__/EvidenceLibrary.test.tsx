@@ -844,11 +844,11 @@ describe('EvidenceLibrary', () => {
     expect(
       screen.getByTestId('evidence-library-all-scaffolds-banner'),
     ).toHaveTextContent(
-      /All parameter values are current calculator scaffolds pending source verification/,
+      /All visible parameter values are current calculator scaffolds pending/,
     );
     expect(
       screen.getByTestId('evidence-library-all-scaffolds-banner'),
-    ).toHaveTextContent(/No values have been approved as source-backed defaults yet/);
+    ).toHaveTextContent(/Adjust filters to check for approved source-backed defaults/);
   });
 
   it('does not show the all-scaffolds banner when approved values are present', () => {
