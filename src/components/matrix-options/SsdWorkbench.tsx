@@ -91,6 +91,7 @@ interface SsdRunState {
   rows: RawEcotoxRecord[];
   fixtureDatasetId: SsdFixtureDatasetId;
   chemicalName: string;
+  selectedChemicalsForRun: string[];
   mediaFilter: SsdMediaFilter;
   environmentFilter: SsdEnvironmentFilter;
   endpointFilters: string[];
@@ -368,6 +369,10 @@ function runStateMatchesDraft(
     runState.rows === draftState.rows &&
     runState.fixtureDatasetId === draftState.fixtureDatasetId &&
     runState.chemicalName === draftState.chemicalName &&
+    runState.selectedChemicalsForRun.length === draftState.selectedChemicalsForRun.length &&
+    runState.selectedChemicalsForRun.every(
+      (value, index) => value === draftState.selectedChemicalsForRun[index],
+    ) &&
     runState.mediaFilter === draftState.mediaFilter &&
     runState.environmentFilter === draftState.environmentFilter &&
     runState.aggregationMethod === draftState.aggregationMethod &&
@@ -499,6 +504,7 @@ export default function SsdWorkbench({
     rows: DEFAULT_FIXTURE_DATASET.rows,
     fixtureDatasetId: DEFAULT_FIXTURE_DATASET.id,
     chemicalName: DEFAULT_FIXTURE_DATASET.chemicalName,
+    selectedChemicalsForRun: [],
     mediaFilter: 'water',
     environmentFilter: 'freshwater',
     endpointFilters: [],
@@ -526,6 +532,7 @@ export default function SsdWorkbench({
       rows: selectedRows,
       fixtureDatasetId,
       chemicalName: selectedChemicalName,
+      selectedChemicalsForRun: dataSourceMode === 'ecotox_mirror' ? selectedChemicals : [],
       mediaFilter,
       environmentFilter,
       endpointFilters,
@@ -549,30 +556,34 @@ export default function SsdWorkbench({
       pValue,
       selectedDistribution,
       selectedChemicalName,
+      selectedChemicals,
       selectedRows,
     ],
   );
   const hasPendingRunChanges = !runStateMatchesDraft(runState, draftRunState);
 
-  const result: SsdAnalysisResult = useMemo(
-    () =>
-      buildSsdAnalysis(runState.rows, {
-        chemicalNames: [runState.chemicalName],
-        mediaFilter: runState.mediaFilter,
-        environmentFilter: runState.environmentFilter,
-        endpointFilters: runState.endpointFilters,
-        aggregationMethod: runState.aggregationMethod,
-        pValue: runState.pValue,
-        analysisMode: runState.analysisMode,
-        selectedDistribution: runState.selectedDistribution,
-        bootstrapIterations: runState.bootstrapIterations,
-        randomSeed: 42,
-        sourceMode: runState.dataSourceMode,
-        ecotoxMirrorRecordCount: OWNER_REPORTED_ECOTOX_ROWS,
-        extractedAt: runState.extractedAt,
-      }),
-    [runState],
-  );
+  const result: SsdAnalysisResult = useMemo(() => {
+    const chemicalNames =
+      runState.dataSourceMode === 'ecotox_mirror' &&
+      runState.selectedChemicalsForRun.length > 0
+        ? runState.selectedChemicalsForRun
+        : [runState.chemicalName];
+    return buildSsdAnalysis(runState.rows, {
+      chemicalNames,
+      mediaFilter: runState.mediaFilter,
+      environmentFilter: runState.environmentFilter,
+      endpointFilters: runState.endpointFilters,
+      aggregationMethod: runState.aggregationMethod,
+      pValue: runState.pValue,
+      analysisMode: runState.analysisMode,
+      selectedDistribution: runState.selectedDistribution,
+      bootstrapIterations: runState.bootstrapIterations,
+      randomSeed: 42,
+      sourceMode: runState.dataSourceMode,
+      ecotoxMirrorRecordCount: OWNER_REPORTED_ECOTOX_ROWS,
+      extractedAt: runState.extractedAt,
+    });
+  }, [runState]);
 
   const chartData = result.empiricalPoints.map((point) => ({
     species: point.speciesScientificName,
@@ -699,6 +710,7 @@ export default function SsdWorkbench({
       );
       setUploadedRows(rows);
       setDataSourceMode('upload');
+      setSelectedChemicals([]);
       if (uploadedChemicals.length === 1) {
         setChemicalSearch(uploadedChemicals[0]);
       }
@@ -709,6 +721,7 @@ export default function SsdWorkbench({
     } catch (err) {
       setUploadedRows([]);
       setDataSourceMode('upload');
+      setSelectedChemicals([]);
       setUploadMessage(
         err instanceof Error
           ? err.message
@@ -978,7 +991,7 @@ export default function SsdWorkbench({
               accepts local ECOTOX-style extracts. ECOTOX mirror mode queries capped
               server-side API routes when configured.
             </p>
-            {selectedChemicals.length > 0 && (
+            {dataSourceMode === 'ecotox_mirror' && selectedChemicals.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5" data-testid="ssd-selected-chemicals-bar">
                 {selectedChemicals.map(name => (
                   <span
