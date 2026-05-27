@@ -344,24 +344,19 @@ describe('POST /api/review/upload', () => {
   // 11. Filename is cryptographically random hex
   // -------------------------------------------------------------------------
   it('generates a cryptographically random filename in hex format', async () => {
-    // randomBytes(8).toString('hex') produces exactly 16 lowercase hex chars.
-    // The real Node crypto module is used -- we verify the output format.
-    let capturedPath: string | null = null;
+    const captured: { path: string | null } = { path: null };
     const client = makeSupabaseClient({
       submission: { id: 'sub-1', user_id: DEFAULT_USER.id },
-      uploadPathCapture: (p) => { capturedPath = p; },
+      uploadPathCapture: (p) => { captured.path = p; },
     });
     mockCreateAuthenticatedClient.mockResolvedValue(client);
 
     const req = makeRequest();
     await POST(req);
 
-    expect(capturedPath).not.toBeNull();
-    // Path shape: review-files/<userId>/<timestamp>-<16-hex>.pdf
-    const filename = (capturedPath as string).split('/').pop()!;
-    // Strip leading timestamp digits and trailing extension
+    expect(captured.path).not.toBeNull();
+    const filename = captured.path!.split('/').pop()!;
     const hexPart = filename.replace(/^\d+-/, '').replace(/\.[^.]+$/, '');
-    // randomBytes(8) -> 8 bytes -> 16 lowercase hex chars
     expect(hexPart).toMatch(/^[0-9a-f]{16}$/);
   });
 
@@ -369,22 +364,20 @@ describe('POST /api/review/upload', () => {
   // 12. Storage path includes user ID
   // -------------------------------------------------------------------------
   it('constructs correct storage path with user ID', async () => {
-    let capturedPath: string | null = null;
+    const captured: { path: string | null } = { path: null };
     const client = makeSupabaseClient({
       submission: { id: 'sub-1', user_id: DEFAULT_USER.id },
-      uploadPathCapture: (p) => { capturedPath = p; },
+      uploadPathCapture: (p) => { captured.path = p; },
     });
     mockCreateAuthenticatedClient.mockResolvedValue(client);
 
     const req = makeRequest();
     await POST(req);
 
-    expect(capturedPath).not.toBeNull();
-    // Path must start with review-files/<userId>/
-    expect(capturedPath as string).toMatch(
+    expect(captured.path).not.toBeNull();
+    expect(captured.path!).toMatch(
       new RegExp(`^review-files/${DEFAULT_USER.id}/`)
     );
-    // Extension must match the file uploaded (.pdf by default in makeRequest)
-    expect(capturedPath as string).toMatch(/\.pdf$/);
+    expect(captured.path!).toMatch(/\.pdf$/);
   });
 });
