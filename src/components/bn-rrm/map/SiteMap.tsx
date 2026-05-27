@@ -65,6 +65,7 @@ import {
   Crosshair,
 } from 'lucide-react';
 import type * as Leaflet from 'leaflet';
+import type { FeatureCollection } from 'geojson';
 
 interface SiteMapProps {
   className?: string;
@@ -218,13 +219,11 @@ export function SiteMap({
   const tileLayerRef = useRef<Leaflet.TileLayer | null>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [leaflet, setLeaflet] = useState<any>(null);
+  const [leaflet, setLeaflet] = useState<typeof Leaflet | null>(null);
   const [activeLayer, setActiveLayer] = useState<keyof typeof BASE_LAYERS>('streets');
   const [showLayerMenu, setShowLayerMenu] = useState(false);
   const [activeOverlays, setActiveOverlays] = useState<Set<string>>(new Set());
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const overlayLayersRef = useRef<Map<string, any>>(new Map());
+  const overlayLayersRef = useRef<Map<string, Leaflet.TileLayer.WMS>>(new Map());
 
   // Pack-supplied GeoJSON overlay state. SEPARATE from WMS overlayLayersRef so
   // the two systems never collide on layer keys.
@@ -234,9 +233,8 @@ export function SiteMap({
   const [loadingGeoKeys, setLoadingGeoKeys] = useState<Set<MapArtifactKey>>(
     () => new Set(),
   );
-  // Map of MapArtifactKey -> Leaflet layer (untyped Leaflet API)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const geojsonOverlayLayersRef = useRef<Map<MapArtifactKey, any>>(new Map());
+  // Map of MapArtifactKey -> Leaflet GeoJSON layer
+  const geojsonOverlayLayersRef = useRef<Map<MapArtifactKey, Leaflet.GeoJSON>>(new Map());
   // Track basins fitBounds so we only auto-fit once per pack switch
   const basinsFittedForPackRef = useRef<string | null>(null);
 
@@ -341,14 +339,12 @@ export function SiteMap({
       tileLayerRef.current = tileLayer;
 
       // Create marker cluster group
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const markers = (L as any).markerClusterGroup({
+      const markers = L.markerClusterGroup({
         maxClusterRadius: 50,
         spiderfyOnMaxZoom: true,
         showCoverageOnHover: false,
         zoomToBoundsOnClick: true,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        iconCreateFunction: (cluster: any) => {
+        iconCreateFunction: (cluster: Leaflet.MarkerCluster) => {
           const count = cluster.getChildCount();
           let size = 'small';
           if (count > 10) size = 'medium';
@@ -580,9 +576,7 @@ export function SiteMap({
             return;
           }
           const style = getStyleForKey(key);
-          // Leaflet's GeoJSON API is largely untyped at our import path.
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const geoLayer = L.geoJSON(data as any, {
+          const geoLayer = L.geoJSON(data as FeatureCollection, {
             style: () => ({
               color: style.color,
               weight: style.strokeWeight,
@@ -590,8 +584,7 @@ export function SiteMap({
               fillColor: style.color,
               fillOpacity: style.fillOpacity,
             }),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            pointToLayer: (_feature: GeoJsonFeature, latlng: any) => {
+            pointToLayer: (_feature: GeoJsonFeature, latlng: Leaflet.LatLng) => {
               return L.circleMarker(latlng, {
                 radius: style.pointRadius,
                 fillColor: style.color,
@@ -601,10 +594,9 @@ export function SiteMap({
                 fillOpacity: 0.9,
               });
             },
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            onEachFeature: (feature: GeoJsonFeature, layer: any) => {
+            onEachFeature: (feature, layer: Leaflet.Layer) => {
               try {
-                const html = formatFeaturePopup(key, feature);
+                const html = formatFeaturePopup(key, feature as GeoJsonFeature);
                 layer.bindPopup(html, { maxWidth: 320 });
               } catch (err) {
                 console.warn(`[SiteMap] popup formatter failed for ${key}`, err);
@@ -614,8 +606,7 @@ export function SiteMap({
               // through the single-writer runIdentify. Non-Identify modes are
               // unaffected because runIdentifyRef.current is null outside the
               // Identify-mode effect.
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              layer.on('click', (evt: any) => {
+              layer.on('click', (evt: Leaflet.LeafletMouseEvent) => {
                 if (interactionModeRef.current !== 'identify') return;
                 try {
                   L.DomEvent.stopPropagation(evt);
@@ -711,7 +702,7 @@ export function SiteMap({
       const color = getMarkerColor(assessment);
       const isCentroid = location.spatialClass === 'SITE_CENTROID';
 
-      const marker = L.circleMarker([location.latitude, location.longitude], {
+      const markerOpts: Leaflet.CircleMarkerOptions & { locationId: string } = {
         radius: isCentroid ? 14 : 12,
         fillColor: color,
         color: 'white',
@@ -720,7 +711,8 @@ export function SiteMap({
         fillOpacity: 0.9,
         dashArray: isCentroid ? '4 3' : undefined,
         locationId: location.id, // Custom option — read by cluster click handler
-      });
+      };
+      const marker = L.circleMarker([location.latitude, location.longitude], markerOpts);
 
       marker.bindPopup(createPopupContent(location, assessment), { maxWidth: 280 });
       // If Identify mode is ALREADY active when this marker is built (e.g.
@@ -821,7 +813,7 @@ export function SiteMap({
           map.removeLayer(areaSelectRectRef.current);
         }
         areaSelectRectRef.current = leaflet.rectangle(
-          [startLatLng, e.latlng],
+          leaflet.latLngBounds(startLatLng, e.latlng),
           { color: '#3b82f6', weight: 2, fillOpacity: 0.15, dashArray: '6 3' },
         ).addTo(map);
       };
@@ -897,7 +889,7 @@ export function SiteMap({
         map.removeLayer(areaSelectRectRef.current);
       }
       areaSelectRectRef.current = leaflet.rectangle(
-        [startLatLng, e.latlng],
+        leaflet.latLngBounds(startLatLng, e.latlng),
         { color: '#7c3aed', weight: 2, fillOpacity: 0.12, dashArray: '6 3' },
       ).addTo(map);
     };
