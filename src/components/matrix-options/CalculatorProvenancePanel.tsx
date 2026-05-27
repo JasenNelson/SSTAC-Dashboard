@@ -61,6 +61,16 @@ function StatusChip({ value }: { value: string }) {
   );
 }
 
+// AssumptionChip: distinct slate/violet tone so assumption tags are visually
+// separate from the emerald/amber status chips in the same column.
+function AssumptionChip({ label }: { label: string }) {
+  return (
+    <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-800 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-200">
+      {label}
+    </span>
+  );
+}
+
 function reviewToneClass(tone: 'approved' | 'blocked' | 'derived' | 'scaffold'): string {
   if (tone === 'approved') {
     return 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200';
@@ -121,6 +131,20 @@ function countStatuses(statuses: string[], status: string): number {
   return statuses.filter((candidate) => candidate === status).length;
 }
 
+// Count items that carry at least one assumption tag.
+function countWithAssumptions(
+  rows: ReturnType<typeof resolveProvenanceRows>,
+  equations: ReturnType<typeof resolveEquationRecords>,
+): number {
+  const rowCount = rows.filter(
+    (row) => (row.catalog_record?.assumption_tags?.length ?? 0) > 0,
+  ).length;
+  const eqCount = equations.filter(
+    (eq) => (eq.assumption_tags?.length ?? 0) > 0,
+  ).length;
+  return rowCount + eqCount;
+}
+
 function calculatorAuditText(
   rows: ReturnType<typeof resolveProvenanceRows>,
   equations: ReturnType<typeof resolveEquationRecords>,
@@ -133,12 +157,18 @@ function calculatorAuditText(
   const pending = countStatuses(statuses, 'pending_source_locator');
   const scaffolds = countStatuses(statuses, 'current_calculator_scaffold');
   const userDerived = countStatuses(statuses, 'user_entered_or_derived');
+  const withAssumptions = countWithAssumptions(rows, equations);
+
+  const assumptionSuffix =
+    withAssumptions > 0
+      ? `, ${withAssumptions} with assumption${withAssumptions === 1 ? '' : 's'}`
+      : '';
 
   return `${approved} approved, ${pending} pending source locator${
     pending === 1 ? '' : 's'
   }, ${scaffolds} current calculator scaffold${
     scaffolds === 1 ? '' : 's'
-  }, ${userDerived} user input${userDerived === 1 ? '' : 's'}`;
+  }, ${userDerived} user input${userDerived === 1 ? '' : 's'}${assumptionSuffix}`;
 }
 
 export default function CalculatorProvenancePanel({
@@ -164,6 +194,21 @@ export default function CalculatorProvenancePanel({
   );
   const sourceCount = sourceRecords.length;
   const auditText = calculatorAuditText(rows, equations);
+
+  // Build a frequency map of unique assumption tags across all rows and equations.
+  // Keys are tag strings; values are the count of items carrying that tag.
+  const assumptionTagFreq = new Map<string, number>();
+  for (const row of rows) {
+    for (const tag of row.catalog_record?.assumption_tags ?? []) {
+      assumptionTagFreq.set(tag, (assumptionTagFreq.get(tag) ?? 0) + 1);
+    }
+  }
+  for (const eq of equations) {
+    for (const tag of eq.assumption_tags ?? []) {
+      assumptionTagFreq.set(tag, (assumptionTagFreq.get(tag) ?? 0) + 1);
+    }
+  }
+  const assumptionTagEntries = Array.from(assumptionTagFreq.entries());
   const regulatoryFrameFilters = regulatoryFrameId
     ? regulatoryFrameEvidenceFilter(regulatoryFrameId)
     : {};
@@ -212,6 +257,20 @@ export default function CalculatorProvenancePanel({
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {auditText}
             </p>
+            {assumptionTagEntries.length > 0 && (
+              <p
+                className="mt-1 text-xs text-violet-700 dark:text-violet-300"
+                data-testid="assumption-inventory"
+              >
+                {'Assumptions: '}
+                {assumptionTagEntries.map(([tag, count], idx) => (
+                  <span key={tag}>
+                    {tag} ({count} {count === 1 ? 'item' : 'items'})
+                    {idx < assumptionTagEntries.length - 1 ? ', ' : ''}
+                  </span>
+                ))}
+              </p>
+            )}
           </div>
           {onOpenEvidenceLibrary && (
             <button
@@ -306,6 +365,16 @@ export default function CalculatorProvenancePanel({
                                 row.evidence_support_status,
                               )}
                             </span>
+                          )}
+                          {(row.catalog_record?.assumption_tags?.length ?? 0) > 0 && (
+                            <div className="mt-1 flex flex-wrap gap-1" data-testid="row-assumption-tags">
+                              <span className="text-[11px] text-slate-500 dark:text-slate-400 self-center">
+                                Assumes:
+                              </span>
+                              {row.catalog_record!.assumption_tags!.map((tag) => (
+                                <AssumptionChip key={tag} label={tag} />
+                              ))}
+                            </div>
                           )}
                         </td>
                         <td className="py-2 text-slate-600 dark:text-slate-300">
