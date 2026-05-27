@@ -71,3 +71,38 @@ test.describe('Matrix Options default-policy review shortcuts', () => {
     await expect(page.locator('body')).not.toContainText('Approve default');
   });
 });
+
+test.describe('Calculator pathway navigation', () => {
+  test('HH Food Web shows substance values and provenance panel', async ({
+    page,
+  }) => {
+    await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(3000);
+
+    await clickUntilVisible(page, 'Calculator', 'calculator-tab-content');
+    await page.getByTestId('category-selector-hh-food').click();
+
+    await expect(page.getByTestId('calculator-tab-content')).toContainText(
+      'Human Health Food Web',
+    );
+
+    const substanceSelector = page.getByTestId('shared-substance-select');
+    await expect(substanceSelector).toBeVisible();
+
+    const calculator = page.getByTestId('hh-food-web-calculator');
+    const provenancePanel = calculator.getByTestId('calculator-provenance-panel');
+    await expect(provenancePanel).toBeVisible();
+    await provenancePanel.click();
+    await expect(provenancePanel).toContainText('Values used in this calculation');
+    await expect(provenancePanel).toContainText('equation');
+    await expect(provenancePanel).toContainText('source');
+    await expect(provenancePanel).toContainText('Oral RfD');
+
+    const valueSearchPanel = page.getByTestId('calculator-value-search-panel');
+    await expect(valueSearchPanel).toContainText('Human Health Food Web');
+    const reviewButton = valueSearchPanel.getByRole('button', {
+      name: /Review candidate defaults/,
+    });
+    await expect(reviewButton).toBeVisible();
+  });
+});
