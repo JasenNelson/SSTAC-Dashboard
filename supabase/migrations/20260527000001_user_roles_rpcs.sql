@@ -36,8 +36,8 @@ BEGIN
       USING ERRCODE = '22023';
   END IF;
 
-  INSERT INTO public.user_roles (user_id, role, created_at, updated_at)
-  VALUES (p_user_id, p_role, NOW(), NOW())
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (p_user_id, p_role)
   ON CONFLICT (user_id, role) DO NOTHING;
 END;
 $$;

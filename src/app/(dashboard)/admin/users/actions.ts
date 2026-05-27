@@ -450,24 +450,21 @@ export async function toggleAdminRole(userId: string, currentIsAdmin: boolean): 
 
   try {
     if (currentIsAdmin) {
-      // Remove admin role
-      const { error } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId)
-        .eq('role', 'admin');
+      // Remove admin role via SECURITY DEFINER RPC
+      const { error } = await supabase.rpc('manage_user_role_delete', {
+        p_user_id: userId,
+        p_role: 'admin',
+      });
 
       if (error) {
         throw error;
       }
     } else {
-      // Add admin role
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: 'admin'
-        });
+      // Add admin role via SECURITY DEFINER RPC
+      const { error } = await supabase.rpc('manage_user_role_insert', {
+        p_user_id: userId,
+        p_role: 'admin',
+      });
 
       if (error) {
         throw error;
@@ -526,13 +523,11 @@ export async function addUserRole(userId: string, role: string): Promise<void> {
   }
 
   try {
-    // Add user role
-    const { error } = await supabase
-      .from('user_roles')
-      .insert({
-        user_id: userId,
-        role: role
-      });
+    // Add user role via SECURITY DEFINER RPC
+    const { error } = await supabase.rpc('manage_user_role_insert', {
+      p_user_id: userId,
+      p_role: role,
+    });
 
     if (error) {
       throw error;

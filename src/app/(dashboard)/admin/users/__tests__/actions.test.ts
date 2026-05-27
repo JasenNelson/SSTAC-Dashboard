@@ -325,28 +325,14 @@ describe('Admin User Actions', () => {
         error: null,
       });
 
-      mockInsert.mockResolvedValue({
-        data: null,
-        error: null,
-      });
-
-      mockEq2.mockReturnValue({
-        single: mockSingle,
-      });
-
-      mockDelete.mockReturnValue({
-        eq: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            data: null,
-            error: null,
-          })),
-        })),
-      });
+      mockSupabaseClient.rpc.mockResolvedValue({ data: null, error: null });
 
       await toggleAdminRole('user-456', false);
 
-      expect(mockFrom).toHaveBeenCalledWith('user_roles');
-      expect(mockInsert).toHaveBeenCalled();
+      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('manage_user_role_insert', {
+        p_user_id: 'user-456',
+        p_role: 'admin',
+      });
     });
 
     it('should remove admin role when currentIsAdmin is true', async () => {
@@ -362,10 +348,14 @@ describe('Admin User Actions', () => {
         error: null,
       });
 
+      mockSupabaseClient.rpc.mockResolvedValue({ data: null, error: null });
+
       await toggleAdminRole('user-456', true);
 
-      expect(mockFrom).toHaveBeenCalledWith('user_roles');
-      expect(mockDelete).toHaveBeenCalled();
+      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('manage_user_role_delete', {
+        p_user_id: 'user-456',
+        p_role: 'admin',
+      });
     });
 
     it('should throw error when operation fails', async () => {
@@ -381,9 +371,9 @@ describe('Admin User Actions', () => {
         error: null,
       });
 
-      mockInsert.mockResolvedValue({
+      mockSupabaseClient.rpc.mockResolvedValue({
         data: null,
-        error: { message: 'Insert failed' },
+        error: { message: 'RPC failed' },
       });
 
       await expect(toggleAdminRole('user-456', false)).rejects.toThrow('Failed to grant admin role');
@@ -431,17 +421,13 @@ describe('Admin User Actions', () => {
         error: null,
       });
 
-      mockInsert.mockResolvedValue({
-        data: null,
-        error: null,
-      });
+      mockSupabaseClient.rpc.mockResolvedValue({ data: null, error: null });
 
       await addUserRole('user-456', 'member');
 
-      expect(mockFrom).toHaveBeenCalledWith('user_roles');
-      expect(mockInsert).toHaveBeenCalledWith({
-        user_id: 'user-456',
-        role: 'member',
+      expect(mockSupabaseClient.rpc).toHaveBeenCalledWith('manage_user_role_insert', {
+        p_user_id: 'user-456',
+        p_role: 'member',
       });
     });
 
@@ -458,9 +444,9 @@ describe('Admin User Actions', () => {
         error: null,
       });
 
-      mockInsert.mockResolvedValue({
+      mockSupabaseClient.rpc.mockResolvedValue({
         data: null,
-        error: { message: 'Insert failed' },
+        error: { message: 'RPC failed' },
       });
 
       await expect(addUserRole('user-456', 'member')).rejects.toThrow('Failed to add user role');
