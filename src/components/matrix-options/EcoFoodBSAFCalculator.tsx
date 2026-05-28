@@ -26,7 +26,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
-import { ecoFoodBSAF } from '@/lib/matrix-options/derivations';
+import { getEquation } from '@/lib/matrix-options/equationDispatch';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type {
   EcoFoodBSAFResult,
@@ -39,6 +39,7 @@ import type {
 } from '@/lib/matrix-options/provenance/types';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import RegulatoryFrameNotice from './RegulatoryFrameNotice';
+import FrameVariantFallbackNotice from './FrameVariantFallbackNotice';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -149,6 +150,13 @@ export default function EcoFoodBSAFCalculator({
     setFsiteInput('1.0');
   };
 
+  // Resolve the equation for the selected regulatory frame (empty FRAME_VARIANTS
+  // -> baseline + usedBaselineFallback: true). Call site below is unchanged.
+  const { run: ecoFoodBSAF, usedBaselineFallback, fallbackReason } = useMemo(
+    () => getEquation(jurisdiction, 'eco-food-bsaf'),
+    [jurisdiction],
+  );
+
   const result: EcoFoodBSAFResult | { error: string } | null = useMemo(() => {
     if (!substance) {
       return { error: 'No substance selected.' };
@@ -214,6 +222,7 @@ export default function EcoFoodBSAFCalculator({
     focPercent,
     fsiteInput,
     ecosystem,
+    ecoFoodBSAF,
   ]);
 
   const isResult = result !== null && !('error' in result);
@@ -330,6 +339,11 @@ export default function EcoFoodBSAFCalculator({
       <RegulatoryFrameNotice
         frameId={jurisdiction}
         pathway="eco-food-bsaf"
+      />
+
+      <FrameVariantFallbackNotice
+        usedBaselineFallback={usedBaselineFallback}
+        fallbackReason={fallbackReason}
       />
 
       {/*

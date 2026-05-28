@@ -5,7 +5,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
-import { humanHealthFoodWeb } from '@/lib/matrix-options/derivations';
+import { getEquation } from '@/lib/matrix-options/equationDispatch';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type {
   Ecosystem,
@@ -23,6 +23,7 @@ import {
 } from './guide/content/jurisdictions';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import RegulatoryFrameNotice from './RegulatoryFrameNotice';
+import FrameVariantFallbackNotice from './FrameVariantFallbackNotice';
 
 const ECOSYSTEM_OPTIONS: ReadonlyArray<{ value: Ecosystem; label: string }> = [
   { value: 'freshwater', label: 'Freshwater' },
@@ -107,6 +108,11 @@ export default function HHFoodWebCalculator({
     setBaOralInput(next ? String(next.ba_oral) : '1');
   }, [substanceKey]);
 
+  // Resolve the equation for the selected regulatory frame (empty FRAME_VARIANTS
+  // -> baseline + usedBaselineFallback: true). Call site below is unchanged.
+  const { run: humanHealthFoodWeb, usedBaselineFallback, fallbackReason } =
+    useMemo(() => getEquation(jurisdiction, 'human-health-food'), [jurisdiction]);
+
   const result: HumanHealthFoodWebResult | { error: string } = useMemo(() => {
     if (!substance) return { error: 'No substance selected.' };
 
@@ -164,6 +170,7 @@ export default function HHFoodWebCalculator({
     fLipidPercent,
     focPercent,
     ecosystem,
+    humanHealthFoodWeb,
   ]);
 
   const hhResult = 'error' in result ? null : result;
@@ -294,6 +301,11 @@ export default function HHFoodWebCalculator({
       <RegulatoryFrameNotice
         frameId={jurisdiction}
         pathway="human-health-food"
+      />
+
+      <FrameVariantFallbackNotice
+        usedBaselineFallback={usedBaselineFallback}
+        fallbackReason={fallbackReason}
       />
 
       <div

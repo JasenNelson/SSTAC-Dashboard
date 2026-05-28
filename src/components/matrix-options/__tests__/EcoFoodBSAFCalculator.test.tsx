@@ -269,6 +269,24 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     }
   });
 
+  it('renders the frame-variant fallback notice for every frame (empty FRAME_VARIANTS, Week 8)', () => {
+    for (const j of REGULATORY_FRAME_IDS) {
+      const { unmount } = render(
+        <EcoFoodBSAFCalculator substanceKey="benzo_a_pyrene" jurisdiction={j} />,
+      );
+      const notice = screen.getByTestId('frame-variant-fallback-notice');
+      expect(notice).toBeInTheDocument();
+      // Proves getEquation(jurisdiction, 'eco-food-bsaf') was called and its
+      // fallbackReason flowed through (not a hardcoded fallback).
+      const text = notice.textContent ?? '';
+      expect(text).toMatch(/No specialized equation is defined for frame/);
+      const baselineMentions =
+        text.split('Using BC Protocol 1 v5 DRA baseline').length - 1;
+      expect(baselineMentions).toBe(1);
+      unmount();
+    }
+  });
+
   it('does NOT render the embedded substance dropdown (substance lifted in PR-A2)', () => {
     render(<EcoFoodBSAFCalculator {...DEFAULT_PROPS} />);
     expect(screen.queryByLabelText(/^Substance$/i)).not.toBeInTheDocument();

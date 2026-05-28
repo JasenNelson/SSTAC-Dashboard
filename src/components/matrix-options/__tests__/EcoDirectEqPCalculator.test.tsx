@@ -174,6 +174,32 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     }
   });
 
+  it('renders the frame-variant fallback notice for every frame (empty FRAME_VARIANTS, Week 8)', () => {
+    // With FRAME_VARIANTS empty, getEquation falls back to the BC Protocol 1
+    // v5 DRA baseline for every frame (usedBaselineFallback true), so the
+    // notice renders for all of them -- including the default frame. When a
+    // frame-specific variant ships (Week 9), the notice must stop rendering
+    // for that frame; that assertion is the it.todo D-3 in the test plan.
+    for (const j of REGULATORY_FRAME_IDS) {
+      const { unmount } = render(
+        <EcoDirectEqPCalculator substanceKey="benzo_a_pyrene" jurisdiction={j} />,
+      );
+      const notice = screen.getByTestId('frame-variant-fallback-notice');
+      expect(notice).toBeInTheDocument();
+      // The notice text must include the dispatch-provided reason, which proves
+      // getEquation(jurisdiction, 'eco-direct-eqp') was actually called and its
+      // fallbackReason flowed through (rather than a hardcoded fallback).
+      const text = notice.textContent ?? '';
+      expect(text).toMatch(/No specialized equation is defined for frame/);
+      // The baseline phrase must appear exactly once (regression guard against
+      // the component lead sentence and the reason both stating it).
+      const baselineMentions =
+        text.split('Using BC Protocol 1 v5 DRA baseline').length - 1;
+      expect(baselineMentions).toBe(1);
+      unmount();
+    }
+  });
+
   // Cursor-agent review on Commit 4 (P3): chained state-machine test
   // covering the full override -> substance change -> reset transition,
   // not just the two halves in isolation.

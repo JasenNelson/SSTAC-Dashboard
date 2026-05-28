@@ -9,6 +9,7 @@ vi.mock('@/components/MathRenderer', () => ({
 }));
 
 import HHFoodWebCalculator from '../HHFoodWebCalculator';
+import { REGULATORY_FRAME_IDS } from '@/lib/matrix-options/regulatoryFrames';
 
 describe('HHFoodWebCalculator', () => {
   it('renders a functioning Human Health food-web calculator', () => {
@@ -86,5 +87,23 @@ describe('HHFoodWebCalculator', () => {
     expect(panel).toHaveTextContent(
       /current calculator scaffold only/i,
     );
+  });
+
+  it('renders the frame-variant fallback notice for every frame (empty FRAME_VARIANTS, Week 8)', () => {
+    for (const j of REGULATORY_FRAME_IDS) {
+      const { unmount } = render(
+        <HHFoodWebCalculator substanceKey="total_pcbs_aroclor_1254" jurisdiction={j} />,
+      );
+      const notice = screen.getByTestId('frame-variant-fallback-notice');
+      expect(notice).toBeInTheDocument();
+      // Proves getEquation(jurisdiction, 'human-health-food') was called and
+      // its fallbackReason flowed through (not a hardcoded fallback).
+      const text = notice.textContent ?? '';
+      expect(text).toMatch(/No specialized equation is defined for frame/);
+      const baselineMentions =
+        text.split('Using BC Protocol 1 v5 DRA baseline').length - 1;
+      expect(baselineMentions).toBe(1);
+      unmount();
+    }
   });
 });

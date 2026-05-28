@@ -5,7 +5,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
-import { humanHealthDirectContact } from '@/lib/matrix-options/derivations';
+import { getEquation } from '@/lib/matrix-options/equationDispatch';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type { HumanHealthDirectContactResult } from '@/lib/matrix-options/types';
 import type {
@@ -20,6 +20,7 @@ import {
 } from './guide/content/jurisdictions';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import RegulatoryFrameNotice from './RegulatoryFrameNotice';
+import FrameVariantFallbackNotice from './FrameVariantFallbackNotice';
 
 export interface HHDirectContactCalculatorProps {
   substanceKey?: string;
@@ -94,6 +95,11 @@ export default function HHDirectContactCalculator({
     setBaOralInput(next ? String(next.ba_oral) : '1');
   }, [substanceKey]);
 
+  // Resolve the equation for the selected regulatory frame (empty FRAME_VARIANTS
+  // -> baseline + usedBaselineFallback: true). Call site below is unchanged.
+  const { run: humanHealthDirectContact, usedBaselineFallback, fallbackReason } =
+    useMemo(() => getEquation(jurisdiction, 'human-health-direct'), [jurisdiction]);
+
   const result: HumanHealthDirectContactResult | { error: string } = useMemo(() => {
     const fields = {
       BW_kg: positiveInput(bwInput, 'Body weight'),
@@ -150,6 +156,7 @@ export default function HHDirectContactCalculator({
     slopeInput,
     absDermalInput,
     baOralInput,
+    humanHealthDirectContact,
   ]);
 
   const hhResult = 'error' in result ? null : result;
@@ -297,6 +304,11 @@ export default function HHDirectContactCalculator({
       <RegulatoryFrameNotice
         frameId={jurisdiction}
         pathway="human-health-direct"
+      />
+
+      <FrameVariantFallbackNotice
+        usedBaselineFallback={usedBaselineFallback}
+        fallbackReason={fallbackReason}
       />
 
       <div
