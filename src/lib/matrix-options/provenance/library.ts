@@ -1442,6 +1442,215 @@ export function buildEvidenceLibraryView(
   };
 }
 
+// ---------------------------------------------------------------------------
+// Cross-pathway consistency audit
+// ---------------------------------------------------------------------------
+
+export interface CrossPathwayAuditEntry {
+  pathway: ProvenancePathway;
+  pathway_label: string;
+  parameter_value_id: string;
+  value: string;
+  unit: string;
+  default_status: string;
+  qa_status: string;
+  evidence_support_status: string;
+}
+
+export interface CrossPathwayAuditRow {
+  substance_key: string;
+  input_key: string;
+  input_label: string;
+  substance_label: string;
+  values_by_pathway: Map<ProvenancePathway, CrossPathwayAuditEntry>;
+  is_inconsistent: boolean;
+  inconsistency_severity: 'none' | 'minor' | 'major';
+}
+
+export interface CrossPathwayAuditSummary {
+  rows: CrossPathwayAuditRow[];
+  totalParameters: number;
+  consistentCount: number;
+  minorIssuesCount: number;
+  majorIssuesCount: number;
+}
+
+const PATHWAY_LABELS: Record<ProvenancePathway, string> = {
+  'eco-direct-eqp': 'Eco Direct (EqP)',
+  'eco-food-bsaf': 'Eco Food (BSAF)',
+  'background-adjustment': 'Background Adjustment',
+  'human-health-direct': 'Human Health Direct',
+  'human-health-food': 'Human Health Food',
+};
+
+/**
+ * Normalize a value string for equality comparison.
+ * Trims whitespace, lowercases, and collapses trailing decimal zeros so that
+ * "0.50" and "0.5" compare as equal.
+ */
+function normalizeValueString(raw: string | number): string {
+  const s = String(raw).trim().toLowerCase();
+  // If the string looks like a number, parse and re-stringify to collapse
+  // leading/trailing zeros (e.g. "0.50" -> "0.5", "1.000" -> "1").
+  const n = Number(s);
+  if (!Number.isNaN(n) && s !== '') {
+    return String(n);
+  }
+  return s;
+}
+
+export function buildCrossPathwayAudit(): CrossPathwayAuditSummary {
+  // Group PARAMETER_VALUE_RECORDS by composite key substance_key + input_key.
+  const groups = new Map<string, ParameterValueRecord[]>();
+  for (const record of PARAMETER_VALUE_RECORDS) {
+    const key = `${record.substance_key}__${record.input_key}`;
+    const existing = groups.get(key);
+    if (existing) {
+      existing.push(record);
+    } else {
+      groups.set(key, [record]);
+    }
+  }
+
+  const rows: CrossPathwayAuditRow[] = [];
+
+  for (const [, records] of groups) {
+    // Only audit parameters that appear in 2+ pathways.
+    if (records.length < 2) continue;
+
+    const first = records[0];
+    const substanceLabel =
+      substanceLabels.get(first.substance_key) ?? first.substance_key;
+    const inputLabel = humanizeCatalogLabel(first.input_key);
+
+    const valuesByPathway = new Map<ProvenancePathway, CrossPathwayAuditEntry>();
+    for (const record of records) {
+      const entry: CrossPathwayAuditEntry = {
+        pathway: record.pathway,
+        pathway_label: PATHWAY_LABELS[record.pathway] ?? record.pathway,
+        parameter_value_id: record.parameter_value_id,
+        value: String(record.value),
+        unit: record.unit,
+        default_status: record.default_status,
+        qa_status: record.qa_status,
+        evidence_support_status: record.evidence_support_status,
+      };
+      const existing = valuesByPathway.get(record.pathway);
+      if (existing) {
+        // Prefer current_default; otherwise keep the first record seen.
+        if (existing.default_status === 'current_default') {
+          // Keep existing -- skip this record.
+          continue;
+        }
+        if (record.default_status === 'current_default') {
+          // New record is current_default; replace.
+          valuesByPathway.set(record.pathway, entry);
+        }
+        // Neither is current_default -- keep existing (first-wins).
+        continue;
+      }
+      valuesByPathway.set(record.pathway, entry);
+    }
+
+    // Collect normalized values and units for comparison.
+    const normalizedValues = Array.from(valuesByPathway.values()).map((e) =>
+      normalizeValueString(e.value),
+    );
+    const normalizedUnits = Array.from(valuesByPathway.values()).map((e) =>
+      e.unit.trim().toLowerCase(),
+    );
+
+    const allValuesEqual = normalizedValues.every((v) => v === normalizedValues[0]);
+    const allUnitsEqual = normalizedUnits.every((u) => u === normalizedUnits[0]);
+
+    // Check for empty value in one pathway while others have a value.
+    const hasEmptyValue = normalizedValues.some((v) => v === '');
+    const hasNonEmptyValue = normalizedValues.some((v) => v !== '');
+    const mixedEmptyNonEmpty = hasEmptyValue && hasNonEmptyValue;
+
+    // Unit equality is checked first: a unit mismatch is always major,
+    // even if the numeric values happen to normalize to the same string
+    // (e.g. "1 mg/kg" vs "1 ug/kg" would otherwise be masked as 'none').
+    let inconsistency_severity: 'none' | 'minor' | 'major';
+    if (!allUnitsEqual || mixedEmptyNonEmpty) {
+      inconsistency_severity = 'major';
+    } else if (!allValuesEqual) {
+      inconsistency_severity = 'minor';
+    } else {
+      inconsistency_severity = 'none';
+    }
+    const is_inconsistent = inconsistency_severity !== 'none';
+
+    rows.push({
+      substance_key: first.substance_key,
+      input_key: first.input_key,
+      input_label: inputLabel,
+      substance_label: substanceLabel,
+      values_by_pathway: valuesByPathway,
+      is_inconsistent,
+      inconsistency_severity,
+    });
+  }
+
+  // Sort: major first, then minor, then none; within each group sort
+  // alphabetically by substance_label then input_key.
+  const severityOrder: Record<'none' | 'minor' | 'major', number> = {
+    major: 0,
+    minor: 1,
+    none: 2,
+  };
+  rows.sort((a, b) => {
+    const severityDiff =
+      severityOrder[a.inconsistency_severity] -
+      severityOrder[b.inconsistency_severity];
+    if (severityDiff !== 0) return severityDiff;
+    const substanceDiff = a.substance_label.localeCompare(b.substance_label);
+    if (substanceDiff !== 0) return substanceDiff;
+    return a.input_key.localeCompare(b.input_key);
+  });
+
+  const majorIssuesCount = rows.filter(
+    (r) => r.inconsistency_severity === 'major',
+  ).length;
+  const minorIssuesCount = rows.filter(
+    (r) => r.inconsistency_severity === 'minor',
+  ).length;
+  const consistentCount = rows.filter(
+    (r) => r.inconsistency_severity === 'none',
+  ).length;
+
+  return {
+    rows,
+    totalParameters: rows.length,
+    consistentCount,
+    minorIssuesCount,
+    majorIssuesCount,
+  };
+}
+
+/**
+ * Returns the cross-pathway audit row for a single (substance_key, input_key)
+ * pair, or null if the parameter appears in fewer than 2 pathways.
+ */
+export function getCrossPathwayValueComparison(
+  substanceKey: string,
+  inputKey: string,
+): CrossPathwayAuditRow | null {
+  const matching = PARAMETER_VALUE_RECORDS.filter(
+    (r) => r.substance_key === substanceKey && r.input_key === inputKey,
+  );
+  if (matching.length < 2) return null;
+
+  // Build a minimal audit for just this parameter by reusing the audit logic.
+  const summary = buildCrossPathwayAudit();
+  return (
+    summary.rows.find(
+      (row) =>
+        row.substance_key === substanceKey && row.input_key === inputKey,
+    ) ?? null
+  );
+}
+
 export function buildCalculatorEvidenceRequest(
   pathway: ProvenancePathway,
   rows: Array<{
