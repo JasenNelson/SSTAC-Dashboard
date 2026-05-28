@@ -7,6 +7,9 @@ import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/pro
 import type { PromotedParameterValueRecord } from '@/lib/matrix-options/provenance/promotion';
 import { submitReview, fetchReviewHistory } from '@/lib/matrix-options/provenance/qa-review-sync';
 import type { ParameterValueReview } from '@/lib/matrix-options/provenance/qa-review-sync';
+import { submitEvidenceItem, fetchEvidenceItems } from '@/lib/matrix-options/provenance/evidence-sync';
+import type { CatalogEvidenceItem } from '@/lib/matrix-options/provenance/evidence-sync';
+import { SOURCE_RECORDS } from '@/lib/matrix-options/provenance/catalog';
 import { usePromotedCandidatesStore } from '@/stores/matrix-options/promotedCandidatesStore';
 import { cn } from '@/utils/cn';
 import {
@@ -1168,6 +1171,221 @@ function QaReviewActions({
   );
 }
 
+// ---------------------------------------------------------------------------
+// SupabaseEvidenceItems -- shows HITL-added evidence items from Supabase
+// ---------------------------------------------------------------------------
+
+function SupabaseEvidenceItems({
+  parameterValueId,
+  refreshToken,
+}: {
+  parameterValueId: string;
+  refreshToken: number;
+}) {
+  const [items, setItems] = useState<CatalogEvidenceItem[]>([]);
+
+  useEffect(() => {
+    fetchEvidenceItems(parameterValueId).then(setItems);
+  }, [parameterValueId, refreshToken]);
+
+  if (items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-2 space-y-1" data-testid="supabase-evidence-items">
+      <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+        HITL-added locators
+      </div>
+      {items.map((item) => (
+        <div
+          key={item.id}
+          className="rounded-md border border-emerald-200 bg-white p-2 text-xs text-slate-600 dark:border-emerald-800 dark:bg-slate-950 dark:text-slate-300"
+        >
+          <div className="font-semibold text-slate-800 dark:text-slate-100">
+            {item.locator}
+          </div>
+          <div className="mt-1">
+            {humanizeCatalogLabel(item.locator_type)};{' '}
+            {humanizeCatalogLabel(item.qa_status)}
+          </div>
+          {item.value_text && (
+            <div className="mt-1 font-mono text-slate-700 dark:text-slate-200">
+              {item.value_text}
+            </div>
+          )}
+          {item.note && (
+            <div className="mt-1 text-slate-500 dark:text-slate-400">
+              {item.note}
+            </div>
+          )}
+          <div className="mt-1 text-slate-400 dark:text-slate-500">
+            Added {new Date(item.created_at).toLocaleDateString()}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// AddEvidenceLocatorForm -- inline form for HITL to add source locators
+// ---------------------------------------------------------------------------
+
+const LOCATOR_TYPES = [
+  { value: 'source_page', label: 'Page number' },
+  { value: 'source_table', label: 'Table reference' },
+  { value: 'source_section', label: 'Section reference' },
+  { value: 'equation_citation', label: 'Equation citation' },
+  { value: 'external_file', label: 'External file' },
+];
+
+function AddEvidenceLocatorForm({
+  parameterValueId,
+  onAdded,
+}: {
+  parameterValueId: string;
+  onAdded: () => void;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [sourceId, setSourceId] = useState('');
+  const [locator, setLocator] = useState('');
+  const [locatorType, setLocatorType] = useState('source_page');
+  const [valueText, setValueText] = useState('');
+  const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const trimmedLocator = locator.trim();
+  const canSubmit = !!sourceId && trimmedLocator.length > 0;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setSubmitting(true);
+    const ok = await submitEvidenceItem({
+      parameter_value_id: parameterValueId,
+      source_id: sourceId,
+      locator: trimmedLocator,
+      locator_type: locatorType,
+      value_text: valueText.trim() || null,
+      note: note.trim(),
+    });
+    if (ok) {
+      onAdded();
+      setShowForm(false);
+      setSourceId('');
+      setLocator('');
+      setValueText('');
+      setNote('');
+      setLocatorType('source_page');
+    }
+    setSubmitting(false);
+  };
+
+  if (!showForm) {
+    return (
+      <button
+        type="button"
+        onClick={() => setShowForm(true)}
+        className="mt-3 inline-flex items-center gap-1 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+        data-testid="add-evidence-locator-button"
+      >
+        + Add evidence locator
+      </button>
+    );
+  }
+
+  return (
+    <div
+      className="mt-3 rounded-md border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/30"
+      data-testid="add-evidence-locator-form"
+    >
+      <p className="text-xs font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+        Add evidence locator
+      </p>
+      <div className="mt-2 grid gap-2">
+        <label className="block text-xs text-slate-600 dark:text-slate-300">
+          Source
+          <select
+            value={sourceId}
+            onChange={(e) => setSourceId(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            data-testid="evidence-source-select"
+          >
+            <option value="">Select a source...</option>
+            {SOURCE_RECORDS.map((s) => (
+              <option key={s.source_id} value={s.source_id}>
+                {s.short_citation} ({s.source_id})
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-xs text-slate-600 dark:text-slate-300">
+          Locator type
+          <select
+            value={locatorType}
+            onChange={(e) => setLocatorType(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
+            {LOCATOR_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block text-xs text-slate-600 dark:text-slate-300">
+          Locator (page, table ref, section)
+          <input
+            type="text"
+            value={locator}
+            onChange={(e) => setLocator(e.target.value)}
+            placeholder="e.g., Table 3-1, p. 45"
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            data-testid="evidence-locator-input"
+          />
+        </label>
+        <label className="block text-xs text-slate-600 dark:text-slate-300">
+          Value text (optional -- the actual value from the source)
+          <input
+            type="text"
+            value={valueText}
+            onChange={(e) => setValueText(e.target.value)}
+            placeholder="e.g., 0.014 ug/L"
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          />
+        </label>
+        <label className="block text-xs text-slate-600 dark:text-slate-300">
+          Note (optional)
+          <input
+            type="text"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          />
+        </label>
+      </div>
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={submitting || !canSubmit}
+          className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500"
+          data-testid="evidence-locator-submit"
+        >
+          {submitting ? 'Saving...' : 'Save locator'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowForm(false)}
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ValueDetailPanel({
   row,
   policyDecision,
@@ -1181,6 +1399,7 @@ function ValueDetailPanel({
   compact?: boolean;
   isAdmin?: boolean;
 }) {
+  const [evidenceRefreshToken, setEvidenceRefreshToken] = useState(0);
   const review = getParameterValueReviewDisposition(row.record, row.sources);
   const canonicalSources = row.sources.filter(isCalculatorEvidenceSource);
   const policyCandidate = policyDecision?.candidates.find(
@@ -1345,6 +1564,16 @@ function ValueDetailPanel({
               </div>
             )}
           </div>
+          <SupabaseEvidenceItems
+            parameterValueId={row.record.parameter_value_id}
+            refreshToken={evidenceRefreshToken}
+          />
+          {isAdmin && (
+            <AddEvidenceLocatorForm
+              parameterValueId={row.record.parameter_value_id}
+              onAdded={() => setEvidenceRefreshToken((t) => t + 1)}
+            />
+          )}
         </aside>
       </div>
     </section>

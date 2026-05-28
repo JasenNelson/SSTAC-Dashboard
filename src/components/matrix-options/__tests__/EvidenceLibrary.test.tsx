@@ -1,12 +1,40 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import EvidenceLibrary from '../EvidenceLibrary';
 import {
   createEvidenceLibraryFilters,
 } from '@/lib/matrix-options/provenance/library';
 import type { EvidenceLibraryFilters } from '@/lib/matrix-options/provenance/types';
 import type { RegulatoryFrameId } from '@/lib/matrix-options/regulatoryFrames';
+
+// ---------------------------------------------------------------------------
+// Module mocks for admin-gated evidence locator tests
+// ---------------------------------------------------------------------------
+
+vi.mock('@/lib/admin-utils', () => ({
+  checkCurrentUserAdminStatus: vi.fn().mockResolvedValue(false),
+  refreshGlobalAdminStatus: vi.fn().mockResolvedValue(false),
+}));
+
+vi.mock('@/lib/matrix-options/provenance/evidence-sync', () => ({
+  submitEvidenceItem: vi.fn().mockResolvedValue(false),
+  fetchEvidenceItems: vi.fn().mockResolvedValue([]),
+  deleteEvidenceItem: vi.fn().mockResolvedValue(false),
+}));
+
+vi.mock('@/lib/matrix-options/provenance/qa-review-sync', () => ({
+  submitReview: vi.fn().mockResolvedValue(false),
+  fetchReviewHistory: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock('@/lib/matrix-options/provenance/promotion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/matrix-options/provenance/promotion')>();
+  return {
+    ...actual,
+    promoteSourceLead: vi.fn().mockResolvedValue(null),
+  };
+});
 
 function renderControlled(
   initialFilters = createEvidenceLibraryFilters(),
@@ -903,5 +931,199 @@ describe('EvidenceLibrary', () => {
       expect(violetChips[0].className).toMatch(/bg-violet-50/);
       expect(violetChips[0].className).toMatch(/text-violet-800/);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Evidence locator UI tests (Phase 4a)
+// ---------------------------------------------------------------------------
+
+describe('EvidenceLibrary -- AddEvidenceLocatorForm', () => {
+  it('does not show add-evidence-locator button in detail panel for non-admin users', async () => {
+    // Mock returns false by default -- non-admin
+    const { checkCurrentUserAdminStatus } = await import('@/lib/admin-utils');
+    vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(false);
+
+    renderControlled();
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('evidence-library-value-detail')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.queryByTestId('add-evidence-locator-button'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows add-evidence-locator button in detail panel for admin users', async () => {
+    const { checkCurrentUserAdminStatus } = await import('@/lib/admin-utils');
+    vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(true);
+
+    renderControlled();
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('add-evidence-locator-button')).toBeInTheDocument();
+    });
+
+    // Cleanup: restore to non-admin for subsequent tests
+    vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(false);
+  });
+
+  it('shows and hides the evidence locator form', async () => {
+    const { checkCurrentUserAdminStatus } = await import('@/lib/admin-utils');
+    vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(true);
+
+    renderControlled();
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('add-evidence-locator-button')).toBeInTheDocument();
+    });
+
+    // Open the form
+    fireEvent.click(screen.getByTestId('add-evidence-locator-button'));
+    expect(screen.getByTestId('add-evidence-locator-form')).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-source-select')).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-locator-input')).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-locator-submit')).toBeInTheDocument();
+
+    // Submit button disabled when fields empty
+    expect(screen.getByTestId('evidence-locator-submit')).toBeDisabled();
+
+    // Cancel hides the form
+    fireEvent.click(screen.getByRole('button', { name: /^Cancel$/ }));
+    expect(
+      screen.queryByTestId('add-evidence-locator-form'),
+    ).not.toBeInTheDocument();
+
+    vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(false);
+  });
+
+  it('enables submit button when source and locator are filled', async () => {
+    const { checkCurrentUserAdminStatus } = await import('@/lib/admin-utils');
+    vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(true);
+
+    renderControlled();
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('add-evidence-locator-button')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('add-evidence-locator-button'));
+
+    // Source select and locator input are empty -- submit disabled
+    expect(screen.getByTestId('evidence-locator-submit')).toBeDisabled();
+
+    // Fill in the locator field only -- still disabled (no source)
+    fireEvent.change(screen.getByTestId('evidence-locator-input'), {
+      target: { value: 'Table 3-1, p. 45' },
+    });
+    expect(screen.getByTestId('evidence-locator-submit')).toBeDisabled();
+
+    // Select a source from the dropdown (first non-empty option)
+    const sourceSelect = screen.getByTestId('evidence-source-select');
+    const options = within(sourceSelect).getAllByRole('option');
+    // options[0] is the empty placeholder; pick the first real source
+    const firstSourceOption = options.find((o) => (o as HTMLOptionElement).value !== '');
+    if (firstSourceOption) {
+      fireEvent.change(sourceSelect, {
+        target: { value: (firstSourceOption as HTMLOptionElement).value },
+      });
+    }
+
+    // Both filled -- submit enabled
+    expect(screen.getByTestId('evidence-locator-submit')).not.toBeDisabled();
+
+    vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(false);
+  });
+
+  it('calls submitEvidenceItem and hides form on successful save', async () => {
+    const { checkCurrentUserAdminStatus } = await import('@/lib/admin-utils');
+    const { submitEvidenceItem } = await import('@/lib/matrix-options/provenance/evidence-sync');
+    vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(true);
+    vi.mocked(submitEvidenceItem).mockResolvedValue(true);
+
+    renderControlled();
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('add-evidence-locator-button')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('add-evidence-locator-button'));
+
+    // Fill required fields
+    fireEvent.change(screen.getByTestId('evidence-locator-input'), {
+      target: { value: 'p. 12' },
+    });
+    const sourceSelect = screen.getByTestId('evidence-source-select');
+    const options = within(sourceSelect).getAllByRole('option');
+    const firstSource = options.find((o) => (o as HTMLOptionElement).value !== '');
+    if (firstSource) {
+      fireEvent.change(sourceSelect, {
+        target: { value: (firstSource as HTMLOptionElement).value },
+      });
+    }
+
+    fireEvent.click(screen.getByTestId('evidence-locator-submit'));
+
+    await waitFor(() => {
+      expect(submitEvidenceItem).toHaveBeenCalled();
+      expect(
+        screen.queryByTestId('add-evidence-locator-form'),
+      ).not.toBeInTheDocument();
+    });
+
+    // Restore
+    vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(false);
+    vi.mocked(submitEvidenceItem).mockResolvedValue(false);
+  });
+
+  it('shows HITL-added evidence items from Supabase in the detail panel', async () => {
+    const { checkCurrentUserAdminStatus } = await import('@/lib/admin-utils');
+    const { fetchEvidenceItems } = await import('@/lib/matrix-options/provenance/evidence-sync');
+    vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(true);
+    vi.mocked(fetchEvidenceItems).mockResolvedValue([
+      {
+        id: 'ei-test-1',
+        parameter_value_id: 'pv-test',
+        source_id: 'src-test',
+        locator: 'Table A-5, p. 88',
+        locator_type: 'source_table',
+        value_text: '0.014 ug/L',
+        extraction_method: 'hitl_manual',
+        extracted_by: 'user-id-1',
+        qa_status: 'needs_review',
+        note: 'cross-checked with appendix',
+        created_at: '2026-05-27T10:00:00Z',
+        created_by: 'user-id-1',
+        updated_at: '2026-05-27T10:00:00Z',
+      },
+    ]);
+
+    renderControlled();
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('supabase-evidence-items')).toBeInTheDocument();
+    });
+
+    const hitlItems = screen.getByTestId('supabase-evidence-items');
+    expect(hitlItems).toHaveTextContent(/Table A-5, p. 88/);
+    expect(hitlItems).toHaveTextContent(/0.014 ug\/L/);
+    expect(hitlItems).toHaveTextContent(/HITL-added locators/);
+
+    // Restore
+    vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(false);
+    vi.mocked(fetchEvidenceItems).mockResolvedValue([]);
   });
 });
