@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { ExternalLink, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, ExternalLink, Search, X } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
 import type { PromotedParameterValueRecord } from '@/lib/matrix-options/provenance/promotion';
@@ -1658,6 +1658,7 @@ function PromotedCandidateCard({
   const [editingPathway, setEditingPathway] = useState(false);
   const [editingSubstance, setEditingSubstance] = useState(false);
   const [substanceInput, setSubstanceInput] = useState(record.substance_key);
+  const [auditExpanded, setAuditExpanded] = useState(false);
   const unscoped = isUnscopedPromotion(record);
 
   return (
@@ -1738,9 +1739,19 @@ function PromotedCandidateCard({
                 {record.substance_key || 'No substance key'}
               </button>
             )}
-            <span className="text-[11px] text-slate-400">
+            <button
+              type="button"
+              onClick={() => setAuditExpanded((prev) => !prev)}
+              className="inline-flex items-center gap-0.5 text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              data-testid="promoted-audit-toggle"
+            >
+              {auditExpanded ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
               {record.audit_history.length} audit {record.audit_history.length === 1 ? 'entry' : 'entries'}
-            </span>
+            </button>
           </div>
         </div>
         <button
@@ -1753,6 +1764,33 @@ function PromotedCandidateCard({
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
+      {auditExpanded && (
+        <div
+          className="mt-2 space-y-1 border-t border-slate-100 pt-2 dark:border-slate-800"
+          data-testid="promoted-audit-trail"
+        >
+          {record.audit_history.length === 0 ? (
+            <p className="text-[11px] text-slate-400">No audit entries.</p>
+          ) : (
+            record.audit_history.map((entry, index) => (
+              <div key={index} className="text-[11px] text-slate-600 dark:text-slate-400">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  {entry.action}
+                </span>
+                {' '}by {entry.actor}{' '}
+                <span className="text-slate-400 dark:text-slate-500">
+                  ({new Date(entry.timestamp).toLocaleString()})
+                </span>
+                {entry.note && (
+                  <div className="ml-2 mt-0.5 text-slate-500 dark:text-slate-500">
+                    {entry.note}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1776,6 +1814,14 @@ function PromotedCandidatesSection() {
           </span>
         )}
       </div>
+      {unscopedCount > 0 && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+          <span className="font-semibold">
+            {unscopedCount} promoted {unscopedCount === 1 ? 'candidate needs' : 'candidates need'} pathway assignment
+          </span>{' '}
+          before {unscopedCount === 1 ? 'it' : 'they'} can route to a calculator.
+        </div>
+      )}
       <div className="space-y-2">
         {Object.values(candidates).map((record) => (
           <PromotedCandidateCard key={record.parameter_value_id} record={record} />
@@ -2181,6 +2227,8 @@ export default function EvidenceLibrary({
               })}
             </div>
           </section>
+
+          {isAdmin && <PromotedCandidatesSection />}
         </div>
       </div>
 
@@ -2751,7 +2799,6 @@ export default function EvidenceLibrary({
               />
             )}
           </div>
-          {isAdmin && <PromotedCandidatesSection />}
         </section>
       )}
         </div>
