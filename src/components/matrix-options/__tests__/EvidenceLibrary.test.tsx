@@ -23,6 +23,11 @@ vi.mock('@/lib/matrix-options/provenance/evidence-sync', () => ({
   deleteEvidenceItem: vi.fn().mockResolvedValue(false),
 }));
 
+vi.mock('@/lib/matrix-options/provenance/triage-sync', () => ({
+  fetchTriageState: vi.fn().mockResolvedValue({}),
+  setTriageStatus: vi.fn().mockResolvedValue(false),
+}));
+
 vi.mock('@/lib/matrix-options/provenance/qa-review-sync', () => ({
   submitReview: vi.fn().mockResolvedValue(false),
   fetchReviewHistory: vi.fn().mockResolvedValue([]),

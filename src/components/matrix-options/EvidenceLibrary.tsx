@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, ExternalLink, Search, X } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
@@ -9,6 +9,8 @@ import { submitReview, fetchReviewHistory } from '@/lib/matrix-options/provenanc
 import type { ParameterValueReview } from '@/lib/matrix-options/provenance/qa-review-sync';
 import { submitEvidenceItem, fetchEvidenceItems } from '@/lib/matrix-options/provenance/evidence-sync';
 import type { CatalogEvidenceItem } from '@/lib/matrix-options/provenance/evidence-sync';
+import { fetchTriageState, setTriageStatus } from '@/lib/matrix-options/provenance/triage-sync';
+import type { SourceLeadTriageRow, TriageStatus } from '@/lib/matrix-options/provenance/triage-sync';
 import { SOURCE_RECORDS } from '@/lib/matrix-options/provenance/catalog';
 import { AddSourceForm } from './AddSourceForm';
 import { fetchHitlSources } from '@/lib/matrix-options/provenance/source-sync';
@@ -2162,13 +2164,137 @@ function ValueGroupCard({
 }
 
 // ---------------------------------------------------------------------------
+// TriageStatusBadge -- visual indicator for triage status
+// ---------------------------------------------------------------------------
+
+function TriageStatusBadge({ status }: { status: TriageStatus }) {
+  const colors: Record<TriageStatus, string> = {
+    untriaged: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    promoted: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    dismissed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
+    deferred: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  };
+  return (
+    <span className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase', colors[status])}>
+      {status}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LeadTriageControls -- admin-only; dismiss/defer/reset triage actions
+// ---------------------------------------------------------------------------
+
+function LeadTriageControls({
+  leadSetId,
+  currentStatus,
+  onTriaged,
+}: {
+  leadSetId: string;
+  currentStatus: TriageStatus;
+  onTriaged: (newStatus: TriageStatus) => void;
+}) {
+  const [showNoteForm, setShowNoteForm] = useState<TriageStatus | null>(null);
+  const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleTriage = async (status: TriageStatus) => {
+    setSubmitting(true);
+    const ok = await setTriageStatus(leadSetId, status, note.trim());
+    if (ok) {
+      onTriaged(status);
+      setShowNoteForm(null);
+      setNote('');
+    }
+    setSubmitting(false);
+  };
+
+  if (showNoteForm) {
+    return (
+      <div className="rounded-md border border-amber-200 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-950/30" data-testid="triage-note-form">
+        <p className="text-xs font-semibold text-amber-800 dark:text-amber-200">
+          {showNoteForm === 'dismissed' ? 'Dismiss this lead' : 'Defer this lead'}
+        </p>
+        <textarea
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder="Optional reason"
+          rows={2}
+          className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        />
+        <div className="mt-2 flex gap-1">
+          <button
+            type="button"
+            onClick={() => handleTriage(showNoteForm)}
+            disabled={submitting}
+            className="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-700 disabled:opacity-50 dark:bg-amber-500"
+            data-testid="triage-confirm"
+          >
+            {submitting ? 'Saving...' : 'Confirm'}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowNoteForm(null); setNote(''); }}
+            className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1" data-testid="lead-triage-controls">
+      <span className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">
+        Triage:
+      </span>
+      <TriageStatusBadge status={currentStatus} />
+      {currentStatus !== 'dismissed' && (
+        <button
+          type="button"
+          onClick={() => setShowNoteForm('dismissed')}
+          className="rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"
+          data-testid="triage-dismiss"
+        >
+          Dismiss
+        </button>
+      )}
+      {currentStatus !== 'deferred' && (
+        <button
+          type="button"
+          onClick={() => setShowNoteForm('deferred')}
+          className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+          data-testid="triage-defer"
+        >
+          Defer
+        </button>
+      )}
+      {currentStatus !== 'untriaged' && (
+        <button
+          type="button"
+          onClick={() => handleTriage('untriaged')}
+          disabled={submitting}
+          className="rounded-md border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+          data-testid="triage-reset"
+        >
+          Reset
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // PromoteLeadButton -- admin-only; source-leads view only
 // ---------------------------------------------------------------------------
 
 function PromoteLeadButton({
   lead,
+  onPromoted,
 }: {
   lead: EvidenceLibrarySourceLeadSummary;
+  onPromoted?: () => void;
 }) {
   const { addCandidate, isPromoted } = usePromotedCandidatesStore();
   const [showPopover, setShowPopover] = useState(false);
@@ -2180,6 +2306,7 @@ function PromoteLeadButton({
     const record = promoteSourceLead(lead, 'admin', selectedPathway);
     addCandidate(record);
     setShowPopover(false);
+    onPromoted?.();
   };
 
   if (alreadyPromoted) {
@@ -2255,9 +2382,13 @@ function PromoteLeadButton({
 function SourceLeadCard({
   lead,
   isAdmin = false,
+  triage,
+  onTriaged,
 }: {
   lead: EvidenceLibrarySourceLeadSummary;
   isAdmin?: boolean;
+  triage?: SourceLeadTriageRow;
+  onTriaged?: (leadSetId: string, newStatus: TriageStatus) => void;
 }) {
   const totalLeads =
     lead.counts.equationLeads +
@@ -2310,11 +2441,24 @@ function SourceLeadCard({
           </ul>
         )}
         {isAdmin && (
-          <div className="flex items-center gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
-            <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
-              Admin:
-            </span>
-            <PromoteLeadButton lead={lead} />
+          <div className="space-y-2 border-t border-slate-200 pt-3 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">
+                Admin:
+              </span>
+              <PromoteLeadButton
+                lead={lead}
+                onPromoted={async () => {
+                  await setTriageStatus(lead.leadSetId, 'promoted', '');
+                  onTriaged?.(lead.leadSetId, 'promoted');
+                }}
+              />
+            </div>
+            <LeadTriageControls
+              leadSetId={lead.leadSetId}
+              currentStatus={triage?.triage_status ?? 'untriaged'}
+              onTriaged={(newStatus) => onTriaged?.(lead.leadSetId, newStatus)}
+            />
           </div>
         )}
       </div>
@@ -2650,6 +2794,8 @@ export default function EvidenceLibrary({
   const [defaultPolicyStatusFilter, setDefaultPolicyStatusFilter] =
     useState<DefaultSelectionDecisionStatus | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [triageState, setTriageState] = useState<Record<string, SourceLeadTriageRow>>({});
+  const [triageRefreshKey, setTriageRefreshKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -2662,6 +2808,36 @@ export default function EvidenceLibrary({
       cancelled = true;
     };
   }, []);
+
+  const latestTriageGenRef = useRef(0);
+
+  useEffect(() => {
+    const gen = ++latestTriageGenRef.current;
+    fetchTriageState().then((result) => {
+      if (gen === latestTriageGenRef.current) {
+        setTriageState(result);
+      }
+    });
+  }, [triageRefreshKey]);
+
+  const handleLeadTriaged = (leadSetId: string, newStatus: TriageStatus) => {
+    setTriageState((prev) => ({
+      ...prev,
+      [leadSetId]: {
+        ...(prev[leadSetId] ?? {
+          id: '',
+          lead_set_id: leadSetId,
+          triage_note: '',
+          triaged_by: null,
+          triaged_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }),
+        triage_status: newStatus,
+        updated_at: new Date().toISOString(),
+      },
+    }));
+    setTriageRefreshKey((k) => k + 1);
+  };
 
   const library = useMemo(() => buildEvidenceLibraryView(filters), [filters]);
   const baselineLibrary = useMemo(() => buildEvidenceLibraryView(), []);
@@ -3551,9 +3727,54 @@ export default function EvidenceLibrary({
               />
             </div>
           </div>
+          {(() => {
+            const allLeadIds = baselineLibrary.sourceLeads.map((l) => l.leadSetId);
+            const triageCounts = {
+              untriaged: allLeadIds.filter(
+                (id) => (triageState[id]?.triage_status ?? 'untriaged') === 'untriaged',
+              ).length,
+              promoted: allLeadIds.filter(
+                (id) => triageState[id]?.triage_status === 'promoted',
+              ).length,
+              dismissed: allLeadIds.filter(
+                (id) => triageState[id]?.triage_status === 'dismissed',
+              ).length,
+              deferred: allLeadIds.filter(
+                (id) => triageState[id]?.triage_status === 'deferred',
+              ).length,
+            };
+            return (
+              <div
+                className="flex flex-wrap gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-900"
+                data-testid="source-leads-triage-summary"
+              >
+                <span className="font-semibold uppercase text-slate-500 dark:text-slate-400">
+                  Triage:
+                </span>
+                <span className="text-slate-700 dark:text-slate-300">
+                  Untriaged: <strong>{triageCounts.untriaged}</strong>
+                </span>
+                <span className="text-emerald-700 dark:text-emerald-300">
+                  Promoted: <strong>{triageCounts.promoted}</strong>
+                </span>
+                <span className="text-red-700 dark:text-red-300">
+                  Dismissed: <strong>{triageCounts.dismissed}</strong>
+                </span>
+                <span className="text-amber-700 dark:text-amber-300">
+                  Deferred: <strong>{triageCounts.deferred}</strong>
+                </span>
+              </div>
+            );
+          })()}
           <div className="grid gap-2">
             {library.sourceLeads.map((lead) => (
-              <SourceLeadCard key={lead.leadSetId} lead={lead} isAdmin={isAdmin} />
+              <SourceLeadCard
+                key={lead.leadSetId}
+                lead={lead}
+                isAdmin={isAdmin}
+                triage={triageState[lead.leadSetId]}
+                onTriaged={handleLeadTriaged}
+              />
             ))}
             {library.sourceLeads.length === 0 && (
               <EmptyDatabaseState
