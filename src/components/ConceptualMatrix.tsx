@@ -8,11 +8,18 @@ export default function ConceptualMatrix() {
         <p className="mt-2 text-slate-600 dark:text-slate-400 leading-relaxed max-w-3xl">
           A high-level visual architecture of the four primary sediment derivation pathways, establishing the foundation for structural policy review.
         </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 italic mt-1">
+          Phase 2 of the BC Sediment Standards Project (2026 scope).
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        role="list"
+        aria-label="Four sediment derivation pathways arranged in a 2 by 2 matrix"
+      >
         {/* Quadrant 1: Ecological - Direct Contact */}
-        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+        <div role="listitem" className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2.5 bg-emerald-100 dark:bg-emerald-800/50 rounded-xl">
               <svg className="w-6 h-6 text-emerald-700 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -27,7 +34,7 @@ export default function ConceptualMatrix() {
         </div>
 
         {/* Quadrant 2: Ecological - Food Web */}
-        <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+        <div role="listitem" className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2.5 bg-teal-100 dark:bg-teal-800/50 rounded-xl">
               <svg className="w-6 h-6 text-teal-700 dark:text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -42,7 +49,7 @@ export default function ConceptualMatrix() {
         </div>
 
         {/* Quadrant 3: Human Health - Direct Contact */}
-        <div className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+        <div role="listitem" className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2.5 bg-sky-100 dark:bg-sky-800/50 rounded-xl">
               <svg className="w-6 h-6 text-sky-700 dark:text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -57,7 +64,7 @@ export default function ConceptualMatrix() {
         </div>
 
         {/* Quadrant 4: Human Health - Food Web */}
-        <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
+        <div role="listitem" className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800/50 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-2.5 bg-indigo-100 dark:bg-indigo-800/50 rounded-xl">
               <svg className="w-6 h-6 text-indigo-700 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -70,6 +77,12 @@ export default function ConceptualMatrix() {
             Protects human populations reliant on aquatic environments for sustenance. Requires specialized modifiers for high-volume Indigenous traditional food consumption rates.
           </p>
         </div>
+      </div>
+
+      <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          <span className="font-semibold">Where to go next:</span> Use <span className="font-semibold">Jurisdictional Frameworks</span> to compare how other regulatory programs approach each pathway, then test specific values in the <span className="font-semibold">Calculator</span>.
+        </p>
       </div>
     </div>
   );
