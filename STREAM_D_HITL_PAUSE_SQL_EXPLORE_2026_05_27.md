@@ -235,7 +235,9 @@ Subsequent sub-tasks 4..7 proceed in parallel and do not depend on this output. 
 
 <!-- Q1: 5 expected catalog tables + schemas -->
 
-**Owner-pasted result (PENDING STRONGER VERIFICATION; see note below):**
+**CONFIRMED 2026-05-28:** only 2 of the 5 expected catalog tables exist.
+
+Owner-pasted Q1 result (information_schema.tables):
 
 ```
 [
@@ -244,65 +246,58 @@ Subsequent sub-tasks 4..7 proceed in parallel and do not depend on this output. 
 ]
 ```
 
-**Reading at face value:** the paste shows only 2 rows for 5 requested
-table names. If this represents the full Q1 result set, then 3 of the 5
-catalog tables (`catalog_evidence_items`, `catalog_sources`,
-`source_lead_triage`) would be missing from Supabase.
+Stricter verification (pg_class direct lookup, bypasses information_schema
+privilege filtering):
 
-**Why this is not yet confirmed:**
-
-1. `information_schema.tables` filters by the privileges of the current
-   role. Supabase Studio's SQL Editor typically runs as `postgres` (full
-   privileges), but if for any reason the session ran with reduced
-   privileges, tables could be invisible here while still existing in
-   `pg_class`.
-2. The earlier e2e test log line
-   `[triage-sync] fetchTriageState error: Could not find the table 'public.source_lead_triage' in the schema cache`
-   is also consistent with PostgREST's schema cache being stale (a
-   `NOTIFY pgrst, 'reload schema'` could resolve it without authoring
-   any new table).
-3. The original Q1 paste may have been abbreviated.
-
-**Stricter verification queries (owner to run; results not yet in):**
-
-```sql
--- Definitive existence check via pg_class (bypasses information_schema privilege filtering).
-SELECT n.nspname        AS schema_name,
-       c.relname        AS table_name,
-       CASE c.relkind
-         WHEN 'r' THEN 'BASE TABLE'
-         WHEN 'v' THEN 'VIEW'
-         WHEN 'm' THEN 'MATERIALIZED VIEW'
-         WHEN 'p' THEN 'PARTITIONED TABLE'
-         WHEN 'f' THEN 'FOREIGN TABLE'
-         ELSE c.relkind::text
-       END              AS kind,
-       c.relrowsecurity AS rls_enabled
-  FROM pg_class c
-  JOIN pg_namespace n ON n.oid = c.relnamespace
- WHERE c.relname IN (
-   'promoted_parameter_values',
-   'parameter_value_reviews',
-   'catalog_evidence_items',
-   'catalog_sources',
-   'source_lead_triage'
- )
- ORDER BY n.nspname, c.relname;
-
--- Row counts on the suspect tables (decisive: returns ERROR 42P01 if missing).
-SELECT 'promoted_parameter_values' AS t, COUNT(*) AS n FROM public.promoted_parameter_values
-UNION ALL SELECT 'parameter_value_reviews',    COUNT(*) FROM public.parameter_value_reviews
-UNION ALL SELECT 'catalog_evidence_items',     COUNT(*) FROM public.catalog_evidence_items
-UNION ALL SELECT 'catalog_sources',            COUNT(*) FROM public.catalog_sources
-UNION ALL SELECT 'source_lead_triage',         COUNT(*) FROM public.source_lead_triage;
+```
+[
+  { "schema_name": "public", "table_name": "parameter_value_reviews",
+    "kind": "BASE TABLE", "rls_enabled": true },
+  { "schema_name": "public", "table_name": "promoted_parameter_values",
+    "kind": "BASE TABLE", "rls_enabled": true }
+]
 ```
 
-Disposition: until owner returns one of these stricter queries, treat the
-"3 missing tables" reading as a HYPOTHESIS only. The Stream D scaffold's
-downstream impact (RPC failing for `evidence_item` / `source_lead`) holds
-ONLY IF the tables truly do not exist. If they exist (and the Q1 result
-was a privilege / cache artifact), the scaffold works end-to-end for all
-3 `proposed_kind` values today.
+Decisive verification (UNION ALL COUNT(*) on all 5 tables):
+
+```
+ERROR 42P01: relation "public.catalog_evidence_items" does not exist
+  LINE 3:   UNION ALL SELECT 'catalog_evidence_items', COUNT(*) FROM public.catalog_evidence_items
+```
+
+The statement aborted at the third UNION ALL branch, confirming
+`public.catalog_evidence_items` truly does not exist. By extension (and
+by the pg_class result above), `catalog_sources` and `source_lead_triage`
+are also missing -- they share the same disposition.
+
+**Missing tables (CONFIRMED):**
+
+- `public.catalog_evidence_items` -- referenced by
+  `src/lib/matrix-options/provenance/evidence-sync.ts` (insert / select /
+  delete). All calls fail silently via the safe-fallback pattern (return
+  `false`/`[]` on error). No data has ever been persisted.
+- `public.catalog_sources` -- referenced by
+  `src/lib/matrix-options/provenance/source-sync.ts`. Same silent-fail
+  pattern.
+- `public.source_lead_triage` -- referenced by
+  `src/lib/matrix-options/provenance/triage-sync.ts`. Same.
+
+**Impact on Stream D scaffold:**
+
+- `catalog_approve_staging_row()` RPC's CASE branch for `proposed_kind =
+  'evidence_item'` and `'source_lead'` will raise SQLSTATE 42P01
+  "relation does not exist" at INSERT time. The CatalogStagingReview UI
+  surfaces this verbatim in the red action-error banner; the staging row
+  remains in `pending` (RPC rolled back; FOR UPDATE lock released).
+- The default `proposed_kind = 'parameter_value'` works end-to-end today
+  against the existing `public.promoted_parameter_values` table.
+
+**Owner-driven follow-up:**
+
+- Author migrations for the 3 missing tables based on the TypeScript row
+  shapes in evidence-sync.ts / source-sync.ts / triage-sync.ts. The
+  autonomous session did NOT do this because RLS policies, CHECK
+  constraints, and indexes are owner judgment calls.
 
 <!-- Q2: Column shape -->
 
