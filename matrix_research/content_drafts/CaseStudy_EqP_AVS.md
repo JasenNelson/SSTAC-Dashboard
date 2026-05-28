@@ -1,5 +1,7 @@
 # Case Study: Ecological Direct Contact (EqP & AVS/SEM)
 
+**Purpose:** This case study compares Equilibrium Partitioning (EqP) and Acid Volatile Sulfide (AVS) methodologies for deriving ecological direct-contact sediment values. Reference for the Phase 2 (2026) Matrix Sediment Standards Derivation Options Analysis.
+
 This case study examines the algorithmic methodologies and thermodynamic derivations utilized by four major international regulatory bodies to establish benthic sediment quality standards for ecological direct contact. By evaluating the mathematical frameworks applied to both **non-ionic organic compounds** and **heavy metals**, we can understand how different jurisdictions balance mechanistic precision against statistical uncertainty and localized environmental variables.
 
 ---
@@ -74,3 +76,7 @@ Furthermore, despite global utilization, RIVM has formally **rejected** the inco
 *   [US EPA: Equilibrium Partitioning Sediment Benchmarks for the Protection of Benthic Organisms](https://www.epa.gov/sites/default/files/2015-08/documents/equilibrium_partitioning_sediment_benchmarks_for_the_protection_of_benthic_organisms_metal_mixtures.pdf)
 *   [CCME: Canadian Sediment Quality Guidelines for the Protection of Aquatic Life](https://ccme.ca/en/resources/sediment)
 *   [ANZG: Australian and New Zealand Guidelines for Fresh and Marine Water Quality](https://www.waterquality.gov.au/anz-guidelines)
+
+---
+
+**See also:** Test specific values for this pathway in the **Calculator** tab (eco-direct-eqp pathway).

@@ -1,5 +1,7 @@
 # Framework: Human Health and Indigenous Exposure Pathways
 
+**Purpose:** This framework outlines the mathematical modifications required to adapt standard human health risk assessment equations to two specific contexts: (1) populations reliant on traditional subsistence foraging, and (2) wetted-sediment dermal contact in aquatic environments. Reference for the Phase 2 (2026) Matrix Sediment Standards Derivation Options Analysis.
+
 Standard deterministic human health risk assessment equations consistently rely on central-tendency exposure variables formulated for generalized regional populations and terrestrial environments. However, when these rigid default parameters are applied to specific geographic jurisdictions heavily reliant on traditional subsistence foraging, or to environments governed by aquatic physical dynamics, they systematically fail to protect the target population. 
 
 This framework outlines the specific mathematical modifications required to account for **high-volume Indigenous traditional food consumption rates** and the unique mechanics of **wetted-sediment dermal contact**.
@@ -29,7 +31,7 @@ Because the target environmental threshold ($C_{wqciu}$) is governed by an inver
 
 ## Dermal Contact Mechanics and Wetted Sediment Adherence
 
-When evaluating direct exposure pathways, modern guidelines, such as **Health Canada’s Supplemental Guidance on Human Health Risk Assessment of Contaminated Sediments**, strictly isolate the fluid dynamics of aquatic matrices from standard terrestrial dry soil physics.
+When evaluating direct exposure pathways, modern guidelines, such as **Health Canada's Supplemental Guidance on Human Health Risk Assessment of Contaminated Sediments**, strictly isolate the fluid dynamics of aquatic matrices from standard terrestrial dry soil physics.
 
 To calculate the systemic physiological impact, risk assessors formulate the **Instantaneous Dermal Dose per Event ($D_{event}$)**:
 
@@ -51,3 +53,7 @@ Applying standard exposed tidal flat $AF_d$ inputs to purely submerged pathways 
 
 *   [Health Canada: Supplemental Guidance on Human Health Risk Assessment of Contaminated Sediments](https://publications.gc.ca/site/eng/9.832535/publication.html)
 *   [ACFN: Lower Athabasca Surface Water and Sediment Quality Criteria for Protection of Indigenous Use](https://acfn.com/wp-content/uploads/2023/10/wqciu_report.pdf)
+
+---
+
+**See also:** Test specific values for these pathways in the **Calculator** tab (human-health-direct and human-health-food pathways).

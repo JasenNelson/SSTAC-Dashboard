@@ -1,5 +1,7 @@
 # Case Study: Bioaccumulation Frameworks (BSAF)
 
+**Purpose:** This case study covers Biota-Sediment Accumulation Factor (BSAF) methodology and trophic transfer modeling for deriving food-web sediment values, including the human-health fish-consumption back-calculation pattern used by SWRCB and OEHHA. Reference for the Phase 2 (2026) Matrix Sediment Standards Derivation Options Analysis.
+
 This case study examines the mathematical architectures used by environmental regulatory bodies, specifically the **California State Water Resources Control Board (SWRCB)** and the **Office of Environmental Health Hazard Assessment (OEHHA)**, to derive human health risk criteria for sediment through the aquatic food web. 
 
 Unlike direct exposure pathways, bioaccumulation modeling requires a complex inverse methodology: risk assessors must first calculate a safe biological tissue threshold for consumed fish, and then back-calculate the allowable abiotic sediment concentration utilizing thermodynamic partition ratios.
@@ -73,3 +75,7 @@ Executed computationally across massive Monte Carlo simulations, this spatial in
 
 *   [OEHHA: Fish Contaminant Goals and Advisory Tissue Levels](https://oehha.ca.gov/fish/fish-contaminant-goals-and-advisory-tissue-levels)
 *   [SWRCB: Water Quality Control Plan for Enclosed Bays and Estuaries - Sediment Quality](https://www.waterboards.ca.gov/water_issues/programs/bptcp/sediment.html)
+
+---
+
+**See also:** Test specific values for this pathway in the **Calculator** tab (eco-food-bsaf and human-health-food pathways).
