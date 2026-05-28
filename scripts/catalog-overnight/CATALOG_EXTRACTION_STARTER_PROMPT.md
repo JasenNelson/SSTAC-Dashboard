@@ -1,7 +1,7 @@
 # SSTAC-Dashboard Stream D Catalog Extraction -- Autonomous Session
 
-This is a TEMPLATE. The wrapper substitutes $PassId, $YYYYMMDDTHHMMSSZ, and $N markers
-before passing to claude -p.
+This is a TEMPLATE. The wrapper substitutes $PassId, $YYYYMMDDTHHMMSSZ, $N, and
+$PRIORITY_BOOST_NOTE markers before passing to claude -p.
 
 ---
 
@@ -53,6 +53,8 @@ c. Check .tmp/CATALOG_EXTRACTION_PAUSE sentinel:
 d. Check .tmp/CATALOG_EXTRACTION_PRIORITY_BOOST sentinel:
    - If present: note the boost and re-order your item queue to front-load priority_tier=1
      items from the manifest.
+   - Wrapper-injected status (replaced by wrapper at launch time; empty if no boost):
+     $PRIORITY_BOOST_NOTE
 
 ### Step 2 -- Build the pending queue
 
