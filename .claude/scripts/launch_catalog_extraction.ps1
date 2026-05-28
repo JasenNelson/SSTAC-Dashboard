@@ -312,9 +312,28 @@ try {
         -Note ("wrapper error: " + $_.Exception.Message) | Out-Null
     throw
 } finally {
-    # Always wipe the DSN from process env before exiting (defense-in-depth)
+    # Capture DSN BEFORE wipe so the sanitizer below can redact it from log files.
+    $dsnForRedaction = $env:CATALOG_DSN
     if ($env:CATALOG_DSN) {
         Remove-Item Env:CATALOG_DSN -ErrorAction SilentlyContinue
+    }
+    # Defense-in-depth: redact the DSN from captured stderr / stdout logs if it
+    # appears (e.g. a propagated psycopg connection error or Python traceback that
+    # quoted the connection string). Best-effort; never block exit on sanitizer failure.
+    if ($dsnForRedaction) {
+        foreach ($logPath in @($stderrLog, $stdoutLog)) {
+            if (Test-Path -LiteralPath $logPath) {
+                try {
+                    $content = Get-Content -Raw -LiteralPath $logPath -ErrorAction Stop
+                    if ($content -and $content.Contains($dsnForRedaction)) {
+                        $content.Replace($dsnForRedaction, '[CATALOG_DSN_REDACTED]') |
+                            Set-Content -Path $logPath -NoNewline -Encoding utf8 -ErrorAction SilentlyContinue
+                    }
+                } catch {
+                    # Swallow; defense-in-depth only.
+                }
+            }
+        }
     }
     # Clean up the temp prompt file (contains the inlined prompt; no secrets, but tidy)
     if (Test-Path $tempPromptFile) {
