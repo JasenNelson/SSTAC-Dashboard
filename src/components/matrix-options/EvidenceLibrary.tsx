@@ -5,6 +5,8 @@ import { ChevronDown, ChevronRight, ExternalLink, Search, X } from 'lucide-react
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
 import type { PromotedParameterValueRecord } from '@/lib/matrix-options/provenance/promotion';
+import { submitReview, fetchReviewHistory } from '@/lib/matrix-options/provenance/qa-review-sync';
+import type { ParameterValueReview } from '@/lib/matrix-options/provenance/qa-review-sync';
 import { usePromotedCandidatesStore } from '@/stores/matrix-options/promotedCandidatesStore';
 import { cn } from '@/utils/cn';
 import {
@@ -998,16 +1000,186 @@ function SourceLeadTriageChecklist({
   );
 }
 
+function QaReviewActions({
+  parameterValueId,
+  currentQaStatus,
+  currentEvidenceStatus,
+}: {
+  parameterValueId: string;
+  currentQaStatus: string;
+  currentEvidenceStatus: string;
+}) {
+  const [showForm, setShowForm] = useState(false);
+  const [targetStatus, setTargetStatus] = useState<string>('');
+  const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [reviews, setReviews] = useState<ParameterValueReview[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [effectiveQaStatus, setEffectiveQaStatus] = useState(currentQaStatus);
+
+  useEffect(() => {
+    setEffectiveQaStatus(currentQaStatus);
+  }, [currentQaStatus]);
+
+  useEffect(() => {
+    fetchReviewHistory(parameterValueId).then(setReviews);
+  }, [parameterValueId]);
+
+  const handleSubmit = async () => {
+    if (!targetStatus) return;
+    setSubmitting(true);
+    const ok = await submitReview(
+      parameterValueId,
+      effectiveQaStatus,
+      targetStatus,
+      note,
+      currentEvidenceStatus,
+      undefined,
+    );
+    if (ok) {
+      setEffectiveQaStatus(targetStatus);
+      const updated = await fetchReviewHistory(parameterValueId);
+      setReviews(updated);
+    }
+    setSubmitting(false);
+    setShowForm(false);
+    setNote('');
+    setTargetStatus('');
+  };
+
+  const transitions =
+    effectiveQaStatus === 'needs_review'
+      ? [
+          { value: 'approved', label: 'Approve' },
+          { value: 'superseded', label: 'Supersede' },
+        ]
+      : effectiveQaStatus === 'approved'
+        ? [
+            { value: 'needs_review', label: 'Revert to needs review' },
+            { value: 'superseded', label: 'Supersede' },
+          ]
+        : [
+            { value: 'needs_review', label: 'Revert to needs review' },
+            { value: 'approved', label: 'Approve' },
+          ];
+
+  return (
+    <div className="space-y-2" data-testid="qa-review-actions">
+      <div className="flex items-center gap-2">
+        <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
+          QA Review
+        </span>
+        {transitions.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => {
+              setTargetStatus(t.value);
+              setShowForm(true);
+            }}
+            disabled={submitting}
+            className={cn(
+              'rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors',
+              t.value === 'approved'
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300'
+                : t.value === 'superseded'
+                  ? 'border-red-300 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300'
+                  : 'border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300',
+            )}
+            data-testid={`qa-review-${t.value}`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {showForm && (
+        <div className="rounded-md border border-sky-200 bg-sky-50 p-3 dark:border-sky-800 dark:bg-sky-950/30">
+          <p className="text-xs font-semibold text-sky-700 dark:text-sky-300">
+            Change QA status: {effectiveQaStatus} -&gt; {targetStatus}
+          </p>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Review note (optional)"
+            rows={2}
+            className="mt-2 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            data-testid="qa-review-note"
+          />
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="rounded-md bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-50 dark:bg-sky-500"
+              data-testid="qa-review-submit"
+            >
+              {submitting ? 'Submitting...' : 'Confirm'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setShowForm(false);
+                setNote('');
+                setTargetStatus('');
+              }}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {reviews.length > 0 && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowHistory(!showHistory)}
+            className="text-xs font-semibold text-slate-500 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400"
+            data-testid="qa-review-history-toggle"
+          >
+            {showHistory ? 'Hide' : 'Show'} review history ({reviews.length})
+          </button>
+          {showHistory && (
+            <div className="mt-2 space-y-1" data-testid="qa-review-history">
+              {reviews.map((r) => (
+                <div
+                  key={r.id}
+                  className="rounded border border-slate-200 bg-slate-50 p-2 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+                >
+                  <span className="font-semibold">
+                    {r.old_qa_status} -&gt; {r.new_qa_status}
+                  </span>
+                  {' at '}
+                  {new Date(r.reviewed_at).toLocaleString()}
+                  {r.reviewer_note && (
+                    <p className="mt-1 text-slate-500 dark:text-slate-400">
+                      {r.reviewer_note}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ValueDetailPanel({
   row,
   policyDecision,
   onClose,
   compact = false,
+  isAdmin = false,
 }: {
   row: EvidenceLibraryValueRow;
   policyDecision: DefaultSelectionPolicyDecision | null;
   onClose: () => void;
   compact?: boolean;
+  isAdmin?: boolean;
 }) {
   const review = getParameterValueReviewDisposition(row.record, row.sources);
   const canonicalSources = row.sources.filter(isCalculatorEvidenceSource);
@@ -1090,6 +1262,14 @@ function ValueDetailPanel({
               <StatusBadge value={row.record.canonical_source_status} />
             )}
           </div>
+
+          {isAdmin && (
+            <QaReviewActions
+              parameterValueId={row.record.parameter_value_id}
+              currentQaStatus={row.record.qa_status}
+              currentEvidenceStatus={row.record.evidence_support_status}
+            />
+          )}
 
           <ReviewDispositionNote {...review} />
 
@@ -2332,6 +2512,7 @@ export default function EvidenceLibrary({
             selectedValue,
           )}
           onClose={() => setSelectedValueId(null)}
+          isAdmin={isAdmin}
         />
       )}
 
@@ -2822,6 +3003,7 @@ export default function EvidenceLibrary({
               )}
               onClose={() => setSelectedValueId(null)}
               compact
+              isAdmin={isAdmin}
             />
           )}
           {selectedSource && (
