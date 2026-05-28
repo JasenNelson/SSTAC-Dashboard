@@ -158,6 +158,15 @@ def build_staging_row(
             'proposed_payload must be a dict; '
             f'got {type(payload).__name__}'
         )
+    if not payload:
+        # Empty dict satisfies the staging table's NOT NULL constraint but
+        # `catalog_approve_staging_row` RPC raises P0001 at HITL approve time
+        # because jsonb_object_keys('{}') returns no rows. Catch here so the
+        # bad row never lands in staging.
+        raise ValueError(
+            'proposed_payload must be a non-empty dict; '
+            'empty payloads fail at HITL approve (RPC P0001)'
+        )
     try:
         json.dumps(payload)
     except (TypeError, ValueError) as je:
@@ -466,8 +475,27 @@ class StagingWriter:
             )
         self.conn = None
 
+    def _redact_dsn(self, exc: BaseException) -> None:
+        """Strip the DSN substring from exc.args so a password-bearing URL-form
+        DSN never reaches error messages that may be logged, committed to
+        progress.json, or pushed to origin. Defense-in-depth against psycopg
+        parse errors that embed the connection string in args[0].
+        """
+        if not self.dsn or not exc.args:
+            return
+        new_args = tuple(
+            arg.replace(self.dsn, '[CATALOG_DSN_REDACTED]') if isinstance(arg, str) else arg
+            for arg in exc.args
+        )
+        if new_args != exc.args:
+            exc.args = new_args
+
     def __enter__(self) -> 'StagingWriter':
-        self.conn = psycopg.connect(self.dsn)
+        try:
+            self.conn = psycopg.connect(self.dsn)
+        except Exception as exc:
+            self._redact_dsn(exc)
+            raise
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -499,13 +527,17 @@ class StagingWriter:
                         ids.append(fetched[0])
             self.conn.commit()
             return ids
-        except Exception:
+        except Exception as exc:
             try:
                 self.conn.rollback()
             except Exception:
                 # Best-effort; if the connection itself is broken
                 # we still want to re-raise the original exception.
                 pass
+            # Redact DSN from any psycopg/runtime exception that may
+            # quote the connection string. Defense-in-depth against the
+            # progress.json + breadcrumb commit-and-push leak path.
+            self._redact_dsn(exc)
             raise
 
 

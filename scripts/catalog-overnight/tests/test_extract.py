@@ -218,6 +218,31 @@ def test_build_staging_row_rejects_non_json_serializable_payload():
         raise AssertionError('expected ValueError for non-JSON-serializable payload')
 
 
+def test_build_staging_row_rejects_empty_payload():
+    # Empty `{}` would pass the staging table's NOT NULL constraint but the
+    # approve RPC raises P0001 at HITL approve time (jsonb_object_keys('{}')
+    # returns no rows). Reject at Python validation so the bad row never
+    # lands in staging.
+    try:
+        extract.build_staging_row(
+            zotero_key='ZK',
+            attachment_path=None,
+            pass_id=uuid.uuid4(),
+            pass_started_at=datetime.now(timezone.utc),
+            proposal={
+                'proposed_kind': 'parameter_value',
+                'proposed_payload': {},
+                'confidence': 0.5,
+                'extraction_notes': None,
+            },
+            extraction_model='claude-opus-4-7',
+        )
+    except ValueError as ve:
+        assert 'non-empty' in str(ve)
+    else:
+        raise AssertionError('expected ValueError for empty proposed_payload')
+
+
 def test_build_staging_row_rejects_out_of_range_confidence():
     for bad in (-0.1, 1.0001, 5.0):
         try:
@@ -409,3 +434,50 @@ def test_staging_writer_accepts_env_dsn(monkeypatch):
     writer = extract.StagingWriter()
     assert writer.dsn == 'postgresql://test:test@localhost/test'
     assert writer.conn is None  # not yet entered
+
+
+def test_staging_writer_redacts_dsn_from_exception_args(monkeypatch):
+    # Simulate a psycopg ProgrammingError whose args[0] embeds the URL-form
+    # DSN with password. The helper must strip it before the exception
+    # propagates to a caller that may log str(exc) into progress.json or a
+    # breadcrumb file (both of which the agent commits and pushes).
+    dsn = 'postgresql://user:secret_pw@host:5432/db'
+    monkeypatch.setenv('CATALOG_DSN', dsn)
+    if not extract.HAS_PSYCOPG:
+        return
+    writer = extract.StagingWriter()
+    exc = RuntimeError(f'could not parse: {dsn}')
+    writer._redact_dsn(exc)
+    assert '[CATALOG_DSN_REDACTED]' in exc.args[0]
+    assert 'secret_pw' not in exc.args[0]
+    assert dsn not in exc.args[0]
+
+
+def test_staging_writer_redact_dsn_handles_multi_arg_exception(monkeypatch):
+    # Exception with multiple args, some string + some non-string. String
+    # args that contain the DSN get redacted; non-string args (ints, dicts)
+    # are passed through untouched.
+    dsn = 'postgresql://u:p@h/db'
+    monkeypatch.setenv('CATALOG_DSN', dsn)
+    if not extract.HAS_PSYCOPG:
+        return
+    writer = extract.StagingWriter()
+    exc = RuntimeError(f'first arg: {dsn}', 42, {'k': 'v'}, f'tail: {dsn}')
+    writer._redact_dsn(exc)
+    assert exc.args[0] == '[CATALOG_DSN_REDACTED]'.join(('first arg: ', ''))
+    assert exc.args[1] == 42
+    assert exc.args[2] == {'k': 'v'}
+    assert exc.args[3] == '[CATALOG_DSN_REDACTED]'.join(('tail: ', ''))
+
+
+def test_staging_writer_redact_dsn_noop_when_dsn_absent(monkeypatch):
+    # If the DSN substring is not in the exception, args are unchanged
+    # (identity preserved; no spurious mutation).
+    monkeypatch.setenv('CATALOG_DSN', 'postgresql://u:p@h/db')
+    if not extract.HAS_PSYCOPG:
+        return
+    writer = extract.StagingWriter()
+    exc = RuntimeError('unrelated error', 'still unrelated')
+    original_args = exc.args
+    writer._redact_dsn(exc)
+    assert exc.args == original_args
