@@ -1,0 +1,33 @@
+# Catalog Extraction Agent -- Python dependencies (thin library form)
+#
+# Phase 3 commit 2 of the redesign: the autonomous worker is now Claude Code
+# itself (spawned via `claude -p` headless mode by
+# `.claude/scripts/launch_catalog_extraction.ps1`); extract.py is a thin
+# library that Claude Code imports for Docling table extraction + psycopg
+# staging-table INSERTs. No external LLM client (Ollama dep dropped).
+#
+# Design: STREAM_D_REDESIGN_2026_05_28.md v0.3.1.
+#
+# Owner sets up the .venv at first real run per
+# cross_project_use_venv_python_not_system_python.md:
+#
+#   cd C:\Projects\SSTAC-Dashboard\scripts\catalog-overnight
+#   python -m venv .venv
+#   .\.venv\Scripts\Activate.ps1
+#   pip install -r requirements.txt
+#
+# Pinned floors -- see DOCLING_CONSISTENCY_SOP.md for canonical floor policy.
+
+# PDF extraction (Docling first, PyMuPDF fallback)
+docling>=2.10.0,<3.0.0
+pymupdf>=1.24.0,<2.0.0
+
+# Supabase service-role connection (raw psycopg; no Supabase MCP)
+psycopg[binary]>=3.2.0,<4.0.0
+
+# Image handling (Docling transitive; pinned to head off Pillow EOL surprises)
+pillow>=10.4.0,<12.0.0
+
+# Test harness
+pytest>=8.0.0,<9.0.0
+pytest-mock>=3.14.0,<4.0.0
