@@ -10,11 +10,15 @@ import type { ParameterValueReview } from '@/lib/matrix-options/provenance/qa-re
 import { submitEvidenceItem, fetchEvidenceItems } from '@/lib/matrix-options/provenance/evidence-sync';
 import type { CatalogEvidenceItem } from '@/lib/matrix-options/provenance/evidence-sync';
 import { SOURCE_RECORDS } from '@/lib/matrix-options/provenance/catalog';
+import { AddSourceForm } from './AddSourceForm';
+import { fetchHitlSources } from '@/lib/matrix-options/provenance/source-sync';
+import type { CatalogSourceRow } from '@/lib/matrix-options/provenance/source-sync';
 import { usePromotedCandidatesStore } from '@/stores/matrix-options/promotedCandidatesStore';
 import { cn } from '@/utils/cn';
 import {
   PROTOCOL28_POLICY_ALIGNMENT,
   buildProtocol28ReviewSummary,
+  buildCrossPathwayAudit,
   buildEvidenceLibraryView,
   createEvidenceLibraryFilters,
   getParameterValueReviewDisposition,
@@ -23,6 +27,8 @@ import {
   isCalculatorEvidenceSource,
 } from '@/lib/matrix-options/provenance/library';
 import type {
+  CrossPathwayAuditRow,
+  CrossPathwayAuditSummary,
   EvidenceLibraryFacetOption,
   EvidenceLibraryProtocol28ReviewSummary,
   EvidenceLibrarySourceLeadSummary,
@@ -46,6 +52,11 @@ import type { RegulatoryFrameId } from '@/lib/matrix-options/regulatoryFrames';
 import DefaultPolicyDispositionNote, {
   DefaultPolicyDecisionSummaryNote,
 } from './DefaultPolicyDispositionNote';
+import {
+  checkZoteroHealth,
+  getZoteroItemByKey,
+} from '@/lib/matrix-options/zotero/client';
+import type { ZoteroItem, ZoteroHealthStatus } from '@/lib/matrix-options/zotero/client';
 
 const PATHWAY_LABELS: Record<ProvenancePathway, string> = {
   'eco-direct-eqp': 'Ecological Direct (EqP)',
@@ -950,6 +961,142 @@ function Protocol28ReviewPanel({
   );
 }
 
+function CrossPathwayAuditRowCard({
+  row,
+  onSelect,
+}: {
+  row: CrossPathwayAuditRow;
+  onSelect?: () => void;
+}) {
+  const severityColor =
+    row.inconsistency_severity === 'major'
+      ? 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/30'
+      : 'border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30';
+
+  return (
+    <div className={cn('rounded border p-2 text-xs', severityColor)}>
+      <div className="flex items-start justify-between gap-1">
+        <div className="min-w-0">
+          <div className="font-semibold text-slate-900 dark:text-white truncate">
+            {row.substance_label}
+          </div>
+          <div className="text-slate-600 dark:text-slate-300">{row.input_label}</div>
+        </div>
+        <span className={cn(
+          'rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase',
+          row.inconsistency_severity === 'major'
+            ? 'bg-red-600 text-white dark:bg-red-500'
+            : 'bg-amber-500 text-white',
+        )}>
+          {row.inconsistency_severity}
+        </span>
+      </div>
+      <div className="mt-1 space-y-0.5">
+        {Array.from(row.values_by_pathway.values()).map(entry => (
+          <div key={entry.pathway} className="flex items-baseline gap-1 text-[11px]">
+            <span className="font-semibold text-slate-700 dark:text-slate-200">{entry.pathway_label}:</span>
+            <span className="font-mono text-slate-600 dark:text-slate-300">
+              {entry.value || '(empty)'} {entry.unit}
+            </span>
+          </div>
+        ))}
+      </div>
+      {onSelect && (
+        <button
+          type="button"
+          onClick={onSelect}
+          className="mt-1 text-[11px] font-semibold text-sky-700 hover:underline dark:text-sky-300"
+        >
+          Inspect first match -&gt;
+        </button>
+      )}
+    </div>
+  );
+}
+
+function CrossPathwayAuditPanel({
+  compact = false,
+  onSelectRow,
+}: {
+  compact?: boolean;
+  onSelectRow?: (row: CrossPathwayAuditRow) => void;
+}) {
+  const summary: CrossPathwayAuditSummary = useMemo(() => buildCrossPathwayAudit(), []);
+  const [showDetails, setShowDetails] = useState(false);
+
+  // Only show inconsistent rows (severity != 'none') in the panel
+  const inconsistentRows = summary.rows.filter(r => r.is_inconsistent);
+
+  if (inconsistentRows.length === 0) {
+    return null; // Nothing to flag
+  }
+
+  return (
+    <section
+      className="rounded-lg border border-amber-200 bg-white p-3 dark:border-amber-800 dark:bg-slate-950"
+      data-testid="cross-pathway-audit-panel"
+    >
+      <div className={cn('flex items-start', compact ? 'flex-col gap-2' : 'gap-2 sm:flex-row sm:items-end sm:justify-between')}>
+        <div className="min-w-0">
+          <h3 className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+            Cross-pathway audit
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Parameters with values that differ across pathways for the same substance.
+          </p>
+        </div>
+      </div>
+
+      <div className={cn('mt-3 grid gap-2', compact ? 'grid-cols-1' : 'sm:grid-cols-3')}>
+        <div className="rounded-md border border-red-200 bg-red-50 p-2 dark:border-red-800 dark:bg-red-900/20">
+          <div className="text-[11px] font-semibold uppercase text-red-700 dark:text-red-300">Major</div>
+          <div className="mt-0.5 text-lg font-bold text-red-800 dark:text-red-200">
+            {summary.majorIssuesCount}
+          </div>
+        </div>
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-900/20">
+          <div className="text-[11px] font-semibold uppercase text-amber-700 dark:text-amber-300">Minor</div>
+          <div className="mt-0.5 text-lg font-bold text-amber-800 dark:text-amber-200">
+            {summary.minorIssuesCount}
+          </div>
+        </div>
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-2 dark:border-emerald-800 dark:bg-emerald-900/20">
+          <div className="text-[11px] font-semibold uppercase text-emerald-700 dark:text-emerald-300">Consistent</div>
+          <div className="mt-0.5 text-lg font-bold text-emerald-800 dark:text-emerald-200">
+            {summary.consistentCount}
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setShowDetails(!showDetails)}
+        className="mt-2 text-xs font-semibold text-amber-700 hover:text-amber-900 dark:text-amber-300 dark:hover:text-amber-100"
+        data-testid="cross-pathway-audit-toggle"
+      >
+        {showDetails ? 'Hide' : 'Show'} {inconsistentRows.length} flagged {inconsistentRows.length === 1 ? 'parameter' : 'parameters'}
+      </button>
+
+      {showDetails && (
+        <div className="mt-2 space-y-1 max-h-64 overflow-y-auto" data-testid="cross-pathway-audit-details">
+          {inconsistentRows.slice(0, 50).map(row => (
+            <CrossPathwayAuditRowCard
+              key={`${row.substance_key}__${row.input_key}`}
+              row={row}
+              onSelect={onSelectRow ? () => onSelectRow(row) : undefined}
+            />
+          ))}
+          {inconsistentRows.length > 50 && (
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 px-1 py-1">
+              Showing first 50 of {inconsistentRows.length}. Use filters to narrow the scope.
+            </p>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function SourceLeadTriageChecklist({
   lead,
 }: {
@@ -1592,6 +1739,119 @@ function sourceDefaultUseText(row: EvidenceLibrarySourceRow): string {
   return 'Source is directly verified. It can support a future approved value, but the source alone does not change calculator defaults without value-level QA and owner or delegated approval.';
 }
 
+function ZoteroStatusBadge({ compact = false }: { compact?: boolean }) {
+  const [status, setStatus] = useState<ZoteroHealthStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    checkZoteroHealth().then(result => {
+      if (mounted) {
+        setStatus(result);
+        setLoading(false);
+      }
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400" data-testid="zotero-status-loading">
+        Checking Zotero connection...
+      </div>
+    );
+  }
+
+  if (!status?.available) {
+    return (
+      <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-900" data-testid="zotero-status-unavailable">
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-slate-400 dark:bg-slate-600" />
+          <span className="font-semibold text-slate-700 dark:text-slate-200">Zotero offline</span>
+        </div>
+        <p className="mt-1 text-slate-500 dark:text-slate-400">
+          Start Zotero desktop with local API enabled to link sources.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs dark:border-emerald-800 dark:bg-emerald-900/20" data-testid="zotero-status-available">
+      <div className="flex items-center gap-1.5">
+        <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+        <span className="font-semibold text-emerald-700 dark:text-emerald-300">Zotero connected</span>
+      </div>
+      <p className="mt-1 text-emerald-600 dark:text-emerald-400">
+        User ID: {status.userId ?? 'local'}
+      </p>
+    </div>
+  );
+}
+
+function ZoteroMetadataPanel({ zoteroKey }: { zoteroKey: string }) {
+  const [item, setItem] = useState<ZoteroItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    setError(false);
+    getZoteroItemByKey(zoteroKey).then(result => {
+      if (!mounted) return;
+      if (result) {
+        setItem(result);
+      } else {
+        setError(true);
+      }
+      setLoading(false);
+    });
+    return () => { mounted = false; };
+  }, [zoteroKey]);
+
+  if (loading) {
+    return (
+      <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+        Loading Zotero metadata...
+      </div>
+    );
+  }
+
+  if (error || !item) {
+    return (
+      <div className="rounded-md border border-slate-200 bg-slate-50 p-2 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400" data-testid="zotero-metadata-unavailable">
+        Zotero item not available (key: {zoteroKey})
+      </div>
+    );
+  }
+
+  const creatorString = item.creators
+    .map(c => c.lastName ?? c.name ?? '')
+    .filter(Boolean)
+    .join(', ');
+
+  return (
+    <div className="rounded-md border border-emerald-200 bg-emerald-50 p-2 text-xs dark:border-emerald-800 dark:bg-emerald-900/20" data-testid="zotero-metadata">
+      <div className="font-semibold text-emerald-700 dark:text-emerald-300">
+        Zotero: {item.itemType}
+      </div>
+      <div className="mt-1 text-slate-700 dark:text-slate-200">{item.title}</div>
+      {creatorString && (
+        <div className="mt-0.5 text-slate-600 dark:text-slate-300">{creatorString}</div>
+      )}
+      {item.date && (
+        <div className="mt-0.5 text-slate-600 dark:text-slate-300">{item.date}</div>
+      )}
+      {item.attachments.length > 0 && (
+        <div className="mt-1 text-emerald-700 dark:text-emerald-300">
+          {item.attachments.length} attachment{item.attachments.length === 1 ? '' : 's'}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SourceDetailPanel({
   row,
   onClose,
@@ -1710,6 +1970,10 @@ function SourceDetailPanel({
             <p className="text-sm text-slate-700 dark:text-slate-200">
               Conflict rule: {row.record.conflict_rule}
             </p>
+          )}
+
+          {row.record.zotero_item_key && (
+            <ZoteroMetadataPanel zoteroKey={row.record.zotero_item_key} />
           )}
         </div>
 
@@ -2285,6 +2549,90 @@ function CalculatorReceiptBanner({
   );
 }
 
+// ---------------------------------------------------------------------------
+// HitlSourcesSection -- admin-only collapsible source-registration panel
+// ---------------------------------------------------------------------------
+
+function HitlSourcesSection({ isAdmin }: { isAdmin: boolean }) {
+  const [showForm, setShowForm] = useState(false);
+  const [sources, setSources] = useState<CatalogSourceRow[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    let mounted = true;
+    fetchHitlSources().then(rows => {
+      if (mounted) setSources(rows);
+    });
+    return () => { mounted = false; };
+  }, [isAdmin, refreshKey]);
+
+  if (!isAdmin) return null;
+
+  const handleAdded = (_sourceId: string) => {
+    setShowForm(false);
+    setRefreshKey(k => k + 1);
+  };
+
+  return (
+    <section
+      className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
+      data-testid="hitl-sources-section"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+          HITL Sources
+          {sources.length > 0 && (
+            <span className="ml-1 text-slate-400 dark:text-slate-500">({sources.length})</span>
+          )}
+        </h3>
+        {!showForm && (
+          <button
+            type="button"
+            onClick={() => setShowForm(true)}
+            className="rounded-md border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+            data-testid="hitl-sources-add-button"
+          >
+            + Register
+          </button>
+        )}
+      </div>
+
+      {showForm && (
+        <div className="mt-2">
+          <AddSourceForm
+            onAdded={handleAdded}
+            onCancel={() => setShowForm(false)}
+          />
+        </div>
+      )}
+
+      {sources.length > 0 && (
+        <div className="mt-2 space-y-1" data-testid="hitl-sources-list">
+          {sources.slice(0, 5).map(source => (
+            <div
+              key={source.source_id}
+              className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] dark:border-slate-800 dark:bg-slate-900"
+            >
+              <div className="font-semibold text-slate-700 dark:text-slate-200 truncate">
+                {source.short_citation}
+              </div>
+              <div className="text-slate-500 dark:text-slate-400 truncate">
+                {source.source_id}
+              </div>
+            </div>
+          ))}
+          {sources.length > 5 && (
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">
+              +{sources.length - 5} more
+            </p>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function EvidenceLibrary({
   filters,
   onFiltersChange,
@@ -2583,6 +2931,12 @@ export default function EvidenceLibrary({
             onReviewSourceLeads={openProtocol28SourceLeads}
             compact
           />
+
+          <CrossPathwayAuditPanel compact />
+
+          <ZoteroStatusBadge compact />
+
+          <HitlSourcesSection isAdmin={isAdmin} />
 
           <section
             className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
