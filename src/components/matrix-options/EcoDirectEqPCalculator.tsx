@@ -23,7 +23,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
-import { ecoDirectEqP } from '@/lib/matrix-options/derivations';
+import { getEquation } from '@/lib/matrix-options/equationDispatch';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type { EcoDirectEqPResult } from '@/lib/matrix-options/types';
 import { parseDecimalInput } from '@/lib/matrix-options/parseDecimal';
@@ -33,6 +33,7 @@ import type {
 } from '@/lib/matrix-options/provenance/types';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import RegulatoryFrameNotice from './RegulatoryFrameNotice';
+import FrameVariantFallbackNotice from './FrameVariantFallbackNotice';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -103,6 +104,15 @@ export default function EcoDirectEqPCalculator({
     setFcvIsOverride(false);
   };
 
+  // Resolve the equation for the selected regulatory frame. With FRAME_VARIANTS
+  // empty (Phase 4 commit 1) this always returns the BC Protocol 1 v5 DRA
+  // baseline function and usedBaselineFallback: true; the call site is
+  // unchanged. When a frame-specific variant ships, getEquation swaps run().
+  const { run: ecoDirectEqP, usedBaselineFallback, fallbackReason } = useMemo(
+    () => getEquation(jurisdiction, 'eco-direct-eqp'),
+    [jurisdiction],
+  );
+
   const result: EcoDirectEqPResult | { error: string } | null = useMemo(() => {
     if (!substance || substance.logKow === null) {
       return {
@@ -141,7 +151,7 @@ export default function EcoDirectEqPCalculator({
     } catch (err) {
       return { error: err instanceof Error ? err.message : String(err) };
     }
-  }, [substance, focPercent, fcvInput, csInput]);
+  }, [ecoDirectEqP, substance, focPercent, fcvInput, csInput]);
 
   const isResult = result !== null && !('error' in result);
   const provenanceValues: CalculatorUsedValue[] = useMemo(
@@ -219,6 +229,11 @@ export default function EcoDirectEqPCalculator({
       <RegulatoryFrameNotice
         frameId={jurisdiction}
         pathway="eco-direct-eqp"
+      />
+
+      <FrameVariantFallbackNotice
+        usedBaselineFallback={usedBaselineFallback}
+        fallbackReason={fallbackReason}
       />
 
       {/*

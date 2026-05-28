@@ -40,9 +40,12 @@ interface FrameVariantFallbackNoticeProps {
 /**
  * FrameVariantFallbackNotice
  *
- * Renders null when usedBaselineFallback is false (the common case for the
- * default frame bc-protocol1-v5-dra, which never falls back because it IS
- * the baseline).
+ * Renders null when usedBaselineFallback is false (a frame+pathway that has a
+ * defined variant). While FRAME_VARIANTS is empty (Phase 4 commit 1) every
+ * frame -- including the default bc-protocol1-v5-dra -- falls back to the
+ * baseline, so the notice renders for all of them; once a frame ships a
+ * variant, usedBaselineFallback becomes false and the notice renders null
+ * for that frame.
  *
  * When usedBaselineFallback is true, renders a compact muted slate notice
  * block informing the HITL that the result on screen is the BC Protocol 1

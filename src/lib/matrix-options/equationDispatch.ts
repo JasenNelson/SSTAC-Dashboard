@@ -119,12 +119,16 @@ function resolveBaselineFallbackReason(
   frameId: RegulatoryFrameId,
   pathway: ProvenancePathway,
 ): string {
+  // NOTE: do not repeat the "Using BC Protocol 1 v5 DRA baseline" lead sentence
+  // here -- FrameVariantFallbackNotice already prepends it. This string only
+  // explains WHY the fallback happened, to avoid a duplicated baseline phrase
+  // in the rendered notice.
   return (
     'No specialized equation is defined for frame "' +
     frameId +
     '" on the "' +
     pathway +
-    '" pathway. Using BC Protocol 1 v5 DRA baseline.'
+    '" pathway.'
   );
 }
 
