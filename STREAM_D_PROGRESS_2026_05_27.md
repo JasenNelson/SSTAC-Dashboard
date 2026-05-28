@@ -24,8 +24,8 @@
 | # | Sub-task | Status |
 |---|---|---|
 | 1 | Branch + workstream-conflict check | DONE |
-| 2 | Supabase exploratory SQL + HITL pause | IN_PROGRESS |
-| 3 | `catalog_extraction_staging` migration SQL | pending |
+| 2 | Supabase exploratory SQL + HITL pause | DONE (commit 27df8e6, pushed) |
+| 3 | `catalog_extraction_staging` migration SQL | IN_PROGRESS |
 | 4 | `scripts/catalog-overnight/` scaffold | pending |
 | 5 | `src/lib/catalog/staging.ts` + tests | pending |
 | 6 | `src/components/matrix-options/CatalogStagingReview.tsx` + tests | pending |
@@ -38,7 +38,7 @@
 
 | Timestamp (UTC) | SHA | Sub-task | Description | Next |
 |---|---|---|---|---|
-| (filled after first commit) | | | | |
+| 2026-05-28 06:00 | `27df8e6` | 2 | Supabase exploratory SQL + HITL pause artifact + this progress doc. 4 gates GREEN (lint, vitest 2550 pass, monitored build, playwright 135 pass). Codex iterate-to-GREEN (1 iteration: P1 Q4 composite-FK pairing fixed). Pushed. | Sub-task 3 migration draft. |
 
 ---
 
