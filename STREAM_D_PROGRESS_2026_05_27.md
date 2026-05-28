@@ -63,7 +63,7 @@ Every ~2 hours per `cross_project_mid_session_workstream_recheck.md`:
 
 | File | Topic | Blocking? |
 |---|---|---|
-| `STREAM_D_HITL_PAUSE_SQL_EXPLORE_2026_05_27.md` | Sub-task 2 exploratory SQL output | RESOLVED 2026-05-28: owner pasted OUTPUT. CRITICAL FINDING: 3 of 5 catalog tables missing in Supabase (`catalog_evidence_items`, `catalog_sources`, `source_lead_triage`); only `promoted_parameter_values` and `parameter_value_reviews` exist. Impact: RPC fails for `evidence_item` and `source_lead` kinds; the `parameter_value` kind works end-to-end. Recommendation: owner-driven follow-up authoring migrations for the 3 missing tables. |
+| `STREAM_D_HITL_PAUSE_SQL_EXPLORE_2026_05_27.md` | Sub-task 2 exploratory SQL output | PARTIALLY RESOLVED 2026-05-28: owner pasted Q1..Q10 OUTPUT. Q2..Q8 confirmed live schemas of `parameter_value_reviews` + `promoted_parameter_values` match conservative defaults. Q1 returned only 2 of 5 expected table names; whether the other 3 (`catalog_evidence_items`, `catalog_sources`, `source_lead_triage`) are genuinely missing OR hidden by an `information_schema` privilege filter / PostgREST schema-cache miss is PENDING STRICTER VERIFICATION (autonomous session over-read the Q1 paste on first pass; correction in commit b111fb6 + this follow-up). Stricter verification SQL (pg_class lookup + UNION ALL row-count) provided in the pause artifact for owner to run. |
 
 ---
 

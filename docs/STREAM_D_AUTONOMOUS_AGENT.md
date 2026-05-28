@@ -166,12 +166,12 @@ below for what's wired vs. what's deferred to owner first-real-run.
 | `proposed_kind` | Target table | Promotion mapping | Live in Supabase? (per 2026-05-28 SQL output) |
 |---|---|---|---|
 | `parameter_value` | `public.promoted_parameter_values` | LLM payload fields map column-by-column to the target table's schema. Columns with DEFAULTs (id, created_at, updated_at) are OMITTED from the INSERT so the defaults fire. | YES (migration `20260527000003_promoted_parameter_values.sql` applied) |
-| `evidence_item` | `public.catalog_evidence_items` | Same column-list strategy. | **NO** -- table missing in Supabase. The RPC raises SQLSTATE 42P01 "relation does not exist" for this kind today. Owner-driven follow-up: author a migration based on `src/lib/matrix-options/provenance/evidence-sync.ts` row shape. |
-| `source_lead` | `public.source_lead_triage` | Same. | **NO** -- table missing in Supabase. Same disposition as `catalog_evidence_items`. |
+| `evidence_item` | `public.catalog_evidence_items` | Same column-list strategy. | **PENDING VERIFICATION** -- 2026-05-28 Q1 returned only 2 of 5 table names, suggesting this table may be missing; could also be an `information_schema` privilege artifact or a PostgREST schema-cache miss. See `STREAM_D_HITL_PAUSE_SQL_EXPLORE_2026_05_27.md` Q1 for the stricter verification query. |
+| `source_lead` | `public.source_lead_triage` | Same. | **PENDING VERIFICATION** -- same disposition as `catalog_evidence_items`. |
 
 The mapping is authoritative in the `catalog_approve_staging_row` RPC's `CASE v_staging_row.proposed_kind` branch. The TypeScript layer no longer carries a duplicate mapping (codex review Sub-task 5 R2 cleanup).
 
-**Operational consequence:** approving a staging row with `proposed_kind = 'parameter_value'` works end-to-end today; approving `'evidence_item'` or `'source_lead'` raises a Postgres error until owner authors and applies migrations for the corresponding target tables. The error surfaces in the CatalogStagingReview UI's red action-error banner; the staging row remains in `pending` state (FOR UPDATE lock is released on transaction rollback).
+**Operational consequence (conditional):** if the verification query confirms the tables exist, all 3 `proposed_kind` values work end-to-end. If the verification confirms they are missing, approving a staging row with `proposed_kind = 'parameter_value'` works but `'evidence_item'` and `'source_lead'` raise a Postgres error (SQLSTATE 42P01) at INSERT time; the CatalogStagingReview UI surfaces the error in its red action-error banner and the staging row remains in `pending` state (FOR UPDATE lock is released on transaction rollback).
 
 ---
 

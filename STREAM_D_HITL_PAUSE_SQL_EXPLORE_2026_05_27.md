@@ -235,7 +235,7 @@ Subsequent sub-tasks 4..7 proceed in parallel and do not depend on this output. 
 
 <!-- Q1: 5 expected catalog tables + schemas -->
 
-**CRITICAL FINDING:** only 2 of the 5 expected catalog tables exist:
+**Owner-pasted result (PENDING STRONGER VERIFICATION; see note below):**
 
 ```
 [
@@ -244,14 +244,65 @@ Subsequent sub-tasks 4..7 proceed in parallel and do not depend on this output. 
 ]
 ```
 
-The other 3 tables are MISSING from Supabase entirely:
-- `catalog_evidence_items` -- referenced by `src/lib/matrix-options/provenance/evidence-sync.ts` (insert / select / delete). Calls fail silently via safe-fallback (return `false`/`[]`). No data has ever been persisted.
-- `catalog_sources` -- referenced by `src/lib/matrix-options/provenance/source-sync.ts`. Same silent-fail pattern.
-- `source_lead_triage` -- referenced by `src/lib/matrix-options/provenance/triage-sync.ts`. Same.
+**Reading at face value:** the paste shows only 2 rows for 5 requested
+table names. If this represents the full Q1 result set, then 3 of the 5
+catalog tables (`catalog_evidence_items`, `catalog_sources`,
+`source_lead_triage`) would be missing from Supabase.
 
-**Impact on Stream D scaffold:**
-- `catalog_approve_staging_row()` RPC's CASE branch for `proposed_kind = 'evidence_item'` and `'source_lead'` will raise `relation "public.catalog_evidence_items" does not exist` (SQLSTATE 42P01) at INSERT time. Only `'parameter_value'` kind works end-to-end today.
-- The TypeScript types in evidence-sync.ts / source-sync.ts / triage-sync.ts are the only on-disk source-of-truth for what the 3 missing tables *should* look like (the autonomous session did not author migrations for them; that is owner-driven follow-up work).
+**Why this is not yet confirmed:**
+
+1. `information_schema.tables` filters by the privileges of the current
+   role. Supabase Studio's SQL Editor typically runs as `postgres` (full
+   privileges), but if for any reason the session ran with reduced
+   privileges, tables could be invisible here while still existing in
+   `pg_class`.
+2. The earlier e2e test log line
+   `[triage-sync] fetchTriageState error: Could not find the table 'public.source_lead_triage' in the schema cache`
+   is also consistent with PostgREST's schema cache being stale (a
+   `NOTIFY pgrst, 'reload schema'` could resolve it without authoring
+   any new table).
+3. The original Q1 paste may have been abbreviated.
+
+**Stricter verification queries (owner to run; results not yet in):**
+
+```sql
+-- Definitive existence check via pg_class (bypasses information_schema privilege filtering).
+SELECT n.nspname        AS schema_name,
+       c.relname        AS table_name,
+       CASE c.relkind
+         WHEN 'r' THEN 'BASE TABLE'
+         WHEN 'v' THEN 'VIEW'
+         WHEN 'm' THEN 'MATERIALIZED VIEW'
+         WHEN 'p' THEN 'PARTITIONED TABLE'
+         WHEN 'f' THEN 'FOREIGN TABLE'
+         ELSE c.relkind::text
+       END              AS kind,
+       c.relrowsecurity AS rls_enabled
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+ WHERE c.relname IN (
+   'promoted_parameter_values',
+   'parameter_value_reviews',
+   'catalog_evidence_items',
+   'catalog_sources',
+   'source_lead_triage'
+ )
+ ORDER BY n.nspname, c.relname;
+
+-- Row counts on the suspect tables (decisive: returns ERROR 42P01 if missing).
+SELECT 'promoted_parameter_values' AS t, COUNT(*) AS n FROM public.promoted_parameter_values
+UNION ALL SELECT 'parameter_value_reviews',    COUNT(*) FROM public.parameter_value_reviews
+UNION ALL SELECT 'catalog_evidence_items',     COUNT(*) FROM public.catalog_evidence_items
+UNION ALL SELECT 'catalog_sources',            COUNT(*) FROM public.catalog_sources
+UNION ALL SELECT 'source_lead_triage',         COUNT(*) FROM public.source_lead_triage;
+```
+
+Disposition: until owner returns one of these stricter queries, treat the
+"3 missing tables" reading as a HYPOTHESIS only. The Stream D scaffold's
+downstream impact (RPC failing for `evidence_item` / `source_lead`) holds
+ONLY IF the tables truly do not exist. If they exist (and the Q1 result
+was a privilege / cache artifact), the scaffold works end-to-end for all
+3 `proposed_kind` values today.
 
 <!-- Q2: Column shape -->
 
