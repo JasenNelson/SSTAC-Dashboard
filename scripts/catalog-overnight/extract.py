@@ -1,46 +1,52 @@
-"""Catalog Extraction Agent -- Docling -> Ollama -> catalog_extraction_staging.
+"""Catalog extraction library -- Docling table extraction + staging row builder + psycopg writer.
 
-Forks the BN-RRM extract_tables_docling.py pattern (Docling-first, chunked,
-heartbeat-aware) but scoped to producing rows for the catalog_extraction_staging
-HITL queue. The agent NEVER writes to production catalog tables; the only
-catalog surface it may populate is the staging table, which is the HITL
-approval queue.
+This is a THIN LIBRARY, not a CLI. It is imported by an autonomous Claude Code
+session (spawned by `.claude/scripts/launch_catalog_extraction.ps1` via
+`claude -p` headless mode); the session orchestrates the per-item processing
+loop directly. No main(), no argparse, no CLI flags.
 
-Pattern source:
+Scope (in):
+- Docling-first PDF table extraction with chunked fallback for long documents.
+- Staging row builder with strict schema validation matching the
+  catalog_extraction_staging migration's CHECK constraints.
+- psycopg StagingWriter context manager.
+- Python-side breadcrumb emitter for the wrapper's watchdog.
+
+Scope (out, vs the prior scaffold):
+- Ollama / any external LLM client. Claude Code itself is the reasoner over
+  Docling output; no LlmClient protocol seam.
+- CLI / main() / dry-run mode. The wrapper handles dry-run; the library is
+  always called from within a Python -c invocation by Claude Code.
+- run_pass orchestrator. The session's starter prompt owns orchestration.
+
+Design reference: STREAM_D_REDESIGN_2026_05_28.md v0.3.1 (cursor-agent GREEN
+at round 5, mutual-agreement methodology).
+
+Tuning constants mirror BN-RRM extract_tables_docling.py for cross-project
+consistency:
   C:\\Projects\\Regulatory-Review\\2026_Database_Development\\data_acquisition\\bnrrm_extraction\\extract_tables_docling.py
-Tuning constants (MAX_PAGES_FOR_OCR, MAX_PAGES_FOR_ACCURATE,
-PROACTIVE_CHUNK_THRESHOLD, DEFAULT_CHUNK_SIZE) intentionally mirror that
-file for cross-project consistency. Do not diverge without owner approval.
 
 Safety:
-  - Local Ollama only (per cross_project_local_ollama_only_for_ingestion_pipelines.md).
-  - No paid LLM APIs.
-  - Service-role DSN is read from --dsn arg only; never logged. Vault / env-var
-    handling is owner-driven first-real-run work (see README.md scheduling
-    section); this scaffold does not implement env-var DSN fallback.
-  - LLM client is INJECTED via the LlmClient protocol; this scaffold does not
-    invoke Ollama end-to-end. The real Ollama wiring lands at owner-driven
-    first-real-run time. Tests mock the protocol.
+- The agent NEVER writes to production catalog tables. Only catalog_extraction_staging.
+- DSN is read from process env CATALOG_DSN by the StagingWriter; never logged.
 
-Authored by Stream D autonomous session (Opus 4.7) 2026-05-27.
+Authored by Stream D autonomous session (Opus 4.7) 2026-05-27; refactored to
+thin library 2026-05-28 per Phase 3 commit 2 of the redesign.
 """
 
 from __future__ import annotations
 
-import argparse
 import dataclasses
 import gc
 import json
 import os
 import re
-import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Iterable, Iterator, Protocol, Sequence
+from typing import Any, Callable, Iterable, Sequence
 
-# Optional imports -- the scaffold runs without them so tests do not need
-# Docling/psycopg installed. Real runs require the full requirements.txt.
+# Optional imports -- tests do not require Docling / psycopg installed.
 try:
     from docling.document_converter import DocumentConverter, PdfFormatOption
     from docling.datamodel.pipeline_options import PdfPipelineOptions, TableFormerMode
@@ -73,38 +79,6 @@ HITL_STATUS_VALUES = ('pending', 'approved', 'rejected', 'superseded')
 
 # -- Service-role discriminator (match catalog_extraction_staging schema) ----
 AGENT_PRINCIPAL = 'agent_service_role'
-
-
-# ============================================================================
-# LLM client interface (Protocol; mocked in tests)
-# ============================================================================
-
-class LlmClient(Protocol):
-    """LLM client for catalog extraction.
-
-    Implementations call local Ollama or a test mock. The agent NEVER calls a
-    paid LLM API. The real Ollama wiring is owner-driven first-real-run work,
-    NOT part of this scaffold (per Sub-task 4 spec).
-    """
-
-    def extract_proposals(
-        self,
-        *,
-        zotero_key: str,
-        attachment_path: str | None,
-        table_data: list[dict],
-        model: str,
-    ) -> list[dict]:
-        """Given Docling-extracted tables from one PDF, return a list of
-        proposed catalog row dicts.
-
-        Each dict MUST have keys:
-          - proposed_kind: one of PROPOSED_KIND_VALUES
-          - proposed_payload: JSON-serializable dict
-          - confidence: float in [0, 1] or None
-          - extraction_notes: str or None
-        """
-        ...
 
 
 # ============================================================================
@@ -161,13 +135,12 @@ def build_staging_row(
     extracted_at: datetime | None = None,
     pass_finished_at: datetime | None = None,
 ) -> StagingRow:
-    """Convert one LLM proposal dict into a StagingRow.
+    """Convert one proposal dict (produced by the Claude Code session) into a StagingRow.
 
-    Validates the proposal shape against the catalog_extraction_staging
-    CHECK constraints (proposed_kind enum, confidence in [0,1]).
-
-    Raises ValueError on validation failure so the agent does not insert
-    rows that would violate the schema.
+    Validates the proposal shape against the catalog_extraction_staging CHECK
+    constraints (proposed_kind enum, confidence in [0,1], JSON-serializable
+    payload). Raises ValueError on validation failure so bad rows are caught
+    before INSERT.
     """
     if not zotero_key:
         raise ValueError('zotero_key is required (NOT NULL on staging row)')
@@ -185,8 +158,6 @@ def build_staging_row(
             'proposed_payload must be a dict; '
             f'got {type(payload).__name__}'
         )
-    # Fail fast on non-JSON-serializable payloads so the row is rejected
-    # at validation time rather than blowing up mid-INSERT in to_db_tuple().
     try:
         json.dumps(payload)
     except (TypeError, ValueError) as je:
@@ -199,7 +170,6 @@ def build_staging_row(
     if confidence_raw is None:
         confidence = None
     elif isinstance(confidence_raw, bool):
-        # Guard: bool is a subclass of int; reject silently-true confidence.
         raise ValueError(
             f'confidence must be float or None; got bool ({confidence_raw!r})'
         )
@@ -477,18 +447,23 @@ RETURNING id;
 class StagingWriter:
     """Writes StagingRow records to catalog_extraction_staging via psycopg.
 
-    Connection is service-role (bypasses RLS). The created_by column is left
-    null (DB allows null when created_by_role = 'agent_service_role', which
-    is the column DEFAULT).
+    DSN is read from process env CATALOG_DSN (set by the wrapper from Windows
+    Credential Manager). The connection runs as service-role and bypasses
+    RLS in Supabase. The created_by column is left null (DB default
+    created_by_role = 'agent_service_role' fires).
 
-    Use as a context manager; the connection is opened on __enter__ and
-    closed on __exit__.
+    Use as a context manager.
     """
 
-    def __init__(self, dsn: str):
+    def __init__(self, dsn: str | None = None):
         if not HAS_PSYCOPG:
-            raise ImportError('psycopg not installed. Run: pip install psycopg')
-        self.dsn = dsn
+            raise ImportError('psycopg not installed. Run: pip install psycopg[binary]')
+        self.dsn = dsn or os.environ.get('CATALOG_DSN')
+        if not self.dsn:
+            raise RuntimeError(
+                'No DSN supplied (constructor arg) and CATALOG_DSN env var unset. '
+                'The wrapper should set CATALOG_DSN before invoking the Python step.'
+            )
         self.conn = None
 
     def __enter__(self) -> 'StagingWriter':
@@ -506,8 +481,8 @@ class StagingWriter:
         """Insert a batch of staging rows atomically. Returns the new row ids.
 
         Wraps the inserts in a transaction: on any error inside the batch,
-        rolls back the transaction and re-raises so the caller can recover
-        without a half-committed batch or an aborted connection state.
+        rolls back and re-raises so the caller can recover without a
+        half-committed batch or an aborted connection state.
         """
         if self.conn is None:
             raise RuntimeError(
@@ -528,196 +503,46 @@ class StagingWriter:
             try:
                 self.conn.rollback()
             except Exception:
-                # Best-effort rollback; if the connection itself is broken
+                # Best-effort; if the connection itself is broken
                 # we still want to re-raise the original exception.
                 pass
             raise
 
 
 # ============================================================================
-# Pass orchestration
-# ============================================================================
-
-@dataclasses.dataclass
-class ExtractionPass:
-    """One agent run = one extraction pass."""
-
-    pass_id: uuid.UUID = dataclasses.field(default_factory=uuid.uuid4)
-    started_at: datetime = dataclasses.field(
-        default_factory=lambda: datetime.now(timezone.utc)
-    )
-    finished_at: datetime | None = None
-    model: str = 'gemma3:12b'  # default per LOCKED Path Y v3
-    pdfs_processed: int = 0
-    pdfs_failed: int = 0
-    rows_emitted: int = 0
-    rows_inserted: int = 0
-
-
-def run_pass(
-    *,
-    zotero_items: Sequence[tuple[str, str | None]],
-    llm_client: LlmClient,
-    writer: StagingWriter | None,
-    model: str = 'gemma3:12b',
-    heartbeat_callback: Callable[[str], None] | None = None,
-    stop_check: Callable[[], bool] | None = None,
-    table_extractor: Callable[[str], list[dict]] | None = None,
-) -> ExtractionPass:
-    """Process a batch of Zotero items. Returns the ExtractionPass record.
-
-    For each item:
-      1. Extract tables from the attached PDF (table_extractor; defaults to
-         extract_tables_from_pdf).
-      2. Prompt the LLM client for catalog proposals.
-      3. Build StagingRow objects (build_staging_row validates each).
-      4. Write the batch to the staging table (skipped if writer is None;
-         useful for --dry-run and tests).
-
-    Errors per-PDF are isolated (one bad PDF does not halt the pass).
-    """
-    pass_state = ExtractionPass(model=model)
-
-    table_fn: Callable[[str], list[dict]] = (
-        table_extractor if table_extractor is not None
-        else (lambda p: extract_tables_from_pdf(
-            p,
-            heartbeat_callback=heartbeat_callback,
-            stop_check=stop_check,
-        ))
-    )
-
-    for zotero_key, attachment_path in zotero_items:
-        if stop_check is not None and stop_check():
-            break
-
-        if heartbeat_callback is not None:
-            try:
-                heartbeat_callback(f'zotero_key={zotero_key}')
-            except Exception:
-                pass
-
-        try:
-            if attachment_path is None:
-                pass_state.pdfs_failed += 1
-                continue
-
-            tables = table_fn(attachment_path)
-
-            proposals = llm_client.extract_proposals(
-                zotero_key=zotero_key,
-                attachment_path=attachment_path,
-                table_data=tables,
-                model=model,
-            )
-
-            rows: list[StagingRow] = []
-            for proposal in proposals:
-                try:
-                    rows.append(
-                        build_staging_row(
-                            zotero_key=zotero_key,
-                            attachment_path=attachment_path,
-                            pass_id=pass_state.pass_id,
-                            pass_started_at=pass_state.started_at,
-                            proposal=proposal,
-                            extraction_model=model,
-                        )
-                    )
-                except ValueError as ve:
-                    # Skip bad proposals; continue with the rest of the batch.
-                    if heartbeat_callback is not None:
-                        try:
-                            heartbeat_callback(f'rejected proposal for {zotero_key}: {ve}')
-                        except Exception:
-                            pass
-
-            if writer is not None and rows:
-                inserted_ids = writer.write_batch(rows)
-                pass_state.rows_inserted += len(inserted_ids)
-
-            pass_state.rows_emitted += len(rows)
-            pass_state.pdfs_processed += 1
-        except Exception as exc:
-            pass_state.pdfs_failed += 1
-            if heartbeat_callback is not None:
-                try:
-                    heartbeat_callback(f'ERROR processing {zotero_key}: {exc}')
-                except Exception:
-                    pass
-        finally:
-            gc.collect()
-
-    pass_state.finished_at = datetime.now(timezone.utc)
-
-    # Backfill extraction_pass_finished_at on every row this pass wrote.
-    # Rows are inserted as they are produced (one at a time), so
-    # `extraction_pass_finished_at` is NULL on insert. Once the pass ends we
-    # know the timestamp; one UPDATE closes out all rows in this pass.
-    if writer is not None and pass_state.rows_inserted > 0:
-        try:
-            with writer.conn.cursor() as cur:  # type: ignore[union-attr]
-                cur.execute(
-                    'UPDATE public.catalog_extraction_staging '
-                    'SET extraction_pass_finished_at = %s '
-                    'WHERE extraction_pass_id = %s '
-                    '  AND extraction_pass_finished_at IS NULL',
-                    (pass_state.finished_at, str(pass_state.pass_id)),
-                )
-            writer.conn.commit()  # type: ignore[union-attr]
-        except Exception as exc:
-            # Best-effort backfill; the pass already wrote its rows so we
-            # log and continue rather than re-raising. Roll back the failed
-            # transaction so a subsequent write_batch (or any other psycopg
-            # call sharing this connection) does not inherit an aborted
-            # transaction state.
-            try:
-                writer.conn.rollback()  # type: ignore[union-attr]
-            except Exception:
-                # Best-effort rollback; if the connection itself is broken
-                # the caller's next connection attempt will surface that.
-                pass
-            if heartbeat_callback is not None:
-                try:
-                    heartbeat_callback(
-                        f'WARN: pass_finished_at backfill failed: {exc}'
-                    )
-                except Exception:
-                    pass
-    return pass_state
-
-
-# ============================================================================
-# Breadcrumb emission (companion to run.ps1)
+# Breadcrumb emission (companion to the wrapper watchdog)
 # ============================================================================
 
 def write_breadcrumb(
     *,
     breadcrumb_dir: Path,
-    pass_id: uuid.UUID,
+    pass_id: uuid.UUID | str,
     status: str,
     note: str = '',
     current_zotero_key: str = '',
     output_artifacts: Sequence[str] = (),
 ) -> Path:
-    """Emit a breadcrumb JSON file at the path scheme run.ps1 watches.
+    """Emit a breadcrumb JSON file at the path scheme the wrapper watchdog filters on.
 
-    Filename includes pass_id and a timestamp (colons replaced with dashes
-    so Windows accepts the path).
+    Filename: <pass_id>-<YYYYMMDDTHHMMSSZ>-py.json. Timestamp is Windows-safe
+    basic ISO format (no colons; colons are invalid in Windows filenames and
+    would cause silent write failures, triggering false STALLED watchdog kills).
+
+    The pass-scoped filename prefix ($PassId) lets the wrapper filter
+    breadcrumbs to this run only, ignoring stale prior-pass crumbs.
     """
     breadcrumb_dir.mkdir(parents=True, exist_ok=True)
-    now_iso = datetime.now(timezone.utc).isoformat()
-    safe_iso = now_iso.replace(':', '-')
+    now_safe = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     crumb = {
         'pass_id': str(pass_id),
         'status': status,
-        'last_progress_at': now_iso,
+        'last_progress_at': datetime.now(timezone.utc).isoformat(),
         'current_zotero_key': current_zotero_key,
         'output_artifacts': list(output_artifacts),
         'note': note,
         'source': 'extract.py',
     }
-    out = breadcrumb_dir / f'{pass_id}-{safe_iso}-py.json'
+    out = breadcrumb_dir / f'{pass_id}-{now_safe}-py.json'
     out.write_text(
         json.dumps(crumb, indent=2, ensure_ascii=True),
         encoding='utf-8',
@@ -726,95 +551,22 @@ def write_breadcrumb(
 
 
 # ============================================================================
-# CLI entry point
+# Public surface (for smoke import test)
 # ============================================================================
 
-def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description=(
-            'Catalog Extraction Agent: extract structured proposals from '
-            'Zotero PDFs into catalog_extraction_staging.'
-        ),
-    )
-    parser.add_argument(
-        '--zotero-collection',
-        required=True,
-        help='Zotero collection key or saved-search id to query.',
-    )
-    parser.add_argument(
-        '--model',
-        default='gemma3:12b',
-        help='Ollama model name (default: gemma3:12b per LOCKED Path Y v3).',
-    )
-    parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='Process PDFs and prompt LLM but do not write to staging table.',
-    )
-    parser.add_argument(
-        '--dsn',
-        help='psycopg DSN for service-role Supabase connection. Required unless --dry-run.',
-    )
-    parser.add_argument(
-        '--pass-id',
-        help='UUID for this pass (run.ps1 passes one in; otherwise auto-generated).',
-    )
-    parser.add_argument(
-        '--breadcrumb-dir',
-        help='Directory for breadcrumb JSON files (run.ps1 sets this).',
-    )
-    return parser.parse_args(argv)
-
-
-def main(argv: Sequence[str] | None = None) -> int:
-    args = _parse_args(argv)
-
-    if not args.dry_run and not args.dsn:
-        print('error: --dsn is required unless --dry-run', file=sys.stderr)
-        return 2
-
-    pass_id = uuid.UUID(args.pass_id) if args.pass_id else uuid.uuid4()
-    breadcrumb_dir = Path(args.breadcrumb_dir) if args.breadcrumb_dir else None
-
-    def emit(status: str, note: str = '', current: str = '') -> None:
-        if breadcrumb_dir is not None:
-            try:
-                write_breadcrumb(
-                    breadcrumb_dir=breadcrumb_dir,
-                    pass_id=pass_id,
-                    status=status,
-                    note=note,
-                    current_zotero_key=current,
-                )
-            except Exception:
-                # Best-effort; do not crash extract.py if breadcrumbs fail.
-                pass
-
-    emit('STARTED', f'pass_id={pass_id}, model={args.model}, dry_run={args.dry_run}')
-
-    # The scaffold does NOT wire real Zotero querying or Ollama. Both are
-    # owner-driven first-real-run work. Emit SILENT_BAIL with a clear note
-    # and exit non-zero so the harness writes COMPLETED_RED rather than
-    # COMPLETED_GREEN -- consumers of the latest breadcrumb get a true
-    # signal that no work happened.
-    emit(
-        'SILENT_BAIL',
-        note=(
-            'Catalog Extraction Agent scaffold landed but Zotero query and '
-            'Ollama client wiring are deferred to first-real-run (Stream D '
-            'Sub-task 4 deliverable is the harness; Sub-task 4 design doc '
-            'lands in docs/STREAM_D_AUTONOMOUS_AGENT.md per Sub-task 7).'
-        ),
-    )
-    print(
-        'Catalog Extraction Agent scaffold present; Zotero + Ollama wiring '
-        'deferred to first-real-run (see scripts/catalog-overnight/README.md).',
-        file=sys.stderr,
-    )
-    # Exit code 3 = scaffold-deferred. Distinguishable from real failures
-    # (exit 1, 2) and from a successful real run (exit 0).
-    return 3
-
-
-if __name__ == '__main__':
-    sys.exit(main())
+__all__ = [
+    'MAX_PAGES_FOR_OCR',
+    'MAX_PAGES_FOR_ACCURATE',
+    'PROACTIVE_CHUNK_THRESHOLD',
+    'DEFAULT_CHUNK_SIZE',
+    'PROPOSED_KIND_VALUES',
+    'HITL_STATUS_VALUES',
+    'AGENT_PRINCIPAL',
+    'StagingRow',
+    'StagingWriter',
+    'build_staging_row',
+    'get_page_count',
+    'configure_docling_converter',
+    'extract_tables_from_pdf',
+    'write_breadcrumb',
+]
