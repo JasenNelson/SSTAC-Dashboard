@@ -224,20 +224,28 @@ Write-PsBreadcrumb -Status 'STARTED' -Note "Spawning claude -p; PassId=$PassId; 
 $stdoutLog = Join-Path $BreadcrumbDir "$PassId.stdout.log"
 $stderrLog = Join-Path $BreadcrumbDir "$PassId.stderr.log"
 
-# Pass the prompt via stdin to avoid CLI flag-parsing issues on long prompts.
-# `claude -p` reads the prompt from stdin when --print-from-stdin or when no
-# positional prompt arg is given; if the local CLI requires a positional arg,
-# we fall back to a temp prompt file.
+# Pass the prompt via STDIN, not as a positional `-p` argument. The prompt
+# template contains many unescaped double quotes (JSON breadcrumb examples,
+# embedded code snippets); passing it through Start-Process -ArgumentList
+# would force PowerShell + Windows CreateProcess argv quoting on each of
+# those, with brittle escaping at the cmdline serialization boundary.
+# stdin sidesteps the entire argv-quoting layer.
+#
+# `claude -p` (alias for --print, non-interactive mode) reads the prompt
+# from stdin when no positional prompt arg is given. Default --input-format
+# is "text" (per `claude -p --help`), which consumes the full stdin stream
+# as the prompt content.
 $tempPromptFile = Join-Path $BreadcrumbDir "$PassId-prompt.txt"
 Set-Content -Path $tempPromptFile -Value $prompt -Encoding utf8
 
 $claudeArgs = @(
-    '-p', "$(Get-Content -Raw -LiteralPath $tempPromptFile)",
+    '-p',
     '--output-format', 'text'
 )
 
 $proc = Start-Process -FilePath $ClaudeExe -ArgumentList $claudeArgs `
     -NoNewWindow -PassThru `
+    -RedirectStandardInput $tempPromptFile `
     -RedirectStandardOutput $stdoutLog `
     -RedirectStandardError $stderrLog
 
