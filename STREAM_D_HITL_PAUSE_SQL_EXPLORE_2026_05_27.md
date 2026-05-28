@@ -298,3 +298,21 @@ Once OUTPUT is filled in:
 2. If divergences exist (e.g. different column type for FK to `auth.users`, different RLS role name), file a follow-up issue or directly amend the staging migration before pasting it into SQL Editor.
 3. Apply the staging migration via Supabase Studio SQL Editor (see `STREAM_D_HITL_PAUSE_MIGRATION_APPLY_2026_05_27.md`).
 4. Resolve this pause artifact (move to `docs/archive/` per archive-before-edit on resolution).
+
+### Apply order (both migrations must land together)
+
+The staging surface ships in TWO migration files; apply them in this order in
+Supabase Studio SQL Editor:
+
+1. `supabase/migrations/20260527000004_catalog_extraction_staging.sql` -- the
+   `catalog_extraction_staging` table itself (Sub-task 3 deliverable).
+2. `supabase/migrations/20260527000005_catalog_approve_staging_rpc.sql` -- the
+   `catalog_approve_staging_row()` Postgres function that the HITL approve
+   path calls. Added in Sub-task 5 after codex review surfaced a race in the
+   client-side multi-statement approve flow; the RPC runs the
+   SELECT FOR UPDATE + INSERT target + UPDATE staging steps in one
+   transaction with row-level locking.
+
+`src/lib/catalog/staging.ts::approveStagingRow()` calls the RPC directly;
+without the RPC migration applied, every approve will fail with
+"function catalog_approve_staging_row does not exist".
