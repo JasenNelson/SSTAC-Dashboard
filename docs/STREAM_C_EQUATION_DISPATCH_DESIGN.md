@@ -19,7 +19,7 @@ Per the approved plan, "the four pathway calculators (Eco{Direct,Food}, HH{Direc
 - The four calculator components import the functions directly and call them with the user's inputs. The `jurisdiction` prop is displayed in a `RegulatoryFrameNotice` (UI metadata) but does not affect computation.
 - Existing tests assert "uses the selected regulatory frame without crashing" -- which only verifies UI rendering, not equation behavior changes.
 
-**The goal of Stream C:** wire `jurisdiction` (typed `Jurisdiction` in the calculator props -- this is a type alias for `RegulatoryFrameId` defined in `src/lib/matrix-options/jurisdictions.ts:17` -- so the prop value can be passed directly to `getEquation()` without conversion) into equation routing so the Calculator surfaces frame-specific values where they exist, without rewriting the equation library from scratch.
+**The goal of Stream C:** wire `jurisdiction` (typed `Jurisdiction` in the calculator props -- this is a type alias for `RegulatoryFrameId` defined in `src/components/matrix-options/guide/content/jurisdictions.ts` -- so the prop value can be passed directly to `getEquation()` without conversion) into equation routing so the Calculator surfaces frame-specific values where they exist, without rewriting the equation library from scratch.
 
 ---
 
