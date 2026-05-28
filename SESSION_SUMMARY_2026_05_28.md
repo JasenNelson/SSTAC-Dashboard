@@ -13,10 +13,10 @@ no production code changed on main. 6 commits landed. 12 files added or edited
 (3,749 net insertions). Memory store received 26 wikilink renames, 1 large trim
 (951 -> 596 lines), 3 new HIGH AUTHORITY anchors, and a new L0 CLAUDE.md rule.
 
-- Commits on origin/main today: 6
-- New docs authored: 11 (plus 1 existing doc patched)
+- Commits on origin/main today: 9
+- New docs authored: 14 (plus 2 existing docs patched)
 - Memory anchors added: 3
-- Memory edits applied: 2 (Class A renames + Edit 18 trim)
+- Memory edits applied: 3 (Class A renames + Edit 18 trim + M1 Edits 4-6 dedup + ASCII fixes)
 
 ---
 
@@ -33,6 +33,9 @@ yesterday's session; it is the base, not counted in today's 6.
 | fed346e   | docs: add Phase 4 Stream C implementation prep pack (3 ...) | Phase 3/4 transition        |
 | f1ae574   | docs: add Phase 4 implementation pack INDEX + memory hygiene | Phase 4 gate-ready marker   |
 | f7f3bff   | docs: add MEMORY.md trim proposal + dead-wikilink patch ...  | Memory hygiene (proposals)  |
+| 1a0ce27   | docs: add 2026-05-28 session summary                         | This doc (self-reference)   |
+| 3ce4f9e   | docs(stream-c): fix jurisdictions.ts path in design doc      | Stream C design patch (P2)  |
+| fff4d65   | docs: add Phase 4 commit 1 PASTE-READY content (1107 lines)  | Phase 4 turnkey prep        |
 
 ---
 
