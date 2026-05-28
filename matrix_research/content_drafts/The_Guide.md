@@ -102,6 +102,8 @@ Six workflows are shipped:
 
 No value moves to `approved_source_backed` without explicit HITL action. No source is mutated automatically. The Evidence Library is readable by all signed-in TWG members; only admin reviewers can register sources, link locators, promote candidates, or triage source leads.
 
+**Persistence status (as of 2026-05-28):** The QA review workflow persists to Supabase (`promoted_parameter_values` + `parameter_value_reviews`). Source registration, source-locator entry, and source-lead triage are UI-complete but their backing tables (`catalog_sources`, `catalog_evidence_items`, `source_lead_triage`) are pending migration -- actions taken in those workflows do not persist until migrations land. Zotero integration is read-only and does not require a backing table. Cross-pathway audit is an analysis surface; no persistence required.
+
 ---
 
 ## 7. Onboarding Pointers for New TWG Members

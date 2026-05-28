@@ -183,7 +183,7 @@ At end of Week 8: dispatch infrastructure in place, no behavior changes for user
 ## 5. Dependencies + risks
 
 ### Dependency on Stream D (Evidence Library catalog)
-The frame variants need source provenance (the `sourceIds` array). Stream D builds the catalog tooling AND populates it. Order matters: Stream D ships first (Phase 3); Stream C consumes Stream D's source IDs (Phase 4). If Stream D's catalog is empty when Stream C starts, the dispatch infrastructure (commits 1-5) lands without any actual variants; variant content waits until catalog is populated.
+The frame variants need source provenance (the `sourceIds` array). Stream D builds the catalog tooling AND populates it. Order matters: Stream D ships first (Phase 3); Stream C consumes Stream D's source IDs (Phase 4). If Stream D's catalog is empty when Stream C starts, the dispatch infrastructure (commits 1-5) lands without any actual variants; variant content waits until catalog is populated. (Stream D's catalog infrastructure depends on migrations for `catalog_sources` and `catalog_evidence_items` -- per the 2026-05-28 discovery, these tables do not yet exist; verify they land before treating source IDs as available for variant provenance.)
 
 ### Owner content input required
 Frame-specific equation parameters (e.g., CCME 2007 BSAF table, US EPA TEF values) are NOT in the codebase today. The Evidence Library catalog (Stream D) is the right home for them. Owner content input determines:

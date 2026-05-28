@@ -10,7 +10,7 @@
 
 **5 commits ready to push to origin/main from `C:\Projects\SSTAC-Dashboard-worktree-stream-a` (5 ahead of origin).** Auto-mode classifier blocked push attempts (interpreted feature-branch policy broadly). You decide: push to main directly, or PR via a feature branch. Push commands at the bottom.
 
-**Stream A is FULLY DONE** -- The Guide content gap-fill + Opus adversarial review fixes (codex CLI failed twice on network errors; Opus subagent fallback used per your standing directive). All 4 gates GREEN.
+**Stream A is FULLY DONE** -- The Guide content gap-fill + Opus adversarial review fixes (codex CLI failed twice on network errors; Opus subagent fallback used per your standing directive). All 4 gates GREEN. Note: Section 6 describes 3 workflows (source registration, source-locator entry, source-lead triage) whose Supabase persistence tables are not yet migrated -- see the persistence-status caveat added to The Guide on 2026-05-28 after Stream D session discovered the missing tables.
 
 **3 design / assessment deliverables also ready for your review:**
 1. `OTHER_2026_TABS_ASSESSMENT_2026_05_27.md` -- answers plan Open Question #1.
