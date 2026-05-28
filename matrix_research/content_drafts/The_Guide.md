@@ -19,7 +19,7 @@ Use the top tabs to move between the main review surfaces:
 *   **SSD Workbench** lets you build species sensitivity distributions for toxicity data review. (2027 scope)
 *   **References & Values** shows the repo-local metadata catalog for sources, values, equations, assumptions, and QA states. (2027 scope)
 
-A typical review flow is: read the Guide, check the conceptual model, compare jurisdictional approaches, test assumptions in the Calculator, and record feedback in TWG Review.
+A typical 2026 review flow is: read the Guide, check the conceptual model, compare jurisdictional approaches, test assumptions in the Calculator, and record feedback in TWG Review. The Interactive Map, SSD Workbench, and References & Values surfaces become primary in 2027.
 
 ---
 
@@ -95,12 +95,12 @@ Six workflows are shipped:
 
 *   **Source registration** via the Add Source form -- register canonical sources (papers, reports, datasets) with citation metadata into the catalog before linking values.
 *   **Source-locator entry** -- link an existing parameter value to a registered source with a page, table, or section locator.
-*   **QA review workflow** -- promote candidate values into `approved_source_backed` status after HITL review; verdicts are HITL professional judgments only.
-*   **Source-lead triage** -- triage incoming source leads (DOIs, titles, references that surfaced during review) into pending, approved, or rejected for later canonical registration.
-*   **Zotero integration** -- the workspace reads your local Zotero library (desktop API at `http://localhost:23119`) to surface DOI and title matches when you are registering a source. Zotero remains read-only; no writes from the workspace.
+*   **QA review workflow** -- HITL reviewers promote candidate values into `approved_source_backed` status after review; verdicts are HITL professional judgments only.
+*   **Source-lead triage** -- triage incoming source leads (DOIs, titles, references that surfaced during review) as untriaged, promoted, dismissed, or deferred for later canonical registration.
+*   **Zotero integration** -- the workspace reads your local Zotero library (desktop API at `http://localhost:23119`) to surface DOI and title matches when you are registering a source. Zotero integration is read-only; the workspace never writes to your Zotero library.
 *   **Cross-pathway audit** -- inspect which sources are cited across multiple pathways (eco-direct, eco-food, hh-direct, hh-food) to spot single-point-of-failure citations.
 
-No value moves to `approved_source_backed` without explicit HITL action. No source is mutated automatically. The Evidence Library is read-only for non-admin users.
+No value moves to `approved_source_backed` without explicit HITL action. No source is mutated automatically. The Evidence Library is readable by all signed-in TWG members; only admin reviewers can register sources, link locators, promote candidates, or triage source leads.
 
 ---
 
@@ -110,6 +110,6 @@ If you are joining the Technical Working Group and opening this workspace for th
 
 *   **Where to start:** Read this Guide top to bottom before navigating to other tabs.
 *   **Where to record feedback:** Use the TWG Review tab. It is the designated surface for logging technical input on the options under review.
-*   **Where outputs go:** TWG feedback is logged for the project record. Review the published Matrix Options Paper for the larger context and formal framing.
+*   **Where outputs go:** TWG feedback is logged for the project record. The published Matrix Options Paper provides the larger context and formal framing and is distributed separately by the project lead.
 *   **Important reminder:** Calculator outputs are screening-grade preliminary values, not final sediment standards. They are useful for comparing options and testing assumptions; professional judgment is required before any regulator-facing use.
 *   **Where to ask questions:** Contact the project lead with any questions about scope, process, or how to interpret a result.
