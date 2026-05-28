@@ -34,6 +34,8 @@
 
 ---
 
+> **HISTORICAL:** the commit log + deliverables list below describes the OLD topology (Docling + local Ollama + run.ps1 harness + LlmClient protocol). The redesign is documented in STREAM_D_REDESIGN_2026_05_28.md (committed at b252589). The new HEAD uses Claude-Code-as-worker (claude CLI headless, schtasks sentinel discipline).
+
 ## Commit log
 
 | Timestamp (UTC) | SHA | Sub-task | Description | Next |
@@ -139,9 +141,7 @@ progress doc).
 5. Set up the `.venv` per `scripts/catalog-overnight/README.md` "One-time
    setup (owner)" section and confirm pytest passes locally (16 unit
    tests; the autonomous session validated python syntax only).
-6. First-real-run wiring: implement the Zotero query layer in `extract.py`
-   and the real OllamaLlmClient class (the scaffold ships the LlmClient
-   protocol but does NOT invoke Ollama).
+6. First-real-run wiring: SUPERSEDED. The LlmClient / OllamaLlmClient extraction path was replaced by the Claude-Code-as-worker redesign (see STREAM_D_REDESIGN_2026_05_28.md, committed 2026-05-28). The new wiring path is: Windows Task Scheduler -> `.claude/scripts/launch_catalog_extraction.ps1` -> `claude -p` headless session reads the handoff doc + manifest + Docling output + writes to catalog_extraction_staging via psycopg. Owner action: register the schtasks task via `.claude/scripts/register_catalog_extraction_task.ps1` (one-shot) and populate `scripts/catalog-overnight/catalog_manifest.csv` with 1-3 smoke-test PDFs.
 
 **Open issues deferred (documented in design doc):**
 - Per-target allowlists for the RPC INSERT column list. Currently denylist;
