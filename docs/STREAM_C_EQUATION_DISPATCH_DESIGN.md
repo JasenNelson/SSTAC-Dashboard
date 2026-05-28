@@ -15,11 +15,11 @@
 Per the approved plan, "the four pathway calculators (Eco{Direct,Food}, HH{Direct,Food}) accept `jurisdiction?: Jurisdiction` prop but equations do not vary by frame." Today's behavior:
 
 - `regulatoryFrames.ts` defines 6 frame IDs (`bc-protocol1-v5-dra`, `bc-csr-sediment-numerical`, `canada-fcsap-aquatic`, `ccme-sediment-quality`, `us-epa-usace-sediment`, `site-specific`) with metadata (label, source hierarchy, applicability per pathway) but NO equation parameters.
-- `derivations.ts` (~738 lines) is a monolithic module exporting `ecoDirectEqP()`, `ecoFoodBSAF()`, `humanHealthDirectContact()`, `humanHealthFoodWeb()`. Each accepts a typed input and returns `{...result} | {error}`. No frame parameter; no per-frame branching.
+- `derivations.ts` (~738 lines) is a monolithic module exporting 4 main pathway equation functions: `ecoDirectEqP()`, `ecoFoodBSAF()`, `humanHealthDirectContact()`, `humanHealthFoodWeb()`. Each accepts a typed input and returns `{...result} | {error}`. No frame parameter; no per-frame branching. (The module also exports two supporting utilities `utl9595()` and `avsSemCheck()` -- these are pathway helpers, not full dispatch targets, and are out of scope for Stream C dispatch routing.)
 - The four calculator components import the functions directly and call them with the user's inputs. The `jurisdiction` prop is displayed in a `RegulatoryFrameNotice` (UI metadata) but does not affect computation.
 - Existing tests assert "uses the selected regulatory frame without crashing" -- which only verifies UI rendering, not equation behavior changes.
 
-**The goal of Stream C:** wire `jurisdiction` (a.k.a. `RegulatoryFrameId`) into equation routing so the Calculator surfaces frame-specific values where they exist, without rewriting the equation library from scratch.
+**The goal of Stream C:** wire `jurisdiction` (typed `Jurisdiction` in the calculator props -- this is a type alias for `RegulatoryFrameId` defined in `src/lib/matrix-options/jurisdictions.ts:17` -- so the prop value can be passed directly to `getEquation()` without conversion) into equation routing so the Calculator surfaces frame-specific values where they exist, without rewriting the equation library from scratch.
 
 ---
 
@@ -137,10 +137,16 @@ const { run: ecoDirectEqP, usedBaselineFallback, fallbackReason } = useMemo(
   [jurisdiction],
 );
 const result = useMemo(() => ecoDirectEqP(input), [ecoDirectEqP, input]);
-// Render fallback notice in the existing RegulatoryFrameNotice region if usedBaselineFallback.
+// Render fallback notice as a SIBLING element placed next to the existing
+// <RegulatoryFrameNotice /> in the calculator JSX (RegulatoryFrameNotice.tsx
+// props today are (frameId, pathway, className?) -- there is no slot for
+// usedBaselineFallback). A second small notice component (e.g.,
+// <FrameVariantFallbackNotice usedBaselineFallback={usedBaselineFallback}
+// fallbackReason={fallbackReason} />) is the recommended approach. Phase 4
+// commit 1 ships this sibling component alongside the dispatch layer.
 ```
 
-Minimal calculator-component change. The dispatch layer absorbs the routing.
+Minimal calculator-component change (one sibling element added; RegulatoryFrameNotice itself untouched). The dispatch layer absorbs the routing.
 
 ### 3.4 Test strategy
 
