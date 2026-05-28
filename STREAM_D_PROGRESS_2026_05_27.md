@@ -28,11 +28,8 @@
 | 3 | `catalog_extraction_staging` migration SQL | DONE (commit 617f132, pushed; HARD GATE codex GREEN) |
 | 4 | `scripts/catalog-overnight/` scaffold | DONE (commit 6efb614, pushed) |
 | 5 | `src/lib/catalog/staging.ts` + tests | DONE (commit 32db060, pushed; RPC migration 20260527000005 added) |
-| 6 | `src/components/matrix-options/CatalogStagingReview.tsx` + tests | IN_PROGRESS |
-| 4 | `scripts/catalog-overnight/` scaffold | pending |
-| 5 | `src/lib/catalog/staging.ts` + tests | pending |
-| 6 | `src/components/matrix-options/CatalogStagingReview.tsx` + tests | pending |
-| 7 | Design doc + holistic codex review | pending |
+| 6 | `src/components/matrix-options/CatalogStagingReview.tsx` + tests | DONE (commit 9dc6f6d, pushed) |
+| 7 | Design doc + holistic codex review | IN_PROGRESS |
 | 8 | Session-end protocol (final gates + memory anchor) | pending |
 
 ---
@@ -45,6 +42,7 @@
 | 2026-05-28 06:25 | `617f132` | 3 | catalog_extraction_staging migration (HITL queue). HARD GATE codex iterate-to-GREEN (1 P0 + 2 P1: service-role auth.uid() / review_consistency superseded / authenticated-read tightened; partial index + polymorphic CHECK refinements). 4 gates GREEN. Pushed. | Sub-task 4 catalog-overnight scaffold. |
 | 2026-05-28 06:50 | `6efb614` | 4 | scripts/catalog-overnight/ scaffold: extract.py + run.ps1 + requirements.txt + tests + README. Forks BN-RRM Docling pattern; LlmClient injected; exit 3 in scaffold-deferred mode -> harness writes COMPLETED_RED. Codex 3 iterations to GREEN (1 P0 colon-replace munging drive prefix + 3 P1s: watchdog blind to stalls / no rollback on batch failure / DSN env-var doc mismatch). 4 gates GREEN. Pushed. | Sub-task 5 staging.ts helpers. |
 | 2026-05-28 07:15 | `32db060` | 5 | src/lib/catalog/staging.ts (HITL approval surface) + RPC migration 20260527000005_catalog_approve_staging_rpc.sql + 21 unit tests. Approve uses transactional RPC (FOR UPDATE lock + dynamic INSERT column list excluding id/created_at/updated_at) -- codex 3 iterations to GREEN, eliminated SELECT-then-UPDATE race + default-suppression bug. 4 gates GREEN. Pushed. | Sub-task 6 CatalogStagingReview UI. |
+| 2026-05-28 07:25 | `9dc6f6d` | 6 | CatalogStagingReview.tsx + 11 tests: 3-column layout (filters / list / detail+actions), admin-gated Approve / Reject calling staging.ts helpers via dependency injection. Codex 1 iteration to GREEN, 3 P2s addressed (stale closure on selection, panel-level status message, aria-pressed). 4 gates GREEN. Pushed. | Sub-task 7 design doc + holistic codex. |
 
 ---
 
@@ -55,6 +53,8 @@ Every ~2 hours per `cross_project_mid_session_workstream_recheck.md`:
 | Timestamp (UTC) | origin/main tip | Result |
 |---|---|---|
 | 2026-05-27 session start | 9465013 | clean |
+| 2026-05-28 06:55 (post-Sub-task 4 push) | 9465013 | clean (no Stream A push) |
+| 2026-05-28 07:25 (post-Sub-task 6 push) | 9465013 | clean (no Stream A push) |
 
 ---
 

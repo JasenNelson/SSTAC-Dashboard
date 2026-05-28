@@ -168,10 +168,18 @@ $proc = Start-Process -FilePath $VenvPython -ArgumentList $pyArgs `
 
 $lastHeartbeatAt = Get-Date
 $exitCode = $null
+$watchdogFired = $false
 
 try {
     while (-not $proc.HasExited) {
         Start-Sleep -Seconds $HeartbeatSeconds
+
+        # Re-check HasExited after sleeping. If the child exited DURING the
+        # sleep window, treat this as a normal exit (not a stall) and let
+        # the post-loop COMPLETED_GREEN / COMPLETED_RED path run.
+        if ($proc.HasExited) {
+            break
+        }
 
         # Look for the most recent PYTHON-emitted breadcrumb (extract.py writes
         # `<pass-id>-<ts>-py.json`). Filtering out the harness's own `*-ps.json`
@@ -190,28 +198,48 @@ try {
         Write-Breadcrumb -Status 'IN_PROGRESS' -Note "stalled_for_seconds=$stalledFor" | Out-Null
 
         if ($stalledFor -ge $StallSeconds) {
-            Write-Breadcrumb -Status 'STALLED' -Note "no breadcrumb update for $stalledFor seconds; killing process tree" | Out-Null
+            $watchdogFired = $true
             try {
                 # Kill process tree using taskkill (handles child processes).
+                # Capture exit code so we can attach it to the STALLED breadcrumb;
+                # taskkill returns 0 on success and 128 on "process not found".
                 & taskkill.exe /PID $proc.Id /T /F 2>&1 | Out-Null
+                $taskkillExit = $LASTEXITCODE
             } catch {
-                # Best-effort cleanup; do not throw from watchdog.
+                $taskkillExit = -1
             }
+            # Bounded wait so a hung taskkill cannot block the watchdog forever.
+            $proc.WaitForExit([int]([Math]::Min(30000, $StallSeconds * 1000))) | Out-Null
+            Write-Breadcrumb -Status 'STALLED' `
+                -OutputArtifacts @($stdoutLog, $stderrLog) `
+                -Note "no breadcrumb update for $stalledFor seconds; taskkill exit=$taskkillExit" | Out-Null
             break
         }
     }
 
-    $proc.WaitForExit()
-    $exitCode = $proc.ExitCode
+    # After the loop: either the python process exited on its own, or the
+    # watchdog fired (and STALLED is already written). Only write
+    # COMPLETED_GREEN / COMPLETED_RED when the watchdog did NOT fire --
+    # otherwise the latest breadcrumb would erroneously be COMPLETED_RED
+    # instead of STALLED.
+    if (-not $watchdogFired) {
+        $proc.WaitForExit()
+        $exitCode = $proc.ExitCode
 
-    if ($exitCode -eq 0) {
-        Write-Breadcrumb -Status 'COMPLETED_GREEN' `
-            -OutputArtifacts @($stdoutLog, $stderrLog) `
-            -Note "extract.py exit=0" | Out-Null
+        if ($exitCode -eq 0) {
+            Write-Breadcrumb -Status 'COMPLETED_GREEN' `
+                -OutputArtifacts @($stdoutLog, $stderrLog) `
+                -Note "extract.py exit=0" | Out-Null
+        } else {
+            Write-Breadcrumb -Status 'COMPLETED_RED' `
+                -OutputArtifacts @($stdoutLog, $stderrLog) `
+                -Note "extract.py exit=$exitCode" | Out-Null
+        }
     } else {
-        Write-Breadcrumb -Status 'COMPLETED_RED' `
-            -OutputArtifacts @($stdoutLog, $stderrLog) `
-            -Note "extract.py exit=$exitCode" | Out-Null
+        # Watchdog already wrote STALLED. Surface a non-zero exit code so the
+        # caller / scheduler sees the failure. 124 mirrors the conventional
+        # "command timeout" exit code from coreutils `timeout`.
+        $exitCode = 124
     }
 } catch {
     Write-Breadcrumb -Status 'COMPLETED_RED' `

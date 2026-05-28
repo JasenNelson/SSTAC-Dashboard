@@ -114,16 +114,50 @@ BEGIN
   -- Correct approach: build an explicit column list from the intersection of
   --   (a) the target table's columns (information_schema.columns)
   --   (b) the payload's top-level keys (jsonb_object_keys)
-  -- excluding columns that MUST take the default (id, created_at, updated_at).
-  -- Then INSERT (col_list) SELECT col_list FROM jsonb_populate_record(...).
-  -- Columns not in the column list take their table defaults.
+  -- excluding TWO classes of columns:
+  --   - system-defaulted     (id, created_at, updated_at)
+  --   - provenance/QA/audit  (qa_status, created_by, extracted_by,
+  --                           triaged_by, reviewed_by, reviewed_at,
+  --                           audit_history)
+  --   Excluding the second class blocks an agent-authored payload from
+  --   escalating a row's HITL / QA / workflow state at promote time. These
+  --   columns rely on their table-level DEFAULTs (e.g. qa_status DEFAULT
+  --   'needs_review'), server-owned writes from other code paths
+  --   (evidence-sync.ts / triage-sync.ts set created_by / extracted_by /
+  --   triaged_by from auth.uid() during HITL-driven flows), or remain NULL
+  --   for agent-promoted rows. If a target column is NOT NULL with no
+  --   DEFAULT and the agent payload omits it, the INSERT fails with a
+  --   clear error message naming the column.
+  --
+  -- The denylist below is the union of workflow / status / provenance
+  -- columns across the three target tables today. Adding new target tables
+  -- requires reviewing whether they introduce new workflow fields that
+  -- belong in the denylist; per-target allowlists are the long-term
+  -- preferred shape but require schemas for all targets (Sub-task 2 SQL
+  -- output is the prerequisite for moving to allowlists).
   -- ---------------------------------------------------------------------
   SELECT string_agg(quote_ident(c.column_name), ', ' ORDER BY c.column_name)
     INTO v_insert_cols
     FROM information_schema.columns c
    WHERE c.table_schema = 'public'
      AND c.table_name = v_target_table
-     AND c.column_name NOT IN ('id', 'created_at', 'updated_at')
+     AND c.column_name NOT IN (
+       -- System-defaulted columns; let DEFAULT fire.
+       'id', 'created_at', 'updated_at',
+       -- Provenance / authorship columns; never agent-controllable.
+       'created_by', 'extracted_by', 'triaged_by',
+       'reviewed_by', 'reviewed_at',
+       -- HITL / QA / workflow status columns; agent must not pre-set state.
+       'qa_status',
+       'default_status', 'evidence_support_status', 'extraction_status',
+       'triage_status', 'triaged_at',
+       -- Reviewer-controlled freeform fields.
+       'review_notes', 'triage_note',
+       -- Server-managed extraction method (set by HITL flow, not agent).
+       'extraction_method',
+       -- Server-managed audit history JSONB.
+       'audit_history'
+     )
      AND c.column_name IN (
        SELECT jsonb_object_keys(v_staging_row.proposed_payload)
      );

@@ -649,6 +649,41 @@ def run_pass(
             gc.collect()
 
     pass_state.finished_at = datetime.now(timezone.utc)
+
+    # Backfill extraction_pass_finished_at on every row this pass wrote.
+    # Rows are inserted as they are produced (one at a time), so
+    # `extraction_pass_finished_at` is NULL on insert. Once the pass ends we
+    # know the timestamp; one UPDATE closes out all rows in this pass.
+    if writer is not None and pass_state.rows_inserted > 0:
+        try:
+            with writer.conn.cursor() as cur:  # type: ignore[union-attr]
+                cur.execute(
+                    'UPDATE public.catalog_extraction_staging '
+                    'SET extraction_pass_finished_at = %s '
+                    'WHERE extraction_pass_id = %s '
+                    '  AND extraction_pass_finished_at IS NULL',
+                    (pass_state.finished_at, str(pass_state.pass_id)),
+                )
+            writer.conn.commit()  # type: ignore[union-attr]
+        except Exception as exc:
+            # Best-effort backfill; the pass already wrote its rows so we
+            # log and continue rather than re-raising. Roll back the failed
+            # transaction so a subsequent write_batch (or any other psycopg
+            # call sharing this connection) does not inherit an aborted
+            # transaction state.
+            try:
+                writer.conn.rollback()  # type: ignore[union-attr]
+            except Exception:
+                # Best-effort rollback; if the connection itself is broken
+                # the caller's next connection attempt will surface that.
+                pass
+            if heartbeat_callback is not None:
+                try:
+                    heartbeat_callback(
+                        f'WARN: pass_finished_at backfill failed: {exc}'
+                    )
+                except Exception:
+                    pass
     return pass_state
 
 
