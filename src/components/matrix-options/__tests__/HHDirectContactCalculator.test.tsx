@@ -9,6 +9,7 @@ vi.mock('@/components/MathRenderer', () => ({
 }));
 
 import HHDirectContactCalculator from '../HHDirectContactCalculator';
+import { REGULATORY_FRAME_IDS } from '@/lib/matrix-options/regulatoryFrames';
 
 describe('HHDirectContactCalculator', () => {
   it('renders a functioning Human Health direct-contact calculator', () => {
@@ -91,5 +92,23 @@ describe('HHDirectContactCalculator', () => {
     expect(panel).toHaveTextContent(
       /current calculator scaffold only/i,
     );
+  });
+
+  it('renders the frame-variant fallback notice for every frame (empty FRAME_VARIANTS, Week 8)', () => {
+    for (const j of REGULATORY_FRAME_IDS) {
+      const { unmount } = render(
+        <HHDirectContactCalculator substanceKey="arsenic_inorganic" jurisdiction={j} />,
+      );
+      const notice = screen.getByTestId('frame-variant-fallback-notice');
+      expect(notice).toBeInTheDocument();
+      // Proves getEquation(jurisdiction, 'human-health-direct') was called and
+      // its fallbackReason flowed through (not a hardcoded fallback).
+      const text = notice.textContent ?? '';
+      expect(text).toMatch(/No specialized equation is defined for frame/);
+      const baselineMentions =
+        text.split('Using BC Protocol 1 v5 DRA baseline').length - 1;
+      expect(baselineMentions).toBe(1);
+      unmount();
+    }
   });
 });
