@@ -10,15 +10,16 @@ Use it to test options, compare pathways, and record review feedback. Calculator
 
 Use the top tabs to move between the main review surfaces:
 
-*   **The Guide** gives the project context, workflow, and key terms.
-*   **Conceptual Model** explains how exposure pathways, receptors, and site conditions fit together.
-*   **Jurisdictional Frameworks** compares examples from other regulatory programs.
-*   **Interactive Map** shows available sediment sample locations and measurements.
-*   **TWG Review** records Technical Working Group feedback on the options under review.
-*   **Calculator** estimates preliminary values for ecological and human-health pathways.
-*   **References & Values** shows the repo-local metadata catalog for sources, values, equations, assumptions, and QA states.
+*   **The Guide** gives the project context, workflow, and key terms. (2026 scope)
+*   **Conceptual Model** explains how exposure pathways, receptors, and site conditions fit together. (2026 scope)
+*   **Jurisdictional Frameworks** compares examples from other regulatory programs. (2026 scope)
+*   **TWG Review** records Technical Working Group feedback on the options under review. (2026 scope)
+*   **Interactive Map** shows available sediment sample locations and measurements. (2027 scope)
+*   **Calculator** estimates preliminary values for ecological and human-health pathways. (2027 scope)
+*   **SSD Workbench** lets you build species sensitivity distributions for toxicity data review. (2027 scope)
+*   **References & Values** shows the repo-local metadata catalog for sources, values, equations, assumptions, and QA states. (2027 scope)
 
-A typical review flow is: read the Guide, check the conceptual model, compare jurisdictional approaches, inspect data on the map, test assumptions in the Calculator, then record feedback in TWG Review.
+A typical review flow is: read the Guide, check the conceptual model, compare jurisdictional approaches, test assumptions in the Calculator, and record feedback in TWG Review.
 
 ---
 
@@ -34,10 +35,12 @@ The sediment standards modernization work is moving through three broad phases:
     *   Supports the Matrix Sediment Standards Derivation Options Analysis.
     *   Supports development of a scientific model for bioavailability adjustment, such as the Bayesian Network Relative Risk Model.
     *   Uses jurisdictional review, data analysis, calculators, map review, and Technical Working Group feedback to test practical derivation options.
+    *   Dashboard tabs serving Phase 2: The Guide, Conceptual Model, Jurisdictional Frameworks, TWG Review.
 *   **Phase 3 (2027): Framework Development and Prioritized Standards**
     *   May include development of Matrix Sediment Standards Derivation Frameworks.
     *   May end with new sediment standards for prioritized substances.
     *   Continues research and database development needed to support defensible standards over time.
+    *   Dashboard tabs serving Phase 3: Interactive Map, Calculator, SSD Workbench, References & Values.
 
 ---
 
@@ -81,3 +84,32 @@ The provenance catalog is repo-managed under `matrix_research/reference_catalog/
 Zotero remains the reference manager and file vault. Google Drive and OneDrive reference folders can be inventoried as external source locations, but source files are not copied into the app repo or Supabase. Future Supabase work may mirror structured metadata for querying, but source files stay outside Supabase unless the owner explicitly changes that policy.
 
 Starter calculator values lifted from the current substance library are not automatically "approved." Values that were already flagged as interim screening defaults, such as the B[a]P ecological TRV and the PCB FCV screening value, are marked `needs_owner_review` in the catalog until the first source batch is extracted and reviewed.
+
+---
+
+## 6. HITL Workflow with Evidence Library
+
+The Evidence Library is the workspace surface for linking parameter values back to canonical sources. It supports transparent HITL review by keeping a traceable record of where each value comes from and what QA action has been taken on it.
+
+Six workflows are shipped:
+
+*   **Source registration** via the Add Source form -- register canonical sources (papers, reports, datasets) with citation metadata into the catalog before linking values.
+*   **Source-locator entry** -- link an existing parameter value to a registered source with a page, table, or section locator.
+*   **QA review workflow** -- promote candidate values into `approved_source_backed` status after HITL review; verdicts are HITL professional judgments only.
+*   **Source-lead triage** -- triage incoming source leads (DOIs, titles, references that surfaced during review) into pending, approved, or rejected for later canonical registration.
+*   **Zotero integration** -- the workspace reads your local Zotero library (desktop API at `http://localhost:23119`) to surface DOI and title matches when you are registering a source. Zotero remains read-only; no writes from the workspace.
+*   **Cross-pathway audit** -- inspect which sources are cited across multiple pathways (eco-direct, eco-food, hh-direct, hh-food) to spot single-point-of-failure citations.
+
+No value moves to `approved_source_backed` without explicit HITL action. No source is mutated automatically. The Evidence Library is read-only for non-admin users.
+
+---
+
+## 7. Onboarding Pointers for New TWG Members
+
+If you are joining the Technical Working Group and opening this workspace for the first time, start here.
+
+*   **Where to start:** Read this Guide top to bottom before navigating to other tabs.
+*   **Where to record feedback:** Use the TWG Review tab. It is the designated surface for logging technical input on the options under review.
+*   **Where outputs go:** TWG feedback is logged for the project record. Review the published Matrix Options Paper for the larger context and formal framing.
+*   **Important reminder:** Calculator outputs are screening-grade preliminary values, not final sediment standards. They are useful for comparing options and testing assumptions; professional judgment is required before any regulator-facing use.
+*   **Where to ask questions:** Contact the project lead with any questions about scope, process, or how to interpret a result.
