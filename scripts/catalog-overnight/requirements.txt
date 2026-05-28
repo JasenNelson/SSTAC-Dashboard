@@ -1,0 +1,31 @@
+# Catalog Extraction Agent -- Python dependencies
+#
+# Author: Stream D autonomous session (Opus 4.7), 2026-05-27.
+# Scope: Sub-task 4 scaffolding. The autonomous session does NOT pip install.
+# Owner sets up the .venv at first real run per
+# cross_project_use_venv_python_not_system_python.md:
+#
+#   cd C:\Projects\SSTAC-Dashboard\scripts\catalog-overnight
+#   python -m venv .venv
+#   .\.venv\Scripts\Activate.ps1
+#   pip install -r requirements.txt
+#
+# Pinned floors -- see DOCLING_CONSISTENCY_SOP.md for canonical floor policy.
+
+# PDF extraction (Docling first, PyMuPDF fallback)
+docling>=2.10.0,<3.0.0
+pymupdf>=1.24.0,<2.0.0
+
+# Supabase service-role connection (no Supabase MCP -- raw psycopg)
+psycopg[binary]>=3.2.0,<4.0.0
+
+# Local Ollama client (no paid LLM APIs;
+# per cross_project_local_ollama_only_for_ingestion_pipelines.md)
+ollama>=0.4.0,<1.0.0
+
+# Image handling (Docling transitive; pinned to head off Pillow EOL surprises)
+pillow>=10.4.0,<12.0.0
+
+# Test harness (mocking docling/psycopg/ollama)
+pytest>=8.0.0,<9.0.0
+pytest-mock>=3.14.0,<4.0.0

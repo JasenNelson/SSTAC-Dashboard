@@ -25,7 +25,8 @@
 |---|---|---|
 | 1 | Branch + workstream-conflict check | DONE |
 | 2 | Supabase exploratory SQL + HITL pause | DONE (commit 27df8e6, pushed) |
-| 3 | `catalog_extraction_staging` migration SQL | IN_PROGRESS |
+| 3 | `catalog_extraction_staging` migration SQL | DONE (commit 617f132, pushed; HARD GATE codex GREEN) |
+| 4 | `scripts/catalog-overnight/` scaffold | IN_PROGRESS |
 | 4 | `scripts/catalog-overnight/` scaffold | pending |
 | 5 | `src/lib/catalog/staging.ts` + tests | pending |
 | 6 | `src/components/matrix-options/CatalogStagingReview.tsx` + tests | pending |
@@ -39,6 +40,7 @@
 | Timestamp (UTC) | SHA | Sub-task | Description | Next |
 |---|---|---|---|---|
 | 2026-05-28 06:00 | `27df8e6` | 2 | Supabase exploratory SQL + HITL pause artifact + this progress doc. 4 gates GREEN (lint, vitest 2550 pass, monitored build, playwright 135 pass). Codex iterate-to-GREEN (1 iteration: P1 Q4 composite-FK pairing fixed). Pushed. | Sub-task 3 migration draft. |
+| 2026-05-28 06:25 | `617f132` | 3 | catalog_extraction_staging migration (HITL queue). HARD GATE codex iterate-to-GREEN (1 P0 + 2 P1: service-role auth.uid() / review_consistency superseded / authenticated-read tightened; partial index + polymorphic CHECK refinements). 4 gates GREEN. Pushed. | Sub-task 4 catalog-overnight scaffold. |
 
 ---
 
