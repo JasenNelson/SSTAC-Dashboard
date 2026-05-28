@@ -63,7 +63,7 @@ Every ~2 hours per `cross_project_mid_session_workstream_recheck.md`:
 
 | File | Topic | Blocking? |
 |---|---|---|
-| `STREAM_D_HITL_PAUSE_SQL_EXPLORE_2026_05_27.md` | Sub-task 2 exploratory SQL output | non-blocking (Stream D proceeds with conservative defaults) |
+| `STREAM_D_HITL_PAUSE_SQL_EXPLORE_2026_05_27.md` | Sub-task 2 exploratory SQL output | RESOLVED 2026-05-28: owner pasted OUTPUT. CRITICAL FINDING: 3 of 5 catalog tables missing in Supabase (`catalog_evidence_items`, `catalog_sources`, `source_lead_triage`); only `promoted_parameter_values` and `parameter_value_reviews` exist. Impact: RPC fails for `evidence_item` and `source_lead` kinds; the `parameter_value` kind works end-to-end. Recommendation: owner-driven follow-up authoring migrations for the 3 missing tables. |
 
 ---
 

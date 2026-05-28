@@ -234,70 +234,149 @@ Subsequent sub-tasks 4..7 proceed in parallel and do not depend on this output. 
 ## OUTPUT (paste results below)
 
 <!-- Q1: 5 expected catalog tables + schemas -->
+
+**CRITICAL FINDING:** only 2 of the 5 expected catalog tables exist:
+
 ```
-(pending owner)
+[
+  { "table_schema": "public", "table_name": "parameter_value_reviews" },
+  { "table_schema": "public", "table_name": "promoted_parameter_values" }
+]
 ```
+
+The other 3 tables are MISSING from Supabase entirely:
+- `catalog_evidence_items` -- referenced by `src/lib/matrix-options/provenance/evidence-sync.ts` (insert / select / delete). Calls fail silently via safe-fallback (return `false`/`[]`). No data has ever been persisted.
+- `catalog_sources` -- referenced by `src/lib/matrix-options/provenance/source-sync.ts`. Same silent-fail pattern.
+- `source_lead_triage` -- referenced by `src/lib/matrix-options/provenance/triage-sync.ts`. Same.
+
+**Impact on Stream D scaffold:**
+- `catalog_approve_staging_row()` RPC's CASE branch for `proposed_kind = 'evidence_item'` and `'source_lead'` will raise `relation "public.catalog_evidence_items" does not exist` (SQLSTATE 42P01) at INSERT time. Only `'parameter_value'` kind works end-to-end today.
+- The TypeScript types in evidence-sync.ts / source-sync.ts / triage-sync.ts are the only on-disk source-of-truth for what the 3 missing tables *should* look like (the autonomous session did not author migrations for them; that is owner-driven follow-up work).
 
 <!-- Q2: Column shape -->
+
+**Confirmed:** `promoted_parameter_values` matches `supabase/migrations/20260527000003_promoted_parameter_values.sql` exactly (24 columns; `id UUID PK DEFAULT gen_random_uuid()`, `created_at` / `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`, `created_by UUID NULLABLE` FK to `auth.users`).
+
+`parameter_value_reviews` columns (9 total, no on-disk migration exists; this is the live shape):
+
 ```
-(pending owner)
+id                            uuid NOT NULL DEFAULT gen_random_uuid()
+parameter_value_id            text NOT NULL
+old_qa_status                 text NOT NULL
+new_qa_status                 text NOT NULL
+old_evidence_support_status   text NULL
+new_evidence_support_status   text NULL
+reviewer_note                 text NOT NULL DEFAULT ''
+reviewed_by                   uuid NULL  (FK -> auth.users(id))
+reviewed_at                   timestamptz NOT NULL DEFAULT now()
 ```
+
+Recommendation for owner: author an on-disk migration for `parameter_value_reviews` matching this shape, so the schema is reproducible. (Lower priority than authoring migrations for the 3 missing tables.)
 
 <!-- Q3: Constraints -->
-```
-(pending owner)
-```
+
+Only auto-generated NOT NULL CHECKs + PKs + UNIQUEs + FKs:
+
+- `parameter_value_reviews`: PK on `id`; FK `reviewed_by -> auth.users(id)`; NOT NULL CHECKs on id, parameter_value_id, old_qa_status, new_qa_status, reviewer_note, reviewed_at.
+- `promoted_parameter_values`: PK on `id`; UNIQUE on `parameter_value_id`; FK `created_by -> auth.users(id)`; NOT NULL CHECKs on all non-nullable columns.
+
+**No domain CHECK constraints** (no enum enforcement on `qa_status`, `default_status`, `evidence_support_status`, etc.) -- values are convention-only. Stream D's new staging migration adds explicit enum CHECKs which is stricter than the existing pattern.
 
 <!-- Q4: Foreign keys -->
-```
-(pending owner)
-```
+
+Two FK relationships, both single-column:
+
+- `parameter_value_reviews.reviewed_by -> auth.users(id)` (NO ACTION on update/delete)
+- `promoted_parameter_values.created_by -> auth.users(id)` (NO ACTION)
+
+The Stream D staging migration follows the same pattern (`hitl_reviewed_by -> auth.users(id)`, `created_by -> auth.users(id)`).
 
 <!-- Q5: Indexes -->
-```
-(pending owner)
-```
+
+Only the PK and UNIQUE indexes exist:
+
+- `parameter_value_reviews_pkey` (on id)
+- `promoted_parameter_values_pkey` (on id)
+- `promoted_parameter_values_parameter_value_id_key` (UNIQUE on parameter_value_id)
+
+No additional functional indexes. The Stream D staging migration adds a partial index on `(extraction_pass_id) WHERE hitl_status = 'pending'` and a standalone index on `(source_zotero_key)`, which is stricter / more performant than the existing 2 tables.
 
 <!-- Q6a: RLS enabled flag (per-table) -->
-```
-(pending owner)
-```
+
+Both existing catalog tables have RLS enabled (and NOT forced, so service_role bypasses).
 
 <!-- Q6b: RLS policy text -->
-```
-(pending owner)
-```
+
+Both tables follow the same two-policy pattern:
+
+- `"Admins can manage..."` -- FOR ALL, USING (user_roles admin or matrix_admin), no WITH CHECK.
+- `"Authenticated users can read..."` -- FOR SELECT, USING (auth.role() = 'authenticated' OR true).
+
+The Stream D staging table DEPARTS from this pattern: it has only the admin policy (no authenticated-read), because codex Sub-task 3 R1 flagged unapproved AI proposals as a tighter risk surface than promoted catalog rows. The departure is intentional and documented in the migration header. Owner should confirm this stricter posture is what they want for the staging queue.
 
 <!-- Q7: user_roles role values -->
+
 ```
-(pending owner)
+[ { "role": "admin" }, { "role": "member" } ]
 ```
+
+**Note:** `matrix_admin` role exists in the `user_roles_role_check` CHECK constraint (per `supabase/migrations/20260519000002_matrix_map_rls.sql`) but has ZERO live members. The Stream D staging table + RPC both gate on `role IN ('admin', 'matrix_admin')` which is consistent with the existing pattern; current `admin` users pass the gate today, and the design is forward-compatible for `matrix_admin` provisioning later.
 
 <!-- Q8: extensions -->
+
 ```
-(pending owner)
+[ { "extname": "uuid-ossp", "extversion": "1.1" },
+  { "extname": "pgcrypto",  "extversion": "1.3" } ]
 ```
+
+`pgcrypto` provides `gen_random_uuid()`, used by both existing tables and by the Stream D staging migration. All good.
 
 <!-- Q9: catalog_extraction_staging existence sanity check -->
-```
-(pending owner) -- expected: 0 rows
-```
+
+Owner reported 0 rows (query echoed without result rows in the OUTPUT paste, which is the expected "no such table" shape from `information_schema.tables`). Safe to apply `supabase/migrations/20260527000004_catalog_extraction_staging.sql`.
 
 <!-- Q10: auth.users existence -->
-```
-(pending owner) -- expected: 1 row
-```
+
+Owner reported 1 row (query echoed, expected shape). `auth.users` is present; FK targets in the Stream D staging migration are valid.
 
 ---
 
-## On return: owner action items
+## On return: owner action items (UPDATED 2026-05-28 after OUTPUT in)
 
-Once OUTPUT is filled in:
+The OUTPUT surfaced a CRITICAL FINDING: 3 of the 5 expected catalog tables
+(`catalog_evidence_items`, `catalog_sources`, `source_lead_triage`) do NOT
+exist in Supabase. The TypeScript helpers that target them silently
+no-op via safe-fallback. The Stream D RPC fails for two of the three
+`proposed_kind` values until the missing tables are created.
 
-1. Compare actual `parameter_value_reviews`, `catalog_evidence_items`, `catalog_sources`, `source_lead_triage` column shapes against the conservative defaults used in `supabase/migrations/20260527000004_catalog_extraction_staging.sql`.
-2. If divergences exist (e.g. different column type for FK to `auth.users`, different RLS role name), file a follow-up issue or directly amend the staging migration before pasting it into SQL Editor.
-3. Apply the staging migration via Supabase Studio SQL Editor (see `STREAM_D_HITL_PAUSE_MIGRATION_APPLY_2026_05_27.md`).
-4. Resolve this pause artifact (move to `docs/archive/` per archive-before-edit on resolution).
+Recommended sequence:
+
+1. **Optional:** author on-disk migrations for the 3 missing tables based
+   on the TypeScript type shapes in:
+     - `src/lib/matrix-options/provenance/evidence-sync.ts` -> `catalog_evidence_items`
+     - `src/lib/matrix-options/provenance/source-sync.ts`   -> `catalog_sources`
+     - `src/lib/matrix-options/provenance/triage-sync.ts`   -> `source_lead_triage`
+   This is owner-driven follow-up. The autonomous session did NOT author
+   them because: (a) the TypeScript types may have drift relative to the
+   intended schema; (b) RLS policies, CHECK constraints, and indexes are
+   owner judgment calls; (c) the scaffold's promote path requires them
+   only when `proposed_kind` is `evidence_item` or `source_lead` -- the
+   default `parameter_value` kind works end-to-end today against the
+   existing `promoted_parameter_values` table.
+2. **Apply** `supabase/migrations/20260527000004_catalog_extraction_staging.sql`
+   and `supabase/migrations/20260527000005_catalog_approve_staging_rpc.sql`
+   via Supabase Studio SQL Editor (in order). Even without the 3 missing
+   tables, the staging queue + approve RPC work for `parameter_value`
+   kind; the other two kinds raise a clear "relation does not exist"
+   error that the UI surfaces via the existing error path.
+3. **Compare** the conservative defaults in the staging migration against
+   the live shapes confirmed by Q2/Q3/Q4/Q5/Q6 above. The autonomous
+   session's conservative defaults match the live `promoted_parameter_values`
+   pattern, plus stricter additions (enum CHECKs, partial index,
+   admin-only RLS, polymorphic discriminator). No amendments needed
+   before applying.
+4. **Resolve** this pause artifact (move to `docs/archive/` per archive-
+   before-edit when fully addressed).
 
 ### Apply order (both migrations must land together)
 
