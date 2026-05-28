@@ -1,7 +1,9 @@
 # SSTAC-Dashboard Stream D Catalog Extraction -- Autonomous Session
 
-This is a TEMPLATE. The wrapper substitutes $PassId, $YYYYMMDDTHHMMSSZ, $N, and
-$PRIORITY_BOOST_NOTE markers before passing to claude -p.
+This is a TEMPLATE. The wrapper substitutes runtime values into placeholder
+markers (defined inline below; the literal marker names are not listed in
+this header to avoid spurious substitution on the header line itself) before
+passing the rendered prompt to claude -p.
 
 ---
 

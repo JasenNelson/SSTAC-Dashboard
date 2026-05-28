@@ -481,3 +481,72 @@ def test_staging_writer_redact_dsn_noop_when_dsn_absent(monkeypatch):
     original_args = exc.args
     writer._redact_dsn(exc)
     assert exc.args == original_args
+
+
+def test_staging_writer_redact_dsn_traverses_cause_chain(monkeypatch):
+    # `raise X from Y` puts the inner exception on __cause__. If the inner
+    # exception contains the DSN (common when a low-level network error is
+    # wrapped by a psycopg.OperationalError), the helper must redact through
+    # the whole chain.
+    dsn = 'postgresql://u:secret_pw@h/db'
+    monkeypatch.setenv('CATALOG_DSN', dsn)
+    if not extract.HAS_PSYCOPG:
+        return
+    writer = extract.StagingWriter()
+    try:
+        try:
+            raise OSError(f'tcp connect failed: {dsn}')
+        except OSError as inner:
+            raise RuntimeError('outer: connect to db failed') from inner
+    except RuntimeError as outer:
+        writer._redact_dsn(outer)
+        # Outer args unaffected (no DSN there)
+        assert outer.args[0] == 'outer: connect to db failed'
+        # Inner cause MUST be redacted
+        assert outer.__cause__ is not None
+        assert '[CATALOG_DSN_REDACTED]' in outer.__cause__.args[0]
+        assert 'secret_pw' not in outer.__cause__.args[0]
+    else:
+        raise AssertionError('expected RuntimeError')
+
+
+def test_staging_writer_redact_dsn_traverses_context_chain(monkeypatch):
+    # Implicit chaining: an exception raised inside an `except` block sets
+    # the previous exception on __context__ (without `from`). Helper must
+    # traverse this too.
+    dsn = 'postgresql://u:secret@h/db'
+    monkeypatch.setenv('CATALOG_DSN', dsn)
+    if not extract.HAS_PSYCOPG:
+        return
+    writer = extract.StagingWriter()
+    try:
+        try:
+            raise OSError(f'inner: {dsn}')
+        except OSError:
+            raise RuntimeError('outer (implicit-chain)')
+    except RuntimeError as outer:
+        writer._redact_dsn(outer)
+        assert outer.__context__ is not None
+        assert '[CATALOG_DSN_REDACTED]' in outer.__context__.args[0]
+        assert 'secret' not in outer.__context__.args[0]
+    else:
+        raise AssertionError('expected RuntimeError')
+
+
+def test_staging_writer_redact_dsn_chain_cycle_safe(monkeypatch):
+    # Defensive: if an exception's __cause__ chain has a cycle (uncommon but
+    # constructable by user code), the traversal must not infinite-loop.
+    monkeypatch.setenv('CATALOG_DSN', 'postgresql://u:p@h/db')
+    if not extract.HAS_PSYCOPG:
+        return
+    writer = extract.StagingWriter()
+    a = RuntimeError('A')
+    b = RuntimeError('B')
+    a.__cause__ = b
+    b.__cause__ = a  # cycle
+    # If the traversal had no cycle guard, this would hang. The seen-set
+    # protects against that.
+    writer._redact_dsn(a)
+    # Test passes if it returns without hanging; no assertion on content
+    # needed (no DSN in either exception).
+    assert True

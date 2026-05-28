@@ -480,15 +480,34 @@ class StagingWriter:
         DSN never reaches error messages that may be logged, committed to
         progress.json, or pushed to origin. Defense-in-depth against psycopg
         parse errors that embed the connection string in args[0].
+
+        Traverses __cause__ and __context__ to redact wrapped exceptions too;
+        callers that surface chained tracebacks (e.g. via logging.exception()
+        or repr(traceback)) thus get redacted output for the whole chain.
+
+        Note: psycopg3's exc.diag attribute is read-only (wraps libpq's
+        PGresult error fields via C struct). diag fields are not str(exc)
+        targets (str(exc) reads args[0]), so the practical leak path through
+        str(exc) -> progress.json IS covered. Wrapper-side log sanitizer
+        (7d3f0f9) catches anything that leaks via traceback printing
+        including diag fields.
         """
-        if not self.dsn or not exc.args:
+        if not self.dsn:
             return
-        new_args = tuple(
-            arg.replace(self.dsn, '[CATALOG_DSN_REDACTED]') if isinstance(arg, str) else arg
-            for arg in exc.args
-        )
-        if new_args != exc.args:
-            exc.args = new_args
+        seen: set[int] = set()
+        current: BaseException | None = exc
+        while current is not None and id(current) not in seen:
+            seen.add(id(current))
+            if current.args:
+                new_args = tuple(
+                    arg.replace(self.dsn, '[CATALOG_DSN_REDACTED]') if isinstance(arg, str) else arg
+                    for arg in current.args
+                )
+                if new_args != current.args:
+                    current.args = new_args
+            # `raise X from Y` sets __cause__; implicit chaining (an exception
+            # raised inside an `except` block) sets __context__.
+            current = current.__cause__ or current.__context__
 
     def __enter__(self) -> 'StagingWriter':
         try:
