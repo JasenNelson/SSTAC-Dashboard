@@ -1,7 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { usePromotedCandidatesStore } from '../promotedCandidatesStore';
 import { promoteSourceLead } from '@/lib/matrix-options/provenance/promotion';
 import type { EvidenceLibrarySourceLeadSummary } from '@/lib/matrix-options/provenance/library';
+
+// Silence fire-and-forget Supabase side-effects that are out-of-scope for these
+// state-only tests. The supabase.test.ts file covers sync behaviour separately.
+vi.mock('@/lib/matrix-options/provenance/supabase-sync', () => ({
+  fetchPromotedValues: vi.fn().mockResolvedValue([]),
+  upsertPromotedValue: vi.fn().mockResolvedValue(true),
+  deletePromotedValue: vi.fn().mockResolvedValue(true),
+}));
 
 // ---------------------------------------------------------------------------
 // Fixtures

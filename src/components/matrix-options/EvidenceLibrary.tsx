@@ -1854,6 +1854,7 @@ export default function EvidenceLibrary({
       if (!cancelled) setIsAdmin(value);
     });
     usePromotedCandidatesStore.persist.rehydrate();
+    usePromotedCandidatesStore.getState().hydrateFromSupabase().catch(console.error);
     return () => {
       cancelled = true;
     };
