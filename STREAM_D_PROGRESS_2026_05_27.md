@@ -1,0 +1,65 @@
+# Stream D Progress -- 2026-05-27 Autonomous Session
+
+**Branch:** `feat/stream-d-catalog-agent-scaffold`
+**Base SHA:** `9465013` (origin/main tip).
+**Parent context:** Stream A in-flight checkpoint commit `73176c5` lives on local `main` only (not pushed). Stream D branch does NOT include it.
+**Session start:** 2026-05-27 (Opus 4.7 acting as the autonomous session).
+**Status:** IN_PROGRESS.
+
+---
+
+## Section 10 confirmation (first message)
+
+- Working dir: `C:\Projects\SSTAC-Dashboard`.
+- Branch base SHA: `9465013` (origin/main tip; later than the prompt-expected SHA only because parent committed Stream A locally before spawning; Stream D branched off origin/main directly to keep the streams cleanly separated).
+- Branch created: `feat/stream-d-catalog-agent-scaffold`.
+- Codex CLI: `codex-cli 0.130.0` available on PATH.
+- Workstream-conflict check: clean. `origin/main` at `9465013`; no parallel commits in Stream D scope; Stream A's `73176c5` is local-only on `main` and out of Stream D's tree.
+- First commit planned: Sub-task 2 (Supabase SQL exploration artifact + HITL pause artifact + this progress doc).
+
+---
+
+## Sub-task progress
+
+| # | Sub-task | Status |
+|---|---|---|
+| 1 | Branch + workstream-conflict check | DONE |
+| 2 | Supabase exploratory SQL + HITL pause | IN_PROGRESS |
+| 3 | `catalog_extraction_staging` migration SQL | pending |
+| 4 | `scripts/catalog-overnight/` scaffold | pending |
+| 5 | `src/lib/catalog/staging.ts` + tests | pending |
+| 6 | `src/components/matrix-options/CatalogStagingReview.tsx` + tests | pending |
+| 7 | Design doc + holistic codex review | pending |
+| 8 | Session-end protocol (final gates + memory anchor) | pending |
+
+---
+
+## Commit log
+
+| Timestamp (UTC) | SHA | Sub-task | Description | Next |
+|---|---|---|---|---|
+| (filled after first commit) | | | | |
+
+---
+
+## Workstream-conflict re-check cadence
+
+Every ~2 hours per `cross_project_mid_session_workstream_recheck.md`:
+
+| Timestamp (UTC) | origin/main tip | Result |
+|---|---|---|
+| 2026-05-27 session start | 9465013 | clean |
+
+---
+
+## HITL pause artifacts
+
+| File | Topic | Blocking? |
+|---|---|---|
+| `STREAM_D_HITL_PAUSE_SQL_EXPLORE_2026_05_27.md` | Sub-task 2 exploratory SQL output | non-blocking (Stream D proceeds with conservative defaults) |
+
+---
+
+## Session-end summary
+
+(filled at end of run)
