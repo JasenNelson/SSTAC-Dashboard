@@ -216,8 +216,13 @@ $claudeArgs = @(
     '--output-format', 'text'
 )
 
+# -WorkingDirectory pins the claude -p worker to the robot's repo root. Without
+# it the worker inherits the launching shell's CWD (which may be a different
+# worktree / branch), reads the wrong manifest, and bails. RepoRoot is resolved
+# from $PSScriptRoot above, so this is correct under schtasks too.
 $proc = Start-Process -FilePath $ClaudeExe -ArgumentList $claudeArgs `
     -NoNewWindow -PassThru `
+    -WorkingDirectory $RepoRoot `
     -RedirectStandardInput $tempPromptFile `
     -RedirectStandardOutput $stdoutLog `
     -RedirectStandardError $stderrLog
