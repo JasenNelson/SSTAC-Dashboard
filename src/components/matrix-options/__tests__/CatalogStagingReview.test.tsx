@@ -3,7 +3,10 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { CatalogStagingReview } from '../CatalogStagingReview';
-import type { CatalogStagingRow } from '@/lib/catalog/staging';
+import type {
+  CatalogStagingRow,
+  ListPendingStagingRowsArgs,
+} from '@/lib/catalog/staging';
 
 // ---------------------------------------------------------------------------
 // Mock staging module so the component's default imports never call the
@@ -246,7 +249,7 @@ describe('CatalogStagingReview', () => {
 
   it('applying a pass id filter re-queries with that pass id', async () => {
     const rows = [makeRow({ id: 'staging-1' })];
-    const list = vi.fn(async () => rows);
+    const list = vi.fn(async (_args?: ListPendingStagingRowsArgs) => rows);
 
     render(
       <CatalogStagingReview isAdmin listPendingStagingRowsFn={list} />,
