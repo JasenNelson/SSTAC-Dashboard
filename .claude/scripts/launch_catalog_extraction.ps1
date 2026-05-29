@@ -11,13 +11,12 @@
 #      slash commands like /handoff-update don't fire in `claude -p` mode
 #      per src/lib/agentic-os/launch-validator.ts empirical verification).
 #   3. Post-archive sentinel re-check (closes the archive-window race).
-#   4. CATALOG_DSN env var load from Windows Credential Manager.
-#   5. Starter prompt substitution ($PassId / $YYYYMMDDTHHMMSSZ / $N markers).
-#   6. STARTED breadcrumb emission to .tmp/catalog-overnight-breadcrumbs/.
-#   7. Spawn claude -p subprocess with the inlined starter prompt.
-#   8. Stall watchdog loop (pass-scoped *-py.json filter; 600s default
+#   4. Starter prompt substitution ($PassId / $YYYYMMDDTHHMMSSZ / $N markers).
+#   5. STARTED breadcrumb emission to .tmp/catalog-overnight-breadcrumbs/.
+#   6. Spawn claude -p subprocess with the inlined starter prompt.
+#   7. Stall watchdog loop (pass-scoped *-py.json filter; 600s default
 #      threshold; taskkill /T /F + STALLED breadcrumb on stall).
-#   9. Final breadcrumb based on exit code (0 = COMPLETED_GREEN,
+#   8. Final breadcrumb based on exit code (0 = COMPLETED_GREEN,
 #      124 = STALLED, else = COMPLETED_RED, no exit code = SILENT_BAIL).
 #
 # Design reference: STREAM_D_REDESIGN_2026_05_28.md v0.3.1
@@ -40,8 +39,7 @@
 
 [CmdletBinding()]
 param(
-    # Skip Supabase writes; the session still processes manifest items but does
-    # not insert into catalog_extraction_staging. For wrapper smoke testing.
+    # Skip writing the proposals file (wrapper smoke test); the session still runs Docling.
     [Parameter(Mandatory = $false)]
     [switch]$DryRun,
 
@@ -61,10 +59,6 @@ param(
     # Bounded wait after taskkill (ms). Defends against hung taskkill.
     [Parameter(Mandatory = $false)]
     [int]$KillWaitMs = 30000,
-
-    # Credential Manager target name for the Supabase service-role DSN.
-    [Parameter(Mandatory = $false)]
-    [string]$DsnCredentialTarget = 'SSTAC_CATALOG_DSN',
 
     # Path to `claude` CLI. Defaults to the standard install location.
     [Parameter(Mandatory = $false)]
@@ -183,27 +177,6 @@ if (Test-Path $SentinelPause) {
     exit 0
 }
 
-# ----- Load CATALOG_DSN from Credential Manager (skip in dry-run) -----------
-
-if (-not $DryRun) {
-    try {
-        # Prefer the CredentialManager PSGallery module if installed
-        if (Get-Command Get-StoredCredential -ErrorAction SilentlyContinue) {
-            $cred = Get-StoredCredential -Target $DsnCredentialTarget -ErrorAction Stop
-            if ($null -eq $cred) {
-                throw "no credential at target $DsnCredentialTarget"
-            }
-            $env:CATALOG_DSN = $cred.GetNetworkCredential().Password
-        } else {
-            Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note "Get-StoredCredential not available. Install CredentialManager module (Install-Module CredentialManager -Scope CurrentUser) or run with -DryRun." | Out-Null
-            exit 1
-        }
-    } catch {
-        Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note ("DSN load failed: " + $_.Exception.Message) | Out-Null
-        exit 1
-    }
-}
-
 # ----- Build starter prompt with marker substitution ------------------------
 
 $promptTemplate = Get-Content -Raw -LiteralPath $StarterPromptFile
@@ -320,29 +293,6 @@ try {
         -Note ("wrapper error: " + $_.Exception.Message) | Out-Null
     throw
 } finally {
-    # Capture DSN BEFORE wipe so the sanitizer below can redact it from log files.
-    $dsnForRedaction = $env:CATALOG_DSN
-    if ($env:CATALOG_DSN) {
-        Remove-Item Env:CATALOG_DSN -ErrorAction SilentlyContinue
-    }
-    # Defense-in-depth: redact the DSN from captured stderr / stdout logs if it
-    # appears (e.g. a propagated psycopg connection error or Python traceback that
-    # quoted the connection string). Best-effort; never block exit on sanitizer failure.
-    if ($dsnForRedaction) {
-        foreach ($logPath in @($stderrLog, $stdoutLog)) {
-            if (Test-Path -LiteralPath $logPath) {
-                try {
-                    $content = Get-Content -Raw -LiteralPath $logPath -ErrorAction Stop
-                    if ($content -and $content.Contains($dsnForRedaction)) {
-                        $content.Replace($dsnForRedaction, '[CATALOG_DSN_REDACTED]') |
-                            Set-Content -Path $logPath -NoNewline -Encoding utf8 -ErrorAction SilentlyContinue
-                    }
-                } catch {
-                    # Swallow; defense-in-depth only.
-                }
-            }
-        }
-    }
     # Clean up the temp prompt file (contains the inlined prompt; no secrets, but tidy)
     if (Test-Path $tempPromptFile) {
         Remove-Item -LiteralPath $tempPromptFile -Force -ErrorAction SilentlyContinue

@@ -1,15 +1,16 @@
 """Unit tests for scripts/catalog-overnight/extract.py (thin-library form).
 
 After the Phase 3 commit 2 refactor, extract.py is a LIBRARY (no main, no CLI,
-no LlmClient protocol). These tests cover the public surface:
+no LlmClient protocol, no database). These tests cover the public surface:
   - build_staging_row validation (proposed_kind enum, confidence type+range,
     JSON-serializable payload, notes type, empty zotero_key)
-  - StagingRow.to_db_tuple shape + ordering vs the INSERT SQL
+  - StagingRow.to_dict shape and JSON-serializability
+  - save_proposals (write, append, atomic-write, JSON array of dicts)
   - write_breadcrumb (filename format, JSON validity, no colons)
   - Tuning constants mirror BN-RRM
   - Public surface __all__ stable (smoke import test)
 
-Tests do NOT require docling, psycopg, or ollama installed.
+Tests do NOT require docling or ollama installed.
 
 Run from the catalog-overnight venv:
     pytest scripts/catalog-overnight/tests -v --maxfail=1
@@ -46,8 +47,8 @@ def test_public_surface_includes_load_bearing_names():
     """The following public names MUST be exported (used by the autonomous session)."""
     required = {
         'StagingRow',
-        'StagingWriter',
         'build_staging_row',
+        'save_proposals',
         'extract_tables_from_pdf',
         'write_breadcrumb',
         'PROPOSED_KIND_VALUES',
@@ -56,6 +57,11 @@ def test_public_surface_includes_load_bearing_names():
     }
     missing = required - set(extract.__all__)
     assert not missing, f'extract.__all__ missing required names: {missing}'
+
+
+def test_staging_writer_not_exported():
+    """StagingWriter must NOT be in __all__ (DB path removed)."""
+    assert 'StagingWriter' not in extract.__all__
 
 
 def test_no_main_function():
@@ -309,7 +315,7 @@ def test_build_staging_row_requires_zotero_key():
         raise AssertionError('expected ValueError for empty zotero_key')
 
 
-def test_to_db_tuple_shape_matches_insert_sql():
+def test_to_dict_shape_and_json_serializable():
     pass_id = uuid.uuid4()
     started = datetime(2026, 5, 28, 23, 30, 0, tzinfo=timezone.utc)
     row = extract.build_staging_row(
@@ -320,12 +326,45 @@ def test_to_db_tuple_shape_matches_insert_sql():
         proposal=_proposal(),
         extraction_model='claude-opus-4-7',
     )
-    tup = row.to_db_tuple()
-    # The INSERT statement has 11 parameter placeholders; the tuple must match.
-    assert len(tup) == 11
-    # proposed_payload must be JSON-serialized text (psycopg casts to jsonb).
-    assert isinstance(tup[7], str)
-    assert json.loads(tup[7]) == row.proposed_payload
+    d = row.to_dict()
+    # Must be JSON-serializable with no errors.
+    serialized = json.dumps(d, ensure_ascii=True)
+    assert isinstance(serialized, str)
+    # Round-trip: proposed_payload preserved as dict.
+    roundtripped = json.loads(serialized)
+    assert roundtripped['proposed_payload'] == row.proposed_payload
+    # UUID serialized to str.
+    assert roundtripped['extraction_pass_id'] == str(pass_id)
+    # Datetime serialized to str (ISO format).
+    assert isinstance(roundtripped['extraction_pass_started_at'], str)
+    assert isinstance(roundtripped['extracted_at'], str)
+    # Spot-check key presence.
+    for key in (
+        'source_zotero_key', 'source_attachment_path', 'extraction_pass_id',
+        'extraction_pass_started_at', 'extraction_pass_finished_at',
+        'extracted_at', 'proposed_kind', 'proposed_payload',
+        'confidence', 'extraction_notes', 'extraction_model',
+    ):
+        assert key in d, f'to_dict() missing key: {key}'
+
+
+def test_to_dict_null_fields_serialize():
+    """None fields (attachment_path, pass_finished_at, confidence, notes) round-trip as null."""
+    row = extract.build_staging_row(
+        zotero_key='ZK',
+        attachment_path=None,
+        pass_id=uuid.uuid4(),
+        pass_started_at=datetime.now(timezone.utc),
+        proposal=_proposal(confidence=None, notes=None),
+        extraction_model='claude-opus-4-7',
+    )
+    d = row.to_dict()
+    assert d['source_attachment_path'] is None
+    assert d['extraction_pass_finished_at'] is None
+    assert d['confidence'] is None
+    assert d['extraction_notes'] is None
+    # Must still be JSON-serializable.
+    json.dumps(d, ensure_ascii=True)
 
 
 # ---------------------------------------------------------------------------
@@ -409,144 +448,115 @@ def test_domain_enums_match_migration():
 
 
 # ---------------------------------------------------------------------------
-# StagingWriter DSN handling (no-connect; just constructor validation)
+# save_proposals() -- write, append, atomic-write, JSON array of dicts
 # ---------------------------------------------------------------------------
 
-def test_staging_writer_requires_dsn(monkeypatch):
-    # Remove env var if present
-    monkeypatch.delenv('CATALOG_DSN', raising=False)
-    if not extract.HAS_PSYCOPG:
-        # If psycopg isn't installed the ImportError fires first; skip.
-        return
-    try:
-        extract.StagingWriter()
-    except RuntimeError as re:
-        assert 'CATALOG_DSN' in str(re)
-    else:
-        raise AssertionError('expected RuntimeError when CATALOG_DSN unset and no dsn arg')
+def _make_row(zotero_key: str = 'ZK1', kind: str = 'parameter_value') -> extract.StagingRow:
+    return extract.build_staging_row(
+        zotero_key=zotero_key,
+        attachment_path='/tmp/test.pdf',
+        pass_id=uuid.uuid4(),
+        pass_started_at=datetime.now(timezone.utc),
+        proposal=_proposal(kind=kind),
+        extraction_model='claude-opus-4-7',
+    )
 
 
-def test_staging_writer_accepts_env_dsn(monkeypatch):
-    monkeypatch.setenv('CATALOG_DSN', 'postgresql://test:test@localhost/test')
-    if not extract.HAS_PSYCOPG:
-        return
-    # Construct without connecting (constructor does not connect; __enter__ does).
-    writer = extract.StagingWriter()
-    assert writer.dsn == 'postgresql://test:test@localhost/test'
-    assert writer.conn is None  # not yet entered
+def test_save_proposals_creates_json_file(tmp_path: Path):
+    """save_proposals writes a JSON array file when out_path does not exist."""
+    out = tmp_path / 'proposals' / 'pass1.json'
+    row = _make_row()
+    total = extract.save_proposals([row], out)
+    assert total == 1
+    assert out.exists()
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0]['source_zotero_key'] == 'ZK1'
+    assert data[0]['proposed_kind'] == 'parameter_value'
 
 
-def test_staging_writer_redacts_dsn_from_exception_args(monkeypatch):
-    # Simulate a psycopg ProgrammingError whose args[0] embeds the URL-form
-    # DSN with password. The helper must strip it before the exception
-    # propagates to a caller that may log str(exc) into progress.json or a
-    # breadcrumb file (both of which the agent commits and pushes).
-    dsn = 'postgresql://user:secret_pw@host:5432/db'
-    monkeypatch.setenv('CATALOG_DSN', dsn)
-    if not extract.HAS_PSYCOPG:
-        return
-    writer = extract.StagingWriter()
-    exc = RuntimeError(f'could not parse: {dsn}')
-    writer._redact_dsn(exc)
-    assert '[CATALOG_DSN_REDACTED]' in exc.args[0]
-    assert 'secret_pw' not in exc.args[0]
-    assert dsn not in exc.args[0]
+def test_save_proposals_appends_on_second_call(tmp_path: Path):
+    """Second call appends to the existing array; does not overwrite."""
+    out = tmp_path / 'pass1.json'
+    row1 = _make_row(zotero_key='ZK1')
+    row2 = _make_row(zotero_key='ZK2')
+    total1 = extract.save_proposals([row1], out)
+    assert total1 == 1
+    total2 = extract.save_proposals([row2], out)
+    assert total2 == 2
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert len(data) == 2
+    keys = [d['source_zotero_key'] for d in data]
+    assert 'ZK1' in keys
+    assert 'ZK2' in keys
 
 
-def test_staging_writer_redact_dsn_handles_multi_arg_exception(monkeypatch):
-    # Exception with multiple args, some string + some non-string. String
-    # args that contain the DSN get redacted; non-string args (ints, dicts)
-    # are passed through untouched.
-    dsn = 'postgresql://u:p@h/db'
-    monkeypatch.setenv('CATALOG_DSN', dsn)
-    if not extract.HAS_PSYCOPG:
-        return
-    writer = extract.StagingWriter()
-    exc = RuntimeError(f'first arg: {dsn}', 42, {'k': 'v'}, f'tail: {dsn}')
-    writer._redact_dsn(exc)
-    assert exc.args[0] == '[CATALOG_DSN_REDACTED]'.join(('first arg: ', ''))
-    assert exc.args[1] == 42
-    assert exc.args[2] == {'k': 'v'}
-    assert exc.args[3] == '[CATALOG_DSN_REDACTED]'.join(('tail: ', ''))
+def test_save_proposals_file_is_json_array_of_dicts(tmp_path: Path):
+    """Each element in the file is a dict matching StagingRow.to_dict()."""
+    out = tmp_path / 'pass1.json'
+    row = _make_row()
+    extract.save_proposals([row], out)
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert isinstance(data, list)
+    element = data[0]
+    assert isinstance(element, dict)
+    expected = row.to_dict()
+    for key, val in expected.items():
+        assert key in element, f'key {key!r} missing from saved element'
+        assert element[key] == val, f'key {key!r}: {element[key]!r} != {val!r}'
 
 
-def test_staging_writer_redact_dsn_noop_when_dsn_absent(monkeypatch):
-    # If the DSN substring is not in the exception, args are unchanged
-    # (identity preserved; no spurious mutation).
-    monkeypatch.setenv('CATALOG_DSN', 'postgresql://u:p@h/db')
-    if not extract.HAS_PSYCOPG:
-        return
-    writer = extract.StagingWriter()
-    exc = RuntimeError('unrelated error', 'still unrelated')
-    original_args = exc.args
-    writer._redact_dsn(exc)
-    assert exc.args == original_args
+def test_save_proposals_atomic_write_leaves_valid_json(tmp_path: Path):
+    """The file must be valid JSON immediately after save_proposals returns.
+
+    The atomic write (tmp -> os.replace) ensures the file is never in a
+    partially-written state from the reader's perspective.
+    """
+    out = tmp_path / 'pass1.json'
+    rows = [_make_row(zotero_key=f'ZK{i}') for i in range(5)]
+    extract.save_proposals(rows, out)
+    # Immediately parse; must not raise.
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert len(data) == 5
 
 
-def test_staging_writer_redact_dsn_traverses_cause_chain(monkeypatch):
-    # `raise X from Y` puts the inner exception on __cause__. If the inner
-    # exception contains the DSN (common when a low-level network error is
-    # wrapped by a psycopg.OperationalError), the helper must redact through
-    # the whole chain.
-    dsn = 'postgresql://u:secret_pw@h/db'
-    monkeypatch.setenv('CATALOG_DSN', dsn)
-    if not extract.HAS_PSYCOPG:
-        return
-    writer = extract.StagingWriter()
-    try:
-        try:
-            raise OSError(f'tcp connect failed: {dsn}')
-        except OSError as inner:
-            raise RuntimeError('outer: connect to db failed') from inner
-    except RuntimeError as outer:
-        writer._redact_dsn(outer)
-        # Outer args unaffected (no DSN there)
-        assert outer.args[0] == 'outer: connect to db failed'
-        # Inner cause MUST be redacted
-        assert outer.__cause__ is not None
-        assert '[CATALOG_DSN_REDACTED]' in outer.__cause__.args[0]
-        assert 'secret_pw' not in outer.__cause__.args[0]
-    else:
-        raise AssertionError('expected RuntimeError')
+def test_save_proposals_creates_parent_directory(tmp_path: Path):
+    """Parent directories are created automatically if they do not exist."""
+    out = tmp_path / 'nested' / 'deep' / 'pass1.json'
+    assert not out.parent.exists()
+    extract.save_proposals([_make_row()], out)
+    assert out.exists()
 
 
-def test_staging_writer_redact_dsn_traverses_context_chain(monkeypatch):
-    # Implicit chaining: an exception raised inside an `except` block sets
-    # the previous exception on __context__ (without `from`). Helper must
-    # traverse this too.
-    dsn = 'postgresql://u:secret@h/db'
-    monkeypatch.setenv('CATALOG_DSN', dsn)
-    if not extract.HAS_PSYCOPG:
-        return
-    writer = extract.StagingWriter()
-    try:
-        try:
-            raise OSError(f'inner: {dsn}')
-        except OSError:
-            raise RuntimeError('outer (implicit-chain)')
-    except RuntimeError as outer:
-        writer._redact_dsn(outer)
-        assert outer.__context__ is not None
-        assert '[CATALOG_DSN_REDACTED]' in outer.__context__.args[0]
-        assert 'secret' not in outer.__context__.args[0]
-    else:
-        raise AssertionError('expected RuntimeError')
+def test_save_proposals_empty_sequence_creates_empty_array(tmp_path: Path):
+    """Passing an empty sequence creates a file with an empty JSON array."""
+    out = tmp_path / 'pass1.json'
+    total = extract.save_proposals([], out)
+    assert total == 0
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert data == []
 
 
-def test_staging_writer_redact_dsn_chain_cycle_safe(monkeypatch):
-    # Defensive: if an exception's __cause__ chain has a cycle (uncommon but
-    # constructable by user code), the traversal must not infinite-loop.
-    monkeypatch.setenv('CATALOG_DSN', 'postgresql://u:p@h/db')
-    if not extract.HAS_PSYCOPG:
-        return
-    writer = extract.StagingWriter()
-    a = RuntimeError('A')
-    b = RuntimeError('B')
-    a.__cause__ = b
-    b.__cause__ = a  # cycle
-    # If the traversal had no cycle guard, this would hang. The seen-set
-    # protects against that.
-    writer._redact_dsn(a)
-    # Test passes if it returns without hanging; no assertion on content
-    # needed (no DSN in either exception).
-    assert True
+def test_save_proposals_output_is_ascii_safe(tmp_path: Path):
+    """JSON output must be ASCII-safe (ensure_ascii=True enforced)."""
+    out = tmp_path / 'pass1.json'
+    extract.save_proposals([_make_row()], out)
+    raw = out.read_text(encoding='utf-8')
+    assert all(ord(c) <= 127 for c in raw), 'non-ASCII character found in proposals JSON'
+
+
+def test_save_proposals_returns_cumulative_count(tmp_path: Path):
+    """Return value is the total count of rows in the file after the call."""
+    out = tmp_path / 'pass1.json'
+    assert extract.save_proposals([_make_row()], out) == 1
+    assert extract.save_proposals([_make_row(), _make_row()], out) == 3
+    assert extract.save_proposals([], out) == 3
+
+
+def test_save_proposals_no_psycopg_import():
+    """save_proposals must not import or reference psycopg in any way."""
+    import inspect
+    src = inspect.getsource(extract.save_proposals)
+    assert 'psycopg' not in src
+    assert 'CATALOG_DSN' not in src

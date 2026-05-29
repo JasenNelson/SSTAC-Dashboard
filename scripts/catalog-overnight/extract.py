@@ -1,4 +1,4 @@
-"""Catalog extraction library -- Docling table extraction + staging row builder + psycopg writer.
+"""Catalog extraction library -- Docling table extraction + staging row builder + JSON proposals writer.
 
 This is a THIN LIBRARY, not a CLI. It is imported by an autonomous Claude Code
 session (spawned by `.claude/scripts/launch_catalog_extraction.ps1` via
@@ -8,8 +8,9 @@ loop directly. No main(), no argparse, no CLI flags.
 Scope (in):
 - Docling-first PDF table extraction with chunked fallback for long documents.
 - Staging row builder with strict schema validation matching the
-  catalog_extraction_staging migration's CHECK constraints.
-- psycopg StagingWriter context manager.
+  catalog_extraction_staging CHECK constraints.
+- JSON proposals writer: appends StagingRow proposals to a local JSON file
+  for manual owner review and import to Supabase (no database connection).
 - Python-side breadcrumb emitter for the wrapper's watchdog.
 
 Scope (out, vs the prior scaffold):
@@ -18,6 +19,7 @@ Scope (out, vs the prior scaffold):
 - CLI / main() / dry-run mode. The wrapper handles dry-run; the library is
   always called from within a Python -c invocation by Claude Code.
 - run_pass orchestrator. The session's starter prompt owns orchestration.
+- Database connections of any kind. No psycopg, no DSN, no Supabase writes.
 
 Design reference: STREAM_D_REDESIGN_2026_05_28.md v0.3.1 (cursor-agent GREEN
 at round 5, mutual-agreement methodology).
@@ -27,8 +29,9 @@ consistency:
   C:\\Projects\\Regulatory-Review\\2026_Database_Development\\data_acquisition\\bnrrm_extraction\\extract_tables_docling.py
 
 Safety:
-- The agent NEVER writes to production catalog tables. Only catalog_extraction_staging.
-- DSN is read from process env CATALOG_DSN by the StagingWriter; never logged.
+- The agent NEVER connects to any database and NEVER uses psycopg or a DSN.
+- Proposed rows are written to a local JSON file only; the owner imports
+  approved rows to Supabase manually via the Studio SQL Editor.
 
 Authored by Stream D autonomous session (Opus 4.7) 2026-05-27; refactored to
 thin library 2026-05-28 per Phase 3 commit 2 of the redesign.
@@ -46,7 +49,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterable, Sequence
 
-# Optional imports -- tests do not require Docling / psycopg installed.
+# Optional imports -- tests do not require Docling installed.
 try:
     from docling.document_converter import DocumentConverter, PdfFormatOption
     from docling.datamodel.pipeline_options import PdfPipelineOptions, TableFormerMode
@@ -59,12 +62,6 @@ try:
     HAS_PYMUPDF = True
 except ImportError:
     HAS_PYMUPDF = False
-
-try:
-    import psycopg
-    HAS_PSYCOPG = True
-except ImportError:
-    HAS_PSYCOPG = False
 
 
 # -- Chunked extraction tuning (mirror BN-RRM extract_tables_docling.py) ------
@@ -87,12 +84,12 @@ AGENT_PRINCIPAL = 'agent_service_role'
 
 @dataclasses.dataclass
 class StagingRow:
-    """In-memory representation of a row destined for catalog_extraction_staging.
+    """In-memory representation of one proposed catalog row.
 
-    Field set matches the migration column shape. DB-defaulted columns
-    (id, hitl_status, hitl_reviewed_*, promoted_to_id, created_by,
-    created_by_role, created_at) are omitted; psycopg INSERTs without them
-    so DB defaults apply (created_by_role defaults to 'agent_service_role').
+    Field set matches the catalog_extraction_staging column shape. DB-defaulted
+    columns (id, hitl_status, hitl_reviewed_*, promoted_to_id, created_by,
+    created_by_role, created_at) are omitted; they receive their DB defaults when
+    the owner manually imports approved rows via Supabase Studio SQL Editor.
     """
 
     source_zotero_key: str
@@ -107,21 +104,35 @@ class StagingRow:
     extraction_notes: str | None
     extraction_model: str
 
-    def to_db_tuple(self) -> tuple:
-        """Return positional values for the INSERT statement in StagingWriter."""
-        return (
-            self.source_zotero_key,
-            self.source_attachment_path,
-            self.extraction_pass_id,
-            self.extraction_pass_started_at,
-            self.extraction_pass_finished_at,
-            self.extracted_at,
-            self.proposed_kind,
-            json.dumps(self.proposed_payload),
-            self.confidence,
-            self.extraction_notes,
-            self.extraction_model,
-        )
+    def to_dict(self) -> dict:
+        """Return a JSON-serializable dict of all row fields.
+
+        Datetime values are serialized to ISO 8601 strings with UTC offset.
+        UUID values are serialized to str. proposed_payload is kept as a dict
+        (json.dumps will handle it at the file-write boundary in save_proposals).
+        """
+        return {
+            'source_zotero_key': self.source_zotero_key,
+            'source_attachment_path': self.source_attachment_path,
+            'extraction_pass_id': str(self.extraction_pass_id),
+            'extraction_pass_started_at': (
+                self.extraction_pass_started_at.isoformat()
+                if self.extraction_pass_started_at is not None else None
+            ),
+            'extraction_pass_finished_at': (
+                self.extraction_pass_finished_at.isoformat()
+                if self.extraction_pass_finished_at is not None else None
+            ),
+            'extracted_at': (
+                self.extracted_at.isoformat()
+                if self.extracted_at is not None else None
+            ),
+            'proposed_kind': self.proposed_kind,
+            'proposed_payload': self.proposed_payload,
+            'confidence': self.confidence,
+            'extraction_notes': self.extraction_notes,
+            'extraction_model': self.extraction_model,
+        }
 
 
 def build_staging_row(
@@ -140,7 +151,7 @@ def build_staging_row(
     Validates the proposal shape against the catalog_extraction_staging CHECK
     constraints (proposed_kind enum, confidence in [0,1], JSON-serializable
     payload). Raises ValueError on validation failure so bad rows are caught
-    before INSERT.
+    before being written to the proposals file.
     """
     if not zotero_key:
         raise ValueError('zotero_key is required (NOT NULL on staging row)')
@@ -432,132 +443,50 @@ def _extract_tables_chunked(
 
 
 # ============================================================================
-# Staging writer (psycopg, service-role)
+# JSON proposals writer (no database; no psycopg; no DSN)
 # ============================================================================
 
-_INSERT_SQL = """
-INSERT INTO public.catalog_extraction_staging (
-    source_zotero_key,
-    source_attachment_path,
-    extraction_pass_id,
-    extraction_pass_started_at,
-    extraction_pass_finished_at,
-    extracted_at,
-    proposed_kind,
-    proposed_payload,
-    confidence,
-    extraction_notes,
-    extraction_model
-) VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s)
-RETURNING id;
-"""
+def save_proposals(rows: Sequence[StagingRow], out_path: 'str | Path') -> int:
+    """Append StagingRow proposals to a JSON file at out_path.
 
+    If out_path already exists, the existing JSON array is loaded and the new
+    rows are appended so multiple items in one pass accumulate. If out_path
+    does not exist, a new array is started.
 
-class StagingWriter:
-    """Writes StagingRow records to catalog_extraction_staging via psycopg.
+    Write is atomic: content is written to a sibling temp file first, then
+    os.replace() moves it over the target. This prevents a partial write from
+    corrupting the proposals file if the process is interrupted.
 
-    DSN is read from process env CATALOG_DSN (set by the wrapper from Windows
-    Credential Manager). The connection runs as service-role and bypasses
-    RLS in Supabase. The created_by column is left null (DB default
-    created_by_role = 'agent_service_role' fires).
+    Returns the total number of rows now in the file (existing + new).
 
-    Use as a context manager.
+    Args:
+        rows: sequence of StagingRow instances to append.
+        out_path: path to the proposals JSON file (str or Path).
     """
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    def __init__(self, dsn: str | None = None):
-        if not HAS_PSYCOPG:
-            raise ImportError('psycopg not installed. Run: pip install psycopg[binary]')
-        self.dsn = dsn or os.environ.get('CATALOG_DSN')
-        if not self.dsn:
-            raise RuntimeError(
-                'No DSN supplied (constructor arg) and CATALOG_DSN env var unset. '
-                'The wrapper should set CATALOG_DSN before invoking the Python step.'
+    if out_path.exists():
+        existing_text = out_path.read_text(encoding='utf-8')
+        existing: list = json.loads(existing_text)
+        if not isinstance(existing, list):
+            raise ValueError(
+                f'Proposals file at {out_path} does not contain a JSON array; '
+                f'found {type(existing).__name__}. Cannot append.'
             )
-        self.conn = None
+    else:
+        existing = []
 
-    def _redact_dsn(self, exc: BaseException) -> None:
-        """Strip the DSN substring from exc.args so a password-bearing URL-form
-        DSN never reaches error messages that may be logged, committed to
-        progress.json, or pushed to origin. Defense-in-depth against psycopg
-        parse errors that embed the connection string in args[0].
+    for row in rows:
+        existing.append(row.to_dict())
 
-        Traverses __cause__ and __context__ to redact wrapped exceptions too;
-        callers that surface chained tracebacks (e.g. via logging.exception()
-        or repr(traceback)) thus get redacted output for the whole chain.
+    serialized = json.dumps(existing, indent=2, ensure_ascii=True)
 
-        Note: psycopg3's exc.diag attribute is read-only (wraps libpq's
-        PGresult error fields via C struct). diag fields are not str(exc)
-        targets (str(exc) reads args[0]), so the practical leak path through
-        str(exc) -> progress.json IS covered. Wrapper-side log sanitizer
-        (7d3f0f9) catches anything that leaks via traceback printing
-        including diag fields.
-        """
-        if not self.dsn:
-            return
-        seen: set[int] = set()
-        current: BaseException | None = exc
-        while current is not None and id(current) not in seen:
-            seen.add(id(current))
-            if current.args:
-                new_args = tuple(
-                    arg.replace(self.dsn, '[CATALOG_DSN_REDACTED]') if isinstance(arg, str) else arg
-                    for arg in current.args
-                )
-                if new_args != current.args:
-                    current.args = new_args
-            # `raise X from Y` sets __cause__; implicit chaining (an exception
-            # raised inside an `except` block) sets __context__.
-            current = current.__cause__ or current.__context__
+    tmp_path = out_path.with_suffix('.tmp')
+    tmp_path.write_text(serialized, encoding='utf-8')
+    os.replace(tmp_path, out_path)
 
-    def __enter__(self) -> 'StagingWriter':
-        try:
-            self.conn = psycopg.connect(self.dsn)
-        except Exception as exc:
-            self._redact_dsn(exc)
-            raise
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        if self.conn is not None:
-            try:
-                self.conn.close()
-            finally:
-                self.conn = None
-
-    def write_batch(self, rows: Sequence[StagingRow]) -> list[uuid.UUID]:
-        """Insert a batch of staging rows atomically. Returns the new row ids.
-
-        Wraps the inserts in a transaction: on any error inside the batch,
-        rolls back and re-raises so the caller can recover without a
-        half-committed batch or an aborted connection state.
-        """
-        if self.conn is None:
-            raise RuntimeError(
-                'StagingWriter is not connected (use as context manager)'
-            )
-
-        ids: list[uuid.UUID] = []
-        try:
-            with self.conn.cursor() as cur:
-                for row in rows:
-                    cur.execute(_INSERT_SQL, row.to_db_tuple())
-                    fetched = cur.fetchone()
-                    if fetched is not None:
-                        ids.append(fetched[0])
-            self.conn.commit()
-            return ids
-        except Exception as exc:
-            try:
-                self.conn.rollback()
-            except Exception:
-                # Best-effort; if the connection itself is broken
-                # we still want to re-raise the original exception.
-                pass
-            # Redact DSN from any psycopg/runtime exception that may
-            # quote the connection string. Defense-in-depth against the
-            # progress.json + breadcrumb commit-and-push leak path.
-            self._redact_dsn(exc)
-            raise
+    return len(existing)
 
 
 # ============================================================================
@@ -614,8 +543,8 @@ __all__ = [
     'HITL_STATUS_VALUES',
     'AGENT_PRINCIPAL',
     'StagingRow',
-    'StagingWriter',
     'build_staging_row',
+    'save_proposals',
     'get_page_count',
     'configure_docling_converter',
     'extract_tables_from_pdf',

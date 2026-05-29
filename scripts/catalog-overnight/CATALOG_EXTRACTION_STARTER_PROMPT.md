@@ -9,15 +9,17 @@ passing the rendered prompt to claude -p.
 
 ## Session capsule
 
-1) Objective: process next $N manifest items into catalog_extraction_staging via Docling +
-   Claude-Code reasoning + psycopg.
+1) Objective: process next $N manifest items into a local JSON proposals file at
+   scripts/catalog-overnight/proposals/$PassId.json via Docling + Claude-Code reasoning
+   (NO database).
 2) Active session ID: catalog-extract-$YYYYMMDDTHHMMSSZ-$PassId
 3) Active pivots: (read CATALOG_EXTRACTION_HANDOFF.md "Next Session Starter" section)
 4) Current blockers: (read CATALOG_EXTRACTION_HANDOFF.md "Open Blockers" section)
 5) Next 3 actions: (read CATALOG_EXTRACTION_HANDOFF.md "Immediate Actions" section)
 6) Hard constraints (LOAD-BEARING; honor without exception):
-   - NEVER write to production catalog tables directly. ONLY catalog_extraction_staging.
-   - NEVER auto-promote staging rows. HITL via UI only.
+   - NEVER connect to any database, and NEVER use psycopg, CATALOG_DSN, or Supabase.
+     Write ONLY to the local JSON proposals file. The owner imports approved rows to
+     Supabase manually.
    - NEVER mutate src/data/* (Tier 2 protected).
    - NEVER commit to main. Only feat/stream-d-catalog-agent-scaffold.
    - NEVER use `git add .` or `git add -A` or `git add -u`. Path-scoped staging only.
@@ -115,17 +117,16 @@ c. Validate each proposal before inserting:
    If any proposal fails validation, log it to errors in progress.json under the doc_id
    with a note describing the validation failure; do NOT insert it.
 
-d. Insert validated proposals into catalog_extraction_staging via psycopg. Read the DSN
-   from the environment variable CATALOG_DSN. Do NOT hardcode any DSN, URL, or credential.
-   Do NOT use the Supabase MCP tools (they fail 100% per CLAUDE.md). Use psycopg directly.
-   If psycopg is not available in the current Python environment, check for a .venv under
-   scripts/ and use .venv/Scripts/python.exe; do not attempt a pip install mid-session.
-   If the insert fails with a connection error, log the doc_id to errors in progress.json
-   with the error message and move on to the next item; do not retry more than once.
+d. Append the validated proposals to scripts/catalog-overnight/proposals/$PassId.json
+   by importing save_proposals from extract.py and calling it (or writing the JSON
+   directly). Do not connect to any database; there is no DSN. The proposals file is
+   a JSON array; save_proposals handles creating the file and appending on subsequent
+   calls within the same pass. If the write fails, log the doc_id to errors in
+   progress.json with the error message and move on to the next item.
 
 e. Update catalog_extraction_progress.json atomically after each item:
    - On success: add the doc_id to `completed` with value {"pass_id": "$PassId",
-     "rows_inserted": <N>, "timestamp": "$YYYYMMDDTHHMMSSZ"}.
+     "rows_proposed": <N>, "timestamp": "$YYYYMMDDTHHMMSSZ"}.
    - On error: add the doc_id to `errors` with value {"pass_id": "$PassId",
      "error": "<message>", "timestamp": "$YYYYMMDDTHHMMSSZ"}.
    - Update `last_updated` to the current timestamp in Windows-safe basic ISO format.
@@ -137,7 +138,7 @@ f. Emit a completion breadcrumb to .tmp/catalog-overnight-breadcrumbs/ with file
      "pass_id": "$PassId",
      "status": "COMPLETED_GREEN",
      "item": "<doc_id>",
-     "rows_inserted": <N>,
+     "rows_proposed": <N>,
      "emitted_at": "$YYYYMMDDTHHMMSSZ"
    }
    On error, use "COMPLETED_RED" in the status field and add an "error" field.
