@@ -150,6 +150,21 @@ if (-not (Test-Path $ClaudeExe)) {
     exit 1
 }
 
+# Venv pre-flight: the worker runs Docling via this repo's catalog-overnight
+# venv. A missing venv (a fresh worktree starts without one) or a venv that
+# cannot import docling would make every item error mid-pass. Fail fast here
+# with a clear breadcrumb instead.
+$VenvPython = Join-Path $RepoRoot 'scripts\catalog-overnight\.venv\Scripts\python.exe'
+if (-not (Test-Path $VenvPython)) {
+    Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note "catalog-overnight venv python not found at $VenvPython (create it: python -m venv + pip install docling pymupdf pillow pytest)" | Out-Null
+    exit 1
+}
+& $VenvPython -c "import docling" 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note "catalog-overnight venv cannot import docling (pip install docling into $VenvPython)" | Out-Null
+    exit 1
+}
+
 # ----- Archive-before-edit on handoff doc -----------------------------------
 
 # Extract version from handoff doc header (line like "**Version:** 1.0")
@@ -182,11 +197,21 @@ if (Test-Path $SentinelPause) {
 $promptTemplate = Get-Content -Raw -LiteralPath $StarterPromptFile
 $boostNote = if ($priorityBoost) { 'PRIORITY_BOOST sentinel detected; owner has flagged this pass as priority.' } else { '' }
 
+# -DryRun must reach the worker, not just the breadcrumb. The $DRY_RUN_NOTE
+# marker expands to an explicit no-write/no-commit instruction the prompt's
+# Step 3/Step 4 branch on; when not a dry run it expands to a normal-run note.
+$dryRunNote = if ($DryRun) {
+    'DRY RUN: this is a wrapper smoke test. Do the Docling extraction and draft + validate proposals normally, but DO NOT call save_proposals or generate_staging_sql (write nothing under proposals/), and DO NOT git commit. Report the count of proposals you WOULD have written, then emit a COMPLETED_GREEN breadcrumb and exit 0.'
+} else {
+    'NORMAL RUN: write proposals + SQL and commit per Step 3 and Step 4.'
+}
+
 $prompt = $promptTemplate `
     -replace '\$PassId', $PassId `
     -replace '\$YYYYMMDDTHHMMSSZ', $StartIsoSafe `
     -replace '\$N\b', $MaxItems.ToString() `
-    -replace '\$PRIORITY_BOOST_NOTE', $boostNote
+    -replace '\$PRIORITY_BOOST_NOTE', $boostNote `
+    -replace '\$DRY_RUN_NOTE', $dryRunNote
 
 # ----- STARTED breadcrumb ---------------------------------------------------
 
@@ -211,6 +236,28 @@ $stderrLog = Join-Path $BreadcrumbDir "$PassId.stderr.log"
 $tempPromptFile = Join-Path $BreadcrumbDir "$PassId-prompt.txt"
 Set-Content -Path $tempPromptFile -Value $prompt -Encoding utf8
 
+# --------------------------------------------------------------------------
+# OWNER-DECISION REQUIRED before autonomous headless runs (the two RED-review
+# BLOCKERs). As shipped, this arg list does NOT bypass permissions or the
+# SessionStart hook, so a `claude -p` worker will narrate-not-act and the
+# wrapper records SILENT_BAIL. That is intentional: arming a no-human worker is
+# a security decision for the owner, not the agent, to make. To ENABLE
+# autonomous runs, add these two flags (verified present in claude 2.1.156):
+#
+#     '--setting-sources', 'project,local',   # drop the user-level SessionStart
+#                                              # /codex-review hook that blocks a
+#                                              # no-human session (repo-local; does
+#                                              # not touch global settings).
+#     '--dangerously-skip-permissions'         # let the worker run Bash/file/git
+#                                              # tools with no approver. Bounded by
+#                                              # L0 1.15 worktree isolation + the
+#                                              # prompt's path-scoped git rules.
+#                                              # Safer alt: a curated
+#                                              # --allowedTools allowlist (must
+#                                              # still include Bash for python+git).
+#
+# See docs/CATALOG_HEADLESS_ENABLEMENT.md for the full rationale + the DryRun
+# smoke recipe to run after arming.
 $claudeArgs = @(
     '-p',
     '--output-format', 'text'
@@ -279,7 +326,15 @@ try {
         $proc.WaitForExit()
         $exitCode = $proc.ExitCode
 
-        if ($exitCode -eq 0) {
+        # Emit EXACTLY ONE terminal breadcrumb. A null ExitCode (process exited
+        # but Windows did not surface a code) is treated as SILENT_BAIL here so
+        # it does not fall through to a second SILENT_BAIL breadcrumb below.
+        if ($null -eq $exitCode) {
+            Write-PsBreadcrumb -Status 'SILENT_BAIL' `
+                -OutputArtifacts @($stdoutLog, $stderrLog) `
+                -Note "claude session exited without reporting an exit code" | Out-Null
+            $exitCode = 2
+        } elseif ($exitCode -eq 0) {
             Write-PsBreadcrumb -Status 'COMPLETED_GREEN' `
                 -OutputArtifacts @($stdoutLog, $stderrLog) `
                 -Note "claude session exit=0" | Out-Null
@@ -304,10 +359,11 @@ try {
     }
 }
 
+# A terminal breadcrumb (COMPLETED_GREEN / COMPLETED_RED / STALLED / SILENT_BAIL)
+# has already been emitted on every path above, so do NOT write another one
+# here -- just exit with the resolved code. Defensive: if $exitCode is somehow
+# still null, exit 2 without a duplicate breadcrumb.
 if ($null -eq $exitCode) {
-    Write-PsBreadcrumb -Status 'SILENT_BAIL' `
-        -OutputArtifacts @($stdoutLog, $stderrLog) `
-        -Note "claude session did not report an exit code" | Out-Null
     exit 2
 }
 

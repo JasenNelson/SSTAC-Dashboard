@@ -1,9 +1,9 @@
 # Catalog Extraction Handoff
 
 **Purpose:** Session continuity for the SSTAC catalog extraction overnight workflow.
-**Version:** 1.1
+**Version:** 1.0
 **Last Updated:** 2026-05-28
-**Status:** INITIAL SCAFFOLDING. No headless passes have run yet. One manual inline pass (d0c00001) produced proposals (see scripts/catalog-overnight/proposals/). Headless robot awaits owner arming (docs/CATALOG_HEADLESS_ENABLEMENT.md) + first smoke run. v1.0->v1.1: removed obsolete CATALOG_DSN setup step (no-database rewire).
+**Status:** INITIAL SCAFFOLDING. No passes have run yet. Awaiting owner trigger of first smoke run.
 
 ---
 
@@ -38,11 +38,10 @@ First-real-run smoke test. The scheduled overnight workflow has not yet fired.
 
 ### Immediate Actions
 
-1. Owner ARMS the wrapper for autonomous headless runs per `docs/CATALOG_HEADLESS_ENABLEMENT.md` (adds the permission + setting-sources flags; security decision).
-2. Owner registers the scheduled task via `.claude/scripts/register_catalog_extraction_task.ps1` (one-shot).
-3. Owner populates `scripts/catalog-overnight/catalog_manifest.csv` with 1-3 smoke-test PDFs.
-4. No credential setup needed: the robot has NO database connection. It writes a local JSON proposals file + a paste-ready `.sql`; the owner imports approved rows via the Supabase SQL Editor. (The old `CATALOG_DSN` / Windows Credential Manager step is obsolete -- removed in the 2026-05-28 rewire.)
-5. Owner triggers the task manually (`schtasks /Run /TN "SSTAC-StreamD-CatalogExtract"`) for the first smoke run.
+1. Owner registers the scheduled task via `.claude/scripts/register_catalog_extraction_task.ps1` (one-shot).
+2. Owner populates `scripts/catalog-overnight/catalog_manifest.csv` with 1-3 smoke-test PDFs.
+3. Owner ensures `CATALOG_DSN` is stored in Windows Credential Manager (target name: `SSTAC_CATALOG_DSN`).
+4. Owner triggers the task manually (`schtasks /Run /TN "SSTAC-StreamD-CatalogExtract"`) for the first smoke run.
 
 ---
 

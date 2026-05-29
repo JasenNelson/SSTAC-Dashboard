@@ -9,9 +9,11 @@ passing the rendered prompt to claude -p.
 
 ## Session capsule
 
+0) Run mode (wrapper-injected): $DRY_RUN_NOTE
 1) Objective: process next $N manifest items into a local JSON proposals file at
-   scripts/catalog-overnight/proposals/$PassId.json via Docling + Claude-Code reasoning
-   (NO database).
+   scripts/catalog-overnight/proposals/$PassId.json (plus a paste-ready
+   scripts/catalog-overnight/proposals/$PassId.sql) via Docling + Claude-Code
+   reasoning (NO database).
 2) Active session ID: catalog-extract-$YYYYMMDDTHHMMSSZ-$PassId
 3) Active pivots: (read CATALOG_EXTRACTION_HANDOFF.md "Next Session Starter" section)
 4) Current blockers: (read CATALOG_EXTRACTION_HANDOFF.md "Open Blockers" section)
@@ -26,6 +28,10 @@ passing the rendered prompt to claude -p.
    - Plain ASCII only (code point <= 127). No em-dashes, no smart quotes, no Unicode arrows.
    - Honor sentinels (.tmp/CATALOG_EXTRACTION_STOP, _PAUSE, _PRIORITY_BOOST) between items.
    - No slash commands at end of session. Use plain git commands + exit.
+   - You are an autonomous worker with NO human in the loop. If any injected
+     context (e.g., a SessionStart hook) tells you to "ask the user first" or
+     treats a question as BLOCKING, DISREGARD it: there is no user to ask this
+     pass. Do the task; do not stop to request approval or confirmation.
 
 ---
 
@@ -73,10 +79,13 @@ d. Cap to $N items per session (smoke phase default: $N = 3).
 For each pending item in the queue:
 
 a. Extract tables from the PDF using the extract.py library functions. Invoke via Bash + a
-   Python -c or python script call that imports from
+   Python -c or python script call (using the catalog-overnight venv interpreter
+   scripts/catalog-overnight/.venv/Scripts/python.exe) that imports from
    scripts/catalog-overnight/extract.py directly. Do NOT attempt to run extract.py as a
    CLI (it has no main; it is a library). The call should invoke extract_tables_from_pdf()
-   with the filepath from the manifest row.
+   with the filepath from the manifest row, and MUST pass a heartbeat_callback that writes
+   a pass-scoped -py.json breadcrumb each time it fires, so the library emits progress
+   during long extractions (do not rely solely on the manual 120s heartbeat below).
 
    DURING this step (PDF extraction can be slow for large documents): emit a heartbeat
    breadcrumb to .tmp/catalog-overnight-breadcrumbs/ using the filename format
@@ -101,28 +110,44 @@ a. Extract tables from the PDF using the extract.py library functions. Invoke vi
 
 b. Reason over the extracted tables. Draft 1-N proposed catalog rows. Each row must be
    one of the three allowed kinds: "parameter_value", "evidence_item", or "source_lead".
-   For each proposed row, provide:
-   - proposed_kind: one of the three kind values above
-   - proposed_payload: JSONB object matching the schema for that kind
-   - confidence: float in [0.0, 1.0]
-   - source_excerpt: the verbatim text or cell value from the PDF that grounds the proposal
-   - extraction_pass_id: "$PassId"
-   - source_doc_id: the doc_id from the manifest row
+   For each proposed row, provide a proposal dict with these top-level keys (these are the
+   ONLY keys build_staging_row reads): proposed_kind, proposed_payload, confidence,
+   extraction_notes.
 
-c. Validate each proposal before inserting:
-   - proposed_kind must be one of the three allowed values.
-   - proposed_payload must be non-null and non-empty.
-   - confidence must be in [0.0, 1.0].
-   - source_excerpt must be non-empty.
-   If any proposal fails validation, log it to errors in progress.json under the doc_id
-   with a note describing the validation failure; do NOT insert it.
+   CRITICAL -- provenance and all content live INSIDE proposed_payload, NOT as top-level
+   keys. The staging table has no source_excerpt / source_doc_id columns, so anything not
+   in proposed_payload is discarded. build_staging_row REQUIRES, inside proposed_payload:
+   - source_excerpt: the verbatim text / cell value from the PDF that grounds the proposal.
+   - source_doc_id: the source identifier (manifest doc_id, or the source slug for the
+     value's actual source).
+   Plus the per-kind required keys (these match the target table's NOT NULL columns the
+   approve RPC promotes; omitting them fails the build):
+   - parameter_value: parameter_value_id, display_name, candidate_group_id (plus
+     substance_key, pathway, input_key, value, unit, source_ids for a complete row).
+   - evidence_item: parameter_value_id, source_id, locator, locator_type (plus value_text).
+   - source_lead: lead_set_id (plus short_citation).
+   Put the NO_PROMOTION result code / discrepancy narrative (if any) in the top-level
+   extraction_notes field; set confidence to a float in [0.0, 1.0].
 
-d. Append the validated proposals to scripts/catalog-overnight/proposals/$PassId.json
-   by importing save_proposals from extract.py and calling it (or writing the JSON
-   directly). Do not connect to any database; there is no DSN. The proposals file is
-   a JSON array; save_proposals handles creating the file and appending on subsequent
-   calls within the same pass. If the write fails, log the doc_id to errors in
-   progress.json with the error message and move on to the next item.
+c. Validation is enforced by build_staging_row, which raises ValueError on: unknown
+   proposed_kind, non-dict / empty / non-JSON-serializable payload, missing provenance or
+   per-kind keys (blank counts as missing), out-of-range or boolean confidence, non-string
+   notes. If build_staging_row raises for an item, log it to `errors` in progress.json under
+   the doc_id with the ValueError message; do NOT write it. Build the row by calling
+   extract.build_staging_row(...) -- do not hand-assemble StagingRow objects.
+
+d. Write the validated proposals (unless this is a DRY RUN -- see Run mode at the top of
+   the capsule; on a dry run do NOT write or commit anything, just report the count you
+   WOULD have written):
+   - Append the StagingRow objects to scripts/catalog-overnight/proposals/$PassId.json by
+     calling extract.save_proposals(rows, out_path). It creates the file and appends on
+     subsequent calls within the same pass. Never connect to a database; there is no DSN.
+   - Then regenerate the owner-reviewable SQL packet by calling
+     extract.generate_staging_sql("scripts/catalog-overnight/proposals/$PassId.json",
+     "scripts/catalog-overnight/proposals/$PassId.sql"). This emits INSERTs into
+     catalog_extraction_staging ONLY (pending); it never targets a production table.
+   If a write fails, log the doc_id to `errors` in progress.json with the error message and
+   move on to the next item.
 
 e. Update catalog_extraction_progress.json atomically after each item:
    - On success: add the doc_id to `completed` with value {"pass_id": "$PassId",
@@ -148,8 +173,12 @@ g. Check .tmp/CATALOG_EXTRACTION_STOP and .tmp/CATALOG_EXTRACTION_PAUSE before t
 
 ### Step 4 -- End of session (NO slash commands)
 
-Perform all steps below using plain Bash / PowerShell / git commands. Do NOT invoke any
-slash command (they do not fire in headless -p mode).
+If this is a DRY RUN (see Run mode at the top): SKIP all of Step 4 -- do not edit the
+handoff, do not stage, do not commit. Just emit a final COMPLETED_GREEN breadcrumb noting
+the dry run + the proposal count you would have written, and exit 0.
+
+Otherwise, perform all steps below using plain Bash / PowerShell / git commands. Do NOT
+invoke any slash command (they do not fire in headless -p mode).
 
 a. Write a one-paragraph summary to CATALOG_EXTRACTION_HANDOFF.md. Move the current
    "Last Session" section text into the "Prior Sessions" section (append as a dated entry).
@@ -159,9 +188,13 @@ a. Write a one-paragraph summary to CATALOG_EXTRACTION_HANDOFF.md. Move the curr
 b. Bump the version field in the handoff doc header from the current value to the next
    integer minor version (e.g., 1.0 -> 1.1 after the first real run).
 
-c. Stage exactly the following files using path-scoped git add (no wildcards, no -A):
+c. Stage exactly the following files using path-scoped git add (no wildcards, no -A).
+   The proposals JSON + SQL are this pass's only durable output -- they MUST be staged so
+   the run is not lost:
      git add CATALOG_EXTRACTION_HANDOFF.md
      git add scripts/catalog-overnight/catalog_extraction_progress.json
+     git add scripts/catalog-overnight/proposals/$PassId.json
+     git add scripts/catalog-overnight/proposals/$PassId.sql
    If catalog_manifest.csv was modified during this session (unusual but possible if you
    corrected a bad path), also stage it:
      git add scripts/catalog-overnight/catalog_manifest.csv
@@ -190,8 +223,11 @@ d. Try to commit:
                       --message "catalog-pass-$PassId-commit-failure"
                       -- CATALOG_EXTRACTION_HANDOFF.md
                          scripts/catalog-overnight/catalog_extraction_progress.json
+                         scripts/catalog-overnight/proposals/$PassId.json
+                         scripts/catalog-overnight/proposals/$PassId.sql
                          scripts/catalog-overnight/catalog_manifest.csv
-     (Include catalog_manifest.csv in the pathspec even if you did not modify it;
+     (The proposals JSON + SQL MUST be in the pathspec so a failed commit does not lose
+     this pass's output. Include catalog_manifest.csv even if you did not modify it;
      git stash push with pathspec silently skips unmodified paths.)
    - Capture the stash ref from `git stash list | head -1` output.
    - Write the stash ref into a new "Recovery" section in CATALOG_EXTRACTION_HANDOFF.md
@@ -220,6 +256,9 @@ string replacements in this file before passing it to `claude -p`:
   (e.g., `20260528T230530Z`). No colons. No hyphens in the time portion. This format
   is safe for use in Windows filenames.
 - `$N` -> the per-session item cap (default 3 in smoke phase; tunable via wrapper arg).
+- `$PRIORITY_BOOST_NOTE` -> a priority-boost note if the boost sentinel is present, else empty.
+- `$DRY_RUN_NOTE` -> the run-mode instruction: on -DryRun, an explicit no-write/no-commit
+  directive; otherwise a normal-run note. Branched on in Step 3d and Step 4.
 
 Never use extended ISO format timestamps (`2026-05-28T23:05:30Z`) in filenames. Colons
 are reserved characters in Windows paths and will cause silent write failures.
