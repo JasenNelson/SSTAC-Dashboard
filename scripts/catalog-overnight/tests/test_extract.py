@@ -83,6 +83,20 @@ def test_no_run_pass_orchestrator():
 # Test helpers
 # ---------------------------------------------------------------------------
 
+def _parameter_value_payload() -> dict:
+    """A valid parameter_value payload: per-kind required keys + provenance."""
+    return {
+        'parameter_value_id': 'pv-cadmium-eco-direct',
+        'display_name': 'Cadmium eco-direct sediment TRV',
+        'candidate_group_id': 'cg-cadmium-eco-direct',
+        'substance_key': 'cadmium',
+        'value': '0.6',
+        'unit': 'mg/kg dw',
+        'source_excerpt': 'Cadmium sediment standard 0.6 mg/kg dw',
+        'source_doc_id': 'protocol-1-dra',
+    }
+
+
 def _proposal(
     kind: str = 'parameter_value',
     *,
@@ -92,11 +106,7 @@ def _proposal(
 ) -> dict:
     return {
         'proposed_kind': kind,
-        'proposed_payload': payload if payload is not None else {
-            'substance_key': 'cadmium',
-            'value': '0.6',
-            'unit': 'mg/kg dw',
-        },
+        'proposed_payload': payload if payload is not None else _parameter_value_payload(),
         'confidence': confidence,
         'extraction_notes': notes,
     }
@@ -122,11 +132,7 @@ def test_build_staging_row_happy_path():
     assert row.extraction_pass_id == pass_id
     assert row.extraction_pass_started_at == pass_started
     assert row.proposed_kind == 'parameter_value'
-    assert row.proposed_payload == {
-        'substance_key': 'cadmium',
-        'value': '0.6',
-        'unit': 'mg/kg dw',
-    }
+    assert row.proposed_payload == _parameter_value_payload()
     assert row.confidence == 0.42
     assert row.extraction_notes == 'extracted from Table 3'
     assert row.extraction_model == 'claude-opus-4-7'
@@ -560,3 +566,211 @@ def test_save_proposals_no_psycopg_import():
     src = inspect.getsource(extract.save_proposals)
     assert 'psycopg' not in src
     assert 'CATALOG_DSN' not in src
+
+
+# ---------------------------------------------------------------------------
+# Per-kind payload schema + provenance validation (BLOCKER #5 / I1)
+# ---------------------------------------------------------------------------
+
+def _build(kind: str, payload: dict):
+    return extract.build_staging_row(
+        zotero_key='ZK',
+        attachment_path=None,
+        pass_id=uuid.uuid4(),
+        pass_started_at=datetime.now(timezone.utc),
+        proposal={
+            'proposed_kind': kind,
+            'proposed_payload': payload,
+            'confidence': 0.5,
+            'extraction_notes': None,
+        },
+        extraction_model='claude-opus-4-8',
+    )
+
+
+def test_build_staging_row_requires_provenance_keys():
+    """Every kind must carry source_excerpt + source_doc_id in the payload."""
+    payload = _parameter_value_payload()
+    del payload['source_excerpt']
+    try:
+        _build('parameter_value', payload)
+    except ValueError as ve:
+        assert 'source_excerpt' in str(ve)
+    else:
+        raise AssertionError('expected ValueError for missing source_excerpt')
+
+
+def test_build_staging_row_rejects_blank_provenance():
+    """A present-but-empty provenance value counts as missing."""
+    payload = _parameter_value_payload()
+    payload['source_doc_id'] = '   '
+    try:
+        _build('parameter_value', payload)
+    except ValueError as ve:
+        assert 'source_doc_id' in str(ve)
+    else:
+        raise AssertionError('expected ValueError for blank source_doc_id')
+
+
+def test_build_staging_row_requires_parameter_value_keys():
+    """parameter_value needs parameter_value_id / display_name / candidate_group_id."""
+    payload = _parameter_value_payload()
+    del payload['parameter_value_id']
+    try:
+        _build('parameter_value', payload)
+    except ValueError as ve:
+        assert 'parameter_value_id' in str(ve)
+    else:
+        raise AssertionError('expected ValueError for missing parameter_value_id')
+
+
+def test_build_staging_row_evidence_item_happy_and_missing():
+    """evidence_item requires parameter_value_id, source_id, locator, locator_type."""
+    good = {
+        'parameter_value_id': 'pv-arsenic-hh-direct',
+        'source_id': 'src-health-canada-trv-v4-2025',
+        'locator': 'Table 1, page 17',
+        'locator_type': 'table',
+        'value_text': '1.8 per mg/kg-bw/day',
+        'source_excerpt': 'Arsenic oral SF 1.8 per mg/kg-bw/day',
+        'source_doc_id': 'health-canada-trv-v4',
+    }
+    row = _build('evidence_item', good)
+    assert row.proposed_kind == 'evidence_item'
+
+    missing = dict(good)
+    del missing['locator_type']
+    try:
+        _build('evidence_item', missing)
+    except ValueError as ve:
+        assert 'locator_type' in str(ve)
+    else:
+        raise AssertionError('expected ValueError for missing locator_type')
+
+
+def test_build_staging_row_source_lead_happy():
+    """source_lead requires lead_set_id + provenance."""
+    payload = {
+        'lead_set_id': 'protocol-1-trv-references-2026-05-28',
+        'short_citation': 'Protocol 1 sec 4.4.1.2 cited TRV references',
+        'source_excerpt': 'TRVs shall be selected per section 4.4.1.2',
+        'source_doc_id': 'protocol-1-dra',
+    }
+    row = _build('source_lead', payload)
+    assert row.proposed_kind == 'source_lead'
+
+
+# ---------------------------------------------------------------------------
+# save_proposals() recovery + unique temp (IMPORTANT findings)
+# ---------------------------------------------------------------------------
+
+def test_save_proposals_quarantines_malformed_json(tmp_path: Path):
+    """A malformed existing file is quarantined and a fresh array is started."""
+    out = tmp_path / 'pass1.json'
+    out.write_text('{ this is not valid json', encoding='utf-8')
+    total = extract.save_proposals([_make_row()], out)
+    assert total == 1
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert isinstance(data, list) and len(data) == 1
+    quarantined = list(tmp_path.glob('pass1.json.corrupt-*'))
+    assert quarantined, 'expected a quarantined .corrupt-* file'
+
+
+def test_save_proposals_quarantines_non_array_json(tmp_path: Path):
+    """A well-formed-but-non-array existing file is quarantined, not appended."""
+    out = tmp_path / 'pass1.json'
+    out.write_text('{"not": "an array"}', encoding='utf-8')
+    total = extract.save_proposals([_make_row()], out)
+    assert total == 1
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert isinstance(data, list) and len(data) == 1
+    assert list(tmp_path.glob('pass1.json.corrupt-*'))
+
+
+def test_save_proposals_leaves_no_fixed_temp_file(tmp_path: Path):
+    """The atomic write must not leave a fixed sibling .tmp behind."""
+    out = tmp_path / 'pass1.json'
+    extract.save_proposals([_make_row()], out)
+    assert not (tmp_path / 'pass1.tmp').exists()
+    assert not list(tmp_path.glob('*.tmp')), 'temp files should be removed by os.replace'
+
+
+# ---------------------------------------------------------------------------
+# generate_staging_sql() -- staging-only, injection-safe, correct casts
+# ---------------------------------------------------------------------------
+
+def _write_proposals(tmp_path: Path, rows) -> Path:
+    out = tmp_path / 'proposals' / 'passX.json'
+    extract.save_proposals(rows, out)
+    return out
+
+
+def test_generate_staging_sql_targets_staging_only(tmp_path: Path):
+    """Generated SQL inserts into catalog_extraction_staging and NEVER into a
+    production table (promotion is the approve RPC's job under HITL)."""
+    proposals = _write_proposals(tmp_path, [_make_row()])
+    sql_path = tmp_path / 'passX.sql'
+    n = extract.generate_staging_sql(proposals, sql_path)
+    assert n == 1
+    sql = sql_path.read_text(encoding='utf-8')
+    assert 'INSERT INTO public.catalog_extraction_staging' in sql
+    # No direct INSERT into any production table.
+    for prod in (
+        'promoted_parameter_values',
+        'catalog_evidence_items',
+        'source_lead_triage',
+    ):
+        assert f'INSERT INTO public.{prod}' not in sql
+        assert f'INSERT INTO {prod}' not in sql
+
+
+def test_generate_staging_sql_has_casts_and_jsonb(tmp_path: Path):
+    proposals = _write_proposals(tmp_path, [_make_row()])
+    sql_path = tmp_path / 'passX.sql'
+    extract.generate_staging_sql(proposals, sql_path)
+    sql = sql_path.read_text(encoding='utf-8')
+    assert '::uuid' in sql
+    assert '::timestamptz' in sql
+    assert '::jsonb' in sql
+    assert 'BEGIN;' in sql and 'COMMIT;' in sql
+
+
+def test_generate_staging_sql_is_injection_safe(tmp_path: Path):
+    """A payload containing a SQL-quote / injection attempt is dollar-quoted,
+    not interpolated into a breakable single-quoted literal."""
+    payload = _parameter_value_payload()
+    payload['display_name'] = "Cadmium'); DROP TABLE catalog_extraction_staging;--"
+    payload['source_excerpt'] = "value with ' single quotes and $cat$ tag-like text"
+    row = extract.build_staging_row(
+        zotero_key="ZK'injection",
+        attachment_path=None,
+        pass_id=uuid.uuid4(),
+        pass_started_at=datetime.now(timezone.utc),
+        proposal={
+            'proposed_kind': 'parameter_value',
+            'proposed_payload': payload,
+            'confidence': None,
+            'extraction_notes': None,
+        },
+        extraction_model='claude-opus-4-8',
+    )
+    proposals = _write_proposals(tmp_path, [row])
+    sql_path = tmp_path / 'passX.sql'
+    extract.generate_staging_sql(proposals, sql_path)
+    sql = sql_path.read_text(encoding='utf-8')
+    # The DROP text appears only inside the dollar-quoted JSONB payload, never
+    # as an executable statement terminator. There must be exactly one INSERT.
+    assert sql.count('INSERT INTO public.catalog_extraction_staging') == 1
+    # NULL confidence emitted as bare NULL, not quoted.
+    assert 'NULL' in sql
+
+
+def test_generate_staging_sql_rejects_non_array(tmp_path: Path):
+    bad = tmp_path / 'bad.json'
+    bad.write_text('{"not": "an array"}', encoding='utf-8')
+    try:
+        extract.generate_staging_sql(bad, tmp_path / 'out.sql')
+    except ValueError as ve:
+        assert 'not a JSON array' in str(ve)
+    else:
+        raise AssertionError('expected ValueError for non-array proposals file')

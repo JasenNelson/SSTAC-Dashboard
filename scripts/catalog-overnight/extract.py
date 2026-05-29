@@ -77,6 +77,29 @@ HITL_STATUS_VALUES = ('pending', 'approved', 'rejected', 'superseded')
 # -- Service-role discriminator (match catalog_extraction_staging schema) ----
 AGENT_PRINCIPAL = 'agent_service_role'
 
+# -- Per-kind payload schema (proposal reviewability + promote-time safety) ---
+# Each proposed_payload must carry the target table's NOT NULL, no-DEFAULT
+# columns for its proposed_kind. catalog_approve_staging_row builds its INSERT
+# column list from the intersection of (target columns) and (payload keys), so
+# a payload that omits a NOT NULL no-DEFAULT column makes the RPC INSERT fail at
+# HITL approve time with a cryptic Postgres error. Validating here catches the
+# bad proposal before it ever lands in staging. Sourced from the target table
+# migrations:
+#   parameter_value -> promoted_parameter_values (20260527000003)
+#   evidence_item   -> catalog_evidence_items     (20260527000007)
+#   source_lead     -> source_lead_triage         (20260527000008)
+PAYLOAD_REQUIRED_KEYS = {
+    'parameter_value': ('parameter_value_id', 'display_name', 'candidate_group_id'),
+    'evidence_item': ('parameter_value_id', 'source_id', 'locator', 'locator_type'),
+    'source_lead': ('lead_set_id',),
+}
+
+# Provenance keys required in EVERY payload so the HITL reviewer always has
+# verbatim grounding + the source doc id. These are NOT target-table columns
+# (catalog_approve_staging_row ignores keys with no matching column at promote
+# time) but they are preserved in the staging proposed_payload JSONB for review.
+PROVENANCE_REQUIRED_KEYS = ('source_excerpt', 'source_doc_id')
+
 
 # ============================================================================
 # Staging row dataclass + builder
@@ -183,6 +206,26 @@ def build_staging_row(
     except (TypeError, ValueError) as je:
         raise ValueError(
             f'proposed_payload must be JSON-serializable: {je}'
+        )
+
+    # Provenance + per-kind required keys must live INSIDE proposed_payload.
+    # The staging table has no source_excerpt / source_doc_id columns, so
+    # grounding can only be carried (and reviewed) via the payload. The per-kind
+    # keys are the target table's NOT NULL no-DEFAULT columns; omitting them
+    # would make catalog_approve_staging_row's INSERT fail at HITL approve time.
+    # A key counts as missing if absent or set to None / empty string.
+    def _is_blank(v: Any) -> bool:
+        return v is None or (isinstance(v, str) and v.strip() == '')
+
+    required_keys = (*PROVENANCE_REQUIRED_KEYS, *PAYLOAD_REQUIRED_KEYS.get(kind, ()))
+    missing = [k for k in required_keys if k not in payload or _is_blank(payload[k])]
+    if missing:
+        raise ValueError(
+            f'proposed_payload for proposed_kind {kind!r} is missing required '
+            f'key(s): {missing}. Provenance keys {PROVENANCE_REQUIRED_KEYS} are '
+            f'required for every kind; per-kind keys '
+            f'{PAYLOAD_REQUIRED_KEYS.get(kind, ())} match the target table NOT '
+            f'NULL columns the approve RPC promotes.'
         )
 
     confidence_raw = proposal.get('confidence')
@@ -453,9 +496,19 @@ def save_proposals(rows: Sequence[StagingRow], out_path: 'str | Path') -> int:
     rows are appended so multiple items in one pass accumulate. If out_path
     does not exist, a new array is started.
 
-    Write is atomic: content is written to a sibling temp file first, then
-    os.replace() moves it over the target. This prevents a partial write from
-    corrupting the proposals file if the process is interrupted.
+    Write is atomic: content is written to a UNIQUE sibling temp file first,
+    then os.replace() moves it over the target. The temp filename includes the
+    pid + a random suffix so two writers never collide on one fixed .tmp path.
+    This prevents a partial write from corrupting the proposals file if the
+    process is interrupted. (The read-modify-write cycle itself is not lock-
+    protected; in practice each pass owns its own proposals/<PassId>.json file,
+    so there is a single writer per file.)
+
+    Recovery: if an existing proposals file is unreadable (malformed JSON or a
+    well-formed value that is not a JSON array), it is quarantined by renaming
+    it to <name>.corrupt-<UTC timestamp> and a fresh array is started, so the
+    current pass can still record its work instead of crashing. The owner can
+    inspect the quarantined file.
 
     Returns the total number of rows now in the file (existing + new).
 
@@ -466,27 +519,214 @@ def save_proposals(rows: Sequence[StagingRow], out_path: 'str | Path') -> int:
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
+    existing: list = []
     if out_path.exists():
         existing_text = out_path.read_text(encoding='utf-8')
-        existing: list = json.loads(existing_text)
-        if not isinstance(existing, list):
-            raise ValueError(
-                f'Proposals file at {out_path} does not contain a JSON array; '
-                f'found {type(existing).__name__}. Cannot append.'
-            )
-    else:
-        existing = []
+        quarantine_reason = ''
+        try:
+            loaded = json.loads(existing_text)
+        except json.JSONDecodeError as jde:
+            quarantine_reason = f'malformed JSON ({jde})'
+        else:
+            if isinstance(loaded, list):
+                existing = loaded
+            else:
+                quarantine_reason = (
+                    f'not a JSON array (found {type(loaded).__name__})'
+                )
+        if quarantine_reason:
+            stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+            quarantine = out_path.with_name(f'{out_path.name}.corrupt-{stamp}')
+            os.replace(out_path, quarantine)
+            existing = []
 
     for row in rows:
         existing.append(row.to_dict())
 
     serialized = json.dumps(existing, indent=2, ensure_ascii=True)
 
-    tmp_path = out_path.with_suffix('.tmp')
+    tmp_path = out_path.with_name(
+        f'{out_path.name}.{os.getpid()}-{uuid.uuid4().hex[:8]}.tmp'
+    )
     tmp_path.write_text(serialized, encoding='utf-8')
     os.replace(tmp_path, out_path)
 
     return len(existing)
+
+
+# ============================================================================
+# Owner-reviewable staging SQL generator (staging table ONLY; never production)
+# ============================================================================
+
+# Columns the generator emits for an INSERT into catalog_extraction_staging.
+# Mirrors StagingRow.to_dict() / the staging migration (20260527000004).
+# created_by_role, extracted_at default, hitl_* and id are deliberately OMITTED
+# so the table DEFAULTs fire (created_by_role -> 'agent_service_role',
+# hitl_status -> 'pending', id -> gen_random_uuid()).
+_STAGING_SQL_COLUMNS = (
+    'source_zotero_key',
+    'source_attachment_path',
+    'extraction_pass_id',
+    'extraction_pass_started_at',
+    'extraction_pass_finished_at',
+    'extracted_at',
+    'proposed_kind',
+    'proposed_payload',
+    'confidence',
+    'extraction_notes',
+    'extraction_model',
+)
+
+
+def _dollar_quote(s: str) -> str:
+    """Return s as a Postgres dollar-quoted string literal with a safe tag.
+
+    Dollar quoting sidesteps single-quote escaping entirely, so arbitrary text
+    (including quotes, backslashes, JSON) is injection-safe. The tag is chosen
+    so it does not appear in the content.
+    """
+    for tag in ('$cat$', '$cat0$', '$cat1$', '$catx$', '$catalog_sql$'):
+        if tag not in s:
+            return f'{tag}{s}{tag}'
+    # Extremely unlikely fallback: build a tag guaranteed absent.
+    n = 0
+    while True:
+        tag = f'$cat{n}x$'
+        if tag not in s:
+            return f'{tag}{s}{tag}'
+        n += 1
+
+
+def _sql_text(value: Any) -> str:
+    """SQL literal for a TEXT column: NULL or a dollar-quoted string."""
+    if value is None:
+        return 'NULL'
+    return _dollar_quote(str(value))
+
+
+def _sql_ts(value: Any, cast: str) -> str:
+    """SQL literal for a UUID / TIMESTAMPTZ column: NULL or quoted + cast."""
+    if value is None:
+        return 'NULL'
+    return f'{_dollar_quote(str(value))}::{cast}'
+
+
+def _sql_numeric(value: Any) -> str:
+    """SQL literal for a NUMERIC column: NULL or a bare number."""
+    if value is None:
+        return 'NULL'
+    return repr(float(value))
+
+
+def _sql_jsonb(value: Any) -> str:
+    """SQL literal for a JSONB column: dollar-quoted JSON text + ::jsonb."""
+    return f'{_dollar_quote(json.dumps(value, ensure_ascii=True))}::jsonb'
+
+
+def _row_summary(row: dict) -> str:
+    """One-line human summary of a proposal row for the SQL review header."""
+    payload = row.get('proposed_payload') or {}
+    kind = row.get('proposed_kind', '?')
+    label = (
+        payload.get('display_name')
+        or payload.get('substance_key')
+        or payload.get('lead_set_id')
+        or payload.get('parameter_value_id')
+        or '(no label)'
+    )
+    value = payload.get('value')
+    excerpt = str(payload.get('source_excerpt', '')).replace('\n', ' ')
+    if len(excerpt) > 80:
+        excerpt = excerpt[:77] + '...'
+    parts = [f'{kind}: {label}']
+    if value is not None:
+        parts.append(f'value={value}')
+    if excerpt:
+        parts.append(f'excerpt="{excerpt}"')
+    return ' | '.join(parts)
+
+
+def generate_staging_sql(
+    proposals_path: 'str | Path',
+    out_sql_path: 'str | Path',
+) -> int:
+    """Read a proposals JSON file and emit owner-reviewable INSERT statements.
+
+    The generated SQL targets ONLY public.catalog_extraction_staging. Each row
+    is inserted with hitl_status defaulting to 'pending'. The generator NEVER
+    emits INSERTs into the production tables (promoted_parameter_values,
+    catalog_evidence_items, source_lead_triage) -- promotion is the exclusive
+    job of the catalog_approve_staging_row RPC under HITL authority. The owner
+    pastes this file into the Supabase SQL Editor to load the pending rows, then
+    reviews each in the CatalogStagingReview UI and approves selected rows via
+    the RPC.
+
+    Values are emitted as dollar-quoted literals (injection-safe), with explicit
+    ::uuid / ::timestamptz / ::jsonb casts. The proposed_payload is a JSONB
+    literal carrying the full proposal (including provenance keys).
+
+    Returns the number of INSERT statements written.
+    """
+    proposals_path = Path(proposals_path)
+    out_sql_path = Path(out_sql_path)
+
+    rows = json.loads(proposals_path.read_text(encoding='utf-8'))
+    if not isinstance(rows, list):
+        raise ValueError(
+            f'Proposals file at {proposals_path} is not a JSON array; '
+            f'found {type(rows).__name__}.'
+        )
+
+    lines: list[str] = [
+        '-- =====================================================================',
+        '-- Catalog staging proposals -- paste into the Supabase Studio SQL Editor.',
+        f'-- Generated from: {proposals_path.name}',
+        f'-- Proposal rows: {len(rows)}',
+        '--',
+        '-- These INSERTs target ONLY public.catalog_extraction_staging. Every row',
+        "-- lands with hitl_status = 'pending'. Nothing is promoted to a production",
+        '-- table here. After pasting, review each row in the CatalogStagingReview',
+        '-- UI (admin) and approve the ones you accept; approval calls',
+        '-- catalog_approve_staging_row(id, notes), which promotes the payload into',
+        '-- the target table (promoted_parameter_values / catalog_evidence_items /',
+        '-- source_lead_triage) under your HITL authority. AI never approves.',
+        '-- =====================================================================',
+        '',
+        'BEGIN;',
+        '',
+    ]
+
+    for i, row in enumerate(rows, start=1):
+        values = {
+            'source_zotero_key': _sql_text(row.get('source_zotero_key')),
+            'source_attachment_path': _sql_text(row.get('source_attachment_path')),
+            'extraction_pass_id': _sql_ts(row.get('extraction_pass_id'), 'uuid'),
+            'extraction_pass_started_at': _sql_ts(
+                row.get('extraction_pass_started_at'), 'timestamptz'),
+            'extraction_pass_finished_at': _sql_ts(
+                row.get('extraction_pass_finished_at'), 'timestamptz'),
+            'extracted_at': _sql_ts(row.get('extracted_at'), 'timestamptz'),
+            'proposed_kind': _sql_text(row.get('proposed_kind')),
+            'proposed_payload': _sql_jsonb(row.get('proposed_payload') or {}),
+            'confidence': _sql_numeric(row.get('confidence')),
+            'extraction_notes': _sql_text(row.get('extraction_notes')),
+            'extraction_model': _sql_text(row.get('extraction_model')),
+        }
+        col_list = ', '.join(_STAGING_SQL_COLUMNS)
+        val_list = ',\n    '.join(values[c] for c in _STAGING_SQL_COLUMNS)
+        lines.append(f'-- Row {i}: {_row_summary(row)}')
+        lines.append(
+            f'INSERT INTO public.catalog_extraction_staging ({col_list})\n'
+            f'VALUES (\n    {val_list}\n);'
+        )
+        lines.append('')
+
+    lines.append('COMMIT;')
+    lines.append('')
+
+    out_sql_path.parent.mkdir(parents=True, exist_ok=True)
+    out_sql_path.write_text('\n'.join(lines), encoding='utf-8')
+    return len(rows)
 
 
 # ============================================================================
@@ -542,9 +782,12 @@ __all__ = [
     'PROPOSED_KIND_VALUES',
     'HITL_STATUS_VALUES',
     'AGENT_PRINCIPAL',
+    'PAYLOAD_REQUIRED_KEYS',
+    'PROVENANCE_REQUIRED_KEYS',
     'StagingRow',
     'build_staging_row',
     'save_proposals',
+    'generate_staging_sql',
     'get_page_count',
     'configure_docling_converter',
     'extract_tables_from_pdf',
