@@ -23,7 +23,10 @@ passing the rendered prompt to claude -p.
      Write ONLY to the local JSON proposals file. The owner imports approved rows to
      Supabase manually.
    - NEVER mutate src/data/* (Tier 2 protected).
-   - NEVER commit to main. Only feat/stream-d-catalog-agent-scaffold.
+   - NEVER commit to main, and NEVER switch branches. You start on branch
+     `$ExpectedBranch` (wrapper-injected) -- commit ONLY to that branch. If
+     `git rev-parse --abbrev-ref HEAD` is not `$ExpectedBranch`, stop and emit
+     COMPLETED_RED without committing.
    - NEVER use `git add .` or `git add -A` or `git add -u`. Path-scoped staging only.
    - Plain ASCII only (code point <= 127). No em-dashes, no smart quotes, no Unicode arrows.
    - Honor sentinels (.tmp/CATALOG_EXTRACTION_STOP, _PAUSE, _PRIORITY_BOOST) between items.
@@ -37,14 +40,18 @@ passing the rendered prompt to claude -p.
 
 ## Mandatory reading
 
-Read these files before doing any extraction work. Read them in order.
+Read these files before doing any extraction work. Read them in order. Paths in
+items 2-5 are RELATIVE to your working directory, which the wrapper pins to THIS
+worktree's repo root -- read the worktree's own copies, NOT the shared
+C:/Projects/SSTAC-Dashboard checkout (reading the shared checkout would desync
+your context and break worktree isolation).
 
-1. C:/Projects/CLAUDE.md (L0 cross-project rules)
-2. C:/Projects/SSTAC-Dashboard/CLAUDE.md (L1 dashboard rules)
-3. C:/Projects/SSTAC-Dashboard/CATALOG_EXTRACTION_HANDOFF.md (state + immediate actions)
-4. C:/Projects/SSTAC-Dashboard/scripts/catalog-overnight/catalog_extraction_progress.json
+1. C:/Projects/CLAUDE.md (L0 cross-project rules; this one is genuinely shared)
+2. ./CLAUDE.md (L1 dashboard rules)
+3. ./CATALOG_EXTRACTION_HANDOFF.md (state + immediate actions)
+4. ./scripts/catalog-overnight/catalog_extraction_progress.json
    (queue state; which items are completed, errored, or in-progress)
-5. C:/Projects/SSTAC-Dashboard/scripts/catalog-overnight/catalog_manifest.csv
+5. ./scripts/catalog-overnight/catalog_manifest.csv
    (full work item list; you will filter to pending items)
 
 ---
@@ -259,6 +266,9 @@ string replacements in this file before passing it to `claude -p`:
 - `$PRIORITY_BOOST_NOTE` -> a priority-boost note if the boost sentinel is present, else empty.
 - `$DRY_RUN_NOTE` -> the run-mode instruction: on -DryRun, an explicit no-write/no-commit
   directive; otherwise a normal-run note. Branched on in Step 3d and Step 4.
+- `$ExpectedBranch` -> the worktree's current git branch (resolved by the wrapper via
+  `git rev-parse --abbrev-ref HEAD`); the branch-guard hard constraint uses it. The
+  wrapper refuses to launch on `main` or a detached HEAD.
 
 Never use extended ISO format timestamps (`2026-05-28T23:05:30Z`) in filenames. Colons
 are reserved characters in Windows paths and will cause silent write failures.

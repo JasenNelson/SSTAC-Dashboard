@@ -67,6 +67,14 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Tracks whether a terminal breadcrumb (COMPLETED_GREEN / COMPLETED_RED /
+# STALLED / SILENT_BAIL) has been emitted, so we emit EXACTLY ONE on every exit
+# path -- including unexpected throws in the pre-spawn region (archive,
+# substitution, spawn) that are not inside the watchdog try/catch. The
+# script-level trap below is the backstop.
+$script:TerminalEmitted = $false
+$TerminalStatuses = @('COMPLETED_GREEN', 'COMPLETED_RED', 'STALLED', 'SILENT_BAIL')
+
 # ----- Resolve paths ---------------------------------------------------------
 
 $ScriptDir = $PSScriptRoot
@@ -120,7 +128,24 @@ function Write-PsBreadcrumb {
     }
     $crumbFile = Join-Path $BreadcrumbDir "$PassId-$nowSafe-ps.json"
     $crumb | ConvertTo-Json -Depth 6 | Set-Content -Path $crumbFile -Encoding utf8
+    if ($TerminalStatuses -contains $Status) {
+        $script:TerminalEmitted = $true
+    }
     return $crumbFile
+}
+
+# ----- Backstop trap: guarantee exactly one terminal breadcrumb -------------
+# Any unhandled terminating error (e.g., a throw in the archive / substitution /
+# spawn region that precedes the watchdog try/catch) lands here. Emit a single
+# COMPLETED_RED if none was emitted yet, then exit non-zero. The watchdog
+# catch's own `throw` also reaches here, but by then TerminalEmitted is already
+# true, so no second breadcrumb is written.
+trap {
+    if (-not $script:TerminalEmitted) {
+        Write-PsBreadcrumb -Status 'COMPLETED_RED' `
+            -Note ("unhandled wrapper error: " + $_.Exception.Message) | Out-Null
+    }
+    exit 1
 }
 
 # ----- Pre-flight (round 1) -------------------------------------------------
@@ -197,6 +222,22 @@ if (Test-Path $SentinelPause) {
 $promptTemplate = Get-Content -Raw -LiteralPath $StarterPromptFile
 $boostNote = if ($priorityBoost) { 'PRIORITY_BOOST sentinel detected; owner has flagged this pass as priority.' } else { '' }
 
+# Resolve the worktree's current branch so the prompt's "only commit to this
+# branch" guard is dynamic, not a hard-coded (and easily stale) branch name.
+try {
+    $ExpectedBranch = (& git -C $RepoRoot rev-parse --abbrev-ref HEAD).Trim()
+} catch {
+    $ExpectedBranch = ''
+}
+if ([string]::IsNullOrWhiteSpace($ExpectedBranch) -or $ExpectedBranch -eq 'HEAD') {
+    Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note "could not resolve current git branch in $RepoRoot (detached HEAD or not a repo); refusing to launch" | Out-Null
+    exit 1
+}
+if ($ExpectedBranch -eq 'main') {
+    Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note "refusing to launch on 'main'; the worker must run on a feature branch" | Out-Null
+    exit 1
+}
+
 # -DryRun must reach the worker, not just the breadcrumb. The $DRY_RUN_NOTE
 # marker expands to an explicit no-write/no-commit instruction the prompt's
 # Step 3/Step 4 branch on; when not a dry run it expands to a normal-run note.
@@ -211,7 +252,8 @@ $prompt = $promptTemplate `
     -replace '\$YYYYMMDDTHHMMSSZ', $StartIsoSafe `
     -replace '\$N\b', $MaxItems.ToString() `
     -replace '\$PRIORITY_BOOST_NOTE', $boostNote `
-    -replace '\$DRY_RUN_NOTE', $dryRunNote
+    -replace '\$DRY_RUN_NOTE', $dryRunNote `
+    -replace '\$ExpectedBranch', $ExpectedBranch
 
 # ----- STARTED breadcrumb ---------------------------------------------------
 

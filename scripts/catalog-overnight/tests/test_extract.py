@@ -765,6 +765,38 @@ def test_generate_staging_sql_is_injection_safe(tmp_path: Path):
     assert 'NULL' in sql
 
 
+def test_generate_staging_sql_comment_injection_is_neutralized(tmp_path: Path):
+    """Newlines / control chars in payload text must not break out of the `--`
+    review-comment line and inject executable SQL into the packet."""
+    payload = _parameter_value_payload()
+    payload['display_name'] = "BaP\r\nCOMMIT;\nDROP TABLE public.catalog_extraction_staging;--"
+    payload['source_excerpt'] = "line1\nline2\rline3"
+    row = extract.build_staging_row(
+        zotero_key='ZK', attachment_path=None,
+        pass_id=uuid.uuid4(), pass_started_at=datetime.now(timezone.utc),
+        proposal={
+            'proposed_kind': 'parameter_value',
+            'proposed_payload': payload,
+            'confidence': 0.5,
+            'extraction_notes': None,
+        },
+        extraction_model='claude-opus-4-8',
+    )
+    proposals = _write_proposals(tmp_path, [row])
+    sql_path = tmp_path / 'passX.sql'
+    extract.generate_staging_sql(proposals, sql_path)
+    sql = sql_path.read_text(encoding='utf-8')
+    # Every comment line stays a comment: no line starts with the injected DROP.
+    for line in sql.splitlines():
+        assert not line.lstrip().startswith('DROP TABLE'), f'comment broke out: {line!r}'
+        assert not line.lstrip().startswith('COMMIT;') or line.strip() == 'COMMIT;', (
+            f'injected COMMIT leaked as a statement: {line!r}'
+        )
+    # The DROP text still exists, but only inside the dollar-quoted JSONB payload.
+    assert 'DROP TABLE' in sql
+    assert sql.count('INSERT INTO public.catalog_extraction_staging') == 1
+
+
 def test_generate_staging_sql_rejects_non_array(tmp_path: Path):
     bad = tmp_path / 'bad.json'
     bad.write_text('{"not": "an array"}', encoding='utf-8')

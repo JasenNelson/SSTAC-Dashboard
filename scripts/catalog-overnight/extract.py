@@ -536,7 +536,11 @@ def save_proposals(rows: Sequence[StagingRow], out_path: 'str | Path') -> int:
                 )
         if quarantine_reason:
             stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
-            quarantine = out_path.with_name(f'{out_path.name}.corrupt-{stamp}')
+            # pid + random suffix so two corruptions in the same second do not
+            # overwrite each other's quarantine file.
+            quarantine = out_path.with_name(
+                f'{out_path.name}.corrupt-{stamp}.{os.getpid()}-{uuid.uuid4().hex[:8]}'
+            )
             os.replace(out_path, quarantine)
             existing = []
 
@@ -560,9 +564,10 @@ def save_proposals(rows: Sequence[StagingRow], out_path: 'str | Path') -> int:
 
 # Columns the generator emits for an INSERT into catalog_extraction_staging.
 # Mirrors StagingRow.to_dict() / the staging migration (20260527000004).
-# created_by_role, extracted_at default, hitl_* and id are deliberately OMITTED
-# so the table DEFAULTs fire (created_by_role -> 'agent_service_role',
-# hitl_status -> 'pending', id -> gen_random_uuid()).
+# extracted_at IS emitted (the row's real extraction time, more useful than the
+# now() default). id, hitl_* and created_by_role are deliberately OMITTED so the
+# table DEFAULTs fire (id -> gen_random_uuid(), hitl_status -> 'pending',
+# created_by_role -> 'agent_service_role').
 _STAGING_SQL_COLUMNS = (
     'source_zotero_key',
     'source_attachment_path',
@@ -623,27 +628,42 @@ def _sql_jsonb(value: Any) -> str:
     return f'{_dollar_quote(json.dumps(value, ensure_ascii=True))}::jsonb'
 
 
+def _one_line(value: Any, limit: int = 100) -> str:
+    """Collapse arbitrary text to a single safe line for a SQL `--` comment.
+
+    Strips ALL control characters (including CR / LF) and collapses runs of
+    whitespace. This is a SECURITY control, not cosmetics: a `--` comment runs
+    to end-of-line, so an un-stripped newline in payload-derived comment text
+    would terminate the comment and turn the rest of the line into executable
+    SQL in the packet the owner pastes into the SQL Editor.
+    """
+    s = re.sub(r'[\x00-\x1f\x7f]', ' ', str(value))
+    s = re.sub(r'\s+', ' ', s).strip()
+    if len(s) > limit:
+        s = s[:limit - 3] + '...'
+    return s
+
+
 def _row_summary(row: dict) -> str:
-    """One-line human summary of a proposal row for the SQL review header."""
+    """One-line, control-char-stripped human summary for the SQL review header."""
     payload = row.get('proposed_payload') or {}
-    kind = row.get('proposed_kind', '?')
-    label = (
+    kind = _one_line(row.get('proposed_kind', '?'), 40)
+    label = _one_line(
         payload.get('display_name')
         or payload.get('substance_key')
         or payload.get('lead_set_id')
         or payload.get('parameter_value_id')
-        or '(no label)'
+        or '(no label)',
+        80,
     )
-    value = payload.get('value')
-    excerpt = str(payload.get('source_excerpt', '')).replace('\n', ' ')
-    if len(excerpt) > 80:
-        excerpt = excerpt[:77] + '...'
     parts = [f'{kind}: {label}']
-    if value is not None:
-        parts.append(f'value={value}')
+    if payload.get('value') is not None:
+        parts.append(f'value={_one_line(payload.get("value"), 40)}')
+    excerpt = _one_line(payload.get('source_excerpt', ''), 80)
     if excerpt:
         parts.append(f'excerpt="{excerpt}"')
-    return ' | '.join(parts)
+    # Final guard: the joined summary must itself be a single line.
+    return _one_line(' | '.join(parts), 240)
 
 
 def generate_staging_sql(
