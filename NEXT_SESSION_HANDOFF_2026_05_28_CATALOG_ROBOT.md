@@ -106,4 +106,31 @@ Result: only meaningful `main` changes build, once. (A handoff `*.md` push like 
 
 ---
 
-*Authored 2026-05-28 ~end of session (continued past 00:00 UTC 2026-05-29). Process check: 0 orphaned catalog workers. origin/main @ 91b2c18; catalog rewire local on feat/stream-d-catalog-agent-scaffold @ 8fba56c.*
+## Catalog rewire -- independent review findings (Opus adversarial, 2026-05-28). VERDICT: YELLOW
+
+Core rewire sound (DB path cleanly removed; `save_proposals` atomic; `to_dict` serializes all 11 staging columns JSON-safely; tests real; `-WorkingDirectory` fix correct). Fix these before an autonomous run:
+
+- **BLOCKER B1 -- `-DryRun` is a silent no-op.** The DSN-load gate was removed but `$DryRun` is no longer passed to the worker (no `$DryRun` prompt marker, no no-write branch). So `-DryRun -MaxItems 1` (the documented smoke recipe) would WRITE real proposals. Fix: wire a `$DryRun` marker into the starter prompt with an explicit no-write branch, or remove `-DryRun`.
+- **I1 -- provenance dropped.** Starter prompt asks the agent for `source_excerpt` (verbatim grounding) + `source_doc_id`, but `build_staging_row` reads only proposed_kind/payload/confidence/extraction_notes -- those fields are discarded unless nested in `proposed_payload`. The HITL review needs the excerpt; reconcile prompt<->library.
+- **I2 -- corrupt-file path.** `save_proposals` does `json.loads(existing)` with no try/except; a malformed/truncated file raises uncaught (the non-array case IS handled -- inconsistent). Add handling + test.
+- **I3 -- README stale.** `scripts/catalog-overnight/README.md` still documents the Supabase/DSN/StagingWriter/Credential-Manager flow + "24 tests" -- now wrong; update in the same change that lands the rewire.
+- **MINORs:** `proposals/` not gitignored (the run's only output is never version-controlled; `.tmp` clutter); `extraction_model` value is never specified to the agent (migration comment still says "Ollama"); manifest points Docling at a `G:\` path (read-only input, acceptable).
+
+**Headless blockers CONFIRMED + scoped:** (1) wrapper lacks `--dangerously-skip-permissions` (primary -- worker can't run tools headlessly -> narrates -> SILENT_BAIL); (2) the SessionStart `/codex-review` hook in `C:\Users\jasen\.claude\settings.json` (matcher `startup|resume`) injects a BLOCKING "ask the user first" instruction that paralyzes a no-human `-p` session. **Fix-path (a) is NECESSARY BUT NOT SUFFICIENT.**
+
+**Full list to make the robot run autonomously + safely (do all before relying on it):**
+1. Add `--dangerously-skip-permissions` (or a curated `--allowedTools` allowlist -- safer) to the wrapper's `claude -p` ArgumentList.
+2. Bypass the SessionStart codex-review hook for `-p`/headless sessions.
+3. Make `-DryRun` actually skip the write (B1).
+4. Reconcile `source_excerpt`/`source_doc_id` between prompt and `build_staging_row` (I1).
+5. Handle a corrupt pre-existing proposals file + test (I2).
+6. Update README + the migration "Ollama" comment + the DryRun docstring (I3, M2).
+7. Add a venv pre-flight to the wrapper (does `.venv/Scripts/python.exe` with docling exist?) before spawn.
+8. Run the worker in a DEDICATED worktree per L0 1.15 (it currently commits in the shared checkout -- the exact hazard the rule guards against). Note `--dangerously-skip-permissions` WIDENS the no-commit-to-main/path-scoped risk, which is currently only instructed, not enforced.
+9. Decide gitignore policy for `proposals/` (M1).
+
+(The same review brief is also captured for the owner to run in the Codex desktop app; reconcile the two verdicts next session.)
+
+---
+
+*Authored 2026-05-28 ~end of session (continued past 00:00 UTC 2026-05-29). Process check: 0 orphaned catalog workers. origin/main @ 91b2c18 (handoff push -> 189ec3b); catalog rewire local on feat/stream-d-catalog-agent-scaffold @ 8fba56c. Opus adversarial review of the rewire: YELLOW (findings above).*
