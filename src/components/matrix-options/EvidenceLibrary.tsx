@@ -2845,8 +2845,23 @@ export default function EvidenceLibrary({
     setTriageRefreshKey((k) => k + 1);
   };
 
-  const library = useMemo(() => buildEvidenceLibraryView(filters), [filters]);
-  const baselineLibrary = useMemo(() => buildEvidenceLibraryView(), []);
+  // Promoted (approved canonical) records are hydrated from Supabase into the store; merge
+  // them into the Evidence Library view so they join the main By-Parameter/Values tables
+  // (with pathway, weighting-modifier, and jurisdiction rendering) instead of only the
+  // "Promoted candidates" side panel.
+  const candidates = usePromotedCandidatesStore((state) => state.candidates);
+  const promotedRecords = useMemo(
+    () => Object.values(candidates),
+    [candidates],
+  );
+  const library = useMemo(
+    () => buildEvidenceLibraryView(filters, promotedRecords),
+    [filters, promotedRecords],
+  );
+  const baselineLibrary = useMemo(
+    () => buildEvidenceLibraryView(undefined, promotedRecords),
+    [promotedRecords],
+  );
   const defaultPolicyDecisions = useMemo(() => {
     const decisions = new Map<string, DefaultSelectionPolicyDecision>();
 
@@ -2881,7 +2896,7 @@ export default function EvidenceLibrary({
     () =>
       QUICK_REVIEW_FILTERS.map((filter) => {
         const savedFilters = createEvidenceLibraryFilters(filter.request);
-        const savedLibrary = buildEvidenceLibraryView(savedFilters);
+        const savedLibrary = buildEvidenceLibraryView(savedFilters, promotedRecords);
         return {
           ...filter,
           filters: savedFilters,
@@ -2890,7 +2905,7 @@ export default function EvidenceLibrary({
           ),
         };
       }),
-    [],
+    [promotedRecords],
   );
   const protocol28Summary = useMemo(() => buildProtocol28ReviewSummary(), []);
   const activeLabels = [
