@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Search, SlidersHorizontal, X } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
 import type { PromotedParameterValueRecord } from '@/lib/matrix-options/provenance/promotion';
@@ -88,9 +88,10 @@ interface EvidenceLibraryProps {
 // Jurisdictional Frameworks tab, source leads fold into Sources, and Assumptions duplicated
 // Values. The underlying view-mode branches remain for internal/quick-filter use.
 const VIEW_MODES: Array<{ id: EvidenceLibraryViewMode; label: string }> = [
-  { id: 'values', label: 'Values' },
-  // Labelled "References" (not "Sources") to match the tab title "References & Values".
+  // Ordered References then Values to match the tab title "References & Values".
+  // (Values remains the default-selected view -- see the useState default.)
   { id: 'sources', label: 'References' },
+  { id: 'values', label: 'Values' },
 ];
 
 type FilterArrayKey = {
@@ -545,6 +546,123 @@ function FilterSelect({
         ))}
       </select>
     </label>
+  );
+}
+
+type FilterControl = {
+  key: FilterArrayKey;
+  label: string;
+  options: EvidenceLibraryFacetOption[];
+};
+
+// Collapses the filter dropdowns behind a single "Filters" button so they do not consume the
+// side panel. Primary filters are always shown when open; the QA/review workflow filters sit
+// under a collapsible "Advanced" section. Closes on click-outside or Escape.
+function FilterPopover({
+  primaryControls,
+  advancedControls,
+  filters,
+  onUpdate,
+  activeCount,
+  onClearAll,
+}: {
+  primaryControls: FilterControl[];
+  advancedControls: FilterControl[];
+  filters: EvidenceLibraryFilters;
+  onUpdate: (key: FilterArrayKey, value: string) => void;
+  activeCount: number;
+  onClearAll: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocMouseDown = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocMouseDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        data-testid="evidence-library-filter-button"
+        className="flex w-full items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700"
+      >
+        <span className="inline-flex items-center gap-1.5">
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          Filters
+          {activeCount > 0 && (
+            <span className="rounded-full bg-sky-600 px-1.5 py-0.5 text-[10px] font-bold text-white dark:bg-sky-500">
+              {activeCount}
+            </span>
+          )}
+        </span>
+        <ChevronDown
+          className={cn('h-4 w-4 transition-transform', open && 'rotate-180')}
+        />
+      </button>
+      {open && (
+        <div
+          className="absolute left-0 right-0 z-20 mt-1 rounded-md border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+          data-testid="evidence-library-filter-popover"
+        >
+          <div className="grid gap-3">
+            {primaryControls.map((control) => (
+              <FilterSelect
+                key={control.key}
+                label={control.label}
+                value={firstValue(filters, control.key)}
+                options={control.options}
+                onChange={(value) => onUpdate(control.key, value)}
+              />
+            ))}
+          </div>
+          {advancedControls.length > 0 && (
+            <details className="mt-3 border-t border-slate-200 pt-2 dark:border-slate-800">
+              <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Advanced ({advancedControls.length})
+              </summary>
+              <div className="mt-2 grid gap-3">
+                {advancedControls.map((control) => (
+                  <FilterSelect
+                    key={control.key}
+                    label={control.label}
+                    value={firstValue(filters, control.key)}
+                    options={control.options}
+                    onChange={(value) => onUpdate(control.key, value)}
+                  />
+                ))}
+              </div>
+            </details>
+          )}
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={onClearAll}
+              className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear all
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -3041,24 +3159,14 @@ export default function EvidenceLibrary({
   }> =
     viewMode === 'sources'
       ? [
+          // Lean source filter set (Tier / Canonical status / Zotero / Policy alignment
+          // dropped as workflow clutter).
           { key: 'authorityScopes', label: 'Authority', options: library.facets.authorityScopes },
-          { key: 'sourceAuthorityTiers', label: 'Tier', options: library.facets.sourceAuthorityTiers },
           { key: 'sourceRoles', label: 'Source role', options: library.facets.sourceRoles },
-          {
-            key: 'canonicalSourceStatuses',
-            label: 'Canonical status',
-            options: library.facets.canonicalSourceStatuses,
-          },
           {
             key: 'currentnessStatuses',
             label: 'Currentness',
             options: library.facets.currentnessStatuses,
-          },
-          { key: 'zoteroStatuses', label: 'Zotero', options: library.facets.zoteroStatuses },
-          {
-            key: 'bcProtocolAlignments',
-            label: 'Policy alignment',
-            options: library.facets.bcProtocolAlignments,
           },
         ]
       : viewMode === 'equations'
@@ -3080,77 +3188,77 @@ export default function EvidenceLibrary({
               { key: 'sourceRoles', label: 'Source role', options: library.facets.sourceRoles },
             ]
           : [
-              { key: 'pathways', label: 'Pathway', options: library.facets.pathways },
+              // Lean, browse-oriented filter set. The status / scaffold dimensions
+              // (evidence support, default status, QA, extraction, policy alignment,
+              // receptor/population/species) were removed from the dropdowns -- they are
+              // QA-workflow jargon; that filtering is still reachable via the audit-strip
+              // shortcuts and saved views, which set those filters programmatically.
               { key: 'substanceKeys', label: 'Substance', options: library.facets.substances },
-              { key: 'inputKeys', label: 'Input', options: library.facets.inputKeys },
-              { key: 'evidenceSupportStatuses', label: 'Evidence', options: library.facets.evidenceSupportStatuses },
-              { key: 'defaultStatuses', label: 'Default', options: library.facets.defaultStatuses },
-              { key: 'qaStatuses', label: 'QA', options: library.facets.qaStatuses },
-              { key: 'extractionStatuses', label: 'Extraction', options: library.facets.extractionStatuses },
+              { key: 'pathways', label: 'Pathway', options: library.facets.pathways },
+              { key: 'inputKeys', label: 'Parameter', options: library.facets.inputKeys },
               { key: 'jurisdictions', label: 'Jurisdiction', options: library.facets.jurisdictions },
-              {
-                key: 'bcProtocolAlignments',
-                label: 'Policy alignment',
-                options: library.facets.bcProtocolAlignments,
-              },
-              { key: 'receptorGroups', label: 'Receptor', options: library.facets.receptorGroups },
-              { key: 'populationGroups', label: 'Population', options: library.facets.populationGroups },
-              { key: 'speciesGroups', label: 'Species', options: library.facets.speciesGroups },
             ];
+
+  // Split into the handful of primary filters (always shown in the popover) and the
+  // QA/review workflow filters (tucked under "Advanced"). Keeps the side panel uncluttered.
+  const primaryFilterKeys: ReadonlySet<FilterArrayKey> =
+    viewMode === 'sources'
+      ? new Set<FilterArrayKey>(['authorityScopes', 'sourceRoles', 'currentnessStatuses'])
+      : new Set<FilterArrayKey>(['substanceKeys', 'pathways', 'inputKeys', 'jurisdictions']);
+  const primaryFilterControls = filterControls.filter((control) =>
+    primaryFilterKeys.has(control.key),
+  );
+  const advancedFilterControls = filterControls.filter(
+    (control) => !primaryFilterKeys.has(control.key),
+  );
 
   // The filter grid is shared: it lives in the left panel on desktop, and falls back to the
   // center column when the left panel is unavailable (mobile, where the parent forces both
   // side panels closed, or when the user toggles the left panel off). Rendered in exactly one
   // place at a time so there is no duplicate mount.
   const filtersBlock = (
-    <div
-      className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
-      data-testid="evidence-library-filters"
-    >
-      <div className="grid gap-3">
-        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
-          <span className="mb-1 block">Search</span>
-          <span className="relative block">
-            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-            <input
-              value={filters.search}
-              onChange={(event) =>
-                onFiltersChange({ ...filters, search: event.target.value })
-              }
-              className="w-full rounded-md border border-slate-300 bg-white py-2 pl-8 pr-2 text-sm text-slate-800 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            />
-          </span>
-        </label>
-        {filterControls.map((control) => (
-          <FilterSelect
-            key={control.key}
-            label={control.label}
-            value={firstValue(filters, control.key)}
-            options={control.options}
-            onChange={(value) => updateFilter(control.key, value)}
+    <div className="space-y-3" data-testid="evidence-library-filters">
+      {/* Search stays always-visible. */}
+      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+        <span className="mb-1 block">Search</span>
+        <span className="relative block">
+          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+          <input
+            value={filters.search}
+            onChange={(event) =>
+              onFiltersChange({ ...filters, search: event.target.value })
+            }
+            className="w-full rounded-md border border-slate-300 bg-white py-2 pl-8 pr-2 text-sm text-slate-800 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           />
-        ))}
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {activeLabels.map((label) => (
-          <span
-            key={label}
-            className="rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-          >
-            {label}
-          </span>
-        ))}
-        {activeLabels.length > 0 && (
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-          >
-            <X className="h-3.5 w-3.5" />
-            Clear
-          </button>
-        )}
-      </div>
+        </span>
+      </label>
+
+      {/* All dropdown filters collapse behind this button. */}
+      <FilterPopover
+        primaryControls={primaryFilterControls}
+        advancedControls={advancedFilterControls}
+        filters={filters}
+        onUpdate={updateFilter}
+        activeCount={activeLabels.length}
+        onClearAll={clearFilters}
+      />
+
+      {/* Active filters at a glance. */}
+      {activeLabels.length > 0 && (
+        <div
+          className="flex flex-wrap gap-1.5"
+          data-testid="evidence-library-active-filters"
+        >
+          {activeLabels.map((label) => (
+            <span
+              key={label}
+              className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 
