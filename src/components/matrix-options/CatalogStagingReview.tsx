@@ -36,6 +36,7 @@ import { ChevronRight } from 'lucide-react';
 import {
   listPendingStagingRows as defaultListPendingStagingRows,
   approveStagingRow as defaultApproveStagingRow,
+  approveAllPendingStagingRows as defaultApproveAllPendingStagingRows,
   rejectStagingRow as defaultRejectStagingRow,
   type CatalogStagingRow,
 } from '@/lib/catalog/staging';
@@ -54,6 +55,8 @@ export interface CatalogStagingReviewProps {
   listPendingStagingRowsFn?: typeof defaultListPendingStagingRows;
   /** Optional override for approveStagingRow (tests). */
   approveStagingRowFn?: typeof defaultApproveStagingRow;
+  /** Optional override for approveAllPendingStagingRows (tests). */
+  approveAllPendingStagingRowsFn?: typeof defaultApproveAllPendingStagingRows;
   /** Optional override for rejectStagingRow (tests). */
   rejectStagingRowFn?: typeof defaultRejectStagingRow;
 }
@@ -137,6 +140,7 @@ export function CatalogStagingReview(props: CatalogStagingReviewProps) {
     initialExtractionPassId,
     listPendingStagingRowsFn = defaultListPendingStagingRows,
     approveStagingRowFn = defaultApproveStagingRow,
+    approveAllPendingStagingRowsFn = defaultApproveAllPendingStagingRows,
     rejectStagingRowFn = defaultRejectStagingRow,
   } = props;
 
@@ -152,6 +156,13 @@ export function CatalogStagingReview(props: CatalogStagingReviewProps) {
 
   // Selection state
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+
+  // Bulk-approve state (admin only). 'confirm' is a two-click guard before the
+  // (hard-to-undo) promotion of every pending row.
+  const [bulkPhase, setBulkPhase] = useState<'idle' | 'confirm' | 'running'>('idle');
+  const [bulkMessage, setBulkMessage] = useState<
+    { kind: 'ok'; text: string } | { kind: 'err'; text: string } | null
+  >(null);
 
   // Action state (admin only)
   const [actionMode, setActionMode] = useState<'approve' | 'reject' | null>(null);
@@ -213,6 +224,38 @@ export function CatalogStagingReview(props: CatalogStagingReviewProps) {
 
   const handleRefresh = useCallback(() => {
     setRefreshToken((n) => n + 1);
+  }, []);
+
+  const handleBulkApprove = useCallback(async () => {
+    if (bulkPhase === 'idle') {
+      setBulkMessage(null);
+      setBulkPhase('confirm');
+      return;
+    }
+    if (bulkPhase !== 'confirm') return;
+    setBulkPhase('running');
+    setBulkMessage(null);
+    try {
+      const result = await approveAllPendingStagingRowsFn({
+        hitlNotes: 'bulk approve from Catalog Staging Review',
+      });
+      setBulkMessage({
+        kind: 'ok',
+        text:
+          `Approved ${result.approved}; skipped ${result.skippedDuplicates} ` +
+          `duplicate(s); ${result.failed} failed.`,
+      });
+      setRefreshToken((n) => n + 1);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setBulkMessage({ kind: 'err', text: msg });
+    } finally {
+      setBulkPhase('idle');
+    }
+  }, [bulkPhase, approveAllPendingStagingRowsFn]);
+
+  const handleCancelBulk = useCallback(() => {
+    setBulkPhase('idle');
   }, []);
 
   const handleStartAction = useCallback((mode: 'approve' | 'reject') => {
@@ -341,6 +384,73 @@ export function CatalogStagingReview(props: CatalogStagingReviewProps) {
             </div>
           )}
         </div>
+
+        {isAdmin && (
+          <div className="mt-4 space-y-2" data-testid="staging-bulk-approve">
+            {bulkPhase !== 'confirm' ? (
+              <button
+                type="button"
+                onClick={handleBulkApprove}
+                disabled={bulkPhase === 'running'}
+                data-testid="staging-bulk-approve-button"
+                aria-label="Approve all pending staging rows"
+                className="w-full rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+              >
+                {bulkPhase === 'running'
+                  ? 'Approving all pending...'
+                  : 'Approve all pending'}
+              </button>
+            ) : (
+              <div
+                className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-2 dark:border-amber-800 dark:bg-amber-900/20"
+                data-testid="staging-bulk-confirm"
+              >
+                <p className="text-[11px] text-amber-800 dark:text-amber-200">
+                  Promote ALL pending staging rows (parameter values, evidence
+                  items, source leads) to production? The server approves every
+                  pending row, not only those shown here. Already-promoted
+                  duplicates are skipped. This cannot be undone here.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleBulkApprove}
+                    data-testid="staging-bulk-confirm-button"
+                    className="rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                  >
+                    Confirm bulk approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCancelBulk}
+                    data-testid="staging-bulk-cancel"
+                    className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+            {bulkMessage && (
+              <div
+                role="status"
+                data-testid={
+                  bulkMessage.kind === 'ok'
+                    ? 'staging-bulk-success'
+                    : 'staging-bulk-error'
+                }
+                className={
+                  'rounded border px-2 py-1 text-[11px] ' +
+                  (bulkMessage.kind === 'ok'
+                    ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+                    : 'border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300')
+                }
+              >
+                {bulkMessage.text}
+              </div>
+            )}
+          </div>
+        )}
       </aside>
 
       {/* --------------------------- Main panel: list ----------------------------- */}
