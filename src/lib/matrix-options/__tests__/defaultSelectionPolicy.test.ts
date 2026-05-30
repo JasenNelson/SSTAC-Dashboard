@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_SELECTION_READ_ONLY_INVARIANTS,
   buildDefaultSelectionPolicyDecision,
+  isUnitBlocked,
   type DefaultSelectionPolicyDecision,
 } from '../defaultSelectionPolicy';
 import { PARAMETER_VALUE_RECORDS } from '../provenance/catalog';
@@ -151,5 +152,35 @@ describe('matrix options default selection policy', () => {
       'pv-hc-pcb-hh-food-rfd-nondioxin',
     );
     expect(statusSnapshot(watchedIds)).toEqual(before);
+  });
+
+  it('exposes a unit-consistency assessment and does not block a comparable slot (A1 guard)', () => {
+    const decision = buildDefaultSelectionPolicyDecision({
+      frameId: 'bc-protocol1-v5-dra',
+      pathway: 'human-health-food',
+      substanceKey: 'total_pcbs_aroclor_1254',
+      inputKey: 'rfd_oral_mg_per_kg_bw_day',
+    });
+
+    // contract: the field is always present
+    expect(decision.unitConsistency).toBeDefined();
+    expect(Array.isArray(decision.unitConsistency.units)).toBe(true);
+    // this real slot's eligible candidates share a comparable dose base, so the
+    // A1 guard must NOT withhold the recommendation it would otherwise emit.
+    expect(decision.unitConsistency.comparable).toBe(true);
+    expect(decision.recommendedCandidate).not.toBeNull();
+    expect(decision.rationale).not.toMatch(/A1 unit guard/);
+  });
+
+  it('isUnitBlocked withholds only a multi-candidate, non-comparable recommendation (A1)', () => {
+    // fail-closed branch: would-be recommendation + >=2 eligible + not comparable
+    expect(isUnitBlocked(true, 2, false)).toBe(true);
+    expect(isUnitBlocked(true, 3, false)).toBe(true);
+    // never blocks: single candidate (nothing to compare)
+    expect(isUnitBlocked(true, 1, false)).toBe(false);
+    // never blocks: comparable slot
+    expect(isUnitBlocked(true, 2, true)).toBe(false);
+    // never blocks: no recommendation to withhold
+    expect(isUnitBlocked(false, 2, false)).toBe(false);
   });
 });

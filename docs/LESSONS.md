@@ -1578,11 +1578,67 @@ Implementing all 6 layers together is more effective than any single layer alone
 2. [2026-01-24 - Incremental Component Extraction Pattern](#2026-01-24---incremental-component-extraction-pattern-high) [HIGH - Phases 2-5 Complete]
 3. [2026-01-24 - Python Gitignore Rules Interfering with JavaScript Projects](#2026-01-24---python-gitignore-rules-interfering-with-javascript-projects-medium) [MEDIUM]
 4. [2026-01-25 - Multi-Layer Security Hardening Pattern](#2026-01-25---multi-layer-security-hardening-pattern-high) [HIGH]
+5. [2026-05-29 - Cross-Source Unit Normalization Fail-Closed Guard](#2026-05-29---cross-source-unit-normalization-fail-closed-guard-high) [HIGH]
 
 ---
 
-**Last Updated:** January 25, 2026 (Phase 2 Security Hardening Complete)
-**Lesson Count:** 1 critical, 2 high, 1 medium (deployment, security, architecture patterns)
+## 2026-05-29 - Cross-Source Unit Normalization Fail-Closed Guard [HIGH]
+
+**Date:** May 29, 2026
+**Area:** Architecture / Data Integrity (matrix-options TRV selection)
+**Impact:** HIGH (latent 1000x mis-selection)
+**Status:** Implemented (PR #191)
+
+### Problem or Discovery
+The Matrix Options catalog groups candidate TRVs per substance + pathway + input_key across
+sources (Protocol 1 sec 4.4 cross-source comparison). Different sources express the SAME quantity
+in different units: an inhalation RfC is "2e-05 mg/m3" from one source and "2E-2 ug/m3" from
+another (numerically identical, 1000x apart in raw magnitude); an inhalation unit risk (IUR) is
+"per ug/m3" vs "(mg/m3)-1" (a RECIPROCAL basis). Any value-based comparison (a future
+most-stringent / min / max default pick) across such a group would mis-rank by up to 1000x or
+invert a carcinogenic slope.
+
+### Root Cause or Context
+buildDefaultSelectionPolicyDecision currently ranks candidates ONLY by jurisdiction hierarchyRank
+(no value comparison yet), so the hazard is latent, not live -- but the catalog data deliberately
+co-groups incommensurate units (that grouping is correct for cross-source comparison). The risk is
+that a future value comparator runs on raw values without converting units first.
+
+### Solution or Pattern
+Fail-closed unit normalization at the single comparison boundary:
+1. normalizeToBase(value, unit) classifies dimension (air / dose / dimensionless) and forward vs
+   reciprocal FROM THE UNIT STRING (robust across legacy and canonical input_key vocab), converts
+   the mass prefix to a canonical base (mg), and INVERTS the factor for reciprocal quantities.
+   Returns null on any unrecognized/blank unit -- never guesses.
+2. Token-safe parsing: take the numerator only (before the first '/'), strip a leading 'per',
+   require an EXACT mass token -- so the 'g' inside a denominator 'kg' is never matched.
+3. assessSlotUnitConsistency reports comparable=true only when every unit is recognized AND all
+   share one base. The selection withholds its auto-recommendation (manual_decision_required)
+   when 2 or more eligible candidates are not provably comparable. Single-candidate and
+   already-comparable slots are never blocked (no over-reach).
+
+Related data-integrity gotcha found the same session: PDF/Docling/Excel extraction coerced CAS
+numbers into DATES (e.g. CAS 75-01-4 stored as "1975-01-04"). Detect malformed CAS by validating
+against the strict CAS regex (2-7 digits, hyphen, 2 digits, hyphen, 1 check digit), not by eyeballing.
+
+### File References
+- `C:/Projects/SSTAC-Dashboard/src/lib/matrix-options/unitNormalization.ts` (normalizeToBase,
+  assessSlotUnitConsistency)
+- `C:/Projects/SSTAC-Dashboard/src/lib/matrix-options/defaultSelectionPolicy.ts` (isUnitBlocked
+  predicate + unitConsistency on the decision)
+- Tests: `src/lib/matrix-options/__tests__/unitNormalization.test.ts`,
+  `src/lib/matrix-options/__tests__/defaultSelectionPolicy.test.ts`
+
+### Key Takeaway
+When a feature deliberately co-groups values in heterogeneous units for comparison, put a single
+fail-closed normalization boundary in front of any numeric comparison: normalize-or-refuse, never
+compare raw. Parse units token-safely (numerator-only, exact mass token) and treat blank/unknown
+units as not-comparable.
+
+---
+
+**Last Updated:** May 29, 2026 (A1 unit-normalization guard PR #191; catalog Step-1 canonicalization)
+**Lesson Count:** 1 critical, 3 high, 1 medium (deployment, security, architecture, data-integrity patterns)
 **Security Status:** ✓ Phase 2 COMPLETE - All 5 tasks done, 3 critical vulnerabilities fixed, 6 security headers added
 **Refactoring Status:** ✓ TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
 **Maintained By:** Claude Sessions with /update-docs skill

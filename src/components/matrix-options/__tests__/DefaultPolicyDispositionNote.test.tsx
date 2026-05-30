@@ -70,6 +70,13 @@ function makeDecision(
     eligibleCandidates: [],
     blockedCandidates: [],
     candidates: [],
+    unitConsistency: {
+      units: [],
+      baseUnits: [],
+      allNormalizable: true,
+      homogeneousBase: true,
+      comparable: true,
+    },
     readOnlyInvariants: DEFAULT_SELECTION_READ_ONLY_INVARIANTS,
     rationale: 'Decision rationale text.',
     ...overrides,
