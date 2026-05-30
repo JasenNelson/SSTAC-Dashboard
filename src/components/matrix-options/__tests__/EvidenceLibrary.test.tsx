@@ -1132,3 +1132,52 @@ describe('EvidenceLibrary -- AddEvidenceLocatorForm', () => {
     vi.mocked(fetchEvidenceItems).mockResolvedValue([]);
   });
 });
+
+describe('EvidenceLibrary Lane 1b layout rebalance', () => {
+  it('shows the slim audit summary strip and the right at-rest dashboard by default', () => {
+    renderControlled();
+
+    // Always-visible slim summary in the center column.
+    const summary = screen.getByTestId('evidence-library-audit-summary');
+    expect(summary).toHaveTextContent(/Approved/);
+    expect(summary).toHaveTextContent(/Pending/);
+    expect(summary).toHaveTextContent(/Defaults/);
+    expect(summary).toHaveTextContent(/Scaffolds/);
+
+    // Right panel "at rest" shows the relocated dashboard, with the full audit strip inside it.
+    expect(screen.getByTestId('evidence-library-right-mode')).toHaveTextContent(
+      'Catalog Dashboard',
+    );
+    const dashboard = screen.getByTestId('evidence-library-right-dashboard');
+    expect(
+      within(dashboard).getByTestId('evidence-library-audit-strip'),
+    ).toBeInTheDocument();
+  });
+
+  it('swaps the right dashboard for detail on selection and returns via the Dashboard action', () => {
+    renderControlled();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
+
+    // At-rest dashboard yields to the detail panel; mode header reflects the change.
+    expect(
+      screen.queryByTestId('evidence-library-right-dashboard'),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-right-mode')).toHaveTextContent(
+      'Inspecting value',
+    );
+    expect(screen.getByTestId('evidence-library-value-detail')).toBeInTheDocument();
+
+    // The explicit "Dashboard" back action returns to the at-rest dashboard.
+    fireEvent.click(
+      screen.getByRole('button', { name: /Back to catalog dashboard/ }),
+    );
+    expect(
+      screen.getByTestId('evidence-library-right-dashboard'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('evidence-library-value-detail'),
+    ).not.toBeInTheDocument();
+  });
+});

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronRight, ExternalLink, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Search, X } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
 import type { PromotedParameterValueRecord } from '@/lib/matrix-options/provenance/promotion';
@@ -794,6 +794,51 @@ function AuditStrip({
             {item.note}
           </div>
         </button>
+      ))}
+    </div>
+  );
+}
+
+// Slim, always-visible headline summary for the CENTER column (Lane 1b). Display-only:
+// the full clickable AuditStrip lives in the right at-rest dashboard. Labels are kept
+// deliberately distinct from AuditStrip's ("Approved values" etc.) so they read as a glance
+// summary and do not duplicate the full strip's wording.
+function AuditSummaryStrip({
+  audit,
+}: {
+  audit: ReturnType<typeof buildEvidenceLibraryView>['audit'];
+}) {
+  const items: Array<{ label: string; value: number; note: string }> = [
+    { label: 'Approved', value: audit.values.approvedSourceBacked, note: 'source-backed' },
+    { label: 'Pending', value: audit.values.pendingSourceLocator, note: 'locator gaps' },
+    { label: 'Defaults', value: audit.values.currentDefaults, note: 'current' },
+    {
+      label: 'Scaffolds',
+      value: audit.values.currentCalculatorScaffold,
+      note: 'calculator-only',
+    },
+  ];
+  return (
+    <div
+      className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+      data-testid="evidence-library-audit-summary"
+      aria-label="Catalog audit summary"
+    >
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950"
+        >
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            {item.label}
+          </div>
+          <div className="text-xl font-bold text-slate-950 dark:text-white">
+            {item.value}
+          </div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+            {item.note}
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -3116,30 +3161,8 @@ export default function EvidenceLibrary({
       >
         <div className="w-full min-w-[270px] p-5 overflow-y-auto h-full space-y-4">
           <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-            Catalog Dashboard
+            Navigation
           </h3>
-
-          <AuditStrip audit={library.audit} onSelect={applyAuditFilter} compact />
-
-          <DefaultPolicyAuditPanel
-            decisions={defaultPolicyDecisions}
-            activeStatus={defaultPolicyStatusFilter}
-            onSelectStatus={applyDefaultPolicyStatusFilter}
-            compact
-          />
-
-          <Protocol28ReviewPanel
-            summary={protocol28Summary}
-            onReview={openProtocol28Review}
-            onReviewSourceLeads={openProtocol28SourceLeads}
-            compact
-          />
-
-          <CrossPathwayAuditPanel compact />
-
-          <ZoteroStatusBadge compact />
-
-          <HitlSourcesSection isAdmin={isAdmin} />
 
           <section
             className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
@@ -3193,8 +3216,6 @@ export default function EvidenceLibrary({
               })}
             </div>
           </section>
-
-          {isAdmin && <PromotedCandidatesSection />}
         </div>
       </div>
 
@@ -3288,6 +3309,11 @@ export default function EvidenceLibrary({
           )}
         </div>
       </div>
+
+      {/* Slim always-visible audit summary (Lane 1b): keeps headline catalog counts in view
+          even while inspecting a row. The full clickable audit + policy dashboard lives in the
+          right at-rest panel below. */}
+      <AuditSummaryStrip audit={library.audit} />
 
       {/* Inline detail when right drawer is toggled off */}
       {!showRightPanel && selectedValue && (
@@ -3828,7 +3854,8 @@ export default function EvidenceLibrary({
         </div>
       </div>
 
-      {/* RIGHT PANEL -- value and source detail inspector */}
+      {/* RIGHT PANEL -- two-state inspector (Lane 1b): the catalog dashboard at rest, the
+          value/source detail when a row is selected. Mode header + "Dashboard" back action. */}
       <div
         className={cn(
           'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-lg',
@@ -3836,7 +3863,34 @@ export default function EvidenceLibrary({
           showRightPanel ? 'w-96' : 'w-0',
         )}
       >
-        <div className="w-full h-full overflow-y-auto overflow-x-hidden p-4">
+        <div className="w-full h-full overflow-y-auto overflow-x-hidden p-4 space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2 dark:border-slate-800">
+            <h3
+              className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500"
+              data-testid="evidence-library-right-mode"
+            >
+              {selectedValue
+                ? 'Inspecting value'
+                : selectedSource
+                  ? 'Inspecting source'
+                  : 'Catalog Dashboard'}
+            </h3>
+            {(selectedValue || selectedSource) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedValueId(null);
+                  setSelectedSourceId(null);
+                }}
+                className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300"
+                aria-label="Back to catalog dashboard"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                Dashboard
+              </button>
+            )}
+          </div>
+
           {selectedValue && (
             <ValueDetailPanel
               row={selectedValue}
@@ -3857,8 +3911,38 @@ export default function EvidenceLibrary({
             />
           )}
           {!selectedValue && !selectedSource && (
-            <div className="p-6 text-center text-sm text-slate-400 dark:text-slate-500">
-              Click a value or source to inspect details
+            <div className="space-y-4" data-testid="evidence-library-right-dashboard">
+              <AuditStrip audit={library.audit} onSelect={applyAuditFilter} compact />
+
+              <DefaultPolicyAuditPanel
+                decisions={defaultPolicyDecisions}
+                activeStatus={defaultPolicyStatusFilter}
+                onSelectStatus={applyDefaultPolicyStatusFilter}
+                compact
+              />
+
+              <Protocol28ReviewPanel
+                summary={protocol28Summary}
+                onReview={openProtocol28Review}
+                onReviewSourceLeads={openProtocol28SourceLeads}
+                compact
+              />
+
+              <CrossPathwayAuditPanel compact />
+
+              <ZoteroStatusBadge compact />
+
+              {isAdmin && (
+                <details className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+                  <summary className="cursor-pointer px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Admin tools
+                  </summary>
+                  <div className="space-y-4 p-3 pt-0">
+                    <HitlSourcesSection isAdmin={isAdmin} />
+                    <PromotedCandidatesSection />
+                  </div>
+                </details>
+              )}
             </div>
           )}
         </div>
