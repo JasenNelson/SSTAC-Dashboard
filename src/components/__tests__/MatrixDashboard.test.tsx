@@ -454,16 +454,9 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     fireEvent.click(screen.getByRole('button', { name: /^References & Values$/ }));
 
     expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
-      /Benzo\[a\]pyrene/,
-    );
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    // Defaults to the Values table (By Parameter / Equations tabs were retired).
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Benzo\[a\]pyrene log Kow/,
-    );
-    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
-    expect(screen.getByTestId('evidence-library-equations')).toHaveTextContent(
-      /Human Health Direct Contact sediment screen/,
     );
   });
 
@@ -486,10 +479,6 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Benzo\[a\]pyrene FCV/,
-    );
-    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
-    expect(screen.getByTestId('evidence-library-equations')).toHaveTextContent(
-      /Eco-Direct EqP sediment benchmark/,
     );
   });
 
@@ -518,12 +507,9 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(
       screen.getByText(/Input: rfd oral mg per kg bw day/i),
     ).toBeInTheDocument();
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
-      /Arsenic \(inorganic\): rfd oral mg per kg bw day/,
-    );
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
-      /Protocol 28/,
-    );
+    // Alternatives now open in the default Values table (the grouped By Parameter view was retired).
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(/Arsenic/i);
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(/Protocol 28/);
   });
 
   it('shows jurisdictional quick-reference copy on Jurisdictional Frameworks', () => {
