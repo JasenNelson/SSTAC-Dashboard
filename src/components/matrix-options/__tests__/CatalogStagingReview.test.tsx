@@ -330,4 +330,97 @@ describe('CatalogStagingReview', () => {
       /network down/,
     );
   });
+
+  it('renders a green Verbatim badge when source_excerpt_fidelity is verbatim', async () => {
+    const rows = [
+      makeRow({
+        id: 'staging-V',
+        proposed_payload: { substance_key: 'cadmium', source_excerpt_fidelity: 'verbatim' },
+      }),
+    ];
+    const list = vi.fn(async () => rows);
+    render(<CatalogStagingReview isAdmin listPendingStagingRowsFn={list} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('staging-row-staging-V')).toBeInTheDocument();
+    });
+    const badge = screen.getByTestId('staging-fidelity-badge-staging-V');
+    expect(badge).toHaveTextContent('Verbatim excerpt');
+    expect(badge.className).toMatch(/emerald/);
+  });
+
+  it('renders an amber Reconstructed badge when source_excerpt_fidelity is reconstructed', async () => {
+    const rows = [
+      makeRow({
+        id: 'staging-R',
+        proposed_payload: { substance_key: 'lead', source_excerpt_fidelity: 'reconstructed' },
+      }),
+    ];
+    const list = vi.fn(async () => rows);
+    render(<CatalogStagingReview isAdmin listPendingStagingRowsFn={list} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('staging-row-staging-R')).toBeInTheDocument();
+    });
+    const badge = screen.getByTestId('staging-fidelity-badge-staging-R');
+    expect(badge).toHaveTextContent('Reconstructed excerpt');
+    expect(badge.className).toMatch(/amber/);
+  });
+
+  it('renders a neutral "Fidelity unspecified" badge when the flag is absent (no false verbatim claim)', async () => {
+    const rows = [
+      makeRow({
+        id: 'staging-U',
+        proposed_payload: { substance_key: 'zinc' }, // no source_excerpt_fidelity
+      }),
+    ];
+    const list = vi.fn(async () => rows);
+    render(<CatalogStagingReview isAdmin listPendingStagingRowsFn={list} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('staging-row-staging-U')).toBeInTheDocument();
+    });
+    const badge = screen.getByTestId('staging-fidelity-badge-staging-U');
+    expect(badge).toHaveTextContent('Fidelity unspecified');
+    expect(badge).not.toHaveTextContent('Verbatim');
+  });
+
+  it('treats a malformed fidelity value as unspecified (no false verbatim claim)', async () => {
+    // Wrong-case / wrong-type values must NOT be coerced to verbatim.
+    const rows = [
+      makeRow({
+        id: 'staging-M',
+        proposed_payload: { substance_key: 'copper', source_excerpt_fidelity: 'VERBATIM' },
+      }),
+    ];
+    const list = vi.fn(async () => rows);
+    render(<CatalogStagingReview isAdmin listPendingStagingRowsFn={list} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('staging-row-staging-M')).toBeInTheDocument();
+    });
+    const badge = screen.getByTestId('staging-fidelity-badge-staging-M');
+    expect(badge).toHaveTextContent('Fidelity unspecified');
+    expect(badge).not.toHaveTextContent('Verbatim excerpt');
+  });
+
+  it('shows the fidelity badge in the detail panel for the selected row', async () => {
+    const rows = [
+      makeRow({
+        id: 'staging-D',
+        proposed_payload: { substance_key: 'mercury', source_excerpt_fidelity: 'reconstructed' },
+      }),
+    ];
+    const list = vi.fn(async () => rows);
+    render(<CatalogStagingReview isAdmin listPendingStagingRowsFn={list} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('staging-row-staging-D')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId('staging-row-staging-D'));
+
+    const detailBadge = screen.getByTestId('staging-detail-fidelity-badge');
+    expect(detailBadge).toHaveTextContent('Reconstructed excerpt');
+    expect(detailBadge.className).toMatch(/amber/);
+  });
 });

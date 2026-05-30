@@ -95,6 +95,37 @@ function payloadSnippet(payload: Record<string, unknown>): string {
     .join(' / ');
 }
 
+// source_excerpt_fidelity (R1 contract): does the staging row's source_excerpt quote the
+// source verbatim, or was it reconstructed/normalized from the source? The extraction agent
+// emits this in the proposed_payload. Absent => fidelity not declared (older rows): we render
+// a neutral "unspecified" badge rather than asserting verbatim, so a reviewer is never falsely
+// told an excerpt is verbatim. Mirrors the regulatory-review EvidenceAccordion fidelity badge.
+type SourceExcerptFidelity = 'verbatim' | 'reconstructed';
+
+function sourceExcerptFidelity(
+  payload: Record<string, unknown>,
+): SourceExcerptFidelity | null {
+  const raw = payload['source_excerpt_fidelity'];
+  if (raw === 'verbatim' || raw === 'reconstructed') return raw;
+  return null;
+}
+
+function fidelityLabel(fidelity: SourceExcerptFidelity | null): string {
+  if (fidelity === 'verbatim') return 'Verbatim excerpt';
+  if (fidelity === 'reconstructed') return 'Reconstructed excerpt';
+  return 'Fidelity unspecified';
+}
+
+function fidelityBadgeClass(fidelity: SourceExcerptFidelity | null): string {
+  if (fidelity === 'verbatim') {
+    return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300';
+  }
+  if (fidelity === 'reconstructed') {
+    return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300';
+  }
+  return 'border-slate-200 bg-slate-50 text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300';
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -403,6 +434,19 @@ export function CatalogStagingReview(props: CatalogStagingReviewProps) {
                         {formatConfidence(row.confidence)}
                       </span>
                     </div>
+                    <div>
+                      <span
+                        className={
+                          'inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ' +
+                          fidelityBadgeClass(
+                            sourceExcerptFidelity(row.proposed_payload),
+                          )
+                        }
+                        data-testid={`staging-fidelity-badge-${row.id}`}
+                      >
+                        {fidelityLabel(sourceExcerptFidelity(row.proposed_payload))}
+                      </span>
+                    </div>
                     <div className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
                       {row.source_zotero_key}
                     </div>
@@ -482,6 +526,24 @@ export function CatalogStagingReview(props: CatalogStagingReviewProps) {
               <pre className="mt-1 max-h-48 overflow-auto rounded border border-slate-200 bg-slate-50 p-2 font-mono text-[11px] text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
                 {JSON.stringify(selectedRow.proposed_payload, null, 2)}
               </pre>
+            </div>
+            <div>
+              <div className="font-bold uppercase text-slate-500 dark:text-slate-400">
+                Source excerpt fidelity
+              </div>
+              <span
+                className={
+                  'mt-1 inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-semibold ' +
+                  fidelityBadgeClass(
+                    sourceExcerptFidelity(selectedRow.proposed_payload),
+                  )
+                }
+                data-testid="staging-detail-fidelity-badge"
+              >
+                {fidelityLabel(
+                  sourceExcerptFidelity(selectedRow.proposed_payload),
+                )}
+              </span>
             </div>
             {selectedRow.extraction_notes && (
               <div>
