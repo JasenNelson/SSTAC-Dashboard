@@ -2046,7 +2046,7 @@ function ValueGroupCard({
               {group.substanceLabel}: {humanizeCatalogLabel(group.inputKey)}
             </div>
             <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              {humanizeCatalogLabel(group.pathway)}; {group.jurisdiction};{' '}
+              {humanizeCatalogLabel(group.pathway)}; {group.jurisdictions.join(', ') || '--'};{' '}
               {group.records.length} candidate
               {group.records.length === 1 ? '' : 's'}
             </div>
