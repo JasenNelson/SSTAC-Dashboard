@@ -17,6 +17,12 @@ import type {
 vi.mock('@/lib/catalog/staging', () => ({
   listPendingStagingRows: vi.fn(async () => []),
   approveStagingRow: vi.fn(async () => ({ ok: true, promotedToId: 'promoted-default' })),
+  approveAllPendingStagingRows: vi.fn(async () => ({
+    ok: true,
+    approved: 0,
+    skippedDuplicates: 0,
+    failed: 0,
+  })),
   rejectStagingRow: vi.fn(async () => ({ ok: true })),
 }));
 
@@ -447,5 +453,98 @@ describe('CatalogStagingReview', () => {
     const detailBadge = screen.getByTestId('staging-detail-fidelity-badge');
     expect(detailBadge).toHaveTextContent('Reconstructed excerpt');
     expect(detailBadge.className).toMatch(/amber/);
+  });
+
+  it('admin sees the bulk-approve button; non-admin does not', async () => {
+    const rows = [makeRow({ id: 'staging-1' })];
+
+    const { unmount } = render(
+      <CatalogStagingReview isAdmin listPendingStagingRowsFn={vi.fn(async () => rows)} />,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId('staging-bulk-approve-button')).toBeInTheDocument();
+    });
+    unmount();
+
+    render(
+      <CatalogStagingReview
+        isAdmin={false}
+        listPendingStagingRowsFn={vi.fn(async () => rows)}
+      />,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId('staging-row-list')).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByTestId('staging-bulk-approve-button'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('bulk-approve requires confirmation, then calls the RPC and reports counts', async () => {
+    const rows = [makeRow({ id: 'staging-1' }), makeRow({ id: 'staging-2' })];
+    const list = vi.fn(async () => rows);
+    const approveAll = vi.fn(async () => ({
+      ok: true as const,
+      approved: 12,
+      skippedDuplicates: 3,
+      failed: 0,
+    }));
+
+    render(
+      <CatalogStagingReview
+        isAdmin
+        listPendingStagingRowsFn={list}
+        approveAllPendingStagingRowsFn={approveAll}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('staging-bulk-approve-button')).toBeInTheDocument();
+    });
+
+    // First click only asks for confirmation -- no RPC yet.
+    fireEvent.click(screen.getByTestId('staging-bulk-approve-button'));
+    expect(screen.getByTestId('staging-bulk-confirm')).toBeInTheDocument();
+    expect(approveAll).not.toHaveBeenCalled();
+
+    // Confirm -> RPC fires and counts are reported.
+    fireEvent.click(screen.getByTestId('staging-bulk-confirm-button'));
+    await waitFor(() => {
+      expect(approveAll).toHaveBeenCalledTimes(1);
+    });
+    await waitFor(() => {
+      expect(screen.getByTestId('staging-bulk-success')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('staging-bulk-success')).toHaveTextContent(
+      /Approved 12; skipped 3 duplicate/,
+    );
+  });
+
+  it('bulk-approve confirmation can be cancelled without calling the RPC', async () => {
+    const rows = [makeRow({ id: 'staging-1' })];
+    const approveAll = vi.fn(async () => ({
+      ok: true as const,
+      approved: 0,
+      skippedDuplicates: 0,
+      failed: 0,
+    }));
+
+    render(
+      <CatalogStagingReview
+        isAdmin
+        listPendingStagingRowsFn={vi.fn(async () => rows)}
+        approveAllPendingStagingRowsFn={approveAll}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('staging-bulk-approve-button')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByTestId('staging-bulk-approve-button'));
+    fireEvent.click(screen.getByTestId('staging-bulk-cancel'));
+
+    expect(screen.queryByTestId('staging-bulk-confirm')).not.toBeInTheDocument();
+    expect(approveAll).not.toHaveBeenCalled();
+    expect(screen.getByTestId('staging-bulk-approve-button')).toBeInTheDocument();
   });
 });

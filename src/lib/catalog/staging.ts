@@ -100,6 +100,19 @@ export interface ApproveStagingRowResult {
   promotedToId: string;
 }
 
+export interface ApproveAllPendingStagingRowsArgs {
+  /** Restrict to one proposed_kind; omit to approve all pending kinds. */
+  kind?: ProposedKind;
+  hitlNotes?: string;
+}
+
+export interface ApproveAllPendingStagingRowsResult {
+  ok: true;
+  approved: number;
+  skippedDuplicates: number;
+  failed: number;
+}
+
 export interface RejectStagingRowArgs {
   stagingId: string;
   hitlNotes?: string;
@@ -350,6 +363,57 @@ export async function approveStagingRow(
   });
 
   return { ok: true, promotedToId };
+}
+
+/**
+ * Bulk-approve every pending staging row (optionally one proposed_kind) in a
+ * single authenticated round-trip via the catalog_approve_staging_rows_bulk RPC
+ * (supabase/migrations/20260530000001_catalog_approve_staging_rows_bulk.sql).
+ *
+ * The RPC loops server-side, approving each pending row in its own
+ * subtransaction and SKIPPING rows whose target was already promoted
+ * (unique_violation), so one duplicate never rolls back the batch. Returns the
+ * counts so the UI can report what happened. Throws (like approveStagingRow) on
+ * auth/role failure so the UI surfaces it rather than failing silently.
+ */
+export async function approveAllPendingStagingRows(
+  args: ApproveAllPendingStagingRowsArgs = {},
+): Promise<ApproveAllPendingStagingRowsResult> {
+  const { kind, hitlNotes } = args;
+
+  const supabase = await createAuthenticatedClient();
+  const { user } = await requireAdminContext(supabase);
+
+  const { data, error } = await supabase.rpc('catalog_approve_staging_rows_bulk', {
+    p_kind: kind ?? null,
+    p_hitl_notes: hitlNotes ?? null,
+  });
+
+  if (error) {
+    logger.error('catalog-staging.approveAllPendingStagingRows rpc error', error, {
+      kind: kind ?? 'all',
+      reviewerId: user.id,
+    });
+    const msg = error.message ?? String(error);
+    throw new Error(`catalog-staging.approveAllPendingStagingRows: ${msg}`);
+  }
+
+  // RETURNS TABLE(...) surfaces as a one-element array of the count row.
+  const row = Array.isArray(data) ? data[0] : data;
+  const result: ApproveAllPendingStagingRowsResult = {
+    ok: true,
+    approved: Number(row?.approved ?? 0),
+    skippedDuplicates: Number(row?.skipped_duplicates ?? 0),
+    failed: Number(row?.failed ?? 0),
+  };
+
+  logger.info('catalog-staging.approveAllPendingStagingRows ok', {
+    kind: kind ?? 'all',
+    reviewerId: user.id,
+    ...result,
+  });
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------
