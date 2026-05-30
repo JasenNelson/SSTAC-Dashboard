@@ -490,3 +490,46 @@ describe('buildEvidenceLibraryView live-merge of promoted records', () => {
     );
   });
 });
+
+describe('buildEvidenceLibraryView contextual facet counts', () => {
+  const sumCounts = (options: { count: number }[]) =>
+    options.reduce((total, option) => total + option.count, 0);
+
+  it('narrows other facets to the active filter, but keeps the filtered dimension full', () => {
+    const all = buildEvidenceLibraryView();
+    const byPathway = buildEvidenceLibraryView(
+      createEvidenceLibraryFilters({ pathways: ['human-health-food'] }),
+    );
+
+    // The substances facet (its own dimension is NOT the active filter) now counts only the
+    // records matching the active pathway filter -> fewer total than the unfiltered view.
+    expect(sumCounts(byPathway.facets.substances)).toBeLessThan(
+      sumCounts(all.facets.substances),
+    );
+    expect(byPathway.facets.substances.length).toBeGreaterThan(0);
+
+    // The pathways facet clears its OWN selection, so every pathway option still appears
+    // (so the user can switch pathways) -- same option set as unfiltered.
+    expect(byPathway.facets.pathways.map((option) => option.value).sort()).toEqual(
+      all.facets.pathways.map((option) => option.value).sort(),
+    );
+  });
+
+  it('a facet count equals the result count when that option is then selected', () => {
+    const byPathway = buildEvidenceLibraryView(
+      createEvidenceLibraryFilters({ pathways: ['human-health-food'] }),
+    );
+    const firstSubstance = byPathway.facets.substances[0];
+    expect(firstSubstance).toBeDefined();
+
+    // Selecting that substance on top of the pathway yields exactly the advertised count --
+    // no "dropdown says N -> 0 results" mismatch.
+    const combined = buildEvidenceLibraryView(
+      createEvidenceLibraryFilters({
+        pathways: ['human-health-food'],
+        substanceKeys: [firstSubstance.value],
+      }),
+    );
+    expect(combined.values.length).toBe(firstSubstance.count);
+  });
+});
