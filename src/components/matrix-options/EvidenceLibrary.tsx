@@ -46,7 +46,7 @@ import type {
   EvidenceLibraryViewMode,
   ProvenancePathway,
 } from '@/lib/matrix-options/provenance/types';
-import { isProvenancePathway } from '@/lib/matrix-options/provenance/pathways';
+import { catalogValueRole, isProvenancePathway } from '@/lib/matrix-options/provenance/pathways';
 import {
   buildDefaultSelectionPolicyDecision,
   type DefaultSelectionDecisionStatus,
@@ -3392,7 +3392,19 @@ export default function EvidenceLibrary({
                             {row.substanceLabel}
                           </div>
                         </td>
-                        <td className="px-3 py-2">{humanizeCatalogLabel(row.record.pathway)}</td>
+                        <td className="px-3 py-2">
+                          {humanizeCatalogLabel(row.record.pathway)}
+                          {catalogValueRole(row.record.pathway) ===
+                            'toxicity-weighting-modifier' && (
+                            <span
+                              className="ml-1.5 inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
+                              title="TEF/RPF weighting modifier -- modifies a toxicity value; not selectable as a TRV"
+                              data-testid="weighting-modifier-badge"
+                            >
+                              Weighting modifier
+                            </span>
+                          )}
+                        </td>
                         <td className="px-3 py-2 font-mono whitespace-nowrap">
                           {formatValue(row.record.value, row.record.unit)}
                         </td>

@@ -81,3 +81,25 @@ export function isCatalogEvidencePathway(
 export function isCatalogPathway(value: unknown): value is CatalogPathway {
   return isProvenancePathway(value) || isCatalogEvidencePathway(value);
 }
+
+// ---------------------------------------------------------------------------
+// Value role (R4): selectable value vs toxicity-weighting modifier.
+//
+// TEF/RPF rows live on the hh-toxicity-weighting pathway. They are NOT selectable as a
+// toxicity reference value -- they MODIFY one (e.g. a PAH potency relative to benzo[a]pyrene).
+// Surfacing this distinction stops a reviewer from mistaking a weighting factor for a TRV.
+//
+// The role is DERIVED from the pathway (no separate data field). A substance that is BOTH a
+// selectable TRV and a weighting modifier (e.g. fluoranthene) is represented by having one
+// record on hh-toxicity-value AND one on hh-toxicity-weighting -- each record carries a single
+// role. (If a stored, per-record role is ever needed, replace this derivation; see the R4
+// owner-decision brief.)
+// ---------------------------------------------------------------------------
+
+export type CatalogValueRole = 'toxicity-weighting-modifier' | 'selectable-value';
+
+export function catalogValueRole(pathway: CatalogPathway): CatalogValueRole {
+  return pathway === 'hh-toxicity-weighting'
+    ? 'toxicity-weighting-modifier'
+    : 'selectable-value';
+}

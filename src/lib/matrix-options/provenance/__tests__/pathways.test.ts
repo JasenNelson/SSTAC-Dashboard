@@ -4,6 +4,7 @@ import {
   CATALOG_EVIDENCE_PATHWAYS,
   CATALOG_PATHWAYS,
   PROVENANCE_PATHWAYS,
+  catalogValueRole,
   isCatalogEvidencePathway,
   isCatalogPathway,
   isProvenancePathway,
@@ -86,5 +87,29 @@ describe('evidence-category badge labels', () => {
       // hyphen-stripped string, which is acceptable, but these 6 are explicitly mapped).
       expect(label).not.toContain('-');
     }
+  });
+});
+
+describe('catalogValueRole (R4: modifier vs selectable, derived from pathway)', () => {
+  it('classifies hh-toxicity-weighting as a toxicity-weighting-modifier', () => {
+    expect(catalogValueRole('hh-toxicity-weighting')).toBe(
+      'toxicity-weighting-modifier',
+    );
+  });
+
+  it('classifies every other catalog pathway as a selectable-value', () => {
+    for (const pathway of CATALOG_PATHWAYS) {
+      if (pathway === 'hh-toxicity-weighting') continue;
+      expect(catalogValueRole(pathway)).toBe('selectable-value');
+    }
+  });
+
+  it('treats hh-toxicity-value (the TRV pathway) as selectable, not a modifier', () => {
+    // The "both" case: a substance can have an hh-toxicity-value record (selectable) AND an
+    // hh-toxicity-weighting record (modifier); each record resolves to a single role.
+    expect(catalogValueRole('hh-toxicity-value')).toBe('selectable-value');
+    expect(catalogValueRole('hh-toxicity-weighting')).toBe(
+      'toxicity-weighting-modifier',
+    );
   });
 });
