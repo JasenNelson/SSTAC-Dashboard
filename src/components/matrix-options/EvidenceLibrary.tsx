@@ -89,7 +89,8 @@ interface EvidenceLibraryProps {
 // Values. The underlying view-mode branches remain for internal/quick-filter use.
 const VIEW_MODES: Array<{ id: EvidenceLibraryViewMode; label: string }> = [
   { id: 'values', label: 'Values' },
-  { id: 'sources', label: 'Sources' },
+  // Labelled "References" (not "Sources") to match the tab title "References & Values".
+  { id: 'sources', label: 'References' },
 ];
 
 type FilterArrayKey = {
@@ -3106,7 +3107,7 @@ export default function EvidenceLibrary({
       className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
       data-testid="evidence-library-filters"
     >
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1">
+      <div className="grid gap-3">
         <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
           <span className="mb-1 block">Search</span>
           <span className="relative block">
@@ -3166,7 +3167,7 @@ export default function EvidenceLibrary({
         )}
       >
         {showLeftPanel && (
-        <div className="w-full min-w-[270px] p-5 overflow-y-auto h-full space-y-4">
+        <div className="w-full min-w-[270px] p-5 overflow-y-auto overflow-x-hidden h-full space-y-4">
           <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
             Filters
           </h3>
@@ -3230,7 +3231,7 @@ export default function EvidenceLibrary({
       </div>
 
       {/* MAIN CONTENT -- header and results */}
-      <div className="flex-1 min-w-0 overflow-y-auto bg-white dark:bg-slate-950">
+      <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-white dark:bg-slate-950">
         <div className="space-y-5 p-6">
           <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
         <div>
@@ -3244,7 +3245,7 @@ export default function EvidenceLibrary({
           </div>
         </div>
         <div
-          className="grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900 sm:inline-grid sm:w-auto sm:grid-cols-6"
+          className="grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900 sm:inline-grid sm:w-auto sm:grid-cols-2"
           aria-label="Evidence library view"
         >
           {VIEW_MODES.map((mode) => (

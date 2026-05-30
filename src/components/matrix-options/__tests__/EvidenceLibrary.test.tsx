@@ -242,7 +242,7 @@ describe('EvidenceLibrary', () => {
     // Defaults to Values.
     expect(screen.getByText(/Showing \d+ of \d+ values/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     expect(screen.getByText(/Showing \d+ of \d+ sources/)).toBeInTheDocument();
     // Source leads now fold into the Sources view, so their lead-set count shows here too.
     expect(screen.getByText(/Showing \d+ of \d+ lead sets/)).toBeInTheDocument();
@@ -251,7 +251,7 @@ describe('EvidenceLibrary', () => {
   it('renders sources with folded-in source leads, without promoting scaffolds', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     expect(screen.getByTestId('evidence-library-sources')).not.toHaveTextContent(
       /calculator scaffold/i,
     );
@@ -426,7 +426,7 @@ describe('EvidenceLibrary', () => {
       /Health Canada/,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
 
     expect(
       screen.getByRole('button', {
@@ -524,7 +524,7 @@ describe('EvidenceLibrary', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     fireEvent.change(screen.getByLabelText(/^Authority$/), {
       target: { value: 'federal-guidance' },
     });
@@ -559,7 +559,7 @@ describe('EvidenceLibrary', () => {
   it('shows a filter-aware empty state for source leads within the Sources view', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     fireEvent.change(screen.getByLabelText(/^Search$/), {
       target: { value: 'zzzz-no-leads' },
     });
@@ -615,7 +615,7 @@ describe('EvidenceLibrary', () => {
   it('opens a selected source detail panel from the sources database view', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-source')[0]);
 
     const panel = screen.getByTestId('evidence-library-source-detail');
@@ -633,7 +633,7 @@ describe('EvidenceLibrary', () => {
   it('keeps Protocol 28 source detail blocked from calculator defaults', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     fireEvent.click(
       screen.getByRole('button', {
         name: /Inspect BC Protocol 28 v3\.0, 2024/,
@@ -650,11 +650,11 @@ describe('EvidenceLibrary', () => {
   it('closes selected detail panels when switching views or clearing filters', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-source')[0]);
     expect(screen.getByTestId('evidence-library-source-detail')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     expect(screen.getByTestId('evidence-library-source-detail')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
@@ -682,7 +682,7 @@ describe('EvidenceLibrary', () => {
   it('searches and clears active filters', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     fireEvent.change(screen.getByLabelText(/^Search$/), {
       target: { value: 'NIST' },
     });
@@ -703,7 +703,7 @@ describe('EvidenceLibrary', () => {
   it('shows source leads as read-only context within the Sources view', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
 
     expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
       /ACFN WQCIU report/,
@@ -810,7 +810,7 @@ describe('EvidenceLibrary', () => {
       }),
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     expect(
       screen.queryByTestId('evidence-library-all-scaffolds-banner'),
     ).not.toBeInTheDocument();
