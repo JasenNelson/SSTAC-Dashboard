@@ -396,3 +396,97 @@ describe('matrix options evidence library helpers', () => {
     }
   });
 });
+
+describe('buildEvidenceLibraryView live-merge of promoted records', () => {
+  // Promoted (approved canonical) records are passed as extraRecords; they extend
+  // ParameterValueRecord, so cloning a seed record and overriding the distinguishing
+  // fields yields a valid fixture without restating every required field.
+  const seed = PARAMETER_VALUE_RECORDS[0];
+
+  function makeExtra(
+    overrides: Partial<typeof seed> & { parameter_value_id: string },
+  ): typeof seed {
+    return { ...seed, ...overrides };
+  }
+
+  it('preserves baseline counts when extraRecords is empty (default path)', () => {
+    const fromDefault = buildEvidenceLibraryView();
+    const fromEmpty = buildEvidenceLibraryView(undefined, []);
+
+    expect(fromEmpty.totalCounts.values).toBe(fromDefault.totalCounts.values);
+    expect(fromEmpty.valueGroups).toHaveLength(fromDefault.valueGroups.length);
+    expect(fromEmpty.audit.values.total).toBe(fromDefault.audit.values.total);
+  });
+
+  it('merges extra records into value rows and total counts', () => {
+    const base = buildEvidenceLibraryView();
+    const extra = makeExtra({
+      parameter_value_id: 'pv-test-promoted-merge',
+      substance_key: 'test_promoted_substance',
+    });
+    const view = buildEvidenceLibraryView(undefined, [extra]);
+
+    expect(view.totalCounts.values).toBe(base.totalCounts.values + 1);
+    expect(
+      view.values.some(
+        (row) => row.record.parameter_value_id === 'pv-test-promoted-merge',
+      ),
+    ).toBe(true);
+  });
+
+  it('dedups by parameter_value_id with promoted-wins on collision', () => {
+    const base = buildEvidenceLibraryView();
+    const collision = makeExtra({
+      parameter_value_id: seed.parameter_value_id,
+      value: 'PROMOTED_OVERRIDE',
+    });
+    const view = buildEvidenceLibraryView(undefined, [collision]);
+
+    // Same id -> no new row added.
+    expect(view.totalCounts.values).toBe(base.totalCounts.values);
+    const row = view.values.find(
+      (item) => item.record.parameter_value_id === seed.parameter_value_id,
+    );
+    // Promoted/extra record wins on collision.
+    expect(row?.record.value).toBe('PROMOTED_OVERRIDE');
+  });
+
+  it('surfaces a promoted hh-toxicity-weighting pathway in the facet and rows', () => {
+    const extra = makeExtra({
+      parameter_value_id: 'pv-test-weighting',
+      pathway: 'hh-toxicity-weighting',
+    });
+    const view = buildEvidenceLibraryView(undefined, [extra]);
+
+    expect(
+      view.facets.pathways.some(
+        (option) => option.value === 'hh-toxicity-weighting',
+      ),
+    ).toBe(true);
+    expect(
+      view.values.some(
+        (row) =>
+          row.record.parameter_value_id === 'pv-test-weighting' &&
+          row.record.pathway === 'hh-toxicity-weighting',
+      ),
+    ).toBe(true);
+  });
+
+  it('includes promoted rows in audit value counts', () => {
+    const base = buildEvidenceLibraryView();
+    const extra = makeExtra({
+      parameter_value_id: 'pv-test-audit',
+      evidence_support_status: 'approved_source_backed',
+      default_status: 'available_option',
+    });
+    const view = buildEvidenceLibraryView(undefined, [extra]);
+
+    expect(view.audit.values.total).toBe(base.audit.values.total + 1);
+    expect(view.audit.values.approvedSourceBacked).toBe(
+      base.audit.values.approvedSourceBacked + 1,
+    );
+    expect(view.audit.values.availableOptions).toBe(
+      base.audit.values.availableOptions + 1,
+    );
+  });
+});

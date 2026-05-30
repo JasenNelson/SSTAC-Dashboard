@@ -1246,43 +1246,44 @@ function buildValueGroups(
 
 function buildAudit(
   sourceLeads: EvidenceLibrarySourceLeadSummary[],
+  valueRecords: readonly ParameterValueRecord[] = PARAMETER_VALUE_RECORDS,
 ): EvidenceLibraryAudit {
   const evidenceSourceRecords = SOURCE_RECORDS.filter(isEvidenceSource);
   return {
     values: {
-      total: PARAMETER_VALUE_RECORDS.length,
+      total: valueRecords.length,
       approvedSourceBacked: countByStatus(
-        PARAMETER_VALUE_RECORDS,
+        valueRecords,
         'evidence_support_status',
         'approved_source_backed',
       ),
       pendingSourceLocator: countByStatus(
-        PARAMETER_VALUE_RECORDS,
+        valueRecords,
         'evidence_support_status',
         'pending_source_locator',
       ),
       currentCalculatorScaffold: countByStatus(
-        PARAMETER_VALUE_RECORDS,
+        valueRecords,
         'evidence_support_status',
         'current_calculator_scaffold',
       ),
       referenceMiningLead: countByStatus(
-        PARAMETER_VALUE_RECORDS,
+        valueRecords,
         'evidence_support_status',
         'reference_mining_lead',
       ),
       currentDefaults: countByStatus(
-        PARAMETER_VALUE_RECORDS,
+        valueRecords,
         'default_status',
         'current_default',
       ),
       availableOptions: countByStatus(
-        PARAMETER_VALUE_RECORDS,
+        valueRecords,
         'default_status',
         'available_option',
       ),
       notDefaults: countByStatus(
-        PARAMETER_VALUE_RECORDS,
+        valueRecords,
         'default_status',
         'not_default',
       ),
@@ -1348,10 +1349,30 @@ function buildAudit(
   };
 }
 
+// Merge the static seed catalog with promoted/extra parameter-value records,
+// deduped by parameter_value_id. On a collision the extra (promoted) record wins,
+// because promoted rows are the latest HITL-approved canonical data. Returns the
+// seed unchanged when there are no extra records.
+function mergeParameterValueRecords(
+  base: readonly ParameterValueRecord[],
+  extra: readonly ParameterValueRecord[],
+): ParameterValueRecord[] {
+  if (extra.length === 0) return [...base];
+  const byId = new Map<string, ParameterValueRecord>();
+  for (const record of base) byId.set(record.parameter_value_id, record);
+  for (const record of extra) byId.set(record.parameter_value_id, record);
+  return [...byId.values()];
+}
+
 export function buildEvidenceLibraryView(
   filters: EvidenceLibraryFilters = emptyEvidenceLibraryFilters(),
+  extraRecords: readonly ParameterValueRecord[] = [],
 ): EvidenceLibraryView {
-  const valueRows = PARAMETER_VALUE_RECORDS.map(valueRow);
+  const workingRecords = mergeParameterValueRecords(
+    PARAMETER_VALUE_RECORDS,
+    extraRecords,
+  );
+  const valueRows = workingRecords.map(valueRow);
   const equationRows = EQUATION_RECORDS.map(equationRow);
   const evidenceSourceRecords = SOURCE_RECORDS.filter(isEvidenceSource);
   const sourceRows = evidenceSourceRecords.map(sourceRow);
@@ -1378,32 +1399,32 @@ export function buildEvidenceLibraryView(
     sourceLeads: filteredSourceLeads,
     facets: {
       pathways: facet([
-        ...PARAMETER_VALUE_RECORDS.map((record) => record.pathway),
+        ...workingRecords.map((record) => record.pathway),
         ...EQUATION_RECORDS.map((record) => record.pathway),
       ]),
       substances: facet(
-        PARAMETER_VALUE_RECORDS.map((record) => record.substance_key),
+        workingRecords.map((record) => record.substance_key),
         (value) => substanceLabels.get(value) ?? value,
       ),
-      inputKeys: facet(PARAMETER_VALUE_RECORDS.map((record) => record.input_key)),
+      inputKeys: facet(workingRecords.map((record) => record.input_key)),
       qaStatuses: facet([
-        ...PARAMETER_VALUE_RECORDS.map((record) => record.qa_status),
+        ...workingRecords.map((record) => record.qa_status),
         ...EQUATION_RECORDS.map((record) => record.qa_status),
       ]),
       defaultStatuses: facet(
-        PARAMETER_VALUE_RECORDS.map((record) => record.default_status),
+        workingRecords.map((record) => record.default_status),
       ),
       evidenceSupportStatuses: facet([
-        ...PARAMETER_VALUE_RECORDS.map(
+        ...workingRecords.map(
           (record) => record.evidence_support_status,
         ),
         ...EQUATION_RECORDS.map((record) => record.evidence_support_status),
       ]),
       extractionStatuses: facet(
-        PARAMETER_VALUE_RECORDS.map((record) => record.extraction_status),
+        workingRecords.map((record) => record.extraction_status),
       ),
       jurisdictions: facet(
-        PARAMETER_VALUE_RECORDS.map((record) => record.jurisdiction),
+        workingRecords.map((record) => record.jurisdiction),
       ),
       authorityScopes: facet(
         evidenceSourceRecords.map((record) => record.authority_scope),
@@ -1420,7 +1441,7 @@ export function buildEvidenceLibraryView(
         evidenceSourceRecords
           .flatMap((record) => canonicalStatusesForRecord(record))
           .concat(
-            PARAMETER_VALUE_RECORDS.flatMap((record) =>
+            workingRecords.flatMap((record) =>
               canonicalStatusesForRecord(record),
             ),
           ),
@@ -1428,7 +1449,7 @@ export function buildEvidenceLibraryView(
       bcProtocolAlignments: facet(
         [
           ...evidenceSourceRecords.map((record) => record.bc_protocol_alignment),
-          ...PARAMETER_VALUE_RECORDS.map(
+          ...workingRecords.map(
             (record) => record.bc_protocol_alignment,
           ),
         ].filter((alignment): alignment is string => Boolean(alignment)),
@@ -1440,18 +1461,18 @@ export function buildEvidenceLibraryView(
         evidenceSourceRecords.map((record) => record.zotero_status),
       ),
       receptorGroups: facet(
-        PARAMETER_VALUE_RECORDS.flatMap((record) => record.receptor_groups ?? []),
+        workingRecords.flatMap((record) => record.receptor_groups ?? []),
       ),
       populationGroups: facet(
-        PARAMETER_VALUE_RECORDS.flatMap((record) => record.population_groups ?? []),
+        workingRecords.flatMap((record) => record.population_groups ?? []),
       ),
       speciesGroups: facet(
-        PARAMETER_VALUE_RECORDS.flatMap((record) => record.species_groups ?? []),
+        workingRecords.flatMap((record) => record.species_groups ?? []),
       ),
     },
-    audit: buildAudit(allSourceLeads),
+    audit: buildAudit(allSourceLeads, workingRecords),
     totalCounts: {
-      values: PARAMETER_VALUE_RECORDS.length,
+      values: workingRecords.length,
       equations: EQUATION_RECORDS.length,
       sources: evidenceSourceRecords.length,
       sourceLeads: allSourceLeads.length,
