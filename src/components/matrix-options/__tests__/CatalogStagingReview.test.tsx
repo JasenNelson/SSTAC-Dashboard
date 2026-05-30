@@ -3,7 +3,10 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { CatalogStagingReview } from '../CatalogStagingReview';
-import type { CatalogStagingRow, ListPendingStagingRowsArgs } from '@/lib/catalog/staging';
+import type {
+  CatalogStagingRow,
+  ListPendingStagingRowsArgs,
+} from '@/lib/catalog/staging';
 
 // ---------------------------------------------------------------------------
 // Mock staging module so the component's default imports never call the

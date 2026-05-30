@@ -1,15 +1,16 @@
 """Unit tests for scripts/catalog-overnight/extract.py (thin-library form).
 
 After the Phase 3 commit 2 refactor, extract.py is a LIBRARY (no main, no CLI,
-no LlmClient protocol). These tests cover the public surface:
+no LlmClient protocol, no database). These tests cover the public surface:
   - build_staging_row validation (proposed_kind enum, confidence type+range,
     JSON-serializable payload, notes type, empty zotero_key)
-  - StagingRow.to_db_tuple shape + ordering vs the INSERT SQL
+  - StagingRow.to_dict shape and JSON-serializability
+  - save_proposals (write, append, atomic-write, JSON array of dicts)
   - write_breadcrumb (filename format, JSON validity, no colons)
   - Tuning constants mirror BN-RRM
   - Public surface __all__ stable (smoke import test)
 
-Tests do NOT require docling, psycopg, or ollama installed.
+Tests do NOT require docling or ollama installed.
 
 Run from the catalog-overnight venv:
     pytest scripts/catalog-overnight/tests -v --maxfail=1
@@ -46,8 +47,8 @@ def test_public_surface_includes_load_bearing_names():
     """The following public names MUST be exported (used by the autonomous session)."""
     required = {
         'StagingRow',
-        'StagingWriter',
         'build_staging_row',
+        'save_proposals',
         'extract_tables_from_pdf',
         'write_breadcrumb',
         'PROPOSED_KIND_VALUES',
@@ -56,6 +57,11 @@ def test_public_surface_includes_load_bearing_names():
     }
     missing = required - set(extract.__all__)
     assert not missing, f'extract.__all__ missing required names: {missing}'
+
+
+def test_staging_writer_not_exported():
+    """StagingWriter must NOT be in __all__ (DB path removed)."""
+    assert 'StagingWriter' not in extract.__all__
 
 
 def test_no_main_function():
@@ -77,6 +83,20 @@ def test_no_run_pass_orchestrator():
 # Test helpers
 # ---------------------------------------------------------------------------
 
+def _parameter_value_payload() -> dict:
+    """A valid parameter_value payload: per-kind required keys + provenance."""
+    return {
+        'parameter_value_id': 'pv-cadmium-eco-direct',
+        'display_name': 'Cadmium eco-direct sediment TRV',
+        'candidate_group_id': 'cg-cadmium-eco-direct',
+        'substance_key': 'cadmium',
+        'value': '0.6',
+        'unit': 'mg/kg dw',
+        'source_excerpt': 'Cadmium sediment standard 0.6 mg/kg dw',
+        'source_doc_id': 'protocol-1-dra',
+    }
+
+
 def _proposal(
     kind: str = 'parameter_value',
     *,
@@ -86,11 +106,7 @@ def _proposal(
 ) -> dict:
     return {
         'proposed_kind': kind,
-        'proposed_payload': payload if payload is not None else {
-            'substance_key': 'cadmium',
-            'value': '0.6',
-            'unit': 'mg/kg dw',
-        },
+        'proposed_payload': payload if payload is not None else _parameter_value_payload(),
         'confidence': confidence,
         'extraction_notes': notes,
     }
@@ -116,11 +132,7 @@ def test_build_staging_row_happy_path():
     assert row.extraction_pass_id == pass_id
     assert row.extraction_pass_started_at == pass_started
     assert row.proposed_kind == 'parameter_value'
-    assert row.proposed_payload == {
-        'substance_key': 'cadmium',
-        'value': '0.6',
-        'unit': 'mg/kg dw',
-    }
+    assert row.proposed_payload == _parameter_value_payload()
     assert row.confidence == 0.42
     assert row.extraction_notes == 'extracted from Table 3'
     assert row.extraction_model == 'claude-opus-4-7'
@@ -309,7 +321,7 @@ def test_build_staging_row_requires_zotero_key():
         raise AssertionError('expected ValueError for empty zotero_key')
 
 
-def test_to_db_tuple_shape_matches_insert_sql():
+def test_to_dict_shape_and_json_serializable():
     pass_id = uuid.uuid4()
     started = datetime(2026, 5, 28, 23, 30, 0, tzinfo=timezone.utc)
     row = extract.build_staging_row(
@@ -320,12 +332,45 @@ def test_to_db_tuple_shape_matches_insert_sql():
         proposal=_proposal(),
         extraction_model='claude-opus-4-7',
     )
-    tup = row.to_db_tuple()
-    # The INSERT statement has 11 parameter placeholders; the tuple must match.
-    assert len(tup) == 11
-    # proposed_payload must be JSON-serialized text (psycopg casts to jsonb).
-    assert isinstance(tup[7], str)
-    assert json.loads(tup[7]) == row.proposed_payload
+    d = row.to_dict()
+    # Must be JSON-serializable with no errors.
+    serialized = json.dumps(d, ensure_ascii=True)
+    assert isinstance(serialized, str)
+    # Round-trip: proposed_payload preserved as dict.
+    roundtripped = json.loads(serialized)
+    assert roundtripped['proposed_payload'] == row.proposed_payload
+    # UUID serialized to str.
+    assert roundtripped['extraction_pass_id'] == str(pass_id)
+    # Datetime serialized to str (ISO format).
+    assert isinstance(roundtripped['extraction_pass_started_at'], str)
+    assert isinstance(roundtripped['extracted_at'], str)
+    # Spot-check key presence.
+    for key in (
+        'source_zotero_key', 'source_attachment_path', 'extraction_pass_id',
+        'extraction_pass_started_at', 'extraction_pass_finished_at',
+        'extracted_at', 'proposed_kind', 'proposed_payload',
+        'confidence', 'extraction_notes', 'extraction_model',
+    ):
+        assert key in d, f'to_dict() missing key: {key}'
+
+
+def test_to_dict_null_fields_serialize():
+    """None fields (attachment_path, pass_finished_at, confidence, notes) round-trip as null."""
+    row = extract.build_staging_row(
+        zotero_key='ZK',
+        attachment_path=None,
+        pass_id=uuid.uuid4(),
+        pass_started_at=datetime.now(timezone.utc),
+        proposal=_proposal(confidence=None, notes=None),
+        extraction_model='claude-opus-4-7',
+    )
+    d = row.to_dict()
+    assert d['source_attachment_path'] is None
+    assert d['extraction_pass_finished_at'] is None
+    assert d['confidence'] is None
+    assert d['extraction_notes'] is None
+    # Must still be JSON-serializable.
+    json.dumps(d, ensure_ascii=True)
 
 
 # ---------------------------------------------------------------------------
@@ -409,144 +454,355 @@ def test_domain_enums_match_migration():
 
 
 # ---------------------------------------------------------------------------
-# StagingWriter DSN handling (no-connect; just constructor validation)
+# save_proposals() -- write, append, atomic-write, JSON array of dicts
 # ---------------------------------------------------------------------------
 
-def test_staging_writer_requires_dsn(monkeypatch):
-    # Remove env var if present
-    monkeypatch.delenv('CATALOG_DSN', raising=False)
-    if not extract.HAS_PSYCOPG:
-        # If psycopg isn't installed the ImportError fires first; skip.
-        return
+def _make_row(zotero_key: str = 'ZK1', kind: str = 'parameter_value') -> extract.StagingRow:
+    return extract.build_staging_row(
+        zotero_key=zotero_key,
+        attachment_path='/tmp/test.pdf',
+        pass_id=uuid.uuid4(),
+        pass_started_at=datetime.now(timezone.utc),
+        proposal=_proposal(kind=kind),
+        extraction_model='claude-opus-4-7',
+    )
+
+
+def test_save_proposals_creates_json_file(tmp_path: Path):
+    """save_proposals writes a JSON array file when out_path does not exist."""
+    out = tmp_path / 'proposals' / 'pass1.json'
+    row = _make_row()
+    total = extract.save_proposals([row], out)
+    assert total == 1
+    assert out.exists()
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0]['source_zotero_key'] == 'ZK1'
+    assert data[0]['proposed_kind'] == 'parameter_value'
+
+
+def test_save_proposals_appends_on_second_call(tmp_path: Path):
+    """Second call appends to the existing array; does not overwrite."""
+    out = tmp_path / 'pass1.json'
+    row1 = _make_row(zotero_key='ZK1')
+    row2 = _make_row(zotero_key='ZK2')
+    total1 = extract.save_proposals([row1], out)
+    assert total1 == 1
+    total2 = extract.save_proposals([row2], out)
+    assert total2 == 2
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert len(data) == 2
+    keys = [d['source_zotero_key'] for d in data]
+    assert 'ZK1' in keys
+    assert 'ZK2' in keys
+
+
+def test_save_proposals_file_is_json_array_of_dicts(tmp_path: Path):
+    """Each element in the file is a dict matching StagingRow.to_dict()."""
+    out = tmp_path / 'pass1.json'
+    row = _make_row()
+    extract.save_proposals([row], out)
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert isinstance(data, list)
+    element = data[0]
+    assert isinstance(element, dict)
+    expected = row.to_dict()
+    for key, val in expected.items():
+        assert key in element, f'key {key!r} missing from saved element'
+        assert element[key] == val, f'key {key!r}: {element[key]!r} != {val!r}'
+
+
+def test_save_proposals_atomic_write_leaves_valid_json(tmp_path: Path):
+    """The file must be valid JSON immediately after save_proposals returns.
+
+    The atomic write (tmp -> os.replace) ensures the file is never in a
+    partially-written state from the reader's perspective.
+    """
+    out = tmp_path / 'pass1.json'
+    rows = [_make_row(zotero_key=f'ZK{i}') for i in range(5)]
+    extract.save_proposals(rows, out)
+    # Immediately parse; must not raise.
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert len(data) == 5
+
+
+def test_save_proposals_creates_parent_directory(tmp_path: Path):
+    """Parent directories are created automatically if they do not exist."""
+    out = tmp_path / 'nested' / 'deep' / 'pass1.json'
+    assert not out.parent.exists()
+    extract.save_proposals([_make_row()], out)
+    assert out.exists()
+
+
+def test_save_proposals_empty_sequence_creates_empty_array(tmp_path: Path):
+    """Passing an empty sequence creates a file with an empty JSON array."""
+    out = tmp_path / 'pass1.json'
+    total = extract.save_proposals([], out)
+    assert total == 0
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert data == []
+
+
+def test_save_proposals_output_is_ascii_safe(tmp_path: Path):
+    """JSON output must be ASCII-safe (ensure_ascii=True enforced)."""
+    out = tmp_path / 'pass1.json'
+    extract.save_proposals([_make_row()], out)
+    raw = out.read_text(encoding='utf-8')
+    assert all(ord(c) <= 127 for c in raw), 'non-ASCII character found in proposals JSON'
+
+
+def test_save_proposals_returns_cumulative_count(tmp_path: Path):
+    """Return value is the total count of rows in the file after the call."""
+    out = tmp_path / 'pass1.json'
+    assert extract.save_proposals([_make_row()], out) == 1
+    assert extract.save_proposals([_make_row(), _make_row()], out) == 3
+    assert extract.save_proposals([], out) == 3
+
+
+def test_save_proposals_no_psycopg_import():
+    """save_proposals must not import or reference psycopg in any way."""
+    import inspect
+    src = inspect.getsource(extract.save_proposals)
+    assert 'psycopg' not in src
+    assert 'CATALOG_DSN' not in src
+
+
+# ---------------------------------------------------------------------------
+# Per-kind payload schema + provenance validation (BLOCKER #5 / I1)
+# ---------------------------------------------------------------------------
+
+def _build(kind: str, payload: dict):
+    return extract.build_staging_row(
+        zotero_key='ZK',
+        attachment_path=None,
+        pass_id=uuid.uuid4(),
+        pass_started_at=datetime.now(timezone.utc),
+        proposal={
+            'proposed_kind': kind,
+            'proposed_payload': payload,
+            'confidence': 0.5,
+            'extraction_notes': None,
+        },
+        extraction_model='claude-opus-4-8',
+    )
+
+
+def test_build_staging_row_requires_provenance_keys():
+    """Every kind must carry source_excerpt + source_doc_id in the payload."""
+    payload = _parameter_value_payload()
+    del payload['source_excerpt']
     try:
-        extract.StagingWriter()
-    except RuntimeError as re:
-        assert 'CATALOG_DSN' in str(re)
+        _build('parameter_value', payload)
+    except ValueError as ve:
+        assert 'source_excerpt' in str(ve)
     else:
-        raise AssertionError('expected RuntimeError when CATALOG_DSN unset and no dsn arg')
+        raise AssertionError('expected ValueError for missing source_excerpt')
 
 
-def test_staging_writer_accepts_env_dsn(monkeypatch):
-    monkeypatch.setenv('CATALOG_DSN', 'postgresql://test:test@localhost/test')
-    if not extract.HAS_PSYCOPG:
-        return
-    # Construct without connecting (constructor does not connect; __enter__ does).
-    writer = extract.StagingWriter()
-    assert writer.dsn == 'postgresql://test:test@localhost/test'
-    assert writer.conn is None  # not yet entered
-
-
-def test_staging_writer_redacts_dsn_from_exception_args(monkeypatch):
-    # Simulate a psycopg ProgrammingError whose args[0] embeds the URL-form
-    # DSN with password. The helper must strip it before the exception
-    # propagates to a caller that may log str(exc) into progress.json or a
-    # breadcrumb file (both of which the agent commits and pushes).
-    dsn = 'postgresql://user:secret_pw@host:5432/db'
-    monkeypatch.setenv('CATALOG_DSN', dsn)
-    if not extract.HAS_PSYCOPG:
-        return
-    writer = extract.StagingWriter()
-    exc = RuntimeError(f'could not parse: {dsn}')
-    writer._redact_dsn(exc)
-    assert '[CATALOG_DSN_REDACTED]' in exc.args[0]
-    assert 'secret_pw' not in exc.args[0]
-    assert dsn not in exc.args[0]
-
-
-def test_staging_writer_redact_dsn_handles_multi_arg_exception(monkeypatch):
-    # Exception with multiple args, some string + some non-string. String
-    # args that contain the DSN get redacted; non-string args (ints, dicts)
-    # are passed through untouched.
-    dsn = 'postgresql://u:p@h/db'
-    monkeypatch.setenv('CATALOG_DSN', dsn)
-    if not extract.HAS_PSYCOPG:
-        return
-    writer = extract.StagingWriter()
-    exc = RuntimeError(f'first arg: {dsn}', 42, {'k': 'v'}, f'tail: {dsn}')
-    writer._redact_dsn(exc)
-    assert exc.args[0] == '[CATALOG_DSN_REDACTED]'.join(('first arg: ', ''))
-    assert exc.args[1] == 42
-    assert exc.args[2] == {'k': 'v'}
-    assert exc.args[3] == '[CATALOG_DSN_REDACTED]'.join(('tail: ', ''))
-
-
-def test_staging_writer_redact_dsn_noop_when_dsn_absent(monkeypatch):
-    # If the DSN substring is not in the exception, args are unchanged
-    # (identity preserved; no spurious mutation).
-    monkeypatch.setenv('CATALOG_DSN', 'postgresql://u:p@h/db')
-    if not extract.HAS_PSYCOPG:
-        return
-    writer = extract.StagingWriter()
-    exc = RuntimeError('unrelated error', 'still unrelated')
-    original_args = exc.args
-    writer._redact_dsn(exc)
-    assert exc.args == original_args
-
-
-def test_staging_writer_redact_dsn_traverses_cause_chain(monkeypatch):
-    # `raise X from Y` puts the inner exception on __cause__. If the inner
-    # exception contains the DSN (common when a low-level network error is
-    # wrapped by a psycopg.OperationalError), the helper must redact through
-    # the whole chain.
-    dsn = 'postgresql://u:secret_pw@h/db'
-    monkeypatch.setenv('CATALOG_DSN', dsn)
-    if not extract.HAS_PSYCOPG:
-        return
-    writer = extract.StagingWriter()
+def test_build_staging_row_rejects_blank_provenance():
+    """A present-but-empty provenance value counts as missing."""
+    payload = _parameter_value_payload()
+    payload['source_doc_id'] = '   '
     try:
-        try:
-            raise OSError(f'tcp connect failed: {dsn}')
-        except OSError as inner:
-            raise RuntimeError('outer: connect to db failed') from inner
-    except RuntimeError as outer:
-        writer._redact_dsn(outer)
-        # Outer args unaffected (no DSN there)
-        assert outer.args[0] == 'outer: connect to db failed'
-        # Inner cause MUST be redacted
-        assert outer.__cause__ is not None
-        assert '[CATALOG_DSN_REDACTED]' in outer.__cause__.args[0]
-        assert 'secret_pw' not in outer.__cause__.args[0]
+        _build('parameter_value', payload)
+    except ValueError as ve:
+        assert 'source_doc_id' in str(ve)
     else:
-        raise AssertionError('expected RuntimeError')
+        raise AssertionError('expected ValueError for blank source_doc_id')
 
 
-def test_staging_writer_redact_dsn_traverses_context_chain(monkeypatch):
-    # Implicit chaining: an exception raised inside an `except` block sets
-    # the previous exception on __context__ (without `from`). Helper must
-    # traverse this too.
-    dsn = 'postgresql://u:secret@h/db'
-    monkeypatch.setenv('CATALOG_DSN', dsn)
-    if not extract.HAS_PSYCOPG:
-        return
-    writer = extract.StagingWriter()
+def test_build_staging_row_requires_parameter_value_keys():
+    """parameter_value needs parameter_value_id / display_name / candidate_group_id."""
+    payload = _parameter_value_payload()
+    del payload['parameter_value_id']
     try:
-        try:
-            raise OSError(f'inner: {dsn}')
-        except OSError:
-            raise RuntimeError('outer (implicit-chain)')
-    except RuntimeError as outer:
-        writer._redact_dsn(outer)
-        assert outer.__context__ is not None
-        assert '[CATALOG_DSN_REDACTED]' in outer.__context__.args[0]
-        assert 'secret' not in outer.__context__.args[0]
+        _build('parameter_value', payload)
+    except ValueError as ve:
+        assert 'parameter_value_id' in str(ve)
     else:
-        raise AssertionError('expected RuntimeError')
+        raise AssertionError('expected ValueError for missing parameter_value_id')
 
 
-def test_staging_writer_redact_dsn_chain_cycle_safe(monkeypatch):
-    # Defensive: if an exception's __cause__ chain has a cycle (uncommon but
-    # constructable by user code), the traversal must not infinite-loop.
-    monkeypatch.setenv('CATALOG_DSN', 'postgresql://u:p@h/db')
-    if not extract.HAS_PSYCOPG:
-        return
-    writer = extract.StagingWriter()
-    a = RuntimeError('A')
-    b = RuntimeError('B')
-    a.__cause__ = b
-    b.__cause__ = a  # cycle
-    # If the traversal had no cycle guard, this would hang. The seen-set
-    # protects against that.
-    writer._redact_dsn(a)
-    # Test passes if it returns without hanging; no assertion on content
-    # needed (no DSN in either exception).
-    assert True
+def test_build_staging_row_evidence_item_happy_and_missing():
+    """evidence_item requires parameter_value_id, source_id, locator, locator_type."""
+    good = {
+        'parameter_value_id': 'pv-arsenic-hh-direct',
+        'source_id': 'src-health-canada-trv-v4-2025',
+        'locator': 'Table 1, page 17',
+        'locator_type': 'table',
+        'value_text': '1.8 per mg/kg-bw/day',
+        'source_excerpt': 'Arsenic oral SF 1.8 per mg/kg-bw/day',
+        'source_doc_id': 'health-canada-trv-v4',
+    }
+    row = _build('evidence_item', good)
+    assert row.proposed_kind == 'evidence_item'
+
+    missing = dict(good)
+    del missing['locator_type']
+    try:
+        _build('evidence_item', missing)
+    except ValueError as ve:
+        assert 'locator_type' in str(ve)
+    else:
+        raise AssertionError('expected ValueError for missing locator_type')
+
+
+def test_build_staging_row_source_lead_happy():
+    """source_lead requires lead_set_id + provenance."""
+    payload = {
+        'lead_set_id': 'protocol-1-trv-references-2026-05-28',
+        'short_citation': 'Protocol 1 sec 4.4.1.2 cited TRV references',
+        'source_excerpt': 'TRVs shall be selected per section 4.4.1.2',
+        'source_doc_id': 'protocol-1-dra',
+    }
+    row = _build('source_lead', payload)
+    assert row.proposed_kind == 'source_lead'
+
+
+# ---------------------------------------------------------------------------
+# save_proposals() recovery + unique temp (IMPORTANT findings)
+# ---------------------------------------------------------------------------
+
+def test_save_proposals_quarantines_malformed_json(tmp_path: Path):
+    """A malformed existing file is quarantined and a fresh array is started."""
+    out = tmp_path / 'pass1.json'
+    out.write_text('{ this is not valid json', encoding='utf-8')
+    total = extract.save_proposals([_make_row()], out)
+    assert total == 1
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert isinstance(data, list) and len(data) == 1
+    quarantined = list(tmp_path.glob('pass1.json.corrupt-*'))
+    assert quarantined, 'expected a quarantined .corrupt-* file'
+
+
+def test_save_proposals_quarantines_non_array_json(tmp_path: Path):
+    """A well-formed-but-non-array existing file is quarantined, not appended."""
+    out = tmp_path / 'pass1.json'
+    out.write_text('{"not": "an array"}', encoding='utf-8')
+    total = extract.save_proposals([_make_row()], out)
+    assert total == 1
+    data = json.loads(out.read_text(encoding='utf-8'))
+    assert isinstance(data, list) and len(data) == 1
+    assert list(tmp_path.glob('pass1.json.corrupt-*'))
+
+
+def test_save_proposals_leaves_no_fixed_temp_file(tmp_path: Path):
+    """The atomic write must not leave a fixed sibling .tmp behind."""
+    out = tmp_path / 'pass1.json'
+    extract.save_proposals([_make_row()], out)
+    assert not (tmp_path / 'pass1.tmp').exists()
+    assert not list(tmp_path.glob('*.tmp')), 'temp files should be removed by os.replace'
+
+
+# ---------------------------------------------------------------------------
+# generate_staging_sql() -- staging-only, injection-safe, correct casts
+# ---------------------------------------------------------------------------
+
+def _write_proposals(tmp_path: Path, rows) -> Path:
+    out = tmp_path / 'proposals' / 'passX.json'
+    extract.save_proposals(rows, out)
+    return out
+
+
+def test_generate_staging_sql_targets_staging_only(tmp_path: Path):
+    """Generated SQL inserts into catalog_extraction_staging and NEVER into a
+    production table (promotion is the approve RPC's job under HITL)."""
+    proposals = _write_proposals(tmp_path, [_make_row()])
+    sql_path = tmp_path / 'passX.sql'
+    n = extract.generate_staging_sql(proposals, sql_path)
+    assert n == 1
+    sql = sql_path.read_text(encoding='utf-8')
+    assert 'INSERT INTO public.catalog_extraction_staging' in sql
+    # No direct INSERT into any production table.
+    for prod in (
+        'promoted_parameter_values',
+        'catalog_evidence_items',
+        'source_lead_triage',
+    ):
+        assert f'INSERT INTO public.{prod}' not in sql
+        assert f'INSERT INTO {prod}' not in sql
+
+
+def test_generate_staging_sql_has_casts_and_jsonb(tmp_path: Path):
+    proposals = _write_proposals(tmp_path, [_make_row()])
+    sql_path = tmp_path / 'passX.sql'
+    extract.generate_staging_sql(proposals, sql_path)
+    sql = sql_path.read_text(encoding='utf-8')
+    assert '::uuid' in sql
+    assert '::timestamptz' in sql
+    assert '::jsonb' in sql
+    assert 'BEGIN;' in sql and 'COMMIT;' in sql
+
+
+def test_generate_staging_sql_is_injection_safe(tmp_path: Path):
+    """A payload containing a SQL-quote / injection attempt is dollar-quoted,
+    not interpolated into a breakable single-quoted literal."""
+    payload = _parameter_value_payload()
+    payload['display_name'] = "Cadmium'); DROP TABLE catalog_extraction_staging;--"
+    payload['source_excerpt'] = "value with ' single quotes and $cat$ tag-like text"
+    row = extract.build_staging_row(
+        zotero_key="ZK'injection",
+        attachment_path=None,
+        pass_id=uuid.uuid4(),
+        pass_started_at=datetime.now(timezone.utc),
+        proposal={
+            'proposed_kind': 'parameter_value',
+            'proposed_payload': payload,
+            'confidence': None,
+            'extraction_notes': None,
+        },
+        extraction_model='claude-opus-4-8',
+    )
+    proposals = _write_proposals(tmp_path, [row])
+    sql_path = tmp_path / 'passX.sql'
+    extract.generate_staging_sql(proposals, sql_path)
+    sql = sql_path.read_text(encoding='utf-8')
+    # The DROP text appears only inside the dollar-quoted JSONB payload, never
+    # as an executable statement terminator. There must be exactly one INSERT.
+    assert sql.count('INSERT INTO public.catalog_extraction_staging') == 1
+    # NULL confidence emitted as bare NULL, not quoted.
+    assert 'NULL' in sql
+
+
+def test_generate_staging_sql_comment_injection_is_neutralized(tmp_path: Path):
+    """Newlines / control chars in payload text must not break out of the `--`
+    review-comment line and inject executable SQL into the packet."""
+    payload = _parameter_value_payload()
+    payload['display_name'] = "BaP\r\nCOMMIT;\nDROP TABLE public.catalog_extraction_staging;--"
+    payload['source_excerpt'] = "line1\nline2\rline3"
+    row = extract.build_staging_row(
+        zotero_key='ZK', attachment_path=None,
+        pass_id=uuid.uuid4(), pass_started_at=datetime.now(timezone.utc),
+        proposal={
+            'proposed_kind': 'parameter_value',
+            'proposed_payload': payload,
+            'confidence': 0.5,
+            'extraction_notes': None,
+        },
+        extraction_model='claude-opus-4-8',
+    )
+    proposals = _write_proposals(tmp_path, [row])
+    sql_path = tmp_path / 'passX.sql'
+    extract.generate_staging_sql(proposals, sql_path)
+    sql = sql_path.read_text(encoding='utf-8')
+    # Every comment line stays a comment: no line starts with the injected DROP.
+    for line in sql.splitlines():
+        assert not line.lstrip().startswith('DROP TABLE'), f'comment broke out: {line!r}'
+        assert not line.lstrip().startswith('COMMIT;') or line.strip() == 'COMMIT;', (
+            f'injected COMMIT leaked as a statement: {line!r}'
+        )
+    # The DROP text still exists, but only inside the dollar-quoted JSONB payload.
+    assert 'DROP TABLE' in sql
+    assert sql.count('INSERT INTO public.catalog_extraction_staging') == 1
+
+
+def test_generate_staging_sql_rejects_non_array(tmp_path: Path):
+    bad = tmp_path / 'bad.json'
+    bad.write_text('{"not": "an array"}', encoding='utf-8')
+    try:
+        extract.generate_staging_sql(bad, tmp_path / 'out.sql')
+    except ValueError as ve:
+        assert 'not a JSON array' in str(ve)
+    else:
+        raise AssertionError('expected ValueError for non-array proposals file')

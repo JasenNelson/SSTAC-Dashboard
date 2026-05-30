@@ -11,13 +11,12 @@
 #      slash commands like /handoff-update don't fire in `claude -p` mode
 #      per src/lib/agentic-os/launch-validator.ts empirical verification).
 #   3. Post-archive sentinel re-check (closes the archive-window race).
-#   4. CATALOG_DSN env var load from Windows Credential Manager.
-#   5. Starter prompt substitution ($PassId / $YYYYMMDDTHHMMSSZ / $N markers).
-#   6. STARTED breadcrumb emission to .tmp/catalog-overnight-breadcrumbs/.
-#   7. Spawn claude -p subprocess with the inlined starter prompt.
-#   8. Stall watchdog loop (pass-scoped *-py.json filter; 600s default
+#   4. Starter prompt substitution ($PassId / $YYYYMMDDTHHMMSSZ / $N markers).
+#   5. STARTED breadcrumb emission to .tmp/catalog-overnight-breadcrumbs/.
+#   6. Spawn claude -p subprocess with the inlined starter prompt.
+#   7. Stall watchdog loop (pass-scoped *-py.json filter; 600s default
 #      threshold; taskkill /T /F + STALLED breadcrumb on stall).
-#   9. Final breadcrumb based on exit code (0 = COMPLETED_GREEN,
+#   8. Final breadcrumb based on exit code (0 = COMPLETED_GREEN,
 #      124 = STALLED, else = COMPLETED_RED, no exit code = SILENT_BAIL).
 #
 # Design reference: STREAM_D_REDESIGN_2026_05_28.md v0.3.1
@@ -40,8 +39,7 @@
 
 [CmdletBinding()]
 param(
-    # Skip Supabase writes; the session still processes manifest items but does
-    # not insert into catalog_extraction_staging. For wrapper smoke testing.
+    # Skip writing the proposals file (wrapper smoke test); the session still runs Docling.
     [Parameter(Mandatory = $false)]
     [switch]$DryRun,
 
@@ -62,16 +60,20 @@ param(
     [Parameter(Mandatory = $false)]
     [int]$KillWaitMs = 30000,
 
-    # Credential Manager target name for the Supabase service-role DSN.
-    [Parameter(Mandatory = $false)]
-    [string]$DsnCredentialTarget = 'SSTAC_CATALOG_DSN',
-
     # Path to `claude` CLI. Defaults to the standard install location.
     [Parameter(Mandatory = $false)]
     [string]$ClaudeExe = "$env:USERPROFILE\.local\bin\claude.exe"
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Tracks whether a terminal breadcrumb (COMPLETED_GREEN / COMPLETED_RED /
+# STALLED / SILENT_BAIL) has been emitted, so we emit EXACTLY ONE on every exit
+# path -- including unexpected throws in the pre-spawn region (archive,
+# substitution, spawn) that are not inside the watchdog try/catch. The
+# script-level trap below is the backstop.
+$script:TerminalEmitted = $false
+$TerminalStatuses = @('COMPLETED_GREEN', 'COMPLETED_RED', 'STALLED', 'SILENT_BAIL')
 
 # ----- Resolve paths ---------------------------------------------------------
 
@@ -126,7 +128,24 @@ function Write-PsBreadcrumb {
     }
     $crumbFile = Join-Path $BreadcrumbDir "$PassId-$nowSafe-ps.json"
     $crumb | ConvertTo-Json -Depth 6 | Set-Content -Path $crumbFile -Encoding utf8
+    if ($TerminalStatuses -contains $Status) {
+        $script:TerminalEmitted = $true
+    }
     return $crumbFile
+}
+
+# ----- Backstop trap: guarantee exactly one terminal breadcrumb -------------
+# Any unhandled terminating error (e.g., a throw in the archive / substitution /
+# spawn region that precedes the watchdog try/catch) lands here. Emit a single
+# COMPLETED_RED if none was emitted yet, then exit non-zero. The watchdog
+# catch's own `throw` also reaches here, but by then TerminalEmitted is already
+# true, so no second breadcrumb is written.
+trap {
+    if (-not $script:TerminalEmitted) {
+        Write-PsBreadcrumb -Status 'COMPLETED_RED' `
+            -Note ("unhandled wrapper error: " + $_.Exception.Message) | Out-Null
+    }
+    exit 1
 }
 
 # ----- Pre-flight (round 1) -------------------------------------------------
@@ -153,6 +172,21 @@ if (-not (Test-Path $StarterPromptFile)) {
 }
 if (-not (Test-Path $ClaudeExe)) {
     Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note "claude CLI not found at $ClaudeExe" | Out-Null
+    exit 1
+}
+
+# Venv pre-flight: the worker runs Docling via this repo's catalog-overnight
+# venv. A missing venv (a fresh worktree starts without one) or a venv that
+# cannot import docling would make every item error mid-pass. Fail fast here
+# with a clear breadcrumb instead.
+$VenvPython = Join-Path $RepoRoot 'scripts\catalog-overnight\.venv\Scripts\python.exe'
+if (-not (Test-Path $VenvPython)) {
+    Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note "catalog-overnight venv python not found at $VenvPython (create it: python -m venv + pip install docling pymupdf pillow pytest)" | Out-Null
+    exit 1
+}
+& $VenvPython -c "import docling" 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note "catalog-overnight venv cannot import docling (pip install docling into $VenvPython)" | Out-Null
     exit 1
 }
 
@@ -183,37 +217,43 @@ if (Test-Path $SentinelPause) {
     exit 0
 }
 
-# ----- Load CATALOG_DSN from Credential Manager (skip in dry-run) -----------
-
-if (-not $DryRun) {
-    try {
-        # Prefer the CredentialManager PSGallery module if installed
-        if (Get-Command Get-StoredCredential -ErrorAction SilentlyContinue) {
-            $cred = Get-StoredCredential -Target $DsnCredentialTarget -ErrorAction Stop
-            if ($null -eq $cred) {
-                throw "no credential at target $DsnCredentialTarget"
-            }
-            $env:CATALOG_DSN = $cred.GetNetworkCredential().Password
-        } else {
-            Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note "Get-StoredCredential not available. Install CredentialManager module (Install-Module CredentialManager -Scope CurrentUser) or run with -DryRun." | Out-Null
-            exit 1
-        }
-    } catch {
-        Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note ("DSN load failed: " + $_.Exception.Message) | Out-Null
-        exit 1
-    }
-}
-
 # ----- Build starter prompt with marker substitution ------------------------
 
 $promptTemplate = Get-Content -Raw -LiteralPath $StarterPromptFile
 $boostNote = if ($priorityBoost) { 'PRIORITY_BOOST sentinel detected; owner has flagged this pass as priority.' } else { '' }
 
+# Resolve the worktree's current branch so the prompt's "only commit to this
+# branch" guard is dynamic, not a hard-coded (and easily stale) branch name.
+try {
+    $ExpectedBranch = (& git -C $RepoRoot rev-parse --abbrev-ref HEAD).Trim()
+} catch {
+    $ExpectedBranch = ''
+}
+if ([string]::IsNullOrWhiteSpace($ExpectedBranch) -or $ExpectedBranch -eq 'HEAD') {
+    Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note "could not resolve current git branch in $RepoRoot (detached HEAD or not a repo); refusing to launch" | Out-Null
+    exit 1
+}
+if ($ExpectedBranch -eq 'main') {
+    Write-PsBreadcrumb -Status 'COMPLETED_RED' -Note "refusing to launch on 'main'; the worker must run on a feature branch" | Out-Null
+    exit 1
+}
+
+# -DryRun must reach the worker, not just the breadcrumb. The $DRY_RUN_NOTE
+# marker expands to an explicit no-write/no-commit instruction the prompt's
+# Step 3/Step 4 branch on; when not a dry run it expands to a normal-run note.
+$dryRunNote = if ($DryRun) {
+    'DRY RUN: this is a wrapper smoke test. Do the Docling extraction and draft + validate proposals normally, but DO NOT call save_proposals or generate_staging_sql (write nothing under proposals/), and DO NOT git commit. Report the count of proposals you WOULD have written, then emit a COMPLETED_GREEN breadcrumb and exit 0.'
+} else {
+    'NORMAL RUN: write proposals + SQL and commit per Step 3 and Step 4.'
+}
+
 $prompt = $promptTemplate `
     -replace '\$PassId', $PassId `
     -replace '\$YYYYMMDDTHHMMSSZ', $StartIsoSafe `
     -replace '\$N\b', $MaxItems.ToString() `
-    -replace '\$PRIORITY_BOOST_NOTE', $boostNote
+    -replace '\$PRIORITY_BOOST_NOTE', $boostNote `
+    -replace '\$DRY_RUN_NOTE', $dryRunNote `
+    -replace '\$ExpectedBranch', $ExpectedBranch
 
 # ----- STARTED breadcrumb ---------------------------------------------------
 
@@ -238,13 +278,40 @@ $stderrLog = Join-Path $BreadcrumbDir "$PassId.stderr.log"
 $tempPromptFile = Join-Path $BreadcrumbDir "$PassId-prompt.txt"
 Set-Content -Path $tempPromptFile -Value $prompt -Encoding utf8
 
+# --------------------------------------------------------------------------
+# OWNER-DECISION REQUIRED before autonomous headless runs (the two RED-review
+# BLOCKERs). As shipped, this arg list does NOT bypass permissions or the
+# SessionStart hook, so a `claude -p` worker will narrate-not-act and the
+# wrapper records SILENT_BAIL. That is intentional: arming a no-human worker is
+# a security decision for the owner, not the agent, to make. To ENABLE
+# autonomous runs, add these two flags (verified present in claude 2.1.156):
+#
+#     '--setting-sources', 'project,local',   # drop the user-level SessionStart
+#                                              # /codex-review hook that blocks a
+#                                              # no-human session (repo-local; does
+#                                              # not touch global settings).
+#     '--dangerously-skip-permissions'         # let the worker run Bash/file/git
+#                                              # tools with no approver. Bounded by
+#                                              # L0 1.15 worktree isolation + the
+#                                              # prompt's path-scoped git rules.
+#                                              # Safer alt: a curated
+#                                              # --allowedTools allowlist (must
+#                                              # still include Bash for python+git).
+#
+# See docs/CATALOG_HEADLESS_ENABLEMENT.md for the full rationale + the DryRun
+# smoke recipe to run after arming.
 $claudeArgs = @(
     '-p',
     '--output-format', 'text'
 )
 
+# -WorkingDirectory pins the claude -p worker to the robot's repo root. Without
+# it the worker inherits the launching shell's CWD (which may be a different
+# worktree / branch), reads the wrong manifest, and bails. RepoRoot is resolved
+# from $PSScriptRoot above, so this is correct under schtasks too.
 $proc = Start-Process -FilePath $ClaudeExe -ArgumentList $claudeArgs `
     -NoNewWindow -PassThru `
+    -WorkingDirectory $RepoRoot `
     -RedirectStandardInput $tempPromptFile `
     -RedirectStandardOutput $stdoutLog `
     -RedirectStandardError $stderrLog
@@ -301,7 +368,15 @@ try {
         $proc.WaitForExit()
         $exitCode = $proc.ExitCode
 
-        if ($exitCode -eq 0) {
+        # Emit EXACTLY ONE terminal breadcrumb. A null ExitCode (process exited
+        # but Windows did not surface a code) is treated as SILENT_BAIL here so
+        # it does not fall through to a second SILENT_BAIL breadcrumb below.
+        if ($null -eq $exitCode) {
+            Write-PsBreadcrumb -Status 'SILENT_BAIL' `
+                -OutputArtifacts @($stdoutLog, $stderrLog) `
+                -Note "claude session exited without reporting an exit code" | Out-Null
+            $exitCode = 2
+        } elseif ($exitCode -eq 0) {
             Write-PsBreadcrumb -Status 'COMPLETED_GREEN' `
                 -OutputArtifacts @($stdoutLog, $stderrLog) `
                 -Note "claude session exit=0" | Out-Null
@@ -320,39 +395,17 @@ try {
         -Note ("wrapper error: " + $_.Exception.Message) | Out-Null
     throw
 } finally {
-    # Capture DSN BEFORE wipe so the sanitizer below can redact it from log files.
-    $dsnForRedaction = $env:CATALOG_DSN
-    if ($env:CATALOG_DSN) {
-        Remove-Item Env:CATALOG_DSN -ErrorAction SilentlyContinue
-    }
-    # Defense-in-depth: redact the DSN from captured stderr / stdout logs if it
-    # appears (e.g. a propagated psycopg connection error or Python traceback that
-    # quoted the connection string). Best-effort; never block exit on sanitizer failure.
-    if ($dsnForRedaction) {
-        foreach ($logPath in @($stderrLog, $stdoutLog)) {
-            if (Test-Path -LiteralPath $logPath) {
-                try {
-                    $content = Get-Content -Raw -LiteralPath $logPath -ErrorAction Stop
-                    if ($content -and $content.Contains($dsnForRedaction)) {
-                        $content.Replace($dsnForRedaction, '[CATALOG_DSN_REDACTED]') |
-                            Set-Content -Path $logPath -NoNewline -Encoding utf8 -ErrorAction SilentlyContinue
-                    }
-                } catch {
-                    # Swallow; defense-in-depth only.
-                }
-            }
-        }
-    }
     # Clean up the temp prompt file (contains the inlined prompt; no secrets, but tidy)
     if (Test-Path $tempPromptFile) {
         Remove-Item -LiteralPath $tempPromptFile -Force -ErrorAction SilentlyContinue
     }
 }
 
+# A terminal breadcrumb (COMPLETED_GREEN / COMPLETED_RED / STALLED / SILENT_BAIL)
+# has already been emitted on every path above, so do NOT write another one
+# here -- just exit with the resolved code. Defensive: if $exitCode is somehow
+# still null, exit 2 without a duplicate breadcrumb.
 if ($null -eq $exitCode) {
-    Write-PsBreadcrumb -Status 'SILENT_BAIL' `
-        -OutputArtifacts @($stdoutLog, $stderrLog) `
-        -Note "claude session did not report an exit code" | Out-Null
     exit 2
 }
 
