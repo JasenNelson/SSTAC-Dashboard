@@ -3357,10 +3357,22 @@ export default function EvidenceLibrary({
               <AllScaffoldsBanner />
             )}
           <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
-            <table className="min-w-full text-sm">
+            <table className="w-full table-fixed text-sm">
+              {/* Fixed column proportions: the text-heavy columns (review status,
+                  default/evidence, applicability, sources) get the room; the short
+                  numeric "Current value" no longer hogs width. */}
+              <colgroup>
+                <col className="w-[20%]" />
+                <col className="w-[8%]" />
+                <col className="w-[9%]" />
+                <col className="w-[13%]" />
+                <col className="w-[20%]" />
+                <col className="w-[15%]" />
+                <col className="w-[15%]" />
+              </colgroup>
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
                 <tr>
-                  <th className="px-3 py-2 font-semibold">Value</th>
+                  <th className="px-3 py-2 font-semibold">Parameter</th>
                   <th className="px-3 py-2 font-semibold">Pathway</th>
                   <th className="px-3 py-2 font-semibold">Current value</th>
                   <th className="px-3 py-2 font-semibold">Default / evidence</th>
