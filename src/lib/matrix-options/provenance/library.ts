@@ -115,7 +115,10 @@ export interface EvidenceLibraryValueGroup {
   substanceKey: string;
   substanceLabel: string;
   inputKey: string;
-  jurisdiction: string;
+  // A source-agnostic candidate group can span multiple source jurisdictions, so this is
+  // the de-duplicated set of all jurisdictions present in the group's records (not just
+  // the first record's). Rendered as a joined label.
+  jurisdictions: string[];
   records: EvidenceLibraryValueRow[];
   currentDefault: EvidenceLibraryValueRow | null;
   evidenceSupportStatuses: EvidenceSupportStatus[];
@@ -1218,7 +1221,7 @@ function buildValueGroups(
         substanceKey: first.record.substance_key,
         substanceLabel: first.substanceLabel,
         inputKey: first.record.input_key,
-        jurisdiction: first.record.jurisdiction,
+        jurisdictions: uniqueArray(records.map((row) => row.record.jurisdiction)),
         records,
         currentDefault,
         evidenceSupportStatuses: uniqueArray(
