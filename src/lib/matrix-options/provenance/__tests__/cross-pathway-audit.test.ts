@@ -457,6 +457,73 @@ describe('buildCrossPathwayAudit', () => {
     );
   });
 
+  it('excludes catalog evidence categories from the cross-pathway comparison', () => {
+    // A substance/input that appears in one CALCULATOR pathway plus one catalog
+    // EVIDENCE category must NOT be surfaced as a cross-pathway comparison: evidence
+    // categories are not derivation pathways. After the calculator-only guard the group
+    // has a single calculator pathway, so it falls below the 2+ gate and is excluded.
+    setRecords([
+      makeRecord({
+        substance_key: 'arsenic',
+        input_key: 'oral_rfd',
+        pathway: 'human-health-direct',
+        value: '0.0003',
+        unit: 'mg/kg-bw/day',
+      }),
+      makeRecord({
+        substance_key: 'arsenic',
+        input_key: 'oral_rfd',
+        pathway: 'hh-toxicity-value',
+        value: '0.0009',
+        unit: 'mg/kg-bw/day',
+      }),
+    ]);
+
+    const summary = buildCrossPathwayAudit();
+    expect(summary.rows).toHaveLength(0);
+    expect(summary.totalParameters).toBe(0);
+  });
+
+  it('keeps the audit calculator-only even when an evidence category shares the substance/input', () => {
+    // Two calculator pathways plus an evidence category on the same substance/input:
+    // the audit compares only the two calculator pathways; the evidence category never
+    // enters values_by_pathway (Map<ProvenancePathway>).
+    setRecords([
+      makeRecord({
+        substance_key: 'benzo_a_pyrene',
+        input_key: 'logKow',
+        pathway: 'eco-direct-eqp',
+        value: '6.13',
+        unit: 'dimensionless',
+      }),
+      makeRecord({
+        substance_key: 'benzo_a_pyrene',
+        input_key: 'logKow',
+        pathway: 'eco-food-bsaf',
+        value: '6.13',
+        unit: 'dimensionless',
+      }),
+      makeRecord({
+        substance_key: 'benzo_a_pyrene',
+        input_key: 'logKow',
+        pathway: 'hh-toxicity-value',
+        value: '6.13',
+        unit: 'dimensionless',
+      }),
+    ]);
+
+    const summary = buildCrossPathwayAudit();
+    expect(summary.rows).toHaveLength(1);
+    const row = summary.rows[0];
+    expect(row.values_by_pathway.size).toBe(2);
+    expect(row.values_by_pathway.get('eco-direct-eqp')).toBeDefined();
+    expect(row.values_by_pathway.get('eco-food-bsaf')).toBeDefined();
+    // The evidence category is absent from the calculator-only comparison map.
+    expect(
+      row.values_by_pathway.has('hh-toxicity-value' as never),
+    ).toBe(false);
+  });
+
   it('populates values_by_pathway map with correct entries', () => {
     setRecords([
       makeRecord({

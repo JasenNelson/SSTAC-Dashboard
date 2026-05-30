@@ -40,11 +40,13 @@ import type {
 } from '@/lib/matrix-options/provenance/library';
 import type {
   CalculatorReceipt,
+  CatalogPathway,
   EvidenceLibraryFilterRequest,
   EvidenceLibraryFilters,
   EvidenceLibraryViewMode,
   ProvenancePathway,
 } from '@/lib/matrix-options/provenance/types';
+import { isProvenancePathway } from '@/lib/matrix-options/provenance/pathways';
 import {
   buildDefaultSelectionPolicyDecision,
   type DefaultSelectionDecisionStatus,
@@ -611,7 +613,7 @@ function sourceRelationshipLabels(row: EvidenceLibraryValueRow): string {
 }
 
 function defaultPolicyDecisionKey(
-  pathway: ProvenancePathway,
+  pathway: CatalogPathway,
   substanceKey: string,
   inputKey: string,
 ): string {
@@ -2519,7 +2521,11 @@ function PromotedCandidateCard({
                 )}
                 data-testid="promoted-pathway-badge"
               >
-                {unscoped ? 'Pathway unscoped' : PATHWAY_LABELS[record.pathway]}
+                {unscoped
+                  ? 'Pathway unscoped'
+                  : isProvenancePathway(record.pathway)
+                    ? PATHWAY_LABELS[record.pathway]
+                    : humanizeCatalogLabel(record.pathway)}
               </button>
             )}
             {editingSubstance ? (
@@ -2845,8 +2851,14 @@ export default function EvidenceLibrary({
     const decisions = new Map<string, DefaultSelectionPolicyDecision>();
 
     for (const row of library.values) {
+      // Default-selection policy is a CALCULATOR concept. Catalog evidence categories
+      // (toxicity values, weighting modifiers, exposure parameters, eco-soil/screening,
+      // reference/background) never drive a calculator default, so they get no policy
+      // decision -- guard before calling the calculator-only policy API.
+      const pathway = row.record.pathway;
+      if (!isProvenancePathway(pathway)) continue;
       const key = defaultPolicyDecisionKey(
-        row.record.pathway,
+        pathway,
         row.record.substance_key,
         row.record.input_key,
       );
@@ -2855,7 +2867,7 @@ export default function EvidenceLibrary({
           key,
           buildDefaultSelectionPolicyDecision({
             frameId: regulatoryFrameId,
-            pathway: row.record.pathway,
+            pathway,
             substanceKey: row.record.substance_key,
             inputKey: row.record.input_key,
           }),

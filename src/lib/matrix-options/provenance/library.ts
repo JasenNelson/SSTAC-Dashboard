@@ -8,6 +8,7 @@ import {
   getSourceRecord,
 } from './catalog';
 import type {
+  CatalogPathway,
   EquationRecord,
   EvidenceSupportStatus,
   EvidenceLibraryFilterRequest,
@@ -22,6 +23,7 @@ import type {
   SourceRelationshipRole,
   SourceRecord,
 } from './types';
+import { isProvenancePathway } from './pathways';
 
 export interface EvidenceLibraryValueRow {
   record: ParameterValueRecord;
@@ -106,7 +108,10 @@ export interface EvidenceLibraryProtocol28ReviewSummary {
 
 export interface EvidenceLibraryValueGroup {
   groupId: string;
-  pathway: ProvenancePathway;
+  // Catalog grouping spans calculator pathways and evidence categories, so this is the
+  // wider CatalogPathway. It is rendered (humanizeCatalogLabel) and used as a string key,
+  // never passed into a calculator-only API without an isProvenancePathway() guard.
+  pathway: CatalogPathway;
   substanceKey: string;
   substanceLabel: string;
   inputKey: string;
@@ -904,6 +909,15 @@ export function humanizeCatalogLabel(value: string): string {
       'Protocol 28 v3.0 policy compilation',
     Canada_federal: 'Canada federal',
     US_federal: 'US federal',
+    // Catalog evidence-category pathways (canonical extraction registry). Calculator
+    // pathway strings are intentionally absent here so their existing badge text is
+    // unchanged; these 6 give the evidence categories readable badges.
+    'hh-toxicity-value': 'HH toxicity value',
+    'hh-toxicity-weighting': 'HH toxicity weighting',
+    'hh-exposure-parameter': 'HH exposure parameter',
+    'eco-soil': 'eco soil (TRV)',
+    'eco-soil-screening': 'eco soil screening',
+    'reference-background': 'reference/background',
   };
   if (labels[value]) return labels[value];
   return value.replaceAll('_', ' ').replaceAll('-', ' ');
@@ -1503,6 +1517,10 @@ export function buildCrossPathwayAudit(): CrossPathwayAuditSummary {
   // Group PARAMETER_VALUE_RECORDS by composite key substance_key + input_key.
   const groups = new Map<string, ParameterValueRecord[]>();
   for (const record of PARAMETER_VALUE_RECORDS) {
+    // Calculator pathways only: the 2+ pathway gate below must count derivation pathways,
+    // not evidence categories, or a substance with one calculator value plus several
+    // evidence rows would be falsely surfaced as a cross-pathway comparison.
+    if (!isProvenancePathway(record.pathway)) continue;
     const key = `${record.substance_key}__${record.input_key}`;
     const existing = groups.get(key);
     if (existing) {
@@ -1525,9 +1543,15 @@ export function buildCrossPathwayAudit(): CrossPathwayAuditSummary {
 
     const valuesByPathway = new Map<ProvenancePathway, CrossPathwayAuditEntry>();
     for (const record of records) {
+      // Cross-pathway CONSISTENCY only compares calculator derivation pathways. Catalog
+      // evidence categories (toxicity values, weighting modifiers, exposure parameters,
+      // eco-soil/screening, reference/background) are not derivation pathways, so they are
+      // excluded here -- mixing them into a "cross-pathway" audit would be a category error.
+      const pathway = record.pathway;
+      if (!isProvenancePathway(pathway)) continue;
       const entry: CrossPathwayAuditEntry = {
-        pathway: record.pathway,
-        pathway_label: PATHWAY_LABELS[record.pathway] ?? record.pathway,
+        pathway,
+        pathway_label: PATHWAY_LABELS[pathway] ?? pathway,
         parameter_value_id: record.parameter_value_id,
         value: String(record.value),
         unit: record.unit,
@@ -1535,7 +1559,7 @@ export function buildCrossPathwayAudit(): CrossPathwayAuditSummary {
         qa_status: record.qa_status,
         evidence_support_status: record.evidence_support_status,
       };
-      const existing = valuesByPathway.get(record.pathway);
+      const existing = valuesByPathway.get(pathway);
       if (existing) {
         // Prefer current_default; otherwise keep the first record seen.
         if (existing.default_status === 'current_default') {
@@ -1544,12 +1568,12 @@ export function buildCrossPathwayAudit(): CrossPathwayAuditSummary {
         }
         if (record.default_status === 'current_default') {
           // New record is current_default; replace.
-          valuesByPathway.set(record.pathway, entry);
+          valuesByPathway.set(pathway, entry);
         }
         // Neither is current_default -- keep existing (first-wins).
         continue;
       }
-      valuesByPathway.set(record.pathway, entry);
+      valuesByPathway.set(pathway, entry);
     }
 
     // Collect normalized values and units for comparison.

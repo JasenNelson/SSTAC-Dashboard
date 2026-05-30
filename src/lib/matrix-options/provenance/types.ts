@@ -1,9 +1,14 @@
-export type ProvenancePathway =
-  | 'eco-direct-eqp'
-  | 'eco-food-bsaf'
-  | 'background-adjustment'
-  | 'human-health-direct'
-  | 'human-health-food';
+// Pathway vocabularies live in ./pathways (single source of truth for the unions +
+// runtime guards). Re-exported here for backward-compatible imports from './types'.
+//   ProvenancePathway      -- 5 calculator derivation pathways (drive equations + policy)
+//   CatalogEvidencePathway -- 6 catalog evidence categories (no equation; never a default)
+//   CatalogPathway         -- the union; the type of a catalog record's `pathway` field
+export type {
+  ProvenancePathway,
+  CatalogEvidencePathway,
+  CatalogPathway,
+} from './pathways';
+import type { ProvenancePathway, CatalogPathway } from './pathways';
 
 export type ZoteroStatus =
   | 'pending_owner_export'
@@ -179,7 +184,10 @@ export interface EquationRecord {
 export interface ParameterValueRecord {
   parameter_value_id: string;
   substance_key: string;
-  pathway: ProvenancePathway;
+  // A catalog record may carry a calculator pathway OR an evidence category, so this is
+  // the wider CatalogPathway. Guard with isProvenancePathway() before feeding it into any
+  // calculator-only API (equation dispatch, frame applicability, default-selection policy).
+  pathway: CatalogPathway;
   input_key: string;
   display_name: string;
   value: number | string;
@@ -247,7 +255,10 @@ export type EvidenceLibraryViewMode =
 
 export interface EvidenceLibraryFilters {
   search: string;
-  pathways: ProvenancePathway[];
+  // The pathway facet is built from catalog record pathways, which include evidence
+  // categories, so the filter accepts the wider CatalogPathway. Calculator pathway pickers
+  // (which assign defaults) stay narrow to ProvenancePathway -- see EvidenceLibrary.tsx.
+  pathways: CatalogPathway[];
   substanceKeys: string[];
   inputKeys: string[];
   qaStatuses: CatalogQaStatus[];
