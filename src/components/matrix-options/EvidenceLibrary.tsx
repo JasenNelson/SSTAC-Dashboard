@@ -2896,6 +2896,76 @@ function HitlSourcesSection({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
+// At-a-glance inventory of what is loaded in the catalog: headline counts + a browsable
+// substance list (click to filter the main view). Phase 1 uses existing data; per-source
+// retrieval/source/QA date tracking is a follow-up once the catalog emits those fields.
+function CatalogInventory({
+  baseline,
+  lastExtractedAt,
+  onSelectSubstance,
+}: {
+  baseline: ReturnType<typeof buildEvidenceLibraryView>;
+  lastExtractedAt: string | null;
+  onSelectSubstance: (substanceKey: string) => void;
+}) {
+  const substances = baseline.facets.substances;
+  const stats: Array<{ label: string; value: number }> = [
+    { label: 'Substances', value: substances.length },
+    { label: 'Parameters', value: baseline.facets.inputKeys.length },
+    { label: 'References', value: baseline.totalCounts.sources },
+    { label: 'Values', value: baseline.totalCounts.values },
+  ];
+  return (
+    <section className="space-y-3" data-testid="evidence-library-inventory">
+      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        Catalog inventory
+      </h3>
+      <div className="grid grid-cols-2 gap-2">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950"
+          >
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {stat.label}
+            </div>
+            <div className="text-xl font-bold text-slate-950 dark:text-white">
+              {stat.value}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div>
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          Substances ({substances.length}) -- click to filter
+        </div>
+        <ul className="max-h-72 space-y-0.5 overflow-y-auto rounded-lg border border-slate-200 p-1 dark:border-slate-800">
+          {substances.map((substance) => (
+            <li key={substance.value}>
+              <button
+                type="button"
+                onClick={() => onSelectSubstance(substance.value)}
+                className="flex w-full items-center justify-between gap-2 rounded px-2 py-1 text-left text-xs text-slate-700 hover:bg-sky-50 dark:text-slate-200 dark:hover:bg-sky-950/30"
+              >
+                <span className="truncate">{substance.label}</span>
+                <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  {substance.count}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p className="text-[11px] text-slate-400 dark:text-slate-500">
+        {lastExtractedAt
+          ? `Latest extraction: ${lastExtractedAt}.`
+          : 'Extraction dates not recorded.'}{' '}
+        Per-source retrieval, source-date, and QA-date tracking is coming.
+      </p>
+    </section>
+  );
+}
+
 export default function EvidenceLibrary({
   filters,
   onFiltersChange,
@@ -2975,6 +3045,17 @@ export default function EvidenceLibrary({
     () => buildEvidenceLibraryView(undefined, promotedRecords),
     [promotedRecords],
   );
+  const lastExtractedAt = useMemo(() => {
+    let max = '';
+    for (const row of baselineLibrary.values) {
+      for (const evidence of row.record.evidence_items) {
+        if (evidence.extracted_at && evidence.extracted_at > max) {
+          max = evidence.extracted_at;
+        }
+      }
+    }
+    return max || null;
+  }, [baselineLibrary.values]);
   const defaultPolicyDecisions = useMemo(() => {
     const decisions = new Map<string, DefaultSelectionPolicyDecision>();
 
@@ -4014,37 +4095,53 @@ export default function EvidenceLibrary({
           )}
           {!selectedValue && !selectedSource && (
             <div className="space-y-4" data-testid="evidence-library-right-dashboard">
-              <AuditStrip audit={library.audit} onSelect={applyAuditFilter} compact />
-
-              <DefaultPolicyAuditPanel
-                decisions={defaultPolicyDecisions}
-                activeStatus={defaultPolicyStatusFilter}
-                onSelectStatus={applyDefaultPolicyStatusFilter}
-                compact
+              {/* Prominent: at-a-glance inventory of what is loaded. */}
+              <CatalogInventory
+                baseline={baselineLibrary}
+                lastExtractedAt={lastExtractedAt}
+                onSelectSubstance={(substanceKey) => {
+                  changeViewMode('values');
+                  updateFilter('substanceKeys', substanceKey);
+                }}
               />
 
-              <Protocol28ReviewPanel
-                summary={protocol28Summary}
-                onReview={openProtocol28Review}
-                onReviewSourceLeads={openProtocol28SourceLeads}
-                compact
-              />
+              {/* Demoted: the catalog status + QA/admin tools, collapsed by default. */}
+              <details
+                className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
+                data-testid="evidence-library-status-admin"
+              >
+                <summary className="cursor-pointer px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                  Catalog status & admin
+                </summary>
+                <div className="space-y-4 p-3 pt-0">
+                  <AuditStrip audit={library.audit} onSelect={applyAuditFilter} compact />
 
-              <CrossPathwayAuditPanel compact />
+                  <DefaultPolicyAuditPanel
+                    decisions={defaultPolicyDecisions}
+                    activeStatus={defaultPolicyStatusFilter}
+                    onSelectStatus={applyDefaultPolicyStatusFilter}
+                    compact
+                  />
 
-              <ZoteroStatusBadge compact />
+                  <Protocol28ReviewPanel
+                    summary={protocol28Summary}
+                    onReview={openProtocol28Review}
+                    onReviewSourceLeads={openProtocol28SourceLeads}
+                    compact
+                  />
 
-              {isAdmin && (
-                <details className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-                  <summary className="cursor-pointer px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                    Admin tools
-                  </summary>
-                  <div className="space-y-4 p-3 pt-0">
-                    <HitlSourcesSection isAdmin={isAdmin} />
-                    <PromotedCandidatesSection />
-                  </div>
-                </details>
-              )}
+                  <CrossPathwayAuditPanel compact />
+
+                  <ZoteroStatusBadge compact />
+
+                  {isAdmin && (
+                    <>
+                      <HitlSourcesSection isAdmin={isAdmin} />
+                      <PromotedCandidatesSection />
+                    </>
+                  )}
+                </div>
+              </details>
             </div>
           )}
         </div>
