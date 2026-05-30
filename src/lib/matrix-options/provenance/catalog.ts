@@ -7,6 +7,7 @@ import epaEcoSslSourceLeadsRaw from '../../../../matrix_research/reference_catal
 import erdcBsafSourceLeadsRaw from '../../../../matrix_research/reference_catalog/source_leads/erdc_bsaf_reference_leads_2026_05_23.json';
 import bcProtocol28TrvSourceLeadsRaw from '../../../../matrix_research/reference_catalog/source_leads/bc_protocol28_trv_reference_leads_2026_05_23.json';
 import type {
+  CatalogPathway,
   EquationRecord,
   ParameterValueRecord,
   ProvenancePathway,
@@ -46,7 +47,7 @@ export function getPathwayEquationRecords(
 
 export function getParameterValueRecord(
   substanceKey: string,
-  pathway: ProvenancePathway,
+  pathway: CatalogPathway,
   inputKey: string,
 ): ParameterValueRecord | undefined {
   return PARAMETER_VALUE_RECORDS.find(
@@ -59,7 +60,7 @@ export function getParameterValueRecord(
 
 export function getParameterValueRecordsForSubstance(
   substanceKey: string,
-  pathway: ProvenancePathway,
+  pathway: CatalogPathway,
 ): ParameterValueRecord[] {
   return PARAMETER_VALUE_RECORDS.filter(
     (record) =>
