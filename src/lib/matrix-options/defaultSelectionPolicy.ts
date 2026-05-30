@@ -15,6 +15,10 @@ import {
   type CatalogJurisdiction,
   type RegulatoryFrameId,
 } from './regulatoryFrames';
+import {
+  assessSlotUnitConsistency,
+  type SlotUnitConsistency,
+} from './unitNormalization';
 
 export type DefaultSelectionCandidateDisposition =
   | 'active_current_default'
@@ -60,6 +64,12 @@ export interface DefaultSelectionPolicyDecision {
   eligibleCandidates: DefaultSelectionCandidate[];
   blockedCandidates: DefaultSelectionCandidate[];
   candidates: DefaultSelectionCandidate[];
+  // A1 unit guard: whether the eligible candidates in this slot are numerically
+  // comparable (all units recognized + share one base). When comparable=false and
+  // more than one eligible candidate exists, the recommendation is withheld
+  // (status forced to manual_decision_required) so no pick is emitted across
+  // incommensurate units (e.g. mg/m3 vs ug/m3, or reciprocal IUR bases).
+  unitConsistency: SlotUnitConsistency;
   readOnlyInvariants: {
     mutatesCatalog: false;
     promotesDefault: false;
@@ -270,6 +280,20 @@ function decisionRationale(
   return 'No approved direct-source candidate is eligible for this frame and slot; keep the current calculator behavior.';
 }
 
+/**
+ * A1 fail-closed predicate: withhold the auto-recommendation when a recommendation
+ * would otherwise be emitted, more than one eligible candidate competes, and the slot's
+ * units are not provably comparable. A single eligible candidate (nothing to compare) and
+ * comparable multi-unit slots are never blocked.
+ */
+export function isUnitBlocked(
+  hasRecommendation: boolean,
+  eligibleCount: number,
+  unitsComparable: boolean,
+): boolean {
+  return hasRecommendation && eligibleCount >= 2 && !unitsComparable;
+}
+
 export function buildDefaultSelectionPolicyDecision(
   request: DefaultSelectionPolicyRequest,
 ): DefaultSelectionPolicyDecision {
@@ -305,14 +329,35 @@ export function buildDefaultSelectionPolicyDecision(
     (candidate) =>
       (candidate.hierarchyRank ?? Number.MAX_SAFE_INTEGER) === topRank,
   );
-  const recommendedCandidate =
+  const unitConsistency = assessSlotUnitConsistency(
+    eligibleCandidates.map((candidate) => ({
+      value: candidate.record.value,
+      unit: candidate.record.unit,
+      input_key: candidate.record.input_key,
+    })),
+  );
+
+  const initialRecommended =
     topEligibleCandidates.length === 1 ? topEligibleCandidates[0] : null;
+  // A1 fail-closed guard: when more than one eligible candidate competes but their
+  // units are not provably comparable (unrecognized unit, or mixed base such as
+  // mg/m3 vs a reciprocal IUR), withhold the auto-recommendation so no pick is
+  // emitted across incommensurate units. A single eligible candidate has nothing to
+  // compare and is unaffected; comparable multi-unit slots (e.g. mg/m3 + ug/m3 that
+  // normalize to one base) are unaffected.
+  const unitBlocked = isUnitBlocked(
+    initialRecommended !== null,
+    eligibleCandidates.length,
+    unitConsistency.comparable,
+  );
+  const recommendedCandidate = unitBlocked ? null : initialRecommended;
+
   const status: DefaultSelectionDecisionStatus =
     pathwayApplicability.status === 'unsupported'
       ? 'pathway_unsupported'
       : recommendedCandidate
         ? 'candidate_pending_approval'
-        : topEligibleCandidates.length > 1
+        : topEligibleCandidates.length > 1 || unitBlocked
           ? 'manual_decision_required'
           : 'keep_current_default_no_eligible_candidate';
 
@@ -324,7 +369,10 @@ export function buildDefaultSelectionPolicyDecision(
     eligibleCandidates,
     blockedCandidates,
     candidates,
+    unitConsistency,
     readOnlyInvariants: DEFAULT_SELECTION_READ_ONLY_INVARIANTS,
-    rationale: decisionRationale(status, recommendedCandidate),
+    rationale: unitBlocked
+      ? `Eligible candidates for this slot use units that are not provably comparable (${unitConsistency.units.join(', ')}); a reviewer must reconcile units before any default is recommended. (A1 unit guard)`
+      : decisionRationale(status, recommendedCandidate),
   };
 }
