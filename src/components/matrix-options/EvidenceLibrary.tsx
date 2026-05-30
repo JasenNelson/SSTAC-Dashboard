@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronRight, ExternalLink, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Search, X } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
 import type { PromotedParameterValueRecord } from '@/lib/matrix-options/provenance/promotion';
@@ -3097,6 +3097,62 @@ export default function EvidenceLibrary({
               { key: 'speciesGroups', label: 'Species', options: library.facets.speciesGroups },
             ];
 
+  // The filter grid is shared: it lives in the left panel on desktop, and falls back to the
+  // center column when the left panel is unavailable (mobile, where the parent forces both
+  // side panels closed, or when the user toggles the left panel off). Rendered in exactly one
+  // place at a time so there is no duplicate mount.
+  const filtersBlock = (
+    <div
+      className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
+      data-testid="evidence-library-filters"
+    >
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1">
+        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+          <span className="mb-1 block">Search</span>
+          <span className="relative block">
+            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              value={filters.search}
+              onChange={(event) =>
+                onFiltersChange({ ...filters, search: event.target.value })
+              }
+              className="w-full rounded-md border border-slate-300 bg-white py-2 pl-8 pr-2 text-sm text-slate-800 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            />
+          </span>
+        </label>
+        {filterControls.map((control) => (
+          <FilterSelect
+            key={control.key}
+            label={control.label}
+            value={firstValue(filters, control.key)}
+            options={control.options}
+            onChange={(value) => updateFilter(control.key, value)}
+          />
+        ))}
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {activeLabels.map((label) => (
+          <span
+            key={label}
+            className="rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+          >
+            {label}
+          </span>
+        ))}
+        {activeLabels.length > 0 && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          >
+            <X className="h-3.5 w-3.5" />
+            Clear
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <section
       className={cn('flex h-full overflow-hidden', className)}
@@ -3109,32 +3165,13 @@ export default function EvidenceLibrary({
           showLeftPanel ? 'w-80' : 'w-0',
         )}
       >
+        {showLeftPanel && (
         <div className="w-full min-w-[270px] p-5 overflow-y-auto h-full space-y-4">
           <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-            Catalog Dashboard
+            Filters
           </h3>
 
-          <AuditStrip audit={library.audit} onSelect={applyAuditFilter} compact />
-
-          <DefaultPolicyAuditPanel
-            decisions={defaultPolicyDecisions}
-            activeStatus={defaultPolicyStatusFilter}
-            onSelectStatus={applyDefaultPolicyStatusFilter}
-            compact
-          />
-
-          <Protocol28ReviewPanel
-            summary={protocol28Summary}
-            onReview={openProtocol28Review}
-            onReviewSourceLeads={openProtocol28SourceLeads}
-            compact
-          />
-
-          <CrossPathwayAuditPanel compact />
-
-          <ZoteroStatusBadge compact />
-
-          <HitlSourcesSection isAdmin={isAdmin} />
+          {filtersBlock}
 
           <section
             className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
@@ -3188,12 +3225,11 @@ export default function EvidenceLibrary({
               })}
             </div>
           </section>
-
-          {isAdmin && <PromotedCandidatesSection />}
         </div>
+        )}
       </div>
 
-      {/* MAIN CONTENT -- header, search/filters, and results */}
+      {/* MAIN CONTENT -- header and results */}
       <div className="flex-1 min-w-0 overflow-y-auto bg-white dark:bg-slate-950">
         <div className="space-y-5 p-6">
           <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
@@ -3237,52 +3273,9 @@ export default function EvidenceLibrary({
         />
       )}
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950/40">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
-            <span className="mb-1 block">Search</span>
-            <span className="relative block">
-              <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                value={filters.search}
-                onChange={(event) =>
-                  onFiltersChange({ ...filters, search: event.target.value })
-                }
-                className="w-full rounded-md border border-slate-300 bg-white py-2 pl-8 pr-2 text-sm text-slate-800 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-              />
-            </span>
-          </label>
-          {filterControls.map((control) => (
-            <FilterSelect
-              key={control.key}
-              label={control.label}
-              value={firstValue(filters, control.key)}
-              options={control.options}
-              onChange={(value) => updateFilter(control.key, value)}
-            />
-          ))}
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {activeLabels.map((label) => (
-            <span
-              key={label}
-              className="rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-            >
-              {label}
-            </span>
-          ))}
-          {activeLabels.length > 0 && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-            >
-              <X className="h-3.5 w-3.5" />
-              Clear
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Filters fall back to the center when the left panel is unavailable (mobile, where the
+          parent forces side panels closed, or when the left panel is toggled off). */}
+      {!showLeftPanel && filtersBlock}
 
       {/* Inline detail when right drawer is toggled off */}
       {!showRightPanel && selectedValue && (
@@ -3841,7 +3834,8 @@ export default function EvidenceLibrary({
         </div>
       </div>
 
-      {/* RIGHT PANEL -- value and source detail inspector */}
+      {/* RIGHT PANEL -- two-state: the catalog status dashboard "at rest", the
+          value/source detail inspector when a row is selected. */}
       <div
         className={cn(
           'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-lg',
@@ -3849,7 +3843,35 @@ export default function EvidenceLibrary({
           showRightPanel ? 'w-96' : 'w-0',
         )}
       >
-        <div className="w-full h-full overflow-y-auto overflow-x-hidden p-4">
+        {showRightPanel && (
+        <div className="w-full h-full overflow-y-auto overflow-x-hidden p-4 space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2 dark:border-slate-800">
+            <h3
+              className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500"
+              data-testid="evidence-library-right-mode"
+            >
+              {selectedValue
+                ? 'Inspecting value'
+                : selectedSource
+                  ? 'Inspecting source'
+                  : 'Catalog Dashboard'}
+            </h3>
+            {(selectedValue || selectedSource) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedValueId(null);
+                  setSelectedSourceId(null);
+                }}
+                className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300"
+                aria-label="Back to catalog dashboard"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                Dashboard
+              </button>
+            )}
+          </div>
+
           {selectedValue && (
             <ValueDetailPanel
               row={selectedValue}
@@ -3870,11 +3892,42 @@ export default function EvidenceLibrary({
             />
           )}
           {!selectedValue && !selectedSource && (
-            <div className="p-6 text-center text-sm text-slate-400 dark:text-slate-500">
-              Click a value or source to inspect details
+            <div className="space-y-4" data-testid="evidence-library-right-dashboard">
+              <AuditStrip audit={library.audit} onSelect={applyAuditFilter} compact />
+
+              <DefaultPolicyAuditPanel
+                decisions={defaultPolicyDecisions}
+                activeStatus={defaultPolicyStatusFilter}
+                onSelectStatus={applyDefaultPolicyStatusFilter}
+                compact
+              />
+
+              <Protocol28ReviewPanel
+                summary={protocol28Summary}
+                onReview={openProtocol28Review}
+                onReviewSourceLeads={openProtocol28SourceLeads}
+                compact
+              />
+
+              <CrossPathwayAuditPanel compact />
+
+              <ZoteroStatusBadge compact />
+
+              {isAdmin && (
+                <details className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
+                  <summary className="cursor-pointer px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                    Admin tools
+                  </summary>
+                  <div className="space-y-4 p-3 pt-0">
+                    <HitlSourcesSection isAdmin={isAdmin} />
+                    <PromotedCandidatesSection />
+                  </div>
+                </details>
+              )}
             </div>
           )}
         </div>
+        )}
       </div>
     </section>
   );

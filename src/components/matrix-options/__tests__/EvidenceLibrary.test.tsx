@@ -1010,3 +1010,47 @@ describe('EvidenceLibrary -- AddEvidenceLocatorForm', () => {
     vi.mocked(fetchEvidenceItems).mockResolvedValue([]);
   });
 });
+
+describe('EvidenceLibrary panel rebalance', () => {
+  it('puts the filter grid in the left panel and the status dashboard in the right panel at rest', () => {
+    renderControlled();
+
+    expect(screen.getByTestId('evidence-library-filters')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Pathway$/)).toBeInTheDocument();
+
+    expect(screen.getByTestId('evidence-library-right-mode')).toHaveTextContent(
+      'Catalog Dashboard',
+    );
+    const dashboard = screen.getByTestId('evidence-library-right-dashboard');
+    expect(
+      within(dashboard).getByTestId('evidence-library-audit-strip'),
+    ).toBeInTheDocument();
+    expect(
+      within(dashboard).getByTestId('protocol28-review-panel'),
+    ).toBeInTheDocument();
+  });
+
+  it('swaps the right dashboard for the inspector on row select and returns via Dashboard', () => {
+    renderControlled();
+
+    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
+
+    expect(
+      screen.queryByTestId('evidence-library-right-dashboard'),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-right-mode')).toHaveTextContent(
+      'Inspecting value',
+    );
+    expect(screen.getByTestId('evidence-library-value-detail')).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Back to catalog dashboard/ }),
+    );
+    expect(
+      screen.getByTestId('evidence-library-right-dashboard'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('evidence-library-value-detail'),
+    ).not.toBeInTheDocument();
+  });
+});
