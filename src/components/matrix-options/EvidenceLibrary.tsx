@@ -82,13 +82,14 @@ interface EvidenceLibraryProps {
   onRequestOpenRightPanel?: () => void;
 }
 
+// References & Values is the catalog browser: the Values table (default) and the Sources
+// table (with source-of-sources leads folded in). The former By Parameter, Equations,
+// Source Leads, and Assumptions tabs were retired -- equations now live in the
+// Jurisdictional Frameworks tab, source leads fold into Sources, and Assumptions duplicated
+// Values. The underlying view-mode branches remain for internal/quick-filter use.
 const VIEW_MODES: Array<{ id: EvidenceLibraryViewMode; label: string }> = [
-  { id: 'by-parameter', label: 'By Parameter' },
   { id: 'values', label: 'Values' },
-  { id: 'equations', label: 'Equations' },
   { id: 'sources', label: 'Sources' },
-  { id: 'source-leads', label: 'Source Leads' },
-  { id: 'assumptions', label: 'Assumptions' },
 ];
 
 type FilterArrayKey = {
@@ -199,7 +200,7 @@ const QUICK_REVIEW_FILTERS: Array<{
   {
     label: 'Eco-SSL',
     description: 'Screening/source leads; exact locators required.',
-    viewMode: 'source-leads',
+    viewMode: 'sources',
     request: {
       search: 'Eco-SSL',
     },
@@ -207,7 +208,7 @@ const QUICK_REVIEW_FILTERS: Array<{
   {
     label: 'ERDC BSAF',
     description: 'Database candidates; row locator review required.',
-    viewMode: 'by-parameter',
+    viewMode: 'values',
     request: {
       search: 'BSAF',
       sourceIds: ['src-erdc-bsaf-db'],
@@ -216,7 +217,7 @@ const QUICK_REVIEW_FILTERS: Array<{
   {
     label: 'WQCIU',
     description: 'Source-of-sources leads only.',
-    viewMode: 'source-leads',
+    viewMode: 'sources',
     request: {
       search: 'WQCIU',
       sourceIds: ['src-acfn-wqciu'],
@@ -734,19 +735,12 @@ function AuditStrip({
       request: { defaultStatuses: ['current_default'] },
     },
     {
-      label: 'Equations pending',
-      value: audit.equations.pendingReview,
-      note:
-        `${audit.equations.pendingSourceLocator} locator gaps; ` +
-        `${audit.equations.currentCalculatorScaffold} scaffolds`,
-      viewMode: 'equations' as const,
-      request: { qaStatuses: ['needs_review'] },
-    },
-    {
+      // Source-of-sources leads now fold into the Sources view (the standalone Source Leads
+      // tab and Equations tab were retired from References & Values).
       label: 'Source-of-sources leads',
       value: sourceLeadCount,
       note: `${audit.sourceLeads.leadSets} lead sets`,
-      viewMode: 'source-leads' as const,
+      viewMode: 'sources' as const,
       request: {},
     },
     {
@@ -2794,7 +2788,7 @@ export default function EvidenceLibrary({
   showRightPanel = true,
   onRequestOpenRightPanel,
 }: EvidenceLibraryProps) {
-  const [viewMode, setViewMode] = useState<EvidenceLibraryViewMode>('by-parameter');
+  const [viewMode, setViewMode] = useState<EvidenceLibraryViewMode>('values');
   const [selectedValueId, setSelectedValueId] = useState<string | null>(null);
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
   const [defaultPolicyStatusFilter, setDefaultPolicyStatusFilter] =
@@ -3004,7 +2998,7 @@ export default function EvidenceLibrary({
   const applyDefaultPolicyStatusFilter = (
     status: DefaultSelectionDecisionStatus | null,
   ) => {
-    setViewMode('by-parameter');
+    setViewMode('values');
     closeDetailPanels();
     onDismissReceipt?.();
     setDefaultPolicyStatusFilter(status);
@@ -3021,7 +3015,7 @@ export default function EvidenceLibrary({
     );
   };
   const openProtocol28SourceLeads = () => {
-    setViewMode('source-leads');
+    setViewMode('sources');
     closeDetailPanels();
     setDefaultPolicyStatusFilter(null);
     onFiltersChange(
@@ -3037,7 +3031,8 @@ export default function EvidenceLibrary({
   const showValueGroups = viewMode === 'by-parameter';
   const showEquations = viewMode === 'equations';
   const showSources = viewMode === 'sources';
-  const showSourceLeads = viewMode === 'source-leads';
+  // Source-of-sources leads now fold into the Sources view rather than a standalone tab.
+  const showSourceLeads = viewMode === 'sources';
   const filterControls: Array<{
     key: FilterArrayKey;
     label: string;
@@ -3378,7 +3373,6 @@ export default function EvidenceLibrary({
                   <th className="px-3 py-2 font-semibold">Review status</th>
                   <th className="px-3 py-2 font-semibold">Applicability</th>
                   <th className="px-3 py-2 font-semibold">Sources</th>
-                  <th className="px-3 py-2 font-semibold">Inspect</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -3396,9 +3390,35 @@ export default function EvidenceLibrary({
                       candidate.record.parameter_value_id ===
                       row.record.parameter_value_id,
                   );
+                  const selectThisValue = () => {
+                    setSelectedSourceId(null);
+                    setSelectedValueId(row.record.parameter_value_id);
+                    if (!showRightPanel) onRequestOpenRightPanel?.();
+                  };
+                  const isSelectedRow =
+                    selectedValueId === row.record.parameter_value_id;
                   return (
                     <React.Fragment key={row.record.parameter_value_id}>
-                      <tr className="align-top text-slate-700 dark:text-slate-200">
+                      <tr
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Inspect ${row.record.display_name}`}
+                        data-testid="evidence-library-inspect-value"
+                        onClick={selectThisValue}
+                        onKeyDown={(event) => {
+                          // Only act on the row itself, not bubbled keys from focusable children.
+                          if (event.target !== event.currentTarget) return;
+                          if (event.key === 'Enter' || event.key === ' ') {
+                            event.preventDefault();
+                            selectThisValue();
+                          }
+                        }}
+                        className={cn(
+                          'cursor-pointer align-top text-slate-700 transition-colors hover:bg-sky-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:text-slate-200 dark:hover:bg-sky-950/30',
+                          isSelectedRow &&
+                            'bg-sky-50 dark:bg-sky-950/40',
+                        )}
+                      >
                         <td className="px-3 py-2">
                           <div className="font-semibold text-slate-900 dark:text-white">
                             {row.record.display_name}
@@ -3445,25 +3465,9 @@ export default function EvidenceLibrary({
                         </td>
                         <td className="px-3 py-2 max-w-xs">{row.record.applicability}</td>
                         <td className="px-3 py-2 max-w-xs">{sourceLabels(row)}</td>
-                        <td className="px-3 py-2">
-                          <button
-                            type="button"
-                            aria-label={`Inspect ${row.record.display_name}`}
-                            data-testid="evidence-library-inspect-value"
-                            onClick={() => {
-                              setSelectedSourceId(null);
-                              setSelectedValueId(row.record.parameter_value_id);
-                              if (!showRightPanel) onRequestOpenRightPanel?.();
-                            }}
-                            className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                          >
-                            <Search className="h-3.5 w-3.5" />
-                            Inspect
-                          </button>
-                        </td>
                       </tr>
                       <tr>
-                        <td colSpan={8} className="bg-white px-3 py-2 dark:bg-slate-950">
+                        <td colSpan={7} className="bg-white px-3 py-2 dark:bg-slate-950">
                           <details>
                             <summary className="cursor-pointer text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300">
                               Details
@@ -3517,7 +3521,7 @@ export default function EvidenceLibrary({
                 })}
                 {visibleValues.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-3 py-6 text-sm text-slate-500">
+                    <td colSpan={7} className="px-3 py-6 text-sm text-slate-500">
                       <EmptyDatabaseState
                         title={
                           viewMode === 'assumptions'
@@ -3620,14 +3624,37 @@ export default function EvidenceLibrary({
                   <th className="px-3 py-2 font-semibold">Currentness</th>
                   <th className="px-3 py-2 font-semibold">Zotero</th>
                   <th className="px-3 py-2 font-semibold">Total catalog links</th>
-                  <th className="px-3 py-2 font-semibold">Inspect</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                {library.sources.map((row) => (
+                {library.sources.map((row) => {
+                  const selectThisSource = () => {
+                    setSelectedValueId(null);
+                    setSelectedSourceId(row.record.source_id);
+                    if (!showRightPanel) onRequestOpenRightPanel?.();
+                  };
+                  const isSelectedSourceRow =
+                    selectedSourceId === row.record.source_id;
+                  return (
                   <tr
                     key={row.record.source_id}
-                    className="align-top text-slate-700 dark:text-slate-200"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Inspect ${row.record.short_citation}`}
+                    data-testid="evidence-library-inspect-source"
+                    onClick={selectThisSource}
+                    onKeyDown={(event) => {
+                      // Only act on the row itself, not bubbled keys from the nested link.
+                      if (event.target !== event.currentTarget) return;
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        selectThisSource();
+                      }
+                    }}
+                    className={cn(
+                      'cursor-pointer align-top text-slate-700 transition-colors hover:bg-sky-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:text-slate-200 dark:hover:bg-sky-950/30',
+                      isSelectedSourceRow && 'bg-sky-50 dark:bg-sky-950/40',
+                    )}
                   >
                     <td className="px-3 py-2">
                       <div className="font-semibold text-slate-900 dark:text-white">
@@ -3636,6 +3663,7 @@ export default function EvidenceLibrary({
                             href={row.record.url}
                             target="_blank"
                             rel="noreferrer"
+                            onClick={(event) => event.stopPropagation()}
                             className="inline-flex items-center gap-1 text-sky-700 hover:underline dark:text-sky-300"
                           >
                             {row.record.short_citation}
@@ -3703,27 +3731,12 @@ export default function EvidenceLibrary({
                       {row.linkedValueCount} total values;{' '}
                       {row.linkedEquationCount} total equations
                     </td>
-                    <td className="px-3 py-2">
-                      <button
-                        type="button"
-                        aria-label={`Inspect ${row.record.short_citation}`}
-                        data-testid="evidence-library-inspect-source"
-                        onClick={() => {
-                          setSelectedValueId(null);
-                          setSelectedSourceId(row.record.source_id);
-                          if (!showRightPanel) onRequestOpenRightPanel?.();
-                        }}
-                        className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                      >
-                        <Search className="h-3.5 w-3.5" />
-                        Inspect
-                      </button>
-                    </td>
                   </tr>
-                ))}
+                  );
+                })}
                 {library.sources.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-3 py-6 text-sm text-slate-500">
+                    <td colSpan={6} className="px-3 py-6 text-sm text-slate-500">
                       <EmptyDatabaseState
                         title="No sources match."
                         activeLabels={activeLabels}

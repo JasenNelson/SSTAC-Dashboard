@@ -67,18 +67,25 @@ function renderControlled(
 }
 
 describe('EvidenceLibrary', () => {
-  it('renders the References & Values overview and conservative scaffolds', () => {
+  it('renders the References & Values overview defaulting to the Values table', () => {
     renderControlled();
 
     expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /^All$/ }),
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
-      /Candidate values are read-only/,
+    // By Parameter / Equations / Source Leads / Assumptions tabs were retired; only the
+    // Values (default) and Sources tabs remain.
+    expect(screen.queryByRole('button', { name: /^By Parameter$/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Equations$/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Source Leads$/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Assumptions$/ })).not.toBeInTheDocument();
+    // Defaults to the Values table.
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Benzo\[a\]pyrene log Kow/,
     );
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
-      /Protocol 28/,
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Needs original-source verification/,
     );
     expect(screen.getByText(/Approved values/)).toBeInTheDocument();
     expect(screen.getByText(/Pending locators/)).toBeInTheDocument();
@@ -106,15 +113,11 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('protocol28-review-panel')).toHaveTextContent(
       /Calculation defaults\s*0/,
     );
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
-      /Needs original-source verification/,
-    );
   });
 
-  it('renders value and equation database views', () => {
+  it('renders the values database view by default', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Benzo\[a\]pyrene log Kow/,
     );
@@ -127,14 +130,9 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /original source pending/i,
     );
-
-    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
-    expect(screen.getByTestId('evidence-library-equations')).toHaveTextContent(
-      /Human Health Direct Contact sediment screen/,
-    );
   });
 
-  it('projects read-only default-selection policy decisions in grouped and value rows', () => {
+  it('projects read-only default-selection policy decisions in value rows', () => {
     renderControlled(
       createEvidenceLibraryFilters({
         pathways: ['human-health-food'],
@@ -143,23 +141,7 @@ describe('EvidenceLibrary', () => {
       }),
     );
 
-    const groupedView = screen.getByTestId('evidence-library-value-groups');
-    expect(groupedView).toHaveTextContent(
-      /Default policy: candidate pending approval/,
-    );
-    expect(
-      screen.getByTestId(
-        'evidence-default-policy-group-row-pv-hc-bap-hh-food-sf',
-      ),
-    ).toHaveTextContent(/Recommended candidate: approval required/);
-    expect(
-      screen.getByTestId(
-        'evidence-default-policy-group-row-pv-p28-bap-hh-food-slope',
-      ),
-    ).toHaveTextContent(/Blocked: policy compilation/);
-
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
-
+    // Values is the default view; the read-only policy dispositions render per value row.
     expect(
       screen.getByTestId('evidence-default-policy-value-pv-hc-bap-hh-food-sf'),
     ).toHaveTextContent(/Read-only recommendation only/);
@@ -210,15 +192,7 @@ describe('EvidenceLibrary', () => {
     expect(
       screen.getByText(/Default policy: Candidate pending approval/),
     ).toBeInTheDocument();
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
-      /Default policy: candidate pending approval/,
-    );
-    expect(screen.getByTestId('evidence-library-value-groups')).not.toHaveTextContent(
-      /Default policy: keep current default/,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
-
+    // The audit card filters the Values table (the default view) -- no grouped view anymore.
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Recommended candidate: approval required/,
     );
@@ -262,32 +236,19 @@ describe('EvidenceLibrary', () => {
     ).toHaveTextContent(/Blocked: policy compilation/);
   });
 
-  it('shows named result counts for each References database view', () => {
+  it('shows named result counts for the Values and Sources views', () => {
     renderControlled();
 
-    expect(
-      screen.getByText(/Showing \d+ of \d+ parameter groups/),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    // Defaults to Values.
     expect(screen.getByText(/Showing \d+ of \d+ values/)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /^Assumptions$/ }));
-    expect(
-      screen.getByText(/Showing \d+ of \d+ assumption\/default rows/),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
-    expect(screen.getByText(/Showing \d+ of \d+ equations/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
     expect(screen.getByText(/Showing \d+ of \d+ sources/)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /^Source Leads$/ }));
+    // Source leads now fold into the Sources view, so their lead-set count shows here too.
     expect(screen.getByText(/Showing \d+ of \d+ lead sets/)).toBeInTheDocument();
   });
 
-  it('renders source and source-lead views without promoting scaffolds', () => {
+  it('renders sources with folded-in source leads, without promoting scaffolds', () => {
     renderControlled();
 
     fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
@@ -304,11 +265,7 @@ describe('EvidenceLibrary', () => {
       /pending owner export/i,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
-    expect(screen.getAllByText(/Arsenic oral RfD/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/current calculator scaffold/i).length).toBeGreaterThan(0);
-
-    fireEvent.click(screen.getByRole('button', { name: /^Source Leads$/ }));
+    // Source-of-sources leads now fold into the Sources view (no standalone tab).
     expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
       /Source-of-sources or policy-compilation context only/i,
     );
@@ -321,6 +278,10 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
       /QA approval/,
     );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    expect(screen.getAllByText(/Arsenic oral RfD/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/current calculator scaffold/i).length).toBeGreaterThan(0);
   });
 
   it('applies source-review quick filters without promoting values', () => {
@@ -448,7 +409,9 @@ describe('EvidenceLibrary', () => {
 
     expect(within(protocol28Button).getByText('6 values')).toBeInTheDocument();
     expect(within(healthCanadaButton).getByText('19 values')).toBeInTheDocument();
-    expect(within(ecoSslButton).getByText('1 lead set')).toBeInTheDocument();
+    // Eco-SSL now opens the Sources view (source leads fold into Sources), so its count
+    // reflects matching source records rather than lead sets.
+    expect(within(ecoSslButton).getByText('4 sources')).toBeInTheDocument();
     expect(within(ssdButton).getByText('0 values')).toBeInTheDocument();
     expect(healthCanadaButton).toHaveAttribute('aria-pressed', 'false');
 
@@ -463,7 +426,7 @@ describe('EvidenceLibrary', () => {
       /Health Canada/,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
 
     expect(
       screen.getByRole('button', {
@@ -539,11 +502,6 @@ describe('EvidenceLibrary', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByText(/Aroclor 1254 freshwater BSAF for human food web/)).toBeInTheDocument();
     expect(screen.queryByText(/Benzo\[a\]pyrene log Kow/)).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
-    expect(screen.getByTestId('evidence-library-equations')).toHaveTextContent(
-      /Human Health Food Web sediment screen/,
-    );
   });
 
   it('filters by species and jurisdiction, and keeps authority filters to evidence sources', () => {
@@ -576,27 +534,10 @@ describe('EvidenceLibrary', () => {
     );
   });
 
-  it('shows filter-aware empty states and clears card and table views', () => {
+  it('shows a filter-aware empty state and clears the Values table', () => {
     renderControlled();
 
-    fireEvent.change(screen.getByLabelText(/^Search$/), {
-      target: { value: 'zzzz-no-match' },
-    });
-
-    expect(screen.getByTestId('evidence-library-empty-state')).toHaveTextContent(
-      /No parameter groups match/i,
-    );
-    expect(screen.getByTestId('evidence-library-empty-state')).toHaveTextContent(
-      /search: zzzz-no-match/i,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /^Clear filters$/ }));
-    expect(screen.queryByText(/search: zzzz-no-match/i)).not.toBeInTheDocument();
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
-      /Candidate values are read-only/i,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    // Defaults to the Values table.
     fireEvent.change(screen.getByLabelText(/^Search$/), {
       target: { value: 'zzzz-no-value' },
     });
@@ -615,23 +556,18 @@ describe('EvidenceLibrary', () => {
     );
   });
 
-  it('shows a filter-aware empty state for source leads', () => {
+  it('shows a filter-aware empty state for source leads within the Sources view', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Source Leads$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
     fireEvent.change(screen.getByLabelText(/^Search$/), {
       target: { value: 'zzzz-no-leads' },
     });
 
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Showing 0 of \d+ lead sets/,
-    );
-    expect(screen.getByTestId('evidence-library-empty-state')).toHaveTextContent(
-      /No source leads match/i,
-    );
-    expect(screen.getByTestId('evidence-library-empty-state')).toHaveTextContent(
-      /search: zzzz-no-leads/i,
-    );
+    const leads = screen.getByTestId('evidence-library-source-leads');
+    expect(leads).toHaveTextContent(/Showing 0 of \d+ lead sets/);
+    expect(leads).toHaveTextContent(/No source leads match/i);
+    expect(leads).toHaveTextContent(/search: zzzz-no-leads/i);
   });
 
   it('shows extraction dates for source-backed Health Canada and IRIS TRVs', () => {
@@ -643,14 +579,6 @@ describe('EvidenceLibrary', () => {
       }),
     );
 
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
-      /Extracted/,
-    );
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
-      /2026-05-23/,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Health Canada/,
     );
@@ -762,40 +690,20 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-sources')).toHaveTextContent(
       /NIST\/SEMATECH e-Handbook/,
     );
-    expect(screen.getByText(/search: NIST/)).toBeInTheDocument();
+    // The active "search: NIST" label can appear in more than one folded sub-section
+    // (sources + source-leads) under the Sources view.
+    expect(screen.getAllByText(/search: NIST/).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
-    expect(screen.queryByText(/search: NIST/)).not.toBeInTheDocument();
+    expect(screen.queryAllByText(/search: NIST/)).toHaveLength(0);
     fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByText(/Benzo\[a\]pyrene log Kow/)).toBeInTheDocument();
   });
 
-  it('shows assumption/default rows in the assumptions view', () => {
+  it('shows source leads as read-only context within the Sources view', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Assumptions$/ }));
-
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Aroclor 1254 FCV/,
-    );
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /current default/,
-    );
-  });
-
-  it('shows grouped parameter candidates and source leads as read-only context', () => {
-    renderControlled();
-
-    fireEvent.click(screen.getByRole('button', { name: /^By Parameter$/ }));
-
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
-      /Candidate values are read-only/,
-    );
-    expect(screen.getByTestId('evidence-library-value-groups')).toHaveTextContent(
-      /pending source locator/i,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /^Source Leads$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
 
     expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
       /ACFN WQCIU report/,
@@ -895,47 +803,17 @@ describe('EvidenceLibrary', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('does not show the all-scaffolds banner in assumptions, equations, or sources views', () => {
+  it('does not show the all-scaffolds banner in the Sources view', () => {
     renderControlled(
       createEvidenceLibraryFilters({
         evidenceSupportStatuses: ['current_calculator_scaffold'],
       }),
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Assumptions$/ }));
-    expect(
-      screen.queryByTestId('evidence-library-all-scaffolds-banner'),
-    ).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
-    expect(
-      screen.queryByTestId('evidence-library-all-scaffolds-banner'),
-    ).not.toBeInTheDocument();
-
     fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
     expect(
       screen.queryByTestId('evidence-library-all-scaffolds-banner'),
     ).not.toBeInTheDocument();
-  });
-
-  it('renders assumption tags on equations using violet chip styling, not amber status badges', () => {
-    renderControlled();
-
-    fireEvent.click(screen.getByRole('button', { name: /^Equations$/ }));
-
-    const equations = screen.getByTestId('evidence-library-equations');
-    // Equation assumption tags that exist in catalog data should appear as
-    // humanized text inside violet chips, not inside amber/slate StatusBadge elements.
-    // The violet chip class is the distinguishing marker.
-    const violetChips = equations.querySelectorAll(
-      'span.border-violet-200',
-    );
-    // At least some equations carry assumption tags; verify the chip class is present
-    // when they do, and that assumption text is not rendered bare via StatusBadge.
-    if (violetChips.length > 0) {
-      expect(violetChips[0].className).toMatch(/bg-violet-50/);
-      expect(violetChips[0].className).toMatch(/text-violet-800/);
-    }
   });
 });
 
