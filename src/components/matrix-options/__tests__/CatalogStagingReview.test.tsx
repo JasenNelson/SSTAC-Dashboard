@@ -107,6 +107,31 @@ describe('CatalogStagingReview', () => {
     expect(screen.queryByTestId('staging-empty-state')).not.toBeInTheDocument();
   });
 
+  it('shows a click-to-review affordance hint when rows are present', async () => {
+    const rows = [makeRow({ id: 'staging-A' })];
+    const list = vi.fn(async () => rows);
+
+    render(<CatalogStagingReview isAdmin listPendingStagingRowsFn={list} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('staging-list-hint')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('staging-list-hint')).toHaveTextContent(
+      /click a row to review/i,
+    );
+  });
+
+  it('does not show the click-to-review hint when there are no rows', async () => {
+    const list = vi.fn(async () => []);
+
+    render(<CatalogStagingReview isAdmin listPendingStagingRowsFn={list} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('staging-empty-state')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('staging-list-hint')).not.toBeInTheDocument();
+  });
+
   it('admin sees Approve and Reject buttons after selecting a row', async () => {
     const rows = [makeRow({ id: 'staging-1' })];
     const list = vi.fn(async () => rows);
