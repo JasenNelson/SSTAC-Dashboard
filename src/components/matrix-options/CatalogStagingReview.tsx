@@ -31,6 +31,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 
 import {
   listPendingStagingRows as defaultListPendingStagingRows,
@@ -400,8 +401,17 @@ export function CatalogStagingReview(props: CatalogStagingReviewProps) {
         )}
 
         {!loading && rows.length > 0 && (
+          <p
+            className="mt-3 text-[11px] text-slate-500 dark:text-slate-400"
+            data-testid="staging-list-hint"
+          >
+            Click a row to review its proposal, then approve or reject it.
+          </p>
+        )}
+
+        {!loading && rows.length > 0 && (
           <ol
-            className="mt-3 divide-y divide-slate-200 dark:divide-slate-800"
+            className="mt-2 flex flex-col gap-1.5"
             data-testid="staging-row-list"
             aria-label="Staging rows sorted by confidence"
           >
@@ -419,13 +429,22 @@ export function CatalogStagingReview(props: CatalogStagingReviewProps) {
                     aria-pressed={isSelected}
                     aria-label={`Select staging row ${row.id} (${humanizeKind(row.proposed_kind)}, confidence ${formatConfidence(row.confidence)})`}
                     className={
-                      'flex w-full flex-col gap-1 px-3 py-2 text-left text-xs ' +
+                      'group relative flex w-full cursor-pointer flex-col gap-1 rounded-md border px-3 py-2 pr-8 text-left text-xs transition-colors ' +
                       (isSelected
-                        ? 'bg-sky-50 dark:bg-sky-950/30'
-                        : 'hover:bg-slate-50 dark:hover:bg-slate-800')
+                        ? 'border-sky-400 bg-sky-50 ring-1 ring-sky-200 dark:border-sky-600 dark:bg-sky-950/30 dark:ring-sky-800'
+                        : 'border-transparent hover:border-sky-300 hover:bg-slate-50 dark:hover:border-sky-700 dark:hover:bg-slate-800')
                     }
                     data-testid={`staging-row-${row.id}`}
                   >
+                    <ChevronRight
+                      aria-hidden="true"
+                      className={
+                        'absolute right-2 top-2.5 h-4 w-4 transition-colors ' +
+                        (isSelected
+                          ? 'text-sky-500 dark:text-sky-400'
+                          : 'text-slate-300 group-hover:text-sky-400 dark:text-slate-600')
+                      }
+                    />
                     <div className="flex items-center justify-between">
                       <span className="font-semibold text-slate-800 dark:text-slate-100">
                         {humanizeKind(row.proposed_kind)}
