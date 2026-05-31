@@ -527,6 +527,36 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(screen.queryByText(/Active Poll/i)).not.toBeInTheDocument();
   });
 
+  // P2-2: retired Equations content now renders in the Jurisdictional Frameworks
+  // right-drawer Quick Reference, filtered to the active side-tab's pathway(s).
+  // The cross-cutting background-adjustment equation is intentionally omitted.
+  it('shows pathway-filtered derivation equations in the Jurisdictional Frameworks drawer', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(
+      screen.getByRole('button', { name: /^Jurisdictional Frameworks$/ }),
+    );
+
+    // Default side-tab (Ecological: EqP & AVS) -> one EqP equation.
+    const eqpReference = screen.getByTestId('jurisdictional-equation-reference');
+    expect(eqpReference).toHaveTextContent(/Eco-Direct EqP sediment benchmark/i);
+    expect(within(eqpReference).getAllByRole('group')).toHaveLength(1);
+    // Background UTL adjustment equation never appears in the drawer.
+    expect(eqpReference).not.toHaveTextContent(/Background UTL/i);
+
+    // Switch to Human Health Pathways -> two equations (direct + food).
+    fireEvent.click(screen.getByText('Human Health Pathways'));
+    const hhReference = screen.getByTestId('jurisdictional-equation-reference');
+    expect(within(hhReference).getAllByRole('group')).toHaveLength(2);
+    expect(hhReference).toHaveTextContent(
+      /Human Health Direct Contact sediment screen/i,
+    );
+    expect(hhReference).toHaveTextContent(
+      /Human Health Food Web sediment screen/i,
+    );
+    expect(hhReference).not.toHaveTextContent(/Background UTL/i);
+    expect(screen.queryByText(/Eco-Direct EqP sediment benchmark/i)).not.toBeInTheDocument();
+  });
+
   it('hydrates the Calculator sidebar audience guide tier from localStorage', () => {
     window.localStorage.setItem(LS_TIER, 'practitioner');
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
