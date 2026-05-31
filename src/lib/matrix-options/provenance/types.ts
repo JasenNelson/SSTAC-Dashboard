@@ -157,6 +157,12 @@ export interface SourceRecord {
   bc_protocol_alignment?: string | null;
   bc_protocol_basis?: string | null;
   source_crystallization_date?: string | null;
+  // Lane 2 P2-4: per-reference retrieval status + dates (optional; owner-supplied later).
+  // The "source date" reuses the existing source_crystallization_date; only these three
+  // are new on the JSON SourceRecord (checked_at already serves as the legacy retrieved line).
+  retrieval_status?: 'full' | 'partial' | 'none' | null;
+  retrieval_date?: string | null;
+  qa_date?: string | null;
 }
 
 export interface EquationRecord {

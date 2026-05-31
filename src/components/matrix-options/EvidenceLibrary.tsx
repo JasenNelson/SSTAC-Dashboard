@@ -2943,8 +2943,9 @@ function HitlSourcesSection({ isAdmin }: { isAdmin: boolean }) {
 }
 
 // At-a-glance inventory of what is loaded in the catalog: headline counts + a browsable
-// substance list (click to filter the main view). Phase 1 uses existing data; per-source
-// retrieval/source/QA date tracking is a follow-up once the catalog emits those fields.
+// substance list (click to filter the main view). Per-reference retrieval status + retrieval/
+// source/QA dates render when present (nullable; owner-supplied via the catalog), falling back
+// gracefully to the legacy checked_at "retrieved" line.
 function CatalogInventory({
   baseline,
   onSelectReference,
@@ -2998,9 +2999,20 @@ function CatalogInventory({
                   <span>
                     {row.linkedValueCount} value{row.linkedValueCount === 1 ? '' : 's'}
                   </span>
-                  {row.record.checked_at && (
-                    <span>retrieved {row.record.checked_at}</span>
+                  {row.record.retrieval_status && (
+                    <span className="font-medium">
+                      {humanizeCatalogLabel(row.record.retrieval_status)} retrieval
+                    </span>
                   )}
+                  {(row.record.retrieval_date ?? row.record.checked_at) && (
+                    <span>
+                      retrieved {row.record.retrieval_date ?? row.record.checked_at}
+                    </span>
+                  )}
+                  {row.record.source_crystallization_date && (
+                    <span>source {row.record.source_crystallization_date}</span>
+                  )}
+                  {row.record.qa_date && <span>QA {row.record.qa_date}</span>}
                   {row.record.currentness_status && (
                     <span>{humanizeCatalogLabel(row.record.currentness_status)}</span>
                   )}
@@ -3010,10 +3022,6 @@ function CatalogInventory({
           ))}
         </ul>
       </div>
-      <p className="text-[11px] text-slate-400 dark:text-slate-500">
-        Per-reference full/partial retrieval status, a dedicated retrieval date, and a QA-review
-        date are coming (new catalog fields).
-      </p>
     </section>
   );
 }
