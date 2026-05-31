@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
 import { Database, FileText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
@@ -27,10 +27,12 @@ import {
 } from '@/lib/matrix-options/provenance/library';
 import type {
   CalculatorReceipt,
+  EquationRecord,
   EvidenceLibraryFilterRequest,
   EvidenceLibraryFilters,
   ProvenancePathway,
 } from '@/lib/matrix-options/provenance/types';
+import { EQUATION_RECORDS } from '@/lib/matrix-options/provenance/catalog';
 import {
   isMatrixCategory,
   type MatrixCategory,
@@ -229,6 +231,14 @@ interface MatrixDashboardProps {
 
 const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'TWG Review', 'Interactive Map', 'Calculator', 'SSD Workbench', 'References & Values'];
 const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
+// Maps each Jurisdictional Frameworks side-tab to the derivation equation pathway(s) shown
+// in its Quick Reference drawer. The cross-cutting 'background-adjustment' equation is
+// intentionally omitted here (it stays in the calculator's Background Adjustment panel).
+const JURISDICTIONAL_SIDE_TAB_PATHWAYS: Record<string, ProvenancePathway[]> = {
+  'Ecological: EqP & AVS': ['eco-direct-eqp'],
+  'Ecological: Food Web (BSAF)': ['eco-food-bsaf'],
+  'Human Health Pathways': ['human-health-direct', 'human-health-food'],
+};
 
 export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent, finalDraftContent, initialMapData = EMPTY_MATRIX_MAP_DATA, fetchErrorMessage = null }: MatrixDashboardProps) {
   const router = useRouter();
