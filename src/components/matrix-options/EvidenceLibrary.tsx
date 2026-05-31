@@ -159,6 +159,17 @@ const DEFAULT_POLICY_STATUS_NOTES: Record<
 // counts that did not match the loaded catalog.
 const SAVED_VIEWS_STORAGE_KEY = 'matrix-options-saved-views-v1';
 
+// The seed-era "quick filters" were removed (see comment above). The single deliberate
+// exception is the "Candidate defaults" review affordance: a first-class HITL entry point
+// into the default-policy review workflow (mirrors the calculator "Review candidate defaults"
+// shortcut). It applies a stable, catalog-accurate filter -- approved-source-backed values
+// that are available-option candidates (NOT current defaults) -- so it does not show the
+// stale counts that doomed the old seed presets.
+const CANDIDATE_DEFAULTS_REQUEST: EvidenceLibraryFilterRequest = {
+  evidenceSupportStatuses: ['approved_source_backed'],
+  defaultStatuses: ['available_option'],
+};
+
 type SavedFilterView = {
   id: string;
   name: string;
@@ -3061,9 +3072,17 @@ export default function EvidenceLibrary({
   const [savedViews, setSavedViews] = useState<SavedFilterView[]>([]);
   const [savingView, setSavingView] = useState(false);
   const [savedViewName, setSavedViewName] = useState('');
+  const [statusAdminOpen, setStatusAdminOpen] = useState(false);
   useEffect(() => {
     setSavedViews(loadSavedViews());
   }, []);
+  // The default-policy audit + admin tools live in the demoted, collapsed "Catalog status &
+  // admin" section. When the user arrives via the calculator "Review candidate defaults"
+  // shortcut (calculatorReceipt present), auto-open that section so the audit they came to
+  // review is visible instead of hidden behind a closed <details>.
+  useEffect(() => {
+    if (calculatorReceipt) setStatusAdminOpen(true);
+  }, [calculatorReceipt]);
   const protocol28Summary = useMemo(() => buildProtocol28ReviewSummary(), []);
   const activeLabels = [
     ...activeFilterLabels(filters),
@@ -3180,6 +3199,26 @@ export default function EvidenceLibrary({
     closeDetailPanels();
     setDefaultPolicyStatusFilter(null);
     onFiltersChange(createEvidenceLibraryFilters(request));
+  };
+  // "Candidate defaults" quick-review affordance (HITL entry point; mirrors the calculator
+  // "Review candidate defaults" shortcut). Toggle on -> apply the candidate-defaults filter;
+  // toggle off -> clear filters. aria-pressed reflects whether the filter is currently active.
+  const candidateDefaultsFilters = useMemo(
+    () => createEvidenceLibraryFilters(CANDIDATE_DEFAULTS_REQUEST),
+    [],
+  );
+  const candidateDefaultsActive =
+    viewMode === 'values' &&
+    defaultPolicyStatusFilter === null &&
+    filtersEqual(filters, candidateDefaultsFilters);
+  const toggleCandidateDefaults = () => {
+    if (candidateDefaultsActive) {
+      closeDetailPanels();
+      setDefaultPolicyStatusFilter(null);
+      onFiltersChange(createEvidenceLibraryFilters({}));
+    } else {
+      applyAuditFilter('values', CANDIDATE_DEFAULTS_REQUEST);
+    }
   };
   const applyDefaultPolicyStatusFilter = (
     status: DefaultSelectionDecisionStatus | null,
@@ -3499,6 +3538,31 @@ export default function EvidenceLibrary({
           receipt={calculatorReceipt}
           onDismiss={onDismissReceipt}
         />
+      )}
+
+      {showValues && (
+        <div
+          className="flex flex-wrap items-center gap-2"
+          data-testid="evidence-library-quick-review"
+        >
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Quick review
+          </span>
+          <button
+            type="button"
+            onClick={toggleCandidateDefaults}
+            aria-pressed={candidateDefaultsActive}
+            data-testid="evidence-library-candidate-defaults"
+            className={cn(
+              'inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors',
+              candidateDefaultsActive
+                ? 'border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
+                : 'border-slate-300 bg-white text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
+            )}
+          >
+            Candidate defaults
+          </button>
+        </div>
       )}
 
       {/* Filters fall back to the center when the left panel is unavailable (mobile, where the
@@ -4144,6 +4208,12 @@ export default function EvidenceLibrary({
 
               {/* Demoted: the catalog status + QA/admin tools, collapsed by default. */}
               <details
+                open={statusAdminOpen}
+                onToggle={(event) =>
+                  setStatusAdminOpen(
+                    (event.currentTarget as HTMLDetailsElement).open,
+                  )
+                }
                 className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
                 data-testid="evidence-library-status-admin"
               >
