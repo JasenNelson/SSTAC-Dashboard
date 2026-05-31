@@ -1,0 +1,183 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+import {
+  fetchSavedViews,
+  createSavedView,
+  deleteSavedView,
+  importLegacySavedViews,
+} from '../saved-views-sync';
+import { createEvidenceLibraryFilters } from '../library';
+
+// ---------------------------------------------------------------------------
+// Supabase mock: a chainable query builder that is thenable and resolves to the
+// next queued result. Each `from()` returns a fresh builder; every builder
+// method returns the same builder, and awaiting it shifts `resultQueue`.
+// ---------------------------------------------------------------------------
+
+const mockGetUser = vi.fn();
+const mockFrom = vi.fn();
+let resultQueue: Array<Record<string, unknown>> = [];
+
+function builder() {
+  const b: Record<string, unknown> = {};
+  for (const m of ['select', 'insert', 'update', 'delete', 'eq', 'in', 'order', 'single']) {
+    b[m] = vi.fn(() => b);
+  }
+  (b as { then: unknown }).then = (resolve: (v: unknown) => void) =>
+    resolve(resultQueue.shift() ?? { data: null, error: null });
+  return b;
+}
+
+vi.mock('@/lib/supabase-auth', () => ({
+  createAuthenticatedClient: vi.fn(() =>
+    Promise.resolve({ auth: { getUser: mockGetUser }, from: mockFrom }),
+  ),
+}));
+
+beforeEach(() => {
+  resultQueue = [];
+  mockFrom.mockReset();
+  mockFrom.mockImplementation(() => builder());
+  mockGetUser.mockReset();
+  mockGetUser.mockResolvedValue({ data: { user: { id: 'user-1' } } });
+});
+
+const baseFilters = createEvidenceLibraryFilters();
+
+describe('saved-views-sync', () => {
+  describe('fetchSavedViews', () => {
+    it('returns mapped rows with normalized filters', async () => {
+      resultQueue = [
+        {
+          data: [
+            {
+              id: 'v1',
+              name: 'My view',
+              filters: { substanceKeys: ['lead'], bogusKey: 1 },
+              view_mode: 'values',
+              created_at: 't1',
+              updated_at: 't1',
+            },
+          ],
+          error: null,
+        },
+      ];
+      const rows = await fetchSavedViews();
+      expect(rows).toHaveLength(1);
+      expect(rows[0].id).toBe('v1');
+      expect(rows[0].view_mode).toBe('values');
+      // Known key preserved and the result is a complete, well-formed filters object
+      // (createEvidenceLibraryFilters merges the defaults, so e.g. search is present).
+      expect(rows[0].filters.substanceKeys).toEqual(['lead']);
+      expect(rows[0].filters.search).toBe('');
+      expect(Array.isArray(rows[0].filters.pathways)).toBe(true);
+    });
+
+    it('coerces an unknown view_mode to values', async () => {
+      resultQueue = [
+        {
+          data: [
+            { id: 'v2', name: 'x', filters: {}, view_mode: 'nonsense', created_at: 't', updated_at: 't' },
+          ],
+          error: null,
+        },
+      ];
+      const rows = await fetchSavedViews();
+      expect(rows[0].view_mode).toBe('values');
+    });
+
+    it('returns [] on a Supabase error', async () => {
+      resultQueue = [{ data: null, error: { message: 'relation does not exist' } }];
+      expect(await fetchSavedViews()).toEqual([]);
+    });
+  });
+
+  describe('createSavedView', () => {
+    it('inserts and returns the mapped view on success', async () => {
+      resultQueue = [
+        { count: 3, error: null }, // cap check
+        {
+          data: {
+            id: 'v9',
+            name: 'New',
+            filters: {},
+            view_mode: 'sources',
+            created_at: 't',
+            updated_at: 't',
+          },
+          error: null,
+        }, // insert.select.single
+      ];
+      const res = await createSavedView({ name: 'New', filters: baseFilters, view_mode: 'sources' });
+      expect(res.success).toBe(true);
+      expect(res.view?.id).toBe('v9');
+      expect(res.view?.view_mode).toBe('sources');
+    });
+
+    it('returns unauthenticated when there is no user', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: null } });
+      const res = await createSavedView({ name: 'x', filters: baseFilters, view_mode: 'values' });
+      expect(res).toEqual({ success: false, view: null, error: 'unauthenticated' });
+    });
+
+    it('returns invalid_name for a blank name', async () => {
+      const res = await createSavedView({ name: '   ', filters: baseFilters, view_mode: 'values' });
+      expect(res.error).toBe('invalid_name');
+    });
+
+    it('returns limit_reached at the 50-view cap', async () => {
+      resultQueue = [{ count: 50, error: null }];
+      const res = await createSavedView({ name: 'x', filters: baseFilters, view_mode: 'values' });
+      expect(res.error).toBe('limit_reached');
+    });
+
+    it('returns unknown on an insert error', async () => {
+      resultQueue = [
+        { count: 0, error: null },
+        { data: null, error: { message: 'boom' } },
+      ];
+      const res = await createSavedView({ name: 'x', filters: baseFilters, view_mode: 'values' });
+      expect(res.error).toBe('unknown');
+    });
+  });
+
+  describe('deleteSavedView', () => {
+    it('returns true on success', async () => {
+      resultQueue = [{ error: null }];
+      expect(await deleteSavedView('v1')).toBe(true);
+    });
+    it('returns false when there is no user', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: null } });
+      expect(await deleteSavedView('v1')).toBe(false);
+    });
+    it('returns false on a Supabase error', async () => {
+      resultQueue = [{ error: { message: 'nope' } }];
+      expect(await deleteSavedView('v1')).toBe(false);
+    });
+  });
+
+  describe('importLegacySavedViews', () => {
+    it('imports up to the remaining cap', async () => {
+      resultQueue = [
+        { count: 48, error: null }, // 2 remaining
+        { error: null }, // insert
+      ];
+      const res = await importLegacySavedViews([
+        { name: 'a', filters: baseFilters, view_mode: 'values' },
+        { name: 'b', filters: baseFilters, view_mode: 'values' },
+        { name: 'c', filters: baseFilters, view_mode: 'values' },
+      ]);
+      expect(res).toEqual({ success: true, imported: 2 });
+    });
+    it('imports nothing for an empty list', async () => {
+      expect(await importLegacySavedViews([])).toEqual({ success: true, imported: 0 });
+    });
+    it('fails when signed out', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: null } });
+      const res = await importLegacySavedViews([
+        { name: 'a', filters: baseFilters, view_mode: 'values' },
+      ]);
+      expect(res).toEqual({ success: false, imported: 0 });
+    });
+  });
+});

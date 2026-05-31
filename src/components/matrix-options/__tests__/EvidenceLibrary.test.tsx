@@ -1,5 +1,6 @@
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as savedViewsSync from '@/lib/matrix-options/provenance/saved-views-sync';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import EvidenceLibrary from '../EvidenceLibrary';
 import {
@@ -40,6 +41,17 @@ vi.mock('@/lib/matrix-options/provenance/promotion', async (importOriginal) => {
     promoteSourceLead: vi.fn().mockResolvedValue(null),
   };
 });
+
+// Saved-views Supabase sync (P2-3). Default to signed-out/local mode so existing tests
+// exercise the localStorage fallback path deterministically; individual tests override.
+vi.mock('@/lib/matrix-options/provenance/saved-views-sync', () => ({
+  fetchSavedViews: vi.fn().mockResolvedValue([]),
+  createSavedView: vi
+    .fn()
+    .mockResolvedValue({ success: false, view: null, error: 'unauthenticated' }),
+  deleteSavedView: vi.fn().mockResolvedValue(false),
+  importLegacySavedViews: vi.fn().mockResolvedValue({ success: false, imported: 0 }),
+}));
 
 function renderControlled(
   initialFilters = createEvidenceLibraryFilters(),
@@ -1130,5 +1142,67 @@ describe('EvidenceLibrary right-panel resize', () => {
     fireEvent(window, new MouseEvent('pointerup', {}));
     // Budget caps at 600 here, below the absolute 720 max.
     expect(wrapper).toHaveStyle({ width: '600px' });
+  });
+});
+
+describe('EvidenceLibrary saved views (Supabase)', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    vi.mocked(savedViewsSync.fetchSavedViews).mockResolvedValue([]);
+    vi.mocked(savedViewsSync.createSavedView).mockResolvedValue({
+      success: false,
+      view: null,
+      error: 'unauthenticated',
+    });
+    vi.mocked(savedViewsSync.deleteSavedView).mockResolvedValue(false);
+    vi.mocked(savedViewsSync.importLegacySavedViews).mockResolvedValue({
+      success: false,
+      imported: 0,
+    });
+  });
+
+  it('renders saved views fetched from Supabase on mount', async () => {
+    vi.mocked(savedViewsSync.fetchSavedViews).mockResolvedValueOnce([
+      {
+        id: 'srv-1',
+        name: 'Server view A',
+        filters: createEvidenceLibraryFilters({ substanceKeys: ['lead'] }),
+        view_mode: 'values',
+        created_at: 't',
+        updated_at: 't',
+      },
+    ]);
+    renderControlled();
+    // Anchor to the start so we hit the apply button, not the "Delete saved view ..." button.
+    expect(
+      await screen.findByRole('button', { name: /^Server view A/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps an optimistic save after the server reconciles its id', async () => {
+    vi.mocked(savedViewsSync.createSavedView).mockResolvedValueOnce({
+      success: true,
+      view: {
+        id: 'srv-99',
+        name: 'Persisted view',
+        filters: createEvidenceLibraryFilters(),
+        view_mode: 'values',
+        created_at: 't',
+        updated_at: 't',
+      },
+      error: null,
+    });
+    renderControlled();
+    fireEvent.click(screen.getByTestId('evidence-library-save-view-button'));
+    fireEvent.change(screen.getByTestId('evidence-library-save-view-input'), {
+      target: { value: 'Persisted view' },
+    });
+    fireEvent.click(screen.getByTestId('evidence-library-save-view-confirm'));
+    // Optimistic row appears immediately; after the server resolves it remains (id reconciled).
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('evidence-library-saved-views'),
+      ).toHaveTextContent(/Persisted view/),
+    );
   });
 });
