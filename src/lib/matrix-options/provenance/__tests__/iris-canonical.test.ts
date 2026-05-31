@@ -59,6 +59,25 @@ function parseRange(s: string): [number, number] | null {
   return a <= b ? [a, b] : [b, a];
 }
 
+// Unit-aware comparison. The snapshot's epa_values are in each input's BASE unit (RfD =
+// mg/kg-bw/day, oral SF = (mg/kg-day)^-1, RfC = mg/m3, inhalation unit risk = (ug/m3)^-1). A
+// catalog record may legitimately carry the SAME value in a different unit -- e.g. arsenic oral
+// RfD 0.06 ug/kg-bw/day == 6e-5 mg/kg-bw/day -- so we MUST normalize the catalog value by its
+// unit to the base before comparing, or a correct value gets false-flagged. (Lesson 2026-05-31:
+// a bare-number comparison wrongly called 0.06 ug/kg "1000x off"; 0.06 ug/kg = 6e-5 mg/kg.)
+export function normalizeToBase(value: number, unit: string, inputKey: string): number {
+  const u = (unit || '').toLowerCase().replace(/\s+/g, '').replace('cu.m', 'm3');
+  if (inputKey === 'rfd_oral_mg_per_kg_bw_day') {
+    return u.startsWith('ug/kg') ? value * 1e-3 : value; // base mg/kg-bw/day
+  }
+  if (inputKey === 'rfc_inhalation_mg_per_m3') {
+    return u.startsWith('ug/m3') ? value * 1e-3 : value; // base mg/m3
+  }
+  // Oral slope factor base (mg/kg-day)^-1 and inhalation unit risk base (ug/m3)^-1: the catalog
+  // uses these bases (no observed ug/mg slope-factor variants). Pass through; extend if one appears.
+  return value;
+}
+
 const snapByKey = new Map<string, SnapshotRecord>(
   snapshot.records.map((r) => [`${r.substance_key}::${r.input_key}`, r]),
 );
@@ -90,9 +109,10 @@ describe('EPA IRIS canonical guardrail (catalog values must match the EPA source
       const epa = snap.epa_values;
       const v = r.value;
       if (typeof v === 'number') {
-        if (!matchesAny(v, epa)) {
+        const nv = normalizeToBase(v, r.unit, r.input_key);
+        if (!matchesAny(nv, epa)) {
           mismatches.push(
-            `${r.substance_key}/${r.input_key}: catalog ${v} not in EPA ${JSON.stringify(epa)}`,
+            `${r.substance_key}/${r.input_key}: catalog ${v} ${r.unit} (= ${nv} base) not in EPA ${JSON.stringify(epa)}`,
           );
         }
       } else {
@@ -101,10 +121,14 @@ describe('EPA IRIS canonical guardrail (catalog values must match the EPA source
           mismatches.push(
             `${r.substance_key}/${r.input_key}: catalog value ${JSON.stringify(v)} is neither numeric nor an "a to b" range for an IRIS toxicity input`,
           );
-        } else if (!matchesAny(range[0], epa) || !matchesAny(range[1], epa)) {
-          mismatches.push(
-            `${r.substance_key}/${r.input_key}: catalog range ${JSON.stringify(v)} endpoints are not both EPA values ${JSON.stringify(epa)}`,
-          );
+        } else {
+          const lo = normalizeToBase(range[0], r.unit, r.input_key);
+          const hi = normalizeToBase(range[1], r.unit, r.input_key);
+          if (!matchesAny(lo, epa) || !matchesAny(hi, epa)) {
+            mismatches.push(
+              `${r.substance_key}/${r.input_key}: catalog range ${JSON.stringify(v)} ${r.unit} endpoints are not both EPA values ${JSON.stringify(epa)}`,
+            );
+          }
         }
       }
     }
@@ -117,4 +141,14 @@ describe('EPA IRIS canonical guardrail (catalog values must match the EPA source
   // the snapshot. The "same-authority single value" idea (proposed by the codex/claude-desktop
   // reviews) was itself a memory-style assumption that contradicts IRIS reality; the correct and
   // sufficient integrity check is membership in the EPA snapshot (the test above).
+
+  it('normalizes units before comparing (a ug-unit value equals its mg-unit EPA value)', () => {
+    // 2026-05-31 lesson: a catalog value in ug units is the SAME as the mg-unit EPA value, and the
+    // guardrail must not false-flag it. 0.06 ug/kg-bw/day == 6e-5 mg/kg-bw/day; 2e-2 ug/m3 == 2e-5 mg/m3.
+    expect(normalizeToBase(0.06, 'ug/kg-day', 'rfd_oral_mg_per_kg_bw_day')).toBeCloseTo(6e-5, 12);
+    expect(normalizeToBase(2e-2, 'ug/m3', 'rfc_inhalation_mg_per_m3')).toBeCloseTo(2e-5, 8);
+    // mg-unit values pass through unchanged.
+    expect(normalizeToBase(6e-5, 'mg/kg-bw/day', 'rfd_oral_mg_per_kg_bw_day')).toBeCloseTo(6e-5, 12);
+    expect(normalizeToBase(0.052, '(mg/kg-day)-1', 'sf_oral_per_mg_per_kg_bw_per_day')).toBeCloseTo(0.052, 6);
+  });
 });
