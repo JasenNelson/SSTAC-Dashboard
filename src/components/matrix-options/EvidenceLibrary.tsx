@@ -20,6 +20,7 @@ import {
   createSavedView,
   deleteSavedView,
   importLegacySavedViews,
+  isSignedIn,
 } from '@/lib/matrix-options/provenance/saved-views-sync';
 import type { SavedViewRow } from '@/lib/matrix-options/provenance/saved-views-sync';
 import { usePromotedCandidatesStore } from '@/stores/matrix-options/promotedCandidatesStore';
@@ -3278,9 +3279,24 @@ export default function EvidenceLibrary({
           }
           return;
         }
-        // Remote empty and nothing to import. Best-effort flag; the write path
-        // (createSavedView) is authoritative for signed-in vs signed-out.
-        setSavedViewsBackend('local');
+        // Remote empty and nothing to import: disambiguate signed-in-empty from
+        // signed-out. A signed-in account with zero remote views is authoritative, so
+        // clear the local mirror -- otherwise stale or another account's local entries
+        // (after an account switch, or a delete on another device) would resurrect here.
+        // Signed-out keeps the localStorage fallback. (A rare offline-created-but-unsynced
+        // local view is also cleared; the server is treated as the source of truth.)
+        const signedIn = await isSignedIn();
+        if (cancelled) return;
+        if (signedIn) {
+          setSavedViews([]);
+          persistSavedViews([]);
+          setSavedViewsBackend('supabase');
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem(SAVED_VIEWS_MIGRATED_KEY, 'done');
+          }
+        } else {
+          setSavedViewsBackend('local');
+        }
       } catch {
         if (!cancelled) setSavedViewsBackend('local');
       }
@@ -3405,9 +3421,16 @@ export default function EvidenceLibrary({
     });
     if (result.success && result.view) {
       const serverView = rowToSavedFilterView(result.view);
-      setSavedViews((current) =>
-        current.map((v) => (v.id === optimistic.id ? serverView : v)),
-      );
+      setSavedViews((current) => {
+        // Persist the reconciled list so localStorage holds the SERVER id, not the
+        // optimistic one -- otherwise a later offline delete would call deleteSavedView
+        // with an id Supabase never stored and the view would resurrect on next sync.
+        const reconciled = current.map((v) =>
+          v.id === optimistic.id ? serverView : v,
+        );
+        persistSavedViews(reconciled);
+        return reconciled;
+      });
       setSavedViewsBackend('supabase');
     } else if (result.error === 'unauthenticated') {
       // Signed-out: local-only is correct; keep the optimistic row.

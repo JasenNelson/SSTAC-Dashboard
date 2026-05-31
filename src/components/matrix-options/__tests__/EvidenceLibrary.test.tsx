@@ -51,6 +51,7 @@ vi.mock('@/lib/matrix-options/provenance/saved-views-sync', () => ({
     .mockResolvedValue({ success: false, view: null, error: 'unauthenticated' }),
   deleteSavedView: vi.fn().mockResolvedValue(false),
   importLegacySavedViews: vi.fn().mockResolvedValue({ success: false, imported: 0 }),
+  isSignedIn: vi.fn().mockResolvedValue(false),
 }));
 
 function renderControlled(
@@ -1158,6 +1159,77 @@ describe('EvidenceLibrary saved views (Supabase)', () => {
     vi.mocked(savedViewsSync.importLegacySavedViews).mockResolvedValue({
       success: false,
       imported: 0,
+    });
+    vi.mocked(savedViewsSync.isSignedIn).mockResolvedValue(false);
+  });
+
+  const SAVED_VIEWS_KEY = 'matrix-options-saved-views-v1';
+  const MIGRATED_KEY = 'matrix-options-saved-views-migrated-v1';
+
+  it('clears a stale local mirror when a signed-in account has no remote views', async () => {
+    // Stale local entry from a prior account/session + sentinel already done; remote empty;
+    // signed in. The authenticated-empty state is authoritative -> the stale view must not show.
+    window.localStorage.setItem(
+      SAVED_VIEWS_KEY,
+      JSON.stringify([
+        { id: 'stale-1', name: 'Other account view', filters: {}, viewMode: 'values' },
+      ]),
+    );
+    window.localStorage.setItem(MIGRATED_KEY, 'done');
+    vi.mocked(savedViewsSync.fetchSavedViews).mockResolvedValue([]);
+    vi.mocked(savedViewsSync.isSignedIn).mockResolvedValue(true);
+
+    renderControlled();
+    await waitFor(() =>
+      expect(
+        screen.getByTestId('evidence-library-saved-views'),
+      ).toHaveTextContent(/No saved views yet/),
+    );
+    expect(
+      screen.getByTestId('evidence-library-saved-views'),
+    ).not.toHaveTextContent(/Other account view/);
+    expect(window.localStorage.getItem(SAVED_VIEWS_KEY)).toBe('[]');
+  });
+
+  it('keeps the local mirror when signed out (no remote, not authenticated)', async () => {
+    window.localStorage.setItem(
+      SAVED_VIEWS_KEY,
+      JSON.stringify([
+        { id: 'local-1', name: 'My local view', filters: {}, viewMode: 'values' },
+      ]),
+    );
+    window.localStorage.setItem(MIGRATED_KEY, 'done');
+    vi.mocked(savedViewsSync.fetchSavedViews).mockResolvedValue([]);
+    vi.mocked(savedViewsSync.isSignedIn).mockResolvedValue(false);
+
+    renderControlled();
+    expect(
+      await screen.findByRole('button', { name: /^My local view/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('persists the reconciled server id to localStorage after a successful save', async () => {
+    vi.mocked(savedViewsSync.createSavedView).mockResolvedValueOnce({
+      success: true,
+      view: {
+        id: 'srv-persist-1',
+        name: 'Persisted view',
+        filters: createEvidenceLibraryFilters(),
+        view_mode: 'values',
+        created_at: 't',
+        updated_at: 't',
+      },
+      error: null,
+    });
+    renderControlled();
+    fireEvent.click(screen.getByTestId('evidence-library-save-view-button'));
+    fireEvent.change(screen.getByTestId('evidence-library-save-view-input'), {
+      target: { value: 'Persisted view' },
+    });
+    fireEvent.click(screen.getByTestId('evidence-library-save-view-confirm'));
+    await waitFor(() => {
+      const raw = window.localStorage.getItem(SAVED_VIEWS_KEY) ?? '[]';
+      expect(raw).toContain('srv-persist-1'); // server id, not the optimistic id
     });
   });
 

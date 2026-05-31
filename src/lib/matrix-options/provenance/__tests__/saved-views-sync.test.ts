@@ -5,6 +5,7 @@ import {
   createSavedView,
   deleteSavedView,
   importLegacySavedViews,
+  isSignedIn,
 } from '../saved-views-sync';
 import { createEvidenceLibraryFilters } from '../library';
 
@@ -211,6 +212,16 @@ describe('saved-views-sync', () => {
         { name: 'a', filters: baseFilters, view_mode: 'values' },
       ]);
       expect(res).toEqual({ success: false, imported: 0 });
+    });
+  });
+
+  describe('isSignedIn', () => {
+    it('returns true when a user is authenticated', async () => {
+      expect(await isSignedIn()).toBe(true);
+    });
+    it('returns false when signed out', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: null } });
+      expect(await isSignedIn()).toBe(false);
     });
   });
 });

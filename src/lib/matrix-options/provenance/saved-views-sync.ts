@@ -129,6 +129,25 @@ export async function fetchSavedViews(): Promise<SavedViewRow[]> {
 }
 
 // ---------------------------------------------------------------------------
+// isSignedIn -- whether there is an authenticated user. Disambiguates an empty
+// fetchSavedViews() result (signed-in with no views vs signed-out) so the UI can
+// clear a stale local mirror for an authenticated-empty account (e.g. after an
+// account switch or a delete on another device) instead of resurrecting it.
+// ---------------------------------------------------------------------------
+
+export async function isSignedIn(): Promise<boolean> {
+  try {
+    const supabase = await createAuthenticatedClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    return Boolean(user);
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // createSavedView -- insert one view for the current user (50-view cap).
 // ---------------------------------------------------------------------------
 
