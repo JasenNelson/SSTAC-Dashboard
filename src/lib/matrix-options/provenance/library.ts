@@ -1391,6 +1391,17 @@ export function buildEvidenceLibraryView(
   );
   const valueGroups = buildValueGroups(filteredValueRows, allSourceLeads);
 
+  // Contextual (faceted) counts: each filter dimension's option counts reflect the records
+  // matching all OTHER active filters (its own selection cleared). This way combining filters
+  // shows the real impact, and an option never advertises a count that the current filters
+  // would exclude (no "5 in the dropdown -> 0 in the results").
+  type ValueFacetKey = 'pathways' | 'substanceKeys' | 'inputKeys' | 'jurisdictions';
+  type SourceFacetKey = 'authorityScopes' | 'sourceRoles' | 'currentnessStatuses';
+  const valueRowsExcept = (key: ValueFacetKey): EvidenceLibraryValueRow[] =>
+    valueRows.filter((row) => valueMatchesFilters(row, { ...filters, [key]: [] }));
+  const sourceRowsExcept = (key: SourceFacetKey): EvidenceLibrarySourceRow[] =>
+    sourceRows.filter((row) => sourceMatchesFilters(row, { ...filters, [key]: [] }));
+
   return {
     values: filteredValueRows,
     valueGroups,
@@ -1398,15 +1409,16 @@ export function buildEvidenceLibraryView(
     sources: filteredSourceRows,
     sourceLeads: filteredSourceLeads,
     facets: {
-      pathways: facet([
-        ...workingRecords.map((record) => record.pathway),
-        ...EQUATION_RECORDS.map((record) => record.pathway),
-      ]),
+      pathways: facet(
+        valueRowsExcept('pathways').map((row) => row.record.pathway),
+      ),
       substances: facet(
-        workingRecords.map((record) => record.substance_key),
+        valueRowsExcept('substanceKeys').map((row) => row.record.substance_key),
         (value) => substanceLabels.get(value) ?? value,
       ),
-      inputKeys: facet(workingRecords.map((record) => record.input_key)),
+      inputKeys: facet(
+        valueRowsExcept('inputKeys').map((row) => row.record.input_key),
+      ),
       qaStatuses: facet([
         ...workingRecords.map((record) => record.qa_status),
         ...EQUATION_RECORDS.map((record) => record.qa_status),
@@ -1424,10 +1436,10 @@ export function buildEvidenceLibraryView(
         workingRecords.map((record) => record.extraction_status),
       ),
       jurisdictions: facet(
-        workingRecords.map((record) => record.jurisdiction),
+        valueRowsExcept('jurisdictions').map((row) => row.record.jurisdiction),
       ),
       authorityScopes: facet(
-        evidenceSourceRecords.map((record) => record.authority_scope),
+        sourceRowsExcept('authorityScopes').map((row) => row.record.authority_scope),
       ),
       sourceAuthorityTiers: facet(
         evidenceSourceRecords
@@ -1435,7 +1447,9 @@ export function buildEvidenceLibraryView(
           .filter((tier): tier is SourceAuthorityTier => Boolean(tier)),
       ),
       sourceRoles: facet(
-        evidenceSourceRecords.flatMap((record) => sourceRolesForRecord(record)),
+        sourceRowsExcept('sourceRoles').flatMap((row) =>
+          sourceRolesForRecord(row.record),
+        ),
       ),
       canonicalSourceStatuses: facet(
         evidenceSourceRecords
@@ -1455,7 +1469,9 @@ export function buildEvidenceLibraryView(
         ].filter((alignment): alignment is string => Boolean(alignment)),
       ),
       currentnessStatuses: facet(
-        evidenceSourceRecords.map((record) => record.currentness_status),
+        sourceRowsExcept('currentnessStatuses').map(
+          (row) => row.record.currentness_status,
+        ),
       ),
       zoteroStatuses: facet(
         evidenceSourceRecords.map((record) => record.zotero_status),

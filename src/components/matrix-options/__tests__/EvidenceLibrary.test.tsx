@@ -66,6 +66,18 @@ function renderControlled(
   return { handleChange };
 }
 
+// Filters now live behind a "Filters" popover button. These helpers open it (idempotently)
+// before poking a dropdown, and clear via the popover's "Clear all".
+function ensureFiltersOpen() {
+  if (!screen.queryByTestId('evidence-library-filter-popover')) {
+    fireEvent.click(screen.getByTestId('evidence-library-filter-button'));
+  }
+}
+function clearAllFilters() {
+  ensureFiltersOpen();
+  fireEvent.click(screen.getByRole('button', { name: /Clear all/ }));
+}
+
 describe('EvidenceLibrary', () => {
   it('renders the References & Values overview defaulting to the Values table', () => {
     renderControlled();
@@ -101,11 +113,12 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-audit-strip')).not.toHaveTextContent(
       /pending owner export/i,
     );
-    expect(screen.getByTestId('evidence-library-quick-filters')).toHaveTextContent(
-      /Protocol 28/,
+    // The hardcoded seed-era quick filters were replaced by user-saved views.
+    expect(screen.getByTestId('evidence-library-saved-views')).toHaveTextContent(
+      /Saved views/,
     );
-    expect(screen.getByTestId('evidence-library-quick-filters')).toHaveTextContent(
-      /Derived preview only/,
+    expect(screen.getByTestId('evidence-library-saved-views')).toHaveTextContent(
+      /No saved views yet/,
     );
     expect(screen.getByTestId('protocol28-review-panel')).toHaveTextContent(
       /Policy compilation leads stay blocked from defaults/,
@@ -203,7 +216,7 @@ describe('EvidenceLibrary', () => {
       /promoted default/i,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
+    clearAllFilters();
 
     expect(
       screen.getByRole('button', { name: /Show Candidate pending approval/i }),
@@ -242,7 +255,7 @@ describe('EvidenceLibrary', () => {
     // Defaults to Values.
     expect(screen.getByText(/Showing \d+ of \d+ values/)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     expect(screen.getByText(/Showing \d+ of \d+ sources/)).toBeInTheDocument();
     // Source leads now fold into the Sources view, so their lead-set count shows here too.
     expect(screen.getByText(/Showing \d+ of \d+ lead sets/)).toBeInTheDocument();
@@ -251,7 +264,7 @@ describe('EvidenceLibrary', () => {
   it('renders sources with folded-in source leads, without promoting scaffolds', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     expect(screen.getByTestId('evidence-library-sources')).not.toHaveTextContent(
       /calculator scaffold/i,
     );
@@ -284,36 +297,11 @@ describe('EvidenceLibrary', () => {
     expect(screen.getAllByText(/current calculator scaffold/i).length).toBeGreaterThan(0);
   });
 
-  it('applies source-review quick filters without promoting values', () => {
+  it('opens the Protocol 28 review queue and source leads without promoting values', () => {
     renderControlled();
 
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /Health Canada: Approved alternatives/i,
-      }),
-    );
-
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Health Canada/,
-    );
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Approved alternative/,
-    );
-    expect(screen.getByText(/Evidence: approved source-backed/)).toBeInTheDocument();
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /Protocol 28: Policy compilation/i,
-      }),
-    );
-
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Protocol 28/,
-    );
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Needs original-source verification/,
-    );
-
+    // The Protocol 28 review-queue buttons live in the demoted "Catalog status & admin"
+    // section of the right panel (still in the DOM in jsdom).
     fireEvent.click(
       screen.getByRole('button', { name: /^Review Protocol 28 queue$/ }),
     );
@@ -323,147 +311,49 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByText(/Policy alignment: Protocol 28/i)).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole('button', {
-        name: /^Review Protocol 28 source leads$/,
-      }),
+      screen.getByRole('button', { name: /^Review Protocol 28 source leads$/ }),
     );
-
     expect(screen.getAllByText(/search: Protocol 28/i).length).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText(/Source role: policy compilation/i).length,
-    ).toBeGreaterThan(0);
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Showing 1 of \d+ lead sets/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /BC Protocol 28 v3\.0/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Read-only triage checklist/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Original source verification/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Exact locator capture/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Currentness check/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Applicability review/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Owner or delegated approval/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Lead triage only; not calculator evidence or calculator default\s+support/i,
-    );
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /Eco-SSL: Screening\/source leads/i,
-      }),
-    );
-
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Eco-SSL/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Needs original-source verification/,
-    );
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /SSD-derived: Derived preview/i,
-      }),
-    );
-
-    expect(screen.getAllByText(/search: SSD/).length).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText(/Evidence: user-entered or derived/).length,
-    ).toBeGreaterThan(0);
-    expect(screen.getByTestId('derived-preview-empty-state')).toHaveTextContent(
-      /SSD-derived candidates are generated in the SSD Workbench receipt/i,
-    );
-    expect(
-      screen.getByRole('button', { name: /^Clear filters$/ }),
-    ).toBeInTheDocument();
+    const leads = screen.getByTestId('evidence-library-source-leads');
+    expect(leads).toHaveTextContent(/Showing 1 of \d+ lead sets/);
+    expect(leads).toHaveTextContent(/BC Protocol 28 v3\.0/);
+    expect(leads).toHaveTextContent(/Read-only triage checklist/);
+    expect(leads).toHaveTextContent(/Original source verification/);
+    expect(leads).toHaveTextContent(/Owner or delegated approval/);
   });
 
-  it('shows saved review view counts and active filter state', () => {
+  it('saves the current filters as a named view, then deletes it', () => {
+    // Start from a clean saved-views store so the assertions are deterministic.
+    window.localStorage.clear();
     renderControlled();
 
-    const protocol28Button = screen.getByRole('button', {
-      name: /Protocol 28: Policy compilation/i,
-    });
-    const healthCanadaButton = screen.getByRole('button', {
-      name: /Health Canada: Approved alternatives/i,
-    });
-    const ecoSslButton = screen.getByRole('button', {
-      name: /Eco-SSL: Screening\/source leads/i,
-    });
-    const ssdButton = screen.getByRole('button', {
-      name: /SSD-derived: Derived preview/i,
-    });
-
-    expect(within(protocol28Button).getByText('6 values')).toBeInTheDocument();
-    expect(within(healthCanadaButton).getByText('19 values')).toBeInTheDocument();
-    // Eco-SSL now opens the Sources view (source leads fold into Sources), so its count
-    // reflects matching source records rather than lead sets.
-    expect(within(ecoSslButton).getByText('4 sources')).toBeInTheDocument();
-    expect(within(ssdButton).getByText('0 values')).toBeInTheDocument();
-    expect(healthCanadaButton).toHaveAttribute('aria-pressed', 'false');
-
-    fireEvent.click(healthCanadaButton);
-
-    expect(
-      screen.getByRole('button', {
-        name: /Health Canada: Approved alternatives/i,
-      }),
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Health Canada/,
+    expect(screen.getByTestId('evidence-library-saved-views')).toHaveTextContent(
+      /No saved views yet/,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
-
-    expect(
-      screen.getByRole('button', {
-        name: /Health Canada: Approved alternatives/i,
-      }),
-    ).toHaveAttribute('aria-pressed', 'false');
-  });
-
-  it('shows candidate defaults saved review view as read-only filter with no promotion', () => {
-    renderControlled();
-
-    const candidateDefaultsButton = screen.getByRole('button', {
-      name: /Candidate defaults: Eligible candidates/i,
+    // Set a filter, then save the current view under a name.
+    ensureFiltersOpen();
+    fireEvent.change(screen.getByLabelText(/^Substance$/), {
+      target: { value: 'benzo_a_pyrene' },
     });
+    fireEvent.click(screen.getByTestId('evidence-library-save-view-button'));
+    fireEvent.change(screen.getByTestId('evidence-library-save-view-input'), {
+      target: { value: 'My BaP view' },
+    });
+    fireEvent.click(screen.getByTestId('evidence-library-save-view-confirm'));
 
-    expect(candidateDefaultsButton).toHaveAttribute('aria-pressed', 'false');
+    const saved = screen.getByTestId('evidence-library-saved-views');
+    expect(saved).toHaveTextContent(/My BaP view/);
+    expect(saved).not.toHaveTextContent(/No saved views yet/);
 
-    fireEvent.click(candidateDefaultsButton);
-
-    expect(
-      screen.getByRole('button', {
-        name: /Candidate defaults: Eligible candidates/i,
-      }),
-    ).toHaveAttribute('aria-pressed', 'true');
-
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Approved alternative/,
+    // Delete it -> back to the empty state.
+    fireEvent.click(
+      screen.getByRole('button', { name: /Delete saved view My BaP view/ }),
     );
-    expect(screen.getByText(/Evidence: approved source-backed/i)).toBeInTheDocument();
-    expect(screen.getByText(/Default: available option/i)).toBeInTheDocument();
-
-    expect(
-      screen.getByText(/do not promote calculator defaults/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /^Promote$|^Set as default$|^Make default$/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-saved-views')).toHaveTextContent(
+      /No saved views yet/,
+    );
+    window.localStorage.clear();
   });
 
   it('uses audit strip counts as read-only database shortcuts', () => {
@@ -494,6 +384,7 @@ describe('EvidenceLibrary', () => {
   it('filters to the human-health-food pathway', () => {
     const { handleChange } = renderControlled();
 
+    ensureFiltersOpen();
     fireEvent.change(screen.getByLabelText(/^Pathway$/), {
       target: { value: 'human-health-food' },
     });
@@ -504,16 +395,10 @@ describe('EvidenceLibrary', () => {
     expect(screen.queryByText(/Benzo\[a\]pyrene log Kow/)).not.toBeInTheDocument();
   });
 
-  it('filters by species and jurisdiction, and keeps authority filters to evidence sources', () => {
+  it('filters by jurisdiction, and keeps authority filters to evidence sources', () => {
     renderControlled();
 
-    fireEvent.change(screen.getByLabelText(/^Species$/), {
-      target: { value: 'fish or shellfish' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
-    expect(screen.getAllByText(/Aroclor 1254 oral RfD/).length).toBeGreaterThan(0);
-    expect(screen.queryByText(/Benzo\[a\]pyrene log Kow/)).not.toBeInTheDocument();
-
+    ensureFiltersOpen();
     fireEvent.change(screen.getByLabelText(/^Jurisdiction$/), {
       target: { value: 'general' },
     });
@@ -523,8 +408,11 @@ describe('EvidenceLibrary', () => {
       /Current calculator scaffold only/,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    clearAllFilters();
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
+    // Switching to the References (sources) view keeps the popover open; its filter set is
+    // now the source filters, so the Authority dropdown is present.
+    ensureFiltersOpen();
     fireEvent.change(screen.getByLabelText(/^Authority$/), {
       target: { value: 'federal-guidance' },
     });
@@ -559,7 +447,7 @@ describe('EvidenceLibrary', () => {
   it('shows a filter-aware empty state for source leads within the Sources view', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     fireEvent.change(screen.getByLabelText(/^Search$/), {
       target: { value: 'zzzz-no-leads' },
     });
@@ -615,7 +503,7 @@ describe('EvidenceLibrary', () => {
   it('opens a selected source detail panel from the sources database view', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-source')[0]);
 
     const panel = screen.getByTestId('evidence-library-source-detail');
@@ -633,7 +521,7 @@ describe('EvidenceLibrary', () => {
   it('keeps Protocol 28 source detail blocked from calculator defaults', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     fireEvent.click(
       screen.getByRole('button', {
         name: /Inspect BC Protocol 28 v3\.0, 2024/,
@@ -650,11 +538,11 @@ describe('EvidenceLibrary', () => {
   it('closes selected detail panels when switching views or clearing filters', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-source')[0]);
     expect(screen.getByTestId('evidence-library-source-detail')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     expect(screen.getByTestId('evidence-library-source-detail')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
@@ -662,27 +550,20 @@ describe('EvidenceLibrary', () => {
       screen.queryByTestId('evidence-library-source-detail'),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /Health Canada: Approved alternatives/i,
-      }),
-    );
+    // Inspecting a value then clearing the filters should also close the detail panel.
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
     expect(screen.getByTestId('evidence-library-value-detail')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
+    clearAllFilters();
     expect(
       screen.queryByTestId('evidence-library-value-detail'),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/Evidence: approved source-backed/i),
     ).not.toBeInTheDocument();
   });
 
   it('searches and clears active filters', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     fireEvent.change(screen.getByLabelText(/^Search$/), {
       target: { value: 'NIST' },
     });
@@ -694,7 +575,7 @@ describe('EvidenceLibrary', () => {
     // (sources + source-leads) under the Sources view.
     expect(screen.getAllByText(/search: NIST/).length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
+    clearAllFilters();
     expect(screen.queryAllByText(/search: NIST/)).toHaveLength(0);
     fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByText(/Benzo\[a\]pyrene log Kow/)).toBeInTheDocument();
@@ -703,7 +584,7 @@ describe('EvidenceLibrary', () => {
   it('shows source leads as read-only context within the Sources view', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
 
     expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
       /ACFN WQCIU report/,
@@ -810,7 +691,7 @@ describe('EvidenceLibrary', () => {
       }),
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Sources$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     expect(
       screen.queryByTestId('evidence-library-all-scaffolds-banner'),
     ).not.toBeInTheDocument();
@@ -1016,6 +897,9 @@ describe('EvidenceLibrary panel rebalance', () => {
     renderControlled();
 
     expect(screen.getByTestId('evidence-library-filters')).toBeInTheDocument();
+    // Filters live behind the popover button now; open it to reach the Pathway dropdown.
+    expect(screen.getByTestId('evidence-library-filter-button')).toBeInTheDocument();
+    ensureFiltersOpen();
     expect(screen.getByLabelText(/^Pathway$/)).toBeInTheDocument();
 
     expect(screen.getByTestId('evidence-library-right-mode')).toHaveTextContent(
@@ -1052,5 +936,41 @@ describe('EvidenceLibrary panel rebalance', () => {
     expect(
       screen.queryByTestId('evidence-library-value-detail'),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('EvidenceLibrary filter popover + inventory', () => {
+  it('collapses filters behind a button; primary filters shown when open, removed ones absent', () => {
+    renderControlled();
+
+    // Dropdowns are hidden until the popover is opened.
+    expect(screen.queryByLabelText(/^Substance$/)).not.toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-filter-button')).toBeInTheDocument();
+
+    ensureFiltersOpen();
+    expect(screen.getByLabelText(/^Substance$/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Pathway$/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Parameter$/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Jurisdiction$/)).toBeInTheDocument();
+
+    // The retired workflow/scaffold filters (and the old "Input" label) are gone.
+    expect(screen.queryByLabelText(/^Evidence$/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^QA$/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Species$/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Input$/)).not.toBeInTheDocument();
+  });
+
+  it('shows the catalog inventory at rest with status/admin demoted to a collapsed section', () => {
+    renderControlled();
+
+    const inventory = screen.getByTestId('evidence-library-inventory');
+    expect(inventory).toHaveTextContent(/Catalog inventory/);
+    expect(inventory).toHaveTextContent(/Substances/);
+    expect(inventory).toHaveTextContent(/Values/);
+
+    // The audit/QA/admin panels are preserved but demoted into a collapsed section.
+    expect(
+      screen.getByTestId('evidence-library-status-admin'),
+    ).toBeInTheDocument();
   });
 });

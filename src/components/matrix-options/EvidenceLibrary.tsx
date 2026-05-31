@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
 import type { PromotedParameterValueRecord } from '@/lib/matrix-options/provenance/promotion';
@@ -88,8 +88,10 @@ interface EvidenceLibraryProps {
 // Jurisdictional Frameworks tab, source leads fold into Sources, and Assumptions duplicated
 // Values. The underlying view-mode branches remain for internal/quick-filter use.
 const VIEW_MODES: Array<{ id: EvidenceLibraryViewMode; label: string }> = [
+  // Ordered References then Values to match the tab title "References & Values".
+  // (Values remains the default-selected view -- see the useState default.)
+  { id: 'sources', label: 'References' },
   { id: 'values', label: 'Values' },
-  { id: 'sources', label: 'Sources' },
 ];
 
 type FilterArrayKey = {
@@ -152,87 +154,75 @@ const DEFAULT_POLICY_STATUS_NOTES: Record<
   pathway_unsupported: 'Selected frame blocks this pathway.',
 };
 
-const QUICK_REVIEW_FILTERS: Array<{
-  label: string;
-  description: string;
+// User-saved filter views, persisted in localStorage. Replaces the former hardcoded
+// seed-era "quick filters", which applied now-removed filter dimensions and showed stale
+// counts that did not match the loaded catalog.
+const SAVED_VIEWS_STORAGE_KEY = 'matrix-options-saved-views-v1';
+
+// The seed-era "quick filters" were removed (see comment above). The single deliberate
+// exception is the "Candidate defaults" review affordance: a first-class HITL entry point
+// into the default-policy review workflow (mirrors the calculator "Review candidate defaults"
+// shortcut). It applies a stable, catalog-accurate filter -- approved-source-backed values
+// that are available-option candidates (NOT current defaults) -- so it does not show the
+// stale counts that doomed the old seed presets.
+const CANDIDATE_DEFAULTS_REQUEST: EvidenceLibraryFilterRequest = {
+  evidenceSupportStatuses: ['approved_source_backed'],
+  defaultStatuses: ['available_option'],
+};
+
+type SavedFilterView = {
+  id: string;
+  name: string;
+  filters: EvidenceLibraryFilters;
   viewMode: EvidenceLibraryViewMode;
-  request: EvidenceLibraryFilterRequest;
-}> = [
-  {
-    label: 'Candidate defaults',
-    description: 'Eligible candidates pending default review and approval.',
-    viewMode: 'values',
-    request: {
-      evidenceSupportStatuses: ['approved_source_backed'],
-      defaultStatuses: ['available_option'],
-    },
-  },
-  {
-    label: 'Protocol 28',
-    description: 'Policy compilation; original source check required.',
-    viewMode: 'values',
-    request: {
-      search: 'Protocol 28',
-      bcProtocolAlignments: [PROTOCOL28_POLICY_ALIGNMENT],
-    },
-  },
-  {
-    label: 'Health Canada',
-    description: 'Approved alternatives, not automatic defaults.',
-    viewMode: 'values',
-    request: {
-      sourceIds: ['src-health-canada-trv-v4-2025'],
-      evidenceSupportStatuses: ['approved_source_backed'],
-    },
-  },
-  {
-    label: 'IRIS',
-    description: 'Approved alternatives, not automatic defaults.',
-    viewMode: 'values',
-    request: {
-      sourceIds: [
-        'src-us-epa-iris-rfd-table-live',
-        'src-us-epa-iris-chemical-details-live',
-      ],
-      evidenceSupportStatuses: ['approved_source_backed'],
-    },
-  },
-  {
-    label: 'Eco-SSL',
-    description: 'Screening/source leads; exact locators required.',
-    viewMode: 'sources',
-    request: {
-      search: 'Eco-SSL',
-    },
-  },
-  {
-    label: 'ERDC BSAF',
-    description: 'Database candidates; row locator review required.',
-    viewMode: 'values',
-    request: {
-      search: 'BSAF',
-      sourceIds: ['src-erdc-bsaf-db'],
-    },
-  },
-  {
-    label: 'WQCIU',
-    description: 'Source-of-sources leads only.',
-    viewMode: 'sources',
-    request: {
-      search: 'WQCIU',
-      sourceIds: ['src-acfn-wqciu'],
-    },
-  },
-  {
-    label: 'SSD-derived',
-    description: 'Derived preview only until ssdtools parity and QA.',
-    viewMode: 'values',
-    request: {
-      search: 'SSD',
-      evidenceSupportStatuses: ['user_entered_or_derived'],
-    },
-  },
-];
+};
+
+function loadSavedViews(): SavedFilterView[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(SAVED_VIEWS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Validate + normalize untrusted storage so a corrupted/old-shape entry can never crash
+    // render (filtersEqual / buildEvidenceLibraryView assume a well-formed filters object).
+    return parsed
+      .filter(
+        (entry): entry is Record<string, unknown> =>
+          typeof entry === 'object' && entry !== null,
+      )
+      .filter(
+        (entry) =>
+          typeof entry.id === 'string' &&
+          typeof entry.name === 'string' &&
+          (entry.viewMode === 'values' || entry.viewMode === 'sources'),
+      )
+      .slice(0, 50)
+      .map((entry) => ({
+        id: entry.id as string,
+        name: entry.name as string,
+        viewMode: entry.viewMode as EvidenceLibraryViewMode,
+        // Re-build through createEvidenceLibraryFilters so the stored filters are always a
+        // complete, well-formed EvidenceLibraryFilters (unknown keys dropped, arrays ensured).
+        filters: createEvidenceLibraryFilters(
+          (typeof entry.filters === 'object' && entry.filters !== null
+            ? entry.filters
+            : {}) as EvidenceLibraryFilterRequest,
+        ),
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function persistSavedViews(views: SavedFilterView[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(views));
+  } catch {
+    // ignore storage failures (private mode / quota)
+  }
+}
 
 const SOURCE_LEAD_TRIAGE_REQUIREMENTS = [
   {
@@ -544,6 +534,123 @@ function FilterSelect({
         ))}
       </select>
     </label>
+  );
+}
+
+type FilterControl = {
+  key: FilterArrayKey;
+  label: string;
+  options: EvidenceLibraryFacetOption[];
+};
+
+// Collapses the filter dropdowns behind a single "Filters" button so they do not consume the
+// side panel. Primary filters are always shown when open; the QA/review workflow filters sit
+// under a collapsible "Advanced" section. Closes on click-outside or Escape.
+function FilterPopover({
+  primaryControls,
+  advancedControls,
+  filters,
+  onUpdate,
+  activeCount,
+  onClearAll,
+}: {
+  primaryControls: FilterControl[];
+  advancedControls: FilterControl[];
+  filters: EvidenceLibraryFilters;
+  onUpdate: (key: FilterArrayKey, value: string) => void;
+  activeCount: number;
+  onClearAll: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocMouseDown = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onDocMouseDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocMouseDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        data-testid="evidence-library-filter-button"
+        className="flex w-full items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700"
+      >
+        <span className="inline-flex items-center gap-1.5">
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          Filters
+          {activeCount > 0 && (
+            <span className="rounded-full bg-sky-600 px-1.5 py-0.5 text-[10px] font-bold text-white dark:bg-sky-500">
+              {activeCount}
+            </span>
+          )}
+        </span>
+        <ChevronDown
+          className={cn('h-4 w-4 transition-transform', open && 'rotate-180')}
+        />
+      </button>
+      {open && (
+        <div
+          className="absolute left-0 right-0 z-20 mt-1 rounded-md border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+          data-testid="evidence-library-filter-popover"
+        >
+          <div className="grid gap-3">
+            {primaryControls.map((control) => (
+              <FilterSelect
+                key={control.key}
+                label={control.label}
+                value={firstValue(filters, control.key)}
+                options={control.options}
+                onChange={(value) => onUpdate(control.key, value)}
+              />
+            ))}
+          </div>
+          {advancedControls.length > 0 && (
+            <details className="mt-3 border-t border-slate-200 pt-2 dark:border-slate-800">
+              <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Advanced ({advancedControls.length})
+              </summary>
+              <div className="mt-2 grid gap-3">
+                {advancedControls.map((control) => (
+                  <FilterSelect
+                    key={control.key}
+                    label={control.label}
+                    value={firstValue(filters, control.key)}
+                    options={control.options}
+                    onChange={(value) => onUpdate(control.key, value)}
+                  />
+                ))}
+              </div>
+            </details>
+          )}
+          <div className="mt-3 flex justify-end">
+            <button
+              type="button"
+              onClick={onClearAll}
+              className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear all
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -2777,6 +2884,82 @@ function HitlSourcesSection({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
+// At-a-glance inventory of what is loaded in the catalog: headline counts + a browsable
+// substance list (click to filter the main view). Phase 1 uses existing data; per-source
+// retrieval/source/QA date tracking is a follow-up once the catalog emits those fields.
+function CatalogInventory({
+  baseline,
+  onSelectReference,
+}: {
+  baseline: ReturnType<typeof buildEvidenceLibraryView>;
+  onSelectReference: (sourceId: string) => void;
+}) {
+  const references = baseline.sources;
+  const stats: Array<{ label: string; value: number }> = [
+    { label: 'References', value: baseline.totalCounts.sources },
+    { label: 'Values', value: baseline.totalCounts.values },
+    { label: 'Substances', value: baseline.facets.substances.length },
+    { label: 'Parameters', value: baseline.facets.inputKeys.length },
+  ];
+  return (
+    <section className="space-y-3" data-testid="evidence-library-inventory">
+      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+        Catalog inventory
+      </h3>
+      <div className="grid grid-cols-2 gap-2">
+        {stats.map((stat) => (
+          <div
+            key={stat.label}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950"
+          >
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              {stat.label}
+            </div>
+            <div className="text-xl font-bold text-slate-950 dark:text-white">
+              {stat.value}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div>
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          References ({references.length}) -- click to inspect
+        </div>
+        <ul className="max-h-80 space-y-0.5 overflow-y-auto rounded-lg border border-slate-200 p-1 dark:border-slate-800">
+          {references.map((row) => (
+            <li key={row.record.source_id}>
+              <button
+                type="button"
+                onClick={() => onSelectReference(row.record.source_id)}
+                className="w-full rounded px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-sky-50 dark:text-slate-200 dark:hover:bg-sky-950/30"
+              >
+                <div className="truncate font-semibold text-slate-800 dark:text-slate-100">
+                  {row.record.short_citation}
+                </div>
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                  <span>
+                    {row.linkedValueCount} value{row.linkedValueCount === 1 ? '' : 's'}
+                  </span>
+                  {row.record.checked_at && (
+                    <span>retrieved {row.record.checked_at}</span>
+                  )}
+                  {row.record.currentness_status && (
+                    <span>{humanizeCatalogLabel(row.record.currentness_status)}</span>
+                  )}
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p className="text-[11px] text-slate-400 dark:text-slate-500">
+        Per-reference full/partial retrieval status, a dedicated retrieval date, and a QA-review
+        date are coming (new catalog fields).
+      </p>
+    </section>
+  );
+}
+
 export default function EvidenceLibrary({
   filters,
   onFiltersChange,
@@ -2886,21 +3069,20 @@ export default function EvidenceLibrary({
 
     return decisions;
   }, [library.values, regulatoryFrameId]);
-  const savedReviewViews = useMemo(
-    () =>
-      QUICK_REVIEW_FILTERS.map((filter) => {
-        const savedFilters = createEvidenceLibraryFilters(filter.request);
-        const savedLibrary = buildEvidenceLibraryView(savedFilters, promotedRecords);
-        return {
-          ...filter,
-          filters: savedFilters,
-          resultCountText: formatResultCount(
-            resultCountForView(savedLibrary, filter.viewMode),
-          ),
-        };
-      }),
-    [promotedRecords],
-  );
+  const [savedViews, setSavedViews] = useState<SavedFilterView[]>([]);
+  const [savingView, setSavingView] = useState(false);
+  const [savedViewName, setSavedViewName] = useState('');
+  const [statusAdminOpen, setStatusAdminOpen] = useState(false);
+  useEffect(() => {
+    setSavedViews(loadSavedViews());
+  }, []);
+  // The default-policy audit + admin tools live in the demoted, collapsed "Catalog status &
+  // admin" section. When the user arrives via the calculator "Review candidate defaults"
+  // shortcut (calculatorReceipt present), auto-open that section so the audit they came to
+  // review is visible instead of hidden behind a closed <details>.
+  useEffect(() => {
+    if (calculatorReceipt) setStatusAdminOpen(true);
+  }, [calculatorReceipt]);
   const protocol28Summary = useMemo(() => buildProtocol28ReviewSummary(), []);
   const activeLabels = [
     ...activeFilterLabels(filters),
@@ -2955,10 +3137,15 @@ export default function EvidenceLibrary({
   const selectedSource = useMemo(
     () =>
       selectedSourceId
-        ? library.sources.find((row) => row.record.source_id === selectedSourceId) ??
+        ? // Fall back to the unfiltered baseline so a reference clicked from the inventory
+          // (which lists baseline sources) still opens even when active filters exclude it.
+          library.sources.find((row) => row.record.source_id === selectedSourceId) ??
+          baselineLibrary.sources.find(
+            (row) => row.record.source_id === selectedSourceId,
+          ) ??
           null
         : null,
-    [library.sources, selectedSourceId],
+    [library.sources, baselineLibrary.sources, selectedSourceId],
   );
 
   const updateFilter = (key: FilterArrayKey, value: string) => {
@@ -2980,11 +3167,29 @@ export default function EvidenceLibrary({
     onDismissReceipt?.();
     onFiltersChange(createEvidenceLibraryFilters());
   };
-  const applyQuickFilter = (filter: (typeof QUICK_REVIEW_FILTERS)[number]) => {
-    setViewMode(filter.viewMode);
+  const applySavedView = (view: SavedFilterView) => {
+    setViewMode(view.viewMode);
     closeDetailPanels();
     setDefaultPolicyStatusFilter(null);
-    onFiltersChange(createEvidenceLibraryFilters(filter.request));
+    onFiltersChange(view.filters);
+  };
+  const saveCurrentView = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const view: SavedFilterView = {
+      id: `${Date.now().toString(36)}-${Math.round(Math.random() * 1e6).toString(36)}`,
+      name: trimmed,
+      filters,
+      viewMode,
+    };
+    const next = [...savedViews, view];
+    setSavedViews(next);
+    persistSavedViews(next);
+  };
+  const removeSavedView = (id: string) => {
+    const next = savedViews.filter((view) => view.id !== id);
+    setSavedViews(next);
+    persistSavedViews(next);
   };
   const applyAuditFilter = (
     nextViewMode: EvidenceLibraryViewMode,
@@ -2994,6 +3199,26 @@ export default function EvidenceLibrary({
     closeDetailPanels();
     setDefaultPolicyStatusFilter(null);
     onFiltersChange(createEvidenceLibraryFilters(request));
+  };
+  // "Candidate defaults" quick-review affordance (HITL entry point; mirrors the calculator
+  // "Review candidate defaults" shortcut). Toggle on -> apply the candidate-defaults filter;
+  // toggle off -> clear filters. aria-pressed reflects whether the filter is currently active.
+  const candidateDefaultsFilters = useMemo(
+    () => createEvidenceLibraryFilters(CANDIDATE_DEFAULTS_REQUEST),
+    [],
+  );
+  const candidateDefaultsActive =
+    viewMode === 'values' &&
+    defaultPolicyStatusFilter === null &&
+    filtersEqual(filters, candidateDefaultsFilters);
+  const toggleCandidateDefaults = () => {
+    if (candidateDefaultsActive) {
+      closeDetailPanels();
+      setDefaultPolicyStatusFilter(null);
+      onFiltersChange(createEvidenceLibraryFilters({}));
+    } else {
+      applyAuditFilter('values', CANDIDATE_DEFAULTS_REQUEST);
+    }
   };
   const applyDefaultPolicyStatusFilter = (
     status: DefaultSelectionDecisionStatus | null,
@@ -3040,24 +3265,14 @@ export default function EvidenceLibrary({
   }> =
     viewMode === 'sources'
       ? [
+          // Lean source filter set (Tier / Canonical status / Zotero / Policy alignment
+          // dropped as workflow clutter).
           { key: 'authorityScopes', label: 'Authority', options: library.facets.authorityScopes },
-          { key: 'sourceAuthorityTiers', label: 'Tier', options: library.facets.sourceAuthorityTiers },
           { key: 'sourceRoles', label: 'Source role', options: library.facets.sourceRoles },
-          {
-            key: 'canonicalSourceStatuses',
-            label: 'Canonical status',
-            options: library.facets.canonicalSourceStatuses,
-          },
           {
             key: 'currentnessStatuses',
             label: 'Currentness',
             options: library.facets.currentnessStatuses,
-          },
-          { key: 'zoteroStatuses', label: 'Zotero', options: library.facets.zoteroStatuses },
-          {
-            key: 'bcProtocolAlignments',
-            label: 'Policy alignment',
-            options: library.facets.bcProtocolAlignments,
           },
         ]
       : viewMode === 'equations'
@@ -3079,77 +3294,77 @@ export default function EvidenceLibrary({
               { key: 'sourceRoles', label: 'Source role', options: library.facets.sourceRoles },
             ]
           : [
-              { key: 'pathways', label: 'Pathway', options: library.facets.pathways },
+              // Lean, browse-oriented filter set. The status / scaffold dimensions
+              // (evidence support, default status, QA, extraction, policy alignment,
+              // receptor/population/species) were removed from the dropdowns -- they are
+              // QA-workflow jargon; that filtering is still reachable via the audit-strip
+              // shortcuts and saved views, which set those filters programmatically.
               { key: 'substanceKeys', label: 'Substance', options: library.facets.substances },
-              { key: 'inputKeys', label: 'Input', options: library.facets.inputKeys },
-              { key: 'evidenceSupportStatuses', label: 'Evidence', options: library.facets.evidenceSupportStatuses },
-              { key: 'defaultStatuses', label: 'Default', options: library.facets.defaultStatuses },
-              { key: 'qaStatuses', label: 'QA', options: library.facets.qaStatuses },
-              { key: 'extractionStatuses', label: 'Extraction', options: library.facets.extractionStatuses },
+              { key: 'pathways', label: 'Pathway', options: library.facets.pathways },
+              { key: 'inputKeys', label: 'Parameter', options: library.facets.inputKeys },
               { key: 'jurisdictions', label: 'Jurisdiction', options: library.facets.jurisdictions },
-              {
-                key: 'bcProtocolAlignments',
-                label: 'Policy alignment',
-                options: library.facets.bcProtocolAlignments,
-              },
-              { key: 'receptorGroups', label: 'Receptor', options: library.facets.receptorGroups },
-              { key: 'populationGroups', label: 'Population', options: library.facets.populationGroups },
-              { key: 'speciesGroups', label: 'Species', options: library.facets.speciesGroups },
             ];
+
+  // Split into the handful of primary filters (always shown in the popover) and the
+  // QA/review workflow filters (tucked under "Advanced"). Keeps the side panel uncluttered.
+  const primaryFilterKeys: ReadonlySet<FilterArrayKey> =
+    viewMode === 'sources'
+      ? new Set<FilterArrayKey>(['authorityScopes', 'sourceRoles', 'currentnessStatuses'])
+      : new Set<FilterArrayKey>(['substanceKeys', 'pathways', 'inputKeys', 'jurisdictions']);
+  const primaryFilterControls = filterControls.filter((control) =>
+    primaryFilterKeys.has(control.key),
+  );
+  const advancedFilterControls = filterControls.filter(
+    (control) => !primaryFilterKeys.has(control.key),
+  );
 
   // The filter grid is shared: it lives in the left panel on desktop, and falls back to the
   // center column when the left panel is unavailable (mobile, where the parent forces both
   // side panels closed, or when the user toggles the left panel off). Rendered in exactly one
   // place at a time so there is no duplicate mount.
   const filtersBlock = (
-    <div
-      className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
-      data-testid="evidence-library-filters"
-    >
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-1">
-        <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
-          <span className="mb-1 block">Search</span>
-          <span className="relative block">
-            <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-            <input
-              value={filters.search}
-              onChange={(event) =>
-                onFiltersChange({ ...filters, search: event.target.value })
-              }
-              className="w-full rounded-md border border-slate-300 bg-white py-2 pl-8 pr-2 text-sm text-slate-800 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-            />
-          </span>
-        </label>
-        {filterControls.map((control) => (
-          <FilterSelect
-            key={control.key}
-            label={control.label}
-            value={firstValue(filters, control.key)}
-            options={control.options}
-            onChange={(value) => updateFilter(control.key, value)}
+    <div className="space-y-3" data-testid="evidence-library-filters">
+      {/* Search stays always-visible. */}
+      <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">
+        <span className="mb-1 block">Search</span>
+        <span className="relative block">
+          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+          <input
+            value={filters.search}
+            onChange={(event) =>
+              onFiltersChange({ ...filters, search: event.target.value })
+            }
+            className="w-full rounded-md border border-slate-300 bg-white py-2 pl-8 pr-2 text-sm text-slate-800 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           />
-        ))}
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {activeLabels.map((label) => (
-          <span
-            key={label}
-            className="rounded-full border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-          >
-            {label}
-          </span>
-        ))}
-        {activeLabels.length > 0 && (
-          <button
-            type="button"
-            onClick={clearFilters}
-            className="inline-flex min-h-8 items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-          >
-            <X className="h-3.5 w-3.5" />
-            Clear
-          </button>
-        )}
-      </div>
+        </span>
+      </label>
+
+      {/* All dropdown filters collapse behind this button. */}
+      <FilterPopover
+        primaryControls={primaryFilterControls}
+        advancedControls={advancedFilterControls}
+        filters={filters}
+        onUpdate={updateFilter}
+        activeCount={activeLabels.length}
+        onClearAll={clearFilters}
+      />
+
+      {/* Active filters at a glance. */}
+      {activeLabels.length > 0 && (
+        <div
+          className="flex flex-wrap gap-1.5"
+          data-testid="evidence-library-active-filters"
+        >
+          {activeLabels.map((label) => (
+            <span
+              key={label}
+              className="rounded-full border border-slate-200 bg-white px-2 py-1 text-[11px] text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+            >
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 
@@ -3166,7 +3381,7 @@ export default function EvidenceLibrary({
         )}
       >
         {showLeftPanel && (
-        <div className="w-full min-w-[270px] p-5 overflow-y-auto h-full space-y-4">
+        <div className="w-full min-w-[270px] p-5 overflow-y-auto overflow-x-hidden h-full space-y-4">
           <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
             Filters
           </h3>
@@ -3175,62 +3390,114 @@ export default function EvidenceLibrary({
 
           <section
             className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
-            data-testid="evidence-library-quick-filters"
-            aria-label="Candidate review quick filters"
+            data-testid="evidence-library-saved-views"
+            aria-label="Saved views"
           >
-            <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                  Saved Review Views
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  These filters inspect alternatives and source leads only; they do not promote calculator defaults.
-                </p>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                Saved views
+              </h3>
+              {!savingView && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSavedViewName('');
+                    setSavingView(true);
+                  }}
+                  data-testid="evidence-library-save-view-button"
+                  className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                >
+                  <Plus className="h-3 w-3" />
+                  Save current
+                </button>
+              )}
+            </div>
+
+            {savingView && (
+              <div className="mb-2 flex items-center gap-1">
+                <input
+                  value={savedViewName}
+                  onChange={(event) => setSavedViewName(event.target.value)}
+                  placeholder="Name this view"
+                  aria-label="Saved view name"
+                  data-testid="evidence-library-save-view-input"
+                  className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                />
+                <button
+                  type="button"
+                  disabled={!savedViewName.trim()}
+                  onClick={() => {
+                    saveCurrentView(savedViewName);
+                    setSavingView(false);
+                  }}
+                  data-testid="evidence-library-save-view-confirm"
+                  className="rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSavingView(false)}
+                  className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                >
+                  Cancel
+                </button>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {savedReviewViews.map((filter) => {
-                const isActive =
-                  viewMode === filter.viewMode && filtersEqual(filters, filter.filters);
-                return (
-                  <button
-                    key={filter.label}
-                    type="button"
-                    aria-label={`${filter.label}: ${filter.description}`}
-                    aria-pressed={isActive}
-                    onClick={() => applyQuickFilter(filter)}
-                    className={cn(
-                      'min-h-10 rounded-md border px-3 text-left text-xs transition-colors',
-                      isActive
-                        ? 'border-sky-400 bg-sky-50 text-sky-800 shadow-sm dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
-                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 hover:bg-white hover:text-sky-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300',
-                    )}
-                  >
-                    <span className="flex items-start justify-between gap-2">
-                      <span className="font-semibold">{filter.label}</span>
-                      {isActive && (
-                        <span className="rounded-full bg-sky-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white dark:bg-sky-500">
-                          Active
+            )}
+
+            {savedViews.length === 0 ? (
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                No saved views yet. Set up filters, then "Save current" to reuse them.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {savedViews.map((view) => {
+                  const isActive =
+                    viewMode === view.viewMode && filtersEqual(filters, view.filters);
+                  const count = formatResultCount(
+                    resultCountForView(
+                      buildEvidenceLibraryView(view.filters, promotedRecords),
+                      view.viewMode,
+                    ),
+                  );
+                  return (
+                    <li key={view.id} className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => applySavedView(view)}
+                        aria-pressed={isActive}
+                        className={cn(
+                          'flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md border px-2 py-1 text-left text-xs transition-colors',
+                          isActive
+                            ? 'border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
+                            : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 hover:bg-white dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200',
+                        )}
+                      >
+                        <span className="truncate font-semibold">{view.name}</span>
+                        <span className="shrink-0 text-[10px] text-slate-500 dark:text-slate-400">
+                          {count}
                         </span>
-                      )}
-                    </span>
-                    <span className="block text-[11px] text-slate-500 dark:text-slate-400">
-                      {filter.description}
-                    </span>
-                    <span className="mt-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                      {filter.resultCountText}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeSavedView(view.id)}
+                        aria-label={`Delete saved view ${view.name}`}
+                        className="rounded-md border border-slate-300 bg-white p-1 text-slate-500 hover:border-red-300 hover:text-red-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </section>
         </div>
         )}
       </div>
 
       {/* MAIN CONTENT -- header and results */}
-      <div className="flex-1 min-w-0 overflow-y-auto bg-white dark:bg-slate-950">
+      <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-white dark:bg-slate-950">
         <div className="space-y-5 p-6">
           <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
         <div>
@@ -3244,7 +3511,7 @@ export default function EvidenceLibrary({
           </div>
         </div>
         <div
-          className="grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900 sm:inline-grid sm:w-auto sm:grid-cols-6"
+          className="grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900 sm:inline-grid sm:w-auto sm:grid-cols-2"
           aria-label="Evidence library view"
         >
           {VIEW_MODES.map((mode) => (
@@ -3271,6 +3538,31 @@ export default function EvidenceLibrary({
           receipt={calculatorReceipt}
           onDismiss={onDismissReceipt}
         />
+      )}
+
+      {showValues && (
+        <div
+          className="flex flex-wrap items-center gap-2"
+          data-testid="evidence-library-quick-review"
+        >
+          <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            Quick review
+          </span>
+          <button
+            type="button"
+            onClick={toggleCandidateDefaults}
+            aria-pressed={candidateDefaultsActive}
+            data-testid="evidence-library-candidate-defaults"
+            className={cn(
+              'inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors',
+              candidateDefaultsActive
+                ? 'border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
+                : 'border-slate-300 bg-white text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
+            )}
+          >
+            Candidate defaults
+          </button>
+        </div>
       )}
 
       {/* Filters fall back to the center when the left panel is unavailable (mobile, where the
@@ -3356,10 +3648,22 @@ export default function EvidenceLibrary({
               <AllScaffoldsBanner />
             )}
           <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
-            <table className="min-w-full text-sm">
+            <table className="w-full table-fixed text-sm">
+              {/* Fixed column proportions: the text-heavy columns (review status,
+                  default/evidence, applicability, sources) get the room; the short
+                  numeric "Current value" no longer hogs width. */}
+              <colgroup>
+                <col className="w-[20%]" />
+                <col className="w-[8%]" />
+                <col className="w-[9%]" />
+                <col className="w-[13%]" />
+                <col className="w-[20%]" />
+                <col className="w-[15%]" />
+                <col className="w-[15%]" />
+              </colgroup>
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
                 <tr>
-                  <th className="px-3 py-2 font-semibold">Value</th>
+                  <th className="px-3 py-2 font-semibold">Parameter</th>
                   <th className="px-3 py-2 font-semibold">Pathway</th>
                   <th className="px-3 py-2 font-semibold">Current value</th>
                   <th className="px-3 py-2 font-semibold">Default / evidence</th>
@@ -3893,37 +4197,58 @@ export default function EvidenceLibrary({
           )}
           {!selectedValue && !selectedSource && (
             <div className="space-y-4" data-testid="evidence-library-right-dashboard">
-              <AuditStrip audit={library.audit} onSelect={applyAuditFilter} compact />
-
-              <DefaultPolicyAuditPanel
-                decisions={defaultPolicyDecisions}
-                activeStatus={defaultPolicyStatusFilter}
-                onSelectStatus={applyDefaultPolicyStatusFilter}
-                compact
+              {/* Prominent: at-a-glance inventory of the references loaded in the catalog. */}
+              <CatalogInventory
+                baseline={baselineLibrary}
+                onSelectReference={(sourceId) => {
+                  setSelectedValueId(null);
+                  setSelectedSourceId(sourceId);
+                }}
               />
 
-              <Protocol28ReviewPanel
-                summary={protocol28Summary}
-                onReview={openProtocol28Review}
-                onReviewSourceLeads={openProtocol28SourceLeads}
-                compact
-              />
+              {/* Demoted: the catalog status + QA/admin tools, collapsed by default. */}
+              <details
+                open={statusAdminOpen}
+                onToggle={(event) =>
+                  setStatusAdminOpen(
+                    (event.currentTarget as HTMLDetailsElement).open,
+                  )
+                }
+                className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
+                data-testid="evidence-library-status-admin"
+              >
+                <summary className="cursor-pointer px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                  Catalog status & admin
+                </summary>
+                <div className="space-y-4 p-3 pt-0">
+                  <AuditStrip audit={library.audit} onSelect={applyAuditFilter} compact />
 
-              <CrossPathwayAuditPanel compact />
+                  <DefaultPolicyAuditPanel
+                    decisions={defaultPolicyDecisions}
+                    activeStatus={defaultPolicyStatusFilter}
+                    onSelectStatus={applyDefaultPolicyStatusFilter}
+                    compact
+                  />
 
-              <ZoteroStatusBadge compact />
+                  <Protocol28ReviewPanel
+                    summary={protocol28Summary}
+                    onReview={openProtocol28Review}
+                    onReviewSourceLeads={openProtocol28SourceLeads}
+                    compact
+                  />
 
-              {isAdmin && (
-                <details className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-                  <summary className="cursor-pointer px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                    Admin tools
-                  </summary>
-                  <div className="space-y-4 p-3 pt-0">
-                    <HitlSourcesSection isAdmin={isAdmin} />
-                    <PromotedCandidatesSection />
-                  </div>
-                </details>
-              )}
+                  <CrossPathwayAuditPanel compact />
+
+                  <ZoteroStatusBadge compact />
+
+                  {isAdmin && (
+                    <>
+                      <HitlSourcesSection isAdmin={isAdmin} />
+                      <PromotedCandidatesSection />
+                    </>
+                  )}
+                </div>
+              </details>
             </div>
           )}
         </div>
