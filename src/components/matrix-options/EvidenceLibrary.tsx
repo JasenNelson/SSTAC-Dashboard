@@ -2210,6 +2210,17 @@ function ValueGroupCard({
               {group.qaStatuses.map((status) => (
                 <StatusBadge key={status} value={status} />
               ))}
+              {!group.unitConsistency.comparable && (
+                <span
+                  className="inline-flex items-center rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
+                  data-testid={`value-group-incommensurate-${group.groupId}`}
+                  title={`Units in this group are not directly comparable (${group.unitConsistency.units.join(
+                    ', ',
+                  )}). A reviewer must reconcile units before any most-stringent pick.`}
+                >
+                  Incommensurate units -- manual review
+                </span>
+              )}
             </div>
           </div>
         </div>

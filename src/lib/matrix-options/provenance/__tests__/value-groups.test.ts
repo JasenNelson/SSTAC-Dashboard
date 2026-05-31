@@ -129,3 +129,60 @@ describe('buildValueGroups jurisdiction de-duplication', () => {
     expect(group?.jurisdictions).toEqual(['BC']);
   });
 });
+
+describe('buildValueGroups unit consistency (A1 guard)', () => {
+  beforeEach(() => {
+    clearRecords();
+  });
+
+  function groupFor(records: ParameterValueRecord[], groupId: string) {
+    setRecords(records);
+    const view = buildEvidenceLibraryView(createEvidenceLibraryFilters());
+    return view.valueGroups.find((g) => g.groupId === groupId);
+  }
+
+  it('marks a 1000x-apart but same-base air group comparable (beryllium RfC mg/m3 vs ug/m3)', () => {
+    const group = groupFor(
+      [
+        makeRecord({ substance_key: 'beryllium', input_key: 'inhalation_rfc', pathway: 'hh-toxicity-value', candidate_group_id: 'cg-be-rfc', jurisdiction: 'US_federal', value: '2e-5', unit: 'mg/m3' }),
+        makeRecord({ substance_key: 'beryllium', input_key: 'inhalation_rfc', pathway: 'hh-toxicity-value', candidate_group_id: 'cg-be-rfc', jurisdiction: 'BC', value: '2e-2', unit: 'ug/m3' }),
+      ],
+      'cg-be-rfc',
+    );
+    expect(group?.unitConsistency.comparable).toBe(true);
+    expect(group?.unitConsistency.baseUnits).toEqual(['mg/m3']);
+  });
+
+  it('marks a reciprocal IUR group comparable (benzene per ug/m3 vs (mg/m3)-1)', () => {
+    const group = groupFor(
+      [
+        makeRecord({ substance_key: 'benzene', input_key: 'inhalation_unit_risk', pathway: 'hh-toxicity-value', candidate_group_id: 'cg-bz-iur', jurisdiction: 'US_federal', value: '7.8e-6', unit: 'per ug/m3' }),
+        makeRecord({ substance_key: 'benzene', input_key: 'inhalation_unit_risk', pathway: 'hh-toxicity-value', candidate_group_id: 'cg-bz-iur', jurisdiction: 'BC', value: '1.6e-2', unit: '(mg/m3)-1' }),
+      ],
+      'cg-bz-iur',
+    );
+    expect(group?.unitConsistency.comparable).toBe(true);
+  });
+
+  it('marks an oral RfD group comparable (arsenic mg/kg-d vs ug/kg-d)', () => {
+    const group = groupFor(
+      [
+        makeRecord({ substance_key: 'arsenic_inorganic', input_key: 'oral_rfd', pathway: 'hh-toxicity-value', candidate_group_id: 'cg-as-rfd', jurisdiction: 'US_federal', value: '3e-4', unit: 'mg/kg-bw/day' }),
+        makeRecord({ substance_key: 'arsenic_inorganic', input_key: 'oral_rfd', pathway: 'hh-toxicity-value', candidate_group_id: 'cg-as-rfd', jurisdiction: 'BC', value: '0.06', unit: 'ug/kg-bw/day' }),
+      ],
+      'cg-as-rfd',
+    );
+    expect(group?.unitConsistency.comparable).toBe(true);
+  });
+
+  it('refuses (incommensurate) when a group mixes dimensionally-incompatible units', () => {
+    const group = groupFor(
+      [
+        makeRecord({ substance_key: 'mystery', input_key: 'mixed', pathway: 'hh-toxicity-value', candidate_group_id: 'cg-mixed', jurisdiction: 'US_federal', value: '1', unit: 'mg/m3' }),
+        makeRecord({ substance_key: 'mystery', input_key: 'mixed', pathway: 'hh-toxicity-value', candidate_group_id: 'cg-mixed', jurisdiction: 'BC', value: '1', unit: 'mg/kg-bw/day' }),
+      ],
+      'cg-mixed',
+    );
+    expect(group?.unitConsistency.comparable).toBe(false);
+  });
+});

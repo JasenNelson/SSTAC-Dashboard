@@ -1,5 +1,9 @@
 import { SUBSTANCE_LIBRARY } from '../substanceLibrary';
 import {
+  assessSlotUnitConsistency,
+  type SlotUnitConsistency,
+} from '../unitNormalization';
+import {
   EQUATION_RECORDS,
   PARAMETER_VALUE_RECORDS,
   SOURCE_LEAD_SETS,
@@ -124,6 +128,12 @@ export interface EvidenceLibraryValueGroup {
   evidenceSupportStatuses: EvidenceSupportStatus[];
   qaStatuses: string[];
   sourceRelationships: SourceRelationship[];
+  // A1 unit guard (canonical-mapping proposal Section D / verifier check 12). A source-agnostic
+  // group can hold values in different units 1000x apart (e.g. inhalation_rfc in mg/m3 AND
+  // ug/m3). comparable=false means a consumer MUST NOT run a most-stringent / min / max across
+  // this group. Computed from the group's rows; never mutates the catalog. AI surfaces; HITL
+  // selects (the calculator default recommendation has its own A1 guard in defaultSelectionPolicy).
+  unitConsistency: SlotUnitConsistency;
   relatedSourceLeads: EvidenceLibrarySourceLeadSummary[];
 }
 
@@ -1229,6 +1239,13 @@ function buildValueGroups(
         ),
         qaStatuses: uniqueArray(records.map((row) => row.record.qa_status)),
         sourceRelationships: records.flatMap((row) => row.sourceRelationships),
+        unitConsistency: assessSlotUnitConsistency(
+          records.map((row) => ({
+            value: row.record.value,
+            unit: row.record.unit,
+            input_key: row.record.input_key,
+          })),
+        ),
       };
       return {
         ...base,
