@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
 import { Database, FileText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
@@ -31,6 +31,7 @@ import type {
   EvidenceLibraryFilters,
   ProvenancePathway,
 } from '@/lib/matrix-options/provenance/types';
+import { EQUATION_RECORDS } from '@/lib/matrix-options/provenance/catalog';
 import {
   isMatrixCategory,
   type MatrixCategory,
@@ -229,6 +230,14 @@ interface MatrixDashboardProps {
 
 const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'TWG Review', 'Interactive Map', 'Calculator', 'SSD Workbench', 'References & Values'];
 const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
+// Maps each Jurisdictional Frameworks side-tab to the derivation equation pathway(s) shown
+// in its Quick Reference drawer. The cross-cutting 'background-adjustment' equation is
+// intentionally omitted here (it stays in the calculator's Background Adjustment panel).
+const JURISDICTIONAL_SIDE_TAB_PATHWAYS: Record<string, ProvenancePathway[]> = {
+  'Ecological: EqP & AVS': ['eco-direct-eqp'],
+  'Ecological: Food Web (BSAF)': ['eco-food-bsaf'],
+  'Human Health Pathways': ['human-health-direct', 'human-health-food'],
+};
 
 export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent, finalDraftContent, initialMapData = EMPTY_MATRIX_MAP_DATA, fetchErrorMessage = null }: MatrixDashboardProps) {
   const router = useRouter();
@@ -403,6 +412,17 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   );
   const calculatorPathway = CALCULATOR_PROVENANCE_PATHWAYS[activeCategory];
   const calculatorCategoryLabel = CALCULATOR_CATEGORY_LABELS[activeCategory];
+  // Derivation equations shown in the Jurisdictional Frameworks Quick Reference,
+  // filtered to the active side-tab's pathway(s). The cross-cutting
+  // 'background-adjustment' equation is intentionally excluded (see
+  // JURISDICTIONAL_SIDE_TAB_PATHWAYS) so it stays in the calculator only.
+  const jurisdictionalEquations = useMemo(
+    () =>
+      EQUATION_RECORDS.filter((eq) =>
+        (JURISDICTIONAL_SIDE_TAB_PATHWAYS[activeSideTab] ?? []).includes(eq.pathway),
+      ),
+    [activeSideTab],
+  );
   const rightPanelTitle =
     activeTopTab === 'Calculator' ? 'Value Search' : 'Quick Reference';
   const rightPanelOpenWidth =
@@ -534,6 +554,44 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           <li>Note how each program handles bioavailability and uncertainty.</li>
           <li>Carry useful assumptions into the calculator for testing.</li>
         </ol>
+        {jurisdictionalEquations.length > 0 && (
+          <div
+            className="space-y-2 border-t border-slate-200 pt-4 dark:border-slate-700"
+            data-testid="jurisdictional-equation-reference"
+          >
+            <p className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300">
+              Derivation equations
+            </p>
+            <div className="grid gap-2">
+              {jurisdictionalEquations.map((eq) => (
+                <details
+                  key={eq.equation_id}
+                  className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
+                >
+                  <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white">
+                    {eq.display_name}
+                  </summary>
+                  <div className="space-y-2 border-t border-slate-200 px-3 py-3 text-xs text-slate-700 dark:border-slate-800 dark:text-slate-200">
+                    <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-xs text-slate-800 dark:text-slate-100">
+                      {eq.equation_latex}
+                    </pre>
+                    <p className="leading-relaxed text-slate-600 dark:text-slate-300">
+                      {eq.plain_language}
+                    </p>
+                    {eq.unit_notes && (
+                      <p className="text-slate-500 dark:text-slate-400">
+                        Units: {eq.unit_notes}
+                      </p>
+                    )}
+                    <p className="text-slate-500 dark:text-slate-400">
+                      Status: {eq.qa_status.replace(/_/g, ' ')}
+                    </p>
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   };

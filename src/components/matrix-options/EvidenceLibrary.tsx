@@ -92,9 +92,10 @@ interface EvidenceLibraryProps {
 
 // References & Values is the catalog browser: the Values table (default) and the Sources
 // table (with source-of-sources leads folded in). The former By Parameter, Equations,
-// Source Leads, and Assumptions tabs were retired -- equations now live in the
-// Jurisdictional Frameworks tab, source leads fold into Sources, and Assumptions duplicated
-// Values. The underlying view-mode branches remain for internal/quick-filter use.
+// Source Leads, and Assumptions tabs were retired -- equations now render in the
+// Jurisdictional Frameworks Quick Reference (their view-mode branch is removed here), source
+// leads fold into Sources, and Assumptions duplicated Values. The remaining retired branches
+// stay for internal/quick-filter use.
 const VIEW_MODES: Array<{ id: EvidenceLibraryViewMode; label: string }> = [
   // Ordered References then Values to match the tab title "References & Values".
   // (Values remains the default-selected view -- see the useState default.)
@@ -259,16 +260,24 @@ function loadSavedViews(): SavedFilterView[] {
           typeof entry === 'object' && entry !== null,
       )
       .filter(
-        (entry) =>
-          typeof entry.id === 'string' &&
-          typeof entry.name === 'string' &&
-          (entry.viewMode === 'values' || entry.viewMode === 'sources'),
+        (entry) => typeof entry.id === 'string' && typeof entry.name === 'string',
       )
       .slice(0, 50)
       .map((entry) => ({
         id: entry.id as string,
         name: entry.name as string,
-        viewMode: entry.viewMode as EvidenceLibraryViewMode,
+        // Only the References (sources) and Values views are user-selectable, so a legacy
+        // local-only saved view whose persisted mode is anything else is PRESERVED (kept with
+        // its name + filters rather than silently dropped) and remapped to where that content
+        // now lives: 'source-leads' folds into the Sources view; the retired 'equations' tab
+        // (now in the Jurisdictional Frameworks Quick Reference), 'by-parameter', and
+        // 'assumptions' all collapse to the default Values view. This is intentionally more
+        // aggressive than the Supabase coerceViewMode (which only rewrites truly-unknown
+        // modes): locally these two tabs are the only modes a user can ever re-select.
+        viewMode:
+          entry.viewMode === 'sources' || entry.viewMode === 'source-leads'
+            ? 'sources'
+            : 'values',
         // Re-build through createEvidenceLibraryFilters so the stored filters are always a
         // complete, well-formed EvidenceLibraryFilters (unknown keys dropped, arrays ensured).
         filters: createEvidenceLibraryFilters(
@@ -441,16 +450,6 @@ function AllScaffoldsBanner() {
   );
 }
 
-// AssumptionChip: distinct violet tone so assumption tags are visually
-// separate from the emerald/amber status chips in the same row.
-function AssumptionChip({ label }: { label: string }) {
-  return (
-    <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-800 dark:border-violet-800 dark:bg-violet-900/20 dark:text-violet-200">
-      {label}
-    </span>
-  );
-}
-
 function ResultCountBadge({
   visible,
   total,
@@ -483,9 +482,6 @@ function resultCountForView(
       label: 'assumption/default rows',
     };
   }
-  if (viewMode === 'equations') {
-    return { count: library.equations.length, label: 'equations' };
-  }
   if (viewMode === 'sources') {
     return { count: library.sources.length, label: 'sources' };
   }
@@ -497,7 +493,6 @@ function formatResultCount({ count, label }: { count: number; label: string }) {
     'parameter groups': 'parameter group',
     values: 'value',
     'assumption/default rows': 'assumption/default row',
-    equations: 'equation',
     sources: 'source',
     'lead sets': 'lead set',
   };
@@ -3515,7 +3510,6 @@ export default function EvidenceLibrary({
 
   const showValues = viewMode === 'values' || viewMode === 'assumptions';
   const showValueGroups = viewMode === 'by-parameter';
-  const showEquations = viewMode === 'equations';
   const showSources = viewMode === 'sources';
   // Source-of-sources leads now fold into the Sources view rather than a standalone tab.
   const showSourceLeads = viewMode === 'sources';
@@ -3536,35 +3530,21 @@ export default function EvidenceLibrary({
             options: library.facets.currentnessStatuses,
           },
         ]
-      : viewMode === 'equations'
+      : viewMode === 'source-leads'
         ? [
-            { key: 'pathways', label: 'Pathway', options: library.facets.pathways },
-            { key: 'evidenceSupportStatuses', label: 'Evidence', options: library.facets.evidenceSupportStatuses },
-            { key: 'qaStatuses', label: 'QA', options: library.facets.qaStatuses },
-            { key: 'authorityScopes', label: 'Authority', options: library.facets.authorityScopes },
-            { key: 'sourceAuthorityTiers', label: 'Tier', options: library.facets.sourceAuthorityTiers },
             { key: 'sourceRoles', label: 'Source role', options: library.facets.sourceRoles },
-            {
-              key: 'currentnessStatuses',
-              label: 'Currentness',
-              options: library.facets.currentnessStatuses,
-            },
           ]
-        : viewMode === 'source-leads'
-          ? [
-              { key: 'sourceRoles', label: 'Source role', options: library.facets.sourceRoles },
-            ]
-          : [
-              // Lean, browse-oriented filter set. The status / scaffold dimensions
-              // (evidence support, default status, QA, extraction, policy alignment,
-              // receptor/population/species) were removed from the dropdowns -- they are
-              // QA-workflow jargon; that filtering is still reachable via the audit-strip
-              // shortcuts and saved views, which set those filters programmatically.
-              { key: 'substanceKeys', label: 'Substance', options: library.facets.substances },
-              { key: 'pathways', label: 'Pathway', options: library.facets.pathways },
-              { key: 'inputKeys', label: 'Parameter', options: library.facets.inputKeys },
-              { key: 'jurisdictions', label: 'Jurisdiction', options: library.facets.jurisdictions },
-            ];
+        : [
+            // Lean, browse-oriented filter set. The status / scaffold dimensions
+            // (evidence support, default status, QA, extraction, policy alignment,
+            // receptor/population/species) were removed from the dropdowns -- they are
+            // QA-workflow jargon; that filtering is still reachable via the audit-strip
+            // shortcuts and saved views, which set those filters programmatically.
+            { key: 'substanceKeys', label: 'Substance', options: library.facets.substances },
+            { key: 'pathways', label: 'Pathway', options: library.facets.pathways },
+            { key: 'inputKeys', label: 'Parameter', options: library.facets.inputKeys },
+            { key: 'jurisdictions', label: 'Jurisdiction', options: library.facets.jurisdictions },
+          ];
 
   // Split into the handful of primary filters (always shown in the popover) and the
   // QA/review workflow filters (tucked under "Advanced"). Keeps the side panel uncluttered.
@@ -4096,66 +4076,6 @@ export default function EvidenceLibrary({
                 )}
               </tbody>
             </table>
-          </div>
-        </section>
-      )}
-
-      {showEquations && (
-        <section className="space-y-2" data-testid="evidence-library-equations">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-              Equations
-            </h3>
-            <ResultCountBadge
-              visible={library.equations.length}
-              total={baselineLibrary.equations.length}
-              label="equations"
-            />
-          </div>
-          <div className="grid gap-2">
-            {library.equations.map((row) => (
-              <details
-                key={row.record.equation_id}
-                className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
-              >
-                <summary className="cursor-pointer px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white">
-                  {row.record.display_name}
-                  <span className="ml-2 text-xs font-normal text-slate-500">
-                    {humanizeCatalogLabel(row.record.pathway)}
-                  </span>
-                </summary>
-                <div className="border-t border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
-                  <p>{row.record.plain_language}</p>
-                  <p className="mt-2 font-mono text-xs">{row.record.equation_latex}</p>
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    <StatusBadge value={row.record.qa_status} />
-                    <StatusBadge value={row.record.evidence_support_status} />
-                    {row.assumptionTags.map((tag) => (
-                      <AssumptionChip key={tag} label={humanizeCatalogLabel(tag)} />
-                    ))}
-                  </div>
-                  <p className="mt-2 text-xs text-slate-500">
-                    Units: {row.record.unit_notes}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    Sources:{' '}
-                    {row.sources.filter(isCalculatorEvidenceSource).length > 0
-                      ? row.sources
-                          .filter(isCalculatorEvidenceSource)
-                          .map((source) => source.short_citation)
-                          .join('; ')
-                      : 'Source review pending; current calculator scaffold only'}
-                  </p>
-                </div>
-              </details>
-            ))}
-            {library.equations.length === 0 && (
-              <EmptyDatabaseState
-                title="No equations match."
-                activeLabels={activeLabels}
-                onClear={clearFilters}
-              />
-            )}
           </div>
         </section>
       )}

@@ -67,10 +67,13 @@ const VIEW_MODES: readonly EvidenceLibraryViewMode[] = [
   'sources',
   'source-leads',
   'values',
-  'equations',
   'assumptions',
 ];
 
+// Retired view modes that may still be persisted in older saved views (notably the former
+// 'equations' tab, whose content now renders in the Jurisdictional Frameworks Quick
+// Reference) are absent from VIEW_MODES, so they fall back to the default 'values' view
+// rather than leaving a saved view stuck on a mode the library no longer renders.
 function coerceViewMode(value: string | null | undefined): EvidenceLibraryViewMode {
   return value && (VIEW_MODES as readonly string[]).includes(value)
     ? (value as EvidenceLibraryViewMode)

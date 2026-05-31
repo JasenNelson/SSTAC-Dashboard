@@ -256,7 +256,6 @@ export type EvidenceLibraryViewMode =
   | 'sources'
   | 'source-leads'
   | 'values'
-  | 'equations'
   | 'assumptions';
 
 export interface EvidenceLibraryFilters {
