@@ -166,6 +166,50 @@ def test_build_staging_row_accepts_zero_and_one_confidence():
         assert row.confidence == c
 
 
+def _build_with_payload(payload: dict):
+    return extract.build_staging_row(
+        zotero_key='ZK',
+        attachment_path=None,
+        pass_id=uuid.uuid4(),
+        pass_started_at=datetime.now(timezone.utc),
+        proposal=_proposal(payload=payload),
+        extraction_model='claude-opus-4-7',
+    )
+
+
+def test_build_staging_row_accepts_verbatim_fidelity():
+    payload = _parameter_value_payload()
+    payload['source_excerpt_fidelity'] = 'verbatim'
+    row = _build_with_payload(payload)
+    assert row.proposed_payload['source_excerpt_fidelity'] == 'verbatim'
+
+
+def test_build_staging_row_accepts_reconstructed_fidelity():
+    payload = _parameter_value_payload()
+    payload['source_excerpt_fidelity'] = 'reconstructed'
+    row = _build_with_payload(payload)
+    assert row.proposed_payload['source_excerpt_fidelity'] == 'reconstructed'
+
+
+def test_build_staging_row_allows_absent_fidelity():
+    # source_excerpt_fidelity is optional; absent stays absent (dashboard => "unspecified").
+    payload = _parameter_value_payload()
+    assert 'source_excerpt_fidelity' not in payload
+    row = _build_with_payload(payload)
+    assert 'source_excerpt_fidelity' not in row.proposed_payload
+
+
+def test_build_staging_row_rejects_invalid_fidelity():
+    payload = _parameter_value_payload()
+    payload['source_excerpt_fidelity'] = 'paraphrased'
+    try:
+        _build_with_payload(payload)
+    except ValueError as ve:
+        assert 'source_excerpt_fidelity' in str(ve)
+    else:
+        raise AssertionError('expected ValueError for invalid source_excerpt_fidelity')
+
+
 def test_build_staging_row_rejects_unknown_kind():
     try:
         extract.build_staging_row(

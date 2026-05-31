@@ -100,6 +100,15 @@ PAYLOAD_REQUIRED_KEYS = {
 # time) but they are preserved in the staging proposed_payload JSONB for review.
 PROVENANCE_REQUIRED_KEYS = ('source_excerpt', 'source_doc_id')
 
+# Optional provenance annotation: whether source_excerpt is copied VERBATIM from the source
+# document or RECONSTRUCTED/normalized from it (e.g. a markdown table rebuilt from a Docling
+# grid, or whitespace-normalized prose). It is NOT required -- absent means fidelity was not
+# declared, and the dashboard renders a neutral "unspecified" badge (CatalogStagingReview.tsx).
+# Producer-strict: if a proposal declares one it MUST be a recognized value (build_staging_row
+# rejects anything else). Consumer-tolerant: the dashboard degrades any unrecognized value to
+# "unspecified" rather than throwing, so a future value (e.g. 'paraphrased') cannot break it.
+SOURCE_EXCERPT_FIDELITY_VALUES = ('verbatim', 'reconstructed')
+
 
 # ============================================================================
 # Staging row dataclass + builder
@@ -226,6 +235,16 @@ def build_staging_row(
             f'required for every kind; per-kind keys '
             f'{PAYLOAD_REQUIRED_KEYS.get(kind, ())} match the target table NOT '
             f'NULL columns the approve RPC promotes.'
+        )
+
+    # Optional provenance fidelity flag. Not required, but if a proposal declares one it must
+    # be a recognized value so a typo cannot reach the HITL reviewer as silent noise. Absent is
+    # fine (the dashboard treats it as "unspecified").
+    fidelity = payload.get('source_excerpt_fidelity')
+    if fidelity is not None and fidelity not in SOURCE_EXCERPT_FIDELITY_VALUES:
+        raise ValueError(
+            'source_excerpt_fidelity must be one of '
+            f'{SOURCE_EXCERPT_FIDELITY_VALUES} when present; got {fidelity!r}'
         )
 
     confidence_raw = proposal.get('confidence')
@@ -804,6 +823,7 @@ __all__ = [
     'AGENT_PRINCIPAL',
     'PAYLOAD_REQUIRED_KEYS',
     'PROVENANCE_REQUIRED_KEYS',
+    'SOURCE_EXCERPT_FIDELITY_VALUES',
     'StagingRow',
     'build_staging_row',
     'save_proposals',
