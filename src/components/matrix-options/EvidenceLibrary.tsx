@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
@@ -169,6 +169,53 @@ const CANDIDATE_DEFAULTS_REQUEST: EvidenceLibraryFilterRequest = {
   evidenceSupportStatuses: ['approved_source_backed'],
   defaultStatuses: ['available_option'],
 };
+
+// Resizable right panel (References & Values). Mirrors the matrix-map right-panel resize
+// pattern in MatrixDashboard.tsx (constants, clamp, pointer handler). Default 384 == the
+// prior fixed Tailwind w-96 so the layout is unchanged until the user drags.
+const REFERENCES_RIGHT_PANEL_MIN_WIDTH = 320;
+const REFERENCES_RIGHT_PANEL_DEFAULT_WIDTH = 384;
+const REFERENCES_RIGHT_PANEL_MAX_WIDTH = 720;
+const REFERENCES_MIN_CENTER_WIDTH = 360;
+const REFERENCES_RIGHT_PANEL_WIDTH_STORAGE_KEY =
+  'matrix-options-references-right-width-v1';
+
+// SSR-safe clamp (port of clampMatrixMapRightPanelWidth). The left filter rail is w-80
+// (320px) when shown; reserve REFERENCES_MIN_CENTER_WIDTH for the center results table.
+function clampReferencesRightPanelWidth(width: number, showLeftPanel: boolean) {
+  if (typeof window === 'undefined') {
+    return Math.min(
+      REFERENCES_RIGHT_PANEL_MAX_WIDTH,
+      Math.max(REFERENCES_RIGHT_PANEL_MIN_WIDTH, width),
+    );
+  }
+  const leftPanelWidth = showLeftPanel ? 320 : 0;
+  const viewportMax = window.innerWidth - leftPanelWidth - REFERENCES_MIN_CENTER_WIDTH;
+  const maxWidth = Math.max(
+    REFERENCES_RIGHT_PANEL_MIN_WIDTH,
+    Math.min(REFERENCES_RIGHT_PANEL_MAX_WIDTH, viewportMax),
+  );
+  return Math.min(maxWidth, Math.max(REFERENCES_RIGHT_PANEL_MIN_WIDTH, width));
+}
+
+// Validate-on-load from localStorage (SSR-safe). Clamps to absolute min/max only; the
+// viewport budget is re-applied by the layout/resize effects on mount. Clears bad entries.
+function restoreReferencesRightPanelWidth(): number {
+  if (typeof window === 'undefined') return REFERENCES_RIGHT_PANEL_DEFAULT_WIDTH;
+  const raw = window.localStorage.getItem(REFERENCES_RIGHT_PANEL_WIDTH_STORAGE_KEY);
+  if (raw !== null) {
+    const parsed = Number(raw);
+    if (
+      Number.isFinite(parsed) &&
+      parsed >= REFERENCES_RIGHT_PANEL_MIN_WIDTH &&
+      parsed <= REFERENCES_RIGHT_PANEL_MAX_WIDTH
+    ) {
+      return parsed;
+    }
+    window.localStorage.removeItem(REFERENCES_RIGHT_PANEL_WIDTH_STORAGE_KEY);
+  }
+  return REFERENCES_RIGHT_PANEL_DEFAULT_WIDTH;
+}
 
 type SavedFilterView = {
   id: string;
@@ -2980,6 +3027,77 @@ export default function EvidenceLibrary({
   const [triageState, setTriageState] = useState<Record<string, SourceLeadTriageRow>>({});
   const [triageRefreshKey, setTriageRefreshKey] = useState(0);
 
+  // Resizable right panel state. Default to the SSR-safe constant; hydrate from localStorage
+  // in a mount-only effect to avoid an SSR/CSR hydration mismatch (matrix-map pattern).
+  const [rightPanelWidth, setRightPanelWidth] = useState(
+    REFERENCES_RIGHT_PANEL_DEFAULT_WIDTH,
+  );
+  useEffect(() => {
+    // Clamp the restored value to the viewport budget here (not only to absolute
+    // min/max) so the on-mount clamp does not depend on effect ordering with the
+    // [showLeftPanel] re-clamp effect below. showLeftPanel is intentionally read
+    // once at mount; later toggles are handled by that separate effect.
+    setRightPanelWidth(
+      clampReferencesRightPanelWidth(
+        restoreReferencesRightPanelWidth(),
+        showLeftPanel,
+      ),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(
+      REFERENCES_RIGHT_PANEL_WIDTH_STORAGE_KEY,
+      String(rightPanelWidth),
+    );
+  }, [rightPanelWidth]);
+  // Re-clamp when the left panel toggles (changes the available budget).
+  useEffect(() => {
+    setRightPanelWidth((current) =>
+      clampReferencesRightPanelWidth(current, showLeftPanel),
+    );
+  }, [showLeftPanel]);
+  // Re-clamp on viewport resize.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onResize = () => {
+      setRightPanelWidth((current) =>
+        clampReferencesRightPanelWidth(current, showLeftPanel),
+      );
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [showLeftPanel]);
+  // Pointer-drag the divider on the LEFT edge of the right panel: dragging left widens it.
+  const handleRightPanelResizePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      const startX = event.clientX;
+      const startWidth = rightPanelWidth;
+      const previousCursor = document.body.style.cursor;
+      const previousUserSelect = document.body.style.userSelect;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      const onPointerMove = (moveEvent: PointerEvent) => {
+        const nextWidth = startWidth + (startX - moveEvent.clientX);
+        setRightPanelWidth(
+          clampReferencesRightPanelWidth(nextWidth, showLeftPanel),
+        );
+      };
+      const onPointerUp = () => {
+        document.body.style.cursor = previousCursor;
+        document.body.style.userSelect = previousUserSelect;
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+      };
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+    },
+    [rightPanelWidth, showLeftPanel],
+  );
+
   useEffect(() => {
     let cancelled = false;
     checkCurrentUserAdminStatus().then((value) => {
@@ -4141,12 +4259,25 @@ export default function EvidenceLibrary({
       {/* RIGHT PANEL -- two-state: the catalog status dashboard "at rest", the
           value/source detail inspector when a row is selected. */}
       <div
+        data-testid="references-values-right-panel-wrapper"
         className={cn(
-          'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-lg',
+          'relative transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-lg',
           'max-md:hidden',
-          showRightPanel ? 'w-96' : 'w-0',
+          !showRightPanel && 'pointer-events-none',
         )}
+        style={{ width: showRightPanel ? `${rightPanelWidth}px` : '0px' }}
       >
+        {showRightPanel && (
+          <button
+            type="button"
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize references and values panel"
+            data-testid="references-values-right-panel-resize-handle"
+            onPointerDown={handleRightPanelResizePointerDown}
+            className="absolute inset-y-0 left-0 z-10 w-2 cursor-col-resize border-l border-transparent hover:border-blue-300 focus:border-blue-500 focus:outline-none dark:hover:border-blue-700"
+          />
+        )}
         {showRightPanel && (
         <div className="w-full h-full overflow-y-auto overflow-x-hidden p-4 space-y-3">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2 dark:border-slate-800">
