@@ -15,6 +15,13 @@ import { SOURCE_RECORDS } from '@/lib/matrix-options/provenance/catalog';
 import { AddSourceForm } from './AddSourceForm';
 import { fetchHitlSources } from '@/lib/matrix-options/provenance/source-sync';
 import type { CatalogSourceRow } from '@/lib/matrix-options/provenance/source-sync';
+import {
+  fetchSavedViews,
+  createSavedView,
+  deleteSavedView,
+  importLegacySavedViews,
+} from '@/lib/matrix-options/provenance/saved-views-sync';
+import type { SavedViewRow } from '@/lib/matrix-options/provenance/saved-views-sync';
 import { usePromotedCandidatesStore } from '@/stores/matrix-options/promotedCandidatesStore';
 import { cn } from '@/utils/cn';
 import {
@@ -223,6 +230,18 @@ type SavedFilterView = {
   filters: EvidenceLibraryFilters;
   viewMode: EvidenceLibraryViewMode;
 };
+
+// Per-browser sentinel so the one-time localStorage -> Supabase import runs at most once.
+const SAVED_VIEWS_MIGRATED_KEY = 'matrix-options-saved-views-migrated-v1';
+
+function rowToSavedFilterView(row: SavedViewRow): SavedFilterView {
+  return {
+    id: row.id,
+    name: row.name,
+    filters: row.filters,
+    viewMode: row.view_mode,
+  };
+}
 
 function loadSavedViews(): SavedFilterView[] {
   if (typeof window === 'undefined') return [];
@@ -3210,8 +3229,65 @@ export default function EvidenceLibrary({
   const [savingView, setSavingView] = useState(false);
   const [savedViewName, setSavedViewName] = useState('');
   const [statusAdminOpen, setStatusAdminOpen] = useState(false);
+  // 'loading' until the Supabase probe resolves; 'supabase' when views sync to the
+  // signed-in account; 'local' when signed-out / offline (localStorage fallback).
+  const [savedViewsBackend, setSavedViewsBackend] = useState<
+    'loading' | 'supabase' | 'local'
+  >('loading');
+  // Load saved views: localStorage first (instant, offline-safe), then Supabase when a
+  // session is available. One-time migrates legacy localStorage views into the account.
   useEffect(() => {
-    setSavedViews(loadSavedViews());
+    let cancelled = false;
+    const local = loadSavedViews();
+    setSavedViews(local);
+    (async () => {
+      try {
+        const remote = await fetchSavedViews();
+        if (cancelled) return;
+        if (remote.length > 0) {
+          setSavedViews(remote.map(rowToSavedFilterView));
+          setSavedViewsBackend('supabase');
+          if (typeof window !== 'undefined') {
+            window.localStorage.setItem(SAVED_VIEWS_MIGRATED_KEY, 'done');
+          }
+          return;
+        }
+        const alreadyMigrated =
+          typeof window !== 'undefined' &&
+          window.localStorage.getItem(SAVED_VIEWS_MIGRATED_KEY) === 'done';
+        if (local.length > 0 && !alreadyMigrated) {
+          const result = await importLegacySavedViews(
+            local.map((v) => ({
+              name: v.name,
+              filters: v.filters,
+              view_mode: v.viewMode,
+            })),
+          );
+          if (cancelled) return;
+          if (result.success) {
+            if (typeof window !== 'undefined') {
+              window.localStorage.setItem(SAVED_VIEWS_MIGRATED_KEY, 'done');
+            }
+            const refreshed = await fetchSavedViews();
+            if (cancelled) return;
+            setSavedViews(refreshed.map(rowToSavedFilterView));
+            setSavedViewsBackend('supabase');
+          } else {
+            // Import failed -> signed out -> keep the local views.
+            setSavedViewsBackend('local');
+          }
+          return;
+        }
+        // Remote empty and nothing to import. Best-effort flag; the write path
+        // (createSavedView) is authoritative for signed-in vs signed-out.
+        setSavedViewsBackend('local');
+      } catch {
+        if (!cancelled) setSavedViewsBackend('local');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
   // The default-policy audit + admin tools live in the demoted, collapsed "Catalog status &
   // admin" section. When the user arrives via the calculator "Review candidate defaults"
@@ -3310,23 +3386,48 @@ export default function EvidenceLibrary({
     setDefaultPolicyStatusFilter(null);
     onFiltersChange(view.filters);
   };
-  const saveCurrentView = (name: string) => {
+  const saveCurrentView = async (name: string) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    const view: SavedFilterView = {
+    const optimistic: SavedFilterView = {
       id: `${Date.now().toString(36)}-${Math.round(Math.random() * 1e6).toString(36)}`,
       name: trimmed,
       filters,
       viewMode,
     };
-    const next = [...savedViews, view];
+    const next = [...savedViews, optimistic];
     setSavedViews(next);
-    persistSavedViews(next);
+    persistSavedViews(next); // keep the local mirror in sync (offline cache)
+    const result = await createSavedView({
+      name: trimmed,
+      filters,
+      view_mode: viewMode,
+    });
+    if (result.success && result.view) {
+      const serverView = rowToSavedFilterView(result.view);
+      setSavedViews((current) =>
+        current.map((v) => (v.id === optimistic.id ? serverView : v)),
+      );
+      setSavedViewsBackend('supabase');
+    } else if (result.error === 'unauthenticated') {
+      // Signed-out: local-only is correct; keep the optimistic row.
+      setSavedViewsBackend('local');
+    } else if (result.error === 'limit_reached') {
+      // Roll back the optimistic add.
+      setSavedViews((current) => {
+        const rolledBack = current.filter((v) => v.id !== optimistic.id);
+        persistSavedViews(rolledBack);
+        return rolledBack;
+      });
+    }
+    // 'unknown' -> keep the local mirror; it persists offline and re-syncs next session.
   };
-  const removeSavedView = (id: string) => {
+  const removeSavedView = async (id: string) => {
     const next = savedViews.filter((view) => view.id !== id);
     setSavedViews(next);
     persistSavedViews(next);
+    // RLS-scoped; harmless no-op when signed out or when the row was never on the server.
+    void deleteSavedView(id);
   };
   const applyAuditFilter = (
     nextViewMode: EvidenceLibraryViewMode,
