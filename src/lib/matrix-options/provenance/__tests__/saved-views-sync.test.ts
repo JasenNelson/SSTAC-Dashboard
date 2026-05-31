@@ -108,6 +108,22 @@ describe('saved-views-sync', () => {
       expect(rows[0].view_mode).toBe('values');
     });
 
+    it('coerces a retired equations view_mode to values', async () => {
+      // 'equations' was a real view mode before P2-2 moved equations into the Jurisdictional
+      // Frameworks Quick Reference. Older saved views may still carry it; they must resolve to
+      // the default Values view rather than a mode the library no longer renders.
+      resultQueue = [
+        {
+          data: [
+            { id: 'v3', name: 'eq', filters: {}, view_mode: 'equations', created_at: 't', updated_at: 't' },
+          ],
+          error: null,
+        },
+      ];
+      const rows = await fetchSavedViews();
+      expect(rows[0].view_mode).toBe('values');
+    });
+
     it('returns [] on a Supabase error', async () => {
       resultQueue = [{ data: null, error: { message: 'relation does not exist' } }];
       expect(await fetchSavedViews()).toEqual([]);
