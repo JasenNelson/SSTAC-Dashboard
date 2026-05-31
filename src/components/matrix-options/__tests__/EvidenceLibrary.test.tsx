@@ -66,6 +66,18 @@ function renderControlled(
   return { handleChange };
 }
 
+// Filters now live behind a "Filters" popover button. These helpers open it (idempotently)
+// before poking a dropdown, and clear via the popover's "Clear all".
+function ensureFiltersOpen() {
+  if (!screen.queryByTestId('evidence-library-filter-popover')) {
+    fireEvent.click(screen.getByTestId('evidence-library-filter-button'));
+  }
+}
+function clearAllFilters() {
+  ensureFiltersOpen();
+  fireEvent.click(screen.getByRole('button', { name: /Clear all/ }));
+}
+
 describe('EvidenceLibrary', () => {
   it('renders the References & Values overview defaulting to the Values table', () => {
     renderControlled();
@@ -203,7 +215,7 @@ describe('EvidenceLibrary', () => {
       /promoted default/i,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
+    clearAllFilters();
 
     expect(
       screen.getByRole('button', { name: /Show Candidate pending approval/i }),
@@ -494,6 +506,7 @@ describe('EvidenceLibrary', () => {
   it('filters to the human-health-food pathway', () => {
     const { handleChange } = renderControlled();
 
+    ensureFiltersOpen();
     fireEvent.change(screen.getByLabelText(/^Pathway$/), {
       target: { value: 'human-health-food' },
     });
@@ -504,16 +517,10 @@ describe('EvidenceLibrary', () => {
     expect(screen.queryByText(/Benzo\[a\]pyrene log Kow/)).not.toBeInTheDocument();
   });
 
-  it('filters by species and jurisdiction, and keeps authority filters to evidence sources', () => {
+  it('filters by jurisdiction, and keeps authority filters to evidence sources', () => {
     renderControlled();
 
-    fireEvent.change(screen.getByLabelText(/^Species$/), {
-      target: { value: 'fish or shellfish' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
-    expect(screen.getAllByText(/Aroclor 1254 oral RfD/).length).toBeGreaterThan(0);
-    expect(screen.queryByText(/Benzo\[a\]pyrene log Kow/)).not.toBeInTheDocument();
-
+    ensureFiltersOpen();
     fireEvent.change(screen.getByLabelText(/^Jurisdiction$/), {
       target: { value: 'general' },
     });
@@ -523,8 +530,11 @@ describe('EvidenceLibrary', () => {
       /Current calculator scaffold only/,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
+    clearAllFilters();
     fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
+    // Switching to the References (sources) view keeps the popover open; its filter set is
+    // now the source filters, so the Authority dropdown is present.
+    ensureFiltersOpen();
     fireEvent.change(screen.getByLabelText(/^Authority$/), {
       target: { value: 'federal-guidance' },
     });
@@ -670,7 +680,7 @@ describe('EvidenceLibrary', () => {
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
     expect(screen.getByTestId('evidence-library-value-detail')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
+    clearAllFilters();
     expect(
       screen.queryByTestId('evidence-library-value-detail'),
     ).not.toBeInTheDocument();
@@ -694,7 +704,7 @@ describe('EvidenceLibrary', () => {
     // (sources + source-leads) under the Sources view.
     expect(screen.getAllByText(/search: NIST/).length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole('button', { name: /^Clear$/ }));
+    clearAllFilters();
     expect(screen.queryAllByText(/search: NIST/)).toHaveLength(0);
     fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByText(/Benzo\[a\]pyrene log Kow/)).toBeInTheDocument();
@@ -1016,6 +1026,9 @@ describe('EvidenceLibrary panel rebalance', () => {
     renderControlled();
 
     expect(screen.getByTestId('evidence-library-filters')).toBeInTheDocument();
+    // Filters live behind the popover button now; open it to reach the Pathway dropdown.
+    expect(screen.getByTestId('evidence-library-filter-button')).toBeInTheDocument();
+    ensureFiltersOpen();
     expect(screen.getByLabelText(/^Pathway$/)).toBeInTheDocument();
 
     expect(screen.getByTestId('evidence-library-right-mode')).toHaveTextContent(
@@ -1052,5 +1065,41 @@ describe('EvidenceLibrary panel rebalance', () => {
     expect(
       screen.queryByTestId('evidence-library-value-detail'),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('EvidenceLibrary filter popover + inventory', () => {
+  it('collapses filters behind a button; primary filters shown when open, removed ones absent', () => {
+    renderControlled();
+
+    // Dropdowns are hidden until the popover is opened.
+    expect(screen.queryByLabelText(/^Substance$/)).not.toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-filter-button')).toBeInTheDocument();
+
+    ensureFiltersOpen();
+    expect(screen.getByLabelText(/^Substance$/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Pathway$/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Parameter$/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Jurisdiction$/)).toBeInTheDocument();
+
+    // The retired workflow/scaffold filters (and the old "Input" label) are gone.
+    expect(screen.queryByLabelText(/^Evidence$/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^QA$/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Species$/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Input$/)).not.toBeInTheDocument();
+  });
+
+  it('shows the catalog inventory at rest with status/admin demoted to a collapsed section', () => {
+    renderControlled();
+
+    const inventory = screen.getByTestId('evidence-library-inventory');
+    expect(inventory).toHaveTextContent(/Catalog inventory/);
+    expect(inventory).toHaveTextContent(/Substances/);
+    expect(inventory).toHaveTextContent(/Values/);
+
+    // The audit/QA/admin panels are preserved but demoted into a collapsed section.
+    expect(
+      screen.getByTestId('evidence-library-status-admin'),
+    ).toBeInTheDocument();
   });
 });
