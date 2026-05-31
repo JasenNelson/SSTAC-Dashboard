@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import EvidenceLibrary from '../EvidenceLibrary';
 import {
@@ -972,5 +972,163 @@ describe('EvidenceLibrary filter popover + inventory', () => {
     expect(
       screen.getByTestId('evidence-library-status-admin'),
     ).toBeInTheDocument();
+  });
+});
+
+describe('EvidenceLibrary right-panel resize', () => {
+  const RIGHT_WIDTH_KEY = 'matrix-options-references-right-width-v1';
+
+  beforeEach(() => {
+    window.localStorage.clear();
+    // jsdom defaults innerWidth to 1024, which would clamp the 384 default down to 344
+    // (1024 - 320 left rail - 360 min center). Widen the viewport so the budget does not
+    // shrink the panel and the drag/clamp assertions are deterministic.
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1600,
+    });
+  });
+
+  function renderLibrary(
+    props: Partial<React.ComponentProps<typeof EvidenceLibrary>> = {},
+  ) {
+    return render(
+      <EvidenceLibrary
+        filters={createEvidenceLibraryFilters()}
+        onFiltersChange={vi.fn()}
+        regulatoryFrameId={'bc-protocol1-v5-dra'}
+        {...props}
+      />,
+    );
+  }
+
+  it('renders a resize handle when the right panel is open', () => {
+    renderLibrary();
+    const handle = screen.getByTestId(
+      'references-values-right-panel-resize-handle',
+    );
+    expect(handle).toBeInTheDocument();
+    expect(handle).toHaveAttribute('role', 'separator');
+    expect(handle).toHaveAttribute('aria-orientation', 'vertical');
+  });
+
+  it('hides the handle and collapses width when the right panel is closed', () => {
+    renderLibrary({ showRightPanel: false });
+    expect(
+      screen.queryByTestId('references-values-right-panel-resize-handle'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId('references-values-right-panel-wrapper'),
+    ).toHaveStyle({ width: '0px' });
+  });
+
+  it('applies the default width with empty storage', async () => {
+    renderLibrary();
+    const wrapper = screen.getByTestId('references-values-right-panel-wrapper');
+    await waitFor(() => expect(wrapper).toHaveStyle({ width: '384px' }));
+  });
+
+  it('widens the panel on drag and clamps to the maximum', async () => {
+    renderLibrary();
+    const wrapper = screen.getByTestId('references-values-right-panel-wrapper');
+    const handle = screen.getByTestId(
+      'references-values-right-panel-resize-handle',
+    );
+    await waitFor(() => expect(wrapper).toHaveStyle({ width: '384px' }));
+
+    // Handle is on the LEFT edge; dragging to a smaller clientX widens the panel.
+    fireEvent.pointerDown(handle, { clientX: 800 });
+    fireEvent(window, new MouseEvent('pointermove', { clientX: 700 }));
+    fireEvent(window, new MouseEvent('pointerup', {}));
+    expect(wrapper).toHaveStyle({ width: '484px' });
+
+    fireEvent.pointerDown(handle, { clientX: 800 });
+    fireEvent(window, new MouseEvent('pointermove', { clientX: 0 }));
+    fireEvent(window, new MouseEvent('pointerup', {}));
+    expect(wrapper).toHaveStyle({ width: '720px' });
+  });
+
+  it('clamps to the minimum width on a large rightward drag', () => {
+    renderLibrary();
+    const wrapper = screen.getByTestId('references-values-right-panel-wrapper');
+    const handle = screen.getByTestId(
+      'references-values-right-panel-resize-handle',
+    );
+    fireEvent.pointerDown(handle, { clientX: 800 });
+    fireEvent(window, new MouseEvent('pointermove', { clientX: 1700 }));
+    fireEvent(window, new MouseEvent('pointerup', {}));
+    expect(wrapper).toHaveStyle({ width: '320px' });
+  });
+
+  it('persists the dragged width to localStorage', () => {
+    renderLibrary();
+    const handle = screen.getByTestId(
+      'references-values-right-panel-resize-handle',
+    );
+    fireEvent.pointerDown(handle, { clientX: 800 });
+    fireEvent(window, new MouseEvent('pointermove', { clientX: 700 }));
+    fireEvent(window, new MouseEvent('pointerup', {}));
+    expect(window.localStorage.getItem(RIGHT_WIDTH_KEY)).toBe('484');
+  });
+
+  it('restores a valid persisted width on mount', async () => {
+    window.localStorage.setItem(RIGHT_WIDTH_KEY, '500');
+    renderLibrary();
+    const wrapper = screen.getByTestId('references-values-right-panel-wrapper');
+    await waitFor(() => expect(wrapper).toHaveStyle({ width: '500px' }));
+  });
+
+  it('rejects a non-numeric persisted width and falls back to the default', async () => {
+    window.localStorage.setItem(RIGHT_WIDTH_KEY, 'abc');
+    renderLibrary();
+    const wrapper = screen.getByTestId('references-values-right-panel-wrapper');
+    // restore() rejects 'abc' and falls back to 384; the persist effect then re-writes
+    // the corrected value, so the key holds '384' (not the rejected 'abc').
+    await waitFor(() => expect(wrapper).toHaveStyle({ width: '384px' }));
+    expect(window.localStorage.getItem(RIGHT_WIDTH_KEY)).toBe('384');
+  });
+
+  it('rejects an out-of-range persisted width and falls back to the default', async () => {
+    window.localStorage.setItem(RIGHT_WIDTH_KEY, '99999');
+    renderLibrary();
+    const wrapper = screen.getByTestId('references-values-right-panel-wrapper');
+    await waitFor(() => expect(wrapper).toHaveStyle({ width: '384px' }));
+    expect(window.localStorage.getItem(RIGHT_WIDTH_KEY)).toBe('384');
+  });
+
+  // Viewport-budget path: on a narrower desktop the [320,720] absolute range is
+  // capped by (innerWidth - 320 left rail - 360 min center). These exercise the
+  // budget that the 1600px beforeEach masks.
+  it('clamps a restored width to the viewport budget on mount (protects the center column)', async () => {
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1280,
+    });
+    window.localStorage.setItem(RIGHT_WIDTH_KEY, '700');
+    renderLibrary();
+    const wrapper = screen.getByTestId('references-values-right-panel-wrapper');
+    // viewportMax = 1280 - 320 (left rail) - 360 (min center) = 600; 700 -> 600.
+    await waitFor(() => expect(wrapper).toHaveStyle({ width: '600px' }));
+  });
+
+  it('clamps a drag to the viewport budget, not the absolute max, on a narrow desktop', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: 1280,
+    });
+    window.localStorage.clear();
+    renderLibrary();
+    const wrapper = screen.getByTestId('references-values-right-panel-wrapper');
+    const handle = screen.getByTestId(
+      'references-values-right-panel-resize-handle',
+    );
+    fireEvent.pointerDown(handle, { clientX: 800 });
+    fireEvent(window, new MouseEvent('pointermove', { clientX: 0 }));
+    fireEvent(window, new MouseEvent('pointerup', {}));
+    // Budget caps at 600 here, below the absolute 720 max.
+    expect(wrapper).toHaveStyle({ width: '600px' });
   });
 });
