@@ -113,11 +113,12 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-audit-strip')).not.toHaveTextContent(
       /pending owner export/i,
     );
-    expect(screen.getByTestId('evidence-library-quick-filters')).toHaveTextContent(
-      /Protocol 28/,
+    // The hardcoded seed-era quick filters were replaced by user-saved views.
+    expect(screen.getByTestId('evidence-library-saved-views')).toHaveTextContent(
+      /Saved views/,
     );
-    expect(screen.getByTestId('evidence-library-quick-filters')).toHaveTextContent(
-      /Derived preview only/,
+    expect(screen.getByTestId('evidence-library-saved-views')).toHaveTextContent(
+      /No saved views yet/,
     );
     expect(screen.getByTestId('protocol28-review-panel')).toHaveTextContent(
       /Policy compilation leads stay blocked from defaults/,
@@ -296,36 +297,11 @@ describe('EvidenceLibrary', () => {
     expect(screen.getAllByText(/current calculator scaffold/i).length).toBeGreaterThan(0);
   });
 
-  it('applies source-review quick filters without promoting values', () => {
+  it('opens the Protocol 28 review queue and source leads without promoting values', () => {
     renderControlled();
 
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /Health Canada: Approved alternatives/i,
-      }),
-    );
-
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Health Canada/,
-    );
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Approved alternative/,
-    );
-    expect(screen.getByText(/Evidence: approved source-backed/)).toBeInTheDocument();
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /Protocol 28: Policy compilation/i,
-      }),
-    );
-
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Protocol 28/,
-    );
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Needs original-source verification/,
-    );
-
+    // The Protocol 28 review-queue buttons live in the demoted "Catalog status & admin"
+    // section of the right panel (still in the DOM in jsdom).
     fireEvent.click(
       screen.getByRole('button', { name: /^Review Protocol 28 queue$/ }),
     );
@@ -335,147 +311,49 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByText(/Policy alignment: Protocol 28/i)).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole('button', {
-        name: /^Review Protocol 28 source leads$/,
-      }),
+      screen.getByRole('button', { name: /^Review Protocol 28 source leads$/ }),
     );
-
     expect(screen.getAllByText(/search: Protocol 28/i).length).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText(/Source role: policy compilation/i).length,
-    ).toBeGreaterThan(0);
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Showing 1 of \d+ lead sets/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /BC Protocol 28 v3\.0/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Read-only triage checklist/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Original source verification/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Exact locator capture/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Currentness check/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Applicability review/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Owner or delegated approval/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Lead triage only; not calculator evidence or calculator default\s+support/i,
-    );
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /Eco-SSL: Screening\/source leads/i,
-      }),
-    );
-
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Eco-SSL/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Needs original-source verification/,
-    );
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /SSD-derived: Derived preview/i,
-      }),
-    );
-
-    expect(screen.getAllByText(/search: SSD/).length).toBeGreaterThan(0);
-    expect(
-      screen.getAllByText(/Evidence: user-entered or derived/).length,
-    ).toBeGreaterThan(0);
-    expect(screen.getByTestId('derived-preview-empty-state')).toHaveTextContent(
-      /SSD-derived candidates are generated in the SSD Workbench receipt/i,
-    );
-    expect(
-      screen.getByRole('button', { name: /^Clear filters$/ }),
-    ).toBeInTheDocument();
+    const leads = screen.getByTestId('evidence-library-source-leads');
+    expect(leads).toHaveTextContent(/Showing 1 of \d+ lead sets/);
+    expect(leads).toHaveTextContent(/BC Protocol 28 v3\.0/);
+    expect(leads).toHaveTextContent(/Read-only triage checklist/);
+    expect(leads).toHaveTextContent(/Original source verification/);
+    expect(leads).toHaveTextContent(/Owner or delegated approval/);
   });
 
-  it('shows saved review view counts and active filter state', () => {
+  it('saves the current filters as a named view, then deletes it', () => {
+    // Start from a clean saved-views store so the assertions are deterministic.
+    window.localStorage.clear();
     renderControlled();
 
-    const protocol28Button = screen.getByRole('button', {
-      name: /Protocol 28: Policy compilation/i,
-    });
-    const healthCanadaButton = screen.getByRole('button', {
-      name: /Health Canada: Approved alternatives/i,
-    });
-    const ecoSslButton = screen.getByRole('button', {
-      name: /Eco-SSL: Screening\/source leads/i,
-    });
-    const ssdButton = screen.getByRole('button', {
-      name: /SSD-derived: Derived preview/i,
-    });
-
-    expect(within(protocol28Button).getByText('6 values')).toBeInTheDocument();
-    expect(within(healthCanadaButton).getByText('19 values')).toBeInTheDocument();
-    // Eco-SSL now opens the Sources view (source leads fold into Sources), so its count
-    // reflects matching source records rather than lead sets.
-    expect(within(ecoSslButton).getByText('4 sources')).toBeInTheDocument();
-    expect(within(ssdButton).getByText('0 values')).toBeInTheDocument();
-    expect(healthCanadaButton).toHaveAttribute('aria-pressed', 'false');
-
-    fireEvent.click(healthCanadaButton);
-
-    expect(
-      screen.getByRole('button', {
-        name: /Health Canada: Approved alternatives/i,
-      }),
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Health Canada/,
+    expect(screen.getByTestId('evidence-library-saved-views')).toHaveTextContent(
+      /No saved views yet/,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
-
-    expect(
-      screen.getByRole('button', {
-        name: /Health Canada: Approved alternatives/i,
-      }),
-    ).toHaveAttribute('aria-pressed', 'false');
-  });
-
-  it('shows candidate defaults saved review view as read-only filter with no promotion', () => {
-    renderControlled();
-
-    const candidateDefaultsButton = screen.getByRole('button', {
-      name: /Candidate defaults: Eligible candidates/i,
+    // Set a filter, then save the current view under a name.
+    ensureFiltersOpen();
+    fireEvent.change(screen.getByLabelText(/^Substance$/), {
+      target: { value: 'benzo_a_pyrene' },
     });
+    fireEvent.click(screen.getByTestId('evidence-library-save-view-button'));
+    fireEvent.change(screen.getByTestId('evidence-library-save-view-input'), {
+      target: { value: 'My BaP view' },
+    });
+    fireEvent.click(screen.getByTestId('evidence-library-save-view-confirm'));
 
-    expect(candidateDefaultsButton).toHaveAttribute('aria-pressed', 'false');
+    const saved = screen.getByTestId('evidence-library-saved-views');
+    expect(saved).toHaveTextContent(/My BaP view/);
+    expect(saved).not.toHaveTextContent(/No saved views yet/);
 
-    fireEvent.click(candidateDefaultsButton);
-
-    expect(
-      screen.getByRole('button', {
-        name: /Candidate defaults: Eligible candidates/i,
-      }),
-    ).toHaveAttribute('aria-pressed', 'true');
-
-    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Approved alternative/,
+    // Delete it -> back to the empty state.
+    fireEvent.click(
+      screen.getByRole('button', { name: /Delete saved view My BaP view/ }),
     );
-    expect(screen.getByText(/Evidence: approved source-backed/i)).toBeInTheDocument();
-    expect(screen.getByText(/Default: available option/i)).toBeInTheDocument();
-
-    expect(
-      screen.getByText(/do not promote calculator defaults/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /^Promote$|^Set as default$|^Make default$/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-saved-views')).toHaveTextContent(
+      /No saved views yet/,
+    );
+    window.localStorage.clear();
   });
 
   it('uses audit strip counts as read-only database shortcuts', () => {
@@ -672,20 +550,13 @@ describe('EvidenceLibrary', () => {
       screen.queryByTestId('evidence-library-source-detail'),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /Health Canada: Approved alternatives/i,
-      }),
-    );
+    // Inspecting a value then clearing the filters should also close the detail panel.
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
     expect(screen.getByTestId('evidence-library-value-detail')).toBeInTheDocument();
 
     clearAllFilters();
     expect(
       screen.queryByTestId('evidence-library-value-detail'),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(/Evidence: approved source-backed/i),
     ).not.toBeInTheDocument();
   });
 

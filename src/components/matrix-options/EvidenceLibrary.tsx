@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
 import type { PromotedParameterValueRecord } from '@/lib/matrix-options/provenance/promotion';
@@ -154,87 +154,38 @@ const DEFAULT_POLICY_STATUS_NOTES: Record<
   pathway_unsupported: 'Selected frame blocks this pathway.',
 };
 
-const QUICK_REVIEW_FILTERS: Array<{
-  label: string;
-  description: string;
+// User-saved filter views, persisted in localStorage. Replaces the former hardcoded
+// seed-era "quick filters", which applied now-removed filter dimensions and showed stale
+// counts that did not match the loaded catalog.
+const SAVED_VIEWS_STORAGE_KEY = 'matrix-options-saved-views-v1';
+
+type SavedFilterView = {
+  id: string;
+  name: string;
+  filters: EvidenceLibraryFilters;
   viewMode: EvidenceLibraryViewMode;
-  request: EvidenceLibraryFilterRequest;
-}> = [
-  {
-    label: 'Candidate defaults',
-    description: 'Eligible candidates pending default review and approval.',
-    viewMode: 'values',
-    request: {
-      evidenceSupportStatuses: ['approved_source_backed'],
-      defaultStatuses: ['available_option'],
-    },
-  },
-  {
-    label: 'Protocol 28',
-    description: 'Policy compilation; original source check required.',
-    viewMode: 'values',
-    request: {
-      search: 'Protocol 28',
-      bcProtocolAlignments: [PROTOCOL28_POLICY_ALIGNMENT],
-    },
-  },
-  {
-    label: 'Health Canada',
-    description: 'Approved alternatives, not automatic defaults.',
-    viewMode: 'values',
-    request: {
-      sourceIds: ['src-health-canada-trv-v4-2025'],
-      evidenceSupportStatuses: ['approved_source_backed'],
-    },
-  },
-  {
-    label: 'IRIS',
-    description: 'Approved alternatives, not automatic defaults.',
-    viewMode: 'values',
-    request: {
-      sourceIds: [
-        'src-us-epa-iris-rfd-table-live',
-        'src-us-epa-iris-chemical-details-live',
-      ],
-      evidenceSupportStatuses: ['approved_source_backed'],
-    },
-  },
-  {
-    label: 'Eco-SSL',
-    description: 'Screening/source leads; exact locators required.',
-    viewMode: 'sources',
-    request: {
-      search: 'Eco-SSL',
-    },
-  },
-  {
-    label: 'ERDC BSAF',
-    description: 'Database candidates; row locator review required.',
-    viewMode: 'values',
-    request: {
-      search: 'BSAF',
-      sourceIds: ['src-erdc-bsaf-db'],
-    },
-  },
-  {
-    label: 'WQCIU',
-    description: 'Source-of-sources leads only.',
-    viewMode: 'sources',
-    request: {
-      search: 'WQCIU',
-      sourceIds: ['src-acfn-wqciu'],
-    },
-  },
-  {
-    label: 'SSD-derived',
-    description: 'Derived preview only until ssdtools parity and QA.',
-    viewMode: 'values',
-    request: {
-      search: 'SSD',
-      evidenceSupportStatuses: ['user_entered_or_derived'],
-    },
-  },
-];
+};
+
+function loadSavedViews(): SavedFilterView[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(SAVED_VIEWS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as SavedFilterView[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistSavedViews(views: SavedFilterView[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(views));
+  } catch {
+    // ignore storage failures (private mode / quota)
+  }
+}
 
 const SOURCE_LEAD_TRIAGE_REQUIREMENTS = [
   {
@@ -2901,19 +2852,17 @@ function HitlSourcesSection({ isAdmin }: { isAdmin: boolean }) {
 // retrieval/source/QA date tracking is a follow-up once the catalog emits those fields.
 function CatalogInventory({
   baseline,
-  lastExtractedAt,
-  onSelectSubstance,
+  onSelectReference,
 }: {
   baseline: ReturnType<typeof buildEvidenceLibraryView>;
-  lastExtractedAt: string | null;
-  onSelectSubstance: (substanceKey: string) => void;
+  onSelectReference: (sourceId: string) => void;
 }) {
-  const substances = baseline.facets.substances;
+  const references = baseline.sources;
   const stats: Array<{ label: string; value: number }> = [
-    { label: 'Substances', value: substances.length },
-    { label: 'Parameters', value: baseline.facets.inputKeys.length },
     { label: 'References', value: baseline.totalCounts.sources },
     { label: 'Values', value: baseline.totalCounts.values },
+    { label: 'Substances', value: baseline.facets.substances.length },
+    { label: 'Parameters', value: baseline.facets.inputKeys.length },
   ];
   return (
     <section className="space-y-3" data-testid="evidence-library-inventory">
@@ -2937,30 +2886,38 @@ function CatalogInventory({
       </div>
       <div>
         <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Substances ({substances.length}) -- click to filter
+          References ({references.length}) -- click to inspect
         </div>
-        <ul className="max-h-72 space-y-0.5 overflow-y-auto rounded-lg border border-slate-200 p-1 dark:border-slate-800">
-          {substances.map((substance) => (
-            <li key={substance.value}>
+        <ul className="max-h-80 space-y-0.5 overflow-y-auto rounded-lg border border-slate-200 p-1 dark:border-slate-800">
+          {references.map((row) => (
+            <li key={row.record.source_id}>
               <button
                 type="button"
-                onClick={() => onSelectSubstance(substance.value)}
-                className="flex w-full items-center justify-between gap-2 rounded px-2 py-1 text-left text-xs text-slate-700 hover:bg-sky-50 dark:text-slate-200 dark:hover:bg-sky-950/30"
+                onClick={() => onSelectReference(row.record.source_id)}
+                className="w-full rounded px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-sky-50 dark:text-slate-200 dark:hover:bg-sky-950/30"
               >
-                <span className="truncate">{substance.label}</span>
-                <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                  {substance.count}
-                </span>
+                <div className="truncate font-semibold text-slate-800 dark:text-slate-100">
+                  {row.record.short_citation}
+                </div>
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+                  <span>
+                    {row.linkedValueCount} value{row.linkedValueCount === 1 ? '' : 's'}
+                  </span>
+                  {row.record.checked_at && (
+                    <span>retrieved {row.record.checked_at}</span>
+                  )}
+                  {row.record.currentness_status && (
+                    <span>{humanizeCatalogLabel(row.record.currentness_status)}</span>
+                  )}
+                </div>
               </button>
             </li>
           ))}
         </ul>
       </div>
       <p className="text-[11px] text-slate-400 dark:text-slate-500">
-        {lastExtractedAt
-          ? `Latest extraction: ${lastExtractedAt}.`
-          : 'Extraction dates not recorded.'}{' '}
-        Per-source retrieval, source-date, and QA-date tracking is coming.
+        Per-reference full/partial retrieval status, a dedicated retrieval date, and a QA-review
+        date are coming (new catalog fields).
       </p>
     </section>
   );
@@ -3045,17 +3002,6 @@ export default function EvidenceLibrary({
     () => buildEvidenceLibraryView(undefined, promotedRecords),
     [promotedRecords],
   );
-  const lastExtractedAt = useMemo(() => {
-    let max = '';
-    for (const row of baselineLibrary.values) {
-      for (const evidence of row.record.evidence_items) {
-        if (evidence.extracted_at && evidence.extracted_at > max) {
-          max = evidence.extracted_at;
-        }
-      }
-    }
-    return max || null;
-  }, [baselineLibrary.values]);
   const defaultPolicyDecisions = useMemo(() => {
     const decisions = new Map<string, DefaultSelectionPolicyDecision>();
 
@@ -3086,21 +3032,12 @@ export default function EvidenceLibrary({
 
     return decisions;
   }, [library.values, regulatoryFrameId]);
-  const savedReviewViews = useMemo(
-    () =>
-      QUICK_REVIEW_FILTERS.map((filter) => {
-        const savedFilters = createEvidenceLibraryFilters(filter.request);
-        const savedLibrary = buildEvidenceLibraryView(savedFilters, promotedRecords);
-        return {
-          ...filter,
-          filters: savedFilters,
-          resultCountText: formatResultCount(
-            resultCountForView(savedLibrary, filter.viewMode),
-          ),
-        };
-      }),
-    [promotedRecords],
-  );
+  const [savedViews, setSavedViews] = useState<SavedFilterView[]>([]);
+  const [savingView, setSavingView] = useState(false);
+  const [savedViewName, setSavedViewName] = useState('');
+  useEffect(() => {
+    setSavedViews(loadSavedViews());
+  }, []);
   const protocol28Summary = useMemo(() => buildProtocol28ReviewSummary(), []);
   const activeLabels = [
     ...activeFilterLabels(filters),
@@ -3180,11 +3117,29 @@ export default function EvidenceLibrary({
     onDismissReceipt?.();
     onFiltersChange(createEvidenceLibraryFilters());
   };
-  const applyQuickFilter = (filter: (typeof QUICK_REVIEW_FILTERS)[number]) => {
-    setViewMode(filter.viewMode);
+  const applySavedView = (view: SavedFilterView) => {
+    setViewMode(view.viewMode);
     closeDetailPanels();
     setDefaultPolicyStatusFilter(null);
-    onFiltersChange(createEvidenceLibraryFilters(filter.request));
+    onFiltersChange(view.filters);
+  };
+  const saveCurrentView = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const view: SavedFilterView = {
+      id: `${Date.now().toString(36)}-${Math.round(Math.random() * 1e6).toString(36)}`,
+      name: trimmed,
+      filters,
+      viewMode,
+    };
+    const next = [...savedViews, view];
+    setSavedViews(next);
+    persistSavedViews(next);
+  };
+  const removeSavedView = (id: string) => {
+    const next = savedViews.filter((view) => view.id !== id);
+    setSavedViews(next);
+    persistSavedViews(next);
   };
   const applyAuditFilter = (
     nextViewMode: EvidenceLibraryViewMode,
@@ -3365,55 +3320,107 @@ export default function EvidenceLibrary({
 
           <section
             className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-950"
-            data-testid="evidence-library-quick-filters"
-            aria-label="Candidate review quick filters"
+            data-testid="evidence-library-saved-views"
+            aria-label="Saved views"
           >
-            <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                  Saved Review Views
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  These filters inspect alternatives and source leads only; they do not promote calculator defaults.
-                </p>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                Saved views
+              </h3>
+              {!savingView && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSavedViewName('');
+                    setSavingView(true);
+                  }}
+                  data-testid="evidence-library-save-view-button"
+                  className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                >
+                  <Plus className="h-3 w-3" />
+                  Save current
+                </button>
+              )}
+            </div>
+
+            {savingView && (
+              <div className="mb-2 flex items-center gap-1">
+                <input
+                  value={savedViewName}
+                  onChange={(event) => setSavedViewName(event.target.value)}
+                  placeholder="Name this view"
+                  aria-label="Saved view name"
+                  data-testid="evidence-library-save-view-input"
+                  className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                />
+                <button
+                  type="button"
+                  disabled={!savedViewName.trim()}
+                  onClick={() => {
+                    saveCurrentView(savedViewName);
+                    setSavingView(false);
+                  }}
+                  data-testid="evidence-library-save-view-confirm"
+                  className="rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSavingView(false)}
+                  className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                >
+                  Cancel
+                </button>
               </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {savedReviewViews.map((filter) => {
-                const isActive =
-                  viewMode === filter.viewMode && filtersEqual(filters, filter.filters);
-                return (
-                  <button
-                    key={filter.label}
-                    type="button"
-                    aria-label={`${filter.label}: ${filter.description}`}
-                    aria-pressed={isActive}
-                    onClick={() => applyQuickFilter(filter)}
-                    className={cn(
-                      'min-h-10 rounded-md border px-3 text-left text-xs transition-colors',
-                      isActive
-                        ? 'border-sky-400 bg-sky-50 text-sky-800 shadow-sm dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
-                        : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 hover:bg-white hover:text-sky-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300',
-                    )}
-                  >
-                    <span className="flex items-start justify-between gap-2">
-                      <span className="font-semibold">{filter.label}</span>
-                      {isActive && (
-                        <span className="rounded-full bg-sky-600 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white dark:bg-sky-500">
-                          Active
+            )}
+
+            {savedViews.length === 0 ? (
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                No saved views yet. Set up filters, then "Save current" to reuse them.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {savedViews.map((view) => {
+                  const isActive =
+                    viewMode === view.viewMode && filtersEqual(filters, view.filters);
+                  const count = formatResultCount(
+                    resultCountForView(
+                      buildEvidenceLibraryView(view.filters, promotedRecords),
+                      view.viewMode,
+                    ),
+                  );
+                  return (
+                    <li key={view.id} className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => applySavedView(view)}
+                        aria-pressed={isActive}
+                        className={cn(
+                          'flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md border px-2 py-1 text-left text-xs transition-colors',
+                          isActive
+                            ? 'border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
+                            : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 hover:bg-white dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200',
+                        )}
+                      >
+                        <span className="truncate font-semibold">{view.name}</span>
+                        <span className="shrink-0 text-[10px] text-slate-500 dark:text-slate-400">
+                          {count}
                         </span>
-                      )}
-                    </span>
-                    <span className="block text-[11px] text-slate-500 dark:text-slate-400">
-                      {filter.description}
-                    </span>
-                    <span className="mt-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                      {filter.resultCountText}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeSavedView(view.id)}
+                        aria-label={`Delete saved view ${view.name}`}
+                        className="rounded-md border border-slate-300 bg-white p-1 text-slate-500 hover:border-red-300 hover:text-red-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
           </section>
         </div>
         )}
@@ -4095,13 +4102,12 @@ export default function EvidenceLibrary({
           )}
           {!selectedValue && !selectedSource && (
             <div className="space-y-4" data-testid="evidence-library-right-dashboard">
-              {/* Prominent: at-a-glance inventory of what is loaded. */}
+              {/* Prominent: at-a-glance inventory of the references loaded in the catalog. */}
               <CatalogInventory
                 baseline={baselineLibrary}
-                lastExtractedAt={lastExtractedAt}
-                onSelectSubstance={(substanceKey) => {
-                  changeViewMode('values');
-                  updateFilter('substanceKeys', substanceKey);
+                onSelectReference={(sourceId) => {
+                  setSelectedValueId(null);
+                  setSelectedSourceId(sourceId);
                 }}
               />
 
