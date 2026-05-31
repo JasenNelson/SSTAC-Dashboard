@@ -102,9 +102,18 @@ function rowToSavedView(row: SavedViewDbRow): SavedViewRow {
 export async function fetchSavedViews(): Promise<SavedViewRow[]> {
   try {
     const supabase = await createAuthenticatedClient();
+    // Explicitly scope to the current user. The admin "FOR SELECT all" RLS policy
+    // (for a separate support read path) would otherwise let an admin -- who is also a
+    // normal Evidence Library user -- hydrate EVERY user's saved views into their own
+    // list. RLS alone is not enough for the normal UI fetch; filter by user_id here.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return [];
     const { data, error } = await supabase
       .from('user_saved_views')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -221,20 +230,33 @@ export async function importLegacySavedViews(
     } = await supabase.auth.getUser();
     if (!user) return { success: false, imported: 0 };
 
-    const { count } = await supabase
+    // Fetch existing view names to (a) compute the remaining cap and (b) dedupe the
+    // incoming legacy views by name. This makes a re-run or a concurrent first-load
+    // import converge instead of inserting duplicates -- a second import sees the first's
+    // rows and skips them. Names already present are never re-imported.
+    const { data: existingRows } = await supabase
       .from('user_saved_views')
-      .select('id', { count: 'exact', head: true })
+      .select('name')
       .eq('user_id', user.id);
+    const existingNames = new Set(
+      ((existingRows as Array<{ name: string }> | null) ?? []).map((r) => r.name),
+    );
 
-    const remaining = MAX_SAVED_VIEWS - (count ?? 0);
+    const remaining = MAX_SAVED_VIEWS - existingNames.size;
     if (remaining <= 0) return { success: true, imported: 0 };
 
+    const seen = new Set(existingNames);
     const payloads = views
-      .filter((v) => v.name.trim().length > 0)
+      .map((v) => ({ ...v, name: v.name.trim() }))
+      .filter((v) => {
+        if (v.name.length === 0 || seen.has(v.name)) return false;
+        seen.add(v.name); // also dedupe within the incoming batch
+        return true;
+      })
       .slice(0, remaining)
       .map((v) => ({
         user_id: user.id,
-        name: v.name.trim(),
+        name: v.name,
         filters: v.filters,
         view_mode: v.view_mode,
       }));

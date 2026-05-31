@@ -158,8 +158,9 @@ describe('saved-views-sync', () => {
 
   describe('importLegacySavedViews', () => {
     it('imports up to the remaining cap', async () => {
+      const existing = Array.from({ length: 48 }, (_, i) => ({ name: `x${i}` }));
       resultQueue = [
-        { count: 48, error: null }, // 2 remaining
+        { data: existing, error: null }, // existing names (48 -> 2 remaining)
         { error: null }, // insert
       ];
       const res = await importLegacySavedViews([
@@ -168,6 +169,17 @@ describe('saved-views-sync', () => {
         { name: 'c', filters: baseFilters, view_mode: 'values' },
       ]);
       expect(res).toEqual({ success: true, imported: 2 });
+    });
+    it('skips legacy views whose name already exists (dedupe)', async () => {
+      resultQueue = [
+        { data: [{ name: 'a' }], error: null }, // 'a' already present
+        { error: null }, // insert
+      ];
+      const res = await importLegacySavedViews([
+        { name: 'a', filters: baseFilters, view_mode: 'values' },
+        { name: 'b', filters: baseFilters, view_mode: 'values' },
+      ]);
+      expect(res).toEqual({ success: true, imported: 1 });
     });
     it('imports nothing for an empty list', async () => {
       expect(await importLegacySavedViews([])).toEqual({ success: true, imported: 0 });
