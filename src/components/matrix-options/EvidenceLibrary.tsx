@@ -17,10 +17,10 @@ import { fetchHitlSources } from '@/lib/matrix-options/provenance/source-sync';
 import type { CatalogSourceRow } from '@/lib/matrix-options/provenance/source-sync';
 import {
   fetchSavedViews,
+  fetchSavedViewsResult,
   createSavedView,
   deleteSavedView,
   importLegacySavedViews,
-  isSignedIn,
 } from '@/lib/matrix-options/provenance/saved-views-sync';
 import type { SavedViewRow } from '@/lib/matrix-options/provenance/saved-views-sync';
 import { usePromotedCandidatesStore } from '@/stores/matrix-options/promotedCandidatesStore';
@@ -3243,21 +3243,28 @@ export default function EvidenceLibrary({
     setSavedViews(local);
     (async () => {
       try {
-        const remote = await fetchSavedViews();
+        const result = await fetchSavedViewsResult();
         if (cancelled) return;
-        if (remote.length > 0) {
-          setSavedViews(remote.map(rowToSavedFilterView));
+        if (result.views.length > 0) {
+          setSavedViews(result.views.map(rowToSavedFilterView));
           setSavedViewsBackend('supabase');
           if (typeof window !== 'undefined') {
             window.localStorage.setItem(SAVED_VIEWS_MIGRATED_KEY, 'done');
           }
           return;
         }
+        // Empty result. Only act authoritatively on a SUCCESSFUL signed-in read. On a
+        // read error (missing table / RLS / outage) or when signed out, keep the
+        // localStorage fallback and NEVER delete it.
+        if (result.error || !result.signedIn) {
+          setSavedViewsBackend('local');
+          return;
+        }
         const alreadyMigrated =
           typeof window !== 'undefined' &&
           window.localStorage.getItem(SAVED_VIEWS_MIGRATED_KEY) === 'done';
         if (local.length > 0 && !alreadyMigrated) {
-          const result = await importLegacySavedViews(
+          const importResult = await importLegacySavedViews(
             local.map((v) => ({
               name: v.name,
               filters: v.filters,
@@ -3265,7 +3272,7 @@ export default function EvidenceLibrary({
             })),
           );
           if (cancelled) return;
-          if (result.success) {
+          if (importResult.success) {
             if (typeof window !== 'undefined') {
               window.localStorage.setItem(SAVED_VIEWS_MIGRATED_KEY, 'done');
             }
@@ -3274,28 +3281,18 @@ export default function EvidenceLibrary({
             setSavedViews(refreshed.map(rowToSavedFilterView));
             setSavedViewsBackend('supabase');
           } else {
-            // Import failed -> signed out -> keep the local views.
             setSavedViewsBackend('local');
           }
           return;
         }
-        // Remote empty and nothing to import: disambiguate signed-in-empty from
-        // signed-out. A signed-in account with zero remote views is authoritative, so
-        // clear the local mirror -- otherwise stale or another account's local entries
-        // (after an account switch, or a delete on another device) would resurrect here.
-        // Signed-out keeps the localStorage fallback. (A rare offline-created-but-unsynced
-        // local view is also cleared; the server is treated as the source of truth.)
-        const signedIn = await isSignedIn();
-        if (cancelled) return;
-        if (signedIn) {
-          setSavedViews([]);
-          persistSavedViews([]);
-          setSavedViewsBackend('supabase');
-          if (typeof window !== 'undefined') {
-            window.localStorage.setItem(SAVED_VIEWS_MIGRATED_KEY, 'done');
-          }
-        } else {
-          setSavedViewsBackend('local');
+        // Signed in, successful read, genuinely empty, nothing to import: clear the
+        // stale local mirror so another account's / deleted-elsewhere entries do not
+        // resurrect. (A read error never reaches here, so the fallback is preserved.)
+        setSavedViews([]);
+        persistSavedViews([]);
+        setSavedViewsBackend('supabase');
+        if (typeof window !== 'undefined') {
+          window.localStorage.setItem(SAVED_VIEWS_MIGRATED_KEY, 'done');
         }
       } catch {
         if (!cancelled) setSavedViewsBackend('local');
