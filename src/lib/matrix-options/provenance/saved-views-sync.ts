@@ -96,36 +96,53 @@ function rowToSavedView(row: SavedViewDbRow): SavedViewRow {
 }
 
 // ---------------------------------------------------------------------------
-// fetchSavedViews -- the current user's views, newest first. [] on any error.
+// fetchSavedViewsResult -- the current user's views PLUS the signals needed to
+// act safely on an empty result: signedIn (vs signed-out) and error (vs a
+// genuinely empty successful read). The UI clears a stale local mirror ONLY on a
+// successful signed-in empty read; on a read error (missing table / RLS / outage)
+// or when signed out it keeps the localStorage fallback and never deletes it.
 // ---------------------------------------------------------------------------
 
-export async function fetchSavedViews(): Promise<SavedViewRow[]> {
+export interface SavedViewsFetch {
+  signedIn: boolean;
+  error: boolean;
+  views: SavedViewRow[];
+}
+
+export async function fetchSavedViewsResult(): Promise<SavedViewsFetch> {
   try {
     const supabase = await createAuthenticatedClient();
-    // Explicitly scope to the current user. The admin "FOR SELECT all" RLS policy
-    // (for a separate support read path) would otherwise let an admin -- who is also a
-    // normal Evidence Library user -- hydrate EVERY user's saved views into their own
-    // list. RLS alone is not enough for the normal UI fetch; filter by user_id here.
+    // Scope to the current user. The admin "FOR SELECT all" RLS policy (a separate
+    // support read path) would otherwise let an admin -- also a normal Evidence Library
+    // user -- hydrate EVERY user's saved views into their own list.
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return [];
+    if (!user) return { signedIn: false, error: false, views: [] };
     const { data, error } = await supabase
       .from('user_saved_views')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
-
     if (error) {
-      console.error('[saved-views-sync] fetchSavedViews error:', error.message);
-      return [];
+      console.error('[saved-views-sync] fetchSavedViewsResult error:', error.message);
+      return { signedIn: true, error: true, views: [] };
     }
-    if (!data) return [];
-    return (data as SavedViewDbRow[]).map(rowToSavedView);
+    return {
+      signedIn: true,
+      error: false,
+      views: ((data as SavedViewDbRow[] | null) ?? []).map(rowToSavedView),
+    };
   } catch (err) {
-    console.error('[saved-views-sync] fetchSavedViews unexpected error:', err);
-    return [];
+    console.error('[saved-views-sync] fetchSavedViewsResult unexpected error:', err);
+    // Unknown failure: treat as an error so the caller keeps the local fallback.
+    return { signedIn: false, error: true, views: [] };
   }
+}
+
+// fetchSavedViews -- views only (back-compat). [] on any error / signed-out.
+export async function fetchSavedViews(): Promise<SavedViewRow[]> {
+  return (await fetchSavedViewsResult()).views;
 }
 
 // ---------------------------------------------------------------------------

@@ -51,6 +51,9 @@ vi.mock('@/lib/matrix-options/provenance/saved-views-sync', () => ({
     .mockResolvedValue({ success: false, view: null, error: 'unauthenticated' }),
   deleteSavedView: vi.fn().mockResolvedValue(false),
   importLegacySavedViews: vi.fn().mockResolvedValue({ success: false, imported: 0 }),
+  fetchSavedViewsResult: vi
+    .fn()
+    .mockResolvedValue({ signedIn: false, error: false, views: [] }),
 }));
 
 function renderControlled(
@@ -1159,19 +1162,125 @@ describe('EvidenceLibrary saved views (Supabase)', () => {
       success: false,
       imported: 0,
     });
+    vi.mocked(savedViewsSync.fetchSavedViewsResult).mockResolvedValue({
+      signedIn: false,
+      error: false,
+      views: [],
+    });
   });
 
-  it('renders saved views fetched from Supabase on mount', async () => {
-    vi.mocked(savedViewsSync.fetchSavedViews).mockResolvedValueOnce([
-      {
-        id: 'srv-1',
-        name: 'Server view A',
-        filters: createEvidenceLibraryFilters({ substanceKeys: ['lead'] }),
+  const SAVED_VIEWS_KEY = 'matrix-options-saved-views-v1';
+  const MIGRATED_KEY = 'matrix-options-saved-views-migrated-v1';
+
+  it('keeps local views on a signed-in empty read (non-destructive; account-aware clear is a follow-up)', async () => {
+    // Signed in, remote empty, sentinel done, local has views. The local cache is NOT
+    // deleted -- it may hold legitimate offline/local-only views (saveCurrentView caches
+    // them). It is shown as the fallback; a fully account-aware reconcile is a follow-up.
+    window.localStorage.setItem(
+      SAVED_VIEWS_KEY,
+      JSON.stringify([
+        { id: 'local-3', name: 'Cached local view', filters: {}, viewMode: 'values' },
+      ]),
+    );
+    window.localStorage.setItem(MIGRATED_KEY, 'done');
+    vi.mocked(savedViewsSync.fetchSavedViewsResult).mockResolvedValue({
+      signedIn: true,
+      error: false,
+      views: [],
+    });
+
+    renderControlled();
+    expect(
+      await screen.findByRole('button', { name: /^Cached local view/ }),
+    ).toBeInTheDocument();
+    // The local cache is preserved, not wiped.
+    expect(window.localStorage.getItem(SAVED_VIEWS_KEY)).toContain('Cached local view');
+  });
+
+  it('keeps the local mirror when signed out (no remote, not authenticated)', async () => {
+    window.localStorage.setItem(
+      SAVED_VIEWS_KEY,
+      JSON.stringify([
+        { id: 'local-1', name: 'My local view', filters: {}, viewMode: 'values' },
+      ]),
+    );
+    window.localStorage.setItem(MIGRATED_KEY, 'done');
+    vi.mocked(savedViewsSync.fetchSavedViewsResult).mockResolvedValue({
+      signedIn: false,
+      error: false,
+      views: [],
+    });
+
+    renderControlled();
+    expect(
+      await screen.findByRole('button', { name: /^My local view/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the local mirror on a remote read ERROR (does not erase the fallback)', async () => {
+    // The codex re-review P2: an empty result from a read FAILURE (missing table / RLS /
+    // outage) must NOT be treated as authoritative-empty and must not delete local views.
+    window.localStorage.setItem(
+      SAVED_VIEWS_KEY,
+      JSON.stringify([
+        { id: 'local-2', name: 'Survives the outage', filters: {}, viewMode: 'values' },
+      ]),
+    );
+    window.localStorage.setItem(MIGRATED_KEY, 'done');
+    vi.mocked(savedViewsSync.fetchSavedViewsResult).mockResolvedValue({
+      signedIn: true,
+      error: true,
+      views: [],
+    });
+
+    renderControlled();
+    expect(
+      await screen.findByRole('button', { name: /^Survives the outage/ }),
+    ).toBeInTheDocument();
+    // localStorage fallback is preserved, not wiped to '[]'.
+    expect(window.localStorage.getItem(SAVED_VIEWS_KEY)).toContain('Survives the outage');
+  });
+
+  it('persists the reconciled server id to localStorage after a successful save', async () => {
+    vi.mocked(savedViewsSync.createSavedView).mockResolvedValueOnce({
+      success: true,
+      view: {
+        id: 'srv-persist-1',
+        name: 'Persisted view',
+        filters: createEvidenceLibraryFilters(),
         view_mode: 'values',
         created_at: 't',
         updated_at: 't',
       },
-    ]);
+      error: null,
+    });
+    renderControlled();
+    fireEvent.click(screen.getByTestId('evidence-library-save-view-button'));
+    fireEvent.change(screen.getByTestId('evidence-library-save-view-input'), {
+      target: { value: 'Persisted view' },
+    });
+    fireEvent.click(screen.getByTestId('evidence-library-save-view-confirm'));
+    await waitFor(() => {
+      const raw = window.localStorage.getItem(SAVED_VIEWS_KEY) ?? '[]';
+      expect(raw).toContain('srv-persist-1'); // server id, not the optimistic id
+    });
+  });
+
+  it('renders saved views fetched from Supabase on mount', async () => {
+    vi.mocked(savedViewsSync.fetchSavedViewsResult).mockResolvedValueOnce({
+      signedIn: true,
+      error: false,
+      views: [
+        {
+          id: 'srv-1',
+          name: 'Server view A',
+          filters: createEvidenceLibraryFilters({ substanceKeys: ['lead'] }),
+          view_mode: 'values',
+          created_at: 't',
+          updated_at: 't',
+        },
+      ],
+    });
     renderControlled();
     // Anchor to the start so we hit the apply button, not the "Delete saved view ..." button.
     expect(

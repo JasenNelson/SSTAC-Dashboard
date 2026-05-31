@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import {
   fetchSavedViews,
+  fetchSavedViewsResult,
   createSavedView,
   deleteSavedView,
   importLegacySavedViews,
@@ -211,6 +212,37 @@ describe('saved-views-sync', () => {
         { name: 'a', filters: baseFilters, view_mode: 'values' },
       ]);
       expect(res).toEqual({ success: false, imported: 0 });
+    });
+  });
+
+  describe('fetchSavedViewsResult', () => {
+    it('reports signed-in + views on a successful non-empty read', async () => {
+      resultQueue = [
+        {
+          data: [
+            { id: 'v1', name: 'a', filters: {}, view_mode: 'values', created_at: 't', updated_at: 't' },
+          ],
+          error: null,
+        },
+      ];
+      const r = await fetchSavedViewsResult();
+      expect(r).toMatchObject({ signedIn: true, error: false });
+      expect(r.views).toHaveLength(1);
+    });
+    it('reports signed-in + no error on a genuinely empty read', async () => {
+      resultQueue = [{ data: [], error: null }];
+      const r = await fetchSavedViewsResult();
+      expect(r).toEqual({ signedIn: true, error: false, views: [] });
+    });
+    it('reports error=true on a Supabase read failure (preserves the fallback)', async () => {
+      resultQueue = [{ data: null, error: { message: 'relation does not exist' } }];
+      const r = await fetchSavedViewsResult();
+      expect(r).toEqual({ signedIn: true, error: true, views: [] });
+    });
+    it('reports signed-out when there is no user', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: null } });
+      const r = await fetchSavedViewsResult();
+      expect(r).toEqual({ signedIn: false, error: false, views: [] });
     });
   });
 });

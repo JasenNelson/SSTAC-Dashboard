@@ -17,6 +17,7 @@ import { fetchHitlSources } from '@/lib/matrix-options/provenance/source-sync';
 import type { CatalogSourceRow } from '@/lib/matrix-options/provenance/source-sync';
 import {
   fetchSavedViews,
+  fetchSavedViewsResult,
   createSavedView,
   deleteSavedView,
   importLegacySavedViews,
@@ -3242,21 +3243,28 @@ export default function EvidenceLibrary({
     setSavedViews(local);
     (async () => {
       try {
-        const remote = await fetchSavedViews();
+        const result = await fetchSavedViewsResult();
         if (cancelled) return;
-        if (remote.length > 0) {
-          setSavedViews(remote.map(rowToSavedFilterView));
+        if (result.views.length > 0) {
+          setSavedViews(result.views.map(rowToSavedFilterView));
           setSavedViewsBackend('supabase');
           if (typeof window !== 'undefined') {
             window.localStorage.setItem(SAVED_VIEWS_MIGRATED_KEY, 'done');
           }
           return;
         }
+        // Empty result. Only act authoritatively on a SUCCESSFUL signed-in read. On a
+        // read error (missing table / RLS / outage) or when signed out, keep the
+        // localStorage fallback and NEVER delete it.
+        if (result.error || !result.signedIn) {
+          setSavedViewsBackend('local');
+          return;
+        }
         const alreadyMigrated =
           typeof window !== 'undefined' &&
           window.localStorage.getItem(SAVED_VIEWS_MIGRATED_KEY) === 'done';
         if (local.length > 0 && !alreadyMigrated) {
-          const result = await importLegacySavedViews(
+          const importResult = await importLegacySavedViews(
             local.map((v) => ({
               name: v.name,
               filters: v.filters,
@@ -3264,7 +3272,7 @@ export default function EvidenceLibrary({
             })),
           );
           if (cancelled) return;
-          if (result.success) {
+          if (importResult.success) {
             if (typeof window !== 'undefined') {
               window.localStorage.setItem(SAVED_VIEWS_MIGRATED_KEY, 'done');
             }
@@ -3273,14 +3281,22 @@ export default function EvidenceLibrary({
             setSavedViews(refreshed.map(rowToSavedFilterView));
             setSavedViewsBackend('supabase');
           } else {
-            // Import failed -> signed out -> keep the local views.
             setSavedViewsBackend('local');
           }
           return;
         }
-        // Remote empty and nothing to import. Best-effort flag; the write path
-        // (createSavedView) is authoritative for signed-in vs signed-out.
-        setSavedViewsBackend('local');
+        // Signed in, successful read, genuinely empty. Do NOT delete the local mirror --
+        // it may hold legitimate views created offline / while signed out (saveCurrentView
+        // caches the optimistic row locally on a transient or unauthenticated write), and
+        // codex review flagged clearing here as data loss. Keep any local views as the
+        // fallback; they sync up on the next successful save. Hiding a DIFFERENT account's
+        // cached views on the same browser without deleting legitimate local-only views
+        // needs the local cache stamped per user_id -- tracked as a follow-up, not a silent
+        // delete here.
+        setSavedViewsBackend(local.length > 0 ? 'local' : 'supabase');
+        if (local.length === 0 && typeof window !== 'undefined') {
+          window.localStorage.setItem(SAVED_VIEWS_MIGRATED_KEY, 'done');
+        }
       } catch {
         if (!cancelled) setSavedViewsBackend('local');
       }
@@ -3405,9 +3421,16 @@ export default function EvidenceLibrary({
     });
     if (result.success && result.view) {
       const serverView = rowToSavedFilterView(result.view);
-      setSavedViews((current) =>
-        current.map((v) => (v.id === optimistic.id ? serverView : v)),
-      );
+      setSavedViews((current) => {
+        // Persist the reconciled list so localStorage holds the SERVER id, not the
+        // optimistic one -- otherwise a later offline delete would call deleteSavedView
+        // with an id Supabase never stored and the view would resurrect on next sync.
+        const reconciled = current.map((v) =>
+          v.id === optimistic.id ? serverView : v,
+        );
+        persistSavedViews(reconciled);
+        return reconciled;
+      });
       setSavedViewsBackend('supabase');
     } else if (result.error === 'unauthenticated') {
       // Signed-out: local-only is correct; keep the optimistic row.
