@@ -25,7 +25,6 @@ export default defineConfig({
     // local "--maxWorkers=2 under memory pressure" practice; no effect locally
     // (CI is unset off the runner).
     maxWorkers: process.env.CI ? 2 : undefined,
-    minWorkers: process.env.CI ? 1 : undefined,
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: [
       'node_modules',
