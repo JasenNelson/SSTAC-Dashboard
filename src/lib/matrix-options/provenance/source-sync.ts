@@ -35,6 +35,11 @@ export interface CatalogSourceRow {
   bc_protocol_alignment: string;
   canonical_source_status: string;
   role: string;
+  // Lane 2 P2-4: per-reference retrieval status + dates (nullable; owner-supplied).
+  retrieval_status: 'full' | 'partial' | 'none' | null;
+  retrieval_date: string | null; // ISO date 'YYYY-MM-DD'
+  source_date: string | null; // ISO date; corresponds to JSON source_crystallization_date
+  qa_date: string | null; // ISO date
   created_at: string;
   created_by: string | null;
   updated_at: string;
@@ -91,6 +96,10 @@ interface CatalogSourceDbRow {
   bc_protocol_alignment: string | null;
   canonical_source_status: string | null;
   role: string | null;
+  retrieval_status: string | null;
+  retrieval_date: string | null;
+  source_date: string | null;
+  qa_date: string | null;
   created_at: string;
   created_by: string | null;
   updated_at: string;
@@ -119,6 +128,15 @@ function rowToSource(row: CatalogSourceDbRow): CatalogSourceRow {
     bc_protocol_alignment: row.bc_protocol_alignment ?? '',
     canonical_source_status: row.canonical_source_status ?? '',
     role: row.role ?? '',
+    retrieval_status:
+      row.retrieval_status === 'full' ||
+      row.retrieval_status === 'partial' ||
+      row.retrieval_status === 'none'
+        ? row.retrieval_status
+        : null,
+    retrieval_date: row.retrieval_date ?? null,
+    source_date: row.source_date ?? null,
+    qa_date: row.qa_date ?? null,
     created_at: row.created_at,
     created_by: row.created_by ?? null,
     updated_at: row.updated_at,
