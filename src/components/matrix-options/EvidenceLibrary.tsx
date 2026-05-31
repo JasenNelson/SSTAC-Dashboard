@@ -171,8 +171,34 @@ function loadSavedViews(): SavedFilterView[] {
   try {
     const raw = window.localStorage.getItem(SAVED_VIEWS_STORAGE_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as SavedFilterView[];
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Validate + normalize untrusted storage so a corrupted/old-shape entry can never crash
+    // render (filtersEqual / buildEvidenceLibraryView assume a well-formed filters object).
+    return parsed
+      .filter(
+        (entry): entry is Record<string, unknown> =>
+          typeof entry === 'object' && entry !== null,
+      )
+      .filter(
+        (entry) =>
+          typeof entry.id === 'string' &&
+          typeof entry.name === 'string' &&
+          (entry.viewMode === 'values' || entry.viewMode === 'sources'),
+      )
+      .slice(0, 50)
+      .map((entry) => ({
+        id: entry.id as string,
+        name: entry.name as string,
+        viewMode: entry.viewMode as EvidenceLibraryViewMode,
+        // Re-build through createEvidenceLibraryFilters so the stored filters are always a
+        // complete, well-formed EvidenceLibraryFilters (unknown keys dropped, arrays ensured).
+        filters: createEvidenceLibraryFilters(
+          (typeof entry.filters === 'object' && entry.filters !== null
+            ? entry.filters
+            : {}) as EvidenceLibraryFilterRequest,
+        ),
+      }));
   } catch {
     return [];
   }
@@ -3092,10 +3118,15 @@ export default function EvidenceLibrary({
   const selectedSource = useMemo(
     () =>
       selectedSourceId
-        ? library.sources.find((row) => row.record.source_id === selectedSourceId) ??
+        ? // Fall back to the unfiltered baseline so a reference clicked from the inventory
+          // (which lists baseline sources) still opens even when active filters exclude it.
+          library.sources.find((row) => row.record.source_id === selectedSourceId) ??
+          baselineLibrary.sources.find(
+            (row) => row.record.source_id === selectedSourceId,
+          ) ??
           null
         : null,
-    [library.sources, selectedSourceId],
+    [library.sources, baselineLibrary.sources, selectedSourceId],
   );
 
   const updateFilter = (key: FilterArrayKey, value: string) => {
