@@ -266,12 +266,16 @@ function loadSavedViews(): SavedFilterView[] {
       .map((entry) => ({
         id: entry.id as string,
         name: entry.name as string,
-        // Only the References (sources) and Values views remain. Any other persisted mode --
-        // including the retired 'equations' tab, whose content now lives in the Jurisdictional
-        // Frameworks Quick Reference -- is PRESERVED but remapped to the default Values view
-        // rather than dropped, mirroring the Supabase coerceViewMode fallback so legacy
-        // local-only saved views keep their name + filters instead of silently disappearing.
-        viewMode: entry.viewMode === 'sources' ? 'sources' : 'values',
+        // Only the References (sources) and Values views remain. Any other persisted mode is
+        // PRESERVED (mirroring the Supabase coerceViewMode fallback so legacy local-only saved
+        // views keep their name + filters instead of silently disappearing) but remapped to
+        // where that content now lives: 'source-leads' folds into the Sources view, while the
+        // retired 'equations' tab (now in the Jurisdictional Frameworks Quick Reference),
+        // 'by-parameter', and 'assumptions' all fall back to the default Values view.
+        viewMode:
+          entry.viewMode === 'sources' || entry.viewMode === 'source-leads'
+            ? 'sources'
+            : 'values',
         // Re-build through createEvidenceLibraryFilters so the stored filters are always a
         // complete, well-formed EvidenceLibraryFilters (unknown keys dropped, arrays ensured).
         filters: createEvidenceLibraryFilters(

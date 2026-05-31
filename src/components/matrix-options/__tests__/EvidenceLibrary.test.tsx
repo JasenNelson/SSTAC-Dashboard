@@ -1251,6 +1251,30 @@ describe('EvidenceLibrary saved views (Supabase)', () => {
     expect(screen.getByTestId('evidence-library-values')).toBeInTheDocument();
   });
 
+  it('remaps a stale localStorage source-leads saved view to the Sources view', async () => {
+    // Source-of-sources leads were folded into the Sources view, so a legacy 'source-leads'
+    // saved view must land on Sources (where that inventory now lives), not the default
+    // Values table -- otherwise its source-role filters would evaluate against value rows.
+    window.localStorage.setItem(
+      SAVED_VIEWS_KEY,
+      JSON.stringify([
+        { id: 'local-sl', name: 'Legacy leads view', filters: {}, viewMode: 'source-leads' },
+      ]),
+    );
+    window.localStorage.setItem(MIGRATED_KEY, 'done');
+    vi.mocked(savedViewsSync.fetchSavedViewsResult).mockResolvedValue({
+      signedIn: false,
+      error: false,
+      views: [],
+    });
+
+    renderControlled();
+    fireEvent.click(
+      await screen.findByRole('button', { name: /^Legacy leads view/ }),
+    );
+    expect(screen.getByTestId('evidence-library-sources')).toBeInTheDocument();
+  });
+
   it('keeps the local mirror on a remote read ERROR (does not erase the fallback)', async () => {
     // The codex re-review P2: an empty result from a read FAILURE (missing table / RLS /
     // outage) must NOT be treated as authoritative-empty and must not delete local views.
