@@ -3285,13 +3285,16 @@ export default function EvidenceLibrary({
           }
           return;
         }
-        // Signed in, successful read, genuinely empty, nothing to import: clear the
-        // stale local mirror so another account's / deleted-elsewhere entries do not
-        // resurrect. (A read error never reaches here, so the fallback is preserved.)
-        setSavedViews([]);
-        persistSavedViews([]);
-        setSavedViewsBackend('supabase');
-        if (typeof window !== 'undefined') {
+        // Signed in, successful read, genuinely empty. Do NOT delete the local mirror --
+        // it may hold legitimate views created offline / while signed out (saveCurrentView
+        // caches the optimistic row locally on a transient or unauthenticated write), and
+        // codex review flagged clearing here as data loss. Keep any local views as the
+        // fallback; they sync up on the next successful save. Hiding a DIFFERENT account's
+        // cached views on the same browser without deleting legitimate local-only views
+        // needs the local cache stamped per user_id -- tracked as a follow-up, not a silent
+        // delete here.
+        setSavedViewsBackend(local.length > 0 ? 'local' : 'supabase');
+        if (local.length === 0 && typeof window !== 'undefined') {
           window.localStorage.setItem(SAVED_VIEWS_MIGRATED_KEY, 'done');
         }
       } catch {

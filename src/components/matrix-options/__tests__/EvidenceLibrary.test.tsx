@@ -1172,13 +1172,14 @@ describe('EvidenceLibrary saved views (Supabase)', () => {
   const SAVED_VIEWS_KEY = 'matrix-options-saved-views-v1';
   const MIGRATED_KEY = 'matrix-options-saved-views-migrated-v1';
 
-  it('clears a stale local mirror when a signed-in account has no remote views', async () => {
-    // Stale local entry from a prior account/session + sentinel already done; remote empty;
-    // signed in. The authenticated-empty state is authoritative -> the stale view must not show.
+  it('keeps local views on a signed-in empty read (non-destructive; account-aware clear is a follow-up)', async () => {
+    // Signed in, remote empty, sentinel done, local has views. The local cache is NOT
+    // deleted -- it may hold legitimate offline/local-only views (saveCurrentView caches
+    // them). It is shown as the fallback; a fully account-aware reconcile is a follow-up.
     window.localStorage.setItem(
       SAVED_VIEWS_KEY,
       JSON.stringify([
-        { id: 'stale-1', name: 'Other account view', filters: {}, viewMode: 'values' },
+        { id: 'local-3', name: 'Cached local view', filters: {}, viewMode: 'values' },
       ]),
     );
     window.localStorage.setItem(MIGRATED_KEY, 'done');
@@ -1189,15 +1190,11 @@ describe('EvidenceLibrary saved views (Supabase)', () => {
     });
 
     renderControlled();
-    await waitFor(() =>
-      expect(
-        screen.getByTestId('evidence-library-saved-views'),
-      ).toHaveTextContent(/No saved views yet/),
-    );
     expect(
-      screen.getByTestId('evidence-library-saved-views'),
-    ).not.toHaveTextContent(/Other account view/);
-    expect(window.localStorage.getItem(SAVED_VIEWS_KEY)).toBe('[]');
+      await screen.findByRole('button', { name: /^Cached local view/ }),
+    ).toBeInTheDocument();
+    // The local cache is preserved, not wiped.
+    expect(window.localStorage.getItem(SAVED_VIEWS_KEY)).toContain('Cached local view');
   });
 
   it('keeps the local mirror when signed out (no remote, not authenticated)', async () => {
