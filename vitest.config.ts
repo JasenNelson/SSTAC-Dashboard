@@ -17,6 +17,15 @@ export default defineConfig({
     css: false,
     testTimeout: 15000,
     setupFiles: ['./src/test/setup.ts'],
+    // CI runners (2 cores, ~7GB) OOM-kill forked workers during the v8-coverage run
+    // (`npm run test:coverage`), after which vitest's forks pool crashes with
+    // `write EPIPE` on the dead worker's IPC channel -- an unhandled 'error' event
+    // that fails the whole Unit Tests job even though every test passes. Cap the
+    // worker count on CI to stay under the memory ceiling. Mirrors the documented
+    // local "--maxWorkers=2 under memory pressure" practice; no effect locally
+    // (CI is unset off the runner).
+    maxWorkers: process.env.CI ? 2 : undefined,
+    minWorkers: process.env.CI ? 1 : undefined,
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: [
       'node_modules',
