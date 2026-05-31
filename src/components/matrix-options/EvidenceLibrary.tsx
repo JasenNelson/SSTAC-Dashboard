@@ -266,12 +266,14 @@ function loadSavedViews(): SavedFilterView[] {
       .map((entry) => ({
         id: entry.id as string,
         name: entry.name as string,
-        // Only the References (sources) and Values views remain. Any other persisted mode is
-        // PRESERVED (mirroring the Supabase coerceViewMode fallback so legacy local-only saved
-        // views keep their name + filters instead of silently disappearing) but remapped to
-        // where that content now lives: 'source-leads' folds into the Sources view, while the
-        // retired 'equations' tab (now in the Jurisdictional Frameworks Quick Reference),
-        // 'by-parameter', and 'assumptions' all fall back to the default Values view.
+        // Only the References (sources) and Values views are user-selectable, so a legacy
+        // local-only saved view whose persisted mode is anything else is PRESERVED (kept with
+        // its name + filters rather than silently dropped) and remapped to where that content
+        // now lives: 'source-leads' folds into the Sources view; the retired 'equations' tab
+        // (now in the Jurisdictional Frameworks Quick Reference), 'by-parameter', and
+        // 'assumptions' all collapse to the default Values view. This is intentionally more
+        // aggressive than the Supabase coerceViewMode (which only rewrites truly-unknown
+        // modes): locally these two tabs are the only modes a user can ever re-select.
         viewMode:
           entry.viewMode === 'sources' || entry.viewMode === 'source-leads'
             ? 'sources'
