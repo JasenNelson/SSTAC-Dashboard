@@ -17,11 +17,18 @@ import { createEvidenceLibraryFilters } from '../library';
 const mockGetUser = vi.fn();
 const mockFrom = vi.fn();
 let resultQueue: Array<Record<string, unknown>> = [];
+const eqCalls: unknown[][] = [];
 
 function builder() {
   const b: Record<string, unknown> = {};
   for (const m of ['select', 'insert', 'update', 'delete', 'eq', 'in', 'order', 'single']) {
-    b[m] = vi.fn(() => b);
+    b[m] =
+      m === 'eq'
+        ? vi.fn((...args: unknown[]) => {
+            eqCalls.push(args);
+            return b;
+          })
+        : vi.fn(() => b);
   }
   (b as { then: unknown }).then = (resolve: (v: unknown) => void) =>
     resolve(resultQueue.shift() ?? { data: null, error: null });
@@ -36,6 +43,7 @@ vi.mock('@/lib/supabase-auth', () => ({
 
 beforeEach(() => {
   resultQueue = [];
+  eqCalls.length = 0;
   mockFrom.mockReset();
   mockFrom.mockImplementation(() => builder());
   mockGetUser.mockReset();
@@ -46,6 +54,19 @@ const baseFilters = createEvidenceLibraryFilters();
 
 describe('saved-views-sync', () => {
   describe('fetchSavedViews', () => {
+    it('scopes the fetch to the current user (admin-hydration tripwire)', async () => {
+      resultQueue = [{ data: [], error: null }];
+      await fetchSavedViews();
+      // Must filter by user_id so an admin (covered by the admin SELECT-all RLS policy)
+      // does not hydrate every user's saved views into their own list.
+      expect(eqCalls).toContainEqual(['user_id', 'user-1']);
+    });
+
+    it('returns [] when signed out', async () => {
+      mockGetUser.mockResolvedValue({ data: { user: null } });
+      expect(await fetchSavedViews()).toEqual([]);
+    });
+
     it('returns mapped rows with normalized filters', async () => {
       resultQueue = [
         {
