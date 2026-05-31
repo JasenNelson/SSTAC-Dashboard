@@ -367,11 +367,15 @@ describe('matrix options provenance catalog', () => {
   });
 
   it('catalogs Health Canada and US EPA IRIS human-health TRVs with extraction dates', () => {
+    // Filter to the source-verified HC/IRIS batch (qa_status='approved') only.
+    // Protocol 28 d0c00003 records are also approved_source_backed+TRV but have
+    // qa_status='needs_review' (pending direct-source check); they are excluded here.
     const tier1Trvs = PARAMETER_VALUE_RECORDS.filter(
       (record) =>
         record.pathway.startsWith('human-health') &&
         record.evidence_support_status === 'approved_source_backed' &&
-        record.assumption_tags?.includes('TRV'),
+        record.assumption_tags?.includes('TRV') &&
+        record.qa_status === 'approved',
     );
     const sourceIds = new Set(tier1Trvs.flatMap((record) => record.source_ids));
 

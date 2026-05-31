@@ -198,6 +198,9 @@ export interface EvidenceReviewDisposition {
 export const PROTOCOL28_POLICY_ALIGNMENT =
   'protocol_28_v3_0_policy_compilation';
 const PROTOCOL28_SOURCE_ID = 'src-bc-protocol-28-v3-0-2024';
+// Jan-2021 revision source added 2026-05-31 (d0c00003 HH-soil TRVs).
+const PROTOCOL28_JAN2021_ALIGNMENT = 'protocol_28_crystallized_bc_policy_trv';
+const PROTOCOL28_JAN2021_SOURCE_ID = 'src-bc-protocol-28-2021-jan';
 
 const EMPTY_FILTERS: EvidenceLibraryFilters = {
   search: '',
@@ -1117,8 +1120,11 @@ function buildSourceLeadSummaries(): EvidenceLibrarySourceLeadSummary[] {
 function isProtocol28ValueRecord(record: ParameterValueRecord): boolean {
   return (
     record.bc_protocol_alignment === PROTOCOL28_POLICY_ALIGNMENT ||
+    record.bc_protocol_alignment === PROTOCOL28_JAN2021_ALIGNMENT ||
     record.source_ids.includes(PROTOCOL28_SOURCE_ID) ||
-    record.compilation_source_ids?.includes(PROTOCOL28_SOURCE_ID) === true
+    record.source_ids.includes(PROTOCOL28_JAN2021_SOURCE_ID) ||
+    record.compilation_source_ids?.includes(PROTOCOL28_SOURCE_ID) === true ||
+    record.compilation_source_ids?.includes(PROTOCOL28_JAN2021_SOURCE_ID) === true
   );
 }
 
