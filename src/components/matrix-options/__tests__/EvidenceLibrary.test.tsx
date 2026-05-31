@@ -1217,6 +1217,40 @@ describe('EvidenceLibrary saved views (Supabase)', () => {
     ).toBeInTheDocument();
   });
 
+  it('preserves a stale localStorage equations saved view, remapped to the Values mode', async () => {
+    // Legacy local-only saved view persisted before the Equations view mode was retired
+    // (equations now render in the Jurisdictional Frameworks Quick Reference). loadSavedViews
+    // used to admit only values/sources, so this view would be DROPPED. It must instead be
+    // PRESERVED (name + filters) with its mode coerced to 'values', mirroring the Supabase
+    // coerceViewMode fallback, so applying it lands on a real view rather than a removed mode.
+    window.localStorage.setItem(
+      SAVED_VIEWS_KEY,
+      JSON.stringify([
+        { id: 'local-eq', name: 'Legacy equations view', filters: {}, viewMode: 'equations' },
+      ]),
+    );
+    window.localStorage.setItem(MIGRATED_KEY, 'done');
+    vi.mocked(savedViewsSync.fetchSavedViewsResult).mockResolvedValue({
+      signedIn: false,
+      error: false,
+      views: [],
+    });
+
+    renderControlled();
+
+    // Preserved, not dropped.
+    expect(
+      await screen.findByRole('button', { name: /^Legacy equations view/ }),
+    ).toBeInTheDocument();
+
+    // Switch off the default Values view so the remap is observable, then apply the legacy
+    // view: it returns to the Values table (equations -> values), proving it is not stranded.
+    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
+    expect(screen.getByTestId('evidence-library-sources')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^Legacy equations view/ }));
+    expect(screen.getByTestId('evidence-library-values')).toBeInTheDocument();
+  });
+
   it('keeps the local mirror on a remote read ERROR (does not erase the fallback)', async () => {
     // The codex re-review P2: an empty result from a read FAILURE (missing table / RLS /
     // outage) must NOT be treated as authoritative-empty and must not delete local views.
