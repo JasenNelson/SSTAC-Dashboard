@@ -1,0 +1,643 @@
+{
+  "_meta": {
+    "source": "US EPA IRIS (https://www.epa.gov/iris), Chemicals_Details export",
+    "source_file": "Chemicals_Details (1).xlsx",
+    "derived": "2026-05-31",
+    "note": "Authoritative IRIS toxicity values for the catalog's IRIS-labeled substances/inputs, derived from the EPA IRIS Chemicals_Details export. Used by iris-canonical.test.ts to assert catalog IRIS values match the EPA source (NOT AI-memorized canon). Regenerate from a fresh EPA IRIS export when IRIS updates. Value notation in EPA export: 'N x 10 M' = N*10^M (minus signs preserved).",
+    "records_count": 40
+  },
+  "records": [
+    {
+      "substance_key": "arsenic_inorganic",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Arsenic, Inorganic"
+      ],
+      "epa_values": [
+        6e-05
+      ],
+      "epa_raw": [
+        "6 x 10 -5 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "arsenic_inorganic",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Arsenic, Inorganic"
+      ],
+      "epa_values": [
+        32.0
+      ],
+      "epa_raw": [
+        "3.2 x 10 1 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "arsenic_inorganic",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "Arsenic, Inorganic"
+      ],
+      "epa_values": [
+        0.0043
+      ],
+      "epa_raw": [
+        "4.3 x 10 -3 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "barium",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Barium and Compounds"
+      ],
+      "epa_values": [
+        0.2
+      ],
+      "epa_raw": [
+        "2 x 10 -1 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "benzene",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Benzene"
+      ],
+      "epa_values": [
+        0.004
+      ],
+      "epa_raw": [
+        "4 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "benzene",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Benzene"
+      ],
+      "epa_values": [
+        0.015,
+        0.055
+      ],
+      "epa_raw": [
+        "1.5 x 10 -2 per mg/kg-day",
+        "5.5 x 10 -2 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "benzene",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "Benzene"
+      ],
+      "epa_values": [
+        0.03
+      ],
+      "epa_raw": [
+        "3 x 10 -2 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "benzene",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "Benzene"
+      ],
+      "epa_values": [
+        2.2e-06,
+        7.8e-06
+      ],
+      "epa_raw": [
+        "2.2 x 10 -6 per \u00b5g/m3",
+        "7.8 x 10 -6 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "benzo_a_pyrene",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Benzo[a]pyrene (BaP)"
+      ],
+      "epa_values": [
+        0.0003,
+        0.0004,
+        0.002
+      ],
+      "epa_raw": [
+        "2 x 10 -3 mg/kg-day",
+        "3 x 10 -4 mg/kg-day",
+        "4 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "benzo_a_pyrene",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Benzo[a]pyrene (BaP)"
+      ],
+      "epa_values": [
+        2.0
+      ],
+      "epa_raw": [
+        "2 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "benzo_a_pyrene",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "Benzo[a]pyrene (BaP)"
+      ],
+      "epa_values": [
+        2e-06,
+        3e-06
+      ],
+      "epa_raw": [
+        "2 x 10 -6 mg/m3",
+        "3 x 10 -6 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "benzo_a_pyrene",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "Benzo[a]pyrene (BaP)"
+      ],
+      "epa_values": [
+        0.001
+      ],
+      "epa_raw": [
+        "1 x 10 -3 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "beryllium",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Beryllium and compounds"
+      ],
+      "epa_values": [
+        0.002
+      ],
+      "epa_raw": [
+        "2 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "beryllium",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "Beryllium and compounds"
+      ],
+      "epa_values": [
+        2e-05
+      ],
+      "epa_raw": [
+        "2 x 10 -5 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "beryllium",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "Beryllium and compounds"
+      ],
+      "epa_values": [
+        0.0024
+      ],
+      "epa_raw": [
+        "2.4 x 10 -3 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "cadmium",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Cadmium"
+      ],
+      "epa_values": [
+        0.0005,
+        0.001
+      ],
+      "epa_raw": [
+        "1 x 10 -3 mg/kg-day",
+        "5 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "cadmium",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "Cadmium"
+      ],
+      "epa_values": [
+        0.0018
+      ],
+      "epa_raw": [
+        "1.8 x 10 -3 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "chlorobenzene",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Chlorobenzene"
+      ],
+      "epa_values": [
+        0.02
+      ],
+      "epa_raw": [
+        "2 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "chromium_hexavalent",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Chromium(VI)"
+      ],
+      "epa_values": [
+        0.0007,
+        0.0009,
+        0.01,
+        0.07
+      ],
+      "epa_raw": [
+        "1 x 10 -2 mg/kg-day",
+        "7 x 10 -2 mg/kg-day",
+        "7 x 10 -4 mg/kg-day",
+        "9 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "chromium_hexavalent",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Chromium(VI)"
+      ],
+      "epa_values": [
+        0.27
+      ],
+      "epa_raw": [
+        "2.7 x 10 -1 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "chromium_hexavalent",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "Chromium(VI)"
+      ],
+      "epa_values": [
+        3e-05
+      ],
+      "epa_raw": [
+        "3 x 10 -5 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "chromium_hexavalent",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "Chromium(VI)"
+      ],
+      "epa_values": [
+        0.018
+      ],
+      "epa_raw": [
+        "1.8 x 10 -2 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "chromium_trivalent",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Chromium(III), insoluble salts"
+      ],
+      "epa_values": [
+        1.5
+      ],
+      "epa_raw": [
+        "1.5 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "methylmercury",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Methylmercury (MeHg)"
+      ],
+      "epa_values": [
+        0.0001
+      ],
+      "epa_raw": [
+        "1 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "naphthalene",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Naphthalene"
+      ],
+      "epa_values": [
+        0.02
+      ],
+      "epa_raw": [
+        "2 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "naphthalene",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "Naphthalene"
+      ],
+      "epa_values": [
+        0.003
+      ],
+      "epa_raw": [
+        "3 x 10 -3 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "tetrachloroethylene",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Tetrachloroethylene (Perchloroethylene)"
+      ],
+      "epa_values": [
+        0.006
+      ],
+      "epa_raw": [
+        "6 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "tetrachloroethylene",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Tetrachloroethylene (Perchloroethylene)"
+      ],
+      "epa_values": [
+        0.0021
+      ],
+      "epa_raw": [
+        "2.1 x 10 -3 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "tetrachloroethylene",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "Tetrachloroethylene (Perchloroethylene)"
+      ],
+      "epa_values": [
+        0.04
+      ],
+      "epa_raw": [
+        "4 x 10 -2 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "tetrachloroethylene",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "Tetrachloroethylene (Perchloroethylene)"
+      ],
+      "epa_values": [
+        2.6e-07
+      ],
+      "epa_raw": [
+        "2.6 x 10 -7 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "total_pcbs_aroclor_1254",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Aroclor 1254"
+      ],
+      "epa_values": [
+        2e-05
+      ],
+      "epa_raw": [
+        "2 x 10 -5 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "trichloroethylene",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Trichloroethylene"
+      ],
+      "epa_values": [
+        0.0005
+      ],
+      "epa_raw": [
+        "5 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "trichloroethylene",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Trichloroethylene"
+      ],
+      "epa_values": [
+        0.052
+      ],
+      "epa_raw": [
+        "5.2 x 10 -2 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "trichloroethylene",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "Trichloroethylene"
+      ],
+      "epa_values": [
+        0.002
+      ],
+      "epa_raw": [
+        "2 x 10 -3 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "trichloroethylene",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "Trichloroethylene"
+      ],
+      "epa_values": [
+        4.8e-06
+      ],
+      "epa_raw": [
+        "4.8 x 10 -6 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "vinyl_chloride",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Vinyl chloride"
+      ],
+      "epa_values": [
+        0.003
+      ],
+      "epa_raw": [
+        "3 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "vinyl_chloride",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Vinyl chloride"
+      ],
+      "epa_values": [
+        0.72,
+        0.75,
+        1.4,
+        1.5
+      ],
+      "epa_raw": [
+        "1.4 per mg/kg-day",
+        "1.5 per mg/kg-day",
+        "7.2 x 10 -1 per mg/kg-day",
+        "7.5 x 10 -1 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "vinyl_chloride",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "Vinyl chloride"
+      ],
+      "epa_values": [
+        0.1
+      ],
+      "epa_raw": [
+        "1 x 10 -1 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "vinyl_chloride",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "Vinyl chloride"
+      ],
+      "epa_values": [
+        4.4e-06,
+        8.8e-06
+      ],
+      "epa_raw": [
+        "4.4 x 10 -6 per \u00b5g/m3",
+        "8.8 x 10 -6 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "zinc",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Zinc and Compounds",
+        "Zinc cyanide",
+        "Zinc phosphide"
+      ],
+      "epa_values": [
+        0.0003,
+        0.05,
+        0.3
+      ],
+      "epa_raw": [
+        "3 x 10 -1 mg/kg-day",
+        "3 x 10 -4 mg/kg-day",
+        "5 x 10 -2 mg/kg-day"
+      ]
+    }
+  ]
+}
