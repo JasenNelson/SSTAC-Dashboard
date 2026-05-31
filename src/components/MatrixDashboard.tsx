@@ -27,7 +27,6 @@ import {
 } from '@/lib/matrix-options/provenance/library';
 import type {
   CalculatorReceipt,
-  EquationRecord,
   EvidenceLibraryFilterRequest,
   EvidenceLibraryFilters,
   ProvenancePathway,
