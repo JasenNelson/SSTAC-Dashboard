@@ -25,16 +25,19 @@ describe('matrix options evidence library helpers', () => {
     expect(view.totalCounts.sourceLeads).toBe(4);
     expect(view.values.length).toBe(view.totalCounts.values);
     expect(view.equations.length).toBe(view.totalCounts.equations);
-    // valueGroups count updated 2026-05-31: +213 Protocol 28 HH-soil TRV records added (d0c00003).
-    expect(view.valueGroups).toHaveLength(366);
-    // approvedSourceBacked unchanged: new p28 records use pending_source_locator, not approved_source_backed.
-    expect(view.audit.values.approvedSourceBacked).toBe(84);
-    // pendingSourceLocator updated 2026-05-31: +213 records (evidence_support_status=pending_source_locator).
+    // valueGroups count updated 2026-05-31 (PR3): +91 new groups from 107 Health Canada TRV v4.0 records (d0c00012).
+    // Prior: 366 (+P28 d0c00003). New total: 457.
+    expect(view.valueGroups).toHaveLength(457);
+    // approvedSourceBacked updated 2026-05-31 (PR3): HC records use approved_source_backed (+107).
+    // Prior: 84. New total: 191.
+    expect(view.audit.values.approvedSourceBacked).toBe(191);
+    // pendingSourceLocator unchanged: HC records use approved_source_backed, not pending_source_locator.
     expect(view.audit.values.pendingSourceLocator).toBe(228);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
-    // availableOptions updated 2026-05-31: +213 records (default_status=available_option).
-    expect(view.audit.values.availableOptions).toBe(303);
+    // availableOptions updated 2026-05-31 (PR3): HC records are available_option (+107).
+    // Prior: 303. New total: 410.
+    expect(view.audit.values.availableOptions).toBe(410);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
