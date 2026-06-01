@@ -79,6 +79,7 @@ share/python-wheels/
 MANIFEST
 
 # Test & Coverage Reports
+/coverage/
 htmlcov/
 .tox/
 .nox/
