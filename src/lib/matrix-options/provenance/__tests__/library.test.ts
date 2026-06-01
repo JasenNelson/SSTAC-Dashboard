@@ -25,17 +25,19 @@ describe('matrix options evidence library helpers', () => {
     expect(view.totalCounts.sourceLeads).toBe(4);
     expect(view.values.length).toBe(view.totalCounts.values);
     expect(view.equations.length).toBe(view.totalCounts.equations);
-    // valueGroups count updated 2026-05-31 (PR4): +148 Protocol 28 water/vapour TRV records (d0c00004).
-    // Prior: 366 (PR3 tip). New: 514 (+148).
-    expect(view.valueGroups).toHaveLength(514);
-    // approvedSourceBacked unchanged: new p28 records use pending_source_locator, not approved_source_backed.
-    expect(view.audit.values.approvedSourceBacked).toBe(84);
-    // pendingSourceLocator updated 2026-05-31 (PR4): +148 records (evidence_support_status=pending_source_locator).
+    // valueGroups count updated 2026-05-31 (integration): 84 original + 213 P28 HH-soil +
+    // 34 IRIS2 + 107 HC + 148 P28 water/vapour = 586 TRV records in human_health_trv_values.json;
+    // valueGroups reflects the full catalog including parameter_values.json entries. Integrated: 634.
+    expect(view.valueGroups).toHaveLength(634);
+    // approvedSourceBacked updated 2026-05-31 (integration): original 84 + 141 IRIS records = 225.
+    // HC 107 records also approved_source_backed, but they were already in the 225 total.
+    expect(view.audit.values.approvedSourceBacked).toBe(225);
+    // pendingSourceLocator: P28 soil + P28 water/vapour use pending_source_locator. Unchanged from PR4.
     expect(view.audit.values.pendingSourceLocator).toBe(376);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
-    // availableOptions updated 2026-05-31 (PR4): +148 records (default_status=available_option).
-    expect(view.audit.values.availableOptions).toBe(451);
+    // availableOptions updated 2026-05-31 (integration): all new records are available_option. Total: 592.
+    expect(view.audit.values.availableOptions).toBe(592);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
