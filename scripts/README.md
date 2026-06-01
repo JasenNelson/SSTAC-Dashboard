@@ -85,24 +85,30 @@ SQL scripts for ongoing database verification and maintenance, plus automated co
 
 | Script | Purpose | When to Use |
 |--------|---------|-------------|
-| `verify-code-changes.sh` | Automated code change verification (Bash) | Before committing code changes |
-| `verify-code-changes.ps1` | Automated code change verification (PowerShell) | Before committing code changes (Windows) |
+| `verify-code-changes.sh` | Automated code change verification (Bash; Linux/Mac only -- fails closed on Windows/Git Bash) | Before committing on Linux/Mac |
+| `verify-code-changes.ps1` | Automated code change verification (PowerShell; uses the monitored build) | Before committing on Windows (required -- the .sh refuses to run here) |
+
+> Windows note: use the PowerShell script. It runs the monitored build
+> (`npm run build:monitored:clean`) per `docs/GATE_MODE_SOP.md` section 10. The Bash script runs a
+> raw `npm run build`, which the raw-build ban forbids on Windows, so it exits early under Git Bash
+> / MSYS / Cygwin and points you here.
 
 **Usage:**
 ```bash
 # Bash/Linux/Mac
 ./scripts/verify/verify-code-changes.sh
-
-# PowerShell (Windows)
+```
+```powershell
+# PowerShell (Windows -- uses the monitored build)
 .\scripts\verify\verify-code-changes.ps1
 ```
 
 **What it checks:**
-- ✅ Build succeeds
-- ✅ TypeScript type checking passes
-- ✅ Linting passes
-- ✅ Unit tests pass
-- ✅ No poll-related files in changes (warns if found)
+- Build succeeds (monitored build on Windows)
+- TypeScript type checking passes
+- Linting passes
+- Unit tests pass (CI-faithful: `test:ci`)
+- No poll-related files in changes (warns if found)
 
 **See:** `docs/review-analysis/CODE_CHANGE_VERIFICATION_PROCESS.md` for complete verification process
 

@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 function die(message, code = 1) {
   process.stderr.write(`${message}\n`)
@@ -83,7 +84,7 @@ function collectMarkdownFiles(args) {
   return [...found].sort()
 }
 
-function stripFences(markdown) {
+export function stripFences(markdown) {
   // Reduce false-positive links/duplication by removing code. ORDER MATTERS:
   //  1. Remove multi-line fenced code blocks FIRST. (Doing inline removal first can
   //     desync on backticks INSIDE a fence -- e.g. console.error(`...`) in a ```js block --
@@ -160,7 +161,7 @@ function isExternalLink(href) {
   return false
 }
 
-function parseMarkdownLinks(markdown) {
+export function parseMarkdownLinks(markdown) {
   // Captures both links and images. This intentionally avoids full Markdown parsing.
   // Format: [text](href "title") or ![alt](href)
   const links = []
@@ -493,5 +494,8 @@ function formatHuman(result) {
   return lines.join('\n')
 }
 
-main()
+// Run only when invoked directly (not when imported by a test).
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main()
+}
 
